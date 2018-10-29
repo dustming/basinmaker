@@ -905,9 +905,10 @@ def Getfloodplain_n(catid,finalcat,rivlen,landuse,landuseinfo):
     rivincat = np.logical_and(catidx, rivids)
     Landtypes = landuse[rivincat]
     Landtypeid = np.unique(Landtypes)
+    Landtypeid = Landtypeid[Landtypeid >= 0]
     sum = 0.0
 #    arcpy.AddMessage("cat id is   " + str(catid))
-    if len(Landtypes) <=0:
+    if len(Landtypeid) <=0:
         floodn = 0.035
     else:
         for i in range(0,len(Landtypeid)):
@@ -915,7 +916,7 @@ def Getfloodplain_n(catid,finalcat,rivlen,landuse,landuseinfo):
 #            arcpy.AddMessage(landuseinfo[landuseinfo['RasterV'] == iid])
             sum = sum + landuseinfo[landuseinfo['RasterV'] == iid]['MannV'].values*len(np.argwhere(Landtypes == iid))
         floodn = sum/(len(Landtypes))
-#    arcpy.AddMessage(floodn)
+    arcpy.AddMessage(floodn)
     return floodn
 ########################################################3
 def Getcatwd(catrow,catcol,width,depth,Q_Mean,DA):
@@ -1161,8 +1162,8 @@ def Writecatinfotodbf(OutputFoldersub,catinfo):
                 tslope = float(sinfo[0,22])
             else:
                 tslope = np.average(gropcat2[:,27],weights=gropcat2[:,20])
-            if sinfo[0,20] < 0:
-                arcpy.AddMessage("catchment id " + str(sinfo[0,0]) +"     "+str(twidth)+"   "+str(tdepth))
+#            if sinfo[0,20] < 0:
+#                arcpy.AddMessage("catchment id " + str(sinfo[0,0]) +"     "+str(twidth)+"   "+str(tdepth))
             if tslope >0:
                 n = calculateChannaln(twidth,tdepth,tqmean,tslope)
             else:
@@ -1265,7 +1266,7 @@ arcpy.CheckOutExtension("Spatial")
 ##### Readed inputs
 OutputFolder = sys.argv[1]
 Z_factor = float(sys.argv[2])
-cellSize = float(sys.argv[3])
+cellSize = float(sys.argv[2])
 #OutputFolder = "C:/Users/dustm/Documents/ubuntu/share/tempout/tsed/GrandR"
 #Z_factor = 0.0013
 arcpy.env.workspace =OutputFolder
@@ -1304,7 +1305,7 @@ ncols = int(arcpy.GetRasterProperties_management(dataset, "COLUMNCOUNT").getOutp
 nrows = int(arcpy.GetRasterProperties_management(dataset, "ROWCOUNT").getOutput(0))
 #######################################3
 GenrateCatchatt(OutputFolder + "/")
-print("------Cculate basin geometry done")
+print("------Calculate basin geometry done")
 rivlen = np.loadtxt(OutputFolder+ "/"+ 'rivlength.asc',skiprows = 6)   #### raster of hydroshed basin fid
 area = np.loadtxt(OutputFolder+ "/"+"area.asc",skiprows = 6)
 slope = np.loadtxt(OutputFolder+ "/"+"slope.asc",skiprows = 6)

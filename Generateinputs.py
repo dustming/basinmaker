@@ -38,7 +38,7 @@ def Defcat(out,outletid):
     Shedid = Shedid[Shedid>=0]
     return Shedid
 
-def writeraster(w_filname,nraster,dataset):   
+def writeraster(w_filname,nraster,dataset):
     orvh = open(w_filname,"w")
     ncols = arcpy.GetRasterProperties_management(dataset, "COLUMNCOUNT")
     nrows = arcpy.GetRasterProperties_management(dataset, "ROWCOUNT")
@@ -54,7 +54,7 @@ def writeraster(w_filname,nraster,dataset):
     f_handle = open(w_filname, 'a')
     np.savetxt(f_handle,nraster,fmt='%i')
     f_handle.close()
-    
+
 
 import numpy as np
 from scipy.optimize import curve_fit
@@ -89,7 +89,7 @@ cellSize = float(sys.argv[12])
 OutHyID2 = int(sys.argv[13])
 Landuse = sys.argv[14]
 Landuseinfo = sys.argv[15]
-tempinfo = Dbf5(hyinfocsv)#np.genfromtxt(hyinfocsv,delimiter=',') 
+tempinfo = Dbf5(hyinfocsv)#np.genfromtxt(hyinfocsv,delimiter=',')
 hyshdinfo = tempinfo.to_dataframe().values
 arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(4326) ### WGS84
 arcpy.AddMessage("processing for outlet id:  "+str(OutHyID))
@@ -116,7 +116,7 @@ for i in range(0,len(HydroBasins)):
         where_clause = where_clause + str(HydroBasins[i])
     else:
         where_clause = where_clause + "," + str(HydroBasins[i])
-where_clause = where_clause + ")" 
+where_clause = where_clause + ")"
 arcpy.Select_analysis(hyshdply, out_feature_class, where_clause)
 ##################
 ######################33
@@ -130,13 +130,13 @@ if VolThreshold >= 0:
     arcpy.AddMessage("#####################33")
     arcpy.Clip_analysis(Lakefile, OutputFolder +"HyMask.shp", OutputFolder +"HyLake1.shp", "")
     copyfile( OutputFolder + "/"+"HyMask.prj" ,  OutputFolder + "/"+"HyLake.prj")
-    where_clause = '"Vol_total"> '+ str(VolThreshold)
+    where_clause = '"Lake_area"> '+ str(VolThreshold)
     arcpy.Select_analysis(OutputFolder +"HyLake1.shp", OutputFolder +"HyLake.shp", where_clause)
     copyfile( OutputFolder + "/"+"HyMask.prj" ,  OutputFolder + "/"+"HyLake.prj")
 else:
     arcpy.Clip_analysis(Lakefile, OutputFolder +"HyMask.shp", OutputFolder +"HyLake1.shp", "")
     copyfile( OutputFolder + "/"+"HyMask.prj" ,  OutputFolder + "/"+"HyLake.prj")
-    where_clause = '"Vol_total"> '+ str(1000000000000000)
+    where_clause = '"Lake_area"> '+ str(1000000000000000)
     arcpy.Select_analysis(OutputFolder +"HyLake1.shp", OutputFolder +"HyLake.shp", where_clause)
     copyfile( OutputFolder + "/"+"HyMask.prj" ,  OutputFolder + "/"+"HyLake.prj")
     tdir = np.loadtxt(OutputFolder+ 'dir.asc',dtype = 'i4',skiprows = 6)
@@ -144,14 +144,14 @@ else:
     tlake[:,:] = -9999
     writeraster(OutputFolder + "hylake.asc",tlake,OutputFolder + 'dir')
 ###################3
-####### Set envroment variable to dir 
+####### Set envroment variable to dir
 arcpy.env.XYTolerance = cellSize
 arcpy.arcpy.env.cellSize = cellSize
-arcpy.env.extent = arcpy.Describe(OutputFolder + "dir").extent 
+arcpy.env.extent = arcpy.Describe(OutputFolder + "dir").extent
 arcpy.env.snapRaster = OutputFolder + "dir"
 #########################################################
 if VolThreshold >= 0:
-    arcpy.PolygonToRaster_conversion(OutputFolder +"HyLake.shp", "Hylak_id", OutputFolder + "hylake", 
+    arcpy.PolygonToRaster_conversion(OutputFolder +"HyLake.shp", "Hylak_id", OutputFolder + "hylake",
                                  "MAXIMUM_COMBINED_AREA","Hylak_id", cellSize)
     arcpy.RasterToASCII_conversion(OutputFolder + "hylake", OutputFolder + "hylake.asc")
 ##### dem
@@ -166,7 +166,7 @@ arcpy.RasterToASCII_conversion(OutputFolder + "acc", OutputFolder + "acc.asc")
 arcpy.AddMessage(Landuse)
 if Landuse != "#":
     outExtractByMask = ExtractByMask(Landuse, OutputFolder +"HyMask.shp")
-    outExtractByMask.save(OutputFolder + "landuse") 
+    outExtractByMask.save(OutputFolder + "landuse")
     arcpy.RasterToASCII_conversion(OutputFolder + "landuse", OutputFolder + "landuse.asc")
     copyfile(Landuseinfo, OutputFolder + "landuseinfo.csv")
 else:
@@ -180,16 +180,16 @@ else:
     kk.to_csv(OutputFolder + "landuseinfo.csv",sep=",")
 ######################################################################################
 #######hydrobasin
-arcpy.PolygonToRaster_conversion(OutputFolder +"HyMask.shp", "FID", OutputFolder + "hybasinfid", 
+arcpy.PolygonToRaster_conversion(OutputFolder +"HyMask.shp", "FID", OutputFolder + "hybasinfid",
                                  "CELL_CENTER","NONE", cellSize)
 arcpy.RasterToASCII_conversion(OutputFolder + "hybasinfid", OutputFolder + "hybasinfid.asc")
 ##### width and depth
 arcpy.Clip_analysis(WidDep, OutputFolder +"HyMask.shp", OutputFolder + "WidDep.shp")
-arcpy.PolylineToRaster_conversion(OutputFolder + "WidDep.shp", "WIDTH", OutputFolder + "width", 
+arcpy.PolylineToRaster_conversion(OutputFolder + "WidDep.shp", "WIDTH", OutputFolder + "width",
                                   "MAXIMUM_LENGTH", "NONE", cellSize)
-arcpy.PolylineToRaster_conversion(OutputFolder + "WidDep.shp", "DEPTH", OutputFolder + "depth", 
+arcpy.PolylineToRaster_conversion(OutputFolder + "WidDep.shp", "DEPTH", OutputFolder + "depth",
                                   "MAXIMUM_LENGTH", "NONE", cellSize)
-arcpy.PolylineToRaster_conversion(OutputFolder + "WidDep.shp", "Q_Mean", OutputFolder + "Q_Mean", 
+arcpy.PolylineToRaster_conversion(OutputFolder + "WidDep.shp", "Q_Mean", OutputFolder + "Q_Mean",
                                   "MAXIMUM_LENGTH", "NONE", cellSize)
 arcpy.RasterToASCII_conversion( OutputFolder + "depth", OutputFolder + "depth.asc")
 arcpy.RasterToASCII_conversion( OutputFolder + "width", OutputFolder + "width.asc")
@@ -198,7 +198,7 @@ arcpy.RasterToASCII_conversion( OutputFolder + "Q_Mean", OutputFolder + "Q_Mean.
 
 #########prepare obspoints
 if obspoint != "#":
-    arcpy.PointToRaster_conversion(obspoint, "FID", 
+    arcpy.PointToRaster_conversion(obspoint, "FID",
                                 OutputFolder + "obs", "MAXIMUM", "", cellSize)
     arcpy.RasterToASCII_conversion( OutputFolder + "obs", OutputFolder + "obs.asc")
 else:
@@ -210,8 +210,3 @@ else:
 dbftocsv( OutputFolder +"HyLake.dbf",OutputFolder +"lakeinfo.csv")
 dbftocsv( OutputFolder +"HyMask.dbf",OutputFolder +"hybinfo.csv")
 ############
-
-
-
-
-
