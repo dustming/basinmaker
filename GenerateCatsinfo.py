@@ -521,7 +521,7 @@ def GenrateCatchatt(OutputFoldersub):
     arcpy.env.extent = arcpy.Describe(OutputFoldersub + "demproj").extent
     arcpy.env.snapRaster = OutputFoldersub + "demproj"
     outSlope = Slope(OutputFoldersub + "demproj", "DEGREE",1)
-    arcpy.AddMessage("After Slope")
+#    arcpy.AddMessage("After Slope")
     outDivide = Divide(outSlope, 180.00)
     outTimes = Times(outDivide, 3.1415926)
 #    expression = '3.1415926 * outSlope / 180.00'
@@ -568,7 +568,7 @@ def Checkcat(prow,pcol,nrows,ncols,lid,lake):
     return noout
 
 ###################################################################3
-def Getcatrivlenslope(catrow,catcol,rivlen,dem,fac,hydir,finalcat,trow,tcol,nrows,ncols,slope):
+def Getcatrivlenslope(catrow,catcol,rivlen,dem,fac,hydir,finalcat,trow,tcol,nrows,ncols,slope,rivpath):
     rivs = rivlen[catrow,catcol]
     rivs = np.unique(rivs)
     rivs = rivs[rivs > 0]
@@ -593,10 +593,12 @@ def Getcatrivlenslope(catrow,catcol,rivlen,dem,fac,hydir,finalcat,trow,tcol,nrow
 #            arcpy.AddMessage("in riv " + str(rivs))
             nrow = prow
             ncol = pcol
+            rivpath[nrow,ncol] = 1
             while finalcat[nrow,ncol] == finalcat[trow,tcol]:
                 flen_orow,flen_ocol = nrow,ncol
                 if flen_orow < 0 or flen_ocol<0:
                     break
+                rivpath[nrow,ncol] = 1
                 rivtemp[icell,0] = rivlen[nrow,ncol]
                 rivtemp[icell,1] = dem[nrow,ncol]
                 rivtemp[icell,3] = slope[nrow,ncol]
@@ -625,10 +627,12 @@ def Getcatrivlenslope(catrow,catcol,rivlen,dem,fac,hydir,finalcat,trow,tcol,nrow
 #            arcpy.AddMessage("in riv " + str(rivs))
             nrow = prow
             ncol = pcol
+            rivpath[nrow,ncol] = 1
             while finalcat[nrow,ncol] == finalcat[trow,tcol]:
                 flen_orow,flen_ocol = nrow,ncol
                 if flen_orow < 0 or flen_ocol<0:
                     break
+                rivpath[nrow,ncol] = 1
                 rivtemp2[icell,0] = rivlen[nrow,ncol]
                 rivtemp2[icell,1] = dem[nrow,ncol]
                 rivtemp2[icell,3] = slope[nrow,ncol]
@@ -667,7 +671,7 @@ def Getcatrivlenslope(catrow,catcol,rivlen,dem,fac,hydir,finalcat,trow,tcol,nrow
         outrivlen = -9999.00
         outrivslp = -9999.00
         outrivslp2 = -9999.00
-    return outrivlen, outrivslp,outrivslp2
+    return outrivlen, outrivslp,outrivslp2,rivpath
 ######################################################
 
 def CE_mcat4lake(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints):
@@ -838,7 +842,7 @@ def Addnlinklakes(fcat,alllake,lake1,fac,sbslid):
 
 
 def Generatecatinfo(Watseds,fac,fdir,lake,dem,area,hycat,hycatinfo,catinfo,allcatid,lakeinfo,width,depth,
-                    rivlen,obs,nrows,ncols,slope,landuse,landuseinfo,Q_Mean):
+                    rivlen,obs,nrows,ncols,slope,landuse,landuseinfo,Q_Mean,wdlen):
     finalcat = copy.copy(Watseds)
     for i in range(0,len(allcatid)):
         catid = allcatid[i].astype(int)
@@ -872,7 +876,11 @@ def Generatecatinfo(Watseds,fac,fdir,lake,dem,area,hycat,hycatinfo,catinfo,allca
 #            arcpy.AddMessage(str(catid)+"      "+str(obs[trow,tcol]))
             catinfo[i,23] =  obs[trow,tcol]
 ########Got basin width and depth
-        catwidth,catdepth,catQ = Getcatwd(rowcol[:,0],rowcol[:,1],width,depth,Q_Mean,-1) ### width depth in m
+        rivpath = copy.copy(Watseds)
+        rivpath[:,:] = -9999
+        catrivlen,catrivslp,catrivslp2,rivpath = Getcatrivlenslope(rowcol[:,0],rowcol[:,1],rivlen,dem,fac,fdir,finalcat,
+                                                trow,tcol,nrows,ncols,slope,rivpath)
+        catwidth,catdepth,catQ = Getcatwd(catid,finalcat,width,depth,Q_Mean,-1,rivlen,wdlen) ### width depth in m
 #        arcpy.AddMessage("catid is    " + str(catid) + "    " + str(catwidth))
         catinfo[i,12] = float(sum(dem[rowcol[:,0],rowcol[:,1]])/float(len(rowcol))) ### average elevation
 #        catinfo[i,13] = float(sum(area[rowcol[:,0],rowcol[:,1]]))/1000/1000  #### maximum area in km^2
@@ -884,8 +892,6 @@ def Generatecatinfo(Watseds,fac,fdir,lake,dem,area,hycat,hycatinfo,catinfo,allca
         catinfo[i,19] = 0.035
 #######Got basin area and rivlen
         catinfo[i,11] = np.mean(area[rowcol[:,0],rowcol[:,1]])
-        catrivlen,catrivslp,catrivslp2 = Getcatrivlenslope(rowcol[:,0],rowcol[:,1],rivlen,dem,fac,fdir,finalcat,
-                                                trow,tcol,nrows,ncols,slope)
         catinfo[i,20] = catrivlen
         catinfo[i,21] = catrivslp
         slopet = slope[rowcol[:,0],rowcol[:,1]]
@@ -905,38 +911,52 @@ def Getfloodplain_n(catid,finalcat,rivlen,landuse,landuseinfo):
     rivincat = np.logical_and(catidx, rivids)
     Landtypes = landuse[rivincat]
     Landtypeid = np.unique(Landtypes)
-    Landtypeid = Landtypeid[Landtypeid >= 0]
-    sum = 0.0
-#    arcpy.AddMessage("cat id is   " + str(catid))
-    if len(Landtypeid) <=0:
-        floodn = 0.035
-    else:
-        for i in range(0,len(Landtypeid)):
-            iid = Landtypeid[i]
-#            arcpy.AddMessage(landuseinfo[landuseinfo['RasterV'] == iid])
+    Landtypeid1 = Landtypeid[Landtypeid >= 0]
+    Landtypeid2 = Landtypeid1[Landtypeid1 > 0]
+    Landtypes = Landtypes[Landtypes > 0]
+    if len(Landtypes) > 0 and float(len(Landtypeid2))/float(len(Landtypeid1)) >= 0.1:
+        sum = 0.0
+        for i in range(0,len(Landtypeid2)):
+            iid = Landtypeid2[i]
             sum = sum + landuseinfo[landuseinfo['RasterV'] == iid]['MannV'].values*len(np.argwhere(Landtypes == iid))
         floodn = sum/(len(Landtypes))
-    arcpy.AddMessage(floodn)
-    return floodn
-########################################################3
-def Getcatwd(catrow,catcol,width,depth,Q_Mean,DA):
-    wds = width[catrow,catcol]
-    dps = depth[catrow,catcol]
-    Q = Q_Mean[catrow,catcol]
-    if max(wds) > 0:
-        catwd = max(wds)
-        catdps = max(dps)
-#        arcpy.AddMessage(max(dps))
-        catQ = max(Q)
     else:
-        if DA > 0:
-            Q = 0.025*DA**0.9302
-            catwd = 7.2 *Q **(0.5)
-            catdps = 0.27*Q**(0.30)
+        Landtypes2 = landuse[catidx]
+        Landtypes2 = Landtypes2[Landtypes2>0]
+        Landtypeiicat = np.unique(Landtypes2)
+        Landtypeiicat = Landtypeiicat[Landtypeiicat > 0]
+        if len(Landtypes2) > 0:
+            sum = 0.0
+            for i in range(0,len(Landtypeiicat)):
+                iid = Landtypeiicat[i]
+                sum = sum + landuseinfo[landuseinfo['RasterV'] == iid]['MannV'].values*len(np.argwhere(Landtypes2 == iid))
+            floodn = sum/(len(Landtypes2))
         else:
-            catwd = -9
-            catdps = -9
-            catQ = -9
+            floodn = 0.035
+#    arcpy.AddMessage(floodn)
+    return float(floodn)
+########################################################3
+def Getcatwd(catid,finalcat,width,depth,Q_Mean,DA,rivpath,wdlen):
+    catregs = finalcat == catid
+    riverp = rivpath > 0
+    rivincat = np.logical_and(catregs, riverp)
+    wd = width[rivincat]
+    dp = depth[rivincat]
+    Q = Q_Mean[rivincat]
+    wd = wd[wd > 0]
+    dp = dp[dp > 0]
+    Q =  Q[Q > 0]
+    if len(wd) > 0:
+        unique, counts = np.unique(wd, return_counts=True)
+        catwd = np.average(unique, weights=counts)
+        unique, counts = np.unique(dp, return_counts=True)
+        catdps = np.average(unique, weights=counts)
+        unique, counts =  np.unique(Q, return_counts=True)
+        catQ = np.average(unique, weights=counts)
+    else:
+        catwd = -9
+        catdps = -9
+        catQ = -9
     return catwd,catdps,catQ
 ############################################################
 
@@ -1292,6 +1312,7 @@ hydem = np.loadtxt(OutputFolder + "/"+"dem.asc",dtype = 'i4',skiprows = 6) #### 
 obs = np.loadtxt(OutputFolder + "/"+"obs.asc",dtype = 'i4',skiprows = 6)
 width = np.loadtxt(OutputFolder + "/"+"width.asc",skiprows = 6)
 depth = np.loadtxt(OutputFolder + "/"+"depth.asc",skiprows = 6)
+wdlen = np.loadtxt(OutputFolder + "/"+"WD_Len.asc",skiprows = 6)
 Q_mean = np.loadtxt(OutputFolder + "/"+"Q_Mean.asc",skiprows = 6)
 landuse = np.loadtxt(OutputFolder + "/"+"landuse.asc",dtype = 'i4',skiprows = 6)
 landuseinfo = pd.read_csv(OutputFolder + "/"+'landuseinfo.csv',sep=",",low_memory=False)
@@ -1313,7 +1334,7 @@ finalcat = np.loadtxt(OutputFolder+ "/"+"finalcat.asc",dtype = 'i4',skiprows = 6
 allcatid = np.unique(finalcat)
 allcatid = allcatid[allcatid >= 0]
 catinfo = np.full((len(allcatid),40),-99999999999.00000000)
-catinfo = Generatecatinfo(finalcat,fac,hydir,Lake1,hydem,area,cat,allsubinfo,catinfo,allcatid,allLakinfo,width,depth,rivlen,obs,nrows,ncols,slope,landuse,landuseinfo,Q_mean)
+catinfo = Generatecatinfo(finalcat,fac,hydir,Lake1,hydem,area,cat,allsubinfo,catinfo,allcatid,allLakinfo,width,depth,rivlen,obs,nrows,ncols,slope,landuse,landuseinfo,Q_mean,wdlen)
 arcpy.CopyFeatures_management(OutputFolder + "/" + "finalcat.shp", OutputFolder + "/" + "finalcat_info")
 copyfile( OutputFolder + "/"+"HyMask.prj" ,  OutputFolder + "/"+"finalcat_info.prj")
 catinfo2 = Writecatinfotodbf(OutputFolder + "/",catinfo)

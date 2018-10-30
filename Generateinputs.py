@@ -191,9 +191,12 @@ arcpy.PolylineToRaster_conversion(OutputFolder + "WidDep.shp", "DEPTH", OutputFo
                                   "MAXIMUM_LENGTH", "NONE", cellSize)
 arcpy.PolylineToRaster_conversion(OutputFolder + "WidDep.shp", "Q_Mean", OutputFolder + "Q_Mean",
                                   "MAXIMUM_LENGTH", "NONE", cellSize)
+arcpy.PolylineToRaster_conversion(OutputFolder + "WidDep.shp", "Shape_Leng", OutputFolder + "WD_Len",
+                                  "MAXIMUM_LENGTH", "NONE", cellSize)
 arcpy.RasterToASCII_conversion( OutputFolder + "depth", OutputFolder + "depth.asc")
 arcpy.RasterToASCII_conversion( OutputFolder + "width", OutputFolder + "width.asc")
 arcpy.RasterToASCII_conversion( OutputFolder + "Q_Mean", OutputFolder + "Q_Mean.asc")
+arcpy.RasterToASCII_conversion( OutputFolder + "WD_Len", OutputFolder + "WD_Len.asc")
 ########
 
 #########prepare obspoints
