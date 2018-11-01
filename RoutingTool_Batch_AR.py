@@ -24,15 +24,16 @@ missrow = "0"
 misscol = "0"
 iscalmanningn = "-1"
 
+ilevel = "08"
 level= "08"  #"12"
 islake="wl" #"nola"
 in_lakevol = "0"
 list = pd.read_csv("C:/Users/m43han/Documents/Routing/Code/Routing/Code/Toolbox/basins_ca.csv",sep=",",low_memory=False)
 for i in range(0,len(list)):
 	in_tarid = int(list.ix[i]['Outid'])
-	tttt = in_output+level+islake+str(in_tarid)+'/'+'finalcat_info.shp'
+	tttt = in_output+ilevel+islake+str(in_tarid)+'/'+'finalcat_info.shp'
 	if list.ix[i]['isna'] == 0 and not os.path.isfile(tttt):
-		in_outputf = in_output+level+islake+str(in_tarid)
+		in_outputf = in_output+ilevel+islake+str(in_tarid)
 		print in_outputf
 		if not os.path.exists(in_outputf):
 			os.makedirs(in_outputf)

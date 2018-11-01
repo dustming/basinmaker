@@ -1,4 +1,4 @@
-##################################################################3  
+##################################################################3
 def dbftocsv(filename,outname):
     if filename.endswith('.dbf'):
         print "Converting %s to csv" % filename
@@ -23,7 +23,7 @@ def Maphru2force(orank,cat,catinfo,fnrows,fncols,outfolder,forcinggrid,outFolder
                       "NONE", "VALUE_ONLY")
     dbftocsv(outfolder + "MapForcing.dbf",outfolder + "MapForcing.csv")
     Mapforcing = pd.read_csv(outfolder + "MapForcing.csv",sep=",",low_memory=False)
-    ogridforc = open(outFolderraven+"GriddedForcings2.txt","w")                                   
+    ogridforc = open(outFolderraven+"GriddedForcings2.txt","w")
     ogridforc.write(":GridWeights" +"\n")
     ogridforc.write("   #      " +"\n")
     ogridforc.write("   # [# HRUs]"+"\n")
@@ -58,7 +58,7 @@ def Maphru2force(orank,cat,catinfo,fnrows,fncols,outfolder,forcinggrid,outFolder
 #                print j,pesr,sumwt
             ogridforc.write("    "+StrGid+Strcellid+str(pesr) + "\n")
     ogridforc.write(":EndGridWeights")
-    ogridforc.close() 
+    ogridforc.close()
 
 
 def Writervhchanl(ocatinfo,outFolder,nrows,ncols,lenThres):
@@ -76,7 +76,7 @@ def Writervhchanl(ocatinfo,outFolder,nrows,ncols,lenThres):
     orvh.write("  :Units        none           none          none           km    none"+"\n")
     tab = "     "
     for i in range(0,len(catinfo.index)):
-        ### Get catchment width and dpeth 
+        ### Get catchment width and dpeth
         catid = int(catinfo.iloc[i]['NSUBID'])
         temp = catinfo.iloc[i]['RIVLEN']
         if (temp >= lenThres):
@@ -86,14 +86,14 @@ def Writervhchanl(ocatinfo,outFolder,nrows,ncols,lenThres):
             catlen = -9999
             strRlen = 'ZERO-'
         #####################################################3
-        Strcat = str(catid) 
+        Strcat = str(catid)
         StrDid = str(int(catinfo.iloc[i]['NDOWSUBID']))
         pronam = 'Chn_'+ Strcat
         chslope = catinfo.iloc[i]['RIVSLOPE']
-        if chslope <= 0.0001:
-            chslope = max(catinfo.iloc[i]['BASINSLOPE'],0.0001)
+        if chslope < 0:
+            chslope = catinfo.iloc[i]['BASINSLOPE']
         writechanel(pronam,catinfo.iloc[i]['BKFWIDTH'],catinfo.iloc[i]['BKFDEPTH'],
-                    chslope,ochn,max(catinfo.iloc[i]['MEANELEV'],300))
+                    chslope,ochn,catinfo.iloc[i]['MEANELEV'])
         if catinfo.iloc[i]['ISOBS'] >= 0 :
             Guage = '1'
         else:
@@ -107,11 +107,11 @@ def Writervhchanl(ocatinfo,outFolder,nrows,ncols,lenThres):
     orvh.write("  :Units       km2         m       deg        deg       none            none       none           none             none            none     deg      deg"+"\n")
     for i in range(0,len(catinfo.index)):
         catid = int(catinfo.iloc[i]['NSUBID'])
-        catslope = max(catinfo.iloc[i]['BASINSLOPE'],0.0001)
+        catslope = catinfo.iloc[i]['BASINSLOPE']
         catarea2 = float(catinfo.iloc[i]['AREA2'])/1000.00/1000.00
         StrGid =  str(catid)+tab
         StrGidarea = str(catarea2)+tab
-        StrGidelev = str(max(catinfo.iloc[i]['MEANELEV'],300))+tab 
+        StrGidelev = str(catinfo.iloc[i]['MEANELEV'])+tab
         lat = str(catinfo.iloc[i]['INSIDE_Y'])+tab
         lon = str(catinfo.iloc[i]['INSIDE_X'])+tab
         LAND_USE_CLASS = 'FOREST'+tab
@@ -133,7 +133,6 @@ def Writervhchanl(ocatinfo,outFolder,nrows,ncols,lenThres):
 def writechanel(chname,chwd,chdep,chslope,orchnl,elev):
     ### Following SWAT instructions, assume a trapezoidal shape channel, with channel sides has depth and width ratio of 2. zch = 2
     zch = 2
-    chslope = max(chslope,0.001)
     sidwd = zch * chdep ###river side width
     tab = "          "
     botwd = chwd - 2*sidwd ### river
@@ -141,7 +140,6 @@ def writechanel(chname,chwd,chdep,chslope,orchnl,elev):
         botwd = 0.5*chwd
         sidwd = 0.5*0.5*chwd
     mann = "0.035"
-    elev = max(elev,300)
     zfld = 4 + elev
     zbot = elev - chdep
     sidwdfp = 4/0.25
@@ -160,22 +158,23 @@ def writechanel(chname,chwd,chdep,chslope,orchnl,elev):
     orchnl.write("    "+str(2*sidwdfp + 4*chwd + 2*sidwd + botwd)+tab+str(zfld)+"\n")
     orchnl.write("  :EndSurveyPoints"+"\n")
     orchnl.write("  :RoughnessZones"+"\n")
-    orchnl.write("    0" + tab + mann +"\n")  
+    orchnl.write("    0" + tab + mann +"\n")
     orchnl.write("  :EndRoughnessZones"+"\n")
     orchnl.write(":EndChannelProfile"+"\n")
     orchnl.write("\n")
     orchnl.write("##############new channel ##############################\n")
-#########################################################################################################33    
+#########################################################################################################33
 
-def writelake(catinfo,outFolderraven,lakevol,WeirCoe):
-    f2 = open(outFolderraven+"TestLake.rvh","w") 
+def writelake(catinfo,outFolderraven):
+    f2 = open(outFolderraven+"TestLake.rvh","w")
     tab = '       '
     for i in range(0,len(catinfo.index)):
-        if catinfo.iloc[i]['HYLAKEID'] > 0 and catinfo.iloc[i]['LAKEAREA'] >= lakevol:
+        if catinfo.iloc[i]['HYLAKEID'] > 0:
             lakeid = int(catinfo.iloc[i]['HYLAKEID'])
             catid = catinfo.iloc[i]['NSUBID']
             A = catinfo.iloc[i]['LAKEAREA']*1000*1000
             h0 = catinfo.iloc[i]['LAKEDEPTH']
+            WeirCoe = 0.6
             Crewd = catinfo.iloc[i]['BKFWIDTH']
 #            if slakeinfo.iloc[0]['Wshd_area'] < 6000 and slakeinfo.iloc[0]['Wshd_area'] > 0:
         ######write lake information to file
@@ -189,10 +188,10 @@ def writelake(catinfo,outFolderraven,lakevol,WeirCoe):
             f2.write("  :LakeArea    "+str(A)+ "\n")
             f2.write(":EndReservoir   "+"\n")
             f2.write("#############################################"+"\n")
-            f2.write("###New Lake starts"+"\n")    
+            f2.write("###New Lake starts"+"\n")
     f2.close()
 
-	
+
 import arcpy
 import pandas as pd
 import os
@@ -200,101 +199,51 @@ from dbfpy import dbf
 import csv
 import copy
 import numpy as np
-#in_output = "C:/Users/m43han/Documents/Routing/Sample/Outputs/"
-in_output = "C:/Users/m43han/Documents/Routing/Sample/Outputs/panca/"
+in_output = "C:/Users/m43han/Documents/Routing/Sample/Outputs/"
 
 level= "08"  #"12"
-islake="wl" #"nola" "wl"
-lenThres = 2000
-list = pd.read_csv("C:/Users/m43han/Documents/Routing/Code/Routing/Code/Toolbox/Basins_ca.csv",sep=",",low_memory=False)
+islake="nola" #"nola" "wl"
+lenThres = 100
+list = pd.read_csv("C:/Users/m43han/Documents/Routing/Code/Routing/Code/Toolbox/basins.csv",sep=",",low_memory=False)
 arcpy.env.overwriteOutput = True
 forcinggrid = "C:/Users/m43han/Documents/Routing/Sample/Inputs/forcingncgrid.asc"
 tarshp =in_output+'finalout_'+level+islake
-lakevol = 0
-WeirCoe = 0.2
 k = 0
-if not os.path.exists(tarshp):
-	os.makedirs(tarshp)
-for i in range(0,3000):
-	in_tarid = int(list.ix[i]['Outid'])
-	in_outputf = in_output+level+islake+str(in_tarid)+'/'+'finalcat_info.shp'
-	in_outputf2 = in_output+level+islake+str(in_tarid)+'/RavenInput/'+'test.rvh'
-	print os.path.isfile(in_outputf2)
-	if os.path.isfile(in_outputf2):
-		if len(arcpy.ListFields(in_outputf,"BasinID"))<=0: 
-			arcpy.AddField_management(in_outputf, "BasinID", "LONG",10,"","", "", "NULLABLE")
-		arcpy.CalculateField_management(in_outputf, "BasinID", str(k), "PYTHON")
-		if len(arcpy.ListFields(in_outputf,"BasinID2"))<=0:
-			arcpy.AddField_management(in_outputf, "BasinID2", "LONG",20,"","", "", "NULLABLE")
-		arcpy.CalculateField_management(in_outputf, "BasinID2", str(int(in_tarid)), "PYTHON")
-		if k == 0:
-			arcpy.Copy_management(in_outputf, tarshp+'/'+'finalcat_info.shp')
-		else:
-			arcpy.Append_management(in_outputf,tarshp+'/'+'finalcat_info.shp','TEST')
-		k = k + 1
-dbftocsv(tarshp +"/"+ "finalcat_info.dbf",tarshp +"/"+ "finalcat_info.csv")
-ncatinfo = pd.read_csv(tarshp +"/"+"finalcat_info.csv",sep=",",low_memory=False)
-ncatinfo['NSUBID'] = -9
-ncatinfo['NDOWSUBID'] = -9
-baseid = 0
-obasinid = 0
-currcatid = 0
+ncatinfo = pd.read_csv(tarshp +"/"+"newfinal_info.csv",sep=",",low_memory=False)
+
+
+
+
+ogridforc = open(tarshp + "/"+'raveninput/'+"GriddedForcings2.txt","w")
+orank = np.loadtxt(forcinggrid,dtype = 'i4',skiprows = 6)
+fncols = int(arcpy.GetRasterProperties_management(forcinggrid, "COLUMNCOUNT").getOutput(0))
+fnrows = int(arcpy.GetRasterProperties_management(forcinggrid, "ROWCOUNT").getOutput(0))
+
+ogridforc.write(":GridWeights" +"\n")
+ogridforc.write("   #      " +"\n")
+ogridforc.write("   # [# HRUs]"+"\n")
+sNhru = len(ncatinfo)
+ogridforc.write("   :NumberHRUs       "+ str(sNhru) + "\n")
+sNcell = fnrows*fncols
+ogridforc.write("   :NumberGridCells  "+str(sNcell)+"\n")
+ogridforc.write("   #            "+"\n")
+ogridforc.write("   # [HRU ID] [Cell #] [w_kl]"+"\n")
+ncncols = fncols
+ncnrows = fnrows
+tab = "      "
+
 for i in range(len(ncatinfo)):
-	if ncatinfo.ix[i]['BASINID'] == obasinid:
-		ncatinfo['NSUBID'][i] = ncatinfo.ix[i]['SUBID'] + baseid
-		if ncatinfo.ix[i]['DOWSUBID'] > 0:
-			ncatinfo['NDOWSUBID'][i] = ncatinfo.ix[i]['DOWSUBID'] + baseid
-		else:
-			ncatinfo['NDOWSUBID'][i] = -1
-		currcatid = ncatinfo.ix[i]['SUBID'] + baseid
-	else:
-		baseid = currcatid + 2
-		ncatinfo['NSUBID'][i] =  ncatinfo.ix[i]['SUBID'] + baseid
-		if ncatinfo.ix[i]['DOWSUBID'] > 0:
-			ncatinfo['NDOWSUBID'][i] = ncatinfo.ix[i]['DOWSUBID'] + baseid
-		else:
-			ncatinfo['NDOWSUBID'][i] = -1
-		obasinid = ncatinfo.ix[i]['BASINID']
-		currcatid = ncatinfo.ix[i]['SUBID'] + baseid
-ncatinfo.to_csv(tarshp +"/"+"newfinal_info.csv",sep=",")
-if not os.path.exists(tarshp + "/"+'raveninput'+str(lakevol)+str(WeirCoe)+'/'):
-    os.makedirs(tarshp + "/"+'raveninput'+str(lakevol)+str(WeirCoe)+'/')
-Writervhchanl(ncatinfo,tarshp + "/"+'raveninput'+str(lakevol)+str(WeirCoe)+'/',0,0,lenThres)
-writelake(ncatinfo,tarshp + "/"+'raveninput'+str(lakevol)+str(WeirCoe)+'/',lakevol,WeirCoe)
-
-
-
-###########################################################################################################
-#ogridforc = open(tarshp + "/"+'raveninput'+str(lakevol)+'/'+"GriddedForcings2.txt","w")
-#orank = np.loadtxt(forcinggrid,dtype = 'i4',skiprows = 6)
-#fncols = int(arcpy.GetRasterProperties_management(forcinggrid, "COLUMNCOUNT").getOutput(0))
-#fnrows = int(arcpy.GetRasterProperties_management(forcinggrid, "ROWCOUNT").getOutput(0))
-
-#ogridforc.write(":GridWeights" +"\n")
-#ogridforc.write("   #      " +"\n")
-#ogridforc.write("   # [# HRUs]"+"\n")
-#sNhru = len(ncatinfo)
-#ogridforc.write("   :NumberHRUs       "+ str(sNhru) + "\n")
-#sNcell = fnrows*fncols
-#ogridforc.write("   :NumberGridCells  "+str(sNcell)+"\n")
-#ogridforc.write("   #            "+"\n")
-#ogridforc.write("   # [HRU ID] [Cell #] [w_kl]"+"\n")
-#ncncols = fncols
-#ncnrows = fnrows
-#tab = "      "
-
-#for i in range(len(ncatinfo)):
-#	in_tarid = int(ncatinfo.ix[i]['BASINID2'])
-#	in_mapgrid = in_output+level+islake+str(in_tarid)+'/'+'RavenInput/'+'GriddedForcings2.txt'
-#	Mapforcing = np.genfromtxt (in_mapgrid,skip_header =7,skip_footer =1)
-#	nsubid = ncatinfo.ix[i]['NSUBID']
-#	osubid = ncatinfo.ix[i]['SUBID']
-#	ids = Mapforcing[Mapforcing[:,0] == osubid,:]
-#	print in_tarid,osubid,nsubid
-#	for j in range(len(ids)):
-#		StrGid = str(int(nsubid)) + tab
-#		Strcellid = str(int(ids[j,1])) + tab
-#		pesr = ids[j,2]
-#		ogridforc.write("    "+StrGid+Strcellid+str(pesr) + "\n")
-#ogridforc.write(":EndGridWeights")
-#ogridforc.close() 
+	in_tarid = int(ncatinfo.ix[i]['BASINID2'])
+	in_mapgrid = in_output+level+islake+str(in_tarid)+'/'+'RavenInput/'+'GriddedForcings2.txt'
+	Mapforcing = np.genfromtxt (in_mapgrid,skip_header =7,skip_footer =1)
+	nsubid = ncatinfo.ix[i]['NSUBID']
+	osubid = ncatinfo.ix[i]['SUBID']
+	ids = Mapforcing[Mapforcing[:,0] == osubid,:]
+	print in_tarid,osubid,nsubid
+	for j in range(len(ids)):
+		StrGid = str(int(nsubid)) + tab
+		Strcellid = str(int(ids[j,1])) + tab
+		pesr = ids[j,2]
+		ogridforc.write("    "+StrGid+Strcellid+str(pesr) + "\n")
+ogridforc.write(":EndGridWeights")
+ogridforc.close()

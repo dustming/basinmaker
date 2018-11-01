@@ -1085,7 +1085,7 @@ def Maphru2forceply(forcingply,outfolder,forcinggrid,outFolderraven,Boundaryply,
 #            arcpy.AddMessage(scat)
             if(len(scat['Row'].values) > 1):
                 arcpy.AddMessage(str(catid)+"error。。。。。。。。。。。。。。")
-            Strcellid = str(int(scat['Row'].values * (max(Forcinfo['Col'].values)+2) + scat['Col'].values)) + "      "
+            Strcellid = str(int(scat['Row'].values * (max(Forcinfo['Col'].values)+misscol) + scat['Col'].values)) + "      "
                 ### str((ncrowcol[0,0] * ncncols + ncrowcol[0,1]))
             ogridforc.write("    "+str(int(catid)) + "     "+Strcellid+str(wt) +"\n")
 #        arcpy.AddMessage(cats)
