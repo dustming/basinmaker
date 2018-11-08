@@ -13,8 +13,8 @@ in_obs = "C:/Users/m43han/Documents/Routing/Sample/Database/Obspoints/obs_ca.shp
 in_output = "C:/Users/m43han/Documents/Routing/Sample/Outputs/"
 OutHyID2 = "-1"
 cellSize = "0.0041666667"
-Landuse = "C:/Users/m43han/Documents/Routing/Sample/Database/Rasters/landuse"
-Landuseinfo = "C:/Users/m43han/Documents/Routing/Sample/Database/Rasters/landuseinfo.csv"
+landuse = "C:/Users/m43han/Documents/Routing/Sample/Database/Rasters/landuse"
+landuseinfo = "C:/Users/m43han/Documents/Routing/Sample/Database/Rasters/landuseinfo.csv"
 InNonConL = "-1"
 NonConLThres = "-1"
 
@@ -32,7 +32,7 @@ in_lakevol = "0"
 list = pd.read_csv("C:/Users/m43han/Documents/Routing/Code/Routing/Code/Toolbox/basins_ca.csv",sep=",",low_memory=False)
 for i in range(0,len(list)):
 	in_tarid = int(list.ix[i]['Outid'])
-	tttt = in_output+ilevel+islake+str(in_tarid)+'/'+'finalcat_info.shp'
+	tttt = in_output+ilevel+islake+str(in_tarid)+'/'+'RavenInput/' + 'test.rvh'
 	if list.ix[i]['isna'] == 1 and not os.path.isfile(tttt):
 		in_outputf = in_output+ilevel+islake+str(in_tarid)
 		print in_outputf
@@ -48,4 +48,4 @@ for i in range(0,len(list)):
 		ravenout = in_outputf +"/"+"RavenInput"
 		if not os.path.exists(ravenout):
 			os.makedirs(ravenout)
-		arcpy.GenerateRavenInputs(in_outputf,ravenout,"100",forcinggrid,forcingply,Boundaryply,missrow,misscol,iscalmanningn)
+		arcpy.GenerateRavenInputs(in_outputf,ravenout,"100",forcinggrid,forcingply,cellSize,Boundaryply,missrow,misscol,iscalmanningn)

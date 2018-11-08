@@ -202,11 +202,11 @@ def selectlake2(hylake,Lakehres,hylakeinfo):
         sl_nrow = sl_rowcol.shape[0]
         slakeinfo = hylakeinfo.loc[hylakeinfo['HYLAK_ID'] == sl_lid]
         if len(slakeinfo)<=0:
-            arcpy.AddMessage("Lake excluded      " + str(sl_lid))
+            arcpy.AddMessage("Lake excluded     asdfasd " + str(sl_lid))
             sl_lake[sl_rowcol[:,0],sl_rowcol[:,1]] = -9999
             continue
         if slakeinfo.iloc[0]['LAKE_AREA'] < Lakehres:
-            arcpy.AddMessage("Lake excluded      " + str(sl_lid))
+            arcpy.AddMessage("Lake excluded     due to area " + str(sl_lid))
             sl_lake[sl_rowcol[:,0],sl_rowcol[:,1]] = -9999
     return sl_lake
 
@@ -454,21 +454,21 @@ def Checkcat(prow,pcol,nrows,ncols,lid,lake):
     ### double check if the head stream cell is nearby the lake, if near by the lake the stream was ignored
     if prow != 0 and prow != nrows -1 and pcol != 0 and pcol != ncols-1:
         if not lake[prow-1,pcol+1] == lid:
-            noout=1
+            noout=1 + noout
         if not lake[prow-1,pcol-1] == lid:
-            noout=1
+            noout=1 + noout
         if not lake[prow-1,pcol] == lid:
-            noout=1
+            noout=1 + noout
         if not lake[prow,pcol+1] == lid:
-            noout=1
+            noout=1 + noout
         if not lake[prow,pcol-1] == lid:
-            noout=1
+            noout=1 + noout
         if not lake[prow+1,pcol-1] == lid:
-            noout=1
+            noout=1 + noout
         if not lake[prow+1,pcol+1] == lid:
-            noout=1
+            noout=1 + noout
         if not lake[prow+1,pcol] == lid:
-            noout=1
+            noout=1 + noout
     return noout
 
 ###################################################################3
@@ -536,6 +536,8 @@ def CE_mcat4lake(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints):
     cat = copy.copy(cat1)
     arlakeid = np.unique(lake)
     arlakeid = arlakeid[arlakeid>=0]
+    outlakeids = np.full(1000000,-99999)
+    outi = 0
     for i in range(0,len(arlakeid)):
         lakeid = arlakeid[i]
         lrowcol = np.argwhere(lake==lakeid).astype(int)
@@ -549,11 +551,14 @@ def CE_mcat4lake(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints):
         arclakeid = cat[lorow,locol]  ####### lake catchment id
         if not arclakeid < bsid and arclakeid > blid:
             continue
-        arcatid = np.unique(cat[lrowcol[:,0],lrowcol[:,1]]) ###### all catchment id containing this lake
+        arcatid,catcounts = np.unique(cat[lrowcol[:,0],lrowcol[:,1]],return_counts=True) ###### all catchment id containing this lake
         tarid = 0
         ### if there are more than 1 catchment in cat1, determine if they need to be combined
         ### check if these catchment flow into the lake if it is true, change catchment id into lake catchment id
         if len(arcatid)>1:  #
+            if float(max(catcounts))/float(len(lrowcol)) < 0.8 and len(lrowcol) < 10000:
+                outlakeids[outi] = lakeid
+                outi = outi + 1
             for j in range(0,len(arcatid)):
                 crowcol = np.argwhere(cat==arcatid[j]).astype(int)
                 catacc = np.full((len(crowcol),3),-9999)
@@ -583,7 +588,8 @@ def CE_mcat4lake(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints):
         pp = pp[pp > 0]
         if len(pp) == 1:
             cat[lrowcol[:,0],lrowcol[:,1]] = arclakeid
-    return cat
+    outlakeids= outlakeids[outlakeids > 0]
+    return cat,outlakeids
 ###################################################33
 def CE_mcat4lake2(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints):
     cat = copy.copy(cat1)
@@ -604,7 +610,23 @@ def CE_mcat4lake2(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints):
         pp = np.unique(pp)
         pp = pp[pp > 0]
         if len(pp) == 1:
-            cat[lrowcol[:,0],lrowcol[:,1]] = arclakeid
+            if arclakeid < 0:
+                cat[lrowcol[:,0],lrowcol[:,1]] = pp
+            else:
+                cat[lrowcol[:,0],lrowcol[:,1]] = arclakeid
+    Pours = np.unique(Pourpoints)
+    Pours = Pours[Pours>0]
+    for i in range(0,len(Pours)):
+        pourid = Pours[i]
+        rowcol = Pourpoints == pourid
+        if cat[rowcol] < 0:
+            nout = Checkcat(rowcol[0,0],rowcol[0,1],nrows,ncols,pourid,cat)
+            if len(cat[cat == pourid]) > 0 and nout < 8:
+                cat[rowcol] = pourid
+    rowcol1 = fac > 0
+    rowcol2 = cat < 0
+    noncontribuite = np.logical_and(rowcol1, rowcol2)
+    cat[noncontribuite] = 2*max(np.unique(cat)) + 1
     return cat
 ######################################################
 def CE_Lakeerror(fac,fdir,lake,cat2,bsid,blid,boid,nrows,ncols,cat):
@@ -660,7 +682,7 @@ def GenerateFinalPourpoints(fac,fdir,lake,cat3,bsid,blid,boid,nrows,ncols,cat,ob
     obsids = obsids[obsids>=0]
     for i in range(0,len(obsids)):
         rowcol = np.argwhere(obs==obsids[i]).astype(int)
-        if Poups[rowcol[0,0],rowcol[0,1]] < 0:
+        if Poups[rowcol[0,0],rowcol[0,1]] < 0 and lake[rowcol[0,0],rowcol[0,1]] < 0:
             Poups[rowcol[0,0],rowcol[0,1]] = ncatid
             ncatid = ncatid + 1
     return Poups
@@ -1004,8 +1026,101 @@ def Maphru2force(orank,cat,catinfo,fnrows,fncols,outfolder,InputsFolder,outFolde
     ogridforc.close()
 ######################################################
 ################################################################################33
+def Dirpoints(N_dir,p_row,p_col,lake1,lid,goodpoint,k):
+    ndir = copy.copy(N_dir)
+    ip = copy.copy(k) + 1
+#    arcpy.AddMessage(str(p_row) + "    " + str(p_col) + "     " + str(ip))
+    if lake1[p_row + 0,p_col + 1] == lid:
+        tt = goodpoint[goodpoint[:,0] == p_row + 0,]
+        if len(tt[tt[:,1] == p_col + 1,]) < 1:
+            ndir[p_row + 0,p_col + 1] = 16
+            goodpoint[ip,0] = p_row + 0
+            goodpoint[ip,1] = p_col + 1
+            ip = ip + 1
+    if lake1[p_row + 1,p_col + 1] == lid:
+        tt = goodpoint[goodpoint[:,0] == p_row + 1,]
+        if len(tt[tt[:,1] == p_col + 1,]) < 1:
+            ndir[p_row + 1,p_col + 1] = 32
+            goodpoint[ip,0] = p_row + 1
+            goodpoint[ip,1] = p_col + 1
+            ip = ip + 1
+    if lake1[p_row + 1,p_col + 0] == lid:
+        tt = goodpoint[goodpoint[:,0] == p_row + 1,]
+        if len(tt[tt[:,1] == p_col + 0,]) < 1:
+            ndir[p_row + 1,p_col + 0] = 64
+            goodpoint[ip,0] = p_row + 1
+            goodpoint[ip,1] = p_col + 0
+            ip = ip + 1
+    if lake1[p_row + 1,p_col - 1] == lid:
+        tt = goodpoint[goodpoint[:,0] == p_row + 1,]
+        if len(tt[tt[:,1] == p_col - 1,]) < 1:
+            ndir[p_row + 1,p_col - 1] = 128
+            goodpoint[ip,0] = p_row + 1
+            goodpoint[ip,1] = p_col - 1
+            ip = ip + 1
+    if lake1[p_row + 0,p_col - 1] == lid:
+        tt = goodpoint[goodpoint[:,0] == p_row + 0,]
+        if len(tt[tt[:,1] == p_col - 1,]) < 1:
+            ndir[p_row + 0,p_col - 1] = 1
+            goodpoint[ip,0] = p_row + 0
+            goodpoint[ip,1] = p_col - 1
+            ip = ip + 1
+    if lake1[p_row - 1,p_col - 1] == lid:
+        tt = goodpoint[goodpoint[:,0] == p_row - 1,]
+        if len(tt[tt[:,1] == p_col - 1,]) < 1:
+            ndir[p_row - 1,p_col - 1] = 2
+            goodpoint[ip,0] = p_row - 1
+            goodpoint[ip,1] = p_col - 1
+            ip = ip + 1
+    if lake1[p_row - 1,p_col + 0] == lid:
+        tt = goodpoint[goodpoint[:,0] == p_row - 1,]
+        if len(tt[tt[:,1] == p_col + 0,]) < 1:
+            ndir[p_row - 1,p_col + 0] = 4
+            goodpoint[ip,0] = p_row - 1
+            goodpoint[ip,1] = p_col + 0
+            ip = ip + 1
+    if lake1[p_row - 1,p_col + 1] == lid:
+        tt = goodpoint[goodpoint[:,0] == p_row - 1,]
+        if len(tt[tt[:,1] == p_col + 1,]) < 1:
+            ndir[p_row - 1,p_col + 1] = 8
+            goodpoint[ip,0] = p_row - 1
+            goodpoint[ip,1] = p_col + 1
+            ip = ip + 1
+#    arcpy.AddMessage(goodpoint[goodpoint[:,0]>0,])
+    return ndir,goodpoint,ip
 
+def ChangeDIR(dir,lake1,acc,ncols,nrows,outlakeids):
+    ndir = copy.copy(dir)
+    for i in range(0,len(outlakeids)):
+        lid = outlakeids[i]
+        goodpoint = np.full((100000,2),-99999)
+        lrowcol = np.argwhere(lake1==lid).astype(int)
+#        if len(lrowcol) > 100:
+#            continue
+#        arcpy.AddMessage(str(lid) + "    " +  str(len(lrowcol)) + "     " + str(i))
+        prow,pcol = Getbasinoutlet(lid,lake1,acc)
+        goodpoint[0,0] = prow
+        goodpoint[0,1] = pcol
+        ip = 0
+        k = 0
+        ipo = -1
+        while ip > ipo:
+            for i in range(0,len(goodpoint[goodpoint[:,0]>0,])):
+                if i > ipo:
+#                    arcpy.AddMessage("start of checking:    " + str(ip) + "     "+ str(ipo)+ "   ")
+#                    arcpy.AddMessage(goodpoint[0:ip,0])
+                    trow = goodpoint[i,0]
+                    tcol = goodpoint[i,1]
+                    ndir,goodpoint,k1= Dirpoints(ndir,trow,tcol,lake1,lid,goodpoint,k)
+#                    arcpy.AddMessage("start of checking:    " + str(k1) + "     "+ str(len(goodpoint[goodpoint[:,0]>0,]))+ "   ")
+                    k = k1 - 1
+            ipo = ip
+            ip = len(goodpoint[goodpoint[:,0]>0,]) - 1
+            k = ip
+            arcpy.AddMessage("start of checking:    " + str(ip) + "     "+ str(ipo)+ "   " + str(len(lrowcol)))
 
+#        ndir[goodpoint[:,0].astype(int),goodpoint[:,1].astype(int)] = 9
+    return ndir
 import numpy as np
 from scipy.optimize import curve_fit
 import arcpy
@@ -1084,7 +1199,7 @@ copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"temcat1.prj")
 arcpy.RasterToASCII_conversion("temcat1",  "temcat1.asc")
 arcpy.AddMessage("--------Gnerate second catchment done")
 cat1 = np.loadtxt(OutputFolder + "/"+"temcat1.asc",dtype = 'i4',skiprows = 6)
-temcat =CE_mcat4lake(cat1,Lake1,fac,hydir,bsid,nrows,ncols,Pourpoints)
+temcat,outlakeids =CE_mcat4lake(cat1,Lake1,fac,hydir,bsid,nrows,ncols,Pourpoints)
 temcat2 = CE_Lakeerror(fac,hydir,Lake1,temcat,bsid,blid,boid,nrows,ncols,cat)
 writeraster(OutputFolder + "/"+"temcat2.asc",temcat2,dataset)
 copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"temcat2.prj")
@@ -1093,7 +1208,15 @@ writeraster(OutputFolder + "/"+"fPourpoints.asc",nPourpoints,dataset)
 copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"fPourpoints.prj")
 arcpy.ASCIIToRaster_conversion(OutputFolder + "/"+"fPourpoints.asc", OutputFolder + "/"+"fPourpoints1","INTEGER")
 copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"fPourpoints1.prj")
-outWatershed = Watershed(OutputFolder + "/"+"dir", OutputFolder + "/"+"fPourpoints1", "VALUE")
+################ modifiy lake flow directions
+arcpy.AddMessage(len(outlakeids))
+ndir = ChangeDIR(hydir,Lake1,fac,ncols,nrows,outlakeids)
+writeraster(OutputFolder + "/"+"ndir.asc",ndir,dataset)
+copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"ndir.prj")
+arcpy.ASCIIToRaster_conversion(OutputFolder + "/"+"ndir.asc", OutputFolder + "/"+"ndir","INTEGER")
+copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"ndir.prj")
+##################################3
+outWatershed = Watershed(OutputFolder + "/"+"ndir", OutputFolder + "/"+"fPourpoints1", "VALUE")
 outSetNull = SetNull(outWatershed, outWatershed, "VALUE < 1")
 outExtractByMask = ExtractByMask(outSetNull, OutputFolder+ "/" +"dir")
 outExtractByMask.save(OutputFolder + "/"+"temcat3")

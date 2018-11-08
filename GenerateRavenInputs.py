@@ -765,7 +765,7 @@ def Writervhchanl(ocatinfo,outFolder,nrows,ncols,lenThres,iscalmanningn):
         Strcat = str(catid)
         StrDid = str(int(catinfo.iloc[i]['DOWSUBID']))
         pronam = 'Chn_'+ Strcat
-        chslope = catinfo.iloc[i]['SLOPE3']
+        chslope = max(catinfo.iloc[i]['SLOPE3'],0.0001)
         if chslope < 0:
             chslope = catinfo.iloc[i]['BASINSLOPE']
         writechanel(pronam,max(catinfo.iloc[i]['BKFWIDTH'],1),max(catinfo.iloc[i]['BKFDEPTH'],1),
@@ -786,7 +786,10 @@ def Writervhchanl(ocatinfo,outFolder,nrows,ncols,lenThres,iscalmanningn):
         hruid = int(catinfo.iloc[i]['SUBID'])
         catslope = catinfo.iloc[i]['BASINSLOPE']
         if catinfo.iloc[i]['ISLAKE'] > 0:
-            catarea2 = float(catinfo.iloc[i]['AREA2'])/1000.00/1000.00 - float(catinfo.iloc[i]['LAKEAREA'])
+            if float(catinfo.iloc[i]['AREA2'])/1000.00/1000.00 <= float(catinfo.iloc[i]['LAKEAREA']):
+                catarea2 = float(catinfo.iloc[i]['AREA2'])*max((1-float(catinfo.iloc[i]['LAKERATIO'])),0.05)/1000.00/1000.00
+            else:
+                catarea2 = float(catinfo.iloc[i]['AREA2'])/1000.00/1000.00 - float(catinfo.iloc[i]['LAKEAREA'])
         else:
             catarea2 = float(catinfo.iloc[i]['AREA2'])/1000.00/1000.00
         StrGid =  str(hruid)+tab
@@ -806,7 +809,10 @@ def Writervhchanl(ocatinfo,outFolder,nrows,ncols,lenThres,iscalmanningn):
         if catinfo.iloc[i]['ISLAKE'] > 0:
             hruid = int(catinfo.iloc[i]['SUBID']) + int(maxcatid)
             catslope = catinfo.iloc[i]['BASINSLOPE']
-            catarea2 = float(catinfo.iloc[i]['LAKEAREA'])
+            if float(catinfo.iloc[i]['AREA2'])/1000.00/1000.00 <= float(catinfo.iloc[i]['LAKEAREA']):
+                catarea2 = float(catinfo.iloc[i]['AREA2'])*min((float(catinfo.iloc[i]['LAKERATIO'])),0.95)/1000/1000
+            else:
+                catarea2 = float(catinfo.iloc[i]['LAKEAREA'])
             StrGid =  str(hruid)+tab
             catid = str(int(catinfo.iloc[i]['SUBID']))+tab
             StrGidarea = str(catarea2)+tab
@@ -878,6 +884,10 @@ def writelake(catinfo,outFolderraven):
         if catinfo.iloc[i]['HYLAKEID'] > 0:
             lakeid = int(catinfo.iloc[i]['HYLAKEID'])
             catid = catinfo.iloc[i]['SUBID']
+            if float(catinfo.iloc[i]['AREA2'])/1000.00/1000.00 <= float(catinfo.iloc[i]['LAKEAREA']):
+                A = float(catinfo.iloc[i]['AREA2'])*min((float(catinfo.iloc[i]['LAKERATIO'])),0.95)
+            else:
+                A = float(catinfo.iloc[i]['LAKEAREA'])*1000*1000
             A = catinfo.iloc[i]['LAKEAREA']*1000*1000
             h0 = catinfo.iloc[i]['LAKEDEPTH']
             WeirCoe = 0.6
@@ -1048,6 +1058,7 @@ def Maphru2forceply(forcingply,outfolder,forcinggrid,outFolderraven,Boundaryply,
     catids = np.unique(catids)
     Lakeids = Mapforcing['HyLakeId'].values
     Lakeids = np.unique(Lakeids)
+    Lakeids = Lakeids[Lakeids>0]
     ogridforc = open(outFolderraven+"GriddedForcings2.txt","w")
     ogridforc.write(":GridWeights" +"\n")
     ogridforc.write("   #      " +"\n")

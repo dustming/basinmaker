@@ -613,17 +613,21 @@ def Getcatrivlenslope(catrow,catcol,rivlen,dem,fac,hydir,finalcat,trow,tcol,nrow
                 nrow,ncol = Nextcell(hydir,int(flen_orow),int(flen_ocol))
                 if nrow < 0 or ncol < 0:
                     nrow,ncol = Nextcell(hydir,int(trow),int(tcol))
-                    print "warning : check river system for catchment: ",finalcat[nrow,ncol],finalcat[trow,tcol],rivs,icell,len(catrow),nrow,ncol,trow,tcol
+                    print "warning : check river system for catchment: ",finalcat[trow,tcol],rivs,icell,len(catrow),nrow,ncol,trow,tcol
                     nrow,ncol = 0,0
             rivtemp = rivtemp[rivtemp[:,0]>0,]
             if icell > 0:
+                icell = min(icell,len(rivtemp))
                 rivout[i,0] = rivtemp[icell-1,2]
                 rivout[i,2] = (max(rivtemp[:,1]) - min(rivtemp[:,1]))/rivtemp[icell-1,2]
                 rivtemp = rivtemp[rivtemp[:,3]>=0,]
-                rivout[i,1] = np.mean(rivtemp[:,3])
+                if len(rivtemp) > 0:
+                    rivout[i,1] = np.mean(rivtemp[:,3])
+                else:
+                    rivout[i,1] = -9999
         rivtemp2 = np.full((len(catrow),4),-9999999999.999999)
         icell = 0
-        if len(rivs) > 0:  #### this means the strem connect at other catchments. or  this catchment only have one stream some head stream was included
+        if len(rivs) > 0 and nout <= 0:  #### this means the strem connect at other catchments. or  this catchment only have one stream some head stream was included
 #            arcpy.AddMessage("in riv " + str(rivs))
             nrow = prow
             ncol = pcol
@@ -647,25 +651,29 @@ def Getcatrivlenslope(catrow,catcol,rivlen,dem,fac,hydir,finalcat,trow,tcol,nrow
                 nrow,ncol = Nextcell(hydir,int(flen_orow),int(flen_ocol))
                 if nrow < 0 or ncol < 0:
                     nrow,ncol = Nextcell(hydir,int(trow),int(tcol))
-                    print "warning : check river system for catchment: ",finalcat[nrow,ncol],finalcat[trow,tcol],rivs,icell,len(catrow),nrow,ncol,trow,tcol
+                    print "warning : check river system for catchment: ",finalcat[trow,tcol],rivs,icell,len(catrow),nrow,ncol,trow,tcol
                     nrow,ncol = 0,0
             rivtemp2 = rivtemp2[rivtemp2[:,0]>0,]
             if icell > 0:
+                icell = min(icell,len(rivtemp2))
                 rivout2[i,0] = rivtemp2[icell-1,2]
                 rivout2[i,2] = (max(rivtemp2[:,1]) - min(rivtemp2[:,1]))/rivtemp2[icell-1,2]
                 rivtemp2 = rivtemp2[rivtemp2[:,3]>=0,]
-                rivout2[i,1] = np.mean(rivtemp2[:,3])
+                if len(rivtemp2) > 0:
+                    rivout2[i,1] = np.mean(rivtemp2[:,3])
+                else:
+                    rivout2[i,1] = -9999
     rivout = rivout[rivout[:,0]>0,]
     rivout2 = rivout2[rivout2[:,0]>0,]
     if len(rivout) > 0:
         rivout = rivout[rivout[:,0].argsort()]
         outrivlen = rivout[len(rivout)-1,0]
-        outrivslp = max(rivout[len(rivout)-1,1],0)
+        outrivslp = rivout[len(rivout)-1,1]
         outrivslp2 = np.mean(rivout[:,2])
     elif len(rivout2) > 0:
         rivout2 = rivout2[rivout2[:,0].argsort()]
         outrivlen = rivout2[len(rivout2)-1,0]
-        outrivslp = max(rivout2[len(rivout2)-1,1],0)
+        outrivslp = rivout2[len(rivout2)-1,1]
         outrivslp2 = np.mean(rivout2[:,2])
     else:
         outrivlen = -9999.00
@@ -871,6 +879,7 @@ def Generatecatinfo(Watseds,fac,fdir,lake,dem,area,hycat,hycatinfo,catinfo,allca
             catinfo[i,8] = slakeinfo.iloc[0]['SLOPE_100']
             catinfo[i,9] = slakeinfo.iloc[0]['WSHD_AREA']
             catinfo[i,10] = slakeinfo.iloc[0]['LAKE_TYPE']
+            catinfo[i,29] = min(float(len(lake[lake == lakeid]))/float(len(finalcat[finalcat == catid])),1.0)
 ########Check if it is observation points
         if obs[trow,tcol]  >= 0:
 #            arcpy.AddMessage(str(catid)+"      "+str(obs[trow,tcol]))
@@ -897,12 +906,13 @@ def Generatecatinfo(Watseds,fac,fdir,lake,dem,area,hycat,hycatinfo,catinfo,allca
         slopet = slope[rowcol[:,0],rowcol[:,1]]
         slopet = slopet[slopet>0,]
         catinfo[i,22] = np.mean(slopet)
+        catinfo[i,27] = catrivslp2
         if len(slopet) < 1:
             catinfo[i,22] = 0.001
             catinfo[i,21] = 0.001
+            catinfo[i,27] = 0.001
         catinfo[i,25] = Getfloodplain_n(catid,finalcat,rivlen,landuse,landuseinfo)
         catinfo[i,26] = catQ
-        catinfo[i,27] = catrivslp2
     return catinfo
 
 def Getfloodplain_n(catid,finalcat,rivlen,landuse,landuseinfo):
@@ -1118,6 +1128,7 @@ def Writecatinfotodbf(OutputFoldersub,catinfo):
     arcpy.AddField_management(dbfile, "Ch_n", "FLOAT", fieldPrecision,field_scale,"", "", "NULLABLE","","")
     arcpy.AddField_management(dbfile, "Slope2", "FLOAT", fieldPrecision,field_scale,"", "", "NULLABLE","","")
     arcpy.AddField_management(dbfile, "Slope3", "FLOAT", fieldPrecision,field_scale,"", "", "NULLABLE","","")
+    arcpy.AddField_management(dbfile, "LakeRatio", "FLOAT", fieldPrecision,field_scale,"", "", "NULLABLE","","")
     rows = arcpy.UpdateCursor(dbfile)
     for row in rows:
         gridcode = row.gridcode
@@ -1128,24 +1139,50 @@ def Writecatinfotodbf(OutputFoldersub,catinfo):
             row.DowSubId = sinfo[0,1]
             row.Area2 = sinfo[0,11]
             row.Rivlen = sinfo[0,20]
-#            arcpy.AddMessage(sinfo[0,21])
-            row.RivSlope = max(sinfo[0,21],0)
-            row.BasinSlope = sinfo[0,22]
+            isupper = 0
+            isdown = 0
             if sinfo[0,17] < 0:
                 twidth = sinfo[0,17]
                 ccurid = sinfo[0,0]
                 while(twidth < 0):
                     downid = catinfo[catinfo[:,0] == ccurid,][0,1]
-                    dowcatinfo = catinfo[catinfo[:,0] == downid,]
-                    twidth = dowcatinfo[0,17]
-                    ccurid = dowcatinfo[0,0]
-                row.BkfWidth = dowcatinfo[0,17]
-                row.BkfDepth = dowcatinfo[0,18]
-#                arcpy.AddMessage(dowcatinfo[0,18])
-                row.Q_Mean = dowcatinfo[0,26]
-                catinfo[catinfo[:,0] == gridcode,17] = dowcatinfo[0,17]
-                catinfo[catinfo[:,0] == gridcode,18] = dowcatinfo[0,18]
-                catinfo[catinfo[:,0] == gridcode,26] = dowcatinfo[0,26]
+                    if downid < 0:
+                        isdown = 0
+                        upcats = catinfo[catinfo[:,1] == ccurid,]
+                        upcats = upcats[upcats[:,17]>0,]
+                        if len(upcats) <= 0:
+                            twidth = 1.2345
+                            ccurid = -1
+                        else:
+                            isupper = 1
+                            twidth = np.average(upcats[:,17])
+                    else:
+                        isdown = 1
+                        dowcatinfo = catinfo[catinfo[:,0] == downid,]
+                        twidth = dowcatinfo[0,17]
+                        ccurid = dowcatinfo[0,0]
+#                arcpy.AddMessage(str(sinfo[0,0]) +"       "+ str(twidth))
+                if twidth == 1.2345 and ccurid == -1:
+                    row.BkfWidth = 1.23456
+                    row.BkfDepth = 1.23456
+                    row.Q_Mean = 1.2345
+                    catinfo[catinfo[:,0] == gridcode,17] = 1.2345
+                    catinfo[catinfo[:,0] == gridcode,18] = 1.2345
+                    catinfo[catinfo[:,0] == gridcode,26] = 1.2345
+                elif isdown == 1:
+                    row.BkfWidth = dowcatinfo[0,17]
+                    row.BkfDepth = dowcatinfo[0,18]
+                    row.Q_Mean = dowcatinfo[0,26]
+                    catinfo[catinfo[:,0] == gridcode,17] = dowcatinfo[0,17]
+                    catinfo[catinfo[:,0] == gridcode,18] = dowcatinfo[0,18]
+                    catinfo[catinfo[:,0] == gridcode,26] = dowcatinfo[0,26]
+                elif isupper == 1:
+                    row.BkfWidth = np.average(upcats[:,17])
+                    row.BkfDepth = np.average(upcats[:,18])
+                    row.Q_Mean = np.average(upcats[:,26])
+                    catinfo[catinfo[:,0] == gridcode,17] = np.average(upcats[:,17])
+                    catinfo[catinfo[:,0] == gridcode,18] = np.average(upcats[:,18])
+                    catinfo[catinfo[:,0] == gridcode,26] = np.average(upcats[:,26])
             else:
                 row.BkfWidth = sinfo[0,17]
                 row.BkfDepth = sinfo[0,18]
@@ -1159,6 +1196,7 @@ def Writecatinfotodbf(OutputFoldersub,catinfo):
                 row.LakeDepth = sinfo[0,7]
                 row.LakeArea = sinfo[0,6]
                 row.Laketype = sinfo[0,10]
+                row.LakeRatio = sinfo[0,29]
             else:
                 row.IsLake = -9999.99
                 row.HyLakeId =  -9999.99
@@ -1166,6 +1204,7 @@ def Writecatinfotodbf(OutputFoldersub,catinfo):
                 row.LakeDepth =  -9999.99
                 row.LakeArea =  -9999.99
                 row.Laketype = -9999.99
+                row.LakeRatio = -9999.99
             if sinfo[0,23] >= 0:
                 row.IsObs = sinfo[0,23]
             else:
@@ -1177,6 +1216,7 @@ def Writecatinfotodbf(OutputFoldersub,catinfo):
             tqmean = catinfo[catinfo[:,0] == gridcode,26]
             gropcat1 = catinfo[catinfo[:,17] == twidth,]
             gropcat2 = gropcat1[gropcat1[:,18] == tdepth,]
+            gropcat2 = gropcat2[gropcat2[:,26] == tqmean,]
             gropcat2 = gropcat2[gropcat2[:,27] > 0,]
             if len(gropcat2) <=0:
                 tslope = float(sinfo[0,22])
@@ -1189,9 +1229,17 @@ def Writecatinfotodbf(OutputFoldersub,catinfo):
             else:
                 n = calculateChannaln(float(sinfo[0,17]),float(sinfo[0,18]),float(sinfo[0,26]),float(sinfo[0,22]))
 #            arcpy.AddMessage(n)
-            row.Ch_n = n
+#            arcpy.AddMessage(sinfo[0,21])
+            if sinfo[0,21] > 0:
+                row.RivSlope = max(sinfo[0,21],0.0)
+            elif tslope > 0:
+                row.RivSlope  = tslope
+            else:
+                row.RivSlope  = sinfo[0,22]
+            row.BasinSlope = sinfo[0,22]
             row.Slope2 = sinfo[0,27]
             row.Slope3 = tslope
+            row.Ch_n = n
             catinfo[catinfo[:,0] == gridcode,28] = n
         rows.updateRow(row)
     del row
