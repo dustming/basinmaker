@@ -502,20 +502,20 @@ def Checklake(prow,pcol,nrows,ncols,lid,lake):
     return noout
 ############################################################################33
 
-def GenrateCatchatt(OutputFoldersub):
-    arcpy.RasterToPolyline_conversion(OutputFoldersub + "str",OutputFoldersub + "riv1.shp" , "ZERO",
-                                   0, "NO_SIMPLIFY")
-    copyfile( OutputFoldersub + "/"+"HyMask.prj" ,  OutputFoldersub + "/"+"riv1.prj")
-    arcpy.Intersect_analysis([OutputFoldersub + "riv1.shp", OutputFoldersub + "finalcat.shp"],
-                             OutputFoldersub + "riv1_cat.shp", "ALL", 0, "LINE")
-    copyfile( OutputFoldersub + "/"+"HyMask.prj" ,  OutputFoldersub + "/"+"riv1_cat.prj")
+def GenrateCatchatt(OutputFoldersub,str100):
+    nrowcol = np.argwhere(str100 > 0)
+    if len(nrowcol) > 0:
+        arcpy.RasterToPolyline_conversion(OutputFoldersub + "str",OutputFoldersub + "riv1.shp" , "ZERO",0, "NO_SIMPLIFY")
+        copyfile( OutputFoldersub + "/"+"HyMask.prj" ,  OutputFoldersub + "/"+"riv1.prj")
+        arcpy.Intersect_analysis([OutputFoldersub + "riv1.shp", OutputFoldersub + "finalcat.shp"], OutputFoldersub + "riv1_cat.shp", "ALL", 0, "LINE")
+        copyfile( OutputFoldersub + "/"+"HyMask.prj" ,  OutputFoldersub + "/"+"riv1_cat.prj")
     #### Get catchment area length
     arcpy.env.CoordinateSystem = arcpy.SpatialReference(3573)####wgs84 - north pore canada
     arcpy.AddField_management(OutputFoldersub +"finalcat.shp","area","DOUBLE","#","#","#","#","NULLABLE","NON_REQUIRED","#")
     arcpy.CalculateField_management(OutputFoldersub +"finalcat.shp","area","!shape.area@squaremeters!","PYTHON_9.3","#")
-
-    arcpy.AddField_management(OutputFoldersub +"riv1_cat.shp","length","DOUBLE","#","#","#","#","NULLABLE","NON_REQUIRED","#")
-    arcpy.CalculateField_management(OutputFoldersub +"riv1_cat.shp","length","!shape.length@meters!","PYTHON_9.3","#")
+    if len(nrowcol) > 0:
+        arcpy.AddField_management(OutputFoldersub +"riv1_cat.shp","length","DOUBLE","#","#","#","#","NULLABLE","NON_REQUIRED","#")
+        arcpy.CalculateField_management(OutputFoldersub +"riv1_cat.shp","length","!shape.length@meters!","PYTHON_9.3","#")
     arcpy.ProjectRaster_management(OutputFoldersub+ "dem", OutputFoldersub+ "demproj",arcpy.SpatialReference(3573),"NEAREST")
     arcpy.arcpy.env.cellSize = float(arcpy.GetRasterProperties_management(OutputFoldersub+ "demproj", "CELLSIZEX").getOutput(0))
     arcpy.env.extent = arcpy.Describe(OutputFoldersub + "demproj").extent
@@ -537,11 +537,12 @@ def GenrateCatchatt(OutputFoldersub):
     arcpy.PolygonToRaster_conversion(OutputFoldersub +"finalcat.shp", "area", OutputFoldersub + "area",
                                  "MAXIMUM_COMBINED_AREA","NONE", cellSize)
     arcpy.RasterToASCII_conversion(OutputFoldersub + "area", OutputFoldersub + "area.asc")
-
-    arcpy.PolylineToRaster_conversion(OutputFoldersub + "riv1_cat.shp", "length", OutputFoldersub + "rivlength",
-                                  "MAXIMUM_LENGTH", "NONE", cellSize)
-    outExtractByMask = ExtractByMask(OutputFoldersub + "rivlength", OutputFoldersub + "strlnk")
-    arcpy.RasterToASCII_conversion(outExtractByMask, OutputFoldersub + "rivlength.asc")
+    if len(nrowcol) > 0:
+        arcpy.PolylineToRaster_conversion(OutputFoldersub + "riv1_cat.shp", "length", OutputFoldersub + "rivlength",  "MAXIMUM_LENGTH", "NONE", cellSize)
+        outExtractByMask = ExtractByMask(OutputFoldersub + "rivlength", OutputFoldersub + "strlnk")
+        arcpy.RasterToASCII_conversion(outExtractByMask, OutputFoldersub + "rivlength.asc")
+    else:
+        writeraster(OutputFoldersub + "rivlength.asc",str100,OutputFoldersub + "dir")
     arcpy.RasterToASCII_conversion(OutputFoldersub + "slope", OutputFoldersub + "slope.asc")
 
 ####################################################################3
@@ -596,7 +597,7 @@ def Getcatrivlenslope(catrow,catcol,rivlen,dem,fac,hydir,finalcat,trow,tcol,nrow
             rivpath[nrow,ncol] = 1
             while finalcat[nrow,ncol] == finalcat[trow,tcol]:
                 flen_orow,flen_ocol = nrow,ncol
-                if flen_orow < 0 or flen_ocol<0:
+                if flen_orow < 0 or flen_ocol<0 or icell >= len(rivtemp):
                     break
                 rivpath[nrow,ncol] = 1
                 rivtemp[icell,0] = rivlen[nrow,ncol]
@@ -634,7 +635,7 @@ def Getcatrivlenslope(catrow,catcol,rivlen,dem,fac,hydir,finalcat,trow,tcol,nrow
             rivpath[nrow,ncol] = 1
             while finalcat[nrow,ncol] == finalcat[trow,tcol]:
                 flen_orow,flen_ocol = nrow,ncol
-                if flen_orow < 0 or flen_ocol<0:
+                if flen_orow < 0 or flen_ocol<0 or icell >= len(rivtemp2):
                     break
                 rivpath[nrow,ncol] = 1
                 rivtemp2[icell,0] = rivlen[nrow,ncol]
@@ -1373,7 +1374,7 @@ Str100 = np.loadtxt(OutputFolder + "/"+'strlink.asc',dtype = 'i4',skiprows = 6)
 ncols = int(arcpy.GetRasterProperties_management(dataset, "COLUMNCOUNT").getOutput(0))
 nrows = int(arcpy.GetRasterProperties_management(dataset, "ROWCOUNT").getOutput(0))
 #######################################3
-GenrateCatchatt(OutputFolder + "/")
+GenrateCatchatt(OutputFolder + "/",Str100)
 print("------Calculate basin geometry done")
 rivlen = np.loadtxt(OutputFolder+ "/"+ 'rivlength.asc',skiprows = 6)   #### raster of hydroshed basin fid
 area = np.loadtxt(OutputFolder+ "/"+"area.asc",skiprows = 6)
