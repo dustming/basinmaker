@@ -1101,6 +1101,8 @@ def ChangeDIR(dir,lake1,acc,ncols,nrows,outlakeids):
         prow,pcol = Getbasinoutlet(lid,lake1,acc)
         goodpoint[0,0] = prow
         goodpoint[0,1] = pcol
+        if prow >= nrows - 1 or pcol == ncols  - 1:
+            continue
         ip = 0
         k = 0
         ipo = -1
@@ -1111,6 +1113,8 @@ def ChangeDIR(dir,lake1,acc,ncols,nrows,outlakeids):
 #                    arcpy.AddMessage(goodpoint[0:ip,0])
                     trow = goodpoint[i,0]
                     tcol = goodpoint[i,1]
+                    if trow >= nrows - 1 or tcol == ncols  - 1:
+                        continue
                     ndir,goodpoint,k1= Dirpoints(ndir,trow,tcol,lake1,lid,goodpoint,k)
 #                    arcpy.AddMessage("start of checking:    " + str(k1) + "     "+ str(len(goodpoint[goodpoint[:,0]>0,]))+ "   ")
                     k = k1 - 1
