@@ -200,27 +200,31 @@ from dbfpy import dbf
 import csv
 import copy
 import numpy as np
-#in_output = "C:/Users/m43han/Documents/Routing/Sample/Outputs/"
-in_output = "C:/Users/m43han/Documents/Routing/Sample/Outputs/panca/"
+in_output = "C:/Users/m43han/Documents/Routing/Sample/Outputs/"
+#in_output = "C:/Users/m43han/Documents/Routing/Sample/Outputs/panca/"
 
 ilevel = "08"
 level= "08"  #"12"
-islake="wl/" #"nola" "wl"
+islake="wl" #"nola" "wl"
 lenThres = 2000
-list = pd.read_csv("C:/Users/m43han/Documents/Routing/Code/Routing/Code/Toolbox/Basins_ca.csv",sep=",",low_memory=False)
+list = pd.read_csv("C:/Users/m43han/Documents/Routing/Code/Routing/Code/Toolbox/Basins_ca_full.csv",sep=",",low_memory=False)
 arcpy.env.overwriteOutput = True
 forcinggrid = "C:/Users/m43han/Documents/Routing/Sample/Inputs/forcingncgrid.asc"
-tarshp =in_output+'finalout_'+islake+level+"/"
+tarshp =in_output+'finalout_'+islake+level
 lakevol = 0
 WeirCoe = 0.6
 k = 0
 if not os.path.exists(tarshp):
 	os.makedirs(tarshp)
+if os.path.isfile(tarshp+'/'+'finalcat_info.shp'):
+    dbftocsv(tarshp +"/"+ "finalcat_info.dbf",tarshp +"/"+ "finalcat_info.csv")
+    ncatinfo1 = pd.read_csv(tarshp +"/"+"finalcat_info.csv",sep=",",low_memory=False)
+    k = max(ncatinfo1['BASINID'].values) + 1
 for i in range(0,len(list)):
 	in_tarid = int(list.ix[i]['Outid'])
 	in_outputf = in_output+ilevel+islake+str(in_tarid)+'/'+'finalcat_info.shp'
 	in_outputf2 = in_output+ilevel+islake+str(in_tarid)+'/RavenInput/'+'test.rvh'
-	print os.path.isfile(in_outputf2)
+	print in_outputf2
 	if os.path.isfile(in_outputf2):
 		if len(arcpy.ListFields(in_outputf,"BasinID"))<=0:
 			arcpy.AddField_management(in_outputf, "BasinID", "LONG",10,"","", "", "NULLABLE")
@@ -230,10 +234,10 @@ for i in range(0,len(list)):
 		arcpy.CalculateField_management(in_outputf, "BasinID2", str(int(in_tarid)), "PYTHON")
 		if k == 0:
 			arcpy.Copy_management(in_outputf, tarshp+'/'+'finalcat_info.shp')
-            arcpy.Copy_management(in_outputf, tarshp+'/'+str(int(in_tarid))+'_finalcat'+'.shp')
+			arcpy.Copy_management(in_outputf, tarshp+'/'+str(int(in_tarid))+'_finalcat'+'.shp')
 		else:
 			arcpy.Append_management(in_outputf,tarshp+'/'+'finalcat_info.shp','TEST')
-            arcpy.Copy_management(in_outputf, tarshp+'/'+str(int(in_tarid))+'_finalcat'+'.shp')
+			arcpy.Copy_management(in_outputf, tarshp+'/'+str(int(in_tarid))+'_finalcat'+'.shp')
 		k = k + 1
 dbftocsv(tarshp +"/"+ "finalcat_info.dbf",tarshp +"/"+ "finalcat_info.csv")
 ncatinfo = pd.read_csv(tarshp +"/"+"finalcat_info.csv",sep=",",low_memory=False)
