@@ -1065,7 +1065,7 @@ def Maphru2forceply(forcingply,outfolder,forcinggrid,outFolderraven,Boundaryply,
     ogridforc.write("   # [# HRUs]"+"\n")
     sNhru = len(catids) + len(Lakeids)
     ogridforc.write("   :NumberHRUs       "+ str(sNhru) + "\n")
-    sNcell = (max(Forcinfo['Row'].values)+missrow) * (max(Forcinfo['Col'].values)+misscol)
+    sNcell = (max(Forcinfo['Row'].values)+1+missrow) * (max(Forcinfo['Col'].values)+1+misscol)
     ogridforc.write("   :NumberGridCells  "+str(sNcell)+"\n")
     ogridforc.write("   #            "+"\n")
     ogridforc.write("   # [HRU ID] [Cell #] [w_kl]"+"\n")

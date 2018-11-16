@@ -224,8 +224,9 @@ for i in range(0,len(list)):
 	in_tarid = int(list.ix[i]['Outid'])
 	in_outputf = in_output+ilevel+islake+str(in_tarid)+'/'+'finalcat_info.shp'
 	in_outputf2 = in_output+ilevel+islake+str(in_tarid)+'/RavenInput/'+'test.rvh'
+	ot_check = tarshp+'/'+str(int(in_tarid))+'_finalcat'+'.shp'
 	print in_outputf2
-	if os.path.isfile(in_outputf2):
+	if os.path.isfile(in_outputf2) and not os.path.isfile(ot_check):
 		if len(arcpy.ListFields(in_outputf,"BasinID"))<=0:
 			arcpy.AddField_management(in_outputf, "BasinID", "LONG",10,"","", "", "NULLABLE")
 		arcpy.CalculateField_management(in_outputf, "BasinID", str(k), "PYTHON")
