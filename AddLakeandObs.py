@@ -1121,7 +1121,7 @@ def ChangeDIR(dir,lake1,acc,ncols,nrows,outlakeids):
             ipo = ip
             ip = len(goodpoint[goodpoint[:,0]>0,]) - 1
             k = ip
-            arcpy.AddMessage("start of checking:    " + str(ip) + "     "+ str(ipo)+ "   " + str(len(lrowcol)))
+#            arcpy.AddMessage("start of checking:    " + str(ip) + "     "+ str(ipo)+ "   " + str(len(lrowcol)))
 
 #        ndir[goodpoint[:,0].astype(int),goodpoint[:,1].astype(int)] = 9
     return ndir
@@ -1213,7 +1213,7 @@ copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"fPourpoints.prj")
 arcpy.ASCIIToRaster_conversion(OutputFolder + "/"+"fPourpoints.asc", OutputFolder + "/"+"fPourpoints1","INTEGER")
 copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"fPourpoints1.prj")
 ################ modifiy lake flow directions
-arcpy.AddMessage(len(outlakeids))
+#arcpy.AddMessage(len(outlakeids))
 ndir = ChangeDIR(hydir,Lake1,fac,ncols,nrows,outlakeids)
 writeraster(OutputFolder + "/"+"ndir.asc",ndir,dataset)
 copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"ndir.prj")
