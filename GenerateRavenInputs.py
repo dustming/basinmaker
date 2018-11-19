@@ -1096,7 +1096,7 @@ def Maphru2forceply(forcingply,outfolder,forcinggrid,outFolderraven,Boundaryply,
 #            arcpy.AddMessage(scat)
             if(len(scat['Row'].values) > 1):
                 arcpy.AddMessage(str(catid)+"error。。。。。。。。。。。。。。")
-            Strcellid = str(int(scat['Row'].values * (max(Forcinfo['Col'].values)+misscol) + scat['Col'].values)) + "      "
+            Strcellid = str(int(scat['Row'].values * (max(Forcinfo['Col'].values) + 1 +misscol) + scat['Col'].values)) + "      "
                 ### str((ncrowcol[0,0] * ncncols + ncrowcol[0,1]))
             ogridforc.write("    "+str(int(catid)) + "     "+Strcellid+str(wt) +"\n")
 #        arcpy.AddMessage(cats)
@@ -1117,11 +1117,23 @@ def Maphru2forceply(forcingply,outfolder,forcinggrid,outFolderraven,Boundaryply,
 #            arcpy.AddMessage(scat)
                 if(len(scat['Row'].values) > 1):
                     arcpy.AddMessage(str(catid)+"error。。。。。。。。。。。。。。")
-                Strcellid = str(int(scat['Row'].values * (max(Forcinfo['Col'].values)+2) + scat['Col'].values)) + "      "
+                Strcellid = str(int(scat['Row'].values * (max(Forcinfo['Col'].values)+ 1 + misscol) + scat['Col'].values)) + "      "
                 ### str((ncrowcol[0,0] * ncncols + ncrowcol[0,1]))
                 ogridforc.write("    "+str(int(catid) + int(maxcatid)) + "     "+Strcellid+str(wt) +"\n")
     ogridforc.write(":EndGridWeights")
     ogridforc.close()
+########
+#/* example of calcuate grid index
+#       	0	1	2	3	4
+#       0	0	1	2	3	4
+#       1	5	6	7	8	9
+#       2	10	11	12	13	14
+#       3	15	16	17	18	19
+##  we have 4 rows (0-3) and 5 cols (0-4), the index of each cell
+#   should be calaulated by row*(max(colnums)+1) + colnum.
+#   for example row =2, col=0, index = 2*(4+1)+0 = 10
+#   for example row 3, col 3, index = 3*(4+1)+3 = 18
+##################################333
 ######################################################
 ###################################################################################33
 import numpy as np

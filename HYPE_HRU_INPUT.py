@@ -127,35 +127,100 @@ def Generatepar(Outfolder,soilinfo,landuseinfo):
     wcep = 'wcep'  + tab ## fieled capicity ~~  -kp1500 watercontent
     mperc1 = 'mperc1'  + tab ## fieled capicity ~~  KSAT
     mperc2 = 'mperc2'  + tab ## fieled capicity ~~  KSAT centimeters per hour (cm/h) ---> mm/day
+    sfrost = 'sfrosts' + tab
+    rrcs1 = 'rrcs1' + tab
+    rrcs2 = 'rrcs2' + tab
+    trrcs = 'trrcs' + tab
+    srrate = 'srrate' + tab
+    macrate = 'macrate' + tab
+    mactrsm = 'mactrsm' + tab
+    mactrinf = 'mactrinf' + tab
     for i in range(0,len(soilinfo)):
         wcfc = wcfc + str(round(soilinfo.ix[i]['KP33']/100.00, 2) - round(soilinfo.ix[i]['KP1500']/100.00, 2)) + tab
         wcwp = wcwp + str(round(soilinfo.ix[i]['KP1500']/100.00, 2)) + tab
         wcep = wcep + str(round(soilinfo.ix[i]['KP0']/100.00, 2) - round(soilinfo.ix[i]['KP33']/100.00, 2)) + tab
         mperc1 = mperc1 + str(round(soilinfo.ix[i]['KSAT']*24*10, 2)) + tab  # cm/h to mm/day
         mperc2 = mperc2 + str(round(soilinfo.ix[i]['KSAT']*24*10, 2)) + tab
-        wcfc = wcfc + '\n'
-        wcwp = wcwp + '\n'
-        wcep = wcep + '\n'
-        mperc1 = mperc1 + '\n'
-        mperc2 = mperc2 + '\n'
+        sfrost = sfrost + str(1.00)+tab
+        rrcs1 = rrcs1 + str(round(soilinfo.ix[i]['KSAT']*24*10/10, 2)) + tab
+        rrcs2 = rrcs2 + str(round(soilinfo.ix[i]['KSAT']*24*10/10, 2)) + tab
+        trrcs = trrcs + str(round(soilinfo.ix[i]['KSAT']*24*10/10, 2)) + tab
+        srrate = srrate + str(round(1, 2)) + tab
+        macrate = macrate + str(round(0, 2)) + tab
+        mactrinf = mactrinf + str(round(soilinfo.ix[i]['KSAT']*24*10/10, 2)) + tab
+        mactrsm = mactrsm + str(round(0, 2)) + tab
+
+    wcfc = wcfc + '\n'
+    wcwp = wcwp + '\n'
+    wcep = wcep + '\n'
+    mperc1 = mperc1 + '\n'
+    mperc2 = mperc2 + '\n'
+#        sfrost = sfrost + '\n'
+    rrcs1 = rrcs1 + '\n'
+    rrcs2 = rrcs2 + '\n'
+    trrcs = trrcs + '\n'
+    srrate = srrate + '\n'
+    macrate = macrate + '\n'
+    mactrinf = mactrinf +'\n'
+    mactrsm = mactrsm + '\n'
+
     opar.write(wcfc)
     opar.write(wcwp)
     opar.write(wcep)
     opar.write(mperc1)
     opar.write(mperc2)
+    opar.write(rrcs1)
+    opar.write(rrcs2)
+    opar.write(trrcs)
+#    opar.write(sfrost)
+    opar.write(srrate)
+    opar.write(macrate)
+    opar.write(mactrinf)
+    opar.write(mactrsm)
 ############landuse dependent paramters
     cmlt = 'cmlt'  + tab ## melting factor
     ttmp = 'ttmp' + tab
+    frost = 'frost' + tab
+    srrcs = 'srrcs' + tab
     for i in range(0,len(landuseinfo)):
         cmlt = cmlt + str(3.00) + tab
         ttmp = ttmp + str(0.00) + tab
+        frost = frost + str(1.00) + tab
+        srrcs = srrcs + str(0.8) + tab
     cmlt = cmlt +  '\n'
     ttmp = ttmp +  '\n'
+    frost = frost + '\n'
+    srrcs = srrcs + '\n'
     opar.write(cmlt)
     opar.write(ttmp)
+    opar.write(srrcs)
+#    opar.write(frost)
+
+##########General paramters
+    rrcs3 = 'rrcs3' + tab + str(0.2)+ '\n'
+    ttpi = 'ttpi' + str(1.00)+ '\n'
+    ttpd = 'ttpd' + str(1.00)+ '\n'
+    rrcscorr = 'rrcscorr' + str(1.00) + '\n'
+    gratk = 'gratk' + str(1.00) + '\n'
+    grata = 'grata' + str(0.00) + '\n'
+    gratp = 'gratp' + str(1.00) + '\n'
+    rivvel = 'rivvel' + str(1.00) + '\n'
+    damp = 'damp' + str(0.20) + '\n'
+    gldepi = 'gldepi' + str(5.00) + '\n'
+    rivvel = 'rivvel' + str(1.00) + '\n'
+    opar.write(ttpi)
+    opar.write(ttpd)
+    opar.write(rrcs3)
+    opar.write(rrcscorr)
+    opar.write(gratk)
+    opar.write(grata)
+    opar.write(gratp)
+    opar.write(rivvel)
+    opar.write(damp)
+    opar.write(gldepi)
+    opar.write(damp)
+    opar.write(damp)
     opar.close()
-
-
 # In[170]:
 
 # coding: utf-8
@@ -482,6 +547,6 @@ LakeDataclasss = LakeDataclasss[LakeDataclasss['lakedataid'] != 'NA']
 LakeDataclasss.to_csv(Ourfolder+'LakeData.txt',sep='\t',index = None)
 CropDataclass = CropDataclass[CropDataclass['cropid'] != 'NA']
 CropDataclass.to_csv(Ourfolder+'CropData.txt',sep='\t',index = None)
-Generatepar(Outfolder,soilinfo,landuseinfo)
+Generatepar(Ourfolder,soilinfo,landuseinfo)
 
 # In[158]:

@@ -60,7 +60,7 @@ def Maphru2forceply(forcingply,outfolder,catply,outFolderraven,Boundaryply,missr
 #            arcpy.AddMessage(scat)
             if(len(scat['Row'].values) > 1):
                 arcpy.AddMessage(str(catid)+"error.......")
-            Strcellid = str(int(scat['Row'].values * (max(Forcinfo['Col'].values)+misscol) + scat['Col'].values)) + "      "
+            Strcellid = str(int(scat['Row'].values * (max(Forcinfo['Col'].values) + 1 +misscol) + scat['Col'].values)) + "      "
                 ### str((ncrowcol[0,0] * ncncols + ncrowcol[0,1]))
             ogridforc.write("    "+str(int(catid)) + "     "+Strcellid+str(wt) +"\n")
             maparray[imap,0] = int(catid)
@@ -87,7 +87,7 @@ def Maphru2forceply(forcingply,outfolder,catply,outFolderraven,Boundaryply,missr
 #            arcpy.AddMessage(scat)
                 if(len(scat['Row'].values) > 1):
                     arcpy.AddMessage(str(catid)+"error......")
-                Strcellid = str(int(scat['Row'].values * (max(Forcinfo['Col'].values)+2) + scat['Col'].values)) + "      "
+                Strcellid = str(int(scat['Row'].values * (max(Forcinfo['Col'].values)+1 + misscol) + scat['Col'].values)) + "      "
                 ### str((ncrowcol[0,0] * ncncols + ncrowcol[0,1]))
                 ogridforc.write("    "+str(int(catid) + int(maxcatid)) + "     "+Strcellid+str(wt) +"\n")
     ogridforc.write(":EndGridWeights")
@@ -101,7 +101,7 @@ def Generatencply(ncfile,thre,clusTol,WorkingFolder):
     np.savetxt(WorkingFolder + "rlat.csv", dsin2.variables['rlat'][:], delimiter=",")
     np.savetxt(WorkingFolder + "rlon.csv", dsin2.variables['rlon'][:], delimiter=",")
     np.savetxt(WorkingFolder + "FI_SFC.csv", dsin2.variables['FI_SFC'][0,:,:], delimiter=",")
-    ncols = len(dsin2.variables['lon'][0,:])
+    ncols = len(dsin2.variables['lon'][0,:])  ### from 0 to (ncols-1).
     nrows = len(dsin2.variables['lon'][:,0])
     latlonrow = np.full((nrows*ncols,4),-9999)
     for i in range(0,nrows):
@@ -212,7 +212,7 @@ def addgridinfo2point(dbfile,lon,lat,i,j,thre,ncols,nrows):
 	rows = arcpy.UpdateCursor(dbfile)
 	for row in rows:
 		if abs (row.POINT_X - lon) < thre and abs(row.POINT_Y - lat) < thre:
-			row.FGID = i*ncols + j
+			row.FGID = i*(ncols)  + j   # ncols = max(colnumers) + 1
 			row.Row = i
 			row.Col = j
 			row.Gridlon = round(lon, 5)
