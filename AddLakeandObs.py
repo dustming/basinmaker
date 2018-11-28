@@ -614,6 +614,7 @@ def CE_mcat4lake2(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints):
                 cat[lrowcol[:,0],lrowcol[:,1]] = pp
             else:
                 cat[lrowcol[:,0],lrowcol[:,1]] = arclakeid
+#### For some reason pour point was missing in non-contribute catchment 
     Pours = np.unique(Pourpoints)
     Pours = Pours[Pours>0]
     for i in range(0,len(Pours)):

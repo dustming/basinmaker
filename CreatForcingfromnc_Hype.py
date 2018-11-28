@@ -49,8 +49,10 @@ def Maphru2forceply(forcingply,outfolder,catply,outFolderraven,Boundaryply,missr
         fids = cats['FGID'].values
         fids = np.unique(fids)
         sumwt = 0.0
+        print cats
         for j in range(len(fids)):
             scat = cats[cats['FGID'] == fids[j]]
+            print j,fids[j]
             if j < len(fids) - 1:
                 sarea = sum(scat['s_area'].values)
                 wt = float(sarea)/float(tarea)
@@ -60,6 +62,7 @@ def Maphru2forceply(forcingply,outfolder,catply,outFolderraven,Boundaryply,missr
 #            arcpy.AddMessage(scat)
             if(len(scat['Row'].values) > 1):
                 arcpy.AddMessage(str(catid)+"error.......")
+            print scat
             Strcellid = str(int(scat['Row'].values * (max(Forcinfo['Col'].values) + 1 +misscol) + scat['Col'].values)) + "      "
                 ### str((ncrowcol[0,0] * ncncols + ncrowcol[0,1]))
             ogridforc.write("    "+str(int(catid)) + "     "+Strcellid+str(wt) +"\n")
@@ -100,7 +103,7 @@ def Generatencply(ncfile,thre,clusTol,WorkingFolder):
     np.savetxt(WorkingFolder + "lat.csv", dsin2.variables['lat'][:,:], delimiter=",")
     np.savetxt(WorkingFolder + "rlat.csv", dsin2.variables['rlat'][:], delimiter=",")
     np.savetxt(WorkingFolder + "rlon.csv", dsin2.variables['rlon'][:], delimiter=",")
-    np.savetxt(WorkingFolder + "FI_SFC.csv", dsin2.variables['FI_SFC'][0,:,:], delimiter=",")
+#    np.savetxt(WorkingFolder + "FI_SFC.csv", dsin2.variables['FI_SFC'][0,:,:], delimiter=",")
     ncols = len(dsin2.variables['lon'][0,:])  ### from 0 to (ncols-1).
     nrows = len(dsin2.variables['lon'][:,0])
     latlonrow = np.full((nrows*ncols,4),-9999)
@@ -251,7 +254,7 @@ os.chdir(WorkingFolder)
 outfolder = WorkingFolder
 
 ncfile = ncfilename
-Generatencply(ncfile,thre,clusTol,WorkingFolder)
+#Generatencply(ncfile,thre,clusTol,WorkingFolder)
 forcingply =  WorkingFolder + "Gridncply.shp"
 forcinggrid = "#"
 Boundaryply = "#"

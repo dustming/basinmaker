@@ -14,14 +14,17 @@ def GenerateGeoClass(geoclass,landuseinfo):
     geoclass['Dep_Soil_Layer2'] = 'NA'
     geoclass['Dep_Soil_Layer3'] = 'NA'
     waterid = landuseinfo[landuseinfo['Landuse'] == 'Water']['LandID'].values[0]
+    inlakeid = int(max(landuseinfo['LandID_Model'].values)) + 1
+    olakeid = int(max(landuseinfo['LandID_Model'].values)) + 2
     for i in range(0,len(geoclass.index)):
         idx = geoclass.index[i]
         landid = geoclass.loc[idx,'LandID']
         ###################################### for olake and ilake
-        if landid == waterid * 100 or landid == waterid * 101:
+        geoclass.loc[idx,'Spec_Code'] = 0
+        if landid == inlakeid or landid == olakeid:
             geoclass.loc[idx,'Main_cropid'] = 0
             geoclass.loc[idx,'Veg_type'] = 3
-            if landid == waterid * 101:
+            if landid == inlakeid:
                 geoclass.loc[idx,'Spec_Code'] = 1
             else:
                 geoclass.loc[idx,'Spec_Code'] = 2
@@ -51,7 +54,6 @@ def GenerateGeoClass(geoclass,landuseinfo):
         else:
             geoclass.loc[idx,'Veg_type'] = 1
 
-        geoclass.loc[idx,'Spec_Code'] = 0
         if  ilandinfo['Landuse'].values[0] == 'Water':
             geoclass.loc[idx,'Num_Soil_Layer'] = 1
             geoclass.loc[idx,'Dep_Soil_Layer1'] = 1
@@ -182,7 +184,7 @@ def Generatepar(Outfolder,soilinfo,landuseinfo):
     ttmp = 'ttmp' + tab
     frost = 'frost' + tab
     srrcs = 'srrcs' + tab
-    for i in range(0,len(landuseinfo)):
+    for i in range(0,len(landuseinfo)+2):
         cmlt = cmlt + str(3.00) + tab
         ttmp = ttmp + str(0.00) + tab
         frost = frost + str(1.00) + tab
@@ -198,16 +200,16 @@ def Generatepar(Outfolder,soilinfo,landuseinfo):
 
 ##########General paramters
     rrcs3 = 'rrcs3' + tab + str(0.2)+ '\n'
-    ttpi = 'ttpi' + str(1.00)+ '\n'
-    ttpd = 'ttpd' + str(1.00)+ '\n'
-    rrcscorr = 'rrcscorr' + str(1.00) + '\n'
-    gratk = 'gratk' + str(1.00) + '\n'
-    grata = 'grata' + str(0.00) + '\n'
-    gratp = 'gratp' + str(1.00) + '\n'
-    rivvel = 'rivvel' + str(1.00) + '\n'
-    damp = 'damp' + str(0.20) + '\n'
-    gldepi = 'gldepi' + str(5.00) + '\n'
-    rivvel = 'rivvel' + str(1.00) + '\n'
+    ttpi = 'ttpi' +tab + str(1.00)+ '\n'
+    ttpd = 'ttpd' + tab + str(1.00)+ '\n'
+    rrcscorr = 'rrcscorr' +tab +  str(1.00) + '\n'
+    gratk = 'gratk' + tab + str(1.00) + '\n'
+    grata = 'grata' + tab + str(0.00) + '\n'
+    gratp = 'gratp' + tab + str(1.00) + '\n'
+    rivvel = 'rivvel' + tab + str(1.00) + '\n'
+    damp = 'damp' + tab + str(0.20) + '\n'
+    gldepi = 'gldepi' + tab + str(5.00) + '\n'
+    rivvel = 'rivvel' + tab + str(1.00) + '\n'
     opar.write(ttpi)
     opar.write(ttpd)
     opar.write(rrcs3)
@@ -256,6 +258,7 @@ def creatpdstructure(soilinfo,landuseinfo,catinfo):
     landclass['slc_ID'] = 'NA'
     landclass['slc_nn'] = 'NA'
     landclass['LandID'] = 'NA'
+    landclass['LandID_Model'] = 'NA'
     landclass['Soilid'] = 'NA'
     geodata['area'] = 'NA'
     geodata['subid'] = 'NA'
@@ -280,39 +283,39 @@ def creatpdstructure(soilinfo,landuseinfo,catinfo):
     LakeDataclasss['rate'] = 'NA'
     LakeDataclasss['exp'] = 'NA'
 #    LakeDataclasss['deltaw0'] = 'NA'
-    LakeDataclasss['qprod1'] = 'NA'
-    LakeDataclasss['qprod2'] = 'NA'
-    LakeDataclasss['datum1'] = 'NA'
-    LakeDataclasss['datum2'] = 'NA'
-    LakeDataclasss['qamp'] = 'NA'
-    LakeDataclasss['qpha'] = 'NA'
-    LakeDataclasss['regvol'] = 'NA'
-    LakeDataclasss['wamp'] = 'NA'
-    LakeDataclasss['maxQprod'] = 'NA'
-    LakeDataclasss['minflow'] = 'NA'
-    LakeDataclasss['obsflow'] = 'NA'
-    LakeDataclasss['prodpp'] = 'NA'
-    LakeDataclasss['prodsp'] = 'NA'
-    LakeDataclasss['Qmean'] = 'NA'
-    LakeDataclasss['tpmean'] = 'NA'
-    LakeDataclasss['tnmean'] = 'NA'
-    LakeDataclasss['tocmean'] = 'NA'
-    LakeDataclasss['limqprod'] = 'NA'
-    LakeDataclasss['sedon'] = 'NA'
-    LakeDataclasss['sedpp'] = 'NA'
-    LakeDataclasss['sedoc'] = 'NA'
-    LakeDataclasss['wprodn'] = 'NA'
-    LakeDataclasss['wprodp'] = 'NA'
-    LakeDataclasss['wprodc'] = 'NA'
-    LakeDataclasss['denitwl'] = 'NA'
-    LakeDataclasss['deeplake'] = 'NA'
-    LakeDataclasss['fastlake'] = 'NA'
-    LakeDataclasss['t2mix'] = 'NA'
+#    LakeDataclasss['qprod1'] = 'NA'
+#    LakeDataclasss['qprod2'] = 'NA'
+#    LakeDataclasss['datum1'] = 'NA'
+#    LakeDataclasss['datum2'] = 'NA'
+#    LakeDataclasss['qamp'] = 'NA'
+#    LakeDataclasss['qpha'] = 'NA'
+#    LakeDataclasss['regvol'] = 'NA'
+#    LakeDataclasss['wamp'] = 'NA'
+#    LakeDataclasss['maxQprod'] = 'NA'
+#    LakeDataclasss['minflow'] = 'NA'
+#    LakeDataclasss['obsflow'] = 'NA'
+#    LakeDataclasss['prodpp'] = 'NA'
+#    LakeDataclasss['prodsp'] = 'NA'
+#    LakeDataclasss['Qmean'] = 'NA'
+#    LakeDataclasss['tpmean'] = 'NA'
+#    LakeDataclasss['tnmean'] = 'NA'
+#    LakeDataclasss['tocmean'] = 'NA'
+#    LakeDataclasss['limqprod'] = 'NA'
+#    LakeDataclasss['sedon'] = 'NA'
+#    LakeDataclasss['sedpp'] = 'NA'
+#    LakeDataclasss['sedoc'] = 'NA'
+#    LakeDataclasss['wprodn'] = 'NA'
+#    LakeDataclasss['wprodp'] = 'NA'
+#    LakeDataclasss['wprodc'] = 'NA'
+#    LakeDataclasss['denitwl'] = 'NA'
+#    LakeDataclasss['deeplake'] = 'NA'
+#    LakeDataclasss['fastlake'] = 'NA'
+#    LakeDataclasss['t2mix'] = 'NA'
     kk = 1
     idxwater = -9
     for i in range(0,len(landuseinfo['LandID'])):
         if landuseinfo['Landuse'][i] == 'Water':
-            colname = 'slc_Water'
+#            colname = 'slc_Wate
 #            geodata[colname] = 0.0
             idxwater = i
         else:
@@ -323,6 +326,7 @@ def creatpdstructure(soilinfo,landuseinfo,catinfo):
                 landclass.loc[kk,'slc_ID'] = kk
                 landclass.loc[kk,'slc_nn'] = 'slc_' + str(kk)
                 landclass.loc[kk,'LandID'] = int(landuseinfo['LandID'][i])
+                landclass.loc[kk,'LandID_Model'] = int(landuseinfo['LandID_Model'][i])
                 landclass.loc[kk,'Soilid'] = int(soilinfo['Soilid'][j])
                 kk = kk + 1
     colname = 'slc_' + str(kk)
@@ -330,20 +334,23 @@ def creatpdstructure(soilinfo,landuseinfo,catinfo):
     landclass.loc[kk,'slc_ID'] = kk
     landclass.loc[kk,'slc_nn'] = 'slc_' + str(kk)
     landclass.loc[kk,'LandID'] = int(landuseinfo['LandID'][idxwater])
+    landclass.loc[kk,'LandID_Model'] = int(landuseinfo['LandID_Model'][idxwater])
     landclass.loc[kk,'Soilid'] = 1
     kk = kk + 1
     colname = 'slc_' + str(kk)
     geodata[colname] = 0.0
     landclass.loc[kk,'slc_ID'] = kk
     landclass.loc[kk,'slc_nn'] = 'slc_' + str(kk)
-    landclass.loc[kk,'LandID'] = int(landuseinfo['LandID'][idxwater])*100  #### incatchment lake
+    landclass.loc[kk,'LandID'] = int(max(landuseinfo['LandID_Model'].values))+1 #### incatchment lake
+    landclass.loc[kk,'LandID_Model'] = int(max(landuseinfo['LandID_Model'].values))+1
     landclass.loc[kk,'Soilid'] = 1
     kk = kk + 1
     colname = 'slc_' + str(kk)
     geodata[colname] = 0.0
     landclass.loc[kk,'slc_ID'] = kk
     landclass.loc[kk,'slc_nn'] = 'slc_' + str(kk)
-    landclass.loc[kk,'LandID'] = int(landuseinfo['LandID'][idxwater])*101   ### outcatchment lake
+    landclass.loc[kk,'LandID'] = int(max(landuseinfo['LandID_Model'].values))+2   ### outcatchment lake
+    landclass.loc[kk,'LandID_Model'] = int(max(landuseinfo['LandID_Model'].values))+2
     landclass.loc[kk,'Soilid'] = 1
 #    geodata['grwdown'] = 'NA'
 #    geodata['grwolake'] = 'NA'
@@ -381,47 +388,8 @@ def creatpdstructure(soilinfo,landuseinfo,catinfo):
     LakeDataclasss = LakeDataclasss.drop(['Drop'], axis=1)
     CropDataclass = CropDataclass.drop(['Drop'], axis=1)
     return geodata,landclass,LakeDataclasss,CropDataclass
-
-#########################start the program
-from arcpy import env
-from arcpy.sa import *
-import copy
-import sys
-import shutil
-import os
-import csv
-import csv
-from dbfpy import dbf
-import pandas as pd
-from shutil import copyfile
-import ConfigParser
-from simpledbf import Dbf5
-import numpy as np
-arcpy.env.overwriteOutput = True
-####### Required parameters
-countthreshold = 50
-#WorkFolder = 'C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/RoutingTool/Samples/Grand River Basin/'
-WorkFolder = 'C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/GrandRiverProject/Dataprocess/'
-InputsFolder =  WorkFolder + 'Project/'
-cellsize = 30
-maxsubnum = 500
-###################Read inputs
-Ourfolder =WorkFolder +  "HYPEINPUTS/"
-if not os.path.exists(Ourfolder):
-    os.makedirs(Ourfolder)
-tab = '\t'
-soilinfo = pd.read_csv(InputsFolder+"Soilinfo.csv",sep=",",low_memory=False)
-landuseinfo = pd.read_csv(InputsFolder+"Landuseinfo.csv",sep=",",low_memory=False)
-dbf2 = Dbf5(WorkFolder+ "finalcat_info.dbf")
-catinfo = dbf2.to_dataframe()
-dbf = Dbf5(InputsFolder+ "HRU_COMBINE.dbf")
-hrus = dbf.to_dataframe()
-
-########
-geodata,landclass,LakeDataclasss,CropDataclass = creatpdstructure(soilinfo,landuseinfo,catinfo)
-cats = np.unique(catinfo['SubId'].values)
-for i in range(0,len(cats)):
-    catid = cats[i]
+####################3
+def writegeodata(catid,i,geodata,hrus,landuseinfo,landclass,soilinfo):
     cathrus = hrus[hrus['CATCHMENTS'] == catid]
     icat = catinfo[catinfo['SubId'] == catid]
     geodata.loc[i,'area'] = icat['Area2'].values[0]/1000.0/1000.0
@@ -447,10 +415,12 @@ for i in range(0,len(cats)):
     catarea = sum(cathrus['COUNT'].values)*30*30/1000.0/1000.0
     cathrus = cathrus.sort_values(by=['COUNT'])
 
-##### Deal with lake first
+##### Deal with lake first   landclass water == water id
+    inlakeid = int(max(landuseinfo['LandID_Model'].values)) + 1
+    outlakeid = int(max(landuseinfo['LandID_Model'].values)) + 2
+    waterid = int(landuseinfo[landuseinfo['Landuse'] == 'Water']['LandID'].values[0])
     if icat['HyLakeId'].values[0] > 0:
-        waterid = landuseinfo[landuseinfo['Landuse'] == 'Water']['LandID'].values[0]
-        olakecolnam = landclass[landclass['LandID'] == waterid*101]['slc_nn'].values[0]
+        olakecolnam = landclass[landclass['LandID'] == outlakeid]['slc_nn'].values[0]
         geodata.loc[i,olakecolnam] = float(icat['LakeArea'].values[0])/catarea
         sumwt = sumwt + float(icat['LakeArea'].values[0])/catarea
 
@@ -534,18 +504,98 @@ for i in range(0,len(cats)):
     geodata.loc[i,'mrwet_part'] = 0.0
     geodata.loc[i,'buffer'] = 0.0
     geodata.loc[i,'petmodel'] = 0.0
+    return geodata
+##################################3
+def Defcat(out,outletid):
+    otsheds = np.full((1,1),outletid)
+    Shedid = np.full((10000000,1),-99999999999999999)
+    psid = 0
+    rout = copy.copy(out)
+    while len(otsheds) > 0:
+        noutshd = np.full((10000000,1),-999999999999999)
+        poshdid = 0
+        for i in range(0,len(otsheds)):
+            Shedid[psid] = otsheds[i]
+            psid = psid + 1
+            irow = np.argwhere(rout[:,1]==otsheds[i]).astype(int)
+            for j in range(0,len(irow)):
+                noutshd[poshdid] = rout[irow[j],0]
+                poshdid = poshdid + 1
+        noutshd = np.unique(noutshd)
+        otsheds = noutshd[noutshd>=0]
+    Shedid = Shedid[Shedid>=0]
+    Shedid,idx = np.unique(Shedid,return_index=True)
+    outshed = np.full((len(Shedid),2),-9)
+    outshed[:,0] = Shedid
+    outshed[:,1] = idx
+    outshed2 = outshed[outshed[:,1].argsort()[::-1]]
+#    print "!@#!@#@!#@!#@!#@!#@!#"
+#    print outshed2
+    return outshed2
+
+#########################start the program
+from arcpy import env
+from arcpy.sa import *
+import copy
+import sys
+import shutil
+import os
+import csv
+import csv
+from dbfpy import dbf
+import pandas as pd
+from shutil import copyfile
+import ConfigParser
+from simpledbf import Dbf5
+import numpy as np
+arcpy.env.overwriteOutput = True
+####### Required parameters
+countthreshold = 50
+#WorkFolder = 'C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/RoutingTool/Samples/Grand River Basin/'
+WorkFolder = 'C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/GrandRiverProject/Dataprocess/'
+InputsFolder =  WorkFolder + 'Project/'
+cellsize = 30
+maxsubnum = 500
+###################Read inputs
+Ourfolder =WorkFolder +  "HYPEINPUTS/"
+if not os.path.exists(Ourfolder):
+    os.makedirs(Ourfolder)
+tab = '\t'
+soilinfo = pd.read_csv(InputsFolder+"Soilinfo.csv",sep=",",low_memory=False)
+landuseinfo = pd.read_csv(InputsFolder+"Landuseinfo.csv",sep=",",low_memory=False)
+dbf2 = Dbf5(WorkFolder+ "finalcat_info.dbf")
+catinfo = dbf2.to_dataframe()
+dbf = Dbf5(InputsFolder+ "HRU_COMBINE.dbf")
+hrus = dbf.to_dataframe()
+routinfo = catinfo[['SubId','DowSubId']].values
+########
+geodata,landclass,LakeDataclasss,CropDataclass = creatpdstructure(soilinfo,landuseinfo,catinfo)
+cats = np.unique(catinfo['SubId'].values)
+outlets = np.unique(catinfo[catinfo['DowSubId'] == -1]['SubId'].values)### get all outlet ids
+for j in range(0,len(outlets)):
+    cats = Defcat(routinfo,outlets[0])  ### return sorted catchment id begin from head watershed
+    for i in range(0,len(cats)):
+        catid = cats[i,0]
+        geodata = writegeodata(catid,i,geodata,hrus,landuseinfo,landclass,soilinfo)
 geodata = geodata[geodata['subid'] != 'NA']
 landclass = landclass[landclass['slc_ID'] != 'NA']
+geodata.dropna(axis='columns')
 geodata.to_csv(Ourfolder+'GeoData.txt',sep='\t',index = None)
 geoclass = copy.copy(landclass)
 geoclass = geoclass.drop(['slc_nn','Drop'], axis=1)
 geoclassnew = GenerateGeoClass(geoclass,landuseinfo)
+geoclassnew=geoclassnew.drop(['LandID'], axis=1)
+geoclassnew.dropna(axis='columns')
 geoclassnew.to_csv(Ourfolder+'GeoClass.txt',sep='\t',index = None, header = None)
 LakeDataclasss = GenerateLakeClass(LakeDataclasss,catinfo)
 CropDataclass = GenerateCropclass(landuseinfo,CropDataclass)
+LakeDataclasss.replace(["NaN"], np.nan, inplace = True)
 LakeDataclasss = LakeDataclasss[LakeDataclasss['lakedataid'] != 'NA']
+LakeDataclasss.dropna(axis='columns')
+#print LakeDataclasss
 LakeDataclasss.to_csv(Ourfolder+'LakeData.txt',sep='\t',index = None)
 CropDataclass = CropDataclass[CropDataclass['cropid'] != 'NA']
+CropDataclass.dropna(axis='columns')
 CropDataclass.to_csv(Ourfolder+'CropData.txt',sep='\t',index = None)
 Generatepar(Ourfolder,soilinfo,landuseinfo)
 
