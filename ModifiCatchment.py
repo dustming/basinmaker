@@ -28,7 +28,7 @@ def Nextcell(N_dir,N_row,N_col):
         N_ncol = -9999
     return N_nrow,N_ncol
 
-##################################################################3  
+##################################################################3
 def Generaterivnetwork(hydir,cat,allsubinfo,fac,OutputFoldersub):
     flenriv = copy.copy(hydir)
     flenriv[:,:] = -9999   ##### generate empty river raster
@@ -49,7 +49,7 @@ def Generaterivnetwork(hydir,cat,allsubinfo,fac,OutputFoldersub):
                     continue
                 orow,ocol = Getbasinoutlet(in_FID,cat,fac)
                 nrow,ncol = Nextcell(hydir,orow,ocol)
-                rowcol = np.full((10000,2),-9999) ### creat two dimension array to store route form beginning to outlet of target catchment 
+                rowcol = np.full((10000,2),-9999) ### creat two dimension array to store route form beginning to outlet of target catchment
                 rowcol [0,0] = nrow
                 rowcol [0,1] = ncol
                 flen_k = 0
@@ -83,7 +83,7 @@ def Generaterivnetwork(hydir,cat,allsubinfo,fac,OutputFoldersub):
                 catacc[:,5] = (catacc[:,0] - catacc[:,3])*(catacc[:,0] - catacc[:,3]) + (catacc[:,1] - catacc[:,4])*(catacc[:,1] - catacc[:,4])
                 catacc = catacc[catacc[:,5].argsort()]
                 nrow,ncol = catacc[len(catacc) - 1,0],catacc[len(catacc) - 1,1]
-                rowcol = np.full((10000,2),-9999) ### creat two dimension array to store route form beginning to outlet of target catchment 
+                rowcol = np.full((10000,2),-9999) ### creat two dimension array to store route form beginning to outlet of target catchment
                 rowcol [0,0] = nrow
                 rowcol [0,1] = ncol
                 flen_k = 0
@@ -102,7 +102,7 @@ def Generaterivnetwork(hydir,cat,allsubinfo,fac,OutputFoldersub):
     return flenriv
 
 
-##################################################################3  
+##################################################################3
 
 def dbftocsv(filename,outname):
     if filename.endswith('.dbf'):
@@ -132,7 +132,7 @@ def Getbasinoutlet(ID,basin,fac):
     catacc = catacc[catacc[:,2].argsort()]
     return catacc[len(catrowcol)-1,0],catacc[len(catrowcol)-1,1]
 
-def writeraster(w_filname,nraster,dataset):   
+def writeraster(w_filname,nraster,dataset):
     orvh = open(w_filname,"w")
     ncols = arcpy.GetRasterProperties_management(dataset, "COLUMNCOUNT")
     nrows = arcpy.GetRasterProperties_management(dataset, "ROWCOUNT")
@@ -148,7 +148,7 @@ def writeraster(w_filname,nraster,dataset):
     f_handle = open(w_filname, 'a')
     np.savetxt(f_handle,nraster,fmt='%i')
     f_handle.close()
-    
+
 import numpy as np
 from scipy.optimize import curve_fit
 import arcpy
@@ -189,8 +189,9 @@ if infofile != "#":
             nstrRaster = Con(Raster(ocat) == tcatid,StreamRaster,Raster(OutputFolder + ostr))
         else:
             nstrRaster = Con(Raster(ocat) == tcatid,StreamRaster,nstrRaster)
- 
+
 nstrRaster.save( "nstr")
+nstrRaster.save( "str")
 copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"nstr.prj")
 arcpy.env.XYTolerance = cellSize
 arcpy.arcpy.env.cellSize = cellSize
@@ -229,11 +230,11 @@ copyfile( OutputFolder + "/"+"HyMask.prj" ,  OutputFolder + "/"+"nonConnect_Lake
 
 arcpy.env.XYTolerance = cellSize
 arcpy.arcpy.env.cellSize = cellSize
-arcpy.env.extent = arcpy.Describe( "dir").extent 
+arcpy.env.extent = arcpy.Describe( "dir").extent
 arcpy.env.snapRaster =  "dir"
 arcpy.RasterToASCII_conversion("nCat1", "hybasinfid.asc")
 arcpy.RasterToASCII_conversion(Strlink, 'strlink.asc')
-arcpy.RasterToASCII_conversion(StreamRaster, 'riv1.asc')
+arcpy.RasterToASCII_conversion(nstrRaster, 'riv1.asc')
 arcpy.DefineProjection_management("hybasinfid.asc", 4326)
 arcpy.DefineProjection_management('strlink.asc', 4326)
 arcpy.DefineProjection_management('riv1.asc', 4326)
@@ -247,6 +248,3 @@ arcpy.RasterToASCII_conversion( OutputFolder + "/"+ "noncnLake",  OutputFolder +
 arcpy.Delete_management(OutputFolder + "/" + "finalcat.asc")
 arcpy.Delete_management(OutputFolder + "/" + "finalcat.shp")
 arcpy.Delete_management(OutputFolder + "/" + "cat1")
-
-
-

@@ -1,3 +1,21 @@
+# Copyright 2018-2018 Ming Han - ming.han(at)uwaterloo.ca
+#
+# License
+# This file is part of Ming Han's personal code library.
+#
+# Ming Han's personal code library is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ming Han's personal code library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+
+# You should have received a copy of the GNU Lesser General Public License
+# along with Ming Han's personal code library.  If not, see <http://www.gnu.org/licenses/>.
+#
 def Maphru2forceply(forcingply,outfolder,catply,outFolderraven,Boundaryply,missrow,misscol):
     dbf1 = Dbf5(forcingply[:-3]+'dbf')
     Forcinfo = dbf1.to_dataframe()
@@ -37,10 +55,13 @@ def Maphru2forceply(forcingply,outfolder,catply,outFolderraven,Boundaryply,missr
     maparray = np.full((1000000,5),-9)
     imap = 0
     maxcatid = max(catids)
+#    arcpy.AddMessage(catids)
     for i in range(len(catids)):
+#        print i
         catid = catids[i]
         cats = Mapforcing.loc[Mapforcing['SubId'] == catid]
         cats = cats[cats['FGID'].isin(Avafgid)]
+#        print cats
         if len(cats) <= 0:
             cats = Mapforcing.loc[Mapforcing['SubId'] == catid]
             arcpy.AddMessage("Following Grid has to be inluded:.......")
@@ -49,10 +70,11 @@ def Maphru2forceply(forcingply,outfolder,catply,outFolderraven,Boundaryply,missr
         fids = cats['FGID'].values
         fids = np.unique(fids)
         sumwt = 0.0
-        print cats
+#        arcpy.AddMessage(cats)
         for j in range(len(fids)):
             scat = cats[cats['FGID'] == fids[j]]
-            print j,fids[j]
+#            arcpy.AddMessage(str(j) + str(fids[j]))
+#            arcpy.AddMessage(scat)
             if j < len(fids) - 1:
                 sarea = sum(scat['s_area'].values)
                 wt = float(sarea)/float(tarea)
@@ -61,16 +83,15 @@ def Maphru2forceply(forcingply,outfolder,catply,outFolderraven,Boundaryply,missr
                 wt = 1- sumwt
 #            arcpy.AddMessage(scat)
             if(len(scat['Row'].values) > 1):
-                arcpy.AddMessage(str(catid)+"error.......")
-            print scat
-            Strcellid = str(int(scat['Row'].values * (max(Forcinfo['Col'].values) + 1 +misscol) + scat['Col'].values)) + "      "
+                arcpy.AddMessage(str(catid)+"need check.......")
+            Strcellid = str(int(scat['Row'].values[0] * (max(Forcinfo['Col'].values) + 1 +misscol) + scat['Col'].values[0])) + "      "
                 ### str((ncrowcol[0,0] * ncncols + ncrowcol[0,1]))
             ogridforc.write("    "+str(int(catid)) + "     "+Strcellid+str(wt) +"\n")
             maparray[imap,0] = int(catid)
             maparray[imap,1] = int(Strcellid)
             maparray[imap,2] = wt
-            maparray[imap,3] = scat['Row'].values
-            maparray[imap,4] = scat['Col'].values
+            maparray[imap,3] = scat['Row'].values[0]
+            maparray[imap,4] = scat['Col'].values[0]
             imap = imap + 1
 #        arcpy.AddMessage(cats)
         if cats['IsLake'].values[0] > 0:
@@ -89,7 +110,7 @@ def Maphru2forceply(forcingply,outfolder,catply,outFolderraven,Boundaryply,missr
                     wt = 1- sumwt
 #            arcpy.AddMessage(scat)
                 if(len(scat['Row'].values) > 1):
-                    arcpy.AddMessage(str(catid)+"error......")
+                    arcpy.AddMessage(str(catid)+"need check......")
                 Strcellid = str(int(scat['Row'].values * (max(Forcinfo['Col'].values)+1 + misscol) + scat['Col'].values)) + "      "
                 ### str((ncrowcol[0,0] * ncncols + ncrowcol[0,1]))
                 ogridforc.write("    "+str(int(catid) + int(maxcatid)) + "     "+Strcellid+str(wt) +"\n")
@@ -265,6 +286,7 @@ maparray = Maphru2forceply(forcingply,outfolder,catply,WorkingFolder,Boundaryply
 
 #########Generate HYPE DAILY INPUTS
 varnames = ['PR0_SFC','FB_SFC','Tave','Tmin','Tmax']
+varnames = ['PR0_SFC','FB_SFC','Tave','Tmin','Tmax']
 outfilenm = ['Pobs.txt','Rnobs.txt','Tobs.txt','TMINobs.txt','TMAXobs.txt']
 unitscale = [1000,1,1,1,1]
 dbf1 = Dbf5(catply[:-3]+'dbf')
@@ -318,16 +340,3 @@ for ivar in range(0,len(varnames)):
     outdataday_var.loc[:,'date'] = outdataday_var.index[:].strftime('%Y-%m-%d')
     outdataday_var.to_csv(WorkingFolder+outfilenm[ivar],sep='\t',index = None)
 ncin.close()
-
-
-
-#        for itstep in range(0,len(nctime)):
-#            sumvalues = 0.00000000
-#            for m in range(0,len(imaparray)):
-#                mrow = int(imaparray[m,3])
-#                mcol = int(imaparray[m,4])
-#                mwt = imaparray[m,2]
-#                sumvalues = sumvalues + max(ncin.variables[varname][itstep,mrow,mcol],0)*mwt
-#            outdatahr_var.loc[datevar[itstep],str(catid)] =sumvalues
-#    outdatahr_var.to_csv(WorkingFolder+outfilenm[ivar],sep="    ")
-#daterange = pd.date_range(start=datevar[0], end=datevar[len(datevar) - 1],freq='H')

@@ -1,6 +1,55 @@
-
-
-
+def Generateobs(Ourfolder,obsinfo,catinfo,GRCAfolder,index,modelstart):
+    nulldata = np.full((len(index),1),np.nan)
+    temp = index.strftime('%Y-%m-%d %H:%M:%S')
+    outdata2 = pd.DataFrame(data=nulldata,columns=['temp'])
+    outdata2['inDate']= temp
+    outdata2['newidates'] = outdata2['inDate'].str.slice(0, 10) + "T"+outdata2['inDate'].str.slice(11, 13)+":00:00.000Z"
+    outdata2['date'] = outdata2['newidates']
+    mapksubid = np.full((100,3),-9999)
+    istart = str(index[0])[0:10]+'T'+str(index[0])[11:13]+":00:00.000Z"
+    iend = str(index[len(index)-1])[0:10]+'T'+str(index[len(index)-1])[11:13]+":00:00.000Z"
+    k = 0
+    maxrow = 0
+    for j in range(0,len(catinfo)):
+        if catinfo['IsObs'][j] < 0:
+            continue
+        else:
+            obsid = catinfo['IsObs'][j]
+        if obsid > len(obsinfo) -1:
+            continue
+        if obsinfo['station_no'][obsid] > 0: ### it is a GRCA obsrvation points
+            stnum = obsinfo['station_no'][obsid]
+            obsfile =GRCAfolder + 'QR_station_timeseries_' + str(int(stnum))+'.csv'
+            if not os.path.isfile(obsfile):
+                print "#######",int(catinfo['SubId'][j]),"    ",stnum,obsid,"not exists"
+                continue
+            dataly = pd.read_csv(obsfile,sep=";",low_memory=False,skiprows=2)
+            colnam = str(int(catinfo['SubId'][j]))
+            mask=dataly['#Timestamp'].isin(outdata2['newidates'])
+            dataly2 = dataly.loc[dataly.index[mask],:]
+            if len(dataly2) < 24*365:  ##### remove obse guage with small number of values
+                print "#######",int(catinfo['SubId'][j]),"    ",stnum,obsid,"removed due to limited # obsevation"
+                continue
+            mask2 = outdata2['newidates'].isin(dataly2['#Timestamp'])
+            outdata2.loc[outdata2.index[mask2],colnam] = dataly2['Value'].values
+            mapksubid[k,0] = k
+            mapksubid[k,1] = stnum
+            mapksubid[k,2] = int(catinfo['SubId'][j])
+            k=k+1
+    mapksubid = mapksubid[mapksubid[:,2] > 0,]
+    outdata2[outdata2<0] = np.nan
+    outdata2.to_csv(Ourfolder+"QGhourly.csv",sep=',')
+    outdata = pd.DataFrame(data=outdata2['newidates'].values,index=index,columns=['date'])
+    for i in range(0,len(mapksubid)):
+        outdata[str(int(mapksubid[i,2]))] = pd.to_numeric(outdata2[str(int(mapksubid[i,2]))]).values
+    outdataday = outdata.resample('D').mean()
+#    outdataday.loc[outdataday.values>0]=-9999
+#    print outdataday.head()
+    outdataday.to_csv(Ourfolder+"QGdaily.csv",sep=',')
+    outdataday.to_csv(Ourfolder+"Qobs.txt",sep='\t')
+    np.savetxt(Ourfolder+"sub&stnum.csv",mapksubid, delimiter=',')
+    print "end of generate Qobs.txt"
+#################################
 def GenerateGeoClass(geoclass,landuseinfo):
     geoclass['Main_cropid'] = 'NA'
     geoclass['Second_crop_id'] = 'NA'
@@ -144,13 +193,13 @@ def Generatepar(Outfolder,soilinfo,landuseinfo):
         mperc1 = mperc1 + str(round(soilinfo.ix[i]['KSAT']*24*10, 2)) + tab  # cm/h to mm/day
         mperc2 = mperc2 + str(round(soilinfo.ix[i]['KSAT']*24*10, 2)) + tab
         sfrost = sfrost + str(1.00)+tab
-        rrcs1 = rrcs1 + str(round(soilinfo.ix[i]['KSAT']*24*10/10, 2)) + tab
-        rrcs2 = rrcs2 + str(round(soilinfo.ix[i]['KSAT']*24*10/10, 2)) + tab
-        trrcs = trrcs + str(round(soilinfo.ix[i]['KSAT']*24*10/10, 2)) + tab
-        srrate = srrate + str(round(1, 2)) + tab
-        macrate = macrate + str(round(0, 2)) + tab
+        rrcs1 = rrcs1 + str(0.2)+ tab#str(round(soilinfo.ix[i]['KSAT']*24*10/10, 2)) + tab
+        rrcs2 = rrcs2 +str(0.002)+ tab #str(round(soilinfo.ix[i]['KSAT']*24*10/10, 2)) + tab
+        trrcs = trrcs + str(0.3)+ tab#str(round(soilinfo.ix[i]['KSAT']*24*10/10, 2)) + tab
+        srrate = srrate + str(0.2) + tab
+        macrate = macrate + str(0.1) + tab
         mactrinf = mactrinf + str(round(soilinfo.ix[i]['KSAT']*24*10/10, 2)) + tab
-        mactrsm = mactrsm + str(round(0, 2)) + tab
+        mactrsm = mactrsm + str(0.5) + tab
 
     wcfc = wcfc + '\n'
     wcwp = wcwp + '\n'
@@ -165,7 +214,6 @@ def Generatepar(Outfolder,soilinfo,landuseinfo):
     macrate = macrate + '\n'
     mactrinf = mactrinf +'\n'
     mactrsm = mactrsm + '\n'
-
     opar.write(wcfc)
     opar.write(wcwp)
     opar.write(wcep)
@@ -182,20 +230,24 @@ def Generatepar(Outfolder,soilinfo,landuseinfo):
 ############landuse dependent paramters
     cmlt = 'cmlt'  + tab ## melting factor
     ttmp = 'ttmp' + tab
+    cevp = 'cevp' + tab
     frost = 'frost' + tab
     srrcs = 'srrcs' + tab
     for i in range(0,len(landuseinfo)+2):
         cmlt = cmlt + str(3.00) + tab
-        ttmp = ttmp + str(0.00) + tab
+        ttmp = ttmp + str(0.10) + tab
+        cevp = cevp + str(0.02) + tab
         frost = frost + str(1.00) + tab
-        srrcs = srrcs + str(0.8) + tab
+        srrcs = srrcs + str(0.1) + tab
     cmlt = cmlt +  '\n'
     ttmp = ttmp +  '\n'
+    cevp = cevp + '\n'
     frost = frost + '\n'
     srrcs = srrcs + '\n'
     opar.write(cmlt)
     opar.write(ttmp)
     opar.write(srrcs)
+    opar.write(cevp)
 #    opar.write(frost)
 
 ##########General paramters
@@ -206,10 +258,12 @@ def Generatepar(Outfolder,soilinfo,landuseinfo):
     gratk = 'gratk' + tab + str(1.00) + '\n'
     grata = 'grata' + tab + str(0.00) + '\n'
     gratp = 'gratp' + tab + str(1.00) + '\n'
-    rivvel = 'rivvel' + tab + str(1.00) + '\n'
+    rivvel = 'rivvel' + tab + str(0.50) + '\n'
     damp = 'damp' + tab + str(0.20) + '\n'
     gldepi = 'gldepi' + tab + str(5.00) + '\n'
-    rivvel = 'rivvel' + tab + str(1.00) + '\n'
+    lp = 'lp' + tab + str(0.8) + '\n'
+    sdnsnew = 'sdnsnew' + tab + str(0.1) + '\n'
+    cevpcorr = 'cevpcorr' + tab + str(0) + '\n'
     opar.write(ttpi)
     opar.write(ttpd)
     opar.write(rrcs3)
@@ -220,8 +274,9 @@ def Generatepar(Outfolder,soilinfo,landuseinfo):
     opar.write(rivvel)
     opar.write(damp)
     opar.write(gldepi)
-    opar.write(damp)
-    opar.write(damp)
+    opar.write(sdnsnew)
+    opar.write(lp)
+    opar.write(cevpcorr)
     opar.close()
 # In[170]:
 
@@ -392,7 +447,7 @@ def creatpdstructure(soilinfo,landuseinfo,catinfo):
 def writegeodata(catid,i,geodata,hrus,landuseinfo,landclass,soilinfo):
     cathrus = hrus[hrus['CATCHMENTS'] == catid]
     icat = catinfo[catinfo['SubId'] == catid]
-    geodata.loc[i,'area'] = icat['Area2'].values[0]/1000.0/1000.0
+    geodata.loc[i,'area'] = icat['Area2'].values[0]
     geodata.loc[i,'subid'] = catid
     geodata.loc[i,'maindown'] = icat['DowSubId'].values[0]
     geodata.loc[i,'latitude'] = icat['INSIDE_Y'].values[0]
@@ -411,7 +466,7 @@ def writegeodata(catid,i,geodata,hrus,landuseinfo,landclass,soilinfo):
     wetlandarea = 0.0
     forestarea = 0.0
     sumwt = 0.0
-    geodata.loc[i,'area'] = sum(cathrus['COUNT'].values)*30*30/1000.0/1000.0
+    geodata.loc[i,'area'] = sum(cathrus['COUNT'].values)*30*30
     catarea = sum(cathrus['COUNT'].values)*30*30/1000.0/1000.0
     cathrus = cathrus.sort_values(by=['COUNT'])
 
@@ -548,12 +603,15 @@ from shutil import copyfile
 import ConfigParser
 from simpledbf import Dbf5
 import numpy as np
+from datetime import datetime,timedelta
 arcpy.env.overwriteOutput = True
 ####### Required parameters
 countthreshold = 50
 #WorkFolder = 'C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/RoutingTool/Samples/Grand River Basin/'
 WorkFolder = 'C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/GrandRiverProject/Dataprocess/'
 InputsFolder =  WorkFolder + 'Project/'
+obsshp = 'C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/GrandRiverProject/Data/Obspoint/Obsfinal_infof_inmodel_f.shp'
+GRCAfolder = 'C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/GrandRiverProject/Data/GRIN/QR/'
 cellsize = 30
 maxsubnum = 500
 ###################Read inputs
@@ -568,7 +626,13 @@ catinfo = dbf2.to_dataframe()
 dbf = Dbf5(InputsFolder+ "HRU_COMBINE.dbf")
 hrus = dbf.to_dataframe()
 routinfo = catinfo[['SubId','DowSubId']].values
+dbf2 = Dbf5(obsshp[:-3]+'dbf')
+obsinfo = dbf2.to_dataframe()
+modelstart ='2010-01-01'
+enddate = '2015-01-01'
+index = pd.date_range(modelstart, enddate,freq='H')
 ########
+Generateobs(Ourfolder,obsinfo,catinfo,GRCAfolder,index,modelstart)
 geodata,landclass,LakeDataclasss,CropDataclass = creatpdstructure(soilinfo,landuseinfo,catinfo)
 cats = np.unique(catinfo['SubId'].values)
 outlets = np.unique(catinfo[catinfo['DowSubId'] == -1]['SubId'].values)### get all outlet ids
@@ -598,5 +662,5 @@ CropDataclass = CropDataclass[CropDataclass['cropid'] != 'NA']
 CropDataclass.dropna(axis='columns')
 CropDataclass.to_csv(Ourfolder+'CropData.txt',sep='\t',index = None)
 Generatepar(Ourfolder,soilinfo,landuseinfo)
-
+#Generateobs(Ourfolder,obsinfo,catinfo,GRCAfolder,index,modelstart)
 # In[158]:
