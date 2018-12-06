@@ -1,25 +1,27 @@
-def Generateobs(Ourfolder,obsinfo,catinfo,GRCAfolder,index,modelstart):
+def Generateobs(Ourfolder,obsinfo,catinfo,GRCAfolder,index,modelstart,lakeobsinfo):
     nulldata = np.full((len(index),1),np.nan)
     temp = index.strftime('%Y-%m-%d %H:%M:%S')
     outdata2 = pd.DataFrame(data=nulldata,columns=['temp'])
     outdata2['inDate']= temp
     outdata2['newidates'] = outdata2['inDate'].str.slice(0, 10) + "T"+outdata2['inDate'].str.slice(11, 13)+":00:00.000Z"
     outdata2['date'] = outdata2['newidates']
+    Lakein = outdata2.copy()
     mapksubid = np.full((100,3),-9999)
     istart = str(index[0])[0:10]+'T'+str(index[0])[11:13]+":00:00.000Z"
     iend = str(index[len(index)-1])[0:10]+'T'+str(index[len(index)-1])[11:13]+":00:00.000Z"
     k = 0
     maxrow = 0
     for j in range(0,len(catinfo)):
-        if catinfo['IsObs'][j] < 0:
+        if catinfo['IsObs'][j] < 0 and catinfo['IsLake'].values[j] < 0:
+            obsid = -9999
             continue
         else:
             obsid = catinfo['IsObs'][j]
-        if obsid > len(obsinfo) -1:
-            continue
-        if obsinfo['station_no'][obsid] > 0: ### it is a GRCA obsrvation points
+        if obsid > 0 and catinfo['IsLake'].values[j] < 0: ### it is a GRCA obsrvation points
+            if obsid > len(obsinfo) -1:
+                continue
             stnum = obsinfo['station_no'][obsid]
-            obsfile =GRCAfolder + 'QR_station_timeseries_' + str(int(stnum))+'.csv'
+            obsfile =GRCAfolder + 'QR/' + 'QR_station_timeseries_' + str(int(stnum))+'.csv'
             if not os.path.isfile(obsfile):
                 print "#######",int(catinfo['SubId'][j]),"    ",stnum,obsid,"not exists"
                 continue
@@ -36,17 +38,54 @@ def Generateobs(Ourfolder,obsinfo,catinfo,GRCAfolder,index,modelstart):
             mapksubid[k,1] = stnum
             mapksubid[k,2] = int(catinfo['SubId'][j])
             k=k+1
+        elif catinfo['IsLake'][j] > 0:
+            hylakeid = int(catinfo['HyLakeId'][j])
+            ilkobs = lakeobsinfo.loc[lakeobsinfo['HyLakeid'] == hylakeid,]
+            if len(ilkobs) <= 0:
+                print "#######Lake",int(catinfo['SubId'][j]),"    ",hylakeid,"obs not exists"
+                continue
+            stnum = int(ilkobs['obsstid'].values[0])
+            obsfile =GRCAfolder + 'QI/' + 'QI_station_timeseries_' + str(int(stnum))+'.csv'
+            if not os.path.isfile(obsfile):
+                print "#######Lake",int(catinfo['SubId'][j]),"    ",hylakeid,"obs not exists"
+                continue
+            dataly = pd.read_csv(obsfile,sep=";",low_memory=False,skiprows=2)
+            colnam = str(int(catinfo['SubId'][j]))
+            mask=dataly['#Timestamp'].isin(Lakein['newidates'])
+            dataly2 = dataly.loc[dataly.index[mask],:]
+            mask2 = Lakein['newidates'].isin(dataly2['#Timestamp'])
+            Lakein.loc[Lakein.index[mask2],colnam] = dataly2['Value'].values
+###################3
+            obsfile =GRCAfolder + 'QT/' + 'QT_station_timeseries_' + str(int(stnum))+'.csv'
+            if not os.path.isfile(obsfile):
+                print "#######",int(catinfo['SubId'][j]),"    ",stnum,obsid,"not exists"
+                continue
+            dataly = pd.read_csv(obsfile,sep=";",low_memory=False,skiprows=2)
+            colnam = str(int(catinfo['SubId'][j]))
+            mask=dataly['#Timestamp'].isin(outdata2['newidates'])
+            dataly2 = dataly.loc[dataly.index[mask],:]
+            mask2 = outdata2['newidates'].isin(dataly2['#Timestamp'])
+            outdata2.loc[outdata2.index[mask2],colnam] = dataly2['Value'].values
+            mapksubid[k,0] = k
+            mapksubid[k,1] = stnum
+            mapksubid[k,2] = int(catinfo['SubId'][j])
+            k=k+1
+################################################################
     mapksubid = mapksubid[mapksubid[:,2] > 0,]
     outdata2[outdata2<0] = np.nan
+    Lakein[Lakein<0] = np.nan
     outdata2.to_csv(Ourfolder+"QGhourly.csv",sep=',')
     outdata = pd.DataFrame(data=outdata2['newidates'].values,index=index,columns=['date'])
     for i in range(0,len(mapksubid)):
         outdata[str(int(mapksubid[i,2]))] = pd.to_numeric(outdata2[str(int(mapksubid[i,2]))]).values
+    Lakein.index = index
     outdataday = outdata.resample('D').mean()
+    Lakeinday = Lakein.resample('D').mean()
 #    outdataday.loc[outdataday.values>0]=-9999
 #    print outdataday.head()
     outdataday.to_csv(Ourfolder+"QGdaily.csv",sep=',')
     outdataday.to_csv(Ourfolder+"Qobs.txt",sep='\t')
+    Lakeinday.to_csv(Ourfolder+"Lakeinobs.txt",sep='\t')
     np.savetxt(Ourfolder+"sub&stnum.csv",mapksubid, delimiter=',')
     print "end of generate Qobs.txt"
 #################################
@@ -74,9 +113,9 @@ def GenerateGeoClass(geoclass,landuseinfo):
             geoclass.loc[idx,'Main_cropid'] = 0
             geoclass.loc[idx,'Veg_type'] = 3
             if landid == inlakeid:
-                geoclass.loc[idx,'Spec_Code'] = 1
-            else:
                 geoclass.loc[idx,'Spec_Code'] = 2
+            else:
+                geoclass.loc[idx,'Spec_Code'] = 1
             geoclass.loc[idx,'LandID'] = waterid
             geoclass.loc[idx,'Second_crop_id'] = 0
             geoclass.loc[idx,'Crop_rotation'] = 0
@@ -127,10 +166,18 @@ def GenerateLakeClass(LakeDataclasss,catinfo):
         LakeDataclasss.loc[idx,'lakeid'] =  0
         LakeDataclasss.loc[idx,'ldtype'] =  1
         LakeDataclasss.loc[idx,'lake_depth'] =  icat['LakeDepth'].values[0]
-        LakeDataclasss.loc[idx,'area'] =  icat['LakeArea'].values[0]
-        LakeDataclasss.loc[idx,'w0ref'] =  icat['LakeDepth'].values[0]
+        LakeDataclasss.loc[idx,'area'] =  icat['LakeArea'].values[0]*1000*1000
+        LakeDataclasss.loc[idx,'w0ref'] =  0 #icat['LakeDepth'].values[0]
         LakeDataclasss.loc[idx,'rate'] =  1
         LakeDataclasss.loc[idx,'exp'] =  1
+        LakeDataclasss.loc[idx,'deltaw0'] = 0.0
+        LakeDataclasss.loc[idx,'qprod1'] = 1
+        LakeDataclasss.loc[idx,'qprod2'] = 10
+        LakeDataclasss.loc[idx,'datum1'] = '0225'
+        LakeDataclasss.loc[idx,'datum2'] = '0601'
+#       LakeDataclasss['qamp'] = 'NA'
+#        LakeDataclasss['qpha'] = 'NA'
+        LakeDataclasss.loc[idx,'regvol'] = icat['LakeDepth'].values[0]*icat['LakeArea'].values[0]*1000*1000*0.8
         idx = idx +1
 #        LakeDataclasss['qprod1'] =  1    #m3/s
 #        LakeDataclasss['qprod2'] =  100   #m3/s
@@ -337,14 +384,14 @@ def creatpdstructure(soilinfo,landuseinfo,catinfo):
     LakeDataclasss['w0ref'] = 'NA'
     LakeDataclasss['rate'] = 'NA'
     LakeDataclasss['exp'] = 'NA'
-#    LakeDataclasss['deltaw0'] = 'NA'
-#    LakeDataclasss['qprod1'] = 'NA'
-#    LakeDataclasss['qprod2'] = 'NA'
-#    LakeDataclasss['datum1'] = 'NA'
-#    LakeDataclasss['datum2'] = 'NA'
+    LakeDataclasss['deltaw0'] = 'NA'
+    LakeDataclasss['qprod1'] = 'NA'
+    LakeDataclasss['qprod2'] = 'NA'
+    LakeDataclasss['datum1'] = 'NA'
+    LakeDataclasss['datum2'] = 'NA'
 #    LakeDataclasss['qamp'] = 'NA'
 #    LakeDataclasss['qpha'] = 'NA'
-#    LakeDataclasss['regvol'] = 'NA'
+    LakeDataclasss['regvol'] = 'NA'
 #    LakeDataclasss['wamp'] = 'NA'
 #    LakeDataclasss['maxQprod'] = 'NA'
 #    LakeDataclasss['minflow'] = 'NA'
@@ -447,7 +494,7 @@ def creatpdstructure(soilinfo,landuseinfo,catinfo):
 def writegeodata(catid,i,geodata,hrus,landuseinfo,landclass,soilinfo):
     cathrus = hrus[hrus['CATCHMENTS'] == catid]
     icat = catinfo[catinfo['SubId'] == catid]
-    geodata.loc[i,'area'] = icat['Area2'].values[0]
+    geodata.loc[i,'area'] = sum(cathrus['COUNT'].values)*30*30
     geodata.loc[i,'subid'] = catid
     geodata.loc[i,'maindown'] = icat['DowSubId'].values[0]
     geodata.loc[i,'latitude'] = icat['INSIDE_Y'].values[0]
@@ -611,7 +658,7 @@ countthreshold = 50
 WorkFolder = 'C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/GrandRiverProject/Dataprocess/'
 InputsFolder =  WorkFolder + 'Project/'
 obsshp = 'C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/GrandRiverProject/Data/Obspoint/Obsfinal_infof_inmodel_f.shp'
-GRCAfolder = 'C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/GrandRiverProject/Data/GRIN/QR/'
+GRCAfolder = 'C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/GrandRiverProject/Data/GRIN/'
 cellsize = 30
 maxsubnum = 500
 ###################Read inputs
@@ -631,16 +678,24 @@ obsinfo = dbf2.to_dataframe()
 modelstart ='2010-01-01'
 enddate = '2015-01-01'
 index = pd.date_range(modelstart, enddate,freq='H')
+lakeobsinfo = pd.read_csv(InputsFolder+"Lakeobs.csv",sep=",",low_memory=False)
 ########
-Generateobs(Ourfolder,obsinfo,catinfo,GRCAfolder,index,modelstart)
+#Generateobs(Ourfolder,obsinfo,catinfo,GRCAfolder,index,modelstart,lakeobsinfo)
 geodata,landclass,LakeDataclasss,CropDataclass = creatpdstructure(soilinfo,landuseinfo,catinfo)
 cats = np.unique(catinfo['SubId'].values)
 outlets = np.unique(catinfo[catinfo['DowSubId'] == -1]['SubId'].values)### get all outlet ids
+Outregion = pd.DataFrame(np.full(len(outlets),1000),columns=['outregid'])
+#print catinfo
 for j in range(0,len(outlets)):
     cats = Defcat(routinfo,outlets[0])  ### return sorted catchment id begin from head watershed
+    Outregion.loc[j,'outregid'] = 100000 + j
     for i in range(0,len(cats)):
         catid = cats[i,0]
         geodata = writegeodata(catid,i,geodata,hrus,landuseinfo,landclass,soilinfo)
+        clonam1 = 'subid_' + str(int(catid))
+        Outregion.loc[j,clonam1] = str(int(catid))
+        clonam1 = 'weight_' + str(int(catid))
+        Outregion.loc[j,clonam1] = catinfo.loc[catinfo['SubId'] ==catid,]['Area2'].values[0]/float(sum(catinfo['Area2'].values))
 geodata = geodata[geodata['subid'] != 'NA']
 landclass = landclass[landclass['slc_ID'] != 'NA']
 geodata.dropna(axis='columns')
@@ -661,6 +716,7 @@ LakeDataclasss.to_csv(Ourfolder+'LakeData.txt',sep='\t',index = None)
 CropDataclass = CropDataclass[CropDataclass['cropid'] != 'NA']
 CropDataclass.dropna(axis='columns')
 CropDataclass.to_csv(Ourfolder+'CropData.txt',sep='\t',index = None)
+Outregion.to_csv(Ourfolder+'Outregions.txt',sep='\t',index = None)
 Generatepar(Ourfolder,soilinfo,landuseinfo)
 #Generateobs(Ourfolder,obsinfo,catinfo,GRCAfolder,index,modelstart)
 # In[158]:
