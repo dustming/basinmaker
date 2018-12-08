@@ -275,7 +275,7 @@ os.chdir(WorkingFolder)
 outfolder = WorkingFolder
 
 ncfile = ncfilename
-#Generatencply(ncfile,thre,clusTol,WorkingFolder)
+Generatencply(ncfile,thre,clusTol,WorkingFolder)
 forcingply =  WorkingFolder + "Gridncply.shp"
 forcinggrid = "#"
 Boundaryply = "#"
