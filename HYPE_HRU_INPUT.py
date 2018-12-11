@@ -116,7 +116,7 @@ def GenerateGeoClass(geoclass,landuseinfo):
                 geoclass.loc[idx,'Spec_Code'] = 2
             else:
                 geoclass.loc[idx,'Spec_Code'] = 1
-            geoclass.loc[idx,'LandID'] = waterid
+            geoclass.loc[idx,'LandID'] = int(waterid)
             geoclass.loc[idx,'Second_crop_id'] = 0
             geoclass.loc[idx,'Crop_rotation'] = 0
             geoclass.loc[idx,'Num_Soil_Layer'] = 1
@@ -162,7 +162,7 @@ def GenerateLakeClass(LakeDataclasss,catinfo):
         icat = catinfo[catinfo['SubId'] == catid]
         if icat['IsLake'].values[0] < 0:
             continue
-        LakeDataclasss.loc[idx,'lakedataid'] =  icat['HyLakeId'].values[0]
+        LakeDataclasss.loc[idx,'lakedataid'] =  int(icat['HyLakeId'].values[0])
         LakeDataclasss.loc[idx,'lakeid'] =  0
         LakeDataclasss.loc[idx,'ldtype'] =  1
         LakeDataclasss.loc[idx,'lake_depth'] =  icat['LakeDepth'].values[0]
@@ -191,7 +191,7 @@ def GenerateCropclass(landuseinfo,CropDataclass):
         if landuseinfo['Landuse'].values[i] == 'Water' or landuseinfo['Landuse'].values[i] == 'Urban':
             continue
         else:
-            CropDataclass.loc[idx,'cropid'] = landuseinfo['LandID'].values[i]
+            CropDataclass.loc[idx,'cropid'] = int(landuseinfo['LandID'].values[i])
             CropDataclass.loc[idx,'reg'] = 1
             CropDataclass.loc[idx,'fn1'] = 9
             CropDataclass.loc[idx,'fp1'] = 9
@@ -454,7 +454,7 @@ def creatpdstructure(soilinfo,landuseinfo,catinfo):
     landclass.loc[kk,'LandID'] = int(max(landuseinfo['LandID_Model'].values))+2   ### outcatchment lake
     landclass.loc[kk,'LandID_Model'] = int(max(landuseinfo['LandID_Model'].values))+2
     landclass.loc[kk,'Soilid'] = 1
-#    geodata['grwdown'] = 'NA'
+    geodata['grwdown'] = 'NA'
 #    geodata['grwolake'] = 'NA'
     geodata['grwolake'] = 'NA'
     geodata['loc_tp'] = 'NA'
@@ -495,8 +495,8 @@ def writegeodata(catid,i,geodata,hrus,landuseinfo,landclass,soilinfo):
     cathrus = hrus[hrus['CATCHMENTS'] == catid]
     icat = catinfo[catinfo['SubId'] == catid]
     geodata.loc[i,'area'] = sum(cathrus['COUNT'].values)*30*30
-    geodata.loc[i,'subid'] = catid
-    geodata.loc[i,'maindown'] = icat['DowSubId'].values[0]
+    geodata.loc[i,'subid'] = int(catid)
+    geodata.loc[i,'maindown'] = int(icat['DowSubId'].values[0])
     geodata.loc[i,'latitude'] = icat['INSIDE_Y'].values[0]
     geodata.loc[i,'region'] = 1
     geodata.loc[i,'parreg'] = 1
@@ -506,7 +506,7 @@ def writegeodata(catid,i,geodata,hrus,landuseinfo,landclass,soilinfo):
     geodata.loc[i,'olregion'] = 1
     geodata.loc[i,'elev_mean'] = icat['MeanElev'].values[0]
     geodata.loc[i,'slope_mean'] = icat['BasinSlope'].values[0]
-    geodata.loc[i,'lakedataid'] = max(0,icat['HyLakeId'].values[0])
+    geodata.loc[i,'lakedataid'] = int(max(0,icat['HyLakeId'].values[0]))
     geodata.loc[i,'rivlen'] = max(0,icat['Rivlen'].values[0])
     waterhruarea = 0.0
     otherarea = 0.0
@@ -575,37 +575,37 @@ def writegeodata(catid,i,geodata,hrus,landuseinfo,landclass,soilinfo):
         waterid = landuseinfo[landuseinfo['Landuse'] == 'Water']['LandID'].values[0]
         colname= landclass[landclass['LandID'] == waterid]['slc_nn'].values[0]
         geodata.loc[i,colname] = 1 - sumwt
-    geodata.loc[i,'grwdown'] = 0.0
-    geodata.loc[i,'grwolake'] = 0.0
-    geodata.loc[i,'loc_tp'] = 0.0
-    geodata.loc[i,'loc_tn'] = 0.0
-    geodata.loc[i,'loc_vol'] = 0.0
-    geodata.loc[i,'loc_sp'] = 0.0
-    geodata.loc[i,'loc_in'] = 0.0
-    geodata.loc[i,'wetdep_n'] = 0.0
-    geodata.loc[i,'drydep_n1'] = 0.0
-    geodata.loc[i,'drydep_n2'] = 0.0
-    geodata.loc[i,'drydep_n3'] = 0.0
-    geodata.loc[i,'deploadn1'] = 0.0
-    geodata.loc[i,'deploadn2'] = 0.0
-    geodata.loc[i,'deploadn3'] = 0.0
-    geodata.loc[i,'deploadn4'] = 0.0
-    geodata.loc[i,'deploadn5'] = 0.0
-    geodata.loc[i,'deploadn6'] = 0.0
-    geodata.loc[i,'deploadn7'] = 0.0
-    geodata.loc[i,'deploadn8'] = 0.0
-    geodata.loc[i,'deploadn9'] = 0.0
-    geodata.loc[i,'deploadn10'] = 0.0
-    geodata.loc[i,'deploadn11'] = 0.0
-    geodata.loc[i,'deploadn12'] = 0.0
-    geodata.loc[i,'lrwet_area'] = 0.0
-    geodata.loc[i,'mrwet_area'] = 0.0
-    geodata.loc[i,'lrwet_dep'] = 0.0
-    geodata.loc[i,'mrwet_dep'] = 0.0
-    geodata.loc[i,'lrwet_part'] = 0.0
-    geodata.loc[i,'mrwet_part'] = 0.0
-    geodata.loc[i,'buffer'] = 0.0
-    geodata.loc[i,'petmodel'] = 0.0
+    geodata.loc[i,'grwdown'] = 0
+    geodata.loc[i,'grwolake'] = 0
+    geodata.loc[i,'loc_tp'] = 0
+    geodata.loc[i,'loc_tn'] = 0
+    geodata.loc[i,'loc_vol'] = 0
+    geodata.loc[i,'loc_sp'] = 0
+    geodata.loc[i,'loc_in'] = 0
+    geodata.loc[i,'wetdep_n'] = 0
+    geodata.loc[i,'drydep_n1'] = 0
+    geodata.loc[i,'drydep_n2'] = 0
+    geodata.loc[i,'drydep_n3'] = 0
+    geodata.loc[i,'deploadn1'] = 0
+    geodata.loc[i,'deploadn2'] = 0
+    geodata.loc[i,'deploadn3'] = 0
+    geodata.loc[i,'deploadn4'] = 0
+    geodata.loc[i,'deploadn5'] = 0
+    geodata.loc[i,'deploadn6'] = 0
+    geodata.loc[i,'deploadn7'] = 0
+    geodata.loc[i,'deploadn8'] = 0
+    geodata.loc[i,'deploadn9'] = 0
+    geodata.loc[i,'deploadn10'] = 0
+    geodata.loc[i,'deploadn11'] = 0
+    geodata.loc[i,'deploadn12'] = 0
+    geodata.loc[i,'lrwet_area'] = 0
+    geodata.loc[i,'mrwet_area'] = 0
+    geodata.loc[i,'lrwet_dep'] = 0
+    geodata.loc[i,'mrwet_dep'] = 0
+    geodata.loc[i,'lrwet_part'] = 0
+    geodata.loc[i,'mrwet_part'] = 0
+    geodata.loc[i,'buffer'] = 0
+    geodata.loc[i,'petmodel'] = 0
     return geodata
 ##################################3
 def Defcat(out,outletid):
@@ -688,7 +688,7 @@ Outregion = pd.DataFrame(np.full(len(outlets),1000),columns=['outregid'])
 #print catinfo
 for j in range(0,len(outlets)):
     cats = Defcat(routinfo,outlets[0])  ### return sorted catchment id begin from head watershed
-    Outregion.loc[j,'outregid'] = 100000 + j
+    Outregion.loc[j,'outregid'] = int(int(100000 + j))
     for i in range(0,len(cats)):
         catid = cats[i,0]
         geodata = writegeodata(catid,i,geodata,hrus,landuseinfo,landclass,soilinfo)
