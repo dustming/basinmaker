@@ -280,21 +280,25 @@ def Generatepar(Outfolder,soilinfo,landuseinfo):
     cevp = 'cevp' + tab
     frost = 'frost' + tab
     srrcs = 'srrcs' + tab
+    kc = 'kc' + tab
     for i in range(0,len(landuseinfo)+2):
         cmlt = cmlt + str(3.00) + tab
         ttmp = ttmp + str(0.10) + tab
         cevp = cevp + str(0.02) + tab
         frost = frost + str(1.00) + tab
         srrcs = srrcs + str(0.1) + tab
+        kc = kc + str(1.0) + tab
     cmlt = cmlt +  '\n'
     ttmp = ttmp +  '\n'
     cevp = cevp + '\n'
     frost = frost + '\n'
     srrcs = srrcs + '\n'
+    kc = kc + '\n'
     opar.write(cmlt)
     opar.write(ttmp)
     opar.write(srrcs)
     opar.write(cevp)
+    opar.write(kc)
 #    opar.write(frost)
 
 ##########General paramters
@@ -605,7 +609,7 @@ def writegeodata(catid,i,geodata,hrus,landuseinfo,landclass,soilinfo):
     geodata.loc[i,'lrwet_part'] = 0
     geodata.loc[i,'mrwet_part'] = 0
     geodata.loc[i,'buffer'] = 0
-    geodata.loc[i,'petmodel'] = 0
+    geodata.loc[i,'petmodel'] = 5
     return geodata
 ##################################3
 def Defcat(out,outletid):
