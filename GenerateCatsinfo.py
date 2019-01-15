@@ -616,6 +616,10 @@ def Getcatrivlenslope(catrow,catcol,rivlen,dem,fac,hydir,finalcat,trow,tcol,nrow
                     nrow,ncol = Nextcell(hydir,int(trow),int(tcol))
                     print "warning : check river system for catchment: ",finalcat[trow,tcol],rivs,icell,len(catrow),nrow,ncol,trow,tcol
                     nrow,ncol = 0,0
+                if nrow >= nrows or ncol >= ncols:
+                    arcpy.AddMessage("out of the boundary")
+                    break                
+
             rivtemp = rivtemp[rivtemp[:,0]>0,]
             if icell > 0:
                 icell = min(icell,len(rivtemp))
@@ -654,6 +658,9 @@ def Getcatrivlenslope(catrow,catcol,rivlen,dem,fac,hydir,finalcat,trow,tcol,nrow
                     nrow,ncol = Nextcell(hydir,int(trow),int(tcol))
                     print "warning : check river system for catchment: ",finalcat[trow,tcol],rivs,icell,len(catrow),nrow,ncol,trow,tcol
                     nrow,ncol = 0,0
+                if nrow >= nrows or ncol >= ncols:
+                    arcpy.AddMessage("out of the boundary")
+                    break 
             rivtemp2 = rivtemp2[rivtemp2[:,0]>0,]
             if icell > 0:
                 icell = min(icell,len(rivtemp2))
