@@ -262,6 +262,7 @@ arcpy.CheckOutExtension("Spatial")
 WorkingFolder = sys.argv[1]
 ncfilename = sys.argv[2]
 catply = sys.argv[3]
+ascinput  = -1
 ############### Change the input in this section
 #WorkingFolder = 'C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/GrandRiverProject/RDRS'
 #ncfilename = 'RDRS_CaPA24hr_forcings_final.nc'
@@ -283,6 +284,9 @@ missrow = 0
 misscol= 0
 
 maparray = Maphru2forceply(forcingply,outfolder,catply,WorkingFolder,Boundaryply,missrow,misscol)
+
+#if ascinput < 0:
+#    exit()
 
 #########Generate HYPE DAILY INPUTS
 varnames = ['PR0_SFC','FB_SFC','Tave','Tmin','Tmax']

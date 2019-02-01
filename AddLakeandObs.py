@@ -549,6 +549,11 @@ def CE_mcat4lake(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints):
         lorow = lakacc[len(lakacc)-1,0]
         locol = lakacc[len(lakacc)-1,1]  ###### lake outlet row and col
         arclakeid = cat[lorow,locol]  ####### lake catchment id
+        lakenrow,lakencol = Nextcell(fdir,lorow,locol)
+        if lakenrow < 0 or lakencol < 0:
+            lakedowcatid = -999
+        else:
+            lakedowcatid = cat[lakenrow,lakencol]
         if not arclakeid < bsid and arclakeid > blid:
             continue
         arcatid,catcounts = np.unique(cat[lrowcol[:,0],lrowcol[:,1]],return_counts=True) ###### all catchment id containing this lake
@@ -577,7 +582,8 @@ def CE_mcat4lake(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints):
                ### if downstream catchment is target lake,and this catchment is an lakeinflow catchment combine them
                     if cat[nrow,ncol] == arclakeid and float(len(nlake))/float(len(crowcol)) > 0.1 and cat[catorow,catocol] > bsid:
                         cat[crowcol[:,0],crowcol[:,1]] = arclakeid
-                    if float(len(nlake))/float(len(lrowcol)) > 0.1 and cat[catorow,catocol] > bsid:
+                    if float(len(nlake))/float(len(lrowcol)) > 0.1 and cat[catorow,catocol] > bsid and cat[catorow,catocol] != lakedowcatid:
+#                        arcpy.AddMessage("2")
                         cat[crowcol[:,0],crowcol[:,1]] = arclakeid
 #                        if cat[catorow,catocol] != arclakeid and cat[nrow,ncol] != arclakeid:
 #                            print lakeid
