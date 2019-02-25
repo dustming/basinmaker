@@ -735,7 +735,7 @@ def Getcatwd(catrow,catcol,width,depth,DA):
     return catwd,catdps
 ############################################################
 
-def Writervhchanl(ocatinfo,outFolder,nrows,ncols,lenThres,iscalmanningn):
+def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn):
     catinfo = copy.copy(ocatinfo)
 #    print int(catinfo.iloc[0]['SUBID']),len(catinfo.index)
     ochn = open(outFolder+"modelchannel.rvp","w")
@@ -1049,16 +1049,21 @@ def Maphru2forceply(forcingply,outfolder,forcinggrid,outFolderraven,Boundaryply,
         Avafgid = Forcinfo['FGID'].values
     arcpy.Project_management(outfolder+"finalcat_info.shp", outfolder+ "finalcat_freferen.shp",Focspre)
     arcpy.Identity_analysis(outfolder+ "finalcat_freferen.shp", forcingply,outfolder+ "finalcat_Frocing.shp")
+    arcpy.Dissolve_management(outfolder+ "finalcat_Frocing.shp", outfolder+ "finalcat_Frocing_diso.shp",["SubID", "FGID"
+    ,"Row","Col"], "", "", "")
     arcpy.env.CoordinateSystem = arcpy.SpatialReference(3573)####wgs84 - north pore canada
-    arcpy.AddField_management(outfolder +"finalcat_Frocing.shp","s_area","DOUBLE","#","#","#","#","NULLABLE","NON_REQUIRED","#")
-    arcpy.CalculateField_management(outfolder +"finalcat_Frocing.shp","s_area","!shape.area@squaremeters!","PYTHON_9.3","#")
-    dbf2 = Dbf5(outfolder+ "finalcat_Frocing.dbf")
+    arcpy.AddField_management(outfolder +"finalcat_Frocing_diso.shp","s_area","DOUBLE","#","#","#","#","NULLABLE","NON_REQUIRED","#")
+    arcpy.CalculateField_management(outfolder +"finalcat_Frocing_diso.shp","s_area","!shape.area@squaremeters!","PYTHON_9.3","#")
+    dbf2 = Dbf5(outfolder+ "finalcat_Frocing_diso.dbf")
     Mapforcing = dbf2.to_dataframe()
+    dbf2 = Dbf5(outfolder+ "finalcat_info.dbf")
+    Catinfofff = dbf2.to_dataframe()
     catids = Mapforcing['SubId'].values
     catids = np.unique(catids)
-    Lakeids = Mapforcing['HyLakeId'].values
-    Lakeids = np.unique(Lakeids)
+    Lakeids = Catinfofff['HyLakeId'].values
+#    Lakeids = np.unique(Lakeids)
     Lakeids = Lakeids[Lakeids>0]
+    arcpy.AddMessage(str(len(Lakeids)) + "......"+ str(len(catids)))
     ogridforc = open(outFolderraven+"GriddedForcings2.txt","w")
     ogridforc.write(":GridWeights" +"\n")
     ogridforc.write("   #      " +"\n")
@@ -1071,6 +1076,7 @@ def Maphru2forceply(forcingply,outfolder,forcinggrid,outFolderraven,Boundaryply,
     ogridforc.write("   # [HRU ID] [Cell #] [w_kl]"+"\n")
 #    arcpy.AddMessage(Mapforcing)
     maxcatid = max(catids)
+    arcpy.AddMessage(" end of mapping ")
     for i in range(len(catids)):
         catid = catids[i]
         cats = Mapforcing.loc[Mapforcing['SubId'] == catid]
@@ -1095,12 +1101,14 @@ def Maphru2forceply(forcingply,outfolder,forcinggrid,outFolderraven,Boundaryply,
                 wt = 1- sumwt
 #            arcpy.AddMessage(scat)
             if(len(scat['Row'].values) > 1):
-                arcpy.AddMessage(str(catid)+"error。。。。。。。。。。。。。。")
-            Strcellid = str(int(scat['Row'].values * (max(Forcinfo['Col'].values) + 1 +misscol) + scat['Col'].values)) + "      "
+                arcpy.AddMessage(str(catid)+"error: 1 catchement, 1 grid, produce muti sub")
+                Strcellid = str(int(scat['Row'].values[0] * (max(Forcinfo['Col'].values) + 1 +misscol) + scat['Col'].values[0])) + "      "
+            else:
+                Strcellid = str(int(scat['Row'].values * (max(Forcinfo['Col'].values) + 1 +misscol) + scat['Col'].values)) + "      "                    
                 ### str((ncrowcol[0,0] * ncncols + ncrowcol[0,1]))
             ogridforc.write("    "+str(int(catid)) + "     "+Strcellid+str(wt) +"\n")
 #        arcpy.AddMessage(cats)
-        if cats['IsLake'].values[0] > 0:
+        if Catinfofff.loc[Catinfofff['SubId'] == catid]["IsLake"].values[0] > 0:
 #        arcpy.AddMessage(Mapforcing.loc[Mapforcing['SubId'] == catid])
             tarea = sum(cats['s_area'].values)
             fids = cats['FGID'].values
@@ -1117,7 +1125,9 @@ def Maphru2forceply(forcingply,outfolder,forcinggrid,outFolderraven,Boundaryply,
 #            arcpy.AddMessage(scat)
                 if(len(scat['Row'].values) > 1):
                     arcpy.AddMessage(str(catid)+"error。。。。。。。。。。。。。。")
-                Strcellid = str(int(scat['Row'].values * (max(Forcinfo['Col'].values)+ 1 + misscol) + scat['Col'].values)) + "      "
+                    Strcellid = str(int(scat['Row'].values[0] * (max(Forcinfo['Col'].values)+ 1 + misscol) + scat['Col'].values[0])) + "      "
+                else:
+                    Strcellid = str(int(scat['Row'].values * (max(Forcinfo['Col'].values)+ 1 + misscol) + scat['Col'].values)) + "      " 
                 ### str((ncrowcol[0,0] * ncncols + ncrowcol[0,1]))
                 ogridforc.write("    "+str(int(catid) + int(maxcatid)) + "     "+Strcellid+str(wt) +"\n")
     ogridforc.write(":EndGridWeights")
@@ -1173,12 +1183,12 @@ dbftocsv(OutputFolder +"/"+ "finalcat_info.dbf",OutputFolder +"/"+ "finalcat_inf
 ncatinfo = pd.read_csv(OutputFolder +"/"+"finalcat_info.csv",sep=",",low_memory=False)
 ncatinfo2 = ncatinfo.drop_duplicates('SUBID', keep='first')
 ncatinfo2.to_csv(OutputFolder +"/"+"finalcatcheck.csv",",")
-ncols = int(arcpy.GetRasterProperties_management(dataset, "COLUMNCOUNT").getOutput(0))
-nrows = int(arcpy.GetRasterProperties_management(dataset, "ROWCOUNT").getOutput(0))
-Writervhchanl(ncatinfo2,Raveinputsfolder + "/",nrows,ncols,lenThres,iscalmanningn)
+#ncols = int(arcpy.GetRasterProperties_management(dataset, "COLUMNCOUNT").getOutput(0))
+#nrows = int(arcpy.GetRasterProperties_management(dataset, "ROWCOUNT").getOutput(0))
+Writervhchanl(ncatinfo2,Raveinputsfolder + "/",lenThres,iscalmanningn)
 writelake(ncatinfo2,Raveinputsfolder+ "/")
-finalcat = np.loadtxt(OutputFolder +'/'+'finalcat.asc',dtype = 'i4',skiprows = 6)
 if forcinggrid !="#" :
+    finalcat = np.loadtxt(OutputFolder +'/'+'finalcat.asc',dtype = 'i4',skiprows = 6)
     orank = np.loadtxt(forcinggrid,dtype = 'i4',skiprows = 6)
     fncols = int(arcpy.GetRasterProperties_management(forcinggrid, "COLUMNCOUNT").getOutput(0))
     fnrows = int(arcpy.GetRasterProperties_management(forcinggrid, "ROWCOUNT").getOutput(0))
