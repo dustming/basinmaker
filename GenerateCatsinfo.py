@@ -512,36 +512,47 @@ def GenrateCatchatt(OutputFoldersub,str100):
     #### Get catchment area length
     if SptailRef.type == "Geographic":
         arcpy.env.CoordinateSystem = arcpy.SpatialReference(3573)####wgs84 - north pore canada
+
     arcpy.AddField_management(OutputFoldersub +"finalcat.shp","area","DOUBLE","#","#","#","#","NULLABLE","NON_REQUIRED","#")
     arcpy.CalculateField_management(OutputFoldersub +"finalcat.shp","area","!shape.area@squaremeters!","PYTHON_9.3","#")
-    
+
     if len(nrowcol) > 0:
         arcpy.AddField_management(OutputFoldersub +"riv1_cat.shp","length","DOUBLE","#","#","#","#","NULLABLE","NON_REQUIRED","#")
         arcpy.CalculateField_management(OutputFoldersub +"riv1_cat.shp","length","!shape.length@meters!","PYTHON_9.3","#")
     if SptailRef.type == "Geographic":    
         arcpy.ProjectRaster_management(OutputFoldersub+ "dem", OutputFoldersub+ "demproj",arcpy.SpatialReference(3573),"NEAREST")
     else:
-        arcpy.ProjectRaster_management(OutputFoldersub+ "dem", OutputFoldersub+ "demproj",arcpy.SpatialReference(SptailRef.factoryCode),"NEAREST")
-        
+        arcpy.CopyRaster_management(OutputFoldersub+ "dem", OutputFoldersub+ "demproj")
+    
     arcpy.arcpy.env.cellSize = float(arcpy.GetRasterProperties_management(OutputFoldersub+ "demproj", "CELLSIZEX").getOutput(0))
     arcpy.env.extent = arcpy.Describe(OutputFoldersub + "demproj").extent
     arcpy.env.snapRaster = OutputFoldersub + "demproj"
+    arcpy.env.CoordinateSystem = arcpy.SpatialReference(arcpy.Describe(OutputFoldersub + "demproj").spatialReference.factoryCode)
+    arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(arcpy.Describe(OutputFoldersub + "demproj").spatialReference.factoryCode)
+    
     outSlope = Slope(OutputFoldersub + "demproj", "DEGREE",1)
 #    arcpy.AddMessage("After Slope")
     outDivide = Divide(outSlope, 180.00)
-    outTimes = Times(outDivide, 3.1415926)
-#    expression = '3.1415926 * outSlope / 180.00'
-#    arcpy.gp.RasterCalculator_sa(expression, OutputFoldersub + "slopedegree")
+    outTimes = Times(outDivide, 3.1415926) 
+
     finalslope = Tan(outTimes)
+#    arcpy.AddMessage("5       " + str(arcpy.Describe(outSlope).spatialReference.factoryCode) + "      " + str(arcpy.Describe(OutputFoldersub + "demproj").spatialReference.factoryCode))   
     ##############################################################333
     arcpy.env.CoordinateSystem = arcpy.SpatialReference(SptailRef.factoryCode)
     arcpy.env.XYTolerance = cellSize
     arcpy.arcpy.env.cellSize = cellSize
     arcpy.env.extent = arcpy.Describe(OutputFoldersub + "dir").extent
     arcpy.env.snapRaster = OutputFoldersub + "dir"
-    arcpy.ProjectRaster_management(finalslope, OutputFoldersub+ "slope",arcpy.SpatialReference(SptailRef.factoryCode),"NEAREST",cellSize)
+    arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(SptailRef.factoryCode)
+    
+    if  SptailRef.type == "Geographic":
+        arcpy.ProjectRaster_management(finalslope, OutputFoldersub+ "slope",str(SptailRef.factoryCode),"NEAREST",cellSize)
+    else:
+        finalslope.save(OutputFoldersub+ "slope")
+        
     arcpy.PolygonToRaster_conversion(OutputFoldersub +"finalcat.shp", "area", OutputFoldersub + "area",
                                  "MAXIMUM_COMBINED_AREA","NONE", cellSize)
+                                 
     arcpy.RasterToASCII_conversion(OutputFoldersub + "area", OutputFoldersub + "area.asc")
     if len(nrowcol) > 0:
         arcpy.PolylineToRaster_conversion(OutputFoldersub + "riv1_cat.shp", "length", OutputFoldersub + "rivlength",  "MAXIMUM_LENGTH", "NONE", cellSize)
