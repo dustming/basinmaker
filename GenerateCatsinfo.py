@@ -565,25 +565,35 @@ def GenrateCatchatt(OutputFoldersub,str100):
 ####################################################################3
 def Checkcat(prow,pcol,nrows,ncols,lid,lake):
     noout=0
-    ### double check if the head stream cell is nearby the lake, if near by the lake the stream was ignored
+    nearcat = np.full(8,-9)
+    ### if the point  (prow,pcol) is at the boundary of catchment
     if prow != 0 and prow != nrows -1 and pcol != 0 and pcol != ncols-1:
         if not lake[prow-1,pcol+1] == lid:
             noout=1
+            nearcat[0] = lake[prow-1,pcol+1]
         if not lake[prow-1,pcol-1] == lid:
             noout=1
+            nearcat[1] = lake[prow-1,pcol-1]
         if not lake[prow-1,pcol] == lid:
             noout=1
+            nearcat[2] = lake[prow-1,pcol]
         if not lake[prow,pcol+1] == lid:
             noout=1
+            nearcat[3] = lake[prow,pcol+1]
         if not lake[prow,pcol-1] == lid:
             noout=1
+            nearcat[4] = lake[prow,pcol-1]
         if not lake[prow+1,pcol-1] == lid:
             noout=1
+            nearcat[5] = lake[prow+1,pcol-1]
         if not lake[prow+1,pcol+1] == lid:
             noout=1
+            nearcat[6] = lake[prow+1,pcol+1]
         if not lake[prow+1,pcol] == lid:
             noout=1
-    return noout
+            nearcat[7] = lake[prow+1,pcol]
+    nearcat = nearcat[nearcat > 0]
+    return noout,nearcat
 
 ###################################################################3
 def Getcatrivlenslope(catrow,catcol,rivlen,dem,fac,hydir,finalcat,trow,tcol,nrows,ncols,slope,rivpath):
@@ -595,20 +605,28 @@ def Getcatrivlenslope(catrow,catcol,rivlen,dem,fac,hydir,finalcat,trow,tcol,nrow
     rivcinfo[:,1] = fac[catrow,catcol]
     rivcinfo[:,2] = catrow
     rivcinfo[:,3] = catcol
-    rivout =  np.full((len(rivs),4),-999999999999.000000)
-    rivout2 =  np.full((len(rivs),4),-999999999999.000000)
+    rivout =  np.full((len(rivs),4),-999999999999.000000) ### store riv info for each river path started at boundary of catchment 
+    rivout2 =  np.full((len(rivs),4),-999999999999.000000) ### store riv info for each river path started at inside of catchment 
     for i in range(0,len(rivs)):
         rivsid = rivs[i]
         rivcinfo2 = rivcinfo[rivcinfo[:,0]==rivsid,]
         rivcinfo2 = rivcinfo2[rivcinfo2[:,1].argsort()]
-        prow = rivcinfo2[0,2].astype(int)
+        prow = rivcinfo2[0,2].astype(int)   ## stream cell with lowerst flow accumulation 
         pcol = rivcinfo2[0,3].astype(int)
-        lid = finalcat[prow,pcol]
-        nout = Checkcat(prow,pcol,nrows,ncols,lid,finalcat)
+        lid = finalcat[prow,pcol]     #### catid of start point of stream cell 
+        nout, nearcat = Checkcat(prow,pcol,nrows,ncols,lid,finalcat)  #### check if the point (prow,pcol) is close to the catchment boundary, most upstream cell 
         rivtemp = np.full((len(catrow),4),-9999999999.999999)
         icell = 0
-        if nout > 0:  #### this means the strem connect at other catchments. or  this catchment only have one stream some head stream was included
-#            arcpy.AddMessage("in riv " + str(rivs))
+        iscase1 = 0
+        if len(nearcat) > 0:  ### check if one of the near cat is the upstream catchment
+            for incat in range(0,len(nearcat)):
+                inearcat = nearcat[incat]
+                incat_trow,incat_tcol = Getbasinoutlet(inearcat,finalcat,fac)
+                incat_nrow,incat_ncol = Nextcell(hydir,incat_trow,incat_tcol)### get the downstream catchment id
+                if finalcat[incat_nrow,incat_ncol] == lid:
+                    iscase1 = 1
+        if nout > 0 and iscase1 == 1:  #### this means the strem connect at other catchments. or  this catchment only have one stream some head stream was included
+#            arcpy.AddMessage("in riv  case 1   " + str(rivsid) + "     " + str(iscase1))
             nrow = prow
             ncol = pcol
             rivpath[nrow,ncol] = 1
@@ -649,8 +667,8 @@ def Getcatrivlenslope(catrow,catcol,rivlen,dem,fac,hydir,finalcat,trow,tcol,nrow
                     rivout[i,1] = -9999
         rivtemp2 = np.full((len(catrow),4),-9999999999.999999)
         icell = 0
-        if len(rivs) > 0 and nout <= 0:  #### this means the strem connect at other catchments. or  this catchment only have one stream some head stream was included
-#            arcpy.AddMessage("in riv " + str(rivs))
+        if len(rivs) > 0 and iscase1 == 0: # for river  not start inside the catchment 
+#            arcpy.AddMessage("in riv  case 2   " + str(rivsid))
             nrow = prow
             ncol = pcol
             rivpath[nrow,ncol] = 1
@@ -877,6 +895,8 @@ def Addnlinklakes(fcat,alllake,lake1,fac,sbslid):
 def Generatecatinfo(Watseds,fac,fdir,lake,dem,area,hycat,hycatinfo,catinfo,allcatid,lakeinfo,width,depth,
                     rivlen,obs,nrows,ncols,slope,landuse,landuseinfo,Q_Mean,wdlen):
     finalcat = copy.copy(Watseds)
+    rivpath = copy.copy(Watseds)
+    rivpath[:,:] = -9999
     for i in range(0,len(allcatid)):
         catid = allcatid[i].astype(int)
         catinfo[i,0] = catid
@@ -910,8 +930,6 @@ def Generatecatinfo(Watseds,fac,fdir,lake,dem,area,hycat,hycatinfo,catinfo,allca
 #            arcpy.AddMessage(str(catid)+"      "+str(obs[trow,tcol]))
             catinfo[i,23] =  obs[trow,tcol]
 ########Got basin width and depth
-        rivpath = copy.copy(Watseds)
-        rivpath[:,:] = -9999
         catrivlen,catrivslp,catrivslp2,rivpath = Getcatrivlenslope(rowcol[:,0],rowcol[:,1],rivlen,dem,fac,fdir,finalcat,
                                                 trow,tcol,nrows,ncols,slope,rivpath)
         catwidth,catdepth,catQ = Getcatwd(catid,finalcat,width,depth,Q_Mean,-1,rivlen,wdlen) ### width depth in m
@@ -938,6 +956,7 @@ def Generatecatinfo(Watseds,fac,fdir,lake,dem,area,hycat,hycatinfo,catinfo,allca
             catinfo[i,27] = 0.001
         catinfo[i,25] = Getfloodplain_n(catid,finalcat,rivlen,landuse,landuseinfo)
         catinfo[i,26] = catQ
+    writeraster(OutputFolder + "/" + "rivpath.asc",rivpath,OutputFolder + "/" + "dir")
     return catinfo
 
 def Getfloodplain_n(catid,finalcat,rivlen,landuse,landuseinfo):
