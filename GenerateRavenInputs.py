@@ -379,40 +379,6 @@ def Checklake(prow,pcol,nrows,ncols,lid,lake):
     return noout
 ############################################################################33
 
-def GenrateCatchatt(OutputFoldersub):
-    arcpy.RasterToPolyline_conversion(OutputFoldersub + "riv1.asc",OutputFoldersub + "riv1.shp" , "ZERO",
-                                   0, "NO_SIMPLIFY")
-    arcpy.Intersect_analysis([OutputFoldersub + "riv1.shp", OutputFoldersub + "finalcat.shp"],
-                             OutputFoldersub + "riv1_cat.shp", "ALL", 0, "LINE")
-    #### Get catchment area length
-    arcpy.env.CoordinateSystem = arcpy.SpatialReference(3573)####wgs84 - north pore canada
-    arcpy.AddField_management(OutputFoldersub +"finalcat.shp","area","DOUBLE","#","#","#","#","NULLABLE","NON_REQUIRED","#")
-    arcpy.CalculateField_management(OutputFoldersub +"finalcat.shp","area","!shape.area@squaremeters!","PYTHON_9.3","#")
-
-    arcpy.AddField_management(OutputFoldersub +"riv1_cat.shp","length","DOUBLE","#","#","#","#","NULLABLE","NON_REQUIRED","#")
-    arcpy.CalculateField_management(OutputFoldersub +"riv1_cat.shp","length","!shape.length@meters!","PYTHON_9.3","#")
-    outSlope = Slope(OutputFoldersub+ "dem", "DEGREE",Z_factor)
-    outDivide = Divide(outSlope, 180.00)
-    outTimes = Times(outDivide, 3.1415926)
-#    expression = '3.1415926 * outSlope / 180.00'
-#    arcpy.gp.RasterCalculator_sa(expression, OutputFoldersub + "slopedegree")
-    finalslope = Tan(outTimes)
-    ##############################################################333
-    arcpy.env.CoordinateSystem = arcpy.SpatialReference(4326)
-    finalslope.save(OutputFoldersub+ "slope")
-    arcpy.env.XYTolerance = cellSize
-    arcpy.arcpy.env.cellSize = cellSize
-    arcpy.env.extent = arcpy.Describe(OutputFoldersub + "dir").extent
-    arcpy.env.snapRaster = OutputFoldersub + "dir"
-    arcpy.PolygonToRaster_conversion(OutputFoldersub +"finalcat.shp", "area", OutputFoldersub + "area",
-                                 "MAXIMUM_COMBINED_AREA","NONE", cellSize)
-    arcpy.RasterToASCII_conversion(OutputFoldersub + "area", OutputFoldersub + "area.asc")
-
-    arcpy.PolylineToRaster_conversion(OutputFoldersub + "riv1_cat.shp", "length", OutputFoldersub + "rivlength",
-                                  "MAXIMUM_LENGTH", "NONE", cellSize)
-    arcpy.RasterToASCII_conversion(OutputFoldersub + "rivlength", OutputFoldersub + "rivlength.asc")
-    arcpy.RasterToASCII_conversion(OutputFoldersub + "slope", OutputFoldersub + "slope.asc")
-
 ####################################################################3
 def Checkcat(prow,pcol,nrows,ncols,lid,lake):
     noout=0
@@ -1051,7 +1017,8 @@ def Maphru2forceply(forcingply,outfolder,forcinggrid,outFolderraven,Boundaryply,
     arcpy.Identity_analysis(outfolder+ "finalcat_freferen.shp", forcingply,outfolder+ "finalcat_Frocing.shp")
     arcpy.Dissolve_management(outfolder+ "finalcat_Frocing.shp", outfolder+ "finalcat_Frocing_diso.shp",["SubID", "FGID"
     ,"Row","Col"], "", "", "")
-    arcpy.env.CoordinateSystem = arcpy.SpatialReference(3573)####wgs84 - north pore canada
+    if SptailRef.type == "Geographic":
+        arcpy.env.CoordinateSystem = arcpy.SpatialReference(3573)####wgs84 - north pore canada
     arcpy.AddField_management(outfolder +"finalcat_Frocing_diso.shp","s_area","DOUBLE","#","#","#","#","NULLABLE","NON_REQUIRED","#")
     arcpy.CalculateField_management(outfolder +"finalcat_Frocing_diso.shp","s_area","!shape.area@squaremeters!","PYTHON_9.3","#")
     dbf2 = Dbf5(outfolder+ "finalcat_Frocing_diso.dbf")
@@ -1168,15 +1135,18 @@ Raveinputsfolder = sys.argv[2]
 lenThres = int(sys.argv[3])
 forcinggrid = sys.argv[4]
 forcingply = sys.argv[5]
-cellSize = float(sys.argv[6])
-Boundaryply = sys.argv[7]
-missrow = float(sys.argv[8])
-misscol = float(sys.argv[9])
-iscalmanningn = float(sys.argv[10])
-#VolThreshold = 0.0
-#OutputFolder = "C:/Users/dustm/Documents/ubuntu/share/tempout/tsed/GrandR"
+Boundaryply = sys.argv[6]
+missrow = float(sys.argv[7])
+misscol = float(sys.argv[8])
+iscalmanningn = float(sys.argv[9])
 arcpy.env.workspace =OutputFolder
 dataset = OutputFolder+"/"+"dir"
+
+cellSize = float(arcpy.GetRasterProperties_management(OutputFolder + "/" + "dir", "CELLSIZEX").getOutput(0))
+SptailRef = arcpy.Describe(hyshddir).spatialReference
+arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryCode)) 
+
+
 if not os.path.exists(Raveinputsfolder):
     os.makedirs(Raveinputsfolder)
 dbftocsv(OutputFolder +"/"+ "finalcat_info.dbf",OutputFolder +"/"+ "finalcat_info.csv")

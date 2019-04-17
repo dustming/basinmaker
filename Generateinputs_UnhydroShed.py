@@ -84,10 +84,18 @@ OutputFolder = sys.argv[7] + "/"
 Landuse = sys.argv[8]
 Landuseinfo = sys.argv[9]
 
-arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(4326) ### WGS84
+
+cellSize = float(arcpy.GetRasterProperties_management(hyshddem, "CELLSIZEX").getOutput(0))
+SptailRef = arcpy.Describe(hyshddem).spatialReference
+arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryCode)) ### WGS84
 
 if not os.path.exists(OutputFolder):
     os.makedirs(OutputFolder)
+
+arcpy.env.XYTolerance = cellSize
+arcpy.arcpy.env.cellSize = cellSize
+arcpy.env.extent = arcpy.Describe(OutputFolder + "hyshddem").extent
+arcpy.env.snapRaster = OutputFolder + "hyshddem"
 
 outFill = Fill(hyshddem)
 outFill.save(OutputFolder + "dem")

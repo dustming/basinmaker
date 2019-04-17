@@ -85,13 +85,20 @@ VolThreshold = int(sys.argv[8])
 Lakefile = sys.argv[9]
 obspoint = sys.argv[10]
 OutputFolder = sys.argv[11] + "/"
-cellSize = float(sys.argv[12])
-OutHyID2 = int(sys.argv[13])
-Landuse = sys.argv[14]
-Landuseinfo = sys.argv[15]
+
+OutHyID2 = int(sys.argv[12])
+Landuse = sys.argv[13]
+Landuseinfo = sys.argv[14]
+
+cellSize = float(arcpy.GetRasterProperties_management(hyshddir, "CELLSIZEX").getOutput(0))
+
+SptailRef = arcpy.Describe(hyshddir).spatialReference
+arcpy.AddMessage("Working with a "+SptailRef.type +" sptail reference     :   "+ SptailRef.name + "       " + str(SptailRef.factoryCode))
+
 tempinfo = Dbf5(hyinfocsv)#np.genfromtxt(hyinfocsv,delimiter=',')
 hyshdinfo = tempinfo.to_dataframe().values
-arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(4326) ### WGS84
+arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryCode)) ### WGS84
+
 arcpy.AddMessage("processing for outlet id:  "+str(OutHyID))
 if not os.path.exists(OutputFolder):
     os.makedirs(OutputFolder)

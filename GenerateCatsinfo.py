@@ -197,7 +197,7 @@ def selectlake(hylake,Str,hylakeinfo,VolThreshold):
 
 ##################################################################3
 def PreparePrograminputs(N60,VolThreshold,OutHyID,OutputFolder,InputsFolder,Databasefolder):
-    arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(4326) ### WGS84
+    arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(SptailRef.factoryCode) ### WGS84
     ###########Get first step input
     if N60 == 0:
         if HyBasinfile == 'Default':
@@ -510,13 +510,19 @@ def GenrateCatchatt(OutputFoldersub,str100):
         arcpy.Intersect_analysis([OutputFoldersub + "riv1.shp", OutputFoldersub + "finalcat.shp"], OutputFoldersub + "riv1_cat.shp", "ALL", 0, "LINE")
         copyfile( OutputFoldersub + "/"+"HyMask.prj" ,  OutputFoldersub + "/"+"riv1_cat.prj")
     #### Get catchment area length
-    arcpy.env.CoordinateSystem = arcpy.SpatialReference(3573)####wgs84 - north pore canada
+    if SptailRef.type == "Geographic":
+        arcpy.env.CoordinateSystem = arcpy.SpatialReference(3573)####wgs84 - north pore canada
     arcpy.AddField_management(OutputFoldersub +"finalcat.shp","area","DOUBLE","#","#","#","#","NULLABLE","NON_REQUIRED","#")
     arcpy.CalculateField_management(OutputFoldersub +"finalcat.shp","area","!shape.area@squaremeters!","PYTHON_9.3","#")
+    
     if len(nrowcol) > 0:
         arcpy.AddField_management(OutputFoldersub +"riv1_cat.shp","length","DOUBLE","#","#","#","#","NULLABLE","NON_REQUIRED","#")
         arcpy.CalculateField_management(OutputFoldersub +"riv1_cat.shp","length","!shape.length@meters!","PYTHON_9.3","#")
-    arcpy.ProjectRaster_management(OutputFoldersub+ "dem", OutputFoldersub+ "demproj",arcpy.SpatialReference(3573),"NEAREST")
+    if SptailRef.type == "Geographic":    
+        arcpy.ProjectRaster_management(OutputFoldersub+ "dem", OutputFoldersub+ "demproj",arcpy.SpatialReference(3573),"NEAREST")
+    else:
+        arcpy.ProjectRaster_management(OutputFoldersub+ "dem", OutputFoldersub+ "demproj",arcpy.SpatialReference(SptailRef.factoryCode),"NEAREST")
+        
     arcpy.arcpy.env.cellSize = float(arcpy.GetRasterProperties_management(OutputFoldersub+ "demproj", "CELLSIZEX").getOutput(0))
     arcpy.env.extent = arcpy.Describe(OutputFoldersub + "demproj").extent
     arcpy.env.snapRaster = OutputFoldersub + "demproj"
@@ -528,12 +534,12 @@ def GenrateCatchatt(OutputFoldersub,str100):
 #    arcpy.gp.RasterCalculator_sa(expression, OutputFoldersub + "slopedegree")
     finalslope = Tan(outTimes)
     ##############################################################333
-    arcpy.env.CoordinateSystem = arcpy.SpatialReference(4326)
+    arcpy.env.CoordinateSystem = arcpy.SpatialReference(SptailRef.factoryCode)
     arcpy.env.XYTolerance = cellSize
     arcpy.arcpy.env.cellSize = cellSize
     arcpy.env.extent = arcpy.Describe(OutputFoldersub + "dir").extent
     arcpy.env.snapRaster = OutputFoldersub + "dir"
-    arcpy.ProjectRaster_management(finalslope, OutputFoldersub+ "slope",arcpy.SpatialReference(4326),"NEAREST",cellSize)
+    arcpy.ProjectRaster_management(finalslope, OutputFoldersub+ "slope",arcpy.SpatialReference(SptailRef.factoryCode),"NEAREST",cellSize)
     arcpy.PolygonToRaster_conversion(OutputFoldersub +"finalcat.shp", "area", OutputFoldersub + "area",
                                  "MAXIMUM_COMBINED_AREA","NONE", cellSize)
     arcpy.RasterToASCII_conversion(OutputFoldersub + "area", OutputFoldersub + "area.asc")
@@ -1341,10 +1347,11 @@ arcpy.env.overwriteOutput = True
 arcpy.CheckOutExtension("Spatial")
 ##### Readed inputs
 OutputFolder = sys.argv[1]
-Z_factor = float(sys.argv[2])
-cellSize = float(sys.argv[2])
-#OutputFolder = "C:/Users/dustm/Documents/ubuntu/share/tempout/tsed/GrandR"
-#Z_factor = 0.0013
+
+cellSize = float(arcpy.GetRasterProperties_management(OutputFolder + "/" + "dir", "CELLSIZEX").getOutput(0))
+SptailRef = arcpy.Describe(OutputFolder + "/" + "dir").spatialReference
+arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryCode)) ### WGS84
+
 arcpy.env.workspace =OutputFolder
 os.chdir(OutputFolder)
 arcpy.env.XYTolerance = cellSize

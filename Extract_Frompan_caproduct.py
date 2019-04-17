@@ -81,7 +81,11 @@ OutHyID2 = int(sys.argv[4])
 tempinfo = Dbf5(hyshdply[:-3]+'dbf')#np.genfromtxt(hyinfocsv,delimiter=',')
 hyshdinfo2 = tempinfo.to_dataframe()
 hyshdinfo = hyshdinfo2[['SubId','DowSubId']].values
-arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(4326) ### WGS84
+
+SptailRef = arcpy.Describe(hyshdply).spatialReference
+
+arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryCode)) ### WGS84
+
 arcpy.AddMessage("processing for outlet id:  "+str(OutHyID))
 arcpy.AddMessage(hyshdinfo)
 if not os.path.exists(OutputFolder):

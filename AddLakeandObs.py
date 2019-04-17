@@ -414,40 +414,6 @@ def Checklake(prow,pcol,nrows,ncols,lid,lake):
     return noout
 ############################################################################33
 
-def GenrateCatchatt(OutputFoldersub):
-    arcpy.RasterToPolyline_conversion(OutputFoldersub + "riv1.asc",OutputFoldersub + "riv1.shp" , "ZERO",
-                                   0, "NO_SIMPLIFY")
-    arcpy.Intersect_analysis([OutputFoldersub + "riv1.shp", OutputFoldersub + "finalcat.shp"],
-                             OutputFoldersub + "riv1_cat.shp", "ALL", 0, "LINE")
-    #### Get catchment area length
-    arcpy.env.CoordinateSystem = arcpy.SpatialReference(3573)####wgs84 - north pore canada
-    arcpy.AddField_management(OutputFoldersub +"finalcat.shp","area","DOUBLE","#","#","#","#","NULLABLE","NON_REQUIRED","#")
-    arcpy.CalculateField_management(OutputFoldersub +"finalcat.shp","area","!shape.area@squaremeters!","PYTHON_9.3","#")
-
-    arcpy.AddField_management(OutputFoldersub +"riv1_cat.shp","length","DOUBLE","#","#","#","#","NULLABLE","NON_REQUIRED","#")
-    arcpy.CalculateField_management(OutputFoldersub +"riv1_cat.shp","length","!shape.length@meters!","PYTHON_9.3","#")
-    outSlope = Slope(OutputFoldersub+ "dem", "DEGREE",Z_factor)
-    outDivide = Divide(outSlope, 180.00)
-    outTimes = Times(outDivide, 3.1415926)
-#    expression = '3.1415926 * outSlope / 180.00'
-#    arcpy.gp.RasterCalculator_sa(expression, OutputFoldersub + "slopedegree")
-    finalslope = Tan(outTimes)
-    ##############################################################333
-    arcpy.env.CoordinateSystem = arcpy.SpatialReference(4326)
-    finalslope.save(OutputFoldersub+ "slope")
-    arcpy.env.XYTolerance = cellSize
-    arcpy.arcpy.env.cellSize = cellSize
-    arcpy.env.extent = arcpy.Describe(OutputFoldersub + "dir").extent
-    arcpy.env.snapRaster = OutputFoldersub + "dir"
-    arcpy.PolygonToRaster_conversion(OutputFoldersub +"finalcat.shp", "area", OutputFoldersub + "area",
-                                 "MAXIMUM_COMBINED_AREA","NONE", cellSize)
-    arcpy.RasterToASCII_conversion(OutputFoldersub + "area", OutputFoldersub + "area.asc")
-
-    arcpy.PolylineToRaster_conversion(OutputFoldersub + "riv1_cat.shp", "length", OutputFoldersub + "rivlength",
-                                  "MAXIMUM_LENGTH", "NONE", cellSize)
-    arcpy.RasterToASCII_conversion(OutputFoldersub + "rivlength", OutputFoldersub + "rivlength.asc")
-    arcpy.RasterToASCII_conversion(OutputFoldersub + "slope", OutputFoldersub + "slope.asc")
-
 ####################################################################3
 def Checkcat(prow,pcol,nrows,ncols,lid,lake):
     noout=0
@@ -1152,13 +1118,16 @@ arcpy.CheckOutExtension("Spatial")
 ##### Readed inputs
 OutputFolder = sys.argv[1]
 VolThreshold = float(sys.argv[2])
-cellSize = float(sys.argv[3])
-InNonConL = float(sys.argv[4])
-NonConLThres = float(sys.argv[5])
-#VolThreshold = 0.0
-#OutputFolder = "C:/Users/dustm/Documents/ubuntu/share/tempout/tsed/GrandR"
+InNonConL = float(sys.argv[3])
+NonConLThres = float(sys.argv[4])
+
 arcpy.env.workspace =OutputFolder
 os.chdir(OutputFolder)
+
+cellSize = float(arcpy.GetRasterProperties_management(OutputFolder + "/" + "dir", "CELLSIZEX").getOutput(0))
+SptailRef = arcpy.Describe(OutputFolder + "/" + "dir").spatialReference
+arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryCode)) ### WGS84
+
 arcpy.env.XYTolerance = cellSize
 arcpy.arcpy.env.cellSize = cellSize
 arcpy.env.extent = arcpy.Describe( "dir").extent

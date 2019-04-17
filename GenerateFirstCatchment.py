@@ -169,13 +169,16 @@ arcpy.CheckOutExtension("Spatial")
 OutputFolder = sys.argv[1]
 Thresholdacc = int(sys.argv[2])
 hyshedply = sys.argv[3]
-cellSize = float(sys.argv[4])
-arcpy.AddMessage(Thresholdacc)
+
+cellSize = float(arcpy.GetRasterProperties_management(OutputFolder + "/" + "dir", "CELLSIZEX").getOutput(0))
+
+SptailRef = arcpy.Describe(OutputFolder + "/" + "dir").spatialReference
+
 if Thresholdacc > 0:
     arcpy.env.workspace =OutputFolder
     hyshddir = "dir"
     hyshdacc = "acc"
-    arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(4326) ### WGS84
+    arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryCode)) ### WGS84
     arcpy.AddMessage("Generate first catchments:  ")
     StreamRaster = SetNull(Raster(hyshdacc) < Thresholdacc, Raster(hyshdacc))#Con(Raster(hyshdacc) > Thresholdacc, 1, 0)
     dirraster = SetNull(Raster(hyshddir) < 1, Raster(hyshddir))
@@ -209,7 +212,7 @@ if Thresholdacc > 0:
     dbftocsv( OutputFolder + "/"+ "Cat1.dbf",OutputFolder + "/"+"hybinfo.csv")
 else:
     arcpy.env.workspace =OutputFolder
-    arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(4326) ### WGS84    
+    arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryCode)) ### WGS84    
     arcpy.Clip_analysis(hyshedply, OutputFolder + "/"+"HyMask.shp", OutputFolder + "/"+"Cat1.shp", "")
     copyfile( OutputFolder + "/"+"HyMask.prj" ,  OutputFolder + "/"+"Cat1.prj")
     dbftocsv( OutputFolder + "/"+ "Cat1.dbf",OutputFolder + "/"+"hybinfo.csv")
@@ -252,9 +255,9 @@ if(Thresholdacc > 0):
     arcpy.RasterToASCII_conversion(StreamRaster, 'riv1.asc')
 else:
     arcpy.ASCIIToRaster_conversion(StreamRaster, "str", "INTEGER")
-arcpy.DefineProjection_management("hybasinfid.asc", 4326)
-arcpy.DefineProjection_management('strlink.asc', 4326)
-arcpy.DefineProjection_management('riv1.asc', 4326)
+arcpy.DefineProjection_management("hybasinfid.asc", int(SptailRef.factoryCode))
+arcpy.DefineProjection_management('strlink.asc', int(SptailRef.factoryCode))
+arcpy.DefineProjection_management('riv1.asc', int(SptailRef.factoryCode))
 arcpy.PolygonToRaster_conversion( OutputFolder + "/"+"Connect_Lake.shp", "Hylak_id",  OutputFolder + "/"+ "cnlake", "MAXIMUM_COMBINED_AREA","Hylak_id", cellSize)
 copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"cnlake.prj")
 arcpy.RasterToASCII_conversion( OutputFolder + "/"+ "cnlake",  OutputFolder + "/"+ "cnlake.asc")

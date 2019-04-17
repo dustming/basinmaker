@@ -169,14 +169,17 @@ arcpy.CheckOutExtension("Spatial")
 OutputFolder = sys.argv[1]
 infofile = sys.argv[2]
 ocat = sys.argv[3]
-cellSize = float(sys.argv[4])
+
+cellSize = float(arcpy.GetRasterProperties_management(ocat, "CELLSIZEX").getOutput(0))
+SptailRef = arcpy.Describe(ocat).spatialReference
+
 arcpy.env.workspace =OutputFolder
 
 hyshddir = "dir"
 hyshdacc = "acc"
 ostr = "/str"
 if infofile != "#":
-    arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(4326) ### WGS84
+    arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryCode)) ### WGS84
     Mcats = pd.read_csv(infofile,sep=",")
     arcpy.AddMessage(Mcats)
     for i in range(len(Mcats)):
@@ -235,9 +238,9 @@ arcpy.env.snapRaster =  "dir"
 arcpy.RasterToASCII_conversion("nCat1", "hybasinfid.asc")
 arcpy.RasterToASCII_conversion(Strlink, 'strlink.asc')
 arcpy.RasterToASCII_conversion(nstrRaster, 'riv1.asc')
-arcpy.DefineProjection_management("hybasinfid.asc", 4326)
-arcpy.DefineProjection_management('strlink.asc', 4326)
-arcpy.DefineProjection_management('riv1.asc', 4326)
+arcpy.DefineProjection_management("hybasinfid.asc", int(SptailRef.factoryCode))
+arcpy.DefineProjection_management('strlink.asc', int(SptailRef.factoryCode))
+arcpy.DefineProjection_management('riv1.asc', int(SptailRef.factoryCode))
 arcpy.PolygonToRaster_conversion( OutputFolder + "/"+"Connect_Lake.shp", "Hylak_id",  OutputFolder + "/"+ "cnlake", "MAXIMUM_COMBINED_AREA","Hylak_id", cellSize)
 copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"cnlake.prj")
 arcpy.RasterToASCII_conversion( OutputFolder + "/"+ "cnlake",  OutputFolder + "/"+ "cnlake.asc")
