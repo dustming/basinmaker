@@ -969,12 +969,11 @@ arcpy.CheckOutExtension("Spatial")
 OutputFolder = sys.argv[1]
 Raveinputsfolder = sys.argv[2]
 lenThres = int(sys.argv[3])
-forcinggrid = sys.argv[4]
-forcingply = sys.argv[5]
-Boundaryply = sys.argv[6]
-missrow = float(sys.argv[7])
-misscol = float(sys.argv[8])
-iscalmanningn = float(sys.argv[9])
+forcingply = sys.argv[4]
+Boundaryply = sys.argv[5]
+missrow = float(sys.argv[6])
+misscol = float(sys.argv[7])
+iscalmanningn = float(sys.argv[8])
 arcpy.env.workspace =OutputFolder
 dataset = OutputFolder+"/"+"finalcat_info.shp"
 
@@ -992,12 +991,7 @@ ncatinfo2.to_csv(OutputFolder +"/"+"finalcatcheck.csv",",")
 #nrows = int(arcpy.GetRasterProperties_management(dataset, "ROWCOUNT").getOutput(0))
 Writervhchanl(ncatinfo2,Raveinputsfolder + "/",lenThres,iscalmanningn)
 writelake(ncatinfo2,Raveinputsfolder+ "/")
-if forcinggrid !="#" :
-    finalcat = np.loadtxt(OutputFolder +'/'+'finalcat.asc',dtype = 'i4',skiprows = 6)
-    orank = np.loadtxt(forcinggrid,dtype = 'i4',skiprows = 6)
-    fncols = int(arcpy.GetRasterProperties_management(forcinggrid, "COLUMNCOUNT").getOutput(0))
-    fnrows = int(arcpy.GetRasterProperties_management(forcinggrid, "ROWCOUNT").getOutput(0))
-    Maphru2force(orank,finalcat,ncatinfo2,fnrows,fncols,OutputFolder + "/",forcinggrid,Raveinputsfolder + "/")
+
 if forcingply !="#" :
     Maphru2forceply(forcingply,OutputFolder + "/",forcinggrid,Raveinputsfolder + "/",Boundaryply,missrow,misscol)
 print("-----------------------Generate Raven input done")
