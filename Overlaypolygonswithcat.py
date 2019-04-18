@@ -966,10 +966,12 @@ from shutil import copyfile
 arcpy.env.overwriteOutput = True
 arcpy.CheckOutExtension("Spatial")
 ##### Readed inputs
+
 OutputFolder = sys.argv[1]
-Raveinputsfolder = sys.argv[2]
-lenThres = int(sys.argv[3])
-iscalmanningn = float(sys.argv[4])
+forcingply = sys.argv[2]
+Boundaryply = sys.argv[3]
+missrow = float(sys.argv[4])
+misscol = float(sys.argv[5])
 
 arcpy.env.workspace =OutputFolder
 dataset = OutputFolder+"/"+"finalcat_info.shp"
@@ -978,14 +980,5 @@ SptailRef = arcpy.Describe(dataset).spatialReference
 arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryCode)) 
 
 
-if not os.path.exists(Raveinputsfolder):
-    os.makedirs(Raveinputsfolder)
-dbftocsv(OutputFolder +"/"+ "finalcat_info.dbf",OutputFolder +"/"+ "finalcat_info.csv")
-ncatinfo = pd.read_csv(OutputFolder +"/"+"finalcat_info.csv",sep=",",low_memory=False)
-ncatinfo2 = ncatinfo.drop_duplicates('SUBID', keep='first')
-ncatinfo2.to_csv(OutputFolder +"/"+"finalcatcheck.csv",",")
-#ncols = int(arcpy.GetRasterProperties_management(dataset, "COLUMNCOUNT").getOutput(0))
-#nrows = int(arcpy.GetRasterProperties_management(dataset, "ROWCOUNT").getOutput(0))
-Writervhchanl(ncatinfo2,Raveinputsfolder + "/",lenThres,iscalmanningn)
-writelake(ncatinfo2,Raveinputsfolder+ "/")
-
+if forcingply !="#" :
+    Maphru2forceply(forcingply,OutputFolder + "/",forcinggrid,,OutputFolder + "/",Boundaryply,missrow,misscol)
