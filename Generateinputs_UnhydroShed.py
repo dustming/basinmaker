@@ -102,17 +102,24 @@ arcpy.env.extent = arcpy.Describe(hyshddem).extent
 arcpy.env.snapRaster = hyshddem
 arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryCode)) ### WGS84
 
-###### Processing DEM fill and burning with user provided stream if needed
-outFill = Fill(hyshddem)
-outFill.save(OutputFolder + "demfill")
-arcpy.CopyRaster_management(OutputFolder + "demfill",OutputFolder + "dem")
-
 ##### Create a mask cover dem region
 maskraster = Con(Raster(hyshddem) > 0,0)
 arcpy.RasterToPolygon_conversion(maskraster,OutputFolder + "HyMask.shp", "NO_SIMPLIFY", "VALUE")
 
 
-outFlowDirection = FlowDirection(OutputFolder + "dem", "NORMAL")
+###### Processing DEM fill and burning with user provided stream if needed
+outFill = Fill(hyshddem)
+outFill.save(OutputFolder + "demfill")
+if userriv == "#":  ### user provide a river network need to buring in 
+    outFill.save(OutputFolder + "demprocessed") ## use filled dem to calculate flow direction 
+else:
+    arcpy.Clip_analysis(userriv, OutputFolder +"HyMask.shp", OutputFolder +"userriv.shp", "")
+    arcpy.PolylineToRaster_conversion(OutputFolder +"userriv.shp", "FID", OutputFolder +"userrivra","MAXIMUM_COMBINED_LENGTH", "", cellSize)
+    BurninDem = Con(Raster(OutputFolder +"userrivra") >= 0,outFill - 100, outFill)
+    BurninDem.save(OutputFolder + "demprocessed")  #### use burn in dem to calculate flow direction 
+arcpy.CopyRaster_management(hyshddem,OutputFolder + "dem") ### copy original dem to calculate property
+
+outFlowDirection = FlowDirection(OutputFolder + "demprocessed", "NORMAL")
 outFlowDirection.save(OutputFolder + "dir")
 
 outFlowAccumulation = FlowAccumulation(OutputFolder + "dir")
