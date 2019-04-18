@@ -1118,8 +1118,7 @@ arcpy.CheckOutExtension("Spatial")
 ##### Readed inputs
 OutputFolder = sys.argv[1]
 VolThreshold = float(sys.argv[2])
-InNonConL = float(sys.argv[3])
-NonConLThres = float(sys.argv[4])
+NonConLThres = float(sys.argv[3])
 
 arcpy.env.workspace =OutputFolder
 os.chdir(OutputFolder)
@@ -1155,8 +1154,7 @@ allLakinfo = pd.read_csv(OutputFolder + "/"+'lakeinfo.csv',sep=",",low_memory=Fa
 dataset = "dir"
 Str100 = np.loadtxt(OutputFolder + "/"+'strlink.asc',dtype = 'i4',skiprows = 6)
 hylake1 = selectlake2(hylake,VolThreshold,allLakinfo)
-if InNonConL > 0:
-    arcpy.AddMessage("Add non connected Lakes"+str(InNonConL))
+if NonConLThres > 0:
     Lake1 = selectlake(hylake1,nchylake,NonConLThres,allLakinfo)
 else:
     Lake1 = hylake1
