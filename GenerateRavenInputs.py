@@ -994,4 +994,3 @@ writelake(ncatinfo2,Raveinputsfolder+ "/")
 
 if forcingply !="#" :
     Maphru2forceply(forcingply,OutputFolder + "/",forcinggrid,Raveinputsfolder + "/",Boundaryply,missrow,misscol)
-print("-----------------------Generate Raven input done")

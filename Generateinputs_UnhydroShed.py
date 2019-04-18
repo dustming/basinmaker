@@ -74,7 +74,8 @@ from simpledbf import Dbf5
 arcpy.env.overwriteOutput = True
 arcpy.CheckOutExtension("Spatial")
 ##### Readed inputs
-hyshdply = sys.argv[1]
+
+userriv = sys.argv[1]
 hyshddem = sys.argv[2]
 WidDep = sys.argv[3]
 VolThreshold = int(sys.argv[4])
@@ -84,28 +85,34 @@ OutputFolder = sys.argv[7] + "/"
 Landuse = sys.argv[8]
 Landuseinfo = sys.argv[9]
 
+arcpy.AddMessage(hyshddem)
 
 cellSize = float(arcpy.GetRasterProperties_management(hyshddem, "CELLSIZEX").getOutput(0))
 SptailRef = arcpy.Describe(hyshddem).spatialReference
-arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryCode)) ### WGS84
 
 if not os.path.exists(OutputFolder):
     os.makedirs(OutputFolder)
 
+arcpy.AddMessage("Working with a     "+SptailRef.type +" sptail reference     :   "+ SptailRef.name + "       " + str(SptailRef.factoryCode))
+arcpy.AddMessage("The cell cize is   "+str(cellSize))
+
 arcpy.env.XYTolerance = cellSize
 arcpy.arcpy.env.cellSize = cellSize
-arcpy.env.extent = arcpy.Describe(OutputFolder + "hyshddem").extent
-arcpy.env.snapRaster = OutputFolder + "hyshddem"
+arcpy.env.extent = arcpy.Describe(hyshddem).extent
+arcpy.env.snapRaster = hyshddem
+arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryCode)) ### WGS84
 
+###### Processing DEM fill and burning with user provided stream if needed
 outFill = Fill(hyshddem)
-outFill.save(OutputFolder + "dem")
+outFill.save(OutputFolder + "demfill")
+arcpy.CopyRaster_management(OutputFolder + "demfill",OutputFolder + "dem")
 
-arcpy.Copy_management(hyshdply, OutputFolder + "HyMask.shp")
+##### Create a mask cover dem region
+maskraster = Con(Raster(hyshddem) > 0,0)
+arcpy.RasterToPolygon_conversion(maskraster,OutputFolder + "HyMask.shp", "NO_SIMPLIFY", "VALUE")
 
 
-cellSize = arcpy.Describe(OutputFolder + "dem").children[0].meanCellHeight
-
-outFlowDirection = FlowDirection(outFill, "NORMAL")
+outFlowDirection = FlowDirection(OutputFolder + "dem", "NORMAL")
 outFlowDirection.save(OutputFolder + "dir")
 
 outFlowAccumulation = FlowAccumulation(OutputFolder + "dir")
@@ -114,18 +121,18 @@ outFlowAccumulation.save(OutputFolder + "acc")
 
 arcpy.RasterToASCII_conversion(OutputFolder + "dir", OutputFolder + "dir.asc")
 
-######################################################3
-arcpy.AddMessage("###################################3"+str(VolThreshold))
-
-
-if VolThreshold >= 0:
-    arcpy.AddMessage("#####################33")
+if VolThreshold >= 0:  ## include lake and select based on area 
+    
+#    arcpy.Project_management( OutputFolder +"HyMask.shp",  OutputFolder +"HyMask_lakeref.shp",arcpy.Describe(Lakefile).spatialReference)
+    
     arcpy.Clip_analysis(Lakefile, OutputFolder +"HyMask.shp", OutputFolder +"HyLake1.shp", "")
-    copyfile( OutputFolder + "/"+"HyMask.prj" ,  OutputFolder + "/"+"HyLake.prj")
+    if os.path.exists(OutputFolder +"HyLake1.prj"):
+        copyfile( OutputFolder + "/"+"HyMask.prj" ,  OutputFolder + "/"+"HyLake1.prj")
     where_clause = '"Lake_area"> '+ str(VolThreshold)
     arcpy.Select_analysis(OutputFolder +"HyLake1.shp", OutputFolder +"HyLake.shp", where_clause)
-    copyfile( OutputFolder + "/"+"HyMask.prj" ,  OutputFolder + "/"+"HyLake.prj")
-else:
+    copyfile( OutputFolder + "/"+"HyLake1.prj" ,  OutputFolder + "/"+"HyLake.prj")
+    
+else: ## no lake included 
     arcpy.Clip_analysis(Lakefile, OutputFolder +"HyMask.shp", OutputFolder +"HyLake1.shp", "")
     copyfile( OutputFolder + "/"+"HyMask.prj" ,  OutputFolder + "/"+"HyLake.prj")
     where_clause = '"Lake_area"> '+ str(1000000000000000)
@@ -137,11 +144,6 @@ else:
     writeraster(OutputFolder + "hylake.asc",tlake,OutputFolder + 'dir')
 ###################3
 ####### Set envroment variable to dir
-
-arcpy.env.XYTolerance = cellSize
-arcpy.arcpy.env.cellSize = cellSize
-arcpy.env.extent = arcpy.Describe(OutputFolder + "dir").extent
-arcpy.env.snapRaster = OutputFolder + "dir"
 #########################################################
 
 if VolThreshold >= 0:
@@ -156,7 +158,6 @@ arcpy.RasterToASCII_conversion(OutputFolder + "dem", OutputFolder + "dem.asc")
 arcpy.RasterToASCII_conversion(OutputFolder + "acc", OutputFolder + "acc.asc")
 #######land use
 
-arcpy.AddMessage(Landuse)
 if Landuse != "#":
     outExtractByMask = ExtractByMask(Landuse, OutputFolder +"dem")
     outExtractByMask.save(OutputFolder + "landuse_1")

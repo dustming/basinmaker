@@ -179,7 +179,6 @@ if Thresholdacc > 0:
     hyshddir = "dir"
     hyshdacc = "acc"
     arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryCode)) ### WGS84
-    arcpy.AddMessage("Generate first catchments:  ")
     StreamRaster = SetNull(Raster(hyshdacc) < Thresholdacc, Raster(hyshdacc))#Con(Raster(hyshdacc) > Thresholdacc, 1, 0)
     dirraster = SetNull(Raster(hyshddir) < 1, Raster(hyshddir))
     StreamRaster = Con(StreamRaster >= 0, 1, 0)
@@ -266,6 +265,7 @@ arcpy.PolygonToRaster_conversion( OutputFolder + "/"+"nonConnect_Lake.shp", "Hyl
 copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"noncnLake.prj")
 arcpy.RasterToASCII_conversion( OutputFolder + "/"+ "noncnLake",  OutputFolder + "/"+ "noncnLake.asc")
 
+arcpy.AddMessage("The generated catchment without lake is located at OutputFolder with name cat1.shp")
 
 
 

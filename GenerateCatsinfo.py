@@ -1419,7 +1419,6 @@ ncols = int(arcpy.GetRasterProperties_management(dataset, "COLUMNCOUNT").getOutp
 nrows = int(arcpy.GetRasterProperties_management(dataset, "ROWCOUNT").getOutput(0))
 #######################################3
 GenrateCatchatt(OutputFolder + "/",Str100)
-print("------Calculate basin geometry done")
 rivlen = np.loadtxt(OutputFolder+ "/"+ 'rivlength.asc',skiprows = 6)   #### raster of hydroshed basin fid
 area = np.loadtxt(OutputFolder+ "/"+"area.asc",skiprows = 6)
 slope = np.loadtxt(OutputFolder+ "/"+"slope.asc",skiprows = 6)
@@ -1433,4 +1432,4 @@ copyfile( OutputFolder + "/"+"HyMask.prj" ,  OutputFolder + "/"+"finalcat_info.p
 catinfo2 = Writecatinfotodbf(OutputFolder + "/",catinfo)
 arcpy.AddGeometryAttributes_management(OutputFolder + "/" + "finalcat_info.shp","CENTROID_INSIDE", "","","")
 np.savetxt(OutputFolder+"/"+"catinfo.csv",catinfo2,delimiter=",")
-print("------Generate Basin parameters done")
+arcpy.AddMessage("The generated catchment with lake and calculated parameters is located at OutputFolder with name finalcat_info.shp")
