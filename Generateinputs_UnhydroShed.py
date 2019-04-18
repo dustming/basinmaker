@@ -115,7 +115,7 @@ if userriv == "#":  ### user provide a river network need to buring in
 else:
     arcpy.Clip_analysis(userriv, OutputFolder +"HyMask.shp", OutputFolder +"userriv.shp", "")
     arcpy.PolylineToRaster_conversion(OutputFolder +"userriv.shp", "FID", OutputFolder +"userrivra","MAXIMUM_COMBINED_LENGTH", "", cellSize)
-    BurninDem = Con(Raster(OutputFolder +"userrivra") >= 0,outFill - 100, outFill)
+    BurninDem = Con(IsNull(Raster(OutputFolder +"userrivra")),outFill, outFill - 100)
     BurninDem.save(OutputFolder + "demprocessed")  #### use burn in dem to calculate flow direction 
 arcpy.CopyRaster_management(hyshddem,OutputFolder + "dem") ### copy original dem to calculate property
 
