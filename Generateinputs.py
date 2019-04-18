@@ -94,12 +94,12 @@ cellSize = float(arcpy.GetRasterProperties_management(hyshddir, "CELLSIZEX").get
 
 SptailRef = arcpy.Describe(hyshddir).spatialReference
 arcpy.AddMessage("Working with a "+SptailRef.type +" sptail reference     :   "+ SptailRef.name + "       " + str(SptailRef.factoryCode))
+arcpy.AddMessage("The cell cize is   "+str(cellSize))
 
 tempinfo = Dbf5(hyinfocsv)#np.genfromtxt(hyinfocsv,delimiter=',')
 hyshdinfo = tempinfo.to_dataframe().values
 arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryCode)) ### WGS84
 
-arcpy.AddMessage("processing for outlet id:  "+str(OutHyID))
 if not os.path.exists(OutputFolder):
     os.makedirs(OutputFolder)
 HydroBasins1 = Defcat(hyshdinfo,OutHyID)
@@ -132,9 +132,7 @@ dirraster = SetNull(outExtractByMask < 1, outExtractByMask)
 dirraster.save(OutputFolder + "dir")
 arcpy.RasterToASCII_conversion(OutputFolder + "dir", OutputFolder + "dir.asc")
 ######################################################3
-arcpy.AddMessage("###################################3"+str(VolThreshold))
 if VolThreshold >= 0:
-    arcpy.AddMessage("#####################33")
     arcpy.Clip_analysis(Lakefile, OutputFolder +"HyMask.shp", OutputFolder +"HyLake1.shp", "")
     copyfile( OutputFolder + "/"+"HyMask.prj" ,  OutputFolder + "/"+"HyLake.prj")
     where_clause = '"Lake_area"> '+ str(VolThreshold)
