@@ -168,7 +168,7 @@ outExtractByMask = ExtractByMask(hyshdacc, OutputFolder +"HyMask.shp")
 outExtractByMask.save(OutputFolder + "acc")
 arcpy.RasterToASCII_conversion(OutputFolder + "acc", OutputFolder + "acc.asc")
 #######land use
-arcpy.AddMessage(Landuse)
+
 if Landuse != "#":
     outExtractByMask = ExtractByMask(Landuse, OutputFolder +"HyMask.shp")
     outExtractByMask.save(OutputFolder + "landuse")
