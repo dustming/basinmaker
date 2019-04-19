@@ -86,8 +86,6 @@ SptailRef = arcpy.Describe(hyshdply).spatialReference
 
 arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryCode)) ### WGS84
 
-arcpy.AddMessage("processing for outlet id:  "+str(OutHyID))
-arcpy.AddMessage(hyshdinfo)
 if not os.path.exists(OutputFolder):
     os.makedirs(OutputFolder)
 HydroBasins1 = Defcat(hyshdinfo,OutHyID)
@@ -104,7 +102,7 @@ if OutHyID2 > 0:
 else:
     HydroBasins = HydroBasins1
 #arcpy.AddMessage(HydroBasins)
-out_feature_class = OutputFolder +"Sub_product.shp"
+out_feature_class = OutputFolder +"finalcat_info.shp"
 where_clause = '"SubId" IN'+ " ("
 for i in range(0,len(HydroBasins)):
     if i == 0:
