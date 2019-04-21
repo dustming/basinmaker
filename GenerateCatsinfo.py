@@ -505,9 +505,9 @@ def Checklake(prow,pcol,nrows,ncols,lid,lake):
 def GenrateCatchatt(OutputFoldersub,str100):
     nrowcol = np.argwhere(str100 > 0)
     if len(nrowcol) > 0:
-        arcpy.RasterToPolyline_conversion(OutputFoldersub + "str",OutputFoldersub + "riv1.shp" , "ZERO",0, "NO_SIMPLIFY")
-        copyfile( OutputFoldersub + "/"+"HyMask.prj" ,  OutputFoldersub + "/"+"riv1.prj")
-        arcpy.Intersect_analysis([OutputFoldersub + "riv1.shp", OutputFoldersub + "finalcat.shp"], OutputFoldersub + "riv1_cat.shp", "ALL", 0, "LINE")
+#        arcpy.RasterToPolyline_conversion(OutputFoldersub + "str",OutputFoldersub + "riv1.shp" , "ZERO",0, "NO_SIMPLIFY")
+#        copyfile( OutputFoldersub + "/"+"HyMask.prj" ,  OutputFoldersub + "/"+"riv1.prj")
+        arcpy.Intersect_analysis([OutputFoldersub + "DrainL1.shp", OutputFoldersub + "finalcat.shp"], OutputFoldersub + "riv1_cat.shp", "ALL", 0, "LINE")
         copyfile( OutputFoldersub + "/"+"HyMask.prj" ,  OutputFoldersub + "/"+"riv1_cat.prj")
     #### Get catchment area length
     if SptailRef.type == "Geographic":
