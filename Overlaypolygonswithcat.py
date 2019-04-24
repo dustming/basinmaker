@@ -980,5 +980,5 @@ SptailRef = arcpy.Describe(dataset).spatialReference
 arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryCode)) 
 
 
-if forcingply !="#" :
-    Maphru2forceply(forcingply,OutputFolder + "/",forcinggrid,,OutputFolder + "/",Boundaryply,missrow,misscol)
+if forcingply !="#":
+    Maphru2forceply(forcingply,OutputFolder + "/","#",OutputFolder + "/",Boundaryply,missrow,misscol)
