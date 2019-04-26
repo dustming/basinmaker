@@ -1405,7 +1405,7 @@ hydem = np.loadtxt(OutputFolder + "/"+"dem.asc",dtype = 'i4',skiprows = 6) #### 
 obs = np.loadtxt(OutputFolder + "/"+"obs.asc",dtype = 'i4',skiprows = 6)
 width = np.loadtxt(OutputFolder + "/"+"width.asc",skiprows = 6)
 depth = np.loadtxt(OutputFolder + "/"+"depth.asc",skiprows = 6)
-wdlen = np.loadtxt(OutputFolder + "/"+"WD_Len.asc",skiprows = 6)
+#wdlen = np.loadtxt(OutputFolder + "/"+"WD_Len.asc",skiprows = 6)
 Q_mean = np.loadtxt(OutputFolder + "/"+"Q_Mean.asc",skiprows = 6)
 landuse = np.loadtxt(OutputFolder + "/"+"landuse.asc",dtype = 'i4',skiprows = 6)
 landuseinfo = pd.read_csv(OutputFolder + "/"+'landuseinfo.csv',sep=",",low_memory=False)
@@ -1417,6 +1417,7 @@ Lake1 = np.loadtxt(OutputFolder + "/"+'Lake1.asc',dtype = 'i4',skiprows = 6)
 Str100 = np.loadtxt(OutputFolder + "/"+'strlink.asc',dtype = 'i4',skiprows = 6)
 ncols = int(arcpy.GetRasterProperties_management(dataset, "COLUMNCOUNT").getOutput(0))
 nrows = int(arcpy.GetRasterProperties_management(dataset, "ROWCOUNT").getOutput(0))
+wdlen = 'not used'
 #######################################3
 GenrateCatchatt(OutputFolder + "/",Str100)
 rivlen = np.loadtxt(OutputFolder+ "/"+ 'rivlength.asc',skiprows = 6)   #### raster of hydroshed basin fid

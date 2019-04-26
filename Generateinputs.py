@@ -74,21 +74,21 @@ from simpledbf import Dbf5
 arcpy.env.overwriteOutput = True
 arcpy.CheckOutExtension("Spatial")
 ##### Readed inputs
-OutHyID = int(sys.argv[1])
-hyshdply = sys.argv[2]
-hyshddem = sys.argv[3]
-hyshddir = sys.argv[4]
-hyshdacc = sys.argv[5]
-WidDep = sys.argv[6]
-hyinfocsv = sys.argv[7]
-VolThreshold = int(sys.argv[8])
-Lakefile = sys.argv[9]
-obspoint = sys.argv[10]
-OutputFolder = sys.argv[11] + "/"
+hyshddem = sys.argv[1]
+hyshddir = sys.argv[2]
+hyshdacc = sys.argv[3]
+hyshdply = sys.argv[4]
+WidDep = sys.argv[5]
+Lakefile = sys.argv[6]
+Landuse = sys.argv[7]
+Landuseinfo = sys.argv[8]
+obspoint = sys.argv[9]
+OutHyID = int(sys.argv[10])
+OutHyID2 = int(sys.argv[11])
+OutputFolder = sys.argv[12] + "/"
 
-OutHyID2 = int(sys.argv[12])
-Landuse = sys.argv[13]
-Landuseinfo = sys.argv[14]
+hyinfocsv = hyshdply[:-3] + "dbf"
+VolThreshold = 0
 
 cellSize = float(arcpy.GetRasterProperties_management(hyshddir, "CELLSIZEX").getOutput(0))
 
@@ -102,6 +102,7 @@ arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryC
 
 if not os.path.exists(OutputFolder):
     os.makedirs(OutputFolder)
+
 HydroBasins1 = Defcat(hyshdinfo,OutHyID)
 if OutHyID2 > 0:
     HydroBasins2 = Defcat(hyshdinfo,OutHyID2)
@@ -196,12 +197,9 @@ arcpy.PolylineToRaster_conversion(OutputFolder + "WidDep.shp", "DEPTH", OutputFo
                                   "MAXIMUM_LENGTH", "NONE", cellSize)
 arcpy.PolylineToRaster_conversion(OutputFolder + "WidDep.shp", "Q_Mean", OutputFolder + "Q_Mean",
                                   "MAXIMUM_LENGTH", "NONE", cellSize)
-arcpy.PolylineToRaster_conversion(OutputFolder + "WidDep.shp", "Shape_Leng", OutputFolder + "WD_Len",
-                                  "MAXIMUM_LENGTH", "NONE", cellSize)
 arcpy.RasterToASCII_conversion( OutputFolder + "depth", OutputFolder + "depth.asc")
 arcpy.RasterToASCII_conversion( OutputFolder + "width", OutputFolder + "width.asc")
 arcpy.RasterToASCII_conversion( OutputFolder + "Q_Mean", OutputFolder + "Q_Mean.asc")
-arcpy.RasterToASCII_conversion( OutputFolder + "WD_Len", OutputFolder + "WD_Len.asc")
 ########
 
 #########prepare obspoints
