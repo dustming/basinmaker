@@ -1273,7 +1273,8 @@ arcpy.env.overwriteOutput = True
 arcpy.CheckOutExtension("Spatial")
 ##### Readed inputs
 OutputFolder = sys.argv[1]
-
+Str100 = arcpy.RasterToNumPyArray(OutputFolder + "/"+'strlink.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'strlink.asc',dtype = 'i4',skiprows = 6)
+GenrateCatchatt(OutputFolder + "/",Str100)
 cellSize = float(arcpy.GetRasterProperties_management(OutputFolder + "/" + "dir", "CELLSIZEX").getOutput(0))
 SptailRef = arcpy.Describe(OutputFolder + "/" + "dir").spatialReference
 arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryCode)) ### WGS84
@@ -1310,12 +1311,11 @@ allsubinfo['FID'] = pd.Series(allsubinfo['HYBAS_ID'], index=allsubinfo.index)
 allLakinfo = pd.read_csv(OutputFolder + "/"+'lakeinfo.csv',sep=",",low_memory=False)
 dataset = "dir"
 Lake1 = arcpy.RasterToNumPyArray(OutputFolder + "/"+'Lake1.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'Lake1.asc',dtype = 'i4',skiprows = 6)
-Str100 = arcpy.RasterToNumPyArray(OutputFolder + "/"+'strlink.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'strlink.asc',dtype = 'i4',skiprows = 6)
 ncols = int(arcpy.GetRasterProperties_management(dataset, "COLUMNCOUNT").getOutput(0))
 nrows = int(arcpy.GetRasterProperties_management(dataset, "ROWCOUNT").getOutput(0))
 wdlen = 'not used'
 #######################################3
-GenrateCatchatt(OutputFolder + "/",Str100)
+
 rivlen = arcpy.RasterToNumPyArray(OutputFolder + "/"+'rivlength.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder+ "/"+ 'rivlength.asc',skiprows = 6)   #### raster of hydroshed basin fid
 area = arcpy.RasterToNumPyArray(OutputFolder + "/"+'area.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder+ "/"+"area.asc",skiprows = 6)
 slope = arcpy.RasterToNumPyArray(OutputFolder + "/"+'slope.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder+ "/"+"slope.asc",skiprows = 6)
