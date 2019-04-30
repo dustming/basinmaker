@@ -383,6 +383,8 @@ def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,outFolder,hydir):
                 GP_cat[dele[:,0],dele[:,1]]=-9999
                 nrow,ncol = Nextcell(hydir,checkcat[len(checkcat)-1,0],checkcat[len(checkcat)-1,1])
                 if nrow > 0 or ncol >0:
+                    if nrow >= nrows or ncols >= ncols:
+                        continue
                     if cat[nrow,ncol] < 0:
                         GP_cat[checkcat[len(checkcat)-1,0],checkcat[len(checkcat)-1,1]] = bcid
                         bcid = bcid + 1
@@ -519,6 +521,8 @@ def CE_mcat4lake(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints):
         if lakenrow < 0 or lakencol < 0:
             lakedowcatid = -999
         else:
+            if lakenrow >= nrows or lakencol >= ncols:
+                continue
             lakedowcatid = cat[lakenrow,lakencol]
         if not arclakeid < bsid and arclakeid > blid:
             continue
@@ -1138,21 +1142,21 @@ bcid = 1       ## begining of new cat id of hydrosheds
 bsid = 2000000   ## begining of new cat id of in inflow of lakes
 blid2 = 3000000
 boid = 4000000
-hylake =  np.loadtxt(OutputFolder + "/"+'cnlake.asc',dtype = 'i4',skiprows = 6) # raster of hydro lake
-nchylake =np.loadtxt(OutputFolder + "/"+'noncnlake.asc',dtype = 'i4',skiprows = 6) # raster of hydro lake
-cat = np.loadtxt(OutputFolder + "/"+'hybasinfid.asc',dtype = 'i4',skiprows = 6)   #### raster of hydroshed basin fid
+hylake =  arcpy.RasterToNumPyArray(OutputFolder + "/"+'cnlake.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'cnlake.asc',dtype = 'i4',skiprows = 6) # raster of hydro lake
+nchylake =arcpy.RasterToNumPyArray(OutputFolder + "/"+'noncnlake.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'noncnlake.asc',dtype = 'i4',skiprows = 6) # raster of hydro lake
+cat = nchylake =arcpy.RasterToNumPyArray(OutputFolder + "/"+'hybasinfid.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'hybasinfid.asc',dtype = 'i4',skiprows = 6)   #### raster of hydroshed basin fid
 hylakeinfo = pd.read_csv(OutputFolder + "/"+"lakeinfo.csv",sep=",",low_memory=False)       # dataframe of hydrolake database
-fac = np.loadtxt(OutputFolder + "/"+'acc.asc',dtype = 'i4',skiprows = 6)   # raster of hydrolakes
-hydir = np.loadtxt(OutputFolder + "/"+'dir.asc',dtype = 'i4',skiprows = 6)   #### raster of hydroshed basin fid
-hydem = np.loadtxt(OutputFolder + "/"+"dem.asc",dtype = 'i4',skiprows = 6) #### raster of hydroshed dem
-obs = np.loadtxt(OutputFolder + "/"+"obs.asc",dtype = 'i4',skiprows = 6)
-width = np.loadtxt(OutputFolder + "/"+"width.asc",dtype = 'i4',skiprows = 6)
-depth = np.loadtxt(OutputFolder + "/"+"depth.asc",dtype = 'i4',skiprows = 6)
+fac = arcpy.RasterToNumPyArray(OutputFolder + "/"+'acc.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'acc.asc',dtype = 'i4',skiprows = 6)   # raster of hydrolakes
+hydir = arcpy.RasterToNumPyArray(OutputFolder + "/"+'dir.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'dir.asc',dtype = 'i4',skiprows = 6)   #### raster of hydroshed basin fid
+hydem = arcpy.RasterToNumPyArray(OutputFolder + "/"+'dem.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+"dem.asc",dtype = 'i4',skiprows = 6) #### raster of hydroshed dem
+obs = arcpy.RasterToNumPyArray(OutputFolder + "/"+'obs.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+"obs.asc",dtype = 'i4',skiprows = 6)
+width = arcpy.RasterToNumPyArray(OutputFolder + "/"+'width.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+"width.asc",dtype = 'i4',skiprows = 6)
+depth = arcpy.RasterToNumPyArray(OutputFolder + "/"+'depth.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+"depth.asc",dtype = 'i4',skiprows = 6)
 allsubinfo = pd.read_csv(OutputFolder + "/"+'hybinfo.csv',sep=",",low_memory=False)
 allsubinfo['FID'] = pd.Series(allsubinfo['HYBAS_ID'], index=allsubinfo.index)
 allLakinfo = pd.read_csv(OutputFolder + "/"+'lakeinfo.csv',sep=",",low_memory=False)
 dataset = "dir"
-Str100 = np.loadtxt(OutputFolder + "/"+'strlink.asc',dtype = 'i4',skiprows = 6)
+Str100 = arcpy.RasterToNumPyArray(OutputFolder + "/"+'strlink.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'strlink.asc',dtype = 'i4',skiprows = 6)
 hylake1 = selectlake2(hylake,VolThreshold,allLakinfo)
 if NonConLThres > 0:
     Lake1 = selectlake(hylake1,nchylake,NonConLThres,allLakinfo)
@@ -1172,7 +1176,7 @@ outSetNull = SetNull(outWatershed, outWatershed, "VALUE < 1")
 outSetNull.save(OutputFolder + "/"+"temcat1")
 copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"temcat1.prj")
 arcpy.RasterToASCII_conversion("temcat1",  "temcat1.asc")
-cat1 = np.loadtxt(OutputFolder + "/"+"temcat1.asc",dtype = 'i4',skiprows = 6)
+cat1 =  arcpy.RasterToNumPyArray(OutputFolder + "/"+'temcat1.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+"temcat1.asc",dtype = 'i4',skiprows = 6)
 temcat,outlakeids =CE_mcat4lake(cat1,Lake1,fac,hydir,bsid,nrows,ncols,Pourpoints)
 temcat2 = CE_Lakeerror(fac,hydir,Lake1,temcat,bsid,blid,boid,nrows,ncols,cat)
 writeraster(OutputFolder + "/"+"temcat2.asc",temcat2,dataset)
@@ -1196,7 +1200,7 @@ outExtractByMask = ExtractByMask(outSetNull, OutputFolder+ "/" +"dir")
 outExtractByMask.save(OutputFolder + "/"+"temcat3")
 copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"temcat3.prj")
 arcpy.RasterToASCII_conversion(OutputFolder + "/"+'temcat3', OutputFolder + "/"+'temcat3.asc')
-temcat3 = np.loadtxt(OutputFolder + "/"+"temcat3.asc",skiprows = 6)
+temcat3 = arcpy.RasterToNumPyArray(OutputFolder + "/"+'temcat3.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+"temcat3.asc",skiprows = 6)
 rowcols = np.argwhere(temcat3 == 0)
 temcat3[rowcols[:,0],rowcols[:,1]] = -9999
 finalcat = CE_mcat4lake2(temcat3,Lake1,fac,hydir,bsid,nrows,ncols,nPourpoints)

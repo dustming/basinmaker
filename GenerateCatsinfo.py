@@ -196,110 +196,6 @@ def selectlake(hylake,Str,hylakeinfo,VolThreshold):
 
 
 ##################################################################3
-def PreparePrograminputs(N60,VolThreshold,OutHyID,OutputFolder,InputsFolder,Databasefolder):
-    arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(SptailRef.factoryCode) ### WGS84
-    ###########Get first step input
-    if N60 == 0:
-        if HyBasinfile == 'Default':
-            hyshdply =  Databasefolder + 'Shapefiles/hybas_na_lev01-12_v1c/' + 'hybas_na_'+cle+'_v1c.shp'
-        else:
-            hyshdply = InputsFolder + HyBasinfile
-        hyshddem =  Databasefolder + 'Rasters/na_dem_15s/na_dem_15s'
-        hyshdacc =  Databasefolder + 'Rasters/na_acc_15s/na_acc_15s'
-        hyshddir =  Databasefolder + 'Rasters/na_dir_15s/na_dir_15s'
-        WidDep = Databasefolder + 'Shapefiles/Width_Depth/narivs.shp'
-        hyshdinfo = np.genfromtxt(Databasefolder + 'Shapefiles/hybas_na_lev01-12_v1c/' + 'hybas_na_'+cle+'_v1c.csv',delimiter=',')
-    if N60 != 0:
-        if HyBasinfile == 'Default':
-            hyshdply =  Databasefolder + 'Shapefiles/hybas_ar_lev01-12_v1c/' + 'hybas_ar_'+cle+'_v1c.shp'
-        else:
-            hyshdply = InputsFolder + HyBasinfile
-        hyshddem =  Databasefolder + 'Rasters/n60_dem_15s'
-        hyshdacc =  Databasefolder + 'Rasters/n60_acc_15s'
-        hyshddir =  Databasefolder + 'Rasters/n60_dir_15s'
-        WidDep = Databasefolder + 'Shapefiles/Width_Depth/narivs.shp'
-#to do### need to transfer dbf to csv here
-        hyshdinfo = np.genfromtxt(Databasefolder + 'Shapefiles/hybas_ar_lev01-12_v1c/' + 'hybas_ar_'+cle+'_v1c.csv',delimiter=',')
-    ###############Get interested study regions based on basin outlet hydrobasin ID
-    if HyBasinfile == 'Default':
-        HydroBasins = Defcat(hyshdinfo,OutHyID)
-        out_feature_class = OutputFolder +"HyMask.shp"
-        where_clause = '"HYBAS_ID" IN'+ " ("
-        for i in range(0,len(HydroBasins)):
-            if i == 0:
-                where_clause = where_clause + str(HydroBasins[i])
-            else:
-                where_clause = where_clause + "," + str(HydroBasins[i])
-        where_clause = where_clause + ")"
-        arcpy.Select_analysis(hyshdply, out_feature_class, where_clause)
-    else:
-        arcpy.CopyFeatures_management(hyshdply, OutputFolder + "HyMask.shp")
-    ### Prepare input files
-    ##### dir
-    arcpy.env.workspace = OutputFolder
-#    arcpy.env.outputCoordinateSystem = "GCS_WGS_1984"
-    arcpy.env.overwriteOutput = True
-    arcpy.CheckOutExtension("Spatial")
-    outExtractByMask = ExtractByMask(hyshddir, OutputFolder +"HyMask.shp")
-    outExtractByMask.save(OutputFolder + "dir")
-    arcpy.RasterToASCII_conversion(OutputFolder + "dir", OutputFolder + "dir.asc")
-    ####### Set envroment variable to dir
-    arcpy.env.XYTolerance = cellSize
-    arcpy.arcpy.env.cellSize = cellSize
-    arcpy.env.extent = arcpy.Describe(OutputFolder + "dir").extent
-    arcpy.env.snapRaster = OutputFolder + "dir"
-    #########################################################
-    ##### dem
-    outExtractByMask = ExtractByMask(hyshddem, OutputFolder +"HyMask.shp")
-    outExtractByMask.save(OutputFolder + "dem")
-    arcpy.RasterToASCII_conversion(OutputFolder + "dem", OutputFolder + "dem.asc")
-    ##### acc
-    outExtractByMask = ExtractByMask(hyshdacc, OutputFolder +"HyMask.shp")
-    outExtractByMask.save(OutputFolder + "acc")
-    arcpy.RasterToASCII_conversion(OutputFolder + "acc", OutputFolder + "acc.asc")
-    ######################################################################################
-    #######hydrobasin
-    arcpy.PolygonToRaster_conversion(OutputFolder +"HyMask.shp", "FID", OutputFolder + "hybasinfid",
-                                 "CELL_CENTER","NONE", cellSize)
-    arcpy.RasterToASCII_conversion(OutputFolder + "hybasinfid", OutputFolder + "hybasinfid.asc")
-    #######Prepare Lakes
-    if Lakefile != 0:
-        arcpy.CopyFeatures_management(Lakefile, OutputFolder +"HyLake1.shp")
-#        arcpy.Clip_fanalysis(Lakefile, OutputFolder +"HyMask.shp", OutputFolder +"HyLake1.shp", "")
-        where_clause = '"Vol_total"> '+ str(VolThreshold)
-        arcpy.Select_analysis(OutputFolder +"HyLake1.shp", OutputFolder +"HyLake.shp", where_clause)
-        arcpy.PolygonToRaster_conversion(OutputFolder +"HyLake.shp", "Hylak_id", OutputFolder + "hylake",
-                                 "MAXIMUM_COMBINED_AREA","Hylak_id", cellSize)
-        arcpy.RasterToASCII_conversion(OutputFolder + "hylake", OutputFolder + "hylake.asc")
-    else:
-        arcpy.Clip_analysis(Databasefolder + 'Shapefiles/HyLake.shp', OutputFolder +"HyMask.shp", OutputFolder +"HyLake.shp", "")
-        tdir = np.loadtxt(OutputFolder+ 'dir.asc',dtype = 'i4',skiprows = 6)
-        tlake = copy.copy(tdir)
-        tlake[:,:] = -9999
-        writeraster(OutputFolder + "hylake.asc",tlake,OutputFolder + 'dir')
-    #########prepare obspoints
-    arcpy.PointToRaster_conversion(obspoint, "FID",
-                                OutputFolder + "obs", "MAXIMUM", "", cellSize)
-    arcpy.RasterToASCII_conversion( OutputFolder + "obs", OutputFolder + "obs.asc")
-    #######converting dbf to csv files
-    dbftocsv( OutputFolder +"HyLake.dbf",OutputFolder +"lakeinfo.csv")
-    dbftocsv( OutputFolder +"HyMask.dbf",OutputFolder +"hybinfo.csv")
-    ##### width and depth
-    arcpy.Clip_analysis(WidDep, OutputFolder +"HyMask.shp", OutputFolder + "WidDep.shp")
-    arcpy.PolylineToRaster_conversion(OutputFolder + "WidDep.shp", "WIDTH", OutputFolder + "width",
-                                  "MAXIMUM_LENGTH", "NONE", cellSize)
-    arcpy.PolylineToRaster_conversion(OutputFolder + "WidDep.shp", "DEPTH", OutputFolder + "depth",
-                                  "MAXIMUM_LENGTH", "NONE", cellSize)
-    arcpy.RasterToASCII_conversion( OutputFolder + "depth", OutputFolder + "depth.asc")
-    arcpy.RasterToASCII_conversion( OutputFolder + "width", OutputFolder + "width.asc")
-    if ComplRiv > 0:
-        rivacc = np.loadtxt(OutputFolder + "acc.asc",dtype = 'i4',skiprows = 6)
-        rivtemp = copy.copy(rivacc)
-        rowcol = np.argwhere(rivacc > 100)
-        rivtemp[:,:] = -9999
-        rivtemp[rowcol[:,0],rowcol[:,1]] = 1
-        writeraster(OutputFolder + "riv1.asc",rivtemp,OutputFolder + "dir")
-##################################################################3
 
 def Addobspoints(obs,pourpoints,boid,cat):
     obsids = np.unique(obs)
@@ -1396,34 +1292,34 @@ bsid = 2000000   ## begining of new cat id of in inflow of lakes
 blid2 = 3000000
 boid = 4000000
 ####
-hylake =  np.loadtxt(OutputFolder + "/"+'hylake.asc',dtype = 'i4',skiprows = 6) # raster of hydro lake
-cat = np.loadtxt(OutputFolder + "/"+'hybasinfid.asc',dtype = 'i4',skiprows = 6)   #### raster of hydroshed basin fid
+hylake =  arcpy.RasterToNumPyArray(OutputFolder + "/"+'hylake.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'hylake.asc',dtype = 'i4',skiprows = 6) # raster of hydro lake
+cat = arcpy.RasterToNumPyArray(OutputFolder + "/"+'hybasinfid.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'hybasinfid.asc',dtype = 'i4',skiprows = 6)   #### raster of hydroshed basin fid
 hylakeinfo = pd.read_csv(OutputFolder + "/"+"lakeinfo.csv",sep=",",low_memory=False)       # dataframe of hydrolake database
-fac = np.loadtxt(OutputFolder + "/"+'acc.asc',dtype = 'i4',skiprows = 6)   # raster of hydrolakes
-hydir = np.loadtxt(OutputFolder + "/"+'dir.asc',dtype = 'i4',skiprows = 6)   #### raster of hydroshed basin fid
-hydem = np.loadtxt(OutputFolder + "/"+"dem.asc",dtype = 'i4',skiprows = 6) #### raster of hydroshed dem
-obs = np.loadtxt(OutputFolder + "/"+"obs.asc",dtype = 'i4',skiprows = 6)
-width = np.loadtxt(OutputFolder + "/"+"width.asc",skiprows = 6)
-depth = np.loadtxt(OutputFolder + "/"+"depth.asc",skiprows = 6)
+fac = arcpy.RasterToNumPyArray(OutputFolder + "/"+'acc.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'acc.asc',dtype = 'i4',skiprows = 6)   # raster of hydrolakes
+hydir = arcpy.RasterToNumPyArray(OutputFolder + "/"+'dir.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'dir.asc',dtype = 'i4',skiprows = 6)   #### raster of hydroshed basin fid
+hydem = arcpy.RasterToNumPyArray(OutputFolder + "/"+'dem.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+"dem.asc",dtype = 'i4',skiprows = 6) #### raster of hydroshed dem
+obs = arcpy.RasterToNumPyArray(OutputFolder + "/"+'obs.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+"obs.asc",dtype = 'i4',skiprows = 6)
+width = arcpy.RasterToNumPyArray(OutputFolder + "/"+'width.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+"width.asc",skiprows = 6)
+depth = arcpy.RasterToNumPyArray(OutputFolder + "/"+'depth.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+"depth.asc",skiprows = 6)
 #wdlen = np.loadtxt(OutputFolder + "/"+"WD_Len.asc",skiprows = 6)
-Q_mean = np.loadtxt(OutputFolder + "/"+"Q_Mean.asc",skiprows = 6)
-landuse = np.loadtxt(OutputFolder + "/"+"landuse.asc",dtype = 'i4',skiprows = 6)
+Q_mean = arcpy.RasterToNumPyArray(OutputFolder + "/"+'Q_Mean.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+"Q_Mean.asc",skiprows = 6)
+landuse = arcpy.RasterToNumPyArray(OutputFolder + "/"+'landuse.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+"landuse.asc",dtype = 'i4',skiprows = 6)
 landuseinfo = pd.read_csv(OutputFolder + "/"+'landuseinfo.csv',sep=",",low_memory=False)
 allsubinfo = pd.read_csv(OutputFolder + "/"+'hybinfo.csv',sep=",",low_memory=False)
 allsubinfo['FID'] = pd.Series(allsubinfo['HYBAS_ID'], index=allsubinfo.index)
 allLakinfo = pd.read_csv(OutputFolder + "/"+'lakeinfo.csv',sep=",",low_memory=False)
 dataset = "dir"
-Lake1 = np.loadtxt(OutputFolder + "/"+'Lake1.asc',dtype = 'i4',skiprows = 6)
-Str100 = np.loadtxt(OutputFolder + "/"+'strlink.asc',dtype = 'i4',skiprows = 6)
+Lake1 = arcpy.RasterToNumPyArray(OutputFolder + "/"+'Lake1.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'Lake1.asc',dtype = 'i4',skiprows = 6)
+Str100 = arcpy.RasterToNumPyArray(OutputFolder + "/"+'strlink.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'strlink.asc',dtype = 'i4',skiprows = 6)
 ncols = int(arcpy.GetRasterProperties_management(dataset, "COLUMNCOUNT").getOutput(0))
 nrows = int(arcpy.GetRasterProperties_management(dataset, "ROWCOUNT").getOutput(0))
 wdlen = 'not used'
 #######################################3
 GenrateCatchatt(OutputFolder + "/",Str100)
-rivlen = np.loadtxt(OutputFolder+ "/"+ 'rivlength.asc',skiprows = 6)   #### raster of hydroshed basin fid
-area = np.loadtxt(OutputFolder+ "/"+"area.asc",skiprows = 6)
-slope = np.loadtxt(OutputFolder+ "/"+"slope.asc",skiprows = 6)
-finalcat = np.loadtxt(OutputFolder+ "/"+"finalcat.asc",dtype = 'i4',skiprows = 6)
+rivlen = arcpy.RasterToNumPyArray(OutputFolder + "/"+'rivlength.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder+ "/"+ 'rivlength.asc',skiprows = 6)   #### raster of hydroshed basin fid
+area = arcpy.RasterToNumPyArray(OutputFolder + "/"+'area.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder+ "/"+"area.asc",skiprows = 6)
+slope = arcpy.RasterToNumPyArray(OutputFolder + "/"+'slope.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder+ "/"+"slope.asc",skiprows = 6)
+finalcat =arcpy.RasterToNumPyArray(OutputFolder + "/"+'finalcat.asc',nodata_to_value=-9999)# np.loadtxt(OutputFolder+ "/"+"finalcat.asc",dtype = 'i4',skiprows = 6)
 allcatid = np.unique(finalcat)
 allcatid = allcatid[allcatid >= 0]
 catinfo = np.full((len(allcatid),40),-99999999999.00000000)
