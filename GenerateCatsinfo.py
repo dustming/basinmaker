@@ -519,6 +519,8 @@ def Getcatrivlenslope(catrow,catcol,rivlen,dem,fac,hydir,finalcat,trow,tcol,nrow
                 inearcat = nearcat[incat]
                 incat_trow,incat_tcol = Getbasinoutlet(inearcat,finalcat,fac)
                 incat_nrow,incat_ncol = Nextcell(hydir,incat_trow,incat_tcol)### get the downstream catchment id
+                if incat_nrow >= nrows or incat_nrow < 0 or incat_ncol >= ncols or incat_ncol < 0:
+                    continue
                 if finalcat[incat_nrow,incat_ncol] == lid:
                     iscase1 = 1
         if nout > 0 and iscase1 == 1:  #### this means the strem connect at other catchments. or  this catchment only have one stream some head stream was included
@@ -1273,11 +1275,11 @@ arcpy.env.overwriteOutput = True
 arcpy.CheckOutExtension("Spatial")
 ##### Readed inputs
 OutputFolder = sys.argv[1]
-Str100 = arcpy.RasterToNumPyArray(OutputFolder + "/"+'strlink.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'strlink.asc',dtype = 'i4',skiprows = 6)
-GenrateCatchatt(OutputFolder + "/",Str100)
 cellSize = float(arcpy.GetRasterProperties_management(OutputFolder + "/" + "dir", "CELLSIZEX").getOutput(0))
 SptailRef = arcpy.Describe(OutputFolder + "/" + "dir").spatialReference
 arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryCode)) ### WGS84
+Str100 = arcpy.RasterToNumPyArray(OutputFolder + "/"+'strlink.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'strlink.asc',dtype = 'i4',skiprows = 6)
+GenrateCatchatt(OutputFolder + "/",Str100)
 
 arcpy.env.workspace =OutputFolder
 os.chdir(OutputFolder)
