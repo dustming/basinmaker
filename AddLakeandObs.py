@@ -461,7 +461,7 @@ def CE_mcat4lake(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints):
         ### if there are more than 1 catchment in cat1, determine if they need to be combined
         ### check if these catchment flow into the lake if it is true, change catchment id into lake catchment id
         if len(arcatid)>1:  #
-            if len(lrowcol) < 1000 and float(max(catcounts))/float(len(lrowcol)) < 0.8: #: float(max(catcounts))/float(len(lrowcol)) < 0.8 and 
+            if float(max(catcounts))/float(len(lrowcol)) < 0.8 and len(lrowcol) < 10000: #: float(max(catcounts))/float(len(lrowcol)) < 0.8 and 
                 outlakeids[outi] = lakeid
                 outi = outi + 1
             for j in range(0,len(arcatid)):
