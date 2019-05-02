@@ -1000,7 +1000,7 @@ def ChangeDIR(dir,lake1,acc,ncols,nrows,outlakeids):
     ndir = copy.copy(dir)
     for i in range(0,len(outlakeids)):
         lid = outlakeids[i]
-        goodpoint = np.full((10000000,2),-99999)
+        goodpoint = np.full((20000,2),-99999)
         lrowcol = np.argwhere(lake1==lid).astype(int)
 #        if len(lrowcol) > 100:
 #            continue
