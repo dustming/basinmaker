@@ -1331,4 +1331,6 @@ copyfile( OutputFolder + "/"+"HyMask.prj" ,  OutputFolder + "/"+"finalcat_info.p
 catinfo2 = Writecatinfotodbf(OutputFolder + "/",catinfo)
 arcpy.AddGeometryAttributes_management(OutputFolder + "/" + "finalcat_info.shp","CENTROID_INSIDE", "","","")
 np.savetxt(OutputFolder+"/"+"catinfo.csv",catinfo2,delimiter=",")
+arcpy.Dissolve_management(OutputFolder+"/" + "riv1_cat.shp", OutputFolder+"/" + "finalriv_info.shp", "gridcode", "", "MULTI_PART", "")
+arcpy.JoinField_management (OutputFolder+"/" + "finalriv_info.shp", "gridcode", OutputFolder + "/" + "finalcat_info.dbf", "SubId","")
 arcpy.AddMessage("The generated catchment with lake and calculated parameters is located at OutputFolder with name finalcat_info.shp")
