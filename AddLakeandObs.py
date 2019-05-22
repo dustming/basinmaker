@@ -446,7 +446,8 @@ def CE_mcat4lake(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints):
         lakacc = lakacc[lakacc[:,2].argsort()]
         lorow = lakacc[len(lakacc)-1,0]
         locol = lakacc[len(lakacc)-1,1]  ###### lake outlet row and col
-        arclakeid = cat[lorow,locol]  ####### lake catchment id
+        arclakeid = cat[lorow,locol]  ####### lake catchment id 
+        lakecatrowcol = np.argwhere(cat==arclakeid).astype(int)    #### lake catchment cells  
         lakenrow,lakencol = Nextcell(fdir,lorow,locol)
         if lakenrow < 0 or lakencol < 0:
             lakedowcatid = -999
@@ -454,41 +455,41 @@ def CE_mcat4lake(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints):
             if lakenrow >= nrows or lakencol >= ncols:
                 continue
             lakedowcatid = cat[lakenrow,lakencol]
-        if not arclakeid < bsid and arclakeid > blid:
-            continue
+        # if not arclakeid < bsid and arclakeid > blid:
+        #     continue
         arcatid,catcounts = np.unique(cat[lrowcol[:,0],lrowcol[:,1]],return_counts=True) ###### all catchment id containing this lake
         tarid = 0
         ### if there are more than 1 catchment in cat1, determine if they need to be combined
         ### check if these catchment flow into the lake if it is true, change catchment id into lake catchment id
         if len(arcatid)>1:  #
-            if float(max(catcounts))/float(len(lrowcol)) < 0.9: #and len(lrowcol) < 10000: #: float(max(catcounts))/float(len(lrowcol)) < 0.8 and 
-                outlakeids[outi] = lakeid
-                outi = outi + 1
-            for j in range(0,len(arcatid)):
-                crowcol = np.argwhere(cat==arcatid[j]).astype(int)
-                catacc = np.full((len(crowcol),3),-9999)
-                catacc[:,0] = crowcol[:,0]
-                catacc[:,1] = crowcol[:,1]
-                catacc[:,2] = fac[crowcol[:,0],crowcol[:,1]]
-                catacc = catacc[catacc[:,2].argsort()]
-                catorow = catacc[len(catacc)-1,0]
-                catocol = catacc[len(catacc)-1,1] ### catchment outlet
-                Lakeincat = lake[crowcol[:,0],crowcol[:,1]]
-                nlake = np.argwhere(Lakeincat==lakeid).astype(int)
-                nrow,ncol = Nextcell(fdir,catorow,catocol) #####Get the next row and col of downstream catchment
-                if nrow < 0 or ncol < 0:
-                    continue
-                if nrow < nrows and ncol < ncols:
-               ### if downstream catchment is target lake,and this catchment is an lakeinflow catchment combine them
-                    if cat[nrow,ncol] == arclakeid and float(len(nlake))/float(len(crowcol)) > 0.1 and cat[catorow,catocol] > bsid:
-                        cat[crowcol[:,0],crowcol[:,1]] = arclakeid
-                    if float(len(nlake))/float(len(lrowcol)) > 0.1 and cat[catorow,catocol] > bsid and cat[catorow,catocol] != lakedowcatid:
-#                        arcpy.AddMessage("2")
-                        cat[crowcol[:,0],crowcol[:,1]] = arclakeid
-#                        if cat[catorow,catocol] != arclakeid and cat[nrow,ncol] != arclakeid:
-#                            print lakeid
-                    if cat[nrow,ncol] > bsid and arcatid[j] > bsid:  #### lake input cat route to another lake input catch
-                        cat[crowcol[:,0],crowcol[:,1]] = cat[nrow,ncol]
+#            if float(len(lakecatrowcol))/float(len(lrowcol)) < 0.9: #and len(lrowcol) < 10000: #: float(max(catcounts))/float(len(lrowcol)) < 0.8 and 
+            outlakeids[outi] = lakeid
+            outi = outi + 1
+#             for j in range(0,len(arcatid)):
+#                 crowcol = np.argwhere(cat==arcatid[j]).astype(int)
+#                 catacc = np.full((len(crowcol),3),-9999)
+#                 catacc[:,0] = crowcol[:,0]
+#                 catacc[:,1] = crowcol[:,1]
+#                 catacc[:,2] = fac[crowcol[:,0],crowcol[:,1]]
+#                 catacc = catacc[catacc[:,2].argsort()]
+#                 catorow = catacc[len(catacc)-1,0]
+#                 catocol = catacc[len(catacc)-1,1] ### catchment outlet
+#                 Lakeincat = lake[crowcol[:,0],crowcol[:,1]]
+#                 nlake = np.argwhere(Lakeincat==lakeid).astype(int)
+#                 nrow,ncol = Nextcell(fdir,catorow,catocol) #####Get the next row and col of downstream catchment
+#                 if nrow < 0 or ncol < 0:
+#                     continue
+#                 if nrow < nrows and ncol < ncols:
+#                ### if downstream catchment is target lake,and this catchment is an lakeinflow catchment combine them
+#                     if cat[nrow,ncol] == arclakeid and float(len(nlake))/float(len(crowcol)) > 0.1 and cat[catorow,catocol] > bsid:
+#                         cat[crowcol[:,0],crowcol[:,1]] = arclakeid
+#                     if float(len(nlake))/float(len(lrowcol)) > 0.1 and cat[catorow,catocol] > bsid and cat[catorow,catocol] != lakedowcatid:
+# #                        arcpy.AddMessage("2")
+#                         cat[crowcol[:,0],crowcol[:,1]] = arclakeid
+# #                        if cat[catorow,catocol] != arclakeid and cat[nrow,ncol] != arclakeid:
+# #                            print lakeid
+#                     if cat[nrow,ncol] > bsid and arcatid[j] > bsid:  #### lake input cat route to another lake input catch
+#                         cat[crowcol[:,0],crowcol[:,1]] = cat[nrow,ncol]
         pp = Pourpoints[lrowcol[:,0],lrowcol[:,1]]
         pp = np.unique(pp)
         pp = pp[pp > 0]
