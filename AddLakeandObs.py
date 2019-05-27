@@ -465,31 +465,31 @@ def CE_mcat4lake(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints):
 #            if float(len(lakecatrowcol))/float(len(lrowcol)) < 0.9: #and len(lrowcol) < 10000: #: float(max(catcounts))/float(len(lrowcol)) < 0.8 and 
             outlakeids[outi] = lakeid
             outi = outi + 1
-#             for j in range(0,len(arcatid)):
-#                 crowcol = np.argwhere(cat==arcatid[j]).astype(int)
-#                 catacc = np.full((len(crowcol),3),-9999)
-#                 catacc[:,0] = crowcol[:,0]
-#                 catacc[:,1] = crowcol[:,1]
-#                 catacc[:,2] = fac[crowcol[:,0],crowcol[:,1]]
-#                 catacc = catacc[catacc[:,2].argsort()]
-#                 catorow = catacc[len(catacc)-1,0]
-#                 catocol = catacc[len(catacc)-1,1] ### catchment outlet
-#                 Lakeincat = lake[crowcol[:,0],crowcol[:,1]]
-#                 nlake = np.argwhere(Lakeincat==lakeid).astype(int)
-#                 nrow,ncol = Nextcell(fdir,catorow,catocol) #####Get the next row and col of downstream catchment
-#                 if nrow < 0 or ncol < 0:
-#                     continue
-#                 if nrow < nrows and ncol < ncols:
-#                ### if downstream catchment is target lake,and this catchment is an lakeinflow catchment combine them
-#                     if cat[nrow,ncol] == arclakeid and float(len(nlake))/float(len(crowcol)) > 0.1 and cat[catorow,catocol] > bsid:
-#                         cat[crowcol[:,0],crowcol[:,1]] = arclakeid
-#                     if float(len(nlake))/float(len(lrowcol)) > 0.1 and cat[catorow,catocol] > bsid and cat[catorow,catocol] != lakedowcatid:
-# #                        arcpy.AddMessage("2")
-#                         cat[crowcol[:,0],crowcol[:,1]] = arclakeid
-# #                        if cat[catorow,catocol] != arclakeid and cat[nrow,ncol] != arclakeid:
-# #                            print lakeid
-#                     if cat[nrow,ncol] > bsid and arcatid[j] > bsid:  #### lake input cat route to another lake input catch
-#                         cat[crowcol[:,0],crowcol[:,1]] = cat[nrow,ncol]
+            for j in range(0,len(arcatid)):
+                crowcol = np.argwhere(cat==arcatid[j]).astype(int)
+                catacc = np.full((len(crowcol),3),-9999)
+                catacc[:,0] = crowcol[:,0]
+                catacc[:,1] = crowcol[:,1]
+                catacc[:,2] = fac[crowcol[:,0],crowcol[:,1]]
+                catacc = catacc[catacc[:,2].argsort()]
+                catorow = catacc[len(catacc)-1,0]
+                catocol = catacc[len(catacc)-1,1] ### catchment outlet
+                Lakeincat = lake[crowcol[:,0],crowcol[:,1]]
+                nlake = np.argwhere(Lakeincat==lakeid).astype(int)
+                nrow,ncol = Nextcell(fdir,catorow,catocol) #####Get the next row and col of downstream catchment
+                if nrow < 0 or ncol < 0:
+                    continue
+                if nrow < nrows and ncol < ncols:
+               ### if downstream catchment is target lake,and this catchment is an lakeinflow catchment combine them
+                    if cat[nrow,ncol] == arclakeid and float(len(nlake))/float(len(crowcol)) > 0.1 and cat[catorow,catocol] > bsid:
+                        cat[crowcol[:,0],crowcol[:,1]] = arclakeid
+                    if float(len(nlake))/float(len(lrowcol)) > 0.1 and cat[catorow,catocol] > bsid and cat[catorow,catocol] != lakedowcatid:
+#                        arcpy.AddMessage("2")
+                        cat[crowcol[:,0],crowcol[:,1]] = arclakeid
+#                        if cat[catorow,catocol] != arclakeid and cat[nrow,ncol] != arclakeid:
+#                            print lakeid
+                    if cat[nrow,ncol] > bsid and arcatid[j] > bsid:  #### lake input cat route to another lake input catch
+                        cat[crowcol[:,0],crowcol[:,1]] = cat[nrow,ncol]
         pp = Pourpoints[lrowcol[:,0],lrowcol[:,1]]
         pp = np.unique(pp)
         pp = pp[pp > 0]
@@ -1027,12 +1027,15 @@ def checklakeboundary(lake1,lid,p_row,p_col):
     return numnonlake,nonlakedir
     
 
-def Dirpoints2(N_dir,p_row,p_col,lake1,lid,goodpoint,k):
+def Dirpoints2(N_dir,p_row,p_col,lake1,lid,goodpoint,k,ncols,nrows):
     ndir = copy.copy(N_dir)
     ip = copy.copy(k) + 1
 #dir 1
-    if lake1[p_row + 0,p_col + 1] == lid:  #### it is a lake cell 
-        numnonlake,nonlakedir = checklakeboundary(lake1,lid,p_row + 0,p_col + 1)
+    if lake1[p_row + 0,p_col + 1] == lid:  #### it is a lake cell
+        if p_row + 0 == nrows-1 or p_col + 1 == ncols - 1:   ### lake not at the boundary of domain
+            numnonlake = 99
+        else:
+            numnonlake,nonlakedir = checklakeboundary(lake1,lid,p_row + 0,p_col + 1)
         if numnonlake != 0: # it is a boundary lake cell
             tt = goodpoint[goodpoint[:,0] == p_row + 0,]
             if len(tt[tt[:,1] == p_col + 1,]) < 1:#### the point not exist in good points which store all boundary points
@@ -1042,7 +1045,10 @@ def Dirpoints2(N_dir,p_row,p_col,lake1,lid,goodpoint,k):
                 ip = ip + 1
 #dir 2
     if lake1[p_row + 1,p_col + 1] == lid:
-        numnonlake,nonlakedir = checklakeboundary(lake1,lid,p_row + 1,p_col + 1)
+        if p_row + 1 == nrows-1 or p_col + 1 == ncols - 1:   ### lake not at the boundary of domain
+            numnonlake = 99
+        else:
+            numnonlake,nonlakedir = checklakeboundary(lake1,lid,p_row + 1,p_col + 1)
         if numnonlake != 0:
             tt = goodpoint[goodpoint[:,0] == p_row + 1,]
             if len(tt[tt[:,1] == p_col + 1,]) < 1:
@@ -1052,7 +1058,10 @@ def Dirpoints2(N_dir,p_row,p_col,lake1,lid,goodpoint,k):
                 ip = ip + 1
 #dir 3
     if lake1[p_row + 1,p_col + 0] == lid:
-        numnonlake,nonlakedir = checklakeboundary(lake1,lid,p_row + 1,p_col + 0)
+        if p_row + 1 == nrows-1 or p_col + 0 == ncols - 1:   ### lake not at the boundary of domain
+            numnonlake = 99
+        else:
+            numnonlake,nonlakedir = checklakeboundary(lake1,lid,p_row + 1,p_col + 0)
         if numnonlake != 0:
             tt = goodpoint[goodpoint[:,0] == p_row + 1,]
             if len(tt[tt[:,1] == p_col + 0,]) < 1:
@@ -1062,7 +1071,10 @@ def Dirpoints2(N_dir,p_row,p_col,lake1,lid,goodpoint,k):
                 ip = ip + 1
 #dir 4
     if lake1[p_row + 1,p_col - 1] == lid:
-        numnonlake,nonlakedir = checklakeboundary(lake1,lid,p_row + 1,p_col - 1)
+        if p_row + 1 == nrows-1 or p_col - 1 == ncols - 1:   ### lake not at the boundary of domain
+            numnonlake = 99
+        else:
+            numnonlake,nonlakedir = checklakeboundary(lake1,lid,p_row + 1,p_col - 1)
         if numnonlake != 0:
             tt = goodpoint[goodpoint[:,0] == p_row + 1,]
             if len(tt[tt[:,1] == p_col - 1,]) < 1:
@@ -1072,7 +1084,10 @@ def Dirpoints2(N_dir,p_row,p_col,lake1,lid,goodpoint,k):
                 ip = ip + 1
 #dir 5
     if lake1[p_row + 0,p_col - 1] == lid:
-        numnonlake,nonlakedir = checklakeboundary(lake1,lid,p_row + 0,p_col - 1)
+        if p_row + 0 == nrows-1 or p_col - 1 == ncols - 1:   ### lake not at the boundary of domain
+            numnonlake = 99
+        else:
+            numnonlake,nonlakedir = checklakeboundary(lake1,lid,p_row + 0,p_col - 1)
         if numnonlake != 0:
             tt = goodpoint[goodpoint[:,0] == p_row + 0,]
             if len(tt[tt[:,1] == p_col - 1,]) < 1:
@@ -1082,7 +1097,10 @@ def Dirpoints2(N_dir,p_row,p_col,lake1,lid,goodpoint,k):
                 ip = ip + 1
 #dir 6
     if lake1[p_row - 1,p_col - 1] == lid:
-        numnonlake,nonlakedir = checklakeboundary(lake1,lid,p_row - 1,p_col - 1)
+        if p_row - 1 == nrows-1 or p_col - 1 == ncols - 1:   ### lake not at the boundary of domain
+            numnonlake = 99
+        else:
+            numnonlake,nonlakedir = checklakeboundary(lake1,lid,p_row - 1,p_col - 1)
         if numnonlake != 0:
             tt = goodpoint[goodpoint[:,0] == p_row - 1,]
             if len(tt[tt[:,1] == p_col - 1,]) < 1:
@@ -1092,7 +1110,10 @@ def Dirpoints2(N_dir,p_row,p_col,lake1,lid,goodpoint,k):
                 ip = ip + 1
 #dir 7
     if lake1[p_row - 1,p_col + 0] == lid:
-        numnonlake,nonlakedir = checklakeboundary(lake1,lid,p_row - 1,p_col + 0)
+        if p_row - 1 == nrows-1 or p_col + 0 == ncols - 1:   ### lake not at the boundary of domain
+            numnonlake = 99
+        else:
+            numnonlake,nonlakedir = checklakeboundary(lake1,lid,p_row - 1,p_col + 0)
         if numnonlake != 0:
             tt = goodpoint[goodpoint[:,0] == p_row - 1,]
             if len(tt[tt[:,1] == p_col + 0,]) < 1:
@@ -1102,7 +1123,10 @@ def Dirpoints2(N_dir,p_row,p_col,lake1,lid,goodpoint,k):
                 ip = ip + 1
 #dir 8
     if lake1[p_row - 1,p_col + 1] == lid:
-        numnonlake,nonlakedir = checklakeboundary(lake1,lid,p_row - 1,p_col + 1)
+        if p_row - 1 == nrows-1 or p_col + 1 == ncols - 1:   ### lake not at the boundary of domain
+            numnonlake = 99
+        else:
+            numnonlake,nonlakedir = checklakeboundary(lake1,lid,p_row - 1,p_col + 1)
         if numnonlake != 0:
             tt = goodpoint[goodpoint[:,0] == p_row - 1,]
             if len(tt[tt[:,1] == p_col + 1,]) < 1:
@@ -1140,7 +1164,7 @@ def ChangeDIR(dir,lake1,acc,ncols,nrows,outlakeids):
                     tcol = goodpoint[i,1]
                     if trow >= nrows - 1 or tcol == ncols  - 1:
                         continue
-                    ndir,goodpoint,k1= Dirpoints2(ndir,trow,tcol,lake1,lid,goodpoint,k)
+                    ndir,goodpoint,k1= Dirpoints2(ndir,trow,tcol,lake1,lid,goodpoint,k,ncols,nrows)
 #                    arcpy.AddMessage("start of checking:    " + str(k1) + "     "+ str(len(goodpoint[goodpoint[:,0]>0,]))+ "   ")
                     k = k1 - 1
             ipo = ip
