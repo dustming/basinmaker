@@ -1078,7 +1078,10 @@ def Writecatinfotodbf(OutputFoldersub,catinfo):
         sinfo = catinfo[catinfo[:,0] == gridcode,]
         if len(sinfo) > 0:
             row.SubId = sinfo[0,0]
-            row.DowSubId = sinfo[0,1]
+            if sinfo[0,0] == sinfo[0,1]:
+                row.DowSubId = -1
+            else:
+                row.DowSubId = sinfo[0,1]
             row.Area2 = sinfo[0,11]
             row.Rivlen = sinfo[0,20]
             isupper = 0

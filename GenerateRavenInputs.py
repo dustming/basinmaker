@@ -565,7 +565,10 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn):
             strRlen = 'ZERO-'
         #####################################################3
         Strcat = str(catid)
-        StrDid = str(int(catinfo.iloc[i]['DOWSUBID']))
+        if catid == catinfo.iloc[i]['DOWSUBID']:
+            StrDid = str(-1)
+        else:
+            StrDid = str(int(catinfo.iloc[i]['DOWSUBID']))
         pronam = 'Chn_'+ Strcat
         chslope = max(catinfo.iloc[i]['SLOPE3'],0.0001)
         if chslope < 0:
