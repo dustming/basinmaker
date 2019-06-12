@@ -555,7 +555,7 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn):
         ### Get catchment width and dpeth
         catid = int(catinfo.iloc[i]['SUBID'])
         temp = catinfo.iloc[i]['RIVLEN']
-        if (temp >= lenThres):
+        if (float(temp) >= lenThres):
             catlen = float(temp)/1000 #### in km
             strRlen = str(catlen)
         else:
