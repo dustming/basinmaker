@@ -28,25 +28,31 @@ import pandas as pd
 import os
 
 ####define required inputs
-pythonfile = 'C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/RoutingTool/Samples/Examples/Script for woring with HydroSHEDS DEM.py'
-accfile = 'C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/RoutingTool/Samples/Examples/accs.csv'
-Workfolder = "C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/RoutingTool/Samples/Examples/"
-pythonexc = 'C:\Python27\ArcGISx6410.6\python.exe'
+#pythonfile = 'C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/RoutingTool/Samples/Examples/Script for woring with HydroSHEDS DEM.py'
+#accfile = 'C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/RoutingTool/Samples/Examples/accs.csv'
+#Workfolder = "C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/RoutingTool/Samples/Examples/"
 
+
+pythonfile = sys.argv[1]
+accfile = sys.argv[2]
+Workfolder = sys.argv[3] + '/'
 
 os.chdir(Workfolder)####set working folder
 accs = pd.read_csv(accfile,sep=',')### read accs
 
 ##### generate .bat file to run python script with arcgis py 
-ofile2 = open(Workfolder+"runaccpys.bat", "w")
-ofile2.write(pythonexc + '      ' + 'acc_py_temp.py')
-ofile2.close()
+#ofile2 = open(Workfolder+"runaccpys.bat", "w")
+#ofile2.write('cd' + '      ' + Workfolder +'\n')
+#ofile2.write(pythonexc + '      ' + 'acc_py_temp.py'+'\n')
+
+#ofile2.close()
 
 #####begin loop for each acc in the list
 
 ### generate 
 for i in range(0,len(accs)):
     ##### generate python script for ith acc value
+    os.chdir(Workfolder)
     iacc = accs['Accs'][i]
     ofile = open(Workfolder+"acc_py_temp.py", "w")
     ifile = open(pythonfile, "r")
@@ -56,8 +62,12 @@ for i in range(0,len(accs)):
         else:
             ofile.write('accthres =' + "\""+str(iacc)+"\""+'\n')
     ifile.close()
-    ofile.close() 
-    # run python script for ith acc value        
-    os.system("runaccpys.bat")
-
+    ofile.close()
+    arcpy.AddMessage("Current acc is    " + str(iacc) )
+    execfile('acc_py_temp.py') 
+    # run python script for ith acc value
+#    os.system('cd' + '      ' + Workfolder +'\n')
+#    os.system(pythonexc + '      ' + 'acc_py_temp.py'+'\n')    
+#    os.system("runaccpys.bat")
+    
 #### extract subbasins for each point of interest of each acc value.

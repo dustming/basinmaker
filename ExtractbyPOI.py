@@ -12,9 +12,14 @@ arcpy.env.overwriteOutput = True
 arcpy.CheckOutExtension("Spatial")
 
 ##### Readed inputs
-POI_FIDS_file = "C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/RoutingTool/Samples/Examples/poi.csv"
-OutputF = "C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/RoutingTool/Samples/Examples/Outputs/"
-Pathoftoolbox = "C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/RoutingTool/Code/Toolbox/An automated ArcGIS toolbox for watershed delineation with lakes.tbx"
+#POI_FIDS_file = "C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/RoutingTool/Samples/Examples/poi.csv"
+#OutputF = "C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/RoutingTool/Samples/Examples/Outputs1/"
+#Pathoftoolbox = "C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/RoutingTool/Code/Toolbox/An automated ArcGIS toolbox for watershed delineation with lakes.tbx"
+
+
+POI_FIDS_file = sys.argv[1]
+Pathoftoolbox = sys.argv[2]
+OutputF = sys.argv[3] + '/'
 
 arcpy.ImportToolbox(Pathoftoolbox)
 
@@ -30,6 +35,7 @@ else:
 for i in range(0,len(Allfolders)):
     hyshdply = OutputF +Allfolders[i] + '/'+'finalcat_info.shp'
     hyshdply.replace('//','/')
+    arcpy.AddMessage(hyshdply[:-3]+'dbf')
     if not os.path.exists(OutputF + Allfolders[i]+'/'+ 'finalcat_info.shp'):
         print (OutputF + Allfolders[i]+'/'+ 'finalcat_info.shp')
         continue
@@ -48,7 +54,7 @@ for i in range(0,len(Allfolders)):
             OutputfoldercaseRes =  OutputF +Allfolders[i]+'/'+'POI_'+str(ipoi)+'/'
             if not os.path.exists(OutputfoldercaseRes):
                 os.makedirs(OutputfoldercaseRes)
-            print(tsubid,ipoi,hyshdply)
+#            arcpy.AddMessage(tsubid,ipoi,hyshdply)
             arcpy.AutomatedLocalRoutingNetworkExtractionToolset(str(int(tsubid.values[0])),hyshdply,OutputfoldercaseRes,'-1')
         else:
             print('Point of interest is not inculded in subbasins:     ' + str(ipoi))
