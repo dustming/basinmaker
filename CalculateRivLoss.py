@@ -19,9 +19,10 @@ OutputF = sys.argv[3] + '/'
 
 
 pois =  pd.read_csv(POI_FIDS_file,sep=',')### read fid of pois
+pois_new =  pd.read_csv(POI_FIDS_file,sep=',')
 
 pois['Total_DA'] = np.nan
-
+pois_new['Total_DA'] = np.nan
 #### check if need process with several delineation results
 if os.path.exists(OutputF + 'finalcat_info.shp'):
     Allfolders = ['']
@@ -40,6 +41,7 @@ for i in range(0,len(Allfolders)):
     hyshdinfo2 = tempinfo.to_dataframe()
     
     pois[Allfolders[i]] = 0.00
+    pois_new[Allfolders[i]] = 0.00
 
 #### loop for each poi
     for j in range(0,len(pois)):
@@ -56,6 +58,7 @@ for i in range(0,len(Allfolders)):
             ij_info = ij_tempinfo.to_dataframe()
             if np.isnan(pois.loc[j,'Total_DA']):
                 pois.loc[j,'Total_DA'] = np.sum(ij_info['Area2'].values) ### calcuate DA for each point of interest
+                pois_new.loc[j,'Total_DA'] = np.sum(ij_info['Area2'].values)
             for k in range(0,len(ij_info)):
                 catid = ij_info['SubId'].values[k]
                 upcatid = ij_info.loc[ij_info['DowSubId'] == catid,]['SubId'].values
@@ -63,14 +66,27 @@ for i in range(0,len(Allfolders)):
                     pois.loc[j,Allfolders[i]] = pois.loc[j,Allfolders[i]] + max(ij_info['Rivlen'].values[k],0)*ij_info['Area2'].values[k]
                 else:
                     pois.loc[j,Allfolders[i]] = pois.loc[j,Allfolders[i]] + 0.0 ##upstream cat
+############calculate new methods
+                ccatid = catid
+                downcatid = ij_info.loc[ij_info['SubId'] == ccatid,]['DowSubId'].values
+                while len(downcatid) > 0 and downcatid[0] > 0 and len(ij_info.loc[ij_info['SubId'] == downcatid[0],]['Rivlen'].values) > 0:
+#                    arcpy.AddMessage(max(ij_info.loc[ij_info['SubId'] == downcatid[0],]['Rivlen'].values,0))
+                    pois_new.loc[j,Allfolders[i]] = pois_new.loc[j,Allfolders[i]] + max(ij_info.loc[ij_info['SubId'] == downcatid[0],]['Rivlen'].values,0)*ij_info['Area2'].values[k]
+                    ccatid = downcatid[0]
+                    downcatid = ij_info.loc[ij_info['SubId'] == ccatid,]['DowSubId'].values
+############
             pois.loc[j,Allfolders[i]] = pois.loc[j,Allfolders[i]]/pois.loc[j,'Total_DA']
+            pois_new.loc[j,Allfolders[i]] = pois_new.loc[j,Allfolders[i]]/pois_new.loc[j,'Total_DA']
         else:
             print('Point of interest is not inculded in subbasins:     ' + str(ipoi))
-pois.to_csv(OutputF+'rivlenloss2.csv')
+pois.to_csv(OutputF+'rivweightlength_hongli.csv')
+pois_new.to_csv(OutputF+'rivweightlength_new.csv')
 for i in range(0,len(Allfolders)):
     if RefFNam == Allfolders[i] or Allfolders[i] not in pois.columns:
         continue
     else:
         pois[Allfolders[i]] = pois[RefFNam].values - pois[Allfolders[i]].values
-pois.to_csv(OutputF+'rivlenloss.csv')
+        pois_new[Allfolders[i]] = pois_new[RefFNam].values - pois_new[Allfolders[i]].values
+pois.to_csv(OutputF+'rivlenloss_hongli.csv')
+pois_new.to_csv(OutputF+'rivlenloss_new.csv')
 
