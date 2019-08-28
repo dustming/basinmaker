@@ -7,6 +7,7 @@ import pandas as pd
 from simpledbf import Dbf5
 import matplotlib
 import matplotlib.pyplot as plt
+import copy as copy
 
 ##### Readed inputs
 #POI_FIDS_file = "C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/RoutingTool/Samples/Examples/poi.csv"
@@ -86,17 +87,31 @@ for i in range(0,len(Allfolders)):
             pois_new.loc[j,Allfolders[i]] = pois_new.loc[j,Allfolders[i]]/pois_new.loc[j,'Total_DA']
         else:
             print('Point of interest is not inculded in subbasins:     ' + str(ipoi))
+
 pois.to_csv(OutputF+'rivweightlength_hongli.csv')
 pois_new.to_csv(OutputF+'rivweightlength_new.csv')
 pois_new2.to_csv(OutputF+'rivwlength_alone.csv')
+
+pois_new_relative = copy.deepcopy(pois_new)
+
 for i in range(0,len(Allfolders)):
     if RefFNam == Allfolders[i] or Allfolders[i] not in pois.columns:
         continue
     else:
         pois[Allfolders[i]] = pois[RefFNam].values - pois[Allfolders[i]].values
-        pois_new[Allfolders[i]] = pois_new[RefFNam].values - pois_new[Allfolders[i]].values
+        pois_new[Allfolders[i]] = (pois_new[RefFNam].values - pois_new[Allfolders[i]].values)
         pois_new2[Allfolders[i]] = pois_new2[RefFNam].values - pois[Allfolders[i]].values
+        pois_new_relative[Allfolders[i]] = (pois_new_relative[RefFNam].values - pois_new_relative[Allfolders[i]].values)/pois_new_relative[RefFNam].values
+
+
+for i in range(0,len(Allfolders)):
+    if RefFNam == Allfolders[i] or Allfolders[i] not in pois.columns:
+        pois[Allfolders[i]] = 0.0
+        pois_new[Allfolders[i]] = 0.0
+        pois_new2[Allfolders[i]] = 0.0
+        
 pois.to_csv(OutputF+'rivlenloss_hongli.csv')
+pois_new_relative.to_csv(OutputF+'rivlenloss_new_relative.csv')
 pois_new.to_csv(OutputF+'rivlenloss_new.csv')
 pois_new2.to_csv(OutputF+'rivlenloss_rivalone.csv')
 
