@@ -207,6 +207,7 @@ if obspoint != "#":
     arcpy.PointToRaster_conversion(obspoint, "FID",
                                 OutputFolder + "obs", "MAXIMUM", "", cellSize)
     arcpy.RasterToASCII_conversion( OutputFolder + "obs", OutputFolder + "obs.asc")
+    arcpy.Clip_analysis(obspoint, OutputFolder +"HyMask.shp", OutputFolder + "obspoint.shp")
 else:
     tdir = np.loadtxt(OutputFolder+ 'dir.asc',dtype = 'i4',skiprows = 6)
     tlake = copy.copy(tdir)
