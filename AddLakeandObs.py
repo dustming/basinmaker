@@ -1137,16 +1137,16 @@ def Dirpoints2(N_dir,p_row,p_col,lake1,lid,goodpoint,k,ncols,nrows):
 #    arcpy.AddMessage(goodpoint[goodpoint[:,0]>0,])
     return ndir,goodpoint,ip
 
-def ChangeDIR(dir,lake1,acc,ncols,nrows,outlakeids):
+def ChangeDIR(dir,lake1,acc,ncols,nrows,outlakeids,nlakegrids):
     ndir = copy.copy(dir)
     for i in range(0,len(outlakeids)):
         lid = outlakeids[i]
-        arcpy.AddMessage("start modify lake flow direction, the lake id is    " + str(int(lid)))
         goodpoint = np.full((20000,2),-99999)
         lrowcol = np.argwhere(lake1==lid).astype(int)
-#        if len(lrowcol) > 100:
-#            continue
+        if len(lrowcol) > nlakegrids:
+            continue
 #        arcpy.AddMessage(str(lid) + "    " +  str(len(lrowcol)) + "     " + str(i))
+        arcpy.AddMessage("start modify lake flow direction, the lake id is    " + str(int(lid)))
         prow,pcol = Getbasinoutlet(lid,lake1,acc)
         goodpoint[0,0] = prow
         goodpoint[0,1] = pcol
@@ -1195,6 +1195,7 @@ arcpy.CheckOutExtension("Spatial")
 OutputFolder = sys.argv[1]
 VolThreshold = float(sys.argv[2])
 NonConLThres = float(sys.argv[3])
+nlakegrids = int(sys.argv[4])
 
 arcpy.env.workspace =OutputFolder
 os.chdir(OutputFolder)
@@ -1216,7 +1217,7 @@ blid2 = 3000000
 boid = 4000000
 hylake =  arcpy.RasterToNumPyArray(OutputFolder + "/"+'cnlake.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'cnlake.asc',dtype = 'i4',skiprows = 6) # raster of hydro lake
 nchylake =arcpy.RasterToNumPyArray(OutputFolder + "/"+'noncnlake.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'noncnlake.asc',dtype = 'i4',skiprows = 6) # raster of hydro lake
-cat = nchylake =arcpy.RasterToNumPyArray(OutputFolder + "/"+'hybasinfid.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'hybasinfid.asc',dtype = 'i4',skiprows = 6)   #### raster of hydroshed basin fid
+cat =arcpy.RasterToNumPyArray(OutputFolder + "/"+'hybasinfid.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'hybasinfid.asc',dtype = 'i4',skiprows = 6)   #### raster of hydroshed basin fid
 hylakeinfo = pd.read_csv(OutputFolder + "/"+"lakeinfo.csv",sep=",",low_memory=False)       # dataframe of hydrolake database
 fac = arcpy.RasterToNumPyArray(OutputFolder + "/"+'acc.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'acc.asc',dtype = 'i4',skiprows = 6)   # raster of hydrolakes
 hydir = arcpy.RasterToNumPyArray(OutputFolder + "/"+'dir.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'dir.asc',dtype = 'i4',skiprows = 6)   #### raster of hydroshed basin fid
@@ -1260,7 +1261,7 @@ arcpy.ASCIIToRaster_conversion(OutputFolder + "/"+"fPourpoints.asc", OutputFolde
 copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"fPourpoints1.prj")
 ################ modifiy lake flow directions
 #arcpy.AddMessage(len(outlakeids))
-ndir = ChangeDIR(hydir,Lake1,fac,ncols,nrows,outlakeids)
+ndir = ChangeDIR(hydir,Lake1,fac,ncols,nrows,outlakeids,nlakegrids)
 writeraster(OutputFolder + "/"+"ndir.asc",ndir,dataset)
 copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"ndir.prj")
 arcpy.ASCIIToRaster_conversion(OutputFolder + "/"+"ndir.asc", OutputFolder + "/"+"ndir","INTEGER")

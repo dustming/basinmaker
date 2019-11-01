@@ -796,6 +796,7 @@ def Generatecatinfo(Watseds,fac,fdir,lake,dem,area,hycat,hycatinfo,catinfo,allca
     rivpath = copy.copy(Watseds)
     rivpath[:,:] = -9999
     for i in range(0,len(allcatid)):
+        arcpy.AddMessage("subid      " + str(allcatid[i].astype(int)))
         catid = allcatid[i].astype(int)
         catinfo[i,0] = catid
         rowcol = np.argwhere(finalcat==catid).astype(int)
@@ -1086,26 +1087,31 @@ def Writecatinfotodbf(OutputFoldersub,catinfo):
             row.Rivlen = sinfo[0,20]
             isupper = 0
             isdown = 0
-            if sinfo[0,17] < 0:
-                twidth = sinfo[0,17]
-                ccurid = sinfo[0,0]
-                while(twidth < 0):
-                    downid = catinfo[catinfo[:,0] == ccurid,][0,1]
-                    if downid < 0:
-                        isdown = 0
-                        upcats = catinfo[catinfo[:,1] == ccurid,]
-                        upcats = upcats[upcats[:,17]>0,]
-                        if len(upcats) <= 0:
-                            twidth = 1.2345
+            if sinfo[0,17] < 0:           #### if no bankfulll width data avaiable for this catchment
+                twidth = sinfo[0,17]      
+                ccurid = sinfo[0,0]       ### ccurid  is the current catchment id 
+                while(twidth < 0 and ccurid > 0):        
+                    downid = catinfo[catinfo[:,0] == ccurid,][0,1]   ### get the downstream if of current catchment 
+                    if downid < 0:                                   ### if no donwstream catchment exist 
+                        isdown = 0                                   
+                        upcats = catinfo[catinfo[:,1] == ccurid,]         #### get upstream catchment id 
+                        upcats = upcats[upcats[:,17]>0,]                  #### check if upstream catchment has bankfull width data
+                        if len(upcats) <= 0:                              #### if upstream catchment do not have bankfull width data 
+                            twidth = 1.2345                               #### define a default value if not downstream exist and upstream do not have bankfull width data
                             ccurid = -1
                         else:
-                            isupper = 1
-                            twidth = np.average(upcats[:,17])
-                    else:
-                        isdown = 1
-                        dowcatinfo = catinfo[catinfo[:,0] == downid,]
-                        twidth = dowcatinfo[0,17]
-                        ccurid = dowcatinfo[0,0]
+                            isupper = 1                                   ### if upstream has bankfull width data 
+                            twidth = np.average(upcats[:,17])                ###  use the averaged bannkfull width data from upstream 
+                    else:                                              ### if down stream exist
+                        if ccurid == downid:                           ### if downstream id = current catchment id;; downstream catchemnt is not exist
+                            twidth = 1.2345
+                            ccurid = -1
+                            isdown = -1
+                        else:
+                            isdown = 1                                    
+                            dowcatinfo = catinfo[catinfo[:,0] == downid,]  ### get downstream id  
+                            twidth = dowcatinfo[0,17]                      ### update twidth catchment with  the downstream id 
+                            ccurid = dowcatinfo[0,0]                       ### set currid with
 #                arcpy.AddMessage(str(sinfo[0,0]) +"       "+ str(twidth))
                 if twidth == 1.2345 and ccurid == -1:
                     row.BkfWidth = 1.23456
@@ -1282,7 +1288,7 @@ cellSize = float(arcpy.GetRasterProperties_management(OutputFolder + "/" + "dir"
 SptailRef = arcpy.Describe(OutputFolder + "/" + "dir").spatialReference
 arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryCode)) ### WGS84
 Str100 = arcpy.RasterToNumPyArray(OutputFolder + "/"+'strlink.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'strlink.asc',dtype = 'i4',skiprows = 6)
-GenrateCatchatt(OutputFolder + "/",Str100)
+#GenrateCatchatt(OutputFolder + "/",Str100)
 
 arcpy.env.workspace =OutputFolder
 os.chdir(OutputFolder)
@@ -1331,6 +1337,7 @@ catinfo = np.full((len(allcatid),40),-99999999999.00000000)
 catinfo = Generatecatinfo(finalcat,fac,hydir,Lake1,hydem,area,cat,allsubinfo,catinfo,allcatid,allLakinfo,width,depth,rivlen,obs,nrows,ncols,slope,landuse,landuseinfo,Q_mean,wdlen)
 arcpy.CopyFeatures_management(OutputFolder + "/" + "finalcat.shp", OutputFolder + "/" + "finalcat_info")
 copyfile( OutputFolder + "/"+"HyMask.prj" ,  OutputFolder + "/"+"finalcat_info.prj")
+np.savetxt(OutputFolder+"/"+"catinfo1.csv",catinfo,delimiter=",")
 catinfo2 = Writecatinfotodbf(OutputFolder + "/",catinfo)
 arcpy.AddGeometryAttributes_management(OutputFolder + "/" + "finalcat_info.shp","CENTROID_INSIDE", "","","")
 np.savetxt(OutputFolder+"/"+"catinfo.csv",catinfo2,delimiter=",")
