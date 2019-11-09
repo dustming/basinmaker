@@ -94,14 +94,52 @@ def Nextcell(N_dir,N_row,N_col):
     return N_nrow,N_ncol
 
 ##################################################################3
-def Getbasinoutlet(ID,basin,fac):
+def Getbasinoutlet(ID,basin,fac,dir,nrows,ncols):
     catrowcol = np.argwhere(basin==ID).astype(int)
     catacc = np.full((len(catrowcol),3),-9999)
     catacc[:,0] = catrowcol[:,0]
     catacc[:,1] = catrowcol[:,1]
     catacc[:,2] = fac[catrowcol[:,0],catrowcol[:,1]]
     catacc = catacc[catacc[:,2].argsort()]
-    return catacc[len(catrowcol)-1,0],catacc[len(catrowcol)-1,1]
+    ### check if it is a real basin outlet 
+    crow = catacc[len(catrowcol)-1,0]
+    ccol = catacc[len(catrowcol)-1,1]
+          
+    nrow,ncol =  Nextcell(dir,crow,ccol)
+    
+    if nrow < 0 or ncol < 0:
+        return crow, ccol
+    elif nrow >= nrows or ncol >= ncols:
+        return crow, ccol
+    elif basin[nrow,ncol] < 0:
+        return crow, ccol
+    elif basin[nrow,ncol] != ID:   #  all above means the outlet is the real loutlet 
+        return crow, ccol
+    else:
+        crow = nrow 
+        ccol = ncol 
+        for i in range(0,1000): #### find next 1000 grids, to find the basin outlet 
+            nrow,ncol =  Nextcell(dir,crow,ccol)
+            ifound = 0
+            if nrow < 0 or ncol < 0:
+                ifound = 1
+                break
+            elif nrow >= nrows or ncol >= ncols:
+                ifound = 1
+                break
+            elif basin[nrow,ncol] < 0:
+                ifound = 1
+                break
+            elif basin[nrow,ncol] != ID:
+                ifound =  1 #     all above means the outlet is the real loutlet 
+                break
+            else:
+                crow = nrow
+                ccol = ncol
+                continue
+            if ifound == 0: 
+                arcpy.AddMessage(" true basin outlet not found for ID...."+ str(ID))
+            return nrow,ncol        
 
 ##################################################################3
 
@@ -574,14 +612,14 @@ def GenerateFinalPourpoints(fac,fdir,lake,cat3,bsid,blid,boid,nrows,ncols,cat,ob
     GWatids = GWatids[GWatids>=0]
     ncatid = 1
     for i in range(0,len(GWatids)):
-        trow,tcol = Getbasinoutlet(GWatids[i],GWat,fac)
+        trow,tcol = Getbasinoutlet(GWatids[i],GWat,fac,fdir,nrows,ncols)
         Poups[trow,tcol] = ncatid
         ncatid = ncatid + 1
     OWat = copy.copy(cat)
     OWatids = np.unique(cat)
     OWatids = OWatids[OWatids>=0]
     for i in range(0,len(OWatids)):
-        trow,tcol = Getbasinoutlet(OWatids[i],OWat,fac)
+        trow,tcol = Getbasinoutlet(OWatids[i],OWat,fac,fdir,nrows,ncols)
         if not GWat[trow,tcol] >= blid:
             if Poups[trow,tcol] < 0:
                 Poups[trow,tcol] = ncatid
@@ -634,7 +672,7 @@ def Generatecatinfo(Watseds,fac,fdir,lake,dem,area,hycat,hycatinfo,catinfo,allca
         catid = allcatid[i].astype(int)
         catinfo[i,0] = catid
         rowcol = np.argwhere(finalcat==catid).astype(int)
-        trow,tcol = Getbasinoutlet(catid,finalcat,fac)
+        trow,tcol = Getbasinoutlet(catid,finalcat,fac,fdir,nrows,ncols)
         nrow,ncol = Nextcell(fdir,trow,tcol)### get the downstream catchment id
         if nrow < 0 or ncol < 0:
             catinfo[i,1] = -1
@@ -1147,7 +1185,7 @@ def ChangeDIR(dir,lake1,acc,ncols,nrows,outlakeids,nlakegrids):
             continue
 #        arcpy.AddMessage(str(lid) + "    " +  str(len(lrowcol)) + "     " + str(i))
         arcpy.AddMessage("start modify lake flow direction, the lake id is    " + str(int(lid)))
-        prow,pcol = Getbasinoutlet(lid,lake1,acc)
+        prow,pcol = Getbasinoutlet(lid,lake1,acc,dir,nrows,ncols)
         goodpoint[0,0] = prow
         goodpoint[0,1] = pcol
         if prow >= nrows - 1 or pcol == ncols  - 1:

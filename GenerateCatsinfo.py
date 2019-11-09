@@ -94,86 +94,55 @@ def Nextcell(N_dir,N_row,N_col):
     return N_nrow,N_ncol
 
 ##################################################################3
-def Getbasinoutlet(ID,basin,fac):
+def Getbasinoutlet(ID,basin,fac,dir,nrows,ncols):
     catrowcol = np.argwhere(basin==ID).astype(int)
     catacc = np.full((len(catrowcol),3),-9999)
     catacc[:,0] = catrowcol[:,0]
     catacc[:,1] = catrowcol[:,1]
     catacc[:,2] = fac[catrowcol[:,0],catrowcol[:,1]]
     catacc = catacc[catacc[:,2].argsort()]
-    return catacc[len(catrowcol)-1,0],catacc[len(catrowcol)-1,1]
+    ### check if it is a real basin outlet 
+    crow = catacc[len(catrowcol)-1,0]
+    ccol = catacc[len(catrowcol)-1,1]
+          
+    nrow,ncol =  Nextcell(dir,crow,ccol)
+    
+    if nrow < 0 or ncol < 0:
+        return crow, ccol
+    elif nrow >= nrows or ncol >= ncols:
+        return crow, ccol
+    elif basin[nrow,ncol] < 0:
+        return crow, ccol
+    elif basin[nrow,ncol] != ID:   #  all above means the outlet is the real loutlet 
+        return crow, ccol
+    else:
+        crow = nrow 
+        ccol = ncol 
+        for i in range(0,1000): #### find next 1000 grids, to find the basin outlet 
+            nrow,ncol =  Nextcell(dir,crow,ccol)
+            ifound = 0
+            if nrow < 0 or ncol < 0:
+                ifound = 1
+                break
+            elif nrow >= nrows or ncol >= ncols:
+                ifound = 1
+                break
+            elif basin[nrow,ncol] < 0:
+                ifound = 1
+                break
+            elif basin[nrow,ncol] != ID:
+                ifound =  1 #     all above means the outlet is the real loutlet 
+                break
+            else:
+                crow = nrow
+                ccol = ncol
+                continue
+            if ifound == 0: 
+                arcpy.AddMessage(" true basin outlet not found for ID...."+ str(ID))
+            return nrow,ncol        
+
 
 ##################################################################3
-def Generaterivnetwork(hydir,cat,allsubinfo,fac,OutputFoldersub):
-    flenriv = copy.copy(hydir)
-    flenriv[:,:] = -9999   ##### generate empty river raster
-    arcatid = np.unique(cat) #### cat all cat id in target small basin
-    arcatid = arcatid[arcatid>=0]
-    for i in range(0,len(arcatid)):  #### loop for each catchmant in small basin
-        lfid = arcatid[i] ### get the fid in large cat file
-        lcatinfo = allsubinfo.loc[allsubinfo['FID'] == lfid] ### Get the cat info in large basin info file
-        hyid = lcatinfo['HYBAS_ID'].iloc[0]
-        Inhyid = allsubinfo.loc[allsubinfo['NEXT_DOWN'] == hyid]
-        if len(Inhyid) > 0:
-            for in_i in range(0,len(Inhyid)):
-                in_FID = Inhyid['FID'].iloc[in_i]
-                pp = np.argwhere(cat == in_FID)
-                if len(pp) <= 0:
-                    continue
-                orow,ocol = Getbasinoutlet(in_FID,cat,fac)
-                nrow,ncol = Nextcell(hydir,orow,ocol)
-                rowcol = np.full((10000,2),-9999) ### creat two dimension array to store route form beginning to outlet of target catchment
-                rowcol [0,0] = nrow
-                rowcol [0,1] = ncol
-                flen_k = 0
-                trow,tcol = Getbasinoutlet(lfid,cat,fac)
-                while nrow != trow or ncol != tcol:
-                    flen_orow,flen_ocol = nrow,ncol
-                    if flen_orow < 0 or flen_ocol<0:
-                        break
-                    nrow,ncol = Nextcell(hydir,int(flen_orow),int(flen_ocol))
-                    flen_k = flen_k + 1
-                    rowcol [flen_k,0] = nrow
-                    rowcol [flen_k,1] = ncol
-                rowcol [flen_k+1,0] = trow
-                rowcol [flen_k+1,1] = tcol
-                rowcol = rowcol[rowcol[:,0]>=0].astype(int)
-                flenriv[rowcol[:,0],rowcol[:,1]] = 1
-        else: ### for head watersheds
-            if lcatinfo['COAST'].iloc[0] == 1:
-                continue
-            in_FID = lfid
-            trow,tcol = Getbasinoutlet(lfid,cat,fac)
-            catrowcol = np.argwhere(cat==in_FID).astype(int)
-            catacc = np.full((len(catrowcol),6),-9999)
-            catacc[:,0] = catrowcol[:,0]
-            catacc[:,1] = catrowcol[:,1]
-            catacc[:,2] = fac[catrowcol[:,0],catrowcol[:,1]]
-            catacc[:,3] = trow
-            catacc[:,4] = tcol
-            catacc = catacc[catacc[:,2] > 100]
-            if len(catacc) > 0:
-                catacc[:,5] = (catacc[:,0] - catacc[:,3])*(catacc[:,0] - catacc[:,3]) + (catacc[:,1] - catacc[:,4])*(catacc[:,1] - catacc[:,4])
-                catacc = catacc[catacc[:,5].argsort()]
-                nrow,ncol = catacc[len(catacc) - 1,0],catacc[len(catacc) - 1,1]
-                rowcol = np.full((10000,2),-9999) ### creat two dimension array to store route form beginning to outlet of target catchment
-                rowcol [0,0] = nrow
-                rowcol [0,1] = ncol
-                flen_k = 0
-                while nrow != trow or ncol != tcol:
-                    orow,ocol = nrow,ncol
-                    if orow < 0 or ocol<0:
-                        break
-                    nrow,ncol = Nextcell(hydir,orow,ocol)
-                    flen_k = flen_k + 1
-                    rowcol [flen_k,0] = nrow
-                    rowcol [flen_k,1] = ncol
-                rowcol [flen_k+1,0] = trow
-                rowcol [flen_k+1,1] = tcol
-                rowcol = rowcol[rowcol[:,0]>=0].astype(int)
-                flenriv[rowcol[:,0],rowcol[:,1]] = 1
-    return flenriv
-
 
 ##################################################################3
 def selectlake(hylake,Str,hylakeinfo,VolThreshold):
@@ -517,7 +486,7 @@ def Getcatrivlenslope(catrow,catcol,rivlen,dem,fac,hydir,finalcat,trow,tcol,nrow
         if len(nearcat) > 0:  ### check if one of the near cat is the upstream catchment
             for incat in range(0,len(nearcat)):
                 inearcat = nearcat[incat]
-                incat_trow,incat_tcol = Getbasinoutlet(inearcat,finalcat,fac)
+                incat_trow,incat_tcol = Getbasinoutlet(inearcat,finalcat,fac,hydir,nrows,ncols)
                 incat_nrow,incat_ncol = Nextcell(hydir,incat_trow,incat_tcol)### get the downstream catchment id
                 if incat_nrow >= nrows or incat_nrow < 0 or incat_ncol >= ncols or incat_ncol < 0:
                     continue
@@ -615,13 +584,13 @@ def Getcatrivlenslope(catrow,catcol,rivlen,dem,fac,hydir,finalcat,trow,tcol,nrow
         outrivlen = rivout[len(rivout)-1,0]
         outrivslp =  rivout[len(rivout)-1,2] ### slope np.mean(slope along the river channel )
         outrivslp2 = rivout[len(rivout)-1,1]   ### slope max (den_b - dem end , 0.5)/ river length 
-        arcpy.AddMessage('final slope ' + str(outrivslp) + "     " +  str(outrivslp2) + "    " + str(outrivlen))
+#        arcpy.AddMessage('final slope ' + str(outrivslp) + "     " +  str(outrivslp2) + "    " + str(outrivlen))
     elif len(rivout2) > 0:
         rivout2 = rivout2[rivout2[:,0].argsort()]
         outrivlen = rivout2[len(rivout2)-1,0]
         outrivslp =  rivout2[len(rivout2)-1,2]
         outrivslp2 = rivout2[len(rivout2)-1,1]
-        arcpy.AddMessage('final slope ' + str(outrivslp) + "     " +  str(outrivslp2))
+#        arcpy.AddMessage('final slope ' + str(outrivslp) + "     " +  str(outrivslp2))
     else:
         outrivlen = -9999.00
         outrivslp = -9999.00
@@ -743,14 +712,14 @@ def GenerateFinalPourpoints(fac,fdir,lake,cat3,bsid,blid,boid,nrows,ncols,cat,ob
     GWatids = GWatids[GWatids>=0]
     ncatid = 1
     for i in range(0,len(GWatids)):
-        trow,tcol = Getbasinoutlet(GWatids[i],GWat,fac)
+        trow,tcol = Getbasinoutlet(GWatids[i],GWat,fac,fdir,nrows,ncols)
         Poups[trow,tcol] = ncatid
         ncatid = ncatid + 1
     OWat = copy.copy(cat)
     OWatids = np.unique(cat)
     OWatids = OWatids[OWatids>=0]
     for i in range(0,len(OWatids)):
-        trow,tcol = Getbasinoutlet(OWatids[i],OWat,fac)
+        trow,tcol = Getbasinoutlet(OWatids[i],OWat,fac,fdir,nrows,ncols)
         if not GWat[trow,tcol] >= blid:
             if Poups[trow,tcol] < 0:
                 Poups[trow,tcol] = ncatid
@@ -806,7 +775,7 @@ def Generatecatinfo(Watseds,fac,fdir,lake,dem,area,hycat,hycatinfo,catinfo,allca
         catid = allcatid[i].astype(int)
         catinfo[i,0] = catid
         rowcol = np.argwhere(finalcat==catid).astype(int)
-        trow,tcol = Getbasinoutlet(catid,finalcat,fac)
+        trow,tcol = Getbasinoutlet(catid,finalcat,fac,fdir,nrows,ncols)
         nrow,ncol = Nextcell(fdir,trow,tcol)### get the downstream catchment id
         if nrow < 0 or ncol < 0:
             catinfo[i,1] = -1
