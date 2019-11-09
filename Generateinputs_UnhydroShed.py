@@ -190,12 +190,12 @@ arcpy.RasterToASCII_conversion(OutputFolder + "hybasinfid", OutputFolder + "hyba
 
 ##### width and depth
 arcpy.Clip_analysis(WidDep, OutputFolder +"HyMask.shp", OutputFolder + "WidDep.shp")
-arcpy.PolylineToRaster_conversion(OutputFolder + "WidDep.shp", "WIDTH", OutputFolder + "width",
-                                  "MAXIMUM_LENGTH", "NONE", cellSize)
-arcpy.PolylineToRaster_conversion(OutputFolder + "WidDep.shp", "DEPTH", OutputFolder + "depth",
-                                  "MAXIMUM_LENGTH", "NONE", cellSize)
-arcpy.PolylineToRaster_conversion(OutputFolder + "WidDep.shp", "Q_Mean", OutputFolder + "Q_Mean",
-                                  "MAXIMUM_LENGTH", "NONE", cellSize)
+arcpy.FeatureToRaster_conversion(OutputFolder + "WidDep.shp", "WIDTH", OutputFolder + "width",
+                                  cellSize)
+arcpy.FeatureToRaster_conversion(OutputFolder + "WidDep.shp", "DEPTH", OutputFolder + "depth",
+                                  cellSize)
+arcpy.FeatureToRaster_conversion(OutputFolder + "WidDep.shp", "Q_Mean", OutputFolder + "Q_Mean",
+                                  cellSize)
 
 arcpy.RasterToASCII_conversion( OutputFolder + "depth", OutputFolder + "depth.asc")
 arcpy.RasterToASCII_conversion( OutputFolder + "width", OutputFolder + "width.asc")
