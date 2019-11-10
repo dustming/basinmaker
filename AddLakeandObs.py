@@ -118,9 +118,9 @@ def Getbasinoutlet(ID,basin,fac,dir,nrows,ncols):
     else:
         crow = nrow 
         ccol = ncol 
+        ifound = 0
         for i in range(0,1000): #### find next 1000 grids, to find the basin outlet 
             nrow,ncol =  Nextcell(dir,crow,ccol)
-            ifound = 0
             if nrow < 0 or ncol < 0:
                 ifound = 1
                 break
@@ -137,9 +137,9 @@ def Getbasinoutlet(ID,basin,fac,dir,nrows,ncols):
                 crow = nrow
                 ccol = ncol
                 continue
-            if ifound == 0: 
-                arcpy.AddMessage(" true basin outlet not found for ID...."+ str(ID))
-            return nrow,ncol        
+        if ifound == 0: 
+            arcpy.AddMessage(" true basin outlet not found for ID...."+ str(ID))
+        return nrow,ncol        
 
 ##################################################################3
 
