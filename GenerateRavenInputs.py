@@ -570,7 +570,7 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn):
         else:
             StrDid = str(int(catinfo.iloc[i]['DOWSUBID']))
         pronam = 'Chn_'+ Strcat
-        chslope = max(catinfo.iloc[i]['SLOPE3'],0.0001)
+        chslope = max(catinfo.iloc[i]['RIVSLOPE'],0.0001)
         if chslope < 0:
             chslope = catinfo.iloc[i]['BASINSLOPE']
         writechanel(pronam,max(catinfo.iloc[i]['BKFWIDTH'],1),max(catinfo.iloc[i]['BKFDEPTH'],1),
