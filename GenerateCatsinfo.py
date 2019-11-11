@@ -1242,7 +1242,7 @@ cellSize = float(arcpy.GetRasterProperties_management(OutputFolder + "/" + "dir"
 SptailRef = arcpy.Describe(OutputFolder + "/" + "dir").spatialReference
 arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryCode)) ### WGS84
 Str100 = arcpy.RasterToNumPyArray(OutputFolder + "/"+'strlink.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'strlink.asc',dtype = 'i4',skiprows = 6)
-#GenrateCatchatt(OutputFolder + "/",Str100)
+GenrateCatchatt(OutputFolder + "/",Str100)
 
 arcpy.env.workspace =OutputFolder
 os.chdir(OutputFolder)
