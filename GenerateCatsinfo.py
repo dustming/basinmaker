@@ -139,7 +139,7 @@ def Getbasinoutlet(ID,basin,fac,dir,nrows,ncols):
                 continue
         if ifound == 0: 
             arcpy.AddMessage(" true basin outlet not found for ID...."+ str(ID))
-        return nrow,ncol        
+        return crow,ccol        
 
 
 ##################################################################3

@@ -106,7 +106,7 @@ def Getbasinoutlet(ID,basin,fac,dir,nrows,ncols):
     ccol = catacc[len(catrowcol)-1,1]
           
     nrow,ncol =  Nextcell(dir,crow,ccol)
-    
+#    arcpy.AddMessage(str(nrow) + '   '+str(ncol) + '   '+str(crow) + '   '+str(ccol) + '   ')
     if nrow < 0 or ncol < 0:
         return crow, ccol
     elif nrow >= nrows or ncol >= ncols:
@@ -117,10 +117,11 @@ def Getbasinoutlet(ID,basin,fac,dir,nrows,ncols):
         return crow, ccol
     else:
         crow = nrow 
-        ccol = ncol 
+        ccol = ncol
         ifound = 0
         for i in range(0,1000): #### find next 1000 grids, to find the basin outlet 
             nrow,ncol =  Nextcell(dir,crow,ccol)
+#            arcpy.AddMessage("processing    " + str(nrow) + '   '+str(ncol) + '   '+str(crow) + '   '+str(ccol) + '   ') 
             if nrow < 0 or ncol < 0:
                 ifound = 1
                 break
@@ -139,7 +140,7 @@ def Getbasinoutlet(ID,basin,fac,dir,nrows,ncols):
                 continue
         if ifound == 0: 
             arcpy.AddMessage(" true basin outlet not found for ID...."+ str(ID))
-        return nrow,ncol        
+        return crow,ccol        
 
 ##################################################################3
 
@@ -613,6 +614,7 @@ def GenerateFinalPourpoints(fac,fdir,lake,cat3,bsid,blid,boid,nrows,ncols,cat,ob
     ncatid = 1
     for i in range(0,len(GWatids)):
         trow,tcol = Getbasinoutlet(GWatids[i],GWat,fac,fdir,nrows,ncols)
+#        arcpy.AddMessage("result     " +str(trow) +"    " +str(tcol))
         Poups[trow,tcol] = ncatid
         ncatid = ncatid + 1
     OWat = copy.copy(cat)
