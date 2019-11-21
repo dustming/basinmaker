@@ -205,17 +205,13 @@ def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,outFolder,hydir):
     for i in range(0,len(arcatid)):
         catid = arcatid[i]
         catrowcol = np.argwhere(cat==catid).astype(int)
-        catacc = np.full((len(catrowcol),3),-9999)
-        catacc[:,0] = catrowcol[:,0]
-        catacc[:,1] = catrowcol[:,1]
-        catacc[:,2] = fac[catrowcol[:,0],catrowcol[:,1]]
-        catacc = catacc[catacc[:,2].argsort()].astype(int)
-        GP_cat[catacc[:,0],catacc[:,1]]=-9999   ### set the catment cells into null
-        GP_cat[catacc[len(catrowcol)-1,0],catacc[len(catrowcol)-1,1]]=bcid #### change the outlet of catchment into wid
+        trow,tcol = Getbasinoutlet(catid,cat,fac,hydir,nrows,ncols)
+        GP_cat[catrowcol[:,0],catrowcol[:,1]]=-9999   ### set the catment cells into null
+        GP_cat[trow,tcol]=bcid #### change the outlet of catchment into wid
         bcid = bcid + 1
         catoutloc[i,0] = catid  ## catchment id
-        catoutloc[i,1] = catacc[len(catrowcol)-1,0]  #### catchment pourpont row
-        catoutloc[i,2] = catacc[len(catrowcol)-1,1]  #### catchment pourpont col
+        catoutloc[i,1] = trow  #### catchment pourpont row
+        catoutloc[i,2] = tcol  #### catchment pourpont col
 #    writeraster(outFolder+subid+"_Pourpoints_1.asc",GP_cat)
     ##################Part 2 Get pourpoints of Lake inflow streams
     arlakeid = np.unique(lake)
