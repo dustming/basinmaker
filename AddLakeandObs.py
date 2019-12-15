@@ -157,7 +157,7 @@ def selectlake(hylake,noncnlake,NonConLThres,hylakeinfo):
         slakeinfo = hylakeinfo.loc[hylakeinfo['HYLAK_ID'] == sl_lid]
         if len(slakeinfo) <=0:
             continue
-        if slakeinfo.iloc[0]['LAKE_AREA'] > NonConLThres:
+        if slakeinfo.iloc[0]['LAKE_AREA'] >= NonConLThres:
             sl_lake[sl_rowcol[:,0],sl_rowcol[:,1]] = sl_lid
     return sl_lake
 
@@ -1267,7 +1267,7 @@ allLakinfo = pd.read_csv(OutputFolder + "/"+'lakeinfo.csv',sep=",",low_memory=Fa
 dataset = "dir"
 Str100 = arcpy.RasterToNumPyArray(OutputFolder + "/"+'strlink.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'strlink.asc',dtype = 'i4',skiprows = 6)
 hylake1 = selectlake2(hylake,VolThreshold,allLakinfo)
-if NonConLThres > 0:
+if NonConLThres >= 0:
     Lake1 = selectlake(hylake1,nchylake,NonConLThres,allLakinfo)
 else:
     Lake1 = hylake1
