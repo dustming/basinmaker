@@ -591,12 +591,12 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn):
         hruid = int(catinfo.iloc[i]['SUBID'])
         catslope = catinfo.iloc[i]['BASINSLOPE']
         if catinfo.iloc[i]['ISLAKE'] > 0:
-            if float(catinfo.iloc[i]['AREA2'])/1000.00/1000.00 <= float(catinfo.iloc[i]['LAKEAREA']):
-                catarea2 = float(catinfo.iloc[i]['AREA2'])*max((1-float(catinfo.iloc[i]['LAKERATIO'])),0.05)/1000.00/1000.00
+            if float(catinfo.iloc[i]['AREA'])/1000.00/1000.00 <= float(catinfo.iloc[i]['LAKEAREA']):
+                catarea2 = float(catinfo.iloc[i]['AREA'])*max((1-float(catinfo.iloc[i]['LAKERATIO'])),0.05)/1000.00/1000.00
             else:
-                catarea2 = float(catinfo.iloc[i]['AREA2'])/1000.00/1000.00 - float(catinfo.iloc[i]['LAKEAREA'])
+                catarea2 = float(catinfo.iloc[i]['AREA'])/1000.00/1000.00 - float(catinfo.iloc[i]['LAKEAREA'])
         else:
-            catarea2 = float(catinfo.iloc[i]['AREA2'])/1000.00/1000.00
+            catarea2 = float(catinfo.iloc[i]['AREA'])/1000.00/1000.00
         StrGid =  str(hruid)+tab
         catid = str(int(catinfo.iloc[i]['SUBID']))+tab
         StrGidarea = str(catarea2)+tab
@@ -614,8 +614,8 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn):
         if catinfo.iloc[i]['ISLAKE'] > 0:
             hruid = int(catinfo.iloc[i]['SUBID']) + int(maxcatid)
             catslope = catinfo.iloc[i]['BASINSLOPE']
-            if float(catinfo.iloc[i]['AREA2'])/1000.00/1000.00 <= float(catinfo.iloc[i]['LAKEAREA']):
-                catarea2 = float(catinfo.iloc[i]['AREA2'])*min((float(catinfo.iloc[i]['LAKERATIO'])),0.95)/1000/1000
+            if float(catinfo.iloc[i]['AREA'])/1000.00/1000.00 <= float(catinfo.iloc[i]['LAKEAREA']):
+                catarea2 = float(catinfo.iloc[i]['AREA'])*min((float(catinfo.iloc[i]['LAKERATIO'])),0.95)/1000/1000
             else:
                 catarea2 = float(catinfo.iloc[i]['LAKEAREA'])
             StrGid =  str(hruid)+tab
@@ -689,8 +689,8 @@ def writelake(catinfo,outFolderraven):
         if catinfo.iloc[i]['HYLAKEID'] > 0:
             lakeid = int(catinfo.iloc[i]['HYLAKEID'])
             catid = catinfo.iloc[i]['SUBID']
-            if float(catinfo.iloc[i]['AREA2'])/1000.00/1000.00 <= float(catinfo.iloc[i]['LAKEAREA']):
-                A = float(catinfo.iloc[i]['AREA2'])*min((float(catinfo.iloc[i]['LAKERATIO'])),0.95)
+            if float(catinfo.iloc[i]['AREA'])/1000.00/1000.00 <= float(catinfo.iloc[i]['LAKEAREA']):
+                A = float(catinfo.iloc[i]['AREA'])*min((float(catinfo.iloc[i]['LAKERATIO'])),0.95)
             else:
                 A = float(catinfo.iloc[i]['LAKEAREA'])*1000*1000
             A = catinfo.iloc[i]['LAKEAREA']*1000*1000
