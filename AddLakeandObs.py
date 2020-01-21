@@ -125,7 +125,7 @@ def Getbasinoutlet(ID,basin,fac,dir,nrows,ncols):
 
 
 ########## Return row and column number of a specific catchment's outlet  
-# hylake       : a dataframe read from HydroLAKE database contain all infromation about lakes 
+# hylake       : a dataframe from HydroLAKE database containing all infromation about lakes 
 # noncnlake    : a two dimension array of lakes that are not connected by river network 
 # NonConLThres : the flow accumulation 2D array  
 # dir    : the flow direction 2D array
