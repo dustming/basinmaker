@@ -27,7 +27,10 @@ Scriptfolder = "C:/Users/dustm/Documents/GitHub/RoutingTool/QGIS_version/"
 import os
 import sys 
 sys.path.insert(1, "C:/Users/dustm/Documents/GitHub/RoutingTool/QGIS_version/")
-import Generateinputs
+from Generateinputs import writeraster,Generateinputdata_hydrosheds,Defcat
+
+
+
 ########### Define datafolder and output folder
 #Datafolder where you save the HydroSHEDS data 
 #Outputfolder wihere you save the generated lake-river routing structure
@@ -65,5 +68,4 @@ basename = 'RoutingProductExample123'
 Outputfoldercase = Outputfolder+basename #+'_ACC_'+accthres
 if not os.path.exists(Outputfoldercase):
 	os.makedirs(Outputfoldercase)
-
-step1command = QGISpython + "   " + Scriptfolder + "Generateinputs.py" +  "    " + na_hydem+ "     " + na_dir+ "     " + na_acc+ "     " + na_hyshedply+ "     " + in_wd+ "     " + in_lake+ "     " + landuse+ "     " + landuseinfo+ "     " + in_obs+ "     " + str(OutHyID1)+ "     " + OutHyID2+ "     " + Outputfoldercase
+Generateinputdata_hydrosheds(na_hydem,na_dir,na_acc,na_hyshedply,in_wd,in_lake,landuse,landuseinfo,in_obs,str(OutHyID1),OutHyID2,Outputfoldercase)

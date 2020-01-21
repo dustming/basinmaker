@@ -39,34 +39,25 @@ def writeraster(w_filname,nraster,dataset):
     f_handle.close()
 
 
-import numpy as np
-from scipy.optimize import curve_fit
-import copy
-import sys
-import shutil
-import os
-import csv
-import pandas as pd
-from shutil import copyfile
-from simpledbf import Dbf5
-from qgis.core import (
-    QgsVectorLayer
-)
 
-##### Readed inputs
-hyshddem = sys.argv[1]
-hyshddir = sys.argv[2]
-hyshdacc = sys.argv[3]
-hyshdply = sys.argv[4]
-WidDep = sys.argv[5]
-Lakefile = sys.argv[6]
-Landuse = sys.argv[7]
-Landuseinfo = sys.argv[8]
-obspoint = sys.argv[9]
-OutHyID = int(sys.argv[10])
-OutHyID2 = int(sys.argv[11])
-OutputFolder = sys.argv[12] + "/"
+def Generateinputdata_hydrosheds(hyshddem,hyshddir,hyshdacc,hyshdply,WidDep,Lakefile,Landuse,Landuseinfo,obspoint,OutHyID,OutHyID2,OutputFolder):
 
-hyinfocsv = hyshdply[:-3] + "dbf"
-VolThreshold = 0
+### function to generate inputs that is needed for lake-river routing network delineatation 
+### Inputs    
+#hyshddem = sys.argv[1]    ## the path for hydroshed dem data 
+#hyshddir = sys.argv[2]    ## the path for hydroshed flow direction data 
+#hyshdacc = sys.argv[3]    ## the path for hydroshed flow accumulation data 
+#hyshdply = sys.argv[4]    ## the path for hydroshed level 12 catchments 
+#WidDep = sys.argv[5]      ## the path for channel bankfull width and depth Polyline
+#Lakefile = sys.argv[6]    ## the path for hydrolake polygon 
+#Landuse = sys.argv[7]     ## the path for landuse data 
+#Landuseinfo = sys.argv[8] ## the path for a csv table, which describe the flood plan mannning's coefficient of each land use type 
+#obspoint = sys.argv[9]    ## the path for the observation point shp file 
+#OutHyID = int(sys.argv[10]) ## the most downstream catchment hydroshed ID 
+#OutHyID2 = int(sys.argv[11]) ## the most upstream catchment hydroshed ID
+#OutputFolder = sys.argv[12] + "/"  ## the path for output folder to save processed files 
 
+    hyinfocsv = hyshdply[:-3] + "dbf"
+    VolThreshold = 0
+    print(hyinfocsv)
+    
