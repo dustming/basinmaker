@@ -712,7 +712,48 @@ def writelake(catinfo,outFolderraven):
             f2.write("#############################################"+"\n")
             f2.write("###New Lake starts"+"\n")
     f2.close()
+    #### write lake input files for different lake zone
+#    arcpy.AddMessage(catinfo.columns) 
+    if 'LAKE_ZONE' in catinfo.columns:  ### write output file for each lake zone 
+        maxzoneid = int(max(catinfo['LAKE_ZONE'].values))
+        minzoneid = int(min(catinfo['LAKE_ZONE'].values[np.nonzero(catinfo['LAKE_ZONE'].values)]))
+        arcpy.AddMessage('minium zone id is    ' + str(minzoneid)+'     maximum zone id is: ' + str(maxzoneid))
+        for izone in range(minzoneid,maxzoneid+1):
+            
+            f3 = open(outFolderraven+"TestLake_"+str(izone)+".rvh","w") ## open a file to save lake output
+            tab = '       '
+            maxcatid = max(catinfo['SUBID'].values)
+            catinfozone = catinfo.loc[catinfo['LAKE_ZONE'] != izone]
+            arcpy.AddMessage("# of lakes not in zone  " + str(izone)+"  :   " +str(len(catinfozone)))
+            for i in range(0,len(catinfozone.index)):
+                if catinfozone.iloc[i]['HYLAKEID'] > 0:
+                    lakeid = int(catinfozone.iloc[i]['HYLAKEID'])
+                    catid = catinfozone.iloc[i]['SUBID']
+                    if float(catinfozone.iloc[i]['AREA'])/1000.00/1000.00 <= float(catinfozone.iloc[i]['LAKEAREA']):
+                        A = float(catinfozone.iloc[i]['AREA'])*min((float(catinfozone.iloc[i]['LAKERATIO'])),0.95)
+                    else:
+                        A = float(catinfozone.iloc[i]['LAKEAREA'])*1000*1000
+                    A = catinfozone.iloc[i]['LAKEAREA']*1000*1000
+                    h0 = catinfozone.iloc[i]['LAKEDEPTH']
+                    WeirCoe = 0.6
+                    hruid = int(catinfozone.iloc[i]['SUBID']) + int(maxcatid)
+                    Crewd = catinfozone.iloc[i]['BKFWIDTH']
+#            if slakeinfo.iloc[0]['Wshd_area'] < 6000 and slakeinfo.iloc[0]['Wshd_area'] > 0:
+        ######write lake information to file
+                    f3.write(":Reservoir"+ "   Lake_"+ str(int(lakeid))+ "   ######## " +"\n")
+                    f3.write("  :SubBasinID  "+str(int(catid))+ "\n")
+                    f3.write("  :HRUID   "+str(int(hruid))+ "\n")
+                    f3.write("  :Type RESROUTE_STANDARD   "+"\n")
+                    f3.write("  :WeirCoefficient  "+str(WeirCoe)+ "\n")
+                    f3.write("  :CrestWidth "+str(Crewd)+ "\n")
+                    f3.write("  :MaxDepth "+str(h0)+ "\n")
+                    f3.write("  :LakeArea    "+str(A)+ "\n")
+                    f3.write(":EndReservoir   "+"\n")
+                    f3.write("#############################################"+"\n")
+                    f3.write("###New Lake starts"+"\n")
+            f3.close()
 
+            
 #################################################################################################################3
 def Writecatinfotodbf(OutputFoldersub,catinfo):
     dbfile = OutputFoldersub+ 'finalcat.shp'
@@ -983,8 +1024,8 @@ arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryC
 
 if not os.path.exists(Raveinputsfolder):
     os.makedirs(Raveinputsfolder)
-dbftocsv(OutputFolder +"/"+ "finalcat_info.dbf",OutputFolder +"/"+ "finalcat_info.csv")
-ncatinfo = pd.read_csv(OutputFolder +"/"+"finalcat_info.csv",sep=",",low_memory=False)
+dbftocsv(OutputFolder +"/"+ "finalcat_info.dbf",OutputFolder +"/"+ "finalcat_info2.csv")
+ncatinfo = pd.read_csv(OutputFolder +"/"+"finalcat_info2.csv",sep=",",low_memory=False)
 ncatinfo2 = ncatinfo.drop_duplicates('SUBID', keep='first')
 ncatinfo2.to_csv(OutputFolder +"/"+"finalcatcheck.csv",",")
 #ncols = int(arcpy.GetRasterProperties_management(dataset, "COLUMNCOUNT").getOutput(0))
