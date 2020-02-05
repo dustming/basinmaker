@@ -1227,11 +1227,20 @@ from shutil import copyfile
 arcpy.env.overwriteOutput = True
 arcpy.CheckOutExtension("Spatial")
 
+###################################################
+#This model will add lakes into the predefined routing structure 
+#  the updated lake-river routing network will ensure 
+#  each lake outlet will be a outlet of catchment 
+#  each connection between river and lake will be identified as a 
+#  new catchment outlet 
+###################################################
+
 ##### Readed inputs
-OutputFolder = sys.argv[1]
-VolThreshold = float(sys.argv[2])
-NonConLThres = float(sys.argv[3])
-nlakegrids = int(sys.argv[4])
+OutputFolder = sys.argv[1]  ### the project folder
+VolThreshold = float(sys.argv[2]) ### lake area thresthold for connected lakes 
+NonConLThres = float(sys.argv[3]) ### lake area thresthold for non connected lakes 
+nlakegrids = int(sys.argv[4])     ### number of the lake grids,lake flow directon correction will not performed for
+                                  ###  lake's with grids number larger than this value.
 
 arcpy.env.workspace =OutputFolder
 os.chdir(OutputFolder)
@@ -1246,47 +1255,67 @@ arcpy.env.extent = arcpy.Describe( "dir").extent
 arcpy.env.snapRaster =  "dir"
 ###### Read inputs
 Null = -9999
+
 blid = 1000000    #### begining of new lake id
-bcid = 1       ## begining of new cat id of hydrosheds
-bsid = 2000000   ## begining of new cat id of in inflow of lakes
+bcid = 1          ## begining of new cat id of hydrosheds
+bsid = 2000000    ## begining of new cat id of in inflow of lakes
 blid2 = 3000000
 boid = 4000000
-hylake =  arcpy.RasterToNumPyArray(OutputFolder + "/"+'cnlake.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'cnlake.asc',dtype = 'i4',skiprows = 6) # raster of hydro lake
-nchylake =arcpy.RasterToNumPyArray(OutputFolder + "/"+'noncnlake.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'noncnlake.asc',dtype = 'i4',skiprows = 6) # raster of hydro lake
-cat =arcpy.RasterToNumPyArray(OutputFolder + "/"+'hybasinfid.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'hybasinfid.asc',dtype = 'i4',skiprows = 6)   #### raster of hydroshed basin fid
-hylakeinfo = pd.read_csv(OutputFolder + "/"+"lakeinfo.csv",sep=",",low_memory=False)       # dataframe of hydrolake database
-fac = arcpy.RasterToNumPyArray(OutputFolder + "/"+'acc.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'acc.asc',dtype = 'i4',skiprows = 6)   # raster of hydrolakes
-hydir = arcpy.RasterToNumPyArray(OutputFolder + "/"+'dir.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'dir.asc',dtype = 'i4',skiprows = 6)   #### raster of hydroshed basin fid
-hydem = arcpy.RasterToNumPyArray(OutputFolder + "/"+'dem.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+"dem.asc",dtype = 'i4',skiprows = 6) #### raster of hydroshed dem
-obs = arcpy.RasterToNumPyArray(OutputFolder + "/"+'obs.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+"obs.asc",dtype = 'i4',skiprows = 6)
-width = arcpy.RasterToNumPyArray(OutputFolder + "/"+'width.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+"width.asc",dtype = 'i4',skiprows = 6)
-depth = arcpy.RasterToNumPyArray(OutputFolder + "/"+'depth.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+"depth.asc",dtype = 'i4',skiprows = 6)
+
+hylake =  arcpy.RasterToNumPyArray(OutputFolder + "/"+'cnlake.asc',nodata_to_value=-9999) ### connected lake raster 
+nchylake =arcpy.RasterToNumPyArray(OutputFolder + "/"+'noncnlake.asc',nodata_to_value=-9999)  ### non connected lake raster 
+cat =arcpy.RasterToNumPyArray(OutputFolder + "/"+'hybasinfid.asc',nodata_to_value=-9999) ### predifined catchment raster 
+hylakeinfo = pd.read_csv(OutputFolder + "/"+"lakeinfo.csv",sep=",",low_memory=False) ### table of the hydrolake database 
+fac = arcpy.RasterToNumPyArray(OutputFolder + "/"+'acc.asc',nodata_to_value=-9999)  ### flow accumulation raster 
+hydir = arcpy.RasterToNumPyArray(OutputFolder + "/"+'dir.asc',nodata_to_value=-9999)### flow direction raster 
+hydem = arcpy.RasterToNumPyArray(OutputFolder + "/"+'dem.asc',nodata_to_value=-9999)### dem raster 
+obs = arcpy.RasterToNumPyArray(OutputFolder + "/"+'obs.asc',nodata_to_value=-9999)### observation point raster 
+width = arcpy.RasterToNumPyArray(OutputFolder + "/"+'width.asc',nodata_to_value=-9999) ### bankfull width raster 
+depth = arcpy.RasterToNumPyArray(OutputFolder + "/"+'depth.asc',nodata_to_value=-9999) ### bankfull depth raster 
+
 allsubinfo = pd.read_csv(OutputFolder + "/"+'hybinfo.csv',sep=",",low_memory=False)
 allsubinfo['FID'] = pd.Series(allsubinfo['HYBAS_ID'], index=allsubinfo.index)
 allLakinfo = pd.read_csv(OutputFolder + "/"+'lakeinfo.csv',sep=",",low_memory=False)
 dataset = "dir"
-Str100 = arcpy.RasterToNumPyArray(OutputFolder + "/"+'strlink.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'strlink.asc',dtype = 'i4',skiprows = 6)
-hylake1 = selectlake2(hylake,VolThreshold,allLakinfo)
+Str100 = arcpy.RasterToNumPyArray(OutputFolder + "/"+'strlink.asc',nodata_to_value=-9999)### predefined stream raster 
+
+
+##### part 1  Remove lakes in connected lakes and non- connected lakes based on lake area thresthold 
+#####         and generate a final lake extent raster 
+
+hylake1 = selectlake2(hylake,VolThreshold,allLakinfo) ### remove lakes with lake area smaller than the VolThreshold from connected lake raster 
+
 if NonConLThres >= 0:
-    Lake1 = selectlake(hylake1,nchylake,NonConLThres,allLakinfo)
+    Lake1 = selectlake(hylake1,nchylake,NonConLThres,allLakinfo) ### remove lakes with lake area smaller than the NonConLThres from non-connected lake raster 
 else:
     Lake1 = hylake1
 writeraster(OutputFolder + "/"+"Lake1.asc",Lake1,dataset)
 copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"Lake1.prj")
+
+
+##### part 2  Define pourpoints based on the predefined river network,catchment and generated lakes 
+
 ncols = int(arcpy.GetRasterProperties_management(dataset, "COLUMNCOUNT").getOutput(0))
 nrows = int(arcpy.GetRasterProperties_management(dataset, "ROWCOUNT").getOutput(0))
+
+######## first try to generate pourpoints 
 Pourpoints = GenerPourpoint(cat,Lake1,Str100,nrows,ncols,blid,bsid,bcid,fac,OutputFolder + "/",hydir)
 writeraster(OutputFolder + "/"+"Pourpoints.asc",Pourpoints,dataset)
 copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"Pourpoints.prj")
 arcpy.ASCIIToRaster_conversion(OutputFolder + "/"+"Pourpoints.asc", OutputFolder + "/"+"Pourpoints1","INTEGER")
 copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"Pourpoints1.prj")
+
+######## generate watershed based on these pourpoints 
 outWatershed = Watershed("dir", OutputFolder + "/"+"Pourpoints1", "VALUE")
 outSetNull = SetNull(outWatershed, outWatershed, "VALUE < 1")
 outSetNull.save(OutputFolder + "/"+"temcat1")
 copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"temcat1.prj")
 arcpy.RasterToASCII_conversion("temcat1",  "temcat1.asc")
-cat1 =  arcpy.RasterToNumPyArray(OutputFolder + "/"+'temcat1.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+"temcat1.asc",dtype = 'i4',skiprows = 6)
-temcat,outlakeids =CE_mcat4lake(cat1,Lake1,fac,hydir,bsid,nrows,ncols,Pourpoints)
+cat1 =  arcpy.RasterToNumPyArray(OutputFolder + "/"+'temcat1.asc',nodata_to_value=-9999) ### the updated catchment with new pourpoints 
+
+##### part 3  Modify the updated catchment  and generate final pourpoints 
+
+temcat,outlakeids =CE_mcat4lake(cat1,Lake1,fac,hydir,bsid,nrows,ncols,Pourpoints) 
 temcat2 = CE_Lakeerror(fac,hydir,Lake1,temcat,bsid,blid,boid,nrows,ncols,cat)
 writeraster(OutputFolder + "/"+"temcat2.asc",temcat2,dataset)
 copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"temcat2.prj")
@@ -1295,14 +1324,17 @@ writeraster(OutputFolder + "/"+"fPourpoints.asc",nPourpoints,dataset)
 copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"fPourpoints.prj")
 arcpy.ASCIIToRaster_conversion(OutputFolder + "/"+"fPourpoints.asc", OutputFolder + "/"+"fPourpoints1","INTEGER")
 copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"fPourpoints1.prj")
+
 ################ modifiy lake flow directions
-#arcpy.AddMessage(len(outlakeids))
+
 ndir = ChangeDIR(hydir,Lake1,fac,ncols,nrows,outlakeids,nlakegrids)
 writeraster(OutputFolder + "/"+"ndir.asc",ndir,dataset)
 copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"ndir.prj")
 arcpy.ASCIIToRaster_conversion(OutputFolder + "/"+"ndir.asc", OutputFolder + "/"+"ndir","INTEGER")
 copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"ndir.prj")
-##################################3
+
+##### part 3  generate fianl catchment with updated flow direction and final pourpoint s
+
 outWatershed = Watershed(OutputFolder + "/"+"ndir", OutputFolder + "/"+"fPourpoints1", "VALUE")
 outSetNull = SetNull(outWatershed, outWatershed, "VALUE < 1")
 outExtractByMask = ExtractByMask(outSetNull, OutputFolder+ "/" +"dir")
@@ -1313,6 +1345,7 @@ temcat3 = arcpy.RasterToNumPyArray(OutputFolder + "/"+'temcat3.asc',nodata_to_va
 rowcols = np.argwhere(temcat3 == 0)
 temcat3[rowcols[:,0],rowcols[:,1]] = -9999
 finalcat = CE_mcat4lake2(temcat3,Lake1,fac,hydir,bsid,nrows,ncols,nPourpoints)
+
 writeraster(OutputFolder + "/"+"finalcat.asc",finalcat,dataset)
 copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"finalcat.prj")
 arcpy.RasterToPolygon_conversion(OutputFolder + "/"+"finalcat.asc",OutputFolder + "/"+"cattemp3.shp", "NO_SIMPLIFY", "VALUE")
