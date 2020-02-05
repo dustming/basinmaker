@@ -49,8 +49,11 @@ def Generateinputdata_hydrosheds(hyshddem,hyshddir,hyshdacc,hyshdply,WidDep,Lake
         QgsVectorLayer,
         QgsApplication,
         QgsFeatureRequest,
-        QgsVectorFileWriter
+        QgsVectorFileWriter,
+        QgsProcessingFeedback
     )
+    import qgis
+    from qgis.analysis import QgsNativeAlgorithms
     from simpledbf import Dbf5
     import os
     import sys
@@ -61,9 +64,17 @@ def Generateinputdata_hydrosheds(hyshddem,hyshddir,hyshdacc,hyshdply,WidDep,Lake
     OutHyID = int(OutHyID)
     OutHyID2 = int(OutHyID2)
     
+    #### set up qgis applicaiton 
     QgsApplication.setPrefixPath("C:/QGIS310/apps/qgis", True)
     Qgs = QgsApplication([],False)
     Qgs.initQgis()
+    from qgis import processing
+    from processing.core.Processing import Processing   
+    feedback = QgsProcessingFeedback()
+    Processing.initialize()
+    QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
+#    Processing.updateAlgsList()
+    #######################################3
     
     r_dem_layer = QgsRasterLayer(hyshddem, "") ### load DEM raster as a  QGIS raster object to obtain attribute
     if not r_dem_layer.isValid():
@@ -119,15 +130,75 @@ def Generateinputdata_hydrosheds(hyshddem,hyshddir,hyshdacc,hyshdply,WidDep,Lake
     
     ### obtain all feature id of selected polygons
     selectedFeatureID = []
+
     for feature in it:
+#        print(feature.id())
         selectedFeatureID.append(feature.id())
+
         
     hyshedl12.select(selectedFeatureID)   ### select with polygon id
     
     # Save selected polygons to output 
     _writer = QgsVectorFileWriter.writeAsVectorFormat(hyshedl12, OutputFolder +"HyMask.shp", "UTF-8", hyshedl12.crs(), "ESRI Shapefile", onlySelected=True)
 
-#arcpy.AddMessage(HydroBasins)
+#    processing.algorithmHelp('gdal:dissolve')
+#    processing.algorithmHelp('gdal:cliprasterbymasklayer')
+    
+    ### merge all hydrshed polygons, create a mask for clip rasters 
+    processing.run('gdal:dissolve', {'INPUT':OutputFolder +"HyMask.shp",'FIELD':'MAIN_BAS','OUTPUT':OutputFolder +"HyMask2.shp"})
+    
+    
+    ### CLIP RASTERS 
+    params = {'INPUT': hyshddem,'MASK': OutputFolder +"HyMask2.shp",'NODATA': -9999,
+                                                                    'ALPHA_BAND': False,
+                                                                    'CROP_TO_CUTLINE': True,
+                                                                    'KEEP_RESOLUTION': True,
+                                                                    'OPTIONS': 'COMPRESS=LZW',
+                                                                    'DATA_TYPE': 0,  # Byte
+                                                                    'OUTPUT': OutputFolder +"dem.tif"}
+    dem = processing.run('gdal:cliprasterbymasklayer',params)
+    params = {'INPUT': hyshddir,'MASK': OutputFolder +"HyMask2.shp",'NODATA': -9999,
+                                                                    'ALPHA_BAND': False,
+                                                                    'CROP_TO_CUTLINE': True,
+                                                                    'KEEP_RESOLUTION': True,
+                                                                    'OPTIONS': 'COMPRESS=LZW',
+                                                                    'DATA_TYPE': 0,  # Byte
+                                                                    'OUTPUT': OutputFolder +"dir.tif"}
+    processing.run('gdal:cliprasterbymasklayer',params)
+    params = {'INPUT': hyshdacc,'MASK': OutputFolder +"HyMask2.shp",'NODATA': -9999,
+                                                                    'ALPHA_BAND': False,
+                                                                    'CROP_TO_CUTLINE': True,
+                                                                    'KEEP_RESOLUTION': True,
+                                                                    'OPTIONS': 'COMPRESS=LZW',
+                                                                    'DATA_TYPE': 0,  # Byte
+                                                                    'OUTPUT': OutputFolder +"acc.tif"}
+    processing.run('gdal:cliprasterbymasklayer',params)
+    params = {'INPUT': Landuse,'MASK': OutputFolder +"HyMask2.shp",'NODATA': -9999,
+                                                                    'ALPHA_BAND': False,
+                                                                    'CROP_TO_CUTLINE': True,
+                                                                    'KEEP_RESOLUTION': True,
+                                                                    'OPTIONS': 'COMPRESS=LZW',
+                                                                    'DATA_TYPE': 0,  # Byte
+                                                                    'OUTPUT': OutputFolder +"landuse.tif"}
+    processing.run('gdal:cliprasterbymasklayer',params)
+    ### end clip rasters 
 
+#### clip vector fiels  
+    processing.run("native:clip", {'INPUT':Lakefile,'OVERLAY':OutputFolder +"HyMask2.shp",'OUTPUT':OutputFolder +"Hylake.shp"})
+    processing.run("native:clip", {'INPUT':WidDep,'OVERLAY':OutputFolder +"HyMask2.shp",'OUTPUT':OutputFolder +"WidDep.shp"})
+    processing.run("native:clip", {'INPUT':obspoint,'OVERLAY':OutputFolder +"HyMask2.shp",'OUTPUT':OutputFolder + "obspoint.shp"})
+
+#### transfer vector to raster 
+    dem = QgsRasterLayer(OutputFolder +"dem.tif", "")
+    extsou = dem.extent()
+    exttrg = str(extsou.xMinimum()) + ',' + str(extsou.xMaximum())+',' + str(extsou.yMinimum())+',' + str(extsou.yMaximum())+'   [' + SptailRefid+']'
+
+    processing.run("gdal:rasterize", {'INPUT':OutputFolder +"WidDep.shp",'FIELD':'WIDTH','BURN':None,'UNITS':1,'WIDTH':cellSize,'HEIGHT':cellSize,'EXTENT':exttrg,'NODATA':-9999,'OPTIONS':'','DATA_TYPE':5,'INIT':None,'INVERT':False,'EXTRA':'','OUTPUT':OutputFolder +"width.tif"})
+    processing.run("gdal:rasterize", {'INPUT':OutputFolder +"WidDep.shp",'FIELD':'DEPTH','BURN':None,'UNITS':1,'WIDTH':cellSize,'HEIGHT':cellSize,'EXTENT':exttrg,'NODATA':-9999,'OPTIONS':'','DATA_TYPE':5,'INIT':None,'INVERT':False,'EXTRA':'','OUTPUT':OutputFolder +"depth.tif"})
+    processing.run("gdal:rasterize", {'INPUT':OutputFolder +"WidDep.shp",'FIELD':'Q_Mean2','BURN':None,'UNITS':1,'WIDTH':cellSize,'HEIGHT':cellSize,'EXTENT':exttrg,'NODATA':-9999,'OPTIONS':'','DATA_TYPE':5,'INIT':None,'INVERT':False,'EXTRA':'','OUTPUT':OutputFolder +"Q_Mean.tif"})
+    processing.run("gdal:rasterize", {'INPUT':OutputFolder + "obspoint.shp",'FIELD':'FID','BURN':None,'UNITS':1,'WIDTH':cellSize,'HEIGHT':cellSize,'EXTENT':exttrg,'NODATA':-9999,'OPTIONS':'','DATA_TYPE':5,'INIT':None,'INVERT':False,'EXTRA':'','OUTPUT':OutputFolder +"obs.tif"})
+    processing.run("gdal:rasterize", {'INPUT':OutputFolder +"Hylake.shp",'FIELD':'Hylak_id','BURN':None,'UNITS':1,'WIDTH':cellSize,'HEIGHT':cellSize,'EXTENT':exttrg,'NODATA':-9999,'OPTIONS':'','DATA_TYPE':5,'INIT':None,'INVERT':False,'EXTRA':'','OUTPUT':OutputFolder +"hylake.tif"})
+
+##### generate first catchment 
     Qgs.exitQgis()
     
