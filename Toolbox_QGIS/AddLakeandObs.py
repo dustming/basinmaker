@@ -141,10 +141,10 @@ def selectlake(hylake,noncnlake,NonConLThres,hylakeinfo):
         sl_lid = arlakeid[i] ### get lake id
         sl_rowcol = np.argwhere(noncnlake==sl_lid).astype(int) ### get the row and col of lake
         sl_nrow = sl_rowcol.shape[0]
-        slakeinfo = hylakeinfo.loc[hylakeinfo['HYLAK_ID'] == sl_lid]
+        slakeinfo = hylakeinfo.loc[hylakeinfo['Hylak_id'] == sl_lid]
         if len(slakeinfo) <=0:
             continue
-        if slakeinfo.iloc[0]['LAKE_AREA'] >= NonConLThres:
+        if slakeinfo.iloc[0]['Lake_area'] >= NonConLThres:
             sl_lake[sl_rowcol[:,0],sl_rowcol[:,1]] = sl_lid
     return sl_lake
 
@@ -156,13 +156,13 @@ def selectlake2(hylake,Lakehres,hylakeinfo):
         sl_lid = arlakeid[i] ### get lake id
         sl_rowcol = np.argwhere(sl_lake==sl_lid).astype(int) ### get the row and col of lake
         sl_nrow = sl_rowcol.shape[0]
-        slakeinfo = hylakeinfo.loc[hylakeinfo['HYLAK_ID'] == sl_lid]
+        slakeinfo = hylakeinfo.loc[hylakeinfo['Hylak_id'] == sl_lid]
         if len(slakeinfo)<=0:
-            arcpy.AddMessage("Lake excluded     asdfasd " + str(sl_lid))
+#            print("Lake excluded     asdfasd " + str(sl_lid))
             sl_lake[sl_rowcol[:,0],sl_rowcol[:,1]] = -9999
             continue
-        if slakeinfo.iloc[0]['LAKE_AREA'] < Lakehres:
-            arcpy.AddMessage("Lake excluded     due to area " + str(sl_lid))
+        if slakeinfo.iloc[0]['Lake_area'] < Lakehres:
+#            print("Lake excluded     due to area " + str(sl_lid))
             sl_lake[sl_rowcol[:,0],sl_rowcol[:,1]] = -9999
     return sl_lake
 
@@ -182,7 +182,7 @@ def Addobspoints(obs,pourpoints,boid,cat):
 #############################################33
 
 ##############################################3
-def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,outFolder,hydir):
+def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir):
     GP_cat = copy.copy(cat)
     sblid = copy.copy(blid)
     ############### Part 1 Get all pourpoints of hydroshed catchment
@@ -820,111 +820,130 @@ def ChangeDIR(dir,lake1,acc,ncols,nrows,outlakeids,nlakegrids):
     return ndir
 import numpy as np
 from scipy.optimize import curve_fit
-import arcpy
-from arcpy import env
-from arcpy.sa import *
 import copy
 import sys
 import shutil
 import os
 import csv
 from simpledbf import Dbf5
-from dbfpy import dbf
 import pandas as pd
 from shutil import copyfile
-arcpy.env.overwriteOutput = True
-arcpy.CheckOutExtension("Spatial")
 
-##### Readed inputs
-OutputFolder = sys.argv[1]
-VolThreshold = float(sys.argv[2])
-NonConLThres = float(sys.argv[3])
-nlakegrids = int(sys.argv[4])
+def AutomatedWatershedsandLakesFilterToolset(OutputFolder = '#',Thre_Lake_Area_Connect = 0,Thre_Lake_Area_nonConnect = -1,
+MaximumLakegrids = 10000):
+    import os
+    import sys
+    import tempfile
+    import shutil
+    import os
+    import sys
+    import tempfile
+    import shutil
 
-arcpy.env.workspace =OutputFolder
-os.chdir(OutputFolder)
+    tempinfo = Dbf5(OutputFolder + "/"+'Hylake.dbf')#np.genfromtxt(hyinfocsv,delimiter=',')
+    allLakinfo = tempinfo.to_dataframe()
+    RoutingToolPath = os.environ['RoutingToolFolder']
+    
+    
+    gisdb =os.path.join(tempfile.gettempdir(), 'grassdata_toolbox')# "C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/RoutingTool/Samples/Examples/"
+    os.environ['GISDBASE'] = gisdb    
+        
+    import grass.script as grass
+    from grass.script import array as garray
+    import grass.script.setup as gsetup
+    from grass.pygrass.modules.shortcuts import general as g
+    from grass.pygrass.modules.shortcuts import raster as r
+    from grass.pygrass.modules import Module
+    from grass_session import Session
 
-cellSize = float(arcpy.GetRasterProperties_management(OutputFolder + "/" + "dir", "CELLSIZEX").getOutput(0))
-SptailRef = arcpy.Describe(OutputFolder + "/" + "dir").spatialReference
-arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryCode)) ### WGS84
+    os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD'))
+    PERMANENT = Session()
+    PERMANENT.open(gisdb=gisdb, location='mytest')
+    grass.run_command('g.region', raster='dem')
+#    grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
+    
 
-arcpy.env.XYTolerance = cellSize
-arcpy.arcpy.env.cellSize = cellSize
-arcpy.env.extent = arcpy.Describe( "dir").extent
-arcpy.env.snapRaster =  "dir"
-###### Read inputs
-Null = -9999
-blid = 1000000    #### begining of new lake id
-bcid = 1       ## begining of new cat id of hydrosheds
-bsid = 2000000   ## begining of new cat id of in inflow of lakes
-blid2 = 3000000
-boid = 4000000
-hylake =  arcpy.RasterToNumPyArray(OutputFolder + "/"+'cnlake.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'cnlake.asc',dtype = 'i4',skiprows = 6) # raster of hydro lake
-nchylake =arcpy.RasterToNumPyArray(OutputFolder + "/"+'noncnlake.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'noncnlake.asc',dtype = 'i4',skiprows = 6) # raster of hydro lake
-cat =arcpy.RasterToNumPyArray(OutputFolder + "/"+'hybasinfid.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'hybasinfid.asc',dtype = 'i4',skiprows = 6)   #### raster of hydroshed basin fid
-hylakeinfo = pd.read_csv(OutputFolder + "/"+"lakeinfo.csv",sep=",",low_memory=False)       # dataframe of hydrolake database
-fac = arcpy.RasterToNumPyArray(OutputFolder + "/"+'acc.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'acc.asc',dtype = 'i4',skiprows = 6)   # raster of hydrolakes
-hydir = arcpy.RasterToNumPyArray(OutputFolder + "/"+'dir.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'dir.asc',dtype = 'i4',skiprows = 6)   #### raster of hydroshed basin fid
-hydem = arcpy.RasterToNumPyArray(OutputFolder + "/"+'dem.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+"dem.asc",dtype = 'i4',skiprows = 6) #### raster of hydroshed dem
-obs = arcpy.RasterToNumPyArray(OutputFolder + "/"+'obs.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+"obs.asc",dtype = 'i4',skiprows = 6)
-width = arcpy.RasterToNumPyArray(OutputFolder + "/"+'width.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+"width.asc",dtype = 'i4',skiprows = 6)
-depth = arcpy.RasterToNumPyArray(OutputFolder + "/"+'depth.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+"depth.asc",dtype = 'i4',skiprows = 6)
-allsubinfo = pd.read_csv(OutputFolder + "/"+'hybinfo.csv',sep=",",low_memory=False)
-allsubinfo['FID'] = pd.Series(allsubinfo['HYBAS_ID'], index=allsubinfo.index)
-allLakinfo = pd.read_csv(OutputFolder + "/"+'lakeinfo.csv',sep=",",low_memory=False)
-dataset = "dir"
-Str100 = arcpy.RasterToNumPyArray(OutputFolder + "/"+'strlink.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'strlink.asc',dtype = 'i4',skiprows = 6)
-hylake1 = selectlake2(hylake,VolThreshold,allLakinfo)
-if NonConLThres >= 0:
-    Lake1 = selectlake(hylake1,nchylake,NonConLThres,allLakinfo)
-else:
-    Lake1 = hylake1
-writeraster(OutputFolder + "/"+"Lake1.asc",Lake1,dataset)
-copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"Lake1.prj")
-ncols = int(arcpy.GetRasterProperties_management(dataset, "COLUMNCOUNT").getOutput(0))
-nrows = int(arcpy.GetRasterProperties_management(dataset, "ROWCOUNT").getOutput(0))
-Pourpoints = GenerPourpoint(cat,Lake1,Str100,nrows,ncols,blid,bsid,bcid,fac,OutputFolder + "/",hydir)
-writeraster(OutputFolder + "/"+"Pourpoints.asc",Pourpoints,dataset)
-copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"Pourpoints.prj")
-arcpy.ASCIIToRaster_conversion(OutputFolder + "/"+"Pourpoints.asc", OutputFolder + "/"+"Pourpoints1","INTEGER")
-copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"Pourpoints1.prj")
-outWatershed = Watershed("dir", OutputFolder + "/"+"Pourpoints1", "VALUE")
-outSetNull = SetNull(outWatershed, outWatershed, "VALUE < 1")
-outSetNull.save(OutputFolder + "/"+"temcat1")
-copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"temcat1.prj")
-arcpy.RasterToASCII_conversion("temcat1",  "temcat1.asc")
-cat1 =  arcpy.RasterToNumPyArray(OutputFolder + "/"+'temcat1.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+"temcat1.asc",dtype = 'i4',skiprows = 6)
-temcat,outlakeids =CE_mcat4lake(cat1,Lake1,fac,hydir,bsid,nrows,ncols,Pourpoints)
-temcat2 = CE_Lakeerror(fac,hydir,Lake1,temcat,bsid,blid,boid,nrows,ncols,cat)
-writeraster(OutputFolder + "/"+"temcat2.asc",temcat2,dataset)
-copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"temcat2.prj")
-nPourpoints = GenerateFinalPourpoints(fac,hydir,Lake1,temcat2,bsid,blid,boid,nrows,ncols,cat,obs)
-writeraster(OutputFolder + "/"+"fPourpoints.asc",nPourpoints,dataset)
-copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"fPourpoints.prj")
-arcpy.ASCIIToRaster_conversion(OutputFolder + "/"+"fPourpoints.asc", OutputFolder + "/"+"fPourpoints1","INTEGER")
-copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"fPourpoints1.prj")
-################ modifiy lake flow directions
-#arcpy.AddMessage(len(outlakeids))
-ndir = ChangeDIR(hydir,Lake1,fac,ncols,nrows,outlakeids,nlakegrids)
-writeraster(OutputFolder + "/"+"ndir.asc",ndir,dataset)
-copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"ndir.prj")
-arcpy.ASCIIToRaster_conversion(OutputFolder + "/"+"ndir.asc", OutputFolder + "/"+"ndir","INTEGER")
-copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"ndir.prj")
-##################################3
-outWatershed = Watershed(OutputFolder + "/"+"ndir", OutputFolder + "/"+"fPourpoints1", "VALUE")
-outSetNull = SetNull(outWatershed, outWatershed, "VALUE < 1")
-outExtractByMask = ExtractByMask(outSetNull, OutputFolder+ "/" +"dir")
-outExtractByMask.save(OutputFolder + "/"+"temcat3")
-copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"temcat3.prj")
-arcpy.RasterToASCII_conversion(OutputFolder + "/"+'temcat3', OutputFolder + "/"+'temcat3.asc')
-temcat3 = arcpy.RasterToNumPyArray(OutputFolder + "/"+'temcat3.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+"temcat3.asc",skiprows = 6)
-rowcols = np.argwhere(temcat3 == 0)
-temcat3[rowcols[:,0],rowcols[:,1]] = -9999
-finalcat = CE_mcat4lake2(temcat3,Lake1,fac,hydir,bsid,nrows,ncols,nPourpoints)
-writeraster(OutputFolder + "/"+"finalcat.asc",finalcat,dataset)
-copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"finalcat.prj")
-arcpy.RasterToPolygon_conversion(OutputFolder + "/"+"finalcat.asc",OutputFolder + "/"+"cattemp3.shp", "NO_SIMPLIFY", "VALUE")
-copyfile( OutputFolder + "/"+"HyMask.prj" ,  OutputFolder + "/"+"cattemp3.prj")
-arcpy.Dissolve_management(OutputFolder + "/"+"cattemp3.shp", OutputFolder + "/"+"finalcat.shp", ["gridcode"])
-copyfile( OutputFolder + "/"+"HyMask.prj" ,  OutputFolder + "/"+"finalcat.prj")
-arcpy.AddMessage("The generated catchment with lake is located at OutputFolder with name finalcat.shp")
+    OutputFolder = OutputFolder ### the project folder
+    VolThreshold =Thre_Lake_Area_Connect ### lake area thresthold for connected lakes 
+    NonConLThres = Thre_Lake_Area_nonConnect ### lake area thresthold for non connected lakes 
+    nlakegrids = MaximumLakegrids 
+    
+
+
+
+    temparray = garray.array()
+    temparray[:,:] = -9999
+    temparray.write(mapname="tempraster", overwrite=True)
+##### begin processing 
+
+    blid = 1000000    #### begining of new lake id
+    bcid = 1          ## begining of new cat id of hydrosheds
+    bsid = 2000000    ## begining of new cat id of in inflow of lakes
+    blid2 = 3000000
+    boid = 4000000
+    
+    noncnlake_arr = garray.array(mapname="Nonconnect_Lake")
+    conlake_arr = garray.array(mapname="Connect_Lake")
+    cat1_arr = garray.array(mapname="cat1")
+    str_array = garray.array(mapname="str_grass_r")
+    acc_array = garray.array(mapname="acc_grass")
+    dir_array = garray.array(mapname="dir_Arcgis")
+    obs_array = garray.array(mapname="obs")
+
+    hylake1 = selectlake2(conlake_arr,VolThreshold,allLakinfo) ### remove lakes with lake area smaller than the VolThreshold from connected lake raster 
+    if NonConLThres >= 0:
+        Lake1 = selectlake(hylake1,noncnlake_arr,NonConLThres,allLakinfo) ### remove lakes with lake area smaller than the NonConLThres from non-connected lake raster 
+    else:
+        Lake1 = hylake1
+    temparray[:,:] = Lake1[:,:]
+    temparray.write(mapname="SelectedLakes", overwrite=True)
+    grass.run_command('r.null', map='SelectedLakes',setnull=-9999)
+    
+    ncols = int(temparray.shape[0])
+    nrows = int(temparray.shape[1])
+    print(ncols,nrows)
+
+    Pourpoints = GenerPourpoint(cat1_arr,Lake1,str_array,nrows,ncols,blid,bsid,bcid,acc_array,dir_array)
+#    (cat,Lake1,Str100,nrows,ncols,blid,bsid,bcid,fac,OutputFolder + "/",hydir)
+    temparray[:,:] = Pourpoints[:,:]
+    temparray.write(mapname="Pourpoints_1", overwrite=True)
+    grass.run_command('r.null', map='Pourpoints_1',setnull=-9999)
+    grass.run_command('r.to.vect', input='Pourpoints_1',output='Pourpoints_1_F',type='point', overwrite = True)
+    grass.run_command('r.stream.basins',direction = 'dir_Grass', points = 'Pourpoints_1_F', basins = 'cat2',overwrite = True)
+    
+    cat2_array =  garray.array(mapname="cat2")
+    temcat,outlakeids =CE_mcat4lake(cat2_array,Lake1,acc_array,dir_array,bsid,nrows,ncols,Pourpoints) 
+    temcat2 = CE_Lakeerror(acc_array,dir_array,Lake1,temcat,bsid,blid,boid,nrows,ncols,cat1_arr)
+    temparray[:,:] = temcat2[:,:]
+    temparray.write(mapname="cat3", overwrite=True)
+    grass.run_command('r.null', map='cat3',setnull=-9999)
+    
+    nPourpoints = GenerateFinalPourpoints(acc_array,dir_array,Lake1,temcat2,bsid,blid,boid,nrows,ncols,cat1_arr,obs_array)
+    temparray[:,:] = Pourpoints[:,:]
+    temparray.write(mapname="Pourpoints_2", overwrite=True)
+    grass.run_command('r.null', map='Pourpoints_2',setnull=-9999)
+    grass.run_command('r.to.vect', input='Pourpoints_2',output='Pourpoints_2_F',type='point', overwrite = True)    
+    
+    ndir = ChangeDIR(dir_array,Lake1,acc_array,ncols,nrows,outlakeids,nlakegrids)
+    temparray[:,:] = ndir[:,:]
+    temparray.write(mapname="ndir_Arcgis", overwrite=True)
+    grass.run_command('r.null', map='ndir_Arcgis',setnull=-9999)    
+    grass.run_command('r.reclass', input='ndir_Arcgis',output = 'ndir_Grass',rules = RoutingToolPath + '/'+ 'Arcgis2GrassDIR.txt',overwrite = True)
+    
+    
+    
+    grass.run_command('r.stream.basins',direction = 'ndir_Grass', points = 'Pourpoints_2_F', basins = 'cat4',overwrite = True)
+    cat4_array =  garray.array(mapname="cat4")
+    rowcols = np.argwhere(cat4_array == 0)
+    cat4_array[rowcols[:,0],rowcols[:,1]] = -9999
+    finalcat = CE_mcat4lake2(cat4_array,Lake1,acc_array,dir_array,bsid,nrows,ncols,nPourpoints)
+    temparray[:,:] = finalcat[:,:]
+    temparray.write(mapname="finalcat", overwrite=True)
+    grass.run_command('r.null', map='finalcat',setnull=-9999)    
+    grass.run_command('r.to.vect', input='finalcat',output='finalcat_F',type='area', overwrite = True)    
+
+
+
+    PERMANENT.close()
+
+ 
