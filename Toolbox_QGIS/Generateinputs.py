@@ -169,6 +169,7 @@ def Generateinputdata_hydrosheds(dem_in = '#',dir_in = '#',hyshdply = '#',WidDep
     
 ###### set up GRASS environment for translate vector to rasters and clip rasters
     import grass.script as grass
+    from grass.script import array as garray
     import grass.script.setup as gsetup
     from grass.pygrass.modules.shortcuts import general as g
     from grass.pygrass.modules.shortcuts import raster as r
@@ -178,6 +179,9 @@ def Generateinputdata_hydrosheds(dem_in = '#',dir_in = '#',hyshdply = '#',WidDep
     gisdb =os.path.join(tempfile.gettempdir(), 'grassdata_toolbox')# "C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/RoutingTool/Samples/Examples/"
 
     shutil.rmtree(gisdb,ignore_errors=True)
+    
+    
+
 
     try:
         os.stat(gisdb)
@@ -192,6 +196,14 @@ def Generateinputdata_hydrosheds(dem_in = '#',dir_in = '#',hyshdply = '#',WidDep
     grass.run_command("r.import", input = OutputFolder +"dem.tif", output = 'dem', overwrite = True)
     grass.run_command('g.region', raster='dem')
     grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
+
+    map2d_1 = garray.array()
+    k=1
+    for y in range(map2d_1.shape[0]):
+        for x in range(map2d_1.shape[1]):
+            map2d_1[y][x] = k
+            k = k + 1
+    map2d_1.write(mapname="Grid_raster", overwrite=True)
     
     if dir_in != '#':
         grass.run_command("r.external", input = dir_in, output = 'dir_in', overwrite = True)
@@ -200,19 +212,30 @@ def Generateinputdata_hydrosheds(dem_in = '#',dir_in = '#',hyshdply = '#',WidDep
     else:
         grass.run_command('r.watershed',elevation = 'dem', drainage = 'dir_Grass', overwrite = True)
         grass.run_command('r.reclass', input='dir_Grass',output = 'dir_Arcgis',rules = RoutingToolPath + '/'+ 'Grass2ArcgisDIR.txt',overwrite = True)
-        
+    
+    copyfile( Landuseinfo ,  OutputFolder + "/"+"landuseinfo.csv") 
     grass.run_command("r.external", input = Landuse, output = 'landuse_in', overwrite = True)
     grass.run_command("r.clip", input = 'landuse_in', output = 'landuse', overwrite = True)        
     
     grass.run_command("v.import", input = OutputFolder +"WidDep.shp", output = 'WidDep', overwrite = True)
     grass.run_command("v.import", input = OutputFolder +"obspoint.shp", output = 'obspoint', overwrite = True)
     grass.run_command("v.import", input = OutputFolder +"Hylake.shp", output = 'Hylake', overwrite = True)
+    
+    
+    
+    os.system('gdal_rasterize -at -of GTiff -a_nodata -9999 -a Hylak_id -tr  '+ str(cellSize) + "  " +str(cellSize) +"   " + "\"" +  os.path.join(OutputFolder, "Hylake.shp") +"\""+ "    "+ "\""+os.path.join(OutputFolder, "hylakegdal.tif")+"\"")
+    
+    grass.run_command("r.in.gdal", input = os.path.join(OutputFolder, "hylakegdal.tif"), output = 'alllakeraster_in', overwrite = True)
+#    grass.run_command("r.null", input = 'alllakeraster_in', setnull = -9999)
 
     grass.run_command('v.to.rast',input = 'WidDep',output = 'width',use = 'attr',attribute_column = 'WIDTH',overwrite = True)
     grass.run_command('v.to.rast',input = 'WidDep',output = 'depth',use = 'attr',attribute_column = 'DEPTH',overwrite = True)
     grass.run_command('v.to.rast',input = 'WidDep',output = 'qmean',use = 'attr',attribute_column = 'Q_Mean2',overwrite = True)
     grass.run_command('v.to.rast',input = 'obspoint',output = 'obs',use = 'attr',attribute_column = 'Obs_ID',overwrite = True)
-    grass.run_command('v.to.rast',input = 'Hylake',output = 'alllake',use = 'attr',attribute_column = 'Hylak_id',overwrite = True)
+#    grass.run_command('v.to.rast',input = 'Hylake',output = 'alllake',use = 'attr',attribute_column = 'Hylak_id',overwrite = True)
 
+    grass.run_command('r.mapcalc',expression = 'alllake = int(alllakeraster_in)',overwrite = True)
+    grass.run_command("r.null", map = 'alllake', setnull = -9999)
+    
     PERMANENT.close()
     Qgs.exit()

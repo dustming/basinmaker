@@ -26,23 +26,6 @@ def Defcat(out,outletid):
     return Shedid
 
 ##################################################################3
-def dbftocsv(filename,outname):
-    if filename.endswith('.dbf'):
-        print "Converting %s to csv" % filename
-        csv_fn = outname
-        with open(csv_fn,'wb') as csvfile:
-            in_db = dbf.Dbf(filename)
-            out_csv = csv.writer(csvfile)
-            names = []
-            for field in in_db.header.fields:
-                names.append(field.name)
-            out_csv.writerow(names)
-            for rec in in_db:
-                out_csv.writerow(rec.fieldData)
-            in_db.close()
-            print "Done..."
-    else:
-        print "Filename does not end with .dbf"
 
 ##################################################################3
 def writeraster(w_filname,nraster,dataset):
@@ -138,7 +121,7 @@ def Getbasinoutlet(ID,basin,fac,dir,nrows,ncols):
                 ccol = ncol
                 continue
         if ifound == 0: 
-            arcpy.AddMessage(" true basin outlet not found for ID...."+ str(ID))
+            print(" true basin outlet not found for ID...."+ str(ID))
         return crow,ccol        
 
 
@@ -153,8 +136,8 @@ def selectlake(hylake,Str,hylakeinfo,VolThreshold):
         sl_lid = arlakeid[i] ### get lake id
         sl_rowcol = np.argwhere(sl_lake==sl_lid).astype(int) ### get the row and col of lake
         sl_nrow = sl_rowcol.shape[0]
-        slakeinfo = hylakeinfo.loc[hylakeinfo['HYLAK_ID'] == sl_lid]
-        if slakeinfo.iloc[0]['VOL_TOTAL'] > VolThreshold:
+        slakeinfo = hylakeinfo.loc[hylakeinfo['Hylak_id'] == sl_lid]
+        if slakeinfo.iloc[0]['Vol_total'] > VolThreshold:
             sl_Strinlake = Str[sl_rowcol[:,0],sl_rowcol[:,1]] ### check the str value within lake
             sl_Strid = np.unique(sl_Strinlake[np.argwhere(sl_Strinlake > 0)]).astype(int) ### Get str id
             if len(sl_Strid) <= 0:  ### if there is no stream or number of lake cells smaller than 5
@@ -465,7 +448,7 @@ def Getcatrivlenslope(catrow,catcol,rivlen,dem,fac,hydir,finalcat,trow,tcol,nrow
     rivs = rivlen[catrow,catcol]
     rivs = np.unique(rivs)  ### get all river length within the catchment 
     rivs = rivs[rivs > 0]
-    rivcinfo = np.full((len(catrow),4),-999999999999)
+    rivcinfo = np.full((len(catrow),4),-999999999999.99999)
     rivcinfo[:,0] = rivlen[catrow,catcol]   #### store river length 
     rivcinfo[:,1] = fac[catrow,catcol]   ### flow accumulation 
     rivcinfo[:,2] = catrow    #### row 
@@ -474,7 +457,7 @@ def Getcatrivlenslope(catrow,catcol,rivlen,dem,fac,hydir,finalcat,trow,tcol,nrow
     rivout2 =  np.full((len(rivs),4),-999999999999.000000) ### store riv info for each river path started at inside of catchment 
     for i in range(0,len(rivs)):  ## loop for each river segments within the catchment  each river segment was labled with their river legth 
         rivsid = rivs[i] 
-        rivcinfo2 = rivcinfo[rivcinfo[:,0]==rivsid,]   ### get information of the river segment i 
+        rivcinfo2 = rivcinfo[rivcinfo[:,0]==rivsid,]   ### get information of the river segment i
         rivcinfo2 = rivcinfo2[rivcinfo2[:,1].argsort()]
         prow = rivcinfo2[0,2].astype(int)   ## find the first grids of the river segment 
         pcol = rivcinfo2[0,3].astype(int)   ## find the first grids of the river segment  
@@ -516,7 +499,7 @@ def Getcatrivlenslope(catrow,catcol,rivlen,dem,fac,hydir,finalcat,trow,tcol,nrow
                 nrow,ncol = Nextcell(hydir,int(flen_orow),int(flen_ocol))
                 if nrow < 0 or ncol < 0:
                     nrow,ncol = Nextcell(hydir,int(trow),int(tcol))
-                    print "warning : check river system for catchment: ",finalcat[trow,tcol],rivs,icell,len(catrow),nrow,ncol,trow,tcol
+                    print("warning : check river system for catchment: ",finalcat[trow,tcol],rivs,icell,len(catrow),nrow,ncol,trow,tcol)
                     nrow,ncol = 0,0
                 if nrow >= nrows or ncol >= ncols:
 #                    arcpy.AddMessage("out of the boundary")
@@ -560,7 +543,7 @@ def Getcatrivlenslope(catrow,catcol,rivlen,dem,fac,hydir,finalcat,trow,tcol,nrow
                 nrow,ncol = Nextcell(hydir,int(flen_orow),int(flen_ocol))
                 if nrow < 0 or ncol < 0:  ### if the next cell move out of the domain 
                     nrow,ncol = Nextcell(hydir,int(trow),int(tcol))
-                    print "warning : check river system for catchment: ",finalcat[trow,tcol],rivs,icell,len(catrow),nrow,ncol,trow,tcol
+                    print("warning : check river system for catchment: ",finalcat[trow,tcol],rivs,icell,len(catrow),nrow,ncol,trow,tcol)
                     nrow,ncol = 0,0
                 if nrow >= nrows or ncol >= ncols: ### if the next cell move out of the domain 
 #                    arcpy.AddMessage("out of the boundary")
@@ -765,73 +748,71 @@ def Addnlinklakes(fcat,alllake,lake1,fac,sbslid):
 ###################################33
 
 
-def Generatecatinfo(Watseds,fac,fdir,lake,dem,area,hycat,hycatinfo,catinfo,allcatid,lakeinfo,width,depth,
-                    rivlen,obs,nrows,ncols,slope,landuse,landuseinfo,Q_Mean,wdlen):
+def Generatecatinfo(Watseds,fac,fdir,lake,dem,area,catinfo,allcatid,lakeinfo,width,depth,
+                    rivlen,obs,nrows,ncols,slope,landuse,landuseinfo,Q_Mean):
     finalcat = copy.copy(Watseds)
     rivpath = copy.copy(Watseds)
     rivpath[:,:] = -9999
     for i in range(0,len(allcatid)):
-        arcpy.AddMessage("subid      " + str(allcatid[i].astype(int)))
+#        print("subid      " + str(allcatid[i].astype(int)))
         catid = allcatid[i].astype(int)
-        catinfo[i,0] = catid
+        catinfo.loc[i,'SubId'] = catid
         rowcol = np.argwhere(finalcat==catid).astype(int)
         trow,tcol = Getbasinoutlet(catid,finalcat,fac,fdir,nrows,ncols)
         nrow,ncol = Nextcell(fdir,trow,tcol)### get the downstream catchment id
         if nrow < 0 or ncol < 0:
-            catinfo[i,1] = -1
+            catinfo.loc[i,'DowSubId'] = -1
         elif nrow >= nrows or ncol >= ncols:
-            catinfo[i,1] = -1
+            catinfo.loc[i,'DowSubId'] = -1
         elif finalcat[nrow,ncol] < 0:
-            catinfo[i,1] = -1
+            catinfo.loc[i,'DowSubId'] = -1
         else:
-            catinfo[i,1] = finalcat[nrow,ncol]
-        catinfo[i,2] = trow
-        catinfo[i,3] = tcol
+            catinfo.loc[i,'DowSubId'] = finalcat[nrow,ncol]
+#        catinfo[i,2] = trow
+#        catinfo[i,3] = tcol
 ################################## Get lake information
         lakeid = lake[trow,tcol]
         if lakeid > 0:
-            slakeinfo = lakeinfo.loc[lakeinfo['HYLAK_ID'] == lakeid]
-            catinfo[i,4] = lakeid
-            catinfo[i,5] = slakeinfo.iloc[0]['VOL_TOTAL']
-            catinfo[i,6] = slakeinfo.iloc[0]['LAKE_AREA']
-            catinfo[i,7] = slakeinfo.iloc[0]['DEPTH_AVG']
-            catinfo[i,8] = slakeinfo.iloc[0]['SLOPE_100']
-            catinfo[i,9] = slakeinfo.iloc[0]['WSHD_AREA']
-            catinfo[i,10] = slakeinfo.iloc[0]['LAKE_TYPE']
-            catinfo[i,29] = min(float(len(lake[lake == lakeid]))/float(len(finalcat[finalcat == catid])),1.0)
+            slakeinfo = lakeinfo.loc[lakeinfo['Hylak_id'] == lakeid]
+            catinfo.loc[i,'IsLake'] = 1
+            catinfo.loc[i,'HyLakeId'] = lakeid
+            catinfo.loc[i,'LakeVol'] = slakeinfo.iloc[0]['Vol_total']
+            catinfo.loc[i,'LakeArea']= slakeinfo.iloc[0]['Lake_area']
+            catinfo.loc[i,'LakeDepth']= slakeinfo.iloc[0]['Depth_avg']
+            catinfo.loc[i,'Laketype'] = slakeinfo.iloc[0]['Lake_type']
+#            catinfo[i,29] = min(float(len(lake[lake == lakeid]))/float(len(finalcat[finalcat == catid])),1.0)
 ########Check if it is observation points
         if obs[trow,tcol]  >= 0:
 #            arcpy.AddMessage(str(catid)+"      "+str(obs[trow,tcol]))
-            catinfo[i,23] =  obs[trow,tcol]
+            catinfo.loc[i,'IsObs'] =  obs[trow,tcol]
 ########Got basin width and depth
         catrivlen,catrivslp,catrivslp2,rivpath = Getcatrivlenslope(rowcol[:,0],rowcol[:,1],rivlen,dem,fac,fdir,finalcat,
                                                 trow,tcol,nrows,ncols,slope,rivpath)
-        catwidth,catdepth,catQ = Getcatwd(catid,finalcat,width,depth,Q_Mean,-1,rivlen,wdlen) ### width depth in m
+        catwidth,catdepth,catQ = Getcatwd(catid,finalcat,width,depth,Q_Mean,-1,rivlen) ### width depth in m
 #        arcpy.AddMessage("catid is    " + str(catid) + "    " + str(catwidth))
-        catinfo[i,12] = float(sum(dem[rowcol[:,0],rowcol[:,1]])/float(len(rowcol))) ### average elevation
+        catinfo.loc[i,'MeanElev'] = float(sum(dem[rowcol[:,0],rowcol[:,1]])/float(len(rowcol))) ### average elevation
 #        catinfo[i,13] = float(sum(area[rowcol[:,0],rowcol[:,1]]))/1000/1000  #### maximum area in km^2
-        catinfo[i,14] = max(dem[rowcol[:,0],rowcol[:,1]])  #### maximum dem
-        catinfo[i,15] = min(dem[rowcol[:,0],rowcol[:,1]])  #### maximum dem
-        catinfo[i,16] = dem[trow,tcol] #### outlet elevation
-        catinfo[i,17] = catwidth
-        catinfo[i,18] = catdepth
-        catinfo[i,19] = 0.035
+#        catinfo[i,14] = max(dem[rowcol[:,0],rowcol[:,1]])  #### maximum dem
+#        catinfo[i,15] = min(dem[rowcol[:,0],rowcol[:,1]])  #### maximum dem
+#        catinfo[i,16] = dem[trow,tcol] #### outlet elevation
+        catinfo.loc[i,'BkfWidth'] = catwidth
+        catinfo.loc[i,'BkfDepth'] = catdepth
+#        catinfo[i,19] = 0.035
 #######Got basin area and rivlen
-        catinfo[i,11] = np.mean(area[rowcol[:,0],rowcol[:,1]])
-        catinfo[i,20] = catrivlen
-        catinfo[i,21] = catrivslp
+#        catinfo[i,11] = np.mean(area[rowcol[:,0],rowcol[:,1]])
+        catinfo.loc[i,'Rivlen'] = catrivlen
+        catinfo.loc[i,'RivSlope'] = catrivslp
         slopet = slope[rowcol[:,0],rowcol[:,1]]
         slopet = slopet[slopet>0,]
-        catinfo[i,22] = np.mean(slopet)
-        catinfo[i,27] = catrivslp2
+        catinfo.loc[i,'BasinSlope'] = np.mean(slopet)
+#        catinfo[i,27] = catrivslp2
         if len(slopet) < 1:
-            catinfo[i,22] = 0.001
-            catinfo[i,21] = 0.001
-            catinfo[i,27] = 0.001
-        catinfo[i,25] = Getfloodplain_n(catid,finalcat,rivlen,landuse,landuseinfo)
-        catinfo[i,26] = catQ
-    writeraster(OutputFolder + "/" + "rivpath.asc",rivpath,OutputFolder + "/" + "dir")
-    return catinfo
+            catinfo.loc[i,'RivSlope'] = 0.001
+            catinfo.loc[i,'BasinSlope'] = 0.001
+        catinfo.loc[i,'FloodP_n'] = Getfloodplain_n(catid,finalcat,rivlen,landuse,landuseinfo)
+        catinfo.loc[i,'Q_Mean'] = catQ
+#    writeraster(outputFolder + "/" + "rivpath.asc",rivpath,OutputFolder + "/" + "dir")
+    return catinfo,rivpath
 
 def Getfloodplain_n(catid,finalcat,rivlen,landuse,landuseinfo):
     catidx = finalcat == catid
@@ -864,7 +845,7 @@ def Getfloodplain_n(catid,finalcat,rivlen,landuse,landuseinfo):
 #    arcpy.AddMessage(floodn)
     return float(floodn)
 ########################################################3
-def Getcatwd(catid,finalcat,width,depth,Q_Mean,DA,rivpath,wdlen):
+def Getcatwd(catid,finalcat,width,depth,Q_Mean,DA,rivpath):
     catregs = finalcat == catid
     riverp = rivpath > 0
     rivincat = np.logical_and(catregs, riverp)
@@ -1222,79 +1203,152 @@ def Maphru2force(orank,cat,catinfo,fnrows,fncols,outfolder,InputsFolder,outFolde
 
 import numpy as np
 from scipy.optimize import curve_fit
-import arcpy
-from arcpy import env
-from arcpy.sa import *
 import copy
 import sys
 import shutil
 import os
 import csv
 from simpledbf import Dbf5
-from dbfpy import dbf
 import pandas as pd
 from shutil import copyfile
-arcpy.env.overwriteOutput = True
-arcpy.CheckOutExtension("Spatial")
-##### Readed inputs
-OutputFolder = sys.argv[1]
-cellSize = float(arcpy.GetRasterProperties_management(OutputFolder + "/" + "dir", "CELLSIZEX").getOutput(0))
-SptailRef = arcpy.Describe(OutputFolder + "/" + "dir").spatialReference
-arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryCode)) ### WGS84
-Str100 = arcpy.RasterToNumPyArray(OutputFolder + "/"+'strlink.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'strlink.asc',dtype = 'i4',skiprows = 6)
-GenrateCatchatt(OutputFolder + "/",Str100)
 
-arcpy.env.workspace =OutputFolder
-os.chdir(OutputFolder)
-arcpy.env.XYTolerance = cellSize
-arcpy.arcpy.env.cellSize = cellSize
-arcpy.env.extent = arcpy.Describe( "dir").extent
-arcpy.env.snapRaster =  "dir"
-###### Read inputs
-Null = -9999
-blid = 1000000    #### begining of new lake id
-bcid = 1       ## begining of new cat id of hydrosheds
-bsid = 2000000   ## begining of new cat id of in inflow of lakes
-blid2 = 3000000
-boid = 4000000
-####
-hylake =  arcpy.RasterToNumPyArray(OutputFolder + "/"+'hylake.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'hylake.asc',dtype = 'i4',skiprows = 6) # raster of hydro lake
-cat = arcpy.RasterToNumPyArray(OutputFolder + "/"+'hybasinfid.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'hybasinfid.asc',dtype = 'i4',skiprows = 6)   #### raster of hydroshed basin fid
-hylakeinfo = pd.read_csv(OutputFolder + "/"+"lakeinfo.csv",sep=",",low_memory=False)       # dataframe of hydrolake database
-fac = arcpy.RasterToNumPyArray(OutputFolder + "/"+'acc.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'acc.asc',dtype = 'i4',skiprows = 6)   # raster of hydrolakes
-hydir = arcpy.RasterToNumPyArray(OutputFolder + "/"+'dir.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'dir.asc',dtype = 'i4',skiprows = 6)   #### raster of hydroshed basin fid
-hydem = arcpy.RasterToNumPyArray(OutputFolder + "/"+'dem.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+"dem.asc",dtype = 'i4',skiprows = 6) #### raster of hydroshed dem
-obs = arcpy.RasterToNumPyArray(OutputFolder + "/"+'obs.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+"obs.asc",dtype = 'i4',skiprows = 6)
-width = arcpy.RasterToNumPyArray(OutputFolder + "/"+'width.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+"width.asc",skiprows = 6)
-depth = arcpy.RasterToNumPyArray(OutputFolder + "/"+'depth.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+"depth.asc",skiprows = 6)
-#wdlen = np.loadtxt(OutputFolder + "/"+"WD_Len.asc",skiprows = 6)
-Q_mean = arcpy.RasterToNumPyArray(OutputFolder + "/"+'Q_Mean.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+"Q_Mean.asc",skiprows = 6)
-landuse = arcpy.RasterToNumPyArray(OutputFolder + "/"+'landuse.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+"landuse.asc",dtype = 'i4',skiprows = 6)
-landuseinfo = pd.read_csv(OutputFolder + "/"+'landuseinfo.csv',sep=",",low_memory=False)
-allsubinfo = pd.read_csv(OutputFolder + "/"+'hybinfo.csv',sep=",",low_memory=False)
-allsubinfo['FID'] = pd.Series(allsubinfo['HYBAS_ID'], index=allsubinfo.index)
-allLakinfo = pd.read_csv(OutputFolder + "/"+'lakeinfo.csv',sep=",",low_memory=False)
-dataset = "dir"
-Lake1 = arcpy.RasterToNumPyArray(OutputFolder + "/"+'Lake1.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder + "/"+'Lake1.asc',dtype = 'i4',skiprows = 6)
-ncols = int(arcpy.GetRasterProperties_management(dataset, "COLUMNCOUNT").getOutput(0))
-nrows = int(arcpy.GetRasterProperties_management(dataset, "ROWCOUNT").getOutput(0))
-wdlen = 'not used'
-#######################################3
+def RoutingNetworkTopologyUpdateToolset(projection = 'default',outputFolder = '#'):
+    import os
+    import sys
+    import tempfile
+    import shutil
+    import os
+    import sys
+    import tempfile
+    import shutil
 
-rivlen = arcpy.RasterToNumPyArray(OutputFolder + "/"+'rivlength.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder+ "/"+ 'rivlength.asc',skiprows = 6)   #### raster of hydroshed basin fid
-area = arcpy.RasterToNumPyArray(OutputFolder + "/"+'area.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder+ "/"+"area.asc",skiprows = 6)
-slope = arcpy.RasterToNumPyArray(OutputFolder + "/"+'slope.asc',nodata_to_value=-9999)#np.loadtxt(OutputFolder+ "/"+"slope.asc",skiprows = 6)
-finalcat =arcpy.RasterToNumPyArray(OutputFolder + "/"+'finalcat.asc',nodata_to_value=-9999)# np.loadtxt(OutputFolder+ "/"+"finalcat.asc",dtype = 'i4',skiprows = 6)
-allcatid = np.unique(finalcat)
-allcatid = allcatid[allcatid >= 0]
-catinfo = np.full((len(allcatid),40),-99999999999.00000000)
-catinfo = Generatecatinfo(finalcat,fac,hydir,Lake1,hydem,area,cat,allsubinfo,catinfo,allcatid,allLakinfo,width,depth,rivlen,obs,nrows,ncols,slope,landuse,landuseinfo,Q_mean,wdlen)
-arcpy.CopyFeatures_management(OutputFolder + "/" + "finalcat.shp", OutputFolder + "/" + "finalcat_info")
-copyfile( OutputFolder + "/"+"HyMask.prj" ,  OutputFolder + "/"+"finalcat_info.prj")
-np.savetxt(OutputFolder+"/"+"catinfo1.csv",catinfo,delimiter=",")
-catinfo2 = Writecatinfotodbf(OutputFolder + "/",catinfo)
-arcpy.AddGeometryAttributes_management(OutputFolder + "/" + "finalcat_info.shp","CENTROID_INSIDE", "","","")
-np.savetxt(OutputFolder+"/"+"catinfo.csv",catinfo2,delimiter=",")
-arcpy.Dissolve_management(OutputFolder+"/" + "riv1_cat.shp", OutputFolder+"/" + "finalriv_info.shp", "gridcode", "", "MULTI_PART", "")
-arcpy.JoinField_management (OutputFolder+"/" + "finalriv_info.shp", "gridcode", OutputFolder + "/" + "finalcat_info.dbf", "SubId","")
-arcpy.AddMessage("The generated catchment with lake and calculated parameters is located at OutputFolder with name finalcat_info.shp")
+    RoutingToolPath = os.environ['RoutingToolFolder']
+    
+    
+    gisdb =os.path.join(tempfile.gettempdir(), 'grassdata_toolbox')# "C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/RoutingTool/Samples/Examples/"
+    os.environ['GISDBASE'] = gisdb    
+        
+    import grass.script as grass
+    from grass.script import array as garray
+    import grass.script.setup as gsetup
+    from grass.pygrass.modules.shortcuts import general as g
+    from grass.pygrass.modules.shortcuts import raster as r
+    from grass.pygrass.modules import Module
+    from grass_session import Session
+
+    os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD'))
+    
+    
+    if projection != 'default':
+
+        os.system('gdalwarp ' + "\"" + os.path.join(outputFolder, "dem.tif") +"\""+ "    "+ "\""+os.path.join(outputFolder, "dem_proj.tif")+"\""+ ' -t_srs  ' + "\""+projection+"\"")
+
+        project = Session()
+        project.open(gisdb=gisdb, location='mytest_project',create_opts=projection)
+        grass.run_command("r.import", input = os.path.join(outputFolder, "dem_proj.tif"), output = 'dem_proj', overwrite = True)
+        grass.run_command('g.region', raster='dem_proj')  
+        
+        grass.run_command('v.proj', location='mytest',mapset = 'PERMANENT', input = 'str_finalcat',overwrite = True)
+        grass.run_command('v.proj', location='mytest',mapset = 'PERMANENT', input = 'finalcat_F',overwrite = True)
+        
+        grass.run_command('v.db.addcolumn', map= 'finalcat_F', columns = "Area double precision") 
+        grass.run_command('v.db.addcolumn', map= 'str_finalcat', columns = "Length double precision")
+              
+        
+        grass.run_command('v.to.db', map= 'finalcat_F',option = 'area',columns = "Area", units = 'meters') 
+        grass.run_command('v.to.db', map= 'str_finalcat',option = 'length', columns = "Length",units = 'meters')
+        
+        grass.run_command('r.slope.aspect', elevation= 'dem_proj',slope = 'slope',aspect = 'aspect',precision = 'DCELL',overwrite = True)
+        grass.run_command('r.mapcalc',expression = 'tanslopedegree = tan(slope) ',overwrite = True) 
+        project.close 
+        
+        
+        PERMANENT = Session()
+        PERMANENT.open(gisdb=gisdb, location='mytest')
+        grass.run_command('g.region', raster='dem')  
+        
+        grass.run_command('v.proj', location='mytest_project',mapset = 'PERMANENT', input = 'str_finalcat',overwrite = True)
+        grass.run_command('v.proj', location='mytest_project',mapset = 'PERMANENT', input = 'finalcat_F',overwrite = True) 
+        grass.run_command('r.proj', location='mytest_project',mapset = 'PERMANENT', input = 'tanslopedegree',overwrite = True) 
+        grass.run_command('r.proj', location='mytest_project',mapset = 'PERMANENT', input = 'aspect',overwrite = True) 
+             
+    else:
+        PERMANENT = Session()
+        PERMANENT.open(gisdb=gisdb, location='mytest')
+        grass.run_command('g.region', raster='dem')
+        
+        grass.run_command('v.db.addcolumn', map= 'finalcat_F', columns = "Area double precision") 
+        grass.run_command('v.db.addcolumn', map= 'str_finalcat', columns = "Length double precision")
+              
+        
+        grass.run_command('v.to.db', map= 'finalcat_F',option = 'area',columns = "Area", units = 'meters') 
+        grass.run_command('v.to.db', map= 'str_finalcat',option = 'length', columns = "Length",units = 'meters')
+        
+        grass.run_command('r.slope.aspect', elevation= 'dem_proj',slope = 'slope',aspect = 'aspect',precision = 'DCELL',overwrite = True)
+        grass.run_command('r.mapcalc',expression = 'tanslopedegree = tan(slope) ',overwrite = True)         
+
+        
+    grass.run_command('v.to.rast',input = 'finalcat_F',output = 'Area',use = 'attr',attribute_column = 'Area',overwrite = True)  
+    grass.run_command('v.to.rast',input = 'str_finalcat',output = 'Length',use = 'attr',attribute_column = 'Length',overwrite = True)
+    
+    grass.run_command('r.out.gdal', input = 'Length',output = outputFolder  + 'rivlength.tif',format= 'GTiff',overwrite = True)
+    grass.run_command('r.out.gdal', input = 'finalcat',output = outputFolder  + 'finalcat.tif',format= 'GTiff',overwrite = True)
+    
+    grass.run_command('r.out.gdal', input = 'tanslopedegree',output = outputFolder  + 'slope.tif',format= 'GTiff',overwrite = True)
+    grass.run_command('r.out.gdal', input = 'aspect',output = outputFolder  + 'aspect.tif',format= 'GTiff',overwrite = True)
+    
+    grass.run_command('v.out.ogr', input = 'str_finalcat',output = outputFolder  + 'str_finalcat.shp',format= 'ESRI_Shapefile',overwrite = True)
+
+
+#####
+    tempinfo = Dbf5(outputFolder + "/"+'Hylake.dbf')#np.genfromtxt(hyinfocsv,delimiter=',')
+    allLakinfo = tempinfo.to_dataframe()
+    landuseinfo = pd.read_csv(outputFolder + "/"+'landuseinfo.csv',sep=",",low_memory=False)
+    
+    
+    finalcat_arr = garray.array(mapname="finalcat")
+    acc_array = garray.array(mapname="acc_grass")
+    dir_array = garray.array(mapname="ndir_Arcgis")
+    Lake1_arr = garray.array(mapname="SelectedLakes")    
+    dem_array = garray.array(mapname="dem")
+    rivlen_array = garray.array(mapname="Length")
+    area_array = garray.array(mapname="Area")
+    width_array = garray.array(mapname="width")
+    depth_array = garray.array(mapname="depth")
+    obs_array = garray.array(mapname="obs")
+    Q_mean_array = garray.array(mapname="qmean")
+    slope_array = garray.array(mapname="tanslopedegree")
+    landuse_array = garray.array(mapname="landuse")
+    
+    temparray = garray.array()
+    temparray[:,:] = -9999
+    ncols = int(temparray.shape[0])
+    nrows = int(temparray.shape[1])
+    
+
+    allcatid = np.unique(finalcat_arr)
+    allcatid = allcatid[allcatid >= 0]
+    catinfo2 = np.full((len(allcatid),18),-9999.00000)
+    
+    catinfodf = pd.DataFrame(catinfo2, columns = ['SubId', "DowSubId","Rivlen",'RivSlope','BasinSlope',
+                            'BkfWidth','BkfDepth','IsLake','HyLakeId','LakeVol','LakeDepth',
+                             'LakeArea','Laketype','IsObs','MeanElev','FloodP_n','Q_Mean','Ch_n'])
+                                 
+    catinfo,rivpath= Generatecatinfo(finalcat_arr,acc_array,dir_array,Lake1_arr,dem_array,
+             area_array,catinfodf,allcatid,allLakinfo,width_array,depth_array,rivlen_array,obs_array,nrows,ncols,
+             slope_array,landuse_array,landuseinfo,Q_mean_array)
+             
+    catinfo.to_csv (os.path.join(outputFolder, "catinfo.csv"), index = None, header=True)
+    
+    
+    temparray[:,:] = rivpath[:,:]
+    temparray.write(mapname="rivpath", overwrite=True)
+    grass.run_command('r.null', map='rivpath',setnull=-9999)
+    grass.run_command('db.in.ogr', input=os.path.join(outputFolder, "catinfo.csv"),output = 'result',overwrite = True)
+    grass.run_command('v.db.join', map= 'finalcat_F',column = 'Gridcode', other_table = 'result',other_column ='SubId', overwrite = True)
+    grass.run_command('v.out.ogr', input = 'finalcat_F',output = outputFolder  + 'finalcat_info.shp',format= 'ESRI_Shapefile',overwrite = True)
+    PERMANENT.close
+    
+    
+    
+    

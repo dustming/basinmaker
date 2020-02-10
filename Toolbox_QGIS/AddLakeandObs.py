@@ -120,7 +120,7 @@ def Getbasinoutlet(ID,basin,fac,dir,nrows,ncols):
                 ccol = ncol
                 continue
         if ifound == 0: 
-            arcpy.AddMessage(" true basin outlet not found for ID...."+ str(ID))
+            print(" true basin outlet not found for ID...."+ str(ID))
         return crow,ccol        
 
 
@@ -642,7 +642,7 @@ def Dirpoints(N_dir,p_row,p_col,lake1,lid,goodpoint,k):
     return ndir,goodpoint,ip
 
 def checklakeboundary(lake1,lid,p_row,p_col):
-    numnonlake = 0.0
+    numnonlake = 0
     nonlakedir = np.full(10,-999)
     if lake1[p_row + 0,p_col + 1] != lid:
         numnonlake = numnonlake + 1
@@ -790,7 +790,7 @@ def ChangeDIR(dir,lake1,acc,ncols,nrows,outlakeids,nlakegrids):
         if len(lrowcol) > nlakegrids:
             continue
 #        arcpy.AddMessage(str(lid) + "    " +  str(len(lrowcol)) + "     " + str(i))
-        arcpy.AddMessage("start modify lake flow direction, the lake id is    " + str(int(lid)))
+        print("start modify lake flow direction, the lake id is    " + str(int(lid)))
         prow,pcol = Getbasinoutlet(lid,lake1,acc,dir,nrows,ncols)
         goodpoint[0,0] = prow
         goodpoint[0,1] = pcol
@@ -901,7 +901,7 @@ MaximumLakegrids = 10000):
     
     ncols = int(temparray.shape[0])
     nrows = int(temparray.shape[1])
-    print(ncols,nrows)
+
 
     Pourpoints = GenerPourpoint(cat1_arr,Lake1,str_array,nrows,ncols,blid,bsid,bcid,acc_array,dir_array)
 #    (cat,Lake1,Str100,nrows,ncols,blid,bsid,bcid,fac,OutputFolder + "/",hydir)
@@ -940,9 +940,18 @@ MaximumLakegrids = 10000):
     temparray[:,:] = finalcat[:,:]
     temparray.write(mapname="finalcat", overwrite=True)
     grass.run_command('r.null', map='finalcat',setnull=-9999)    
-    grass.run_command('r.to.vect', input='finalcat',output='finalcat_F',type='area', overwrite = True)    
+    grass.run_command('r.to.vect', input='finalcat',output='finalcat_F1',type='area', overwrite = True)    
 
-
+    grass.run_command('v.db.addcolumn', map= 'finalcat_F1', columns = "Gridcode VARCHAR(40)")
+    grass.run_command('v.db.update', map= 'finalcat_F1', column = "Gridcode",qcol = 'value')
+#    grass.run_command('v.reclass', input= 'finalcat_F1', column = "Gridcode",output = 'finalcat_F',overwrite = True)
+    grass.run_command('v.dissolve', input= 'finalcat_F1', column = "Gridcode",output = 'finalcat_F',overwrite = True)    
+#    grass.run_command('v.select',ainput = 'str',binput = 'finalcat_F',output = 'str_finalcat',overwrite = True)
+    grass.run_command('v.overlay',ainput = 'str',binput = 'finalcat_F1',operator = 'and',output = 'str_finalcat',overwrite = True)  
+    
+    grass.run_command('r.to.vect', input='SelectedLakes',output='SelectedLakes_F',type='area', overwrite = True) 
+    grass.run_command('v.out.ogr', input = 'SelectedLakes_F',output = OutputFolder  + 'SelectedLakes.shp',format= 'ESRI_Shapefile',overwrite = True)
+#    grass.run_command('v.db.join', map= 'SelectedLakes_F',column = 'value', other_table = 'result',other_column ='SubId', overwrite = True)
 
     PERMANENT.close()
 
