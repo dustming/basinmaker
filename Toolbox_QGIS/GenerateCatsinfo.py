@@ -764,7 +764,7 @@ def Generatecatinfo(Watseds,fac,fdir,lake,dem,area,catinfo,allcatid,lakeinfo,wid
             catinfo.loc[i,'DowSubId'] = -1
         elif nrow >= nrows or ncol >= ncols:
             catinfo.loc[i,'DowSubId'] = -1
-        elif finalcat[nrow,ncol] < 0:
+        elif finalcat[nrow,ncol] <= 0:
             catinfo.loc[i,'DowSubId'] = -1
         else:
             catinfo.loc[i,'DowSubId'] = finalcat[nrow,ncol]
@@ -1305,10 +1305,9 @@ def RoutingNetworkTopologyUpdateToolset(projection = 'default',outputFolder = '#
     allLakinfo = tempinfo.to_dataframe()
     landuseinfo = pd.read_csv(outputFolder + "/"+'landuseinfo.csv',sep=",",low_memory=False)
     
-    
     finalcat_arr = garray.array(mapname="finalcat")
     acc_array = garray.array(mapname="acc_grass")
-    dir_array = garray.array(mapname="ndir_Arcgis")
+    dir_array = garray.array(mapname="dir_Arcgis")#ndir_Arcgis
     Lake1_arr = garray.array(mapname="SelectedLakes")    
     dem_array = garray.array(mapname="dem")
     rivlen_array = garray.array(mapname="Length")
@@ -1320,10 +1319,11 @@ def RoutingNetworkTopologyUpdateToolset(projection = 'default',outputFolder = '#
     slope_array = garray.array(mapname="tanslopedegree")
     landuse_array = garray.array(mapname="landuse")
     
+    
     temparray = garray.array()
     temparray[:,:] = -9999
-    ncols = int(temparray.shape[0])
-    nrows = int(temparray.shape[1])
+    ncols = int(temparray.shape[1])
+    nrows = int(temparray.shape[0])
     
 
     allcatid = np.unique(finalcat_arr)

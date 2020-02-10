@@ -899,8 +899,8 @@ MaximumLakegrids = 10000):
     temparray.write(mapname="SelectedLakes", overwrite=True)
     grass.run_command('r.null', map='SelectedLakes',setnull=-9999)
     
-    ncols = int(temparray.shape[0])
-    nrows = int(temparray.shape[1])
+    ncols = int(temparray.shape[1])
+    nrows = int(temparray.shape[0])
 
 
     Pourpoints = GenerPourpoint(cat1_arr,Lake1,str_array,nrows,ncols,blid,bsid,bcid,acc_array,dir_array)
