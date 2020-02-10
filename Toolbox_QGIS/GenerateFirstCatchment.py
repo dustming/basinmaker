@@ -1,8 +1,88 @@
+def Nextcell(N_dir,N_row,N_col):
+    if N_dir[N_row,N_col] == 1:
+        N_nrow = N_row + 0
+        N_ncol = N_col + 1
+    elif N_dir[N_row,N_col] == 2:
+        N_nrow = N_row + 1
+        N_ncol = N_col + 1
+    elif N_dir[N_row,N_col] == 4:
+        N_nrow = N_row + 1
+        N_ncol = N_col + 0
+    elif N_dir[N_row,N_col] == 8:
+        N_nrow = N_row + 1
+        N_ncol = N_col - 1
+    elif N_dir[N_row,N_col] == 16:
+        N_nrow = N_row + 0
+        N_ncol = N_col - 1
+    elif N_dir[N_row,N_col] == 32:
+        N_nrow = N_row - 1
+        N_ncol = N_col - 1
+    elif N_dir[N_row,N_col] == 64:
+        N_nrow = N_row - 1
+        N_ncol = N_col + 0
+    elif N_dir[N_row,N_col] == 128:
+        N_nrow = N_row - 1
+        N_ncol = N_col + 1
+    else:
+        N_nrow = -9999
+        N_ncol = -9999
+    return N_nrow,N_ncol
+
+##################################################################3
+def Getbasinoutlet(ID,basin,fac,dir,nrows,ncols):
+    import numpy as np
+    catrowcol = np.argwhere(basin==ID).astype(int)
+    catacc = np.full((len(catrowcol),3),-9999)
+    catacc[:,0] = catrowcol[:,0]
+    catacc[:,1] = catrowcol[:,1]
+    catacc[:,2] = fac[catrowcol[:,0],catrowcol[:,1]]
+    catacc = catacc[catacc[:,2].argsort()]
+    ### check if it is a real basin outlet 
+    crow = catacc[len(catrowcol)-1,0]
+    ccol = catacc[len(catrowcol)-1,1]
+          
+    nrow,ncol =  Nextcell(dir,crow,ccol)
+    
+    if nrow < 0 or ncol < 0:
+        return crow, ccol
+    elif nrow >= nrows or ncol >= ncols:
+        return crow, ccol
+    elif basin[nrow,ncol] < 0:
+        return crow, ccol
+    elif basin[nrow,ncol] != ID:   #  all above means the outlet is the real loutlet 
+        return crow, ccol
+    else:
+        crow = nrow 
+        ccol = ncol 
+        ifound = 0
+        for i in range(0,1000): #### find next 1000 grids, to find the basin outlet 
+            nrow,ncol =  Nextcell(dir,crow,ccol)
+            if nrow < 0 or ncol < 0:
+                ifound = 1
+                break
+            elif nrow >= nrows or ncol >= ncols:
+                ifound = 1
+                break
+            elif basin[nrow,ncol] < 0:
+                ifound = 1
+                break
+            elif basin[nrow,ncol] != ID:
+                ifound =  1 #     all above means the outlet is the real loutlet 
+                break
+            else:
+                crow = nrow
+                ccol = ncol
+                continue
+        if ifound == 0: 
+            print(" true basin outlet not found for ID...."+ str(ID))
+        return crow,ccol        
+
 def WatershedDiscretizationToolset(OutputFolder,Thresholdacc,GRASS_BIN):
     import os
     import sys
     import tempfile
     import shutil
+    import numpy as np
     
     gisdb =os.path.join(tempfile.gettempdir(), 'grassdata_toolbox')# "C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/RoutingTool/Samples/Examples/"
     os.environ['GISDBASE'] = gisdb    
@@ -26,7 +106,48 @@ def WatershedDiscretizationToolset(OutputFolder,Thresholdacc,GRASS_BIN):
     grass.run_command('r.accumulate', direction='dir_Grass',format = '45degree',accumulation ='acc_grass',
                   stream = 'str_grass_v',threshold = 500, overwrite = True)
 
-    grass.run_command('v.to.rast',input = 'str_grass_v',output = 'str_grass_r',use = 'cat',overwrite = True)
+    grass.run_command('v.to.rast',input = 'str_grass_v',output = 'str_grass_r2',use = 'cat',overwrite = True)
+    
+    strtemp_array = garray.array(mapname="str_grass_r2")
+    acc_array = garray.array(mapname="acc_grass")
+    dirarc_array = garray.array(mapname="dir_Arcgis")
+    
+    strids = np.unique(strtemp_array)
+    strids = strids[strids >= 0] 
+    
+    ncols = int(strtemp_array.shape[1])
+    nrows = int(strtemp_array.shape[0])
+ 
+    for i in range(0,len(strids)):
+        strid = strids[i]
+
+        trow,tcol = Getbasinoutlet(strid,strtemp_array,acc_array,dirarc_array,nrows,ncols)
+        nrow,ncol = Nextcell(dirarc_array,trow,tcol)### get the downstream catchment id
+        nstrid = strtemp_array[nrow,ncol]
+        
+        rowcol = np.argwhere(strtemp_array==nstrid).astype(int)
+        catacc = np.full((len(rowcol),3),-9999)
+        catacc[:,0] = rowcol[:,0]
+        catacc[:,1] = rowcol[:,1]
+        catacc[:,2] = acc_array[rowcol[:,0],rowcol[:,1]]
+        catacc = catacc[catacc[:,2].argsort()]
+    
+        if nrow != catacc[0,0] or ncol != catacc[0,1]:
+             nnrow,nncol = Nextcell(dirarc_array,nrow,ncol)
+             print(nstrid)
+             if nnrow <= 0 or nncol <=0 or nnrow >=nrows or nncol >= ncols:
+                 continue
+             nnstrid = strtemp_array[nnrow,nncol]
+             strtemp_array[nrow,ncol] = nnstrid
+        
+    temparray = garray.array()
+    temparray[:,:] = 0
+    temparray[:,:] = strtemp_array[:,:]
+    temparray.write(mapname="str_grass_rf", overwrite=True)
+    
+    grass.run_command('r.null', map='str_grass_rf',setnull=0)
+    grass.run_command('r.mapcalc',expression = 'str_grass_rfn = int(str_grass_rf)',overwrite = True)
+    grass.run_command('r.thin',input = 'str_grass_rfn', output = 'str_grass_r',overwrite = True)
     
     grass.run_command('r.stream.basins',direction = 'dir_Grass', stream = 'str_grass_r', basins = 'cat1',overwrite = True)
     
