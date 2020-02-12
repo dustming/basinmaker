@@ -1350,7 +1350,7 @@ class LRRT:
         if not os.path.exists(self.OutputFolder):
 	           os.makedirs(self.OutputFolder)         
         
-        self.Raveinputsfolder = os.path.join(self.OutputFolder,'RavenInput')
+        self.Raveinputsfolder = self.OutputFolder + '/'+'RavenInput/'
                 
         self.qgisPP = os.environ['QGISPrefixPath']
         self.RoutingToolPath = os.environ['RoutingToolFolder']
