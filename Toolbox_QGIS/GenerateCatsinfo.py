@@ -801,10 +801,13 @@ def Generatecatinfo(Watseds,fac,fdir,lake,dem,area,catinfo,allcatid,lakeinfo,wid
 #######Got basin area and rivlen
 #        catinfo[i,11] = np.mean(area[rowcol[:,0],rowcol[:,1]])
         catinfo.loc[i,'Rivlen'] = catrivlen
-        catinfo.loc[i,'RivSlope'] = catrivslp
         slopet = slope[rowcol[:,0],rowcol[:,1]]
         slopet = slopet[slopet>0,]
         catinfo.loc[i,'BasinSlope'] = np.mean(slopet)
+        if catrivslp < 0:
+            catinfo.loc[i,'RivSlope'] = np.mean(slopet)
+        else：
+            catinfo.loc[i,'RivSlope'] = catrivslp
 #        catinfo[i,27] = catrivslp2
         if len(slopet) < 1:
             catinfo.loc[i,'RivSlope'] = 0.001
