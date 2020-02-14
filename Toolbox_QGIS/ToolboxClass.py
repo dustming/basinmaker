@@ -445,8 +445,9 @@ def Getcatrivlenslope(catrow,catcol,rivlen,dem,fac,hydir,finalcat,trow,tcol,nrow
                 nrow,ncol = Nextcell(hydir,int(flen_orow),int(flen_ocol))
                 if nrow < 0 or ncol < 0:
                     nrow,ncol = Nextcell(hydir,int(trow),int(tcol))
-                    print("warning : check river system for catchment: ",finalcat[trow,tcol],rivs,icell,len(catrow),nrow,ncol,trow,tcol)
-                    nrow,ncol = 0,0
+                    if nrow > 0 and ncol >0:  ##### if they are <0, means the downstream catchment is None, so it is not a error 
+                        print("warning : check river system for catchment: ",finalcat[trow,tcol],rivs,icell,len(catrow),nrow,ncol,trow,tcol)
+                    nrow,ncol = -1,-1 ## to break the loop
                 if nrow >= nrows or ncol >= ncols:
 #                    arcpy.AddMessage("out of the boundary")
                     break                
@@ -489,8 +490,9 @@ def Getcatrivlenslope(catrow,catcol,rivlen,dem,fac,hydir,finalcat,trow,tcol,nrow
                 nrow,ncol = Nextcell(hydir,int(flen_orow),int(flen_ocol))
                 if nrow < 0 or ncol < 0:  ### if the next cell move out of the domain 
                     nrow,ncol = Nextcell(hydir,int(trow),int(tcol))
-                    print("warning : check river system for catchment: ",finalcat[trow,tcol],rivs,icell,len(catrow),nrow,ncol,trow,tcol)
-                    nrow,ncol = 0,0
+                    if nrow > 0 and ncol >0:  ##### if they are <0, means the downstream catchment is None, so it is not a error 
+                        print("warning : check river system for catchment: ",finalcat[trow,tcol],rivs,icell,len(catrow),nrow,ncol,trow,tcol)
+                    nrow,ncol = -1,-1 ## to break the loop
                 if nrow >= nrows or ncol >= ncols: ### if the next cell move out of the domain 
 #                    arcpy.AddMessage("out of the boundary")
                     break 
@@ -752,10 +754,10 @@ def Dirpoints2(N_dir,p_row,p_col,lake1,lid,goodpoint,k,ncols,nrows):
 def ChangeDIR(dir,lake1,acc,ncols,nrows,outlakeids,nlakegrids):
     ndir = copy.copy(dir)
     for i in range(0,len(outlakeids)):
-        lid = outlakeids[i]
+        lid = outlakeids[0,i]
         goodpoint = np.full((20000,2),-99999)
         lrowcol = np.argwhere(lake1==lid).astype(int)
-        if len(lrowcol) > nlakegrids:
+        if len(lrowcol) > nlakegrids and outlakeids[1,i] > 0.9:
             continue
 #        arcpy.AddMessage(str(lid) + "    " +  str(len(lrowcol)) + "     " + str(i))
         print("start modify lake flow direction, the lake id is    " + str(int(lid)))
@@ -889,7 +891,7 @@ def CE_mcat4lake(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints):
     cat = copy.copy(cat1)
     arlakeid = np.unique(lake)
     arlakeid = arlakeid[arlakeid>=0]
-    outlakeids = np.full(1000000,-99999)
+    outlakeids = np.full((1000000,2),-99999.999)
     outi = 0
     for i in range(0,len(arlakeid)):
         lakeid = arlakeid[i]
@@ -918,7 +920,8 @@ def CE_mcat4lake(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints):
         ### check if these catchment flow into the lake if it is true, change catchment id into lake catchment id
         if len(arcatid)>1:  #
 #            if float(len(lakecatrowcol))/float(len(lrowcol)) < 0.9: #and len(lrowcol) < 10000: #: float(max(catcounts))/float(len(lrowcol)) < 0.8 and 
-            outlakeids[outi] = lakeid
+            outlakeids[outi,0] = lakeid
+            outlakeids[outi,1] = float(len(lakecatrowcol))/float(len(lrowcol))
             outi = outi + 1
             for j in range(0,len(arcatid)):
                 crowcol = np.argwhere(cat==arcatid[j]).astype(int)
@@ -950,7 +953,7 @@ def CE_mcat4lake(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints):
         pp = pp[pp > 0]
         if len(pp) == 1:
             cat[lrowcol[:,0],lrowcol[:,1]] = arclakeid
-    outlakeids= outlakeids[outlakeids > 0]
+    outlakeids= outlakeids[outlakeids[:,0] > 0]
     return cat,outlakeids
 ###################################################33
 def CE_mcat4lake2(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints):
@@ -1364,10 +1367,16 @@ class LRRT:
         self.grass_location_pro = 'Projected'
         
         self.tempfolder = os.path.join(tempfile.gettempdir(), 'grassdata_toolbox_temp',self.ProjectNM)
-        
-        if not os.path.exists(self.tempfolder):
-	           os.makedirs(self.tempfolder)  
 
+        if not os.path.exists(self.tempfolder):
+	           os.makedirs(self.tempfolder)
+        
+        
+               
+        self.cellSize = -9.9999
+        self.SpRef_in = '#'
+        self.ncols = -9999
+        self.nrows = -9999
         self.Path_Maskply = '#'
         self.Path_dem = os.path.join(self.tempfolder,'dem.tif')
         self.Path_demproj = os.path.join(self.tempfolder,'dem_proj.tif')
@@ -1378,11 +1387,8 @@ class LRRT:
         self.Path_allLakeRas = os.path.join(self.tempfolder,'hylakegdal.tif')
         self.Path_finalcatinfo = os.path.join(self.tempfolder,'catinfo.csv')
         self.Path_alllakeinfoinfo = os.path.join(self.tempfolder,'hylake.csv')
-		
-        self.cellSize = -9.9999
-        self.SpRef_in = '#'
-        self.ncols = -9999
-        self.nrows = -9999
+        self.Path_Maskply = os.path.join(self.tempfolder, 'HyMask2.shp')
+       
 ########################################################################################
 ### Remove tempfolders
 
@@ -1401,52 +1407,81 @@ class LRRT:
         Processing.initialize()
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
         
-        hyinfocsv = self.Path_hyshdply_in[:-3] + "dbf"
-        tempinfo = Dbf5(hyinfocsv)
-        hyshdinfo = tempinfo.to_dataframe().values 
-           
-        HydroBasins1 = Defcat(hyshdinfo,self.OutHyID) ### return fid of polygons that needs to be select 
+        
         if self.OutHyID > 0:
-            HydroBasins2 = Defcat(hyshdinfo,self.OutHyID2)            
+            hyinfocsv = self.Path_hyshdply_in[:-3] + "dbf"
+            tempinfo = Dbf5(hyinfocsv)
+            hyshdinfo = tempinfo.to_dataframe().values 
+           
+            HydroBasins1 = Defcat(hyshdinfo,self.OutHyID) ### return fid of polygons that needs to be select 
+            if self.OutHyID > 0:
+                HydroBasins2 = Defcat(hyshdinfo,self.OutHyID2)            
     ###  exculde the Ids in HydroBasins2 from HydroBasins1
-            for i in range(len(HydroBasins2)):
-                rows =np.argwhere(HydroBasins1 == HydroBasins2[i])
-                HydroBasins1 = np.delete(HydroBasins1, rows)
-            HydroBasins = HydroBasins1            
-        else:
-            HydroBasins = HydroBasins1
+                for i in range(len(HydroBasins2)):
+                    rows =np.argwhere(HydroBasins1 == HydroBasins2[i])
+                    HydroBasins1 = np.delete(HydroBasins1, rows)
+                HydroBasins = HydroBasins1            
+            else:
+                HydroBasins = HydroBasins1
         
     ### Load HydroSHED Layers 
-        hyshedl12 = QgsVectorLayer(self.Path_hyshdply_in, "")
+            hyshedl12 = QgsVectorLayer(self.Path_hyshdply_in, "")
         
     ### Build qgis selection expression
-        where_clause = '"HYBAS_ID" IN'+ " ("
-        for i in range(0,len(HydroBasins)):
-            if i == 0:
-                where_clause = where_clause + str(HydroBasins[i])
-            else:
-                where_clause = where_clause + "," + str(HydroBasins[i])
-        where_clause = where_clause + ")"
+            where_clause = '"HYBAS_ID" IN'+ " ("
+            for i in range(0,len(HydroBasins)):
+                if i == 0:
+                    where_clause = where_clause + str(HydroBasins[i])
+                else:
+                    where_clause = where_clause + "," + str(HydroBasins[i])
+            where_clause = where_clause + ")"
     
-        req = QgsFeatureRequest().setFlags( QgsFeatureRequest.NoGeometry )
-        req.setFilterExpression(where_clause)
-        it = hyshedl12.getFeatures( req )
+            req = QgsFeatureRequest().setFlags( QgsFeatureRequest.NoGeometry )
+            req.setFilterExpression(where_clause)
+            it = hyshedl12.getFeatures( req )
         
         ### obtain all feature id of selected polygons
-        selectedFeatureID = []
+            selectedFeatureID = []
     
-        for feature in it:
+            for feature in it:
     #        print(feature.id())
-            selectedFeatureID.append(feature.id())
+                selectedFeatureID.append(feature.id())
             
-        hyshedl12.select(selectedFeatureID)   ### select with polygon id
+            hyshedl12.select(selectedFeatureID)   ### select with polygon id
         
         # Save selected polygons to output 
-        _writer = QgsVectorFileWriter.writeAsVectorFormat(hyshedl12, os.path.join(self.tempfolder, 'HyMask.shp'), "UTF-8", hyshedl12.crs(), "ESRI Shapefile", onlySelected=True)
-        processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask.shp'),'FIELD':'MAIN_BAS','OUTPUT':os.path.join(self.tempfolder, 'HyMask2.shp')})
-        self.Path_Maskply = os.path.join(self.tempfolder, 'HyMask2.shp')
-        del tempinfo
-        del hyshedl12
+            _writer = QgsVectorFileWriter.writeAsVectorFormat(hyshedl12, os.path.join(self.tempfolder, 'HyMask.shp'), "UTF-8", hyshedl12.crs(), "ESRI Shapefile", onlySelected=True)
+            processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask.shp'),'FIELD':'MAIN_BAS','OUTPUT':self.Path_Maskply})
+            
+            del hyshedl12
+            
+        else:
+            r_dem_layer = QgsRasterLayer(self.Path_dem_in, "") ### load DEM raster as a  QGIS raster object to obtain attribute        
+            self.cellSize = float(r_dem_layer.rasterUnitsPerPixelX())  ### Get Raster cell size
+            self.SpRef_in = r_dem_layer.crs().authid()   ### get Raster spatialReference id
+            params = {'INPUT': self.Path_dem_in, 'format': 'GTiff', 'OUTPUT': self.Path_dem}
+            processing.run('gdal:translate',params)
+            import grass.script as grass
+            from grass.script import array as garray
+            import grass.script.setup as gsetup
+            from grass.pygrass.modules.shortcuts import general as g
+            from grass.pygrass.modules.shortcuts import raster as r
+            from grass.pygrass.modules import Module
+            from grass_session import Session
+            
+            os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='-1'))
+            PERMANENT = Session()
+            PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
+    
+            grass.run_command("r.import", input = self.Path_dem, output = 'dem', overwrite = True)
+            grass.run_command('g.region', raster='dem')
+            grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
+            
+            grass.run_command('r.out.gdal', input = 'MASK',output = os.path.join(self.tempfolder, 'Mask1.tif'),format= 'GTiff',overwrite = True)
+            processing.run("gdal:polygonize", {'INPUT':os.path.join(self.tempfolder, 'Mask1.tif'),'BAND':1,'FIELD':'DN','EIGHT_CONNECTEDNESS':False,'EXTRA':'','OUTPUT':os.path.join(self.tempfolder, 'HyMask.shp')})
+            processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask.shp'),'FIELD':'DN','OUTPUT':self.Path_Maskply})
+            PERMANENT.close()
+            del r_dem_layer
         Qgs.exitQgis()
         
         return 
@@ -1461,10 +1496,14 @@ class LRRT:
         Qgs = QgsApplication([],False)
         Qgs.initQgis()
         from qgis import processing
-        from processing.core.Processing import Processing   
+        from processing.core.Processing import Processing
+        from processing.tools import dataobjects
+           
         feedback = QgsProcessingFeedback()
         Processing.initialize()
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
+        context = dataobjects.createContext()
+        context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
     
         r_dem_layer = QgsRasterLayer(self.Path_dem_in, "") ### load DEM raster as a  QGIS raster object to obtain attribute        
         self.cellSize = float(r_dem_layer.rasterUnitsPerPixelX())  ### Get Raster cell size
@@ -1472,23 +1511,15 @@ class LRRT:
         print("Working with a  sptail reference  :   " , r_dem_layer.crs().description(), "      ", self.SpRef_in )
         print("The cell cize is   ",self.cellSize)
     
-        if  self.Path_hyshdply_in != '#':   #### input is using hydroshed DEM and hydroshed polygons 
+        if  self.OutHyID > 0:   #### input is using hydroshed  hydroshed polygons 
             params = {'INPUT': self.Path_dem_in,'MASK': self.Path_Maskply,'NODATA': -9999,'ALPHA_BAND': False,'CROP_TO_CUTLINE': True,
                                                                     'KEEP_RESOLUTION': True,
                                                                     'OPTIONS': 'COMPRESS=LZW',
                                                                     'DATA_TYPE': 0,  # Byte
                                                                     'OUTPUT': self.Path_dem}
             dem = processing.run('gdal:cliprasterbymasklayer',params)  #### extract dem
-    
-        else:
-            params = {'INPUT': self.Path_dem_in, 'format': 'GTiff', 'OUTPUT': self.Path_dem}
-            processing.run('gdal:translate',params)
-            
-#### clip vector fiels  
-        processing.run("native:clip", {'INPUT':self.Path_Lakefile_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_allLakeply})
-        processing.run("native:clip", {'INPUT':self.Path_WiDep_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_WidDepLine})
-        processing.run("native:clip", {'INPUT':self.Path_obspoint_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_ObsPoint})
-    
+        
+          
 ###### set up GRASS environment for translate vector to rasters and clip rasters
         import grass.script as grass
         from grass.script import array as garray
@@ -1502,12 +1533,24 @@ class LRRT:
         os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='-1'))
         PERMANENT = Session()
         PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
-    
-        grass.run_command("r.import", input = self.Path_dem, output = 'dem', overwrite = True)
-        grass.run_command('g.region', raster='dem')
-        grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
+        
+        if self.OutHyID <= 0:
+            grass.run_command('g.region', raster='dem')
+        else:
+            grass.run_command("r.import", input = self.Path_dem, output = 'dem', overwrite = True)
+            grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
+            grass.run_command('g.region', raster='dem')
 
-    
+        ### process vector data 
+        processing.run("native:clip", {'INPUT':self.Path_Lakefile_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_allLakeply},context = context)
+        processing.run("native:clip", {'INPUT':self.Path_WiDep_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_WidDepLine},context = context)
+        processing.run("native:clip", {'INPUT':self.Path_obspoint_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_ObsPoint},context = context)
+
+        
+        grass.run_command("v.import", input = self.Path_WidDepLine, output = 'WidDep', overwrite = True)
+        grass.run_command("v.import", input = self.Path_ObsPoint, output = 'obspoint', overwrite = True)
+        grass.run_command("v.import", input = self.Path_allLakeply, output = 'Hylake', overwrite = True)
+
         if self.Path_dir_in != '#':
             grass.run_command("r.external", input = self.Path_dir_in, output = 'dir_in', overwrite = True)
             grass.run_command("r.clip", input = 'dir_in', output = 'dir_Arcgis', overwrite = True, flags = 'r')
@@ -1519,11 +1562,6 @@ class LRRT:
         copyfile(self.Path_Landuseinfo_in, self.Path_Landuseinfo) 
         grass.run_command("r.external", input = self.Path_Landuse_in, output = 'landuse_in', overwrite = True)
         grass.run_command("r.clip", input = 'landuse_in', output = 'landuse', overwrite = True)        
-    
-        grass.run_command("v.import", input = self.Path_WidDepLine, output = 'WidDep', overwrite = True)
-        grass.run_command("v.import", input = self.Path_ObsPoint, output = 'obspoint', overwrite = True)
-        grass.run_command("v.import", input = self.Path_allLakeply, output = 'Hylake', overwrite = True)
-    
     
     
         os.system('gdal_rasterize -at -of GTiff -a_nodata -9999 -a Hylak_id -tr  '+ str(self.cellSize) + "  " +str(self.cellSize) +"   " + "\"" +  self.Path_allLakeply +"\""+ "    "+ "\""+self.Path_allLakeRas+"\"")
@@ -1542,7 +1580,7 @@ class LRRT:
     
         PERMANENT.close()
         del r_dem_layer
-        Qgs.exitQgis()
+        Qgs.exit()
 #####################################################################################################
 
 ####################################################################################################3
@@ -1565,51 +1603,63 @@ class LRRT:
         grass.run_command('r.accumulate', direction='dir_Grass',format = '45degree',accumulation ='acc_grass',
                   stream = 'str_grass_v',threshold = accthresold, overwrite = True)
 
-        grass.run_command('v.to.rast',input = 'str_grass_v',output = 'str_grass_r2',use = 'cat',overwrite = True)
+
+        if self.Path_dir_in == '#':  ### did not provide dir, use dem to generate watershed. recommand !!
+            grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =accthresold,stream_raster = 'str_grass_rf',
+                              stream_vector = 'str_grass_v2',overwrite = True)
+        else:
+        ## generate correct stream raster, when the dir is not derived from dem. for Hydroshed Cases 
+            grass.run_command('v.to.rast',input = 'str_grass_v',output = 'str_grass_r2',use = 'cat',overwrite = True)
     
-        strtemp_array = garray.array(mapname="str_grass_r2")
-        acc_array = garray.array(mapname="acc_grass")
-        dirarc_array = garray.array(mapname="dir_Arcgis")
+            strtemp_array = garray.array(mapname="str_grass_r2")
+            acc_array = garray.array(mapname="acc_grass")
+            dirarc_array = garray.array(mapname="dir_Arcgis")
     
     #####Correct stream network
-        strids = np.unique(strtemp_array)
-        strids = strids[strids >= 0] 
-        self.ncols = int(strtemp_array.shape[1])
-        self.nrows = int(strtemp_array.shape[0])
- 
-        for i in range(0,len(strids)):
-            strid = strids[i]
-
-            trow,tcol = Getbasinoutlet(strid,strtemp_array,acc_array,dirarc_array,self.ncols,self.nrows)
-            nrow,ncol = Nextcell(dirarc_array,trow,tcol)### get the downstream catchment id
-            nstrid = strtemp_array[nrow,ncol]
+            strids = np.unique(strtemp_array)
+            strids = strids[strids >= 0] 
+            self.ncols = int(strtemp_array.shape[1])
+            self.nrows = int(strtemp_array.shape[0])
         
-            rowcol = np.argwhere(strtemp_array==nstrid).astype(int)
-            catacc = np.full((len(rowcol),3),-9999)
-            catacc[:,0] = rowcol[:,0]
-            catacc[:,1] = rowcol[:,1]
-            catacc[:,2] = acc_array[rowcol[:,0],rowcol[:,1]]
-            catacc = catacc[catacc[:,2].argsort()]
-    
-            if nrow != catacc[0,0] or ncol != catacc[0,1]:  ### If the stream 1 did not connect to the begining of the downstream stream (2) 
-                nnrow,nncol = Nextcell(dirarc_array,nrow,ncol) ### The last cell of 2 will be changed. 
-                if nnrow <= 0 or nncol <=0 or nnrow >=self.nrows or nncol >= self.ncols:
+            for i in range(0,len(strids)):
+                strid = strids[i]
+
+                trow,tcol = Getbasinoutlet(strid,strtemp_array,acc_array,dirarc_array,self.ncols,self.nrows)
+                nrow,ncol = Nextcell(dirarc_array,trow,tcol)### get the downstream catchment id
+                if nrow <= 0 or ncol <=0 or nrow >=self.nrows or ncol >= self.ncols:
                     continue
-                nnstrid = strtemp_array[nnrow,nncol]
-                strtemp_array[nrow,ncol] = nnstrid
+                nstrid = strtemp_array[nrow,ncol]
+        
+                rowcol = np.argwhere(strtemp_array==nstrid).astype(int)
+                catacc = np.full((len(rowcol),3),-9999)
+                catacc[:,0] = rowcol[:,0]
+                catacc[:,1] = rowcol[:,1]
+                catacc[:,2] = acc_array[rowcol[:,0],rowcol[:,1]]
+                catacc = catacc[catacc[:,2].argsort()]
+    
+                if nrow != catacc[0,0] or ncol != catacc[0,1]:  ### If the stream 1 did not connect to the begining of the downstream stream (2) 
+                    nnrow,nncol = Nextcell(dirarc_array,nrow,ncol) ### The last cell of 2 will be changed. 
+                    if nnrow <= 0 or nncol <=0 or nnrow >=self.nrows or nncol >= self.ncols:
+                        continue
+                    nnstrid = strtemp_array[nnrow,nncol]
+                    strtemp_array[nrow,ncol] = nnstrid
         ##### end modify stream grid and store new grids
-        temparray = garray.array()
-        temparray[:,:] = 0
-        temparray[:,:] = strtemp_array[:,:]
-        temparray.write(mapname="str_grass_rf", overwrite=True)
-        grass.run_command('r.null', map='str_grass_rf',setnull=0)
+            temparray = garray.array()
+            temparray[:,:] = 0
+            temparray[:,:] = strtemp_array[:,:]
+            temparray.write(mapname="str_grass_rf", overwrite=True)
+            grass.run_command('r.null', map='str_grass_rf',setnull=0)
+        
         grass.run_command('r.mapcalc',expression = 'str_grass_rfn = int(str_grass_rf)',overwrite = True)
         grass.run_command('r.thin',input = 'str_grass_rfn', output = 'str_grass_r',overwrite = True)
-        grass.run_command('r.stream.basins',direction = 'dir_Grass', stream = 'str_grass_r', basins = 'cat1',overwrite = True)
         grass.run_command('r.to.vect',  input = 'str_grass_r',output = 'str', type ='line' ,overwrite = True)
+                
+        ##### generate catchment without lakes based on 'str_grass_r'        
+        grass.run_command('r.stream.basins',direction = 'dir_Grass', stream = 'str_grass_r', basins = 'cat1',overwrite = True)
+
         
 ################ check connected lakes  and non connected lakes 
-        grass.run_command('v.select',ainput = 'Hylake',binput = 'str_grass_v',output = 'lake_str',overwrite = True)
+        grass.run_command('v.select',ainput = 'Hylake',binput = 'str',output = 'lake_str',overwrite = True)
         grass.run_command('v.out.ogr', input = 'lake_str',output = os.path.join(self.tempfolder, "Connect_lake.shp"),format= 'ESRI_Shapefile',overwrite = True)
         os.system('gdal_rasterize -at -of GTiff -a_nodata -9999 -a Hylak_id -tr  '+ str(self.cellSize) + "  " +str(self.cellSize) +"   " + "\"" +  os.path.join(self.tempfolder, "Connect_lake.shp") +"\""+ "    "+ "\""+os.path.join(self.tempfolder, "cnhylakegdal.tif")+"\"")
         grass.run_command("r.in.gdal", input = os.path.join(self.tempfolder, "cnhylakegdal.tif"), output = 'cnlakeraster_in', overwrite = True)
@@ -1620,7 +1670,7 @@ class LRRT:
 ###########################################################################################3
 
 ############################################################################################
-    def AutomatedWatershedsandLakesFilterToolset(self,Thre_Lake_Area_Connect = 0,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 10000):
+    def AutomatedWatershedsandLakesFilterToolset(self,Thre_Lake_Area_Connect = 0,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 1600):
 
         tempinfo = Dbf5(self.Path_allLakeply[:-3] + "dbf")
         allLakinfo = tempinfo.to_dataframe()
