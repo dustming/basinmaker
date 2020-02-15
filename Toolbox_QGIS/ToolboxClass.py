@@ -1903,12 +1903,15 @@ class LRRT:
         feedback = QgsProcessingFeedback()
         Processing.initialize()
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
+        from processing.tools import dataobjects
+        context = dataobjects.createContext()
+        context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
         
-        processing.run("native:centroids", {'INPUT':os.path.join(self.tempfolder,'finalcat_info1.shp'),'ALL_PARTS':False,'OUTPUT':os.path.join(self.tempfolder,'Centerpoints.shp')})
-        processing.run("native:addxyfields", {'INPUT':os.path.join(self.tempfolder,'Centerpoints.shp'),'CRS':QgsCoordinateReferenceSystem(self.SpRef_in),'OUTPUT':os.path.join(self.tempfolder,'ctwithxy.shp')})
+        processing.run("native:centroids", {'INPUT':os.path.join(self.tempfolder,'finalcat_info1.shp'),'ALL_PARTS':False,'OUTPUT':os.path.join(self.tempfolder,'Centerpoints.shp')},context = context)
+        processing.run("native:addxyfields", {'INPUT':os.path.join(self.tempfolder,'Centerpoints.shp'),'CRS':QgsCoordinateReferenceSystem(self.SpRef_in),'OUTPUT':os.path.join(self.tempfolder,'ctwithxy.shp')},context = context)
         processing.run("native:joinattributestable",{'INPUT':os.path.join(self.tempfolder,'finalcat_info1.shp'),'FIELD':'SubId','INPUT_2':os.path.join(self.tempfolder,'ctwithxy.shp'),'FIELD_2':'SubId',
-                          'FIELDS_TO_COPY':['x','y'],'METHOD':0,'DISCARD_NONMATCHING':False,'PREFIX':'centroid_','OUTPUT':os.path.join(self.OutputFolder,'finalcat_info.shp')})
-        Qgs.exitQgis()
+                          'FIELDS_TO_COPY':['x','y'],'METHOD':0,'DISCARD_NONMATCHING':False,'PREFIX':'centroid_','OUTPUT':os.path.join(self.OutputFolder,'finalcat_info.shp')},context = context)
+        Qgs.exit()
         
 ###########################################################################3
     def Output_Clean(self,Out = 'Simple',clean = 'True',):
