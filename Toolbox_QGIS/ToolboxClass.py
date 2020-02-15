@@ -754,14 +754,16 @@ def Dirpoints2(N_dir,p_row,p_col,lake1,lid,goodpoint,k,ncols,nrows):
 def ChangeDIR(dir,lake1,acc,ncols,nrows,outlakeids,nlakegrids):
     ndir = copy.copy(dir)
     for i in range(0,len(outlakeids)):
-        lid = outlakeids[0,i]
+        lid = outlakeids[i,0]
         goodpoint = np.full((20000,2),-99999)
         lrowcol = np.argwhere(lake1==lid).astype(int)
-        if len(lrowcol) > nlakegrids and outlakeids[1,i] > 0.9:
+        if len(lrowcol) > nlakegrids and outlakeids[i,1] > 0.9:
             continue
-#        arcpy.AddMessage(str(lid) + "    " +  str(len(lrowcol)) + "     " + str(i))
-        print("start modify lake flow direction, the lake id is    " + str(int(lid)))
+#        print("start modify lake flow direction, the lake id is    " + str(int(lid)) + "  The number of lake grids is   " + str(int(len(lrowcol))) +
+#                "The ratio between lake grids in lake's cat and all lake grids is   " + str(outlakeids[i,1]) )
+
         prow,pcol = Getbasinoutlet(lid,lake1,acc,dir,nrows,ncols)
+
         goodpoint[0,0] = prow
         goodpoint[0,1] = pcol
         if prow >= nrows - 1 or pcol == ncols  - 1:
@@ -772,21 +774,15 @@ def ChangeDIR(dir,lake1,acc,ncols,nrows,outlakeids,nlakegrids):
         while ip > ipo:
             for i in range(0,len(goodpoint[goodpoint[:,0]>0,])):
                 if i > ipo:
-#                    arcpy.AddMessage("start of checking:    " + str(ip) + "     "+ str(ipo)+ "   ")
-#                    arcpy.AddMessage(goodpoint[0:ip,0])
                     trow = goodpoint[i,0]
                     tcol = goodpoint[i,1]
                     if trow >= nrows - 1 or tcol == ncols  - 1:
                         continue
                     ndir,goodpoint,k1= Dirpoints2(ndir,trow,tcol,lake1,lid,goodpoint,k,ncols,nrows)
-#                    arcpy.AddMessage("start of checking:    " + str(k1) + "     "+ str(len(goodpoint[goodpoint[:,0]>0,]))+ "   ")
                     k = k1 - 1
             ipo = ip
             ip = len(goodpoint[goodpoint[:,0]>0,]) - 1
             k = ip
-#            arcpy.AddMessage("start of checking:    " + str(ip) + "     "+ str(ipo)+ "   " + str(len(lrowcol)))
-#        goodpoint[goodpoint[:,0]>0,]
-#        ndir[goodpoint[goodpoint[:,0]>0,0].astype(int),goodpoint[goodpoint[:,0]>0,1].astype(int)] = 9
     return ndir
 
   
@@ -904,7 +900,10 @@ def CE_mcat4lake(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints):
         lorow = lakacc[len(lakacc)-1,0]
         locol = lakacc[len(lakacc)-1,1]  ###### lake outlet row and col
         arclakeid = cat[lorow,locol]  ####### lake catchment id 
-        lakecatrowcol = np.argwhere(cat==arclakeid).astype(int)    #### lake catchment cells  
+        lakecatrowcol = np.argwhere(cat==arclakeid).astype(int)    #### lake catchment cells 
+        Lakeincat1 = lake[lakecatrowcol[:,0],lakecatrowcol[:,1]]
+        nlake = np.argwhere(Lakeincat1==lakeid).astype(int) 
+
         lakenrow,lakencol = Nextcell(fdir,lorow,locol)
         if lakenrow < 0 or lakencol < 0:
             lakedowcatid = -999
@@ -921,7 +920,8 @@ def CE_mcat4lake(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints):
         if len(arcatid)>1:  #
 #            if float(len(lakecatrowcol))/float(len(lrowcol)) < 0.9: #and len(lrowcol) < 10000: #: float(max(catcounts))/float(len(lrowcol)) < 0.8 and 
             outlakeids[outi,0] = lakeid
-            outlakeids[outi,1] = float(len(lakecatrowcol))/float(len(lrowcol))
+            outlakeids[outi,1] = float(len(nlake))/float(len(lrowcol))
+#            print(outlakeids[outi,0],outlakeids[outi,1])
             outi = outi + 1
             for j in range(0,len(arcatid)):
                 crowcol = np.argwhere(cat==arcatid[j]).astype(int)
@@ -1254,13 +1254,13 @@ def Nextcell(N_dir,N_row,N_col):
 
 ##################################################################3
 def Getbasinoutlet(ID,basin,fac,dir,nrows,ncols):
-    import numpy as np
     catrowcol = np.argwhere(basin==ID).astype(int)
     catacc = np.full((len(catrowcol),3),-9999)
     catacc[:,0] = catrowcol[:,0]
     catacc[:,1] = catrowcol[:,1]
     catacc[:,2] = fac[catrowcol[:,0],catrowcol[:,1]]
     catacc = catacc[catacc[:,2].argsort()]
+#    print(ID,len(catrowcol))
     ### check if it is a real basin outlet 
     crow = catacc[len(catrowcol)-1,0]
     ccol = catacc[len(catrowcol)-1,1]
