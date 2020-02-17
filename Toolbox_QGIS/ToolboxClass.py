@@ -646,7 +646,7 @@ def Dirpoints2(N_dir,p_row,p_col,lake1,lid,goodpoint,k,ncols,nrows):
     ip = copy.copy(k) + 1
 #dir 1
     if lake1[p_row + 0,p_col + 1] == lid:  #### it is a lake cell
-        if p_row + 0 == nrows-1 or p_col + 1 == ncols - 1:   ### lake not at the boundary of domain
+        if p_row + 1 >= nrows-3 or p_col + 1 >= ncols - 3 or p_row - 1 <= 2 or p_col - 1 <= 2:   ### lake not at the boundary of domain
             numnonlake = 99
         else:
             numnonlake,nonlakedir = checklakeboundary(lake1,lid,p_row + 0,p_col + 1)
@@ -659,7 +659,7 @@ def Dirpoints2(N_dir,p_row,p_col,lake1,lid,goodpoint,k,ncols,nrows):
                 ip = ip + 1
 #dir 2
     if lake1[p_row + 1,p_col + 1] == lid:
-        if p_row + 1 == nrows-1 or p_col + 1 == ncols - 1:   ### lake not at the boundary of domain
+        if p_row + 1 >= nrows-3 or p_col + 1 >= ncols - 3 or p_row - 1 <= 2 or p_col - 1 <= 2:   ### lake not at the boundary of domain
             numnonlake = 99
         else:
             numnonlake,nonlakedir = checklakeboundary(lake1,lid,p_row + 1,p_col + 1)
@@ -672,7 +672,7 @@ def Dirpoints2(N_dir,p_row,p_col,lake1,lid,goodpoint,k,ncols,nrows):
                 ip = ip + 1
 #dir 3
     if lake1[p_row + 1,p_col + 0] == lid:
-        if p_row + 1 == nrows-1 or p_col + 0 == ncols - 1:   ### lake not at the boundary of domain
+        if p_row + 1 >= nrows-3 or p_col + 1 >= ncols - 3 or p_row - 1 <= 2 or p_col - 1 <= 2:   ### lake not at the boundary of domain
             numnonlake = 99
         else:
             numnonlake,nonlakedir = checklakeboundary(lake1,lid,p_row + 1,p_col + 0)
@@ -685,7 +685,7 @@ def Dirpoints2(N_dir,p_row,p_col,lake1,lid,goodpoint,k,ncols,nrows):
                 ip = ip + 1
 #dir 4
     if lake1[p_row + 1,p_col - 1] == lid:
-        if p_row + 1 == nrows-1 or p_col - 1 == ncols - 1:   ### lake not at the boundary of domain
+        if p_row + 1 >= nrows-3 or p_col + 1 >= ncols - 3 or p_row - 1 <= 2 or p_col - 1 <= 2:   ### lake not at the boundary of domain
             numnonlake = 99
         else:
             numnonlake,nonlakedir = checklakeboundary(lake1,lid,p_row + 1,p_col - 1)
@@ -698,7 +698,7 @@ def Dirpoints2(N_dir,p_row,p_col,lake1,lid,goodpoint,k,ncols,nrows):
                 ip = ip + 1
 #dir 5
     if lake1[p_row + 0,p_col - 1] == lid:
-        if p_row + 0 == nrows-1 or p_col - 1 == ncols - 1:   ### lake not at the boundary of domain
+        if p_row + 1 >= nrows-3 or p_col + 1 >= ncols - 3 or p_row - 1 <= 2 or p_col - 1 <= 2:   ### lake not at the boundary of domain
             numnonlake = 99
         else:
             numnonlake,nonlakedir = checklakeboundary(lake1,lid,p_row + 0,p_col - 1)
@@ -711,7 +711,7 @@ def Dirpoints2(N_dir,p_row,p_col,lake1,lid,goodpoint,k,ncols,nrows):
                 ip = ip + 1
 #dir 6
     if lake1[p_row - 1,p_col - 1] == lid:
-        if p_row - 1 == nrows-1 or p_col - 1 == ncols - 1:   ### lake not at the boundary of domain
+        if p_row + 1 >= nrows-3 or p_col + 1 >= ncols - 3 or p_row - 1 <= 2 or p_col - 1 <= 2:  ### lake not at the boundary of domain
             numnonlake = 99
         else:
             numnonlake,nonlakedir = checklakeboundary(lake1,lid,p_row - 1,p_col - 1)
@@ -724,7 +724,7 @@ def Dirpoints2(N_dir,p_row,p_col,lake1,lid,goodpoint,k,ncols,nrows):
                 ip = ip + 1
 #dir 7
     if lake1[p_row - 1,p_col + 0] == lid:
-        if p_row - 1 == nrows-1 or p_col + 0 == ncols - 1:   ### lake not at the boundary of domain
+        if p_row + 1 >= nrows-3 or p_col + 1 >= ncols - 3 or p_row - 1 <= 2 or p_col - 1 <= 2: ### lake not at the boundary of domain
             numnonlake = 99
         else:
             numnonlake,nonlakedir = checklakeboundary(lake1,lid,p_row - 1,p_col + 0)
@@ -737,7 +737,7 @@ def Dirpoints2(N_dir,p_row,p_col,lake1,lid,goodpoint,k,ncols,nrows):
                 ip = ip + 1
 #dir 8
     if lake1[p_row - 1,p_col + 1] == lid:
-        if p_row - 1 == nrows-1 or p_col + 1 == ncols - 1:   ### lake not at the boundary of domain
+        if p_row + 1 >= nrows-3 or p_col + 1 >= ncols - 3 or p_row - 1 <= 2 or p_col - 1 <= 2:  ### lake not at the boundary of domain
             numnonlake = 99
         else:
             numnonlake,nonlakedir = checklakeboundary(lake1,lid,p_row - 1,p_col + 1)
@@ -1320,6 +1320,8 @@ def Getbasinoutlet(ID,basin,fac,dir,nrows,ncols):
 
 
 ###################################################################3
+
+##### out has two column the first column has sub id , the second has down sub id 
 def Defcat(out,outletid):
     otsheds = np.full((1,1),outletid)
     Shedid = np.full((10000000,1),-99999999999999999)
@@ -1341,9 +1343,63 @@ def Defcat(out,outletid):
     Shedid = Shedid[Shedid>=0]
     return Shedid
 ###########
-
-
+def selectpolygonsfromroutingproduct(Path_shpfile,sub_colnm,down_colnm,outname,mostdownid,mostupstreamid,qgisPP):
+    QgsApplication.setPrefixPath(qgisPP, True)
+    Qgs = QgsApplication([],False)
+    Qgs.initQgis()
+    from qgis import processing
+    from processing.core.Processing import Processing   
+    feedback = QgsProcessingFeedback()
+    Processing.initialize()
+    QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
+    OutHyID = mostdownid
+    OutHyID2 = mostupstreamid
     
+    hyinfocsv = Path_shpfile[:-3] + "dbf"
+    tempinfo = Dbf5(hyinfocsv)
+    hyshdinfo2 = tempinfo.to_dataframe().drop_duplicates(sub_colnm, keep='first')
+    hyshdinfo =  hyshdinfo2[[sub_colnm,down_colnm]].astype('float').values
+    
+    HydroBasins1 = Defcat(hyshdinfo,OutHyID) ### return fid of polygons that needs to be select 
+    if OutHyID2 > 0:
+        HydroBasins2 = Defcat(hyshdinfo,self.OutHyID2)            
+    ###  exculde the Ids in HydroBasins2 from HydroBasins1
+        for i in range(len(HydroBasins2)):
+            rows =np.argwhere(HydroBasins1 == HydroBasins2[i])
+            HydroBasins1 = np.delete(HydroBasins1, rows)
+        HydroBasins = HydroBasins1            
+    else:
+        HydroBasins = HydroBasins1
+    ### Load HydroSHED Layers 
+    hyshedl12 = QgsVectorLayer(Path_shpfile, "")
+        
+    where_clause = '"SubId" IN'+ " ("
+    for i in range(0,len(HydroBasins)):
+        if i == 0:
+            where_clause = where_clause + str(HydroBasins[i])
+        else:
+            where_clause = where_clause + "," + str(HydroBasins[i])
+    where_clause = where_clause + ")"
+    
+    req = QgsFeatureRequest().setFlags( QgsFeatureRequest.NoGeometry )
+    req.setFilterExpression(where_clause)
+    it = hyshedl12.getFeatures( req )
+        
+        ### obtain all feature id of selected polygons
+    selectedFeatureID = []
+    
+    for feature in it:
+    #        print(feature.id())
+        selectedFeatureID.append(feature.id())
+        
+    hyshedl12.select(selectedFeatureID)   ### select with polygon id
+        
+        # Save selected polygons to output 
+    _writer = QgsVectorFileWriter.writeAsVectorFormat(hyshedl12, outname, "UTF-8", hyshedl12.crs(), "ESRI Shapefile", onlySelected=True)
+    del hyshedl12
+    Qgs.exit()
+
+############    
 class LRRT:
     def __init__(self, dem_in = '#',dir_in = '#',hyshdply = '#',WidDep = '#',Lakefile = '#'
                                      ,Landuse = '#',Landuseinfo = '#',obspoint = '#',OutHyID = -1 ,OutHyID2 = -1, 
@@ -1558,6 +1614,10 @@ class LRRT:
             grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
             grass.run_command('g.region', raster='dem')
 
+        strtemp_array = garray.array(mapname="dem")
+        self.ncols = int(strtemp_array.shape[1])
+        self.nrows = int(strtemp_array.shape[0])
+#        print(self.nrows,self.ncols)
         ### process vector data 
         processing.run("native:clip", {'INPUT':self.Path_Lakefile_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_allLakeply},context = context)
         processing.run("native:clip", {'INPUT':self.Path_WiDep_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_WidDepLine},context = context)
@@ -1635,8 +1695,7 @@ class LRRT:
     #####Correct stream network
             strids = np.unique(strtemp_array)
             strids = strids[strids >= 0] 
-            self.ncols = int(strtemp_array.shape[1])
-            self.nrows = int(strtemp_array.shape[0])
+
         
             for i in range(0,len(strids)):
                 strid = strids[i]
@@ -1774,8 +1833,8 @@ class LRRT:
         temparray.write(mapname="cat3", overwrite=True)
         grass.run_command('r.null', map='cat3',setnull=-9999)
 
-        grass.run_command('r.out.gdal', input = 'cat2',output = os.path.join(self.tempfolder,'cat2.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
-        grass.run_command('r.out.gdal', input = 'cat3',output = os.path.join(self.tempfolder,'cat3.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
+#        grass.run_command('r.out.gdal', input = 'cat2',output = os.path.join(self.tempfolder,'cat2.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
+#        grass.run_command('r.out.gdal', input = 'cat3',output = os.path.join(self.tempfolder,'cat3.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
     
         nPourpoints = GenerateFinalPourpoints(acc_array,dir_array,Lake1,temcat2,bsid,blid,boid,self.nrows,self.ncols,cat1_arr,obs_array)
         temparray[:,:] = nPourpoints[:,:]
@@ -1786,7 +1845,7 @@ class LRRT:
         grass.run_command('v.out.ogr', input = 'Pourpoints_2_F',output = os.path.join(self.tempfolder, "Pourpoints_2_F.shp"),format= 'ESRI_Shapefile',overwrite = True)
     
         ### Modify lake flow directions
-        ndir = ChangeDIR(dir_array,Lake1,acc_array,self.nrows,self.ncols,outlakeids,nlakegrids)
+        ndir = ChangeDIR(dir_array,Lake1,acc_array,self.ncols,self.nrows,outlakeids,nlakegrids)
         temparray[:,:] = ndir[:,:]
         temparray.write(mapname="ndir_Arcgis", overwrite=True)
         grass.run_command('r.null', map='ndir_Arcgis',setnull=-9999)    
@@ -1795,15 +1854,15 @@ class LRRT:
         grass.run_command('r.stream.basins',direction = 'ndir_Grass', points = 'Pourpoints_2_F', basins = 'cat4_t',overwrite = True)
 
         sqlstat="SELECT cat, value FROM Pourpoints_2_F"
-        df_P_1_F = pd.read_sql_query(sqlstat, con)
-        df_P_1_F.loc[len(df_P_1_F),'cat'] = '*'
-        df_P_1_F.loc[len(df_P_1_F)-1,'value'] = 'NULL'
-        df_P_1_F['eq'] = '='
-        df_P_1_F.to_csv(os.path.join(self.tempfolder,'rule_cat4.txt'),sep = ' ',columns = ['cat','eq','value'],header = False,index=False)
-        grass.run_command('r.reclass', input='cat4_t',output = 'cat4',rules =os.path.join(self.tempfolder,'rule_cat2.txt'), overwrite = True)
+        df_P_2_F = pd.read_sql_query(sqlstat, con)
+        df_P_2_F.loc[len(df_P_1_F),'cat'] = '*'
+        df_P_2_F.loc[len(df_P_1_F)-1,'value'] = 'NULL'
+        df_P_2_F['eq'] = '='
+        df_P_2_F.to_csv(os.path.join(self.tempfolder,'rule_cat4.txt'),sep = ' ',columns = ['cat','eq','value'],header = False,index=False)
+        grass.run_command('r.reclass', input='cat4_t',output = 'cat4',rules =os.path.join(self.tempfolder,'rule_cat4.txt'), overwrite = True)
 
 
-        grass.run_command('r.out.gdal', input = 'cat4',output = os.path.join(self.tempfolder,'cat4.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
+#        grass.run_command('r.out.gdal', input = 'cat4',output = os.path.join(self.tempfolder,'cat4.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
         cat4_array =  garray.array(mapname="cat4")
         rowcols = np.argwhere(cat4_array == 0)
         cat4_array[rowcols[:,0],rowcols[:,1]] = -9999
@@ -1944,6 +2003,19 @@ class LRRT:
         grass.run_command('v.db.join', map= 'finalcat_F',column = 'Gridcode', other_table = 'result',other_column ='SubId', overwrite = True)
         grass.run_command('v.out.ogr', input = 'finalcat_F',output = os.path.join(self.tempfolder,'finalcat_info1.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
         
+        
+        obsids = np.unique(obs_array)
+        obsids = obsids[obsids>0]
+        obsinfo = np.full((len(obsids),3),-9999)
+        
+        for i in range(0,len(obsids)):
+            rowcol = np.argwhere(obs_array==obsids[i]).astype(int)
+            obsinfo[i,0] = obsids[i]
+            obsinfo[i,1] = finalcat_arr[rowcol[0,0],rowcol[0,1]]
+            obsinfo[i,2] = acc_array[rowcol[0,0],rowcol[0,1]]
+            
+        obsinfo = obsinfo[obsinfo[:,2].argsort()].astype(int)
+        subid_with_largestacc_obs = obsinfo[len(obsinfo) - 1,1]
 #        grass.run_command('v.out.ogr', input = 'finalcat_F',output = outputFolder  + 'finalcat_info.shp',format= 'ESRI_Shapefile',overwrite = True)
         PERMANENT.close
         
@@ -1962,8 +2034,11 @@ class LRRT:
         processing.run("native:centroids", {'INPUT':os.path.join(self.tempfolder,'finalcat_info1.shp'),'ALL_PARTS':False,'OUTPUT':os.path.join(self.tempfolder,'Centerpoints.shp')},context = context)
         processing.run("native:addxyfields", {'INPUT':os.path.join(self.tempfolder,'Centerpoints.shp'),'CRS':QgsCoordinateReferenceSystem(self.SpRef_in),'OUTPUT':os.path.join(self.tempfolder,'ctwithxy.shp')},context = context)
         processing.run("native:joinattributestable",{'INPUT':os.path.join(self.tempfolder,'finalcat_info1.shp'),'FIELD':'SubId','INPUT_2':os.path.join(self.tempfolder,'ctwithxy.shp'),'FIELD_2':'SubId',
-                          'FIELDS_TO_COPY':['x','y'],'METHOD':0,'DISCARD_NONMATCHING':False,'PREFIX':'centroid_','OUTPUT':os.path.join(self.OutputFolder,'finalcat_info.shp')},context = context)
-        Qgs.exit()
+                          'FIELDS_TO_COPY':['x','y'],'METHOD':0,'DISCARD_NONMATCHING':False,'PREFIX':'centroid_','OUTPUT':os.path.join(self.tempfolder,'finalcat_info2.shp')},context = context)
+                          
+        Qgs.exit()              
+        selectpolygonsfromroutingproduct(os.path.join(self.tempfolder,'finalcat_info2.shp'),'SubId','DowSubId',os.path.join(self.OutputFolder,'finalcat_info.shp'),subid_with_largestacc_obs,-1,self.qgisPP)
+        
         
 ###########################################################################3
     def Output_Clean(self,Out = 'Simple',clean = 'True',):
