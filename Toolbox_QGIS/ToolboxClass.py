@@ -12,7 +12,7 @@ import tempfile
 import copy
 import pandas as pd
 import sqlite3
-from Calculate_River_Len_Slope import Getcatrivlenslope
+from Calculate_River_Len_Slope import Getcatrivlenslope_hydroshed
 from GetBasinoutlet import Getbasinoutlet,Nextcell
 
 
@@ -402,7 +402,7 @@ def Generatecatinfo(Watseds,fac,fdir,lake,dem,area,catinfo,allcatid,lakeinfo,wid
 #            arcpy.AddMessage(str(catid)+"      "+str(obs[trow,tcol]))
             catinfo.loc[i,'IsObs'] =  obs[trow,tcol]
 ########Got basin width and depth
-        catrivlen,catrivslp,catrivslp2,rivpath = Getcatrivlenslope(rowcol[:,0],rowcol[:,1],rivlen,dem,fac,fdir,finalcat,
+        catrivlen,catrivslp,catrivslp2,rivpath = Getcatrivlenslope_hydroshed(rowcol[:,0],rowcol[:,1],rivlen,dem,fac,fdir,finalcat,
                                                 trow,tcol,nrows,ncols,slope,rivpath)
         catwidth,catdepth,catQ = Getcatwd(catid,finalcat,width,depth,Q_Mean,-1,rivlen) ### width depth in m
 #        arcpy.AddMessage("catid is    " + str(catid) + "    " + str(catwidth))
@@ -1582,9 +1582,11 @@ class LRRT:
         grass.run_command('v.dissolve', input= 'finalcat_F1', column = "Gridcode",output = 'finalcat_F',overwrite = True)    
 #    grass.run_command('v.select',ainput = 'str',binput = 'finalcat_F',output = 'str_finalcat',overwrite = True)
         grass.run_command('v.overlay',ainput = 'str',binput = 'finalcat_F1',operator = 'and',output = 'str_finalcat',overwrite = True)  
-    
+        grass.run_command('v.out.ogr', input = 'str_finalcat',output = os.path.join(self.tempfolder,'str_finalcat.shp'),format= 'ESRI_Shapefile',overwrite = True)
+        
+        grass.run_command('v.out.ogr', input = 'str',output = os.path.join(self.tempfolder,'str.shp'),format= 'ESRI_Shapefile',overwrite = True)    
         grass.run_command('r.to.vect', input='SelectedLakes',output='SelectedLakes_F',type='area', overwrite = True) 
-#        grass.run_command('v.out.ogr', input = 'SelectedLakes_F',output = OutputFolder  + 'SelectedLakes.shp',format= 'ESRI_Shapefile',overwrite = True)
+        grass.run_command('v.out.ogr', input = 'str_finalcat',output = os.path.join(self.tempfolder,'str_finalcat.shp'),format= 'ESRI_Shapefile',overwrite = True)
 #    grass.run_command('v.db.join', map= 'SelectedLakes_F',column = 'value', other_table = 'result',other_column ='SubId', overwrite = True)
         con.close()
         PERMANENT.close()
@@ -1645,13 +1647,20 @@ class LRRT:
             grass.run_command('v.to.db', map= 'str_finalcat',option = 'length', columns = "Length",units = 'meters')
         
             grass.run_command('r.slope.aspect', elevation= 'dem_proj',slope = 'slope',aspect = 'aspect',precision = 'DCELL',overwrite = True)
-            grass.run_command('r.mapcalc',expression = 'tanslopedegree = tan(slope) ',overwrite = True)         
+            grass.run_command('r.mapcalc',expression = 'tanslopedegree = tan(slope) ',overwrite = True)       
+            
+              
 
         grass.run_command('v.to.rast',input = 'finalcat_F',output = 'Area',use = 'attr',attribute_column = 'Area',overwrite = True)  
         grass.run_command('v.to.rast',input = 'str_finalcat',output = 'Length',use = 'attr',attribute_column = 'Length',overwrite = True)
+        grass.run_command('v.out.ogr', input = 'str_finalcat',output = os.path.join(self.tempfolder,'str_finalcat2.shp'),format= 'ESRI_Shapefile',overwrite = True)
+
+        grass.run_command('v.to.rast',input = 'str_finalcat',output = 'b_value',use = 'attr',attribute_column = 'b_value',overwrite = True)
+        grass.run_command('r.out.gdal', input = 'b_value',output =os.path.join(self.tempfolder,'b_value.tif'),format= 'GTiff',overwrite = True)
+
     
-#        grass.run_command('r.out.gdal', input = 'Length',output = outputFolder  + 'rivlength.tif',format= 'GTiff',overwrite = True)
-#        grass.run_command('r.out.gdal', input = 'finalcat',output = outputFolder  + 'finalcat.tif',format= 'GTiff',overwrite = True)
+        grass.run_command('r.out.gdal', input = 'Length',output =os.path.join(self.tempfolder,'rivlength.tif'),format= 'GTiff',overwrite = True)
+        grass.run_command('r.out.gdal', input = 'finalcat',output =os.path.join(self.tempfolder,'finalcat.tif'),format= 'GTiff',overwrite = True)
 #        grass.run_command('r.out.gdal', input = 'tanslopedegree',output = outputFolder  + 'slope.tif',format= 'GTiff',overwrite = True)
 #        grass.run_command('r.out.gdal', input = 'aspect',output = outputFolder  + 'aspect.tif',format= 'GTiff',overwrite = True)    
 #        grass.run_command('v.out.ogr', input = 'str_finalcat',output = outputFolder  + 'str_finalcat.shp',format= 'ESRI_Shapefile',overwrite = True)
@@ -1700,6 +1709,8 @@ class LRRT:
         temparray[:,:] = rivpath[:,:]
         temparray.write(mapname="rivpath", overwrite=True)
         grass.run_command('r.null', map='rivpath',setnull=-9999)
+        grass.run_command('r.out.gdal', input = 'rivpath',output =os.path.join(self.tempfolder,'rivpath.tif'),format= 'GTiff',overwrite = True)
+        
         grass.run_command('db.in.ogr', input=self.Path_alllakeinfoinfo,output = 'alllakeinfo',overwrite = True)
         grass.run_command('v.db.join', map= 'SelectedLakes_F',column = 'value', other_table = 'alllakeinfo',other_column ='Hylak_id', overwrite = True)
         grass.run_command('db.in.ogr', input=self.Path_finalcatinfo,output = 'result',overwrite = True)
