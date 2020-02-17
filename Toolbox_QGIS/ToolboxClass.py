@@ -11,7 +11,7 @@ from shutil import copyfile
 import tempfile
 import copy
 import pandas as pd
-
+import sqlite3
 
 def writechanel(chname,chwd,chdep,chslope,orchnl,elev,floodn,channeln,iscalmanningn):
     ### Following SWAT instructions, assume a trapezoidal shape channel, with channel sides has depth and width ratio of 2. zch = 2
@@ -1046,7 +1046,7 @@ def GenerateFinalPourpoints(fac,fdir,lake,cat3,bsid,blid,boid,nrows,ncols,cat,ob
                 Poups[trow,tcol] = ncatid
                 ncatid = ncatid + 1
     obsids = np.unique(obs)
-    obsids = obsids[obsids>=0]
+    obsids = obsids[obsids>0]
     for i in range(0,len(obsids)):
         rowcol = np.argwhere(obs==obsids[i]).astype(int)
         if Poups[rowcol[0,0],rowcol[0,1]] < 0 and lake[rowcol[0,0],rowcol[0,1]] < 0:
@@ -1076,16 +1076,17 @@ def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir):
         catoutloc[i,1] = trow  #### catchment pourpont row
         catoutloc[i,2] = tcol  #### catchment pourpont col
 #    writeraster(outFolder+subid+"_Pourpoints_1.asc",GP_cat)
+
     ##################Part 2 Get pourpoints of Lake inflow streams
     arlakeid = np.unique(lake)
     arlakeid = arlakeid[arlakeid>=0]
     for i in range(0,len(arlakeid)): #### loop for each lake
-        lid = arlakeid[i]
-        rowcol = np.argwhere(lake==lid.astype(int))
-        nrow = rowcol.shape[0]
-        Stridinlake = np.full(nrow,-9999)
-        Stridinlake[:] = Str[rowcol[:,0],rowcol[:,1]]
-        Strid_L  = np.unique(Stridinlake[np.argwhere(Stridinlake > 0).astype(int)]) ### Get all stream that intercept with lake
+        lid = arlakeid[i]       ##### obtain lake id 
+        rowcol = np.argwhere(lake==lid.astype(int))  ### got row anc col of lake grids 
+        nrow = rowcol.shape[0]  ### number of grids of the lake 
+        Stridinlake = np.full(nrow,-9999)  #### 
+        Stridinlake[:] = Str[rowcol[:,0],rowcol[:,1]]  ### get all stream with in the lake domain 
+        Strid_L  = np.unique(Stridinlake[np.argwhere(Stridinlake > 0).astype(int)]) ### Get unique stream id of sach stream 
         ##### find the intercept point of stream and lake
         for j in range(0,len(Strid_L)):  #### loop for each stream intercept with lake
             strid = Strid_L[j]
@@ -1095,88 +1096,96 @@ def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir):
             Strchek[:,0] = strrowcol[:,0]
             Strchek[:,1] = strrowcol[:,1]
             Strchek[:,2] = fac[strrowcol[:,0],strrowcol[:,1]]
+            Strchek[:,3] = lake[strrowcol[:,0],strrowcol[:,1]]
             Strchek = Strchek[Strchek[:,2].argsort()].astype(int)
-            ibg=-99
-            for irowst in range(nstrrow):#### search from smallest acc stream cell
-                if lake[Strchek[irowst,0],Strchek[irowst,1]] == lid and ibg==-99: ### if the begining of stream in lake the stream is ingnored
-                    ibg = 1
-                    if irowst != 0:
-                        if lake[Strchek[irowst-1,0],Strchek[irowst-1,1]] == -9999:
-                        ##### this means the stream connect two lakes, so must assign an pourpoints
-                            if len(np.unique(lake[Strchek[:,0],Strchek[:,1]])) >= 3:
-                                GP_cat[Strchek[irowst-1,0],Strchek[irowst-1,1]] = bsid
-                                bsid = bsid + 1
-                        ### double check if the head stream cell is nearby the lake, if near by the lake the stream was ignored
-                        if Strchek[0,0] != 0 and Strchek[0,0] != nrows -1 and Strchek[0,1] != 0 and Strchek[0,1] != ncols-1:
-                            noout = Checklake(Strchek[0,0],Strchek[0,1],nrows,ncols,lid,lake)
-                        ##### the head stream celll is not nearby the lake
-                        if noout == 0:
-                            GP_cat[Strchek[irowst-1,0],Strchek[irowst-1,1]] = bsid
+            
+            ###3 find the first intersection point between river and lake 
+            Grids_Lake_river = np.where(Strchek[:,3] == lid)
+            irowst = np.nanmin(Grids_Lake_river)
+            Intersection_Grid_row = Strchek[irowst,0]
+            Intersection_Grid_col = Strchek[irowst,1]
+
+            noout = 0
+            ### double check if the head stream cell is nearby the lake
+            if Strchek[0,0] != 0 and Strchek[0,0] != nrows -1 and Strchek[0,1] != 0 and Strchek[0,1] != ncols-1:
+                noout = Checklake(Strchek[0,0],Strchek[0,1],nrows,ncols,lid,lake)            
+            ####
+            
+            if irowst != 0: ## is the stream is not start within the lake 
+                if lake[Strchek[irowst-1,0],Strchek[irowst-1,1]] == -9999:  ### double check 
+                    ##### this means the stream connect two lakes, so must assign an pourpoints
+                    if len(np.unique(lake[Strchek[0:irowst,0],Strchek[0:irowst,1]])) >= 3:
+                        GP_cat[Strchek[irowst-1,0],Strchek[irowst-1,1]] = bsid
+                        bsid = bsid + 1
+
+                    ##### the head stream celll is not nearby the lake
+                    if noout == 0:
+                        GP_cat[Strchek[irowst-1,0],Strchek[irowst-1,1]] = bsid
+                        bsid = bsid + 1
+            #### it is possible that two steam combine together near the lake, double check if the stream conncet to
+            # anotehr stream and this steam is not witin the lake
+            if irowst == 0 or noout == 1:
+                nostr = Str[Strchek[0,0],Strchek[0,1]]
+                a = 0
+                orowcol = np.full((8,3),-9999)
+                if Strchek[0,0] != 0 and Strchek[0,0] != nrows -1 and Strchek[0,1] != 0 and Strchek[0,1] != ncols-1:
+                    if Str[Strchek[0,0]-1,Strchek[0,1]+1] != -9999 and lake[Strchek[0,0]-1,Strchek[0,1]+1] == -9999:
+                        orowcol[a,0] = Strchek[0,0]-1
+                        orowcol[a,1] = Strchek[0,1]+1
+                        orowcol[a,2] = Str[Strchek[0,0]-1,Strchek[0,1]+1]
+                        a = a+1
+                    if Str[Strchek[0,0]-1,Strchek[0,1]-1] != -9999 and lake[Strchek[0,0]-1,Strchek[0,1]-1] == -9999:
+                        orowcol[a,0] = Strchek[0,0]-1
+                        orowcol[a,1] = Strchek[0,1]-1
+                        orowcol[a,2] = Str[Strchek[0,0]-1,Strchek[0,1]-1]
+                        a = a+1
+                    if Str[Strchek[0,0]-1,Strchek[0,1]] != -9999 and lake[Strchek[0,0]-1,Strchek[0,1]] == -9999:
+                        orowcol[a,0] = Strchek[0,0]-1
+                        orowcol[a,1] = Strchek[0,1]-0
+                        orowcol[a,2] = Str[Strchek[0,0]-1,Strchek[0,1]-0]
+                        a = a+1
+                    if Str[Strchek[0,0],Strchek[0,1]+1] != -9999 and lake[Strchek[0,0],Strchek[0,1]+1] == -9999:
+                        orowcol[a,0] = Strchek[0,0]-0
+                        orowcol[a,1] = Strchek[0,1]+1
+                        orowcol[a,2] = Str[Strchek[0,0]-0,Strchek[0,1]+1]
+                        a = a+1
+                    if Str[Strchek[0,0],Strchek[0,1]-1] != -9999 and lake[Strchek[0,0],Strchek[0,1]-1] == -9999:
+                        orowcol[a,0] = Strchek[0,0]-0
+                        orowcol[a,1] = Strchek[0,1]-1
+                        orowcol[a,2] = Str[Strchek[0,0]-0,Strchek[0,1]-1]
+                        a = a+1
+                    if Str[Strchek[0,0]+1,Strchek[0,1]-1] != -9999 and lake[Strchek[0,0]+1,Strchek[0,1]-1] == -9999:
+                        orowcol[a,0] = Strchek[0,0]+1
+                        orowcol[a,1] = Strchek[0,1]-1
+                        orowcol[a,2] = Str[Strchek[0,0]+1,Strchek[0,1]-1]
+                        a = a+1
+                    if Str[Strchek[0,0]+1,Strchek[0,1]+1] != -9999 and lake[Strchek[0,0]+1,Strchek[0,1]+1] == -9999:
+                        orowcol[a,0] = Strchek[0,0]+1
+                        orowcol[a,1] = Strchek[0,1]+1
+                        orowcol[a,2] = Str[Strchek[0,0]+1,Strchek[0,1]+1]
+                        a = a+1
+                    if Str[Strchek[0,0]+1,Strchek[0,1]] != -9999 and lake[Strchek[0,0]+1,Strchek[0,1]] == -9999:
+                        orowcol[a,0] = Strchek[0,0]+1
+                        orowcol[a,1] = Strchek[0,1]-0
+                        orowcol[a,2] = Str[Strchek[0,0]+1,Strchek[0,1]-0]
+                        a = a+1
+                if a > 0:
+                    for ka in range(0,a):
+                        nostr =orowcol[ka,2]  ## up stream stram id 
+                        srowcol = np.argwhere(Str==nostr).astype(int)
+                        snrow = srowcol.shape[0]
+                        iStrchek = np.full((snrow,4),-9999)##### 0 row, 1 col, 2 fac,
+                        iStrchek[:,0] = srowcol[:,0]
+                        iStrchek[:,1] = srowcol[:,1]
+                        iStrchek[:,2] = fac[srowcol[:,0],srowcol[:,1]]
+                        iStrchek = iStrchek[iStrchek[:,2].argsort()]
+                        noout = Checklake(iStrchek[0,0],iStrchek[0,1],nrows,ncols,lid,lake)
+                        Lakinstr = np.full(snrow,-9999)
+                        Lakinstr[:] = lake[srowcol[:,0],srowcol[:,1]]
+                        d = np.argwhere(Lakinstr==lid).astype(int)  #### the connected stream should not within the lake
+                        if len(d) < 1 and noout == 0:
+                            GP_cat[orowcol[ka,0],orowcol[ka,1]] = bsid
                             bsid = bsid + 1
-                        #### it is possible that two steam combine together near the lake, double check if the stream conncet to
-                        # anotehr stream and this steam is not witin the lake
-                    if irowst == 0 or noout == 1:
-                        nostr = Str[Strchek[0,0],Strchek[0,1]]
-                        a = 0
-                        orowcol = np.full((8,3),-9999)
-                        if Strchek[0,0] != 0 and Strchek[0,0] != nrows -1 and Strchek[0,1] != 0 and Strchek[0,1] != ncols-1:
-                            if Str[Strchek[0,0]-1,Strchek[0,1]+1] != -9999 and lake[Strchek[0,0]-1,Strchek[0,1]+1] == -9999:
-                                orowcol[a,0] = Strchek[0,0]-1
-                                orowcol[a,1] = Strchek[0,1]+1
-                                orowcol[a,2] = Str[Strchek[0,0]-1,Strchek[0,1]+1]
-                                a = a+1
-                            if Str[Strchek[0,0]-1,Strchek[0,1]-1] != -9999 and lake[Strchek[0,0]-1,Strchek[0,1]-1] == -9999:
-                                orowcol[a,0] = Strchek[0,0]-1
-                                orowcol[a,1] = Strchek[0,1]-1
-                                orowcol[a,2] = Str[Strchek[0,0]-1,Strchek[0,1]-1]
-                                a = a+1
-                            if Str[Strchek[0,0]-1,Strchek[0,1]] != -9999 and lake[Strchek[0,0]-1,Strchek[0,1]] == -9999:
-                                orowcol[a,0] = Strchek[0,0]-1
-                                orowcol[a,1] = Strchek[0,1]-0
-                                orowcol[a,2] = Str[Strchek[0,0]-1,Strchek[0,1]-0]
-                                a = a+1
-                            if Str[Strchek[0,0],Strchek[0,1]+1] != -9999 and lake[Strchek[0,0],Strchek[0,1]+1] == -9999:
-                                orowcol[a,0] = Strchek[0,0]-0
-                                orowcol[a,1] = Strchek[0,1]+1
-                                orowcol[a,2] = Str[Strchek[0,0]-0,Strchek[0,1]+1]
-                                a = a+1
-                            if Str[Strchek[0,0],Strchek[0,1]-1] != -9999 and lake[Strchek[0,0],Strchek[0,1]-1] == -9999:
-                                orowcol[a,0] = Strchek[0,0]-0
-                                orowcol[a,1] = Strchek[0,1]-1
-                                orowcol[a,2] = Str[Strchek[0,0]-0,Strchek[0,1]-1]
-                                a = a+1
-                            if Str[Strchek[0,0]+1,Strchek[0,1]-1] != -9999 and lake[Strchek[0,0]+1,Strchek[0,1]-1] == -9999:
-                                orowcol[a,0] = Strchek[0,0]+1
-                                orowcol[a,1] = Strchek[0,1]-1
-                                orowcol[a,2] = Str[Strchek[0,0]+1,Strchek[0,1]-1]
-                                a = a+1
-                            if Str[Strchek[0,0]+1,Strchek[0,1]+1] != -9999 and lake[Strchek[0,0]+1,Strchek[0,1]+1] == -9999:
-                                orowcol[a,0] = Strchek[0,0]+1
-                                orowcol[a,1] = Strchek[0,1]+1
-                                orowcol[a,2] = Str[Strchek[0,0]+1,Strchek[0,1]+1]
-                                a = a+1
-                            if Str[Strchek[0,0]+1,Strchek[0,1]] != -9999 and lake[Strchek[0,0]+1,Strchek[0,1]] == -9999:
-                                orowcol[a,0] = Strchek[0,0]+1
-                                orowcol[a,1] = Strchek[0,1]-0
-                                orowcol[a,2] = Str[Strchek[0,0]+1,Strchek[0,1]-0]
-                                a = a+1
-                            if a > 0:
-                                for ka in range(0,a):
-                                    nostr =orowcol[ka,2]
-                                    srowcol = np.argwhere(Str==nostr).astype(int)
-                                    snrow = srowcol.shape[0]
-                                    iStrchek = np.full((snrow,4),-9999)##### 0 row, 1 col, 2 fac,
-                                    iStrchek[:,0] = srowcol[:,0]
-                                    iStrchek[:,1] = srowcol[:,1]
-                                    iStrchek[:,2] = fac[srowcol[:,0],srowcol[:,1]]
-                                    iStrchek = iStrchek[iStrchek[:,2].argsort()]
-                                    noout = Checklake(iStrchek[0,0],iStrchek[0,1],nrows,ncols,lid,lake)
-                                    Lakinstr = np.full(snrow,-9999)
-                                    Lakinstr[:] = lake[srowcol[:,0],srowcol[:,1]]
-                                    d = np.argwhere(Lakinstr==lid).astype(int)  #### the connected stream should not within the lake
-                                    if len(d) < 1 and noout == 0:
-                                        GP_cat[orowcol[ka,0],orowcol[ka,1]] = bsid
-                                        bsid = bsid + 1
 ################################################################################
 ################## Part 3Get Lake pourpoint id and remove cat pourpoint that contribute to lake
 #    writeraster(outFolder+"Pourpoints_2.asc",GP_cat)
@@ -1190,14 +1199,18 @@ def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir):
         lakeacc[:,2] = fac[lrowcol[:,0],lrowcol[:,1]]
         lakeacc = lakeacc[lakeacc[:,2].argsort()]
         maxcatid = cat[lakeacc[len(lakeacc)-1,0],lakeacc[len(lakeacc)-1,1]] ### Get the catchment id that will keeped
+        
+        ### remove the all pourpoints close to lake pourpoints
         if lakeacc[len(lakeacc)-1,0] != 0 and lakeacc[len(lakeacc)-1,0] != nrows -1 and lakeacc[len(lakeacc)-1,1] != 0 and lakeacc[len(lakeacc)-1,1] != ncols-1:
-            GP_cat[lakeacc[len(lakeacc)-1,0]-1,lakeacc[len(lakeacc)-1,1]-1]=-9999 ### remove the all pourpoints close to lake pourpoints
+            GP_cat[lakeacc[len(lakeacc)-1,0]-1,lakeacc[len(lakeacc)-1,1]-1]=-9999 
             GP_cat[lakeacc[len(lakeacc)-1,0]+1,lakeacc[len(lakeacc)-1,1]-1]=-9999
             GP_cat[lakeacc[len(lakeacc)-1,0],lakeacc[len(lakeacc)-1,1]-1]=-9999
             GP_cat[lakeacc[len(lakeacc)-1,0]+1,lakeacc[len(lakeacc)-1,1]]=-9999
             GP_cat[lakeacc[len(lakeacc)-1,0]+1,lakeacc[len(lakeacc)-1,1]+1]=-9999
             GP_cat[lakeacc[len(lakeacc)-1,0],lakeacc[len(lakeacc)-1,1]+1]=-9999
             GP_cat[lakeacc[len(lakeacc)-1,0]-1,lakeacc[len(lakeacc)-1,1]]=-9999
+            
+        ### remove pourpoints that not equal to maxcatid 
         for j in range(0,len(arcatid)):
             if arcatid[j] != maxcatid:
                 crowcol = np.argwhere(cat==arcatid[j]).astype(int)
@@ -1209,6 +1222,8 @@ def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir):
                 checkcat = checkcat[checkcat[:,3].argsort()]
                 dele = checkcat[checkcat[:,2]<blid].astype(int)   #### do not delete the lake and strem ids
                 GP_cat[dele[:,0],dele[:,1]]=-9999
+                
+                ### add keep catchment in case the catchment outlet is at the boundary of the domain
                 nrow,ncol = Nextcell(hydir,checkcat[len(checkcat)-1,0],checkcat[len(checkcat)-1,1])
                 if nrow > 0 or ncol >0:
                     if nrow >= nrows or ncols >= ncols:
@@ -1216,6 +1231,8 @@ def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir):
                     if cat[nrow,ncol] < 0:
                         GP_cat[checkcat[len(checkcat)-1,0],checkcat[len(checkcat)-1,1]] = bcid
                         bcid = bcid + 1
+                        
+        #### add lake outlet 
         GP_cat[lakeacc[len(lakeacc)-1,0],lakeacc[len(lakeacc)-1,1]]= sblid
         sblid = sblid + 1
     return GP_cat
@@ -1372,7 +1389,7 @@ class LRRT:
 	           os.makedirs(self.tempfolder)
         
         
-               
+        self.sqlpath = os.path.join(self.grassdb,'Geographic\\PERMANENT\\sqlite\\sqlite.db')       
         self.cellSize = -9.9999
         self.SpRef_in = '#'
         self.ncols = -9999
@@ -1605,7 +1622,7 @@ class LRRT:
 
 
         if self.Path_dir_in == '#':  ### did not provide dir, use dem to generate watershed. recommand !!
-            grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =accthresold,stream_raster = 'str_grass_rf',
+            grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =accthresold,stream_raster = 'str_grass_r',
                               stream_vector = 'str_grass_v2',overwrite = True)
         else:
         ## generate correct stream raster, when the dir is not derived from dem. for Hydroshed Cases 
@@ -1649,9 +1666,10 @@ class LRRT:
             temparray[:,:] = strtemp_array[:,:]
             temparray.write(mapname="str_grass_rf", overwrite=True)
             grass.run_command('r.null', map='str_grass_rf',setnull=0)
+            grass.run_command('r.mapcalc',expression = 'str_grass_r = int(str_grass_rf)',overwrite = True)
         
-        grass.run_command('r.mapcalc',expression = 'str_grass_rfn = int(str_grass_rf)',overwrite = True)
-        grass.run_command('r.thin',input = 'str_grass_rfn', output = 'str_grass_r',overwrite = True)
+#       
+#        grass.run_command('r.thin',input = 'str_grass_rfn', output = 'str_grass_r',overwrite = True)
         grass.run_command('r.to.vect',  input = 'str_grass_r',output = 'str', type ='line' ,overwrite = True)
                 
         ##### generate catchment without lakes based on 'str_grass_r'        
@@ -1666,6 +1684,10 @@ class LRRT:
         grass.run_command('r.mapcalc',expression = 'Connect_Lake = int(cnlakeraster_in)',overwrite = True)    
         grass.run_command('r.mapcalc',expression = 'Nonconnect_Lake = if(isnull(Connect_Lake),alllake,-9)',overwrite = True)
     
+#        grass.run_command('v.out.ogr', input = 'finalcat_F',output = os.path.join(self.tempfolder,'finalcat_info1.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
+        grass.run_command('r.out.gdal', input = 'cat1',output = os.path.join(self.tempfolder,'cat1.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')    
+        grass.run_command('r.out.gdal', input = 'Connect_Lake',output = os.path.join(self.tempfolder,'Connect_Lake.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')    
+        grass.run_command('r.out.gdal', input = 'str_grass_r',output = os.path.join(self.tempfolder,'str_grass_r.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')    
         PERMANENT.close()
 ###########################################################################################3
 
@@ -1684,11 +1706,12 @@ class LRRT:
         from grass.pygrass.modules import Module
         from grass_session import Session
 
-        os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='-1'))
+        os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
         PERMANENT = Session()
         PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
         grass.run_command('g.region', raster='dem')
-    
+        con = sqlite3.connect(self.sqlpath)
+        
         VolThreshold =Thre_Lake_Area_Connect ### lake area thresthold for connected lakes 
         NonConLThres = Thre_Lake_Area_nonConnect ### lake area thresthold for non connected lakes 
         nlakegrids = MaximumLakegrids 
@@ -1728,7 +1751,21 @@ class LRRT:
         temparray.write(mapname="Pourpoints_1", overwrite=True)
         grass.run_command('r.null', map='Pourpoints_1',setnull=-9999)
         grass.run_command('r.to.vect', input='Pourpoints_1',output='Pourpoints_1_F',type='point', overwrite = True)
-        grass.run_command('r.stream.basins',direction = 'dir_Grass', points = 'Pourpoints_1_F', basins = 'cat2',overwrite = True)
+        
+        grass.run_command('r.stream.basins',direction = 'dir_Grass', points = 'Pourpoints_1_F', basins = 'cat2_t',overwrite = True)
+        
+        
+        sqlstat="SELECT cat, value FROM Pourpoints_1_F"
+        df_P_1_F = pd.read_sql_query(sqlstat, con)
+        df_P_1_F.loc[len(df_P_1_F),'cat'] = '*'
+        df_P_1_F.loc[len(df_P_1_F)-1,'value'] = 'NULL'
+        df_P_1_F['eq'] = '='
+        df_P_1_F.to_csv(os.path.join(self.tempfolder,'rule_cat2.txt'),sep = ' ',columns = ['cat','eq','value'],header = False,index=False)
+        grass.run_command('r.reclass', input='cat2_t',output = 'cat2',rules =os.path.join(self.tempfolder,'rule_cat2.txt'), overwrite = True)
+        
+        
+        grass.run_command('v.out.ogr', input = 'Pourpoints_1_F',output = os.path.join(self.tempfolder, "Pourpoints_1_F.shp"),format= 'ESRI_Shapefile',overwrite = True)
+#        grass.run_command('r.out.gdal', input = 'cat1',output = os.path.join(self.tempfolder,'cat1.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')    
     
         cat2_array =  garray.array(mapname="cat2")
         temcat,outlakeids =CE_mcat4lake(cat2_array,Lake1,acc_array,dir_array,bsid,self.nrows,self.ncols,Pourpoints) 
@@ -1736,12 +1773,17 @@ class LRRT:
         temparray[:,:] = temcat2[:,:]
         temparray.write(mapname="cat3", overwrite=True)
         grass.run_command('r.null', map='cat3',setnull=-9999)
+
+        grass.run_command('r.out.gdal', input = 'cat2',output = os.path.join(self.tempfolder,'cat2.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
+        grass.run_command('r.out.gdal', input = 'cat3',output = os.path.join(self.tempfolder,'cat3.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
     
         nPourpoints = GenerateFinalPourpoints(acc_array,dir_array,Lake1,temcat2,bsid,blid,boid,self.nrows,self.ncols,cat1_arr,obs_array)
-        temparray[:,:] = Pourpoints[:,:]
+        temparray[:,:] = nPourpoints[:,:]
         temparray.write(mapname="Pourpoints_2", overwrite=True)
         grass.run_command('r.null', map='Pourpoints_2',setnull=-9999)
         grass.run_command('r.to.vect', input='Pourpoints_2',output='Pourpoints_2_F',type='point', overwrite = True)    
+
+        grass.run_command('v.out.ogr', input = 'Pourpoints_2_F',output = os.path.join(self.tempfolder, "Pourpoints_2_F.shp"),format= 'ESRI_Shapefile',overwrite = True)
     
         ### Modify lake flow directions
         ndir = ChangeDIR(dir_array,Lake1,acc_array,self.nrows,self.ncols,outlakeids,nlakegrids)
@@ -1750,8 +1792,18 @@ class LRRT:
         grass.run_command('r.null', map='ndir_Arcgis',setnull=-9999)    
         grass.run_command('r.reclass', input='ndir_Arcgis',output = 'ndir_Grass',rules =os.path.join(self.RoutingToolPath,'Arcgis2GrassDIR.txt'),overwrite = True)
      
-    
-        grass.run_command('r.stream.basins',direction = 'ndir_Grass', points = 'Pourpoints_2_F', basins = 'cat4',overwrite = True)
+        grass.run_command('r.stream.basins',direction = 'ndir_Grass', points = 'Pourpoints_2_F', basins = 'cat4_t',overwrite = True)
+
+        sqlstat="SELECT cat, value FROM Pourpoints_2_F"
+        df_P_1_F = pd.read_sql_query(sqlstat, con)
+        df_P_1_F.loc[len(df_P_1_F),'cat'] = '*'
+        df_P_1_F.loc[len(df_P_1_F)-1,'value'] = 'NULL'
+        df_P_1_F['eq'] = '='
+        df_P_1_F.to_csv(os.path.join(self.tempfolder,'rule_cat4.txt'),sep = ' ',columns = ['cat','eq','value'],header = False,index=False)
+        grass.run_command('r.reclass', input='cat4_t',output = 'cat4',rules =os.path.join(self.tempfolder,'rule_cat2.txt'), overwrite = True)
+
+
+        grass.run_command('r.out.gdal', input = 'cat4',output = os.path.join(self.tempfolder,'cat4.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
         cat4_array =  garray.array(mapname="cat4")
         rowcols = np.argwhere(cat4_array == 0)
         cat4_array[rowcols[:,0],rowcols[:,1]] = -9999
@@ -1772,7 +1824,7 @@ class LRRT:
         grass.run_command('r.to.vect', input='SelectedLakes',output='SelectedLakes_F',type='area', overwrite = True) 
 #        grass.run_command('v.out.ogr', input = 'SelectedLakes_F',output = OutputFolder  + 'SelectedLakes.shp',format= 'ESRI_Shapefile',overwrite = True)
 #    grass.run_command('v.db.join', map= 'SelectedLakes_F',column = 'value', other_table = 'result',other_column ='SubId', overwrite = True)
-
+        con.close()
         PERMANENT.close()
                 
 ############################################################################3
