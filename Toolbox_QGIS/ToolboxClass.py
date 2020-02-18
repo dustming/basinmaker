@@ -1387,12 +1387,12 @@ class LRRT:
 
 
         grass.run_command('r.accumulate', direction='dir_Grass',format = '45degree',accumulation ='acc_grass',
-                  stream = 'str_grass_v',threshold = accthresold, overwrite = True)
+                  stream = 'str_grass_v1',threshold = accthresold, overwrite = True)
 
 
         if self.Path_dir_in == '#':  ### did not provide dir, use dem to generate watershed. recommand !!
             grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =accthresold,stream_raster = 'str_grass_r',
-                              stream_vector = 'str_grass_v2',overwrite = True)
+                              stream_vector = 'str_grass_v',overwrite = True)
         else:
         ## generate correct stream raster, when the dir is not derived from dem. for Hydroshed Cases 
             grass.run_command('v.to.rast',input = 'str_grass_v',output = 'str_grass_r2',use = 'cat',overwrite = True)
@@ -1439,7 +1439,7 @@ class LRRT:
 #       
 #        grass.run_command('r.thin',input = 'str_grass_rfn', output = 'str_grass_r',overwrite = True)
         grass.run_command('r.to.vect',  input = 'str_grass_r',output = 'str', type ='line' ,overwrite = True)
-                
+
         ##### generate catchment without lakes based on 'str_grass_r'        
         grass.run_command('r.stream.basins',direction = 'dir_Grass', stream = 'str_grass_r', basins = 'cat1',overwrite = True)
 
@@ -1598,7 +1598,124 @@ class LRRT:
         PERMANENT.close()
                 
 ############################################################################3
+    def RoutingNetworkTopologyUpdateToolset_riv(self):
+        import grass.script as grass
+        from grass.script import array as garray
+        import grass.script.setup as gsetup
+        from grass.pygrass.modules.shortcuts import general as g
+        from grass.pygrass.modules.shortcuts import raster as r
+        from grass.pygrass.modules import Module
+        from grass_session import Session
 
+        QgsApplication.setPrefixPath(self.qgisPP, True)
+        Qgs = QgsApplication([],False)
+        Qgs.initQgis()
+        from qgis import processing
+        from processing.core.Processing import Processing
+        from processing.tools import dataobjects
+           
+        feedback = QgsProcessingFeedback()
+        Processing.initialize()
+        QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
+        context = dataobjects.createContext()
+        context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
+
+
+        os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
+        PERMANENT = Session()
+        PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
+        grass.run_command('g.region', raster='dem')
+        
+        finalcat_arr = garray.array(mapname="finalcat")
+        acc_array = garray.array(mapname="acc_grass")
+        dir_array = garray.array(mapname="dir_Arcgis")#ndir_Arcgis
+        Lake1_arr = garray.array(mapname="SelectedLakes")    
+        dem_array = garray.array(mapname="dem")
+        rivlen_array = garray.array(mapname="Length")
+        area_array = garray.array(mapname="Area")
+        width_array = garray.array(mapname="width")
+        depth_array = garray.array(mapname="depth")
+        obs_array = garray.array(mapname="obs")
+        Q_mean_array = garray.array(mapname="qmean")
+        str_grass_r_array = garray.array(mapname="str_grass_r")
+        
+
+        #### generate new stream raster based on str_grass_r from acc thresthold and finalcat. 
+        nstrarray = garray.array()
+        nstrarray[:,:] = -9999        
+        ## loop for each str_grass_r
+        
+        strids = np.unique(str_grass_r_array)#### cat all catchment idd
+        strids = strids[strids>0]
+        
+        fcatids = np.unique(finalcat_arr)#### cat all catchment idd
+        fcatids = fcatids[fcatids>0]
+        nstrinfo = np.full((len(strids)*len(fcatids),3),-9999)   ### maximum possible number of new stream segments 
+        nstrinfodf = pd.DataFrame(nstrinfo, columns = ['No_Lake_SubId', "Finalcat_SubId","With_Lake_SubId"])
+        nstrid = 1
+        for i in range(0,len(strids)):
+            strid = strids[i]
+            nstrinfodf.loc[i,'No_Lake_SubId'] = strid
+            
+            strmask = str_grass_r_array == strid
+            
+            catsinstr = finalcat_arr[strmask]
+            
+            catsinstrids = np.unique(catsinstr)
+            catsinstrids = catsinstrids[catsinstrids>0]
+            for j in range(0,len(catsinstrids)):
+                finalcatmask = finalcat_arr == catsinstrids[j]
+                mask = np.logical_and(finalcatmask, strmask)
+                nstrarray[mask] = nstrid
+                nstrinfodf.loc[i,'Finalcat_SubId'] = catsinstrids[j]
+                nstrinfodf.loc[i,'With_Lake_SubId'] = nstrid
+                nstrid = nstrid + 1
+        temparray = garray.array()
+        temparray[:,:] = -9999
+        temparray[:,:] = nstrarray[:,:]
+        temparray.write(mapname="nstr_seg_t", overwrite=True)
+        grass.run_command('r.null', map='nstr_seg_t',setnull=-9999)
+        grass.run_command('r.mapcalc',expression = 'nstr_seg = int(nstr_seg_t)',overwrite = True)
+        grass.run_command('r.out.gdal', input = 'nstr_seg',output =os.path.join(self.tempfolder,'nstr_seg.tif'),format= 'GTiff',overwrite = True)    
+        grass.run_command('r.stream.basins',direction = 'ndir_Grass', stream = 'nstr_seg', basins = 'Net_cat',overwrite = True)        
+        grass.run_command('r.out.gdal', input = 'Net_cat',output =os.path.join(self.tempfolder,'Net_cat.tif'),format= 'GTiff',overwrite = True)
+        
+        grass.run_command('r.to.vect', input='Net_cat',output='Net_cat_F1',type='area', overwrite = True)    
+
+        ####   dissolve final catchment polygons    
+        grass.run_command('v.db.addcolumn', map= 'Net_cat_F1', columns = "Gridcode VARCHAR(40)")
+        grass.run_command('v.db.addcolumn', map= 'Net_cat_F1', columns = "Area_m double")
+        
+        grass.run_command('v.db.update', map= 'Net_cat_F1', column = "Gridcode",qcol = 'value')
+        #    grass.run_command('v.reclass', input= 'finalcat_F1', column = "Gridcode",output = 'finalcat_F',overwrite = True)
+        grass.run_command('v.dissolve', input= 'Net_cat_F1', column = "Gridcode",output = 'Net_cat_F',overwrite = True)
+        grass.run_command('v.to.db', map= 'Net_cat_F', option = "area",col = 'Area_m', units = 'meters', overwrite = True)
+        
+        grass.run_command('v.out.ogr', input = 'Net_cat_F',output = os.path.join(self.tempfolder,'Net_cat_F.shp'),format= 'ESRI_Shapefile',overwrite = True)
+        
+
+        grass.run_command('r.mapcalc',expression = 'str1 = if(isnull(str_grass_r),null(),1)',overwrite = True)
+        
+        grass.run_command('r.to.vect',  input = 'str1',output = 'str1', type ='line' ,overwrite = True)
+
+
+        grass.run_command('v.overlay',ainput = 'str1',binput = 'Net_cat_F',operator = 'and',output = 'nstr_nfinalcat',overwrite = True)  
+        grass.run_command('v.out.ogr', input = 'nstr_nfinalcat',output = os.path.join(self.tempfolder,'nstr_nfinalcat.shp'),format= 'ESRI_Shapefile',overwrite = True)
+        processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'nstr_nfinalcat.shp'),'FIELD':'b_Gridcode','OUTPUT':os.path.join(self.tempfolder, "nstr_nfinalcat_F.shp")}) 
+        grass.run_command("v.import", input =os.path.join(self.tempfolder, "nstr_nfinalcat_F.shp"), output = 'nstr_nfinalcat_F', overwrite = True)               
+  
+
+        
+        grass.run_command('v.db.addcolumn', map= 'nstr_nfinalcat_F', columns = "Gridcode VARCHAR(40)")
+        grass.run_command('v.db.addcolumn', map= 'nstr_nfinalcat_F', columns = "Length_m double")
+        
+        grass.run_command('v.db.update', map= 'nstr_nfinalcat_F', column = "Gridcode",qcol = 'b_Gridcode')
+        grass.run_command('v.to.db', map= 'nstr_nfinalcat_F', option = "length",col = 'Length_m', units = 'meters', overwrite = True)
+        grass.run_command('v.db.dropcolumn', map= 'nstr_nfinalcat_F', columns = ['Shape','b_Gridcode'])        
+        grass.run_command('v.out.ogr', input = 'nstr_nfinalcat_F',output = os.path.join(self.tempfolder,'nstr_nfinalcat_F_Final.shp'),format= 'ESRI_Shapefile',overwrite = True)
+        Qgs.exit()
+        PERMANENT.close()
+        
     def RoutingNetworkTopologyUpdateToolset(self,projection = 'default'):
         import grass.script as grass
         from grass.script import array as garray
@@ -1609,7 +1726,7 @@ class LRRT:
         from grass_session import Session
 
         os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='-1'))
-    
+        
     
         if projection != 'default':
 
