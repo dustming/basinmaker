@@ -1171,7 +1171,7 @@ class LRRT:
 #########################################################################################
 ##### function to enerate mask based on the most donwstream polygon id
 ##### Output: self.Path_Maskply    
-    def Generatmaskregion(self):
+    def Generatmaskregion(self,Path_OutletPoint = '#'):
         #### g
         ### Set up QGIS enviroment 
         QgsApplication.setPrefixPath(self.qgisPP, True)
@@ -1245,13 +1245,19 @@ class LRRT:
             from grass.pygrass.modules import Module
             from grass_session import Session
             
-            os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='-1'))
+            os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
             PERMANENT = Session()
             PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
-    
+            
             grass.run_command("r.import", input = self.Path_dem, output = 'dem', overwrite = True)
             grass.run_command('g.region', raster='dem')
-            grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
+            #### create watershed mask or use dem as mask
+            if Path_OutletPoint != '#':
+                grass.run_command('r.watershed',elevation = 'dem', drainage = 'dir_Grass', overwrite = True)
+                grass.run_command('r.water.outlet',input = 'dir_Grass', output = 'wat_mask', coordinates  = Path_OutletPoint,overwrite = True)
+                grass.run_command('r.mask'  , raster='wat_mask', maskcats = '*',overwrite = True)
+            else:
+                grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
             
             grass.run_command('r.out.gdal', input = 'MASK',output = os.path.join(self.tempfolder, 'Mask1.tif'),format= 'GTiff',overwrite = True)
             processing.run("gdal:polygonize", {'INPUT':os.path.join(self.tempfolder, 'Mask1.tif'),'BAND':1,'FIELD':'DN','EIGHT_CONNECTEDNESS':False,'EXTRA':'','OUTPUT':os.path.join(self.tempfolder, 'HyMask.shp')})
@@ -1558,14 +1564,14 @@ class LRRT:
 
         sqlstat="SELECT cat, value FROM Pourpoints_2_F"
         df_P_2_F = pd.read_sql_query(sqlstat, con)
-        df_P_2_F.loc[len(df_P_1_F),'cat'] = '*'
-        df_P_2_F.loc[len(df_P_1_F)-1,'value'] = 'NULL'
+        df_P_2_F.loc[len(df_P_2_F),'cat'] = '*'
+        df_P_2_F.loc[len(df_P_2_F)-1,'value'] = 'NULL'
         df_P_2_F['eq'] = '='
         df_P_2_F.to_csv(os.path.join(self.tempfolder,'rule_cat4.txt'),sep = ' ',columns = ['cat','eq','value'],header = False,index=False)
         grass.run_command('r.reclass', input='cat4_t',output = 'cat4',rules =os.path.join(self.tempfolder,'rule_cat4.txt'), overwrite = True)
 
 
-#        grass.run_command('r.out.gdal', input = 'cat4',output = os.path.join(self.tempfolder,'cat4.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
+        grass.run_command('r.out.gdal', input = 'cat4',output = os.path.join(self.tempfolder,'cat4.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
         cat4_array =  garray.array(mapname="cat4")
         rowcols = np.argwhere(cat4_array == 0)
         cat4_array[rowcols[:,0],rowcols[:,1]] = -9999
