@@ -12,9 +12,8 @@ import tempfile
 import copy
 import pandas as pd
 import sqlite3
-from Calculate_River_Len_Slope import Getcatrivlenslope_hydroshed
 from GetBasinoutlet import Getbasinoutlet,Nextcell
-
+from Generatecatinfo import Generatecatinfo,Generatecatinfo_riv,calculateChannaln
 
 def writechanel(chname,chwd,chdep,chslope,orchnl,elev,floodn,channeln,iscalmanningn):
     ### Following SWAT instructions, assume a trapezoidal shape channel, with channel sides has depth and width ratio of 2. zch = 2
@@ -235,29 +234,6 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn):
 
 
 
-def calculateChannaln(width,depth,Q,slope):
-    zch = 2
-    sidwd = zch * depth ###river side width
-    tab = "          "
-    botwd = width - 2*sidwd ### river
-    if (botwd < 0):
-        botwd = 0.5*width
-        sidwd = 0.5*0.5*width
-        zch = (width - botwd)/2/depth
-    Ach = botwd*depth + 2*zch*depth*depth/2
-#    arcpy.AddMessage(depth)
-#    arcpy.AddMessage(zch)
-#    arcpy.AddMessage(botwd)
-#    arcpy.AddMessage(width)
-#    arcpy.AddMessage(slope)
-
-    Pch = botwd + 2*depth*(1+zch**2)**0.5
-    Rch = float(Ach)/float(Pch)  ### in meter
-    V = float(Q)/float(Ach)
-    n = (Rch**(2.0/3.0))*(slope**(1.0/2.0))/V
-    return n
-
-
 
 
 def Writecatinfotodbf(catinfo):
@@ -300,140 +276,6 @@ def Writecatinfotodbf(catinfo):
                                            catinfo['Q_Mean'].values[i],catinfo['RivSlope'].values[i])
 
     return catinfo
-
-
-
-
-
-def Getfloodplain_n(catid,finalcat,rivlen,landuse,landuseinfo):
-    catidx = finalcat == catid
-    rivids = rivlen > 0
-    rivincat = np.logical_and(catidx, rivids)
-    Landtypes = landuse[rivincat]
-    Landtypeid = np.unique(Landtypes)
-    Landtypeid1 = Landtypeid[Landtypeid >= 0]
-    Landtypeid2 = Landtypeid1[Landtypeid1 > 0]
-    Landtypes = Landtypes[Landtypes > 0]
-    if len(Landtypes) > 0 and float(len(Landtypeid2))/float(len(Landtypeid1)) >= 0.1:
-        sum = 0.0
-        for i in range(0,len(Landtypeid2)):
-            iid = Landtypeid2[i]
-            sum = sum + landuseinfo[landuseinfo['RasterV'] == iid]['MannV'].values*len(np.argwhere(Landtypes == iid))
-        floodn = sum/(len(Landtypes))
-    else:
-        Landtypes2 = landuse[catidx]
-        Landtypes2 = Landtypes2[Landtypes2>0]
-        Landtypeiicat = np.unique(Landtypes2)
-        Landtypeiicat = Landtypeiicat[Landtypeiicat > 0]
-        if len(Landtypes2) > 0:
-            sum = 0.0
-            for i in range(0,len(Landtypeiicat)):
-                iid = Landtypeiicat[i]
-                sum = sum + landuseinfo[landuseinfo['RasterV'] == iid]['MannV'].values*len(np.argwhere(Landtypes2 == iid))
-            floodn = sum/(len(Landtypes2))
-        else:
-            floodn = 0.035
-#    arcpy.AddMessage(floodn)
-    return float(floodn)
-
-def Getcatwd(catid,finalcat,width,depth,Q_Mean,DA,rivpath):
-    catregs = finalcat == catid
-    riverp = rivpath > 0
-    rivincat = np.logical_and(catregs, riverp)
-    wd = width[rivincat]
-    dp = depth[rivincat]
-    Q = Q_Mean[rivincat]
-    wd = wd[wd > 0]
-    dp = dp[dp > 0]
-    Q =  Q[Q > 0]
-    if len(wd) > 0:
-        unique, counts = np.unique(wd, return_counts=True)
-        catwd = np.average(unique, weights=counts)
-        unique, counts = np.unique(dp, return_counts=True)
-        catdps = np.average(unique, weights=counts)
-        unique, counts =  np.unique(Q, return_counts=True)
-        catQ = np.average(unique, weights=counts)
-    else:
-        catwd = -9
-        catdps = -9
-        catQ = -9
-    return catwd,catdps,catQ
-############################################################
-
-
-
-
-
-def Generatecatinfo(Watseds,fac,fdir,lake,dem,area,catinfo,allcatid,lakeinfo,width,depth,
-                    rivlen,obs,nrows,ncols,slope,landuse,landuseinfo,Q_Mean):
-    finalcat = copy.copy(Watseds)
-    rivpath = copy.copy(Watseds)
-    rivpath[:,:] = -9999
-    for i in range(0,len(allcatid)):
-#        print("subid      " + str(allcatid[i].astype(int)))
-        catid = allcatid[i].astype(int)
-        catinfo.loc[i,'SubId'] = catid
-        rowcol = np.argwhere(finalcat==catid).astype(int)
-        trow,tcol = Getbasinoutlet(catid,finalcat,fac,fdir,nrows,ncols)
-        nrow,ncol = Nextcell(fdir,trow,tcol)### get the downstream catchment id
-        if nrow < 0 or ncol < 0:
-            catinfo.loc[i,'DowSubId'] = -1
-        elif nrow >= nrows or ncol >= ncols:
-            catinfo.loc[i,'DowSubId'] = -1
-        elif finalcat[nrow,ncol] <= 0:
-            catinfo.loc[i,'DowSubId'] = -1
-        else:
-            catinfo.loc[i,'DowSubId'] = finalcat[nrow,ncol]
-#        catinfo[i,2] = trow
-#        catinfo[i,3] = tcol
-################################## Get lake information
-        lakeid = lake[trow,tcol]
-        if lakeid > 0:
-            slakeinfo = lakeinfo.loc[lakeinfo['Hylak_id'] == lakeid]
-            catinfo.loc[i,'IsLake'] = 1
-            catinfo.loc[i,'HyLakeId'] = lakeid
-            catinfo.loc[i,'LakeVol'] = slakeinfo.iloc[0]['Vol_total']
-            catinfo.loc[i,'LakeArea']= slakeinfo.iloc[0]['Lake_area']
-            catinfo.loc[i,'LakeDepth']= slakeinfo.iloc[0]['Depth_avg']
-            catinfo.loc[i,'Laketype'] = slakeinfo.iloc[0]['Lake_type']
-#            catinfo[i,29] = min(float(len(lake[lake == lakeid]))/float(len(finalcat[finalcat == catid])),1.0)
-########Check if it is observation points
-        if obs[trow,tcol]  >= 0:
-#            arcpy.AddMessage(str(catid)+"      "+str(obs[trow,tcol]))
-            catinfo.loc[i,'IsObs'] =  obs[trow,tcol]
-########Got basin width and depth
-        catrivlen,catrivslp,catrivslp2,rivpath = Getcatrivlenslope_hydroshed(rowcol[:,0],rowcol[:,1],rivlen,dem,fac,fdir,finalcat,
-                                                trow,tcol,nrows,ncols,slope,rivpath)
-        catwidth,catdepth,catQ = Getcatwd(catid,finalcat,width,depth,Q_Mean,-1,rivlen) ### width depth in m
-#        arcpy.AddMessage("catid is    " + str(catid) + "    " + str(catwidth))
-        catinfo.loc[i,'MeanElev'] = float(sum(dem[rowcol[:,0],rowcol[:,1]])/float(len(rowcol))) ### average elevation
-#        catinfo[i,13] = float(sum(area[rowcol[:,0],rowcol[:,1]]))/1000/1000  #### maximum area in km^2
-#        catinfo[i,14] = max(dem[rowcol[:,0],rowcol[:,1]])  #### maximum dem
-#        catinfo[i,15] = min(dem[rowcol[:,0],rowcol[:,1]])  #### maximum dem
-#        catinfo[i,16] = dem[trow,tcol] #### outlet elevation
-        catinfo.loc[i,'BkfWidth'] = catwidth
-        catinfo.loc[i,'BkfDepth'] = catdepth
-#        catinfo[i,19] = 0.035
-#######Got basin area and rivlen
-#        catinfo[i,11] = np.mean(area[rowcol[:,0],rowcol[:,1]])
-        catinfo.loc[i,'Rivlen'] = catrivlen
-        slopet = slope[rowcol[:,0],rowcol[:,1]]
-        slopet = slopet[slopet>0,]
-        catinfo.loc[i,'BasinSlope'] = np.mean(slopet)
-        if catrivslp < 0:
-            catinfo.loc[i,'RivSlope'] = 0.0001234
-        else:
-            catinfo.loc[i,'RivSlope'] = catrivslp
-#        catinfo[i,27] = catrivslp2
-        if len(slopet) < 1:
-            catinfo.loc[i,'RivSlope'] = 0.0001234
-            catinfo.loc[i,'BasinSlope'] = 0.0001234
-        catinfo.loc[i,'FloodP_n'] = Getfloodplain_n(catid,finalcat,rivlen,landuse,landuseinfo)
-        catinfo.loc[i,'Q_Mean'] = catQ
-#    writeraster(outputFolder + "/" + "rivpath.asc",rivpath,OutputFolder + "/" + "dir")
-    return catinfo,rivpath
-
-
 
 
 def checklakeboundary(lake1,lid,p_row,p_col):
@@ -1161,7 +1003,7 @@ class LRRT:
         self.Path_ObsPoint = os.path.join(self.tempfolder,'obspoint.shp')
         self.Path_Landuseinfo = os.path.join(self.tempfolder,'landuseinfo.csv')
         self.Path_allLakeRas = os.path.join(self.tempfolder,'hylakegdal.tif')
-        self.Path_finalcatinfo = os.path.join(self.tempfolder,'catinfo.csv')
+        self.Path_finalcatinfo_riv = os.path.join(self.tempfolder,'catinfo_riv.csv')
         self.Path_alllakeinfoinfo = os.path.join(self.tempfolder,'hylake.csv')
         self.Path_Maskply = os.path.join(self.tempfolder, 'HyMask2.shp')
        
@@ -1598,7 +1440,7 @@ class LRRT:
         PERMANENT.close()
                 
 ############################################################################3
-    def RoutingNetworkTopologyUpdateToolset_riv(self):
+    def RoutingNetworkTopologyUpdateToolset_riv(self,projection = 'default'):
         import grass.script as grass
         from grass.script import array as garray
         import grass.script.setup as gsetup
@@ -1626,20 +1468,14 @@ class LRRT:
         PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
         grass.run_command('g.region', raster='dem')
         
+        con = sqlite3.connect(self.sqlpath)
+        
         finalcat_arr = garray.array(mapname="finalcat")
-        acc_array = garray.array(mapname="acc_grass")
-        dir_array = garray.array(mapname="dir_Arcgis")#ndir_Arcgis
-        Lake1_arr = garray.array(mapname="SelectedLakes")    
-        dem_array = garray.array(mapname="dem")
-        rivlen_array = garray.array(mapname="Length")
-        area_array = garray.array(mapname="Area")
-        width_array = garray.array(mapname="width")
-        depth_array = garray.array(mapname="depth")
-        obs_array = garray.array(mapname="obs")
-        Q_mean_array = garray.array(mapname="qmean")
         str_grass_r_array = garray.array(mapname="str_grass_r")
         
-
+        self.ncols = int(finalcat_arr.shape[1])
+        self.nrows = int(finalcat_arr.shape[0])
+        
         #### generate new stream raster based on str_grass_r from acc thresthold and finalcat. 
         nstrarray = garray.array()
         nstrarray[:,:] = -9999        
@@ -1681,24 +1517,15 @@ class LRRT:
         grass.run_command('r.out.gdal', input = 'Net_cat',output =os.path.join(self.tempfolder,'Net_cat.tif'),format= 'GTiff',overwrite = True)
         
         grass.run_command('r.to.vect', input='Net_cat',output='Net_cat_F1',type='area', overwrite = True)    
-
-        ####   dissolve final catchment polygons    
         grass.run_command('v.db.addcolumn', map= 'Net_cat_F1', columns = "Gridcode VARCHAR(40)")
-        grass.run_command('v.db.addcolumn', map= 'Net_cat_F1', columns = "Area_m double")
-        
+        grass.run_command('v.db.addcolumn', map= 'Net_cat_F1', columns = "Area_m double")        
         grass.run_command('v.db.update', map= 'Net_cat_F1', column = "Gridcode",qcol = 'value')
-        #    grass.run_command('v.reclass', input= 'finalcat_F1', column = "Gridcode",output = 'finalcat_F',overwrite = True)
         grass.run_command('v.dissolve', input= 'Net_cat_F1', column = "Gridcode",output = 'Net_cat_F',overwrite = True)
-        grass.run_command('v.to.db', map= 'Net_cat_F', option = "area",col = 'Area_m', units = 'meters', overwrite = True)
-        
+#        grass.run_command('v.to.db', map= 'Net_cat_F', option = "area",col = 'Area_m', units = 'meters', overwrite = True)        
         grass.run_command('v.out.ogr', input = 'Net_cat_F',output = os.path.join(self.tempfolder,'Net_cat_F.shp'),format= 'ESRI_Shapefile',overwrite = True)
         
-
         grass.run_command('r.mapcalc',expression = 'str1 = if(isnull(str_grass_r),null(),1)',overwrite = True)
-        
         grass.run_command('r.to.vect',  input = 'str1',output = 'str1', type ='line' ,overwrite = True)
-
-
         grass.run_command('v.overlay',ainput = 'str1',binput = 'Net_cat_F',operator = 'and',output = 'nstr_nfinalcat',overwrite = True)  
         grass.run_command('v.out.ogr', input = 'nstr_nfinalcat',output = os.path.join(self.tempfolder,'nstr_nfinalcat.shp'),format= 'ESRI_Shapefile',overwrite = True)
         processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'nstr_nfinalcat.shp'),'FIELD':'b_Gridcode','OUTPUT':os.path.join(self.tempfolder, "nstr_nfinalcat_F.shp")}) 
@@ -1710,12 +1537,95 @@ class LRRT:
         grass.run_command('v.db.addcolumn', map= 'nstr_nfinalcat_F', columns = "Length_m double")
         
         grass.run_command('v.db.update', map= 'nstr_nfinalcat_F', column = "Gridcode",qcol = 'b_Gridcode')
-        grass.run_command('v.to.db', map= 'nstr_nfinalcat_F', option = "length",col = 'Length_m', units = 'meters', overwrite = True)
+#        grass.run_command('v.to.db', map= 'nstr_nfinalcat_F', option = "length",col = 'Length_m', units = 'meters', overwrite = True)
         grass.run_command('v.db.dropcolumn', map= 'nstr_nfinalcat_F', columns = ['Shape','b_Gridcode'])        
         grass.run_command('v.out.ogr', input = 'nstr_nfinalcat_F',output = os.path.join(self.tempfolder,'nstr_nfinalcat_F_Final.shp'),format= 'ESRI_Shapefile',overwrite = True)
-        Qgs.exit()
+        Qgs.exit()       
         PERMANENT.close()
         
+        if projection != 'default':
+
+            os.system('gdalwarp ' + "\"" + self.Path_dem +"\""+ "    "+ "\""+self.Path_demproj+"\""+ ' -t_srs  ' + "\""+projection+"\"")
+
+            project = Session()
+            project.open(gisdb=self.grassdb, location=self.grass_location_pro,create_opts=projection)
+            grass.run_command("r.import", input = self.Path_demproj, output = 'dem_proj', overwrite = True)
+            grass.run_command('g.region', raster='dem_proj')  
+        
+            grass.run_command('v.proj', location=self.grass_location_geo,mapset = 'PERMANENT', input = 'nstr_nfinalcat_F',overwrite = True)
+            grass.run_command('v.proj', location=self.grass_location_geo,mapset = 'PERMANENT', input = 'Net_cat_F',overwrite = True)
+        
+            grass.run_command('v.to.db', map= 'Net_cat_F',option = 'area',columns = "Area_m", units = 'meters') 
+            grass.run_command('v.to.db', map= 'nstr_nfinalcat_F',option = 'length', columns = "Length_m",units = 'meters')
+        
+            grass.run_command('r.slope.aspect', elevation= 'dem_proj',slope = 'slope',aspect = 'aspect',precision = 'DCELL',overwrite = True)
+            grass.run_command('r.mapcalc',expression = 'tanslopedegree = tan(slope) ',overwrite = True) 
+            project.close 
+        
+            PERMANENT = Session()
+            PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
+            grass.run_command('g.region', raster='dem')
+            grass.run_command('v.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'nstr_nfinalcat_F',overwrite = True)
+            grass.run_command('v.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'Net_cat_F',overwrite = True) 
+            grass.run_command('r.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'tanslopedegree',overwrite = True) 
+            grass.run_command('r.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'slope',overwrite = True) 
+            grass.run_command('r.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'aspect',overwrite = True) 
+
+        Lake1_arr = garray.array(mapname="SelectedLakes")    
+        dem_array = garray.array(mapname="dem")
+        width_array = garray.array(mapname="width")
+        depth_array = garray.array(mapname="depth")
+        obs_array = garray.array(mapname="obs")
+        slope_array = garray.array(mapname="tanslopedegree")
+        aspect_array = garray.array(mapname="aspect")
+        slope_deg_array = garray.array(mapname="slope")
+        nstr_seg_array = garray.array(mapname="nstr_seg")
+        acc_array = garray.array(mapname="acc_grass")
+        dir_array = garray.array(mapname="dir_Arcgis")#ndir_Arcgis
+        Q_mean_array = garray.array(mapname="qmean")
+        landuse_array = garray.array(mapname="landuse")
+
+
+        tempinfo = Dbf5(self.Path_allLakeply[:-3] + "dbf")
+        allLakinfo = tempinfo.to_dataframe()
+        landuseinfo = pd.read_csv(self.Path_Landuseinfo_in,sep=",",low_memory=False)
+    
+    ### read length and area
+        sqlstat="SELECT Gridcode, Length_m FROM nstr_nfinalcat_F"
+        rivleninfo = pd.read_sql_query(sqlstat, con)
+    
+        sqlstat="SELECT Gridcode, Area_m FROM Net_cat_F"
+        catareainfo = pd.read_sql_query(sqlstat, con)
+        
+        
+    
+###
+
+        allcatid = np.unique(nstr_seg_array)
+        allcatid = allcatid[allcatid > 0]
+        catinfo2 = np.full((len(allcatid),20),-9999.00000)
+        
+    
+        catinfodf = pd.DataFrame(catinfo2, columns = ['SubId', "DowSubId",'RivSlope','RivLength','BasSlope','BasAspect','BasArea',
+                            'BkfWidth','BkfDepth','IsLake','HyLakeId','LakeVol','LakeDepth',
+                             'LakeArea','Laketype','IsObs','MeanElev','FloodP_n','Q_Mean','Ch_n']) 
+                             
+        catinfo= Generatecatinfo_riv(nstr_seg_array,acc_array,dir_array,Lake1_arr,dem_array,
+             catinfodf,allcatid,width_array,depth_array,obs_array,slope_array,aspect_array,landuse_array,
+             slope_deg_array,Q_mean_array,landuseinfo,allLakinfo,self.nrows,self.ncols,rivleninfo.astype(float),catareainfo.astype(float))
+             
+        catinfo.to_csv(self.Path_finalcatinfo_riv, index = None, header=True)
+    
+    
+        grass.run_command('db.in.ogr', input=self.Path_alllakeinfoinfo,output = 'alllakeinfo',overwrite = True)
+        grass.run_command('v.db.join', map= 'SelectedLakes_F',column = 'value', other_table = 'alllakeinfo',other_column ='Hylak_id', overwrite = True)
+        grass.run_command('db.in.ogr', input=self.Path_finalcatinfo_riv,output = 'result_riv',overwrite = True)
+        grass.run_command('v.db.join', map= 'nstr_nfinalcat_F',column = 'Gridcode', other_table = 'result_riv',other_column ='SubId', overwrite = True)
+        grass.run_command('v.out.ogr', input = 'nstr_nfinalcat_F',output = os.path.join(self.tempfolder,'finalriv_info1.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
+        PERMANENT.close()
+        
+            
+
     def RoutingNetworkTopologyUpdateToolset(self,projection = 'default'):
         import grass.script as grass
         from grass.script import array as garray
