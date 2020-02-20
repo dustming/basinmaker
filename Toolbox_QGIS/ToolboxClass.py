@@ -1004,6 +1004,9 @@ class LRRT:
         self.Path_Landuseinfo = os.path.join(self.tempfolder,'landuseinfo.csv')
         self.Path_allLakeRas = os.path.join(self.tempfolder,'hylakegdal.tif')
         self.Path_finalcatinfo_riv = os.path.join(self.tempfolder,'catinfo_riv.csv')
+        self.Path_finalcatinfo = os.path.join(self.tempfolder,'catinfo.csv')
+        self.Path_finalcatinfo_riv_type = os.path.join(self.tempfolder,'catinfo_riv.csvt')
+        self.Path_finalcatinfo_type = os.path.join(self.tempfolder,'catinfo.csvt')
         self.Path_alllakeinfoinfo = os.path.join(self.tempfolder,'hylake.csv')
         self.Path_Maskply = os.path.join(self.tempfolder, 'HyMask2.shp')
        
@@ -1469,80 +1472,90 @@ class LRRT:
         grass.run_command('g.region', raster='dem')
         
         con = sqlite3.connect(self.sqlpath)
+      
         
+        
+
+        
+        #### generate new stream raster based on str_grass_r from acc thresthold and finalcat.
+         
         finalcat_arr = garray.array(mapname="finalcat")
         str_grass_r_array = garray.array(mapname="str_grass_r")
-        
+
         self.ncols = int(finalcat_arr.shape[1])
-        self.nrows = int(finalcat_arr.shape[0])
+        self.nrows = int(finalcat_arr.shape[0])  
         
-        #### generate new stream raster based on str_grass_r from acc thresthold and finalcat. 
         nstrarray = garray.array()
         nstrarray[:,:] = -9999        
         ## loop for each str_grass_r
         
-        strids = np.unique(str_grass_r_array)#### cat all catchment idd
+        ## obtain all stream id 
+        strids = np.unique(str_grass_r_array)#
         strids = strids[strids>0]
-        
+        #obtain all cat id 
         fcatids = np.unique(finalcat_arr)#### cat all catchment idd
         fcatids = fcatids[fcatids>0]
+        ###A array store new stream id , old stream id and catchemtn id 
         nstrinfo = np.full((len(strids)*len(fcatids),3),-9999)   ### maximum possible number of new stream segments 
         nstrinfodf = pd.DataFrame(nstrinfo, columns = ['No_Lake_SubId', "Finalcat_SubId","With_Lake_SubId"])
+        
+        ### assign a unique stream id based on str_grass_r and final cat
         nstrid = 1
         for i in range(0,len(strids)):
             strid = strids[i]
             nstrinfodf.loc[i,'No_Lake_SubId'] = strid
-            
-            strmask = str_grass_r_array == strid
-            
-            catsinstr = finalcat_arr[strmask]
-            
-            catsinstrids = np.unique(catsinstr)
+            strmask = str_grass_r_array == strid  ### mask array, true at location of str == strid 
+            catsinstr = finalcat_arr[strmask]  ### get all cat id overlay with this stream
+            catsinstrids = np.unique(catsinstr)  ### get unique cat id overlay with this stream
             catsinstrids = catsinstrids[catsinstrids>0]
-            for j in range(0,len(catsinstrids)):
+            for j in range(0,len(catsinstrids)):   ### loop for each cat id, and assgin for a new stream id 
                 finalcatmask = finalcat_arr == catsinstrids[j]
-                mask = np.logical_and(finalcatmask, strmask)
-                nstrarray[mask] = nstrid
+                mask = np.logical_and(finalcatmask, strmask)   ### build mask for grids belong to current stream and current cat
+                nstrarray[mask] = nstrid   ## assgin new stream id to mask region
                 nstrinfodf.loc[i,'Finalcat_SubId'] = catsinstrids[j]
                 nstrinfodf.loc[i,'With_Lake_SubId'] = nstrid
                 nstrid = nstrid + 1
         temparray = garray.array()
         temparray[:,:] = -9999
         temparray[:,:] = nstrarray[:,:]
-        temparray.write(mapname="nstr_seg_t", overwrite=True)
+        temparray.write(mapname="nstr_seg_t", overwrite=True)  #### write new stream id to a grass raster 
         grass.run_command('r.null', map='nstr_seg_t',setnull=-9999)
         grass.run_command('r.mapcalc',expression = 'nstr_seg = int(nstr_seg_t)',overwrite = True)
-        grass.run_command('r.out.gdal', input = 'nstr_seg',output =os.path.join(self.tempfolder,'nstr_seg.tif'),format= 'GTiff',overwrite = True)    
+        grass.run_command('r.out.gdal', input = 'nstr_seg',output =os.path.join(self.tempfolder,'nstr_seg.tif'),format= 'GTiff',overwrite = True)  
+        
+        ### Generate new catchment based on new stream   
         grass.run_command('r.stream.basins',direction = 'ndir_Grass', stream = 'nstr_seg', basins = 'Net_cat',overwrite = True)        
         grass.run_command('r.out.gdal', input = 'Net_cat',output =os.path.join(self.tempfolder,'Net_cat.tif'),format= 'GTiff',overwrite = True)
-        
-        grass.run_command('r.to.vect', input='Net_cat',output='Net_cat_F1',type='area', overwrite = True)    
-        grass.run_command('v.db.addcolumn', map= 'Net_cat_F1', columns = "Gridcode VARCHAR(40)")
+        grass.run_command('r.to.vect', input='Net_cat',output='Net_cat_F1',type='area', overwrite = True)    ## save to vector 
+        grass.run_command('v.db.addcolumn', map= 'Net_cat_F1', columns = "GC_str VARCHAR(40)")
         grass.run_command('v.db.addcolumn', map= 'Net_cat_F1', columns = "Area_m double")        
-        grass.run_command('v.db.update', map= 'Net_cat_F1', column = "Gridcode",qcol = 'value')
-        grass.run_command('v.dissolve', input= 'Net_cat_F1', column = "Gridcode",output = 'Net_cat_F',overwrite = True)
-#        grass.run_command('v.to.db', map= 'Net_cat_F', option = "area",col = 'Area_m', units = 'meters', overwrite = True)        
+        grass.run_command('v.db.update', map= 'Net_cat_F1', column = "GC_str",qcol = 'value')
+        grass.run_command('v.dissolve', input= 'Net_cat_F1', column = "GC_str",output = 'Net_cat_F',overwrite = True) ### dissolve based on gridcode 
         grass.run_command('v.out.ogr', input = 'Net_cat_F',output = os.path.join(self.tempfolder,'Net_cat_F.shp'),format= 'ESRI_Shapefile',overwrite = True)
+        grass.run_command('v.db.addcolumn', map= 'Net_cat_F', columns = "Gridcode INT")        
+        grass.run_command('v.db.update', map= 'Net_cat_F', column = "Gridcode",qcol = 'GC_str')
         
-        grass.run_command('r.mapcalc',expression = 'str1 = if(isnull(str_grass_r),null(),1)',overwrite = True)
+
+        # create a river network shpfile that have river segment based on   'Net_cat_F.shp'
+        grass.run_command('r.mapcalc',expression = 'str1 = if(isnull(str_grass_r),null(),1)',overwrite = True) ## a rive 
         grass.run_command('r.to.vect',  input = 'str1',output = 'str1', type ='line' ,overwrite = True)
         grass.run_command('v.overlay',ainput = 'str1',binput = 'Net_cat_F',operator = 'and',output = 'nstr_nfinalcat',overwrite = True)  
         grass.run_command('v.out.ogr', input = 'nstr_nfinalcat',output = os.path.join(self.tempfolder,'nstr_nfinalcat.shp'),format= 'ESRI_Shapefile',overwrite = True)
-        processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'nstr_nfinalcat.shp'),'FIELD':'b_Gridcode','OUTPUT':os.path.join(self.tempfolder, "nstr_nfinalcat_F.shp")}) 
+        processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'nstr_nfinalcat.shp'),'FIELD':'b_GC_str','OUTPUT':os.path.join(self.tempfolder, "nstr_nfinalcat_F.shp")}) 
         grass.run_command("v.import", input =os.path.join(self.tempfolder, "nstr_nfinalcat_F.shp"), output = 'nstr_nfinalcat_F', overwrite = True)               
   
 
         
-        grass.run_command('v.db.addcolumn', map= 'nstr_nfinalcat_F', columns = "Gridcode VARCHAR(40)")
+        grass.run_command('v.db.addcolumn', map= 'nstr_nfinalcat_F', columns = "Gridcode INT")
         grass.run_command('v.db.addcolumn', map= 'nstr_nfinalcat_F', columns = "Length_m double")
         
-        grass.run_command('v.db.update', map= 'nstr_nfinalcat_F', column = "Gridcode",qcol = 'b_Gridcode')
-#        grass.run_command('v.to.db', map= 'nstr_nfinalcat_F', option = "length",col = 'Length_m', units = 'meters', overwrite = True)
-        grass.run_command('v.db.dropcolumn', map= 'nstr_nfinalcat_F', columns = ['Shape','b_Gridcode'])        
-        grass.run_command('v.out.ogr', input = 'nstr_nfinalcat_F',output = os.path.join(self.tempfolder,'nstr_nfinalcat_F_Final.shp'),format= 'ESRI_Shapefile',overwrite = True)
+        grass.run_command('v.db.update', map= 'nstr_nfinalcat_F', column = "Gridcode",qcol = 'b_GC_str')
+        grass.run_command('v.db.dropcolumn', map= 'nstr_nfinalcat_F', columns = ['b_GC_str'])       
+#        grass.run_command('v.out.ogr', input = 'nstr_nfinalcat_F',output = os.path.join(self.tempfolder,'nstr_nfinalcat_F_Final.shp'),format= 'ESRI_Shapefile',overwrite = True)
         Qgs.exit()       
         PERMANENT.close()
         
+        ### Calulate catchment area slope river length under projected coordinates system. 
         if projection != 'default':
 
             os.system('gdalwarp ' + "\"" + self.Path_dem +"\""+ "    "+ "\""+self.Path_demproj+"\""+ ' -t_srs  ' + "\""+projection+"\"")
@@ -1571,6 +1584,8 @@ class LRRT:
             grass.run_command('r.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'slope',overwrite = True) 
             grass.run_command('r.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'aspect',overwrite = True) 
 
+        ### Add attributes to each catchments 
+        # read raster arrays 
         Lake1_arr = garray.array(mapname="SelectedLakes")    
         dem_array = garray.array(mapname="dem")
         width_array = garray.array(mapname="width")
@@ -1585,40 +1600,35 @@ class LRRT:
         Q_mean_array = garray.array(mapname="qmean")
         landuse_array = garray.array(mapname="landuse")
 
-
+        ## read landuse and lake infomation data 
         tempinfo = Dbf5(self.Path_allLakeply[:-3] + "dbf")
         allLakinfo = tempinfo.to_dataframe()
         landuseinfo = pd.read_csv(self.Path_Landuseinfo_in,sep=",",low_memory=False)
-    
     ### read length and area
         sqlstat="SELECT Gridcode, Length_m FROM nstr_nfinalcat_F"
         rivleninfo = pd.read_sql_query(sqlstat, con)
-    
         sqlstat="SELECT Gridcode, Area_m FROM Net_cat_F"
         catareainfo = pd.read_sql_query(sqlstat, con)
         
-        
+        print(catareainfo)
     
-###
-
         allcatid = np.unique(nstr_seg_array)
         allcatid = allcatid[allcatid > 0]
-        catinfo2 = np.full((len(allcatid),20),-9999.00000)
-        
-    
+        catinfo2 = np.full((len(allcatid),20),-9999.00000)    
         catinfodf = pd.DataFrame(catinfo2, columns = ['SubId', "DowSubId",'RivSlope','RivLength','BasSlope','BasAspect','BasArea',
                             'BkfWidth','BkfDepth','IsLake','HyLakeId','LakeVol','LakeDepth',
-                             'LakeArea','Laketype','IsObs','MeanElev','FloodP_n','Q_Mean','Ch_n']) 
-                             
+                             'LakeArea','Laketype','IsObs','MeanElev','FloodP_n','Q_Mean','Ch_n'])                      
         catinfo= Generatecatinfo_riv(nstr_seg_array,acc_array,dir_array,Lake1_arr,dem_array,
              catinfodf,allcatid,width_array,depth_array,obs_array,slope_array,aspect_array,landuse_array,
              slope_deg_array,Q_mean_array,landuseinfo,allLakinfo,self.nrows,self.ncols,rivleninfo.astype(float),catareainfo.astype(float))
              
+        catinfo["SubId"]= catinfo["SubId"].astype(str)          
         catinfo.to_csv(self.Path_finalcatinfo_riv, index = None, header=True)
     
-    
+        ### add lake info to selected laeks 
         grass.run_command('db.in.ogr', input=self.Path_alllakeinfoinfo,output = 'alllakeinfo',overwrite = True)
         grass.run_command('v.db.join', map= 'SelectedLakes_F',column = 'value', other_table = 'alllakeinfo',other_column ='Hylak_id', overwrite = True)
+        ### add catchment info to all river segment 
         grass.run_command('db.in.ogr', input=self.Path_finalcatinfo_riv,output = 'result_riv',overwrite = True)
         grass.run_command('v.db.join', map= 'nstr_nfinalcat_F',column = 'Gridcode', other_table = 'result_riv',other_column ='SubId', overwrite = True)
         grass.run_command('v.out.ogr', input = 'nstr_nfinalcat_F',output = os.path.join(self.tempfolder,'finalriv_info1.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
@@ -1718,7 +1728,9 @@ class LRRT:
         slope_array = garray.array(mapname="tanslopedegree")
         landuse_array = garray.array(mapname="landuse")
     
-    
+        self.ncols = int(finalcat_arr.shape[1])
+        self.nrows = int(finalcat_arr.shape[0])
+            
         temparray = garray.array()
         temparray[:,:] = -9999
     
