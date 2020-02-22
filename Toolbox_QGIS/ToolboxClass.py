@@ -13,7 +13,7 @@ import copy
 import pandas as pd
 import sqlite3
 from GetBasinoutlet import Getbasinoutlet,Nextcell
-from Generatecatinfo import Generatecatinfo,Generatecatinfo_riv,calculateChannaln
+from Generatecatinfo import Generatecatinfo,Generatecatinfo_riv,calculateChannaln,Writecatinfotodbf
 
 def writechanel(chname,chwd,chdep,chslope,orchnl,elev,floodn,channeln,iscalmanningn):
     ### Following SWAT instructions, assume a trapezoidal shape channel, with channel sides has depth and width ratio of 2. zch = 2
@@ -236,46 +236,7 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn):
 
 
 
-def Writecatinfotodbf(catinfo):
 
-    for i in range(0,len(catinfo)):
-        if catinfo['SubId'].values[i] == catinfo['DowSubId'].values[i]:
-            catinfo.loc[i,'DowSubId'] = -1
-        
-        if catinfo['BkfWidth'].values[i] < 0:           #### if no bankfulll width data avaiable for this catchment
-            twidth = catinfo['BkfWidth'].values[i]      
-            ccurid = catinfo['SubId'].values[i]      ### ccurid  is the current catchment id 
-            isdown = -1
-            while(twidth < 0 and ccurid > 0):        
-                downid = catinfo[catinfo['SubId'] == ccurid]['DowSubId'].values[0]   ### get the downstream if of current catchment 
-                if downid <= 0:                                   ### if no donwstream catchment exist 
-                    twidth = 1.2345                               #### define a default value if not downstream exist and upstream do not have bankfull width data
-                    ccurid = -1
-                    isdown = -1
-                else:                                              ### if down stream exist
-                    if ccurid == downid:                           ### if downstream id = current catchment id;; downstream catchemnt is not exist
-                        twidth = 1.2345
-                        ccurid = -1
-                        isdown = -1
-                    else:
-                        isdown = 1                                    
-                        dowcatinfo = catinfo[catinfo['SubId'] ==downid]  ### get downstream id  
-                        twidth = dowcatinfo['BkfWidth'].values[0]                      ### update twidth catchment with  the downstream id 
-                        ccurid = dowcatinfo['SubId'].values[0]                       ### set currid with
-#                arcpy.AddMessage(str(sinfo[0,0]) +"       "+ str(twidth))
-            if twidth == 1.2345 and ccurid == -1:
-                catinfo.loc[i,'BkfWidth'] = 1.2345
-                catinfo.loc[i,'BkfDepth'] = 1.2345
-                catinfo.loc[i,'Q_Mean'] = 1.2345
-            elif isdown == 1:
-                catinfo.loc[i,'BkfWidth'] =dowcatinfo['BkfWidth'].values[0]
-                catinfo.loc[i,'BkfDepth'] =dowcatinfo['BkfDepth'].values[0]
-                catinfo.loc[i,'Q_Mean'] = dowcatinfo['Q_Mean'].values[0]
-                            
-        catinfo.loc[i,'Ch_n'] = calculateChannaln(catinfo['BkfWidth'].values[i],catinfo['BkfDepth'].values[i],
-                                           catinfo['Q_Mean'].values[i],catinfo['RivSlope'].values[i])
-
-    return catinfo
 
 
 def checklakeboundary(lake1,lid,p_row,p_col):
@@ -1015,7 +976,10 @@ class LRRT:
 
 #########################################################################################
 ##### function to enerate mask based on the most donwstream polygon id
-##### Output: self.Path_Maskply    
+##### Output: For using hydroshed products the output is a mask polygon: self.Path_Maskply
+#####         For using non hydroshed product, the output is a mask based on either dem or 
+#####              a rough watershed delineaiton resut. depend on Path_OutletPoint value
+#####              at the same time flow directio and accumulation is caculated for this region 
     def Generatmaskregion(self,Path_OutletPoint = '#'):
         #### g
         ### Set up QGIS enviroment 
@@ -1027,8 +991,7 @@ class LRRT:
         feedback = QgsProcessingFeedback()
         Processing.initialize()
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
-        
-        
+
         if self.OutHyID > 0:
             hyinfocsv = self.Path_hyshdply_in[:-3] + "dbf"
             tempinfo = Dbf5(hyinfocsv)
@@ -1098,8 +1061,8 @@ class LRRT:
             grass.run_command('g.region', raster='dem')
             #### create watershed mask or use dem as mask
             if Path_OutletPoint != '#':
-                grass.run_command('r.watershed',elevation = 'dem', drainage = 'dir_Grass', overwrite = True)
-                grass.run_command('r.water.outlet',input = 'dir_Grass', output = 'wat_mask', coordinates  = Path_OutletPoint,overwrite = True)
+                grass.run_command('r.watershed',elevation = 'dem', drainage = 'dir_grass',accumulation = 'acc_grass',flags = 's', overwrite = True)
+                grass.run_command('r.water.outlet',input = 'dir_grass', output = 'wat_mask', coordinates  = Path_OutletPoint,overwrite = True)
                 grass.run_command('r.mask'  , raster='wat_mask', maskcats = '*',overwrite = True)
             else:
                 grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
@@ -1160,10 +1123,9 @@ class LRRT:
         os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='-1'))
         PERMANENT = Session()
         PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
-        
-        if self.OutHyID <= 0:
-            grass.run_command('g.region', raster='dem')
-        else:
+        ###  hydroshed product use cliped dem to setup g.region and g.mask 
+        ###  non hydroshed product the g.region and g.mask is defined in generatemask funciton 
+        if self.OutHyID > 0:   
             grass.run_command("r.import", input = self.Path_dem, output = 'dem', overwrite = True)
             grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
             grass.run_command('g.region', raster='dem')
@@ -1171,44 +1133,41 @@ class LRRT:
         strtemp_array = garray.array(mapname="dem")
         self.ncols = int(strtemp_array.shape[1])
         self.nrows = int(strtemp_array.shape[0])
-#        print(self.nrows,self.ncols)
-        ### process vector data 
+
+        ### process vector data, clip and import 
         processing.run("native:clip", {'INPUT':self.Path_Lakefile_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_allLakeply},context = context)
         processing.run("native:clip", {'INPUT':self.Path_WiDep_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_WidDepLine},context = context)
         processing.run("native:clip", {'INPUT':self.Path_obspoint_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_ObsPoint},context = context)
-
-        
         grass.run_command("v.import", input = self.Path_WidDepLine, output = 'WidDep', overwrite = True)
         grass.run_command("v.import", input = self.Path_ObsPoint, output = 'obspoint', overwrite = True)
         grass.run_command("v.import", input = self.Path_allLakeply, output = 'Hylake', overwrite = True)
 
-        if self.Path_dir_in != '#':
+
+        if self.Path_dir_in != '#':  ### Hydroshed provided with dir 
             grass.run_command("r.external", input = self.Path_dir_in, output = 'dir_in', overwrite = True)
             grass.run_command("r.clip", input = 'dir_in', output = 'dir_Arcgis', overwrite = True, flags = 'r')
-            grass.run_command('r.reclass', input='dir_Arcgis',output = 'dir_Grass',rules =os.path.join(self.RoutingToolPath,'Arcgis2GrassDIR.txt'), overwrite = True)
-        else:
-            grass.run_command('r.watershed',elevation = 'dem', drainage = 'dir_Grass', overwrite = True)
-            grass.run_command('r.reclass', input='dir_Grass',output = 'dir_Arcgis',rules = os.path.join(self.RoutingToolPath,'Grass2ArcgisDIR.txt'), overwrite = True)
+            grass.run_command('r.reclass', input='dir_Arcgis',output = 'dir_grass',rules =os.path.join(self.RoutingToolPath,'Arcgis2GrassDIR.txt'), overwrite = True)
+        else:  ### non hydroshed if dir has been build 
+            dirbuid = grass.find_file('dir_grass', element = 'cell')
+            if (len(dirbuid['file']) <=0):
+                grass.run_command('r.watershed',elevation = 'dem', drainage = 'dir_grass', accumulation = 'acc_grass',flags = 's', overwrite = True)
+            grass.run_command('r.reclass', input='dir_grass',output = 'dir_Arcgis',rules = os.path.join(self.RoutingToolPath,'Grass2ArcgisDIR.txt'), overwrite = True)
     
         copyfile(self.Path_Landuseinfo_in, self.Path_Landuseinfo) 
         grass.run_command("r.external", input = self.Path_Landuse_in, output = 'landuse_in', overwrite = True)
         grass.run_command("r.clip", input = 'landuse_in', output = 'landuse', overwrite = True)        
     
-    
+        ### change lake vector to lake raster.... with -at option 
         os.system('gdal_rasterize -at -of GTiff -a_nodata -9999 -a Hylak_id -tr  '+ str(self.cellSize) + "  " +str(self.cellSize) +"   " + "\"" +  self.Path_allLakeply +"\""+ "    "+ "\""+self.Path_allLakeRas+"\"")
-    
         grass.run_command("r.in.gdal", input = self.Path_allLakeRas, output = 'alllakeraster_in', overwrite = True)
-#    grass.run_command("r.null", input = 'alllakeraster_in', setnull = -9999)
-
+        grass.run_command('r.mapcalc',expression = 'alllake = int(alllakeraster_in)',overwrite = True)
+        grass.run_command("r.null", map = 'alllake', setnull = -9999)
+        ### rasterize other vectors 
         grass.run_command('v.to.rast',input = 'WidDep',output = 'width',use = 'attr',attribute_column = 'WIDTH',overwrite = True)
         grass.run_command('v.to.rast',input = 'WidDep',output = 'depth',use = 'attr',attribute_column = 'DEPTH',overwrite = True)
         grass.run_command('v.to.rast',input = 'WidDep',output = 'qmean',use = 'attr',attribute_column = 'Q_Mean2',overwrite = True)
         grass.run_command('v.to.rast',input = 'obspoint',output = 'obs',use = 'attr',attribute_column = 'Obs_ID',overwrite = True)
-#    grass.run_command('v.to.rast',input = 'Hylake',output = 'alllake',use = 'attr',attribute_column = 'Hylak_id',overwrite = True)
 
-        grass.run_command('r.mapcalc',expression = 'alllake = int(alllakeraster_in)',overwrite = True)
-        grass.run_command("r.null", map = 'alllake', setnull = -9999)
-    
         PERMANENT.close()
         del r_dem_layer
         Qgs.exit()
@@ -1228,11 +1187,6 @@ class LRRT:
         os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='-1'))
         PERMANENT = Session()
         PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
-        grass.run_command('g.region', raster='dem')
-
-
-        grass.run_command('r.accumulate', direction='dir_Grass',format = '45degree',accumulation ='acc_grass',
-                  stream = 'str_grass_v1',threshold = accthresold, overwrite = True)
 
 
         if self.Path_dir_in == '#':  ### did not provide dir, use dem to generate watershed. recommand !!
@@ -1240,6 +1194,8 @@ class LRRT:
                               stream_vector = 'str_grass_v',overwrite = True)
         else:
         ## generate correct stream raster, when the dir is not derived from dem. for Hydroshed Cases 
+            grass.run_command('r.accumulate', direction='dir_grass',format = '45degree',accumulation ='acc_grass',
+                            stream = 'str_grass_v',threshold = accthresold, overwrite = True)
             grass.run_command('v.to.rast',input = 'str_grass_v',output = 'str_grass_r2',use = 'cat',overwrite = True)
     
             strtemp_array = garray.array(mapname="str_grass_r2")
@@ -1280,13 +1236,12 @@ class LRRT:
             temparray.write(mapname="str_grass_rf", overwrite=True)
             grass.run_command('r.null', map='str_grass_rf',setnull=0)
             grass.run_command('r.mapcalc',expression = 'str_grass_r = int(str_grass_rf)',overwrite = True)
-        
-#       
+             
 #        grass.run_command('r.thin',input = 'str_grass_rfn', output = 'str_grass_r',overwrite = True)
         grass.run_command('r.to.vect',  input = 'str_grass_r',output = 'str', type ='line' ,overwrite = True)
 
         ##### generate catchment without lakes based on 'str_grass_r'        
-        grass.run_command('r.stream.basins',direction = 'dir_Grass', stream = 'str_grass_r', basins = 'cat1',overwrite = True)
+        grass.run_command('r.stream.basins',direction = 'dir_grass', stream = 'str_grass_r', basins = 'cat1',overwrite = True)
 
         
 ################ check connected lakes  and non connected lakes 
@@ -1301,6 +1256,7 @@ class LRRT:
         grass.run_command('r.out.gdal', input = 'cat1',output = os.path.join(self.tempfolder,'cat1.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')    
         grass.run_command('r.out.gdal', input = 'Connect_Lake',output = os.path.join(self.tempfolder,'Connect_Lake.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')    
         grass.run_command('r.out.gdal', input = 'str_grass_r',output = os.path.join(self.tempfolder,'str_grass_r.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')    
+
         PERMANENT.close()
 ###########################################################################################3
 
@@ -1365,7 +1321,7 @@ class LRRT:
         grass.run_command('r.null', map='Pourpoints_1',setnull=-9999)
         grass.run_command('r.to.vect', input='Pourpoints_1',output='Pourpoints_1_F',type='point', overwrite = True)
         
-        grass.run_command('r.stream.basins',direction = 'dir_Grass', points = 'Pourpoints_1_F', basins = 'cat2_t',overwrite = True)
+        grass.run_command('r.stream.basins',direction = 'dir_grass', points = 'Pourpoints_1_F', basins = 'cat2_t',overwrite = True)
         
         
         sqlstat="SELECT cat, value FROM Pourpoints_1_F"
@@ -1403,9 +1359,9 @@ class LRRT:
         temparray[:,:] = ndir[:,:]
         temparray.write(mapname="ndir_Arcgis", overwrite=True)
         grass.run_command('r.null', map='ndir_Arcgis',setnull=-9999)    
-        grass.run_command('r.reclass', input='ndir_Arcgis',output = 'ndir_Grass',rules =os.path.join(self.RoutingToolPath,'Arcgis2GrassDIR.txt'),overwrite = True)
+        grass.run_command('r.reclass', input='ndir_Arcgis',output = 'ndir_grass',rules =os.path.join(self.RoutingToolPath,'Arcgis2GrassDIR.txt'),overwrite = True)
      
-        grass.run_command('r.stream.basins',direction = 'ndir_Grass', points = 'Pourpoints_2_F', basins = 'cat4_t',overwrite = True)
+        grass.run_command('r.stream.basins',direction = 'ndir_grass', points = 'Pourpoints_2_F', basins = 'cat4_t',overwrite = True)
 
         sqlstat="SELECT cat, value FROM Pourpoints_2_F"
         df_P_2_F = pd.read_sql_query(sqlstat, con)
@@ -1524,7 +1480,7 @@ class LRRT:
         grass.run_command('r.out.gdal', input = 'nstr_seg',output =os.path.join(self.tempfolder,'nstr_seg.tif'),format= 'GTiff',overwrite = True)  
         
         ### Generate new catchment based on new stream   
-        grass.run_command('r.stream.basins',direction = 'ndir_Grass', stream = 'nstr_seg', basins = 'Net_cat',overwrite = True)        
+        grass.run_command('r.stream.basins',direction = 'ndir_grass', stream = 'nstr_seg', basins = 'Net_cat',overwrite = True)        
         grass.run_command('r.out.gdal', input = 'Net_cat',output =os.path.join(self.tempfolder,'Net_cat.tif'),format= 'GTiff',overwrite = True)
         grass.run_command('r.to.vect', input='Net_cat',output='Net_cat_F1',type='area', overwrite = True)    ## save to vector 
         grass.run_command('v.db.addcolumn', map= 'Net_cat_F1', columns = "GC_str VARCHAR(40)")
@@ -1599,7 +1555,11 @@ class LRRT:
         dir_array = garray.array(mapname="dir_Arcgis")#ndir_Arcgis
         Q_mean_array = garray.array(mapname="qmean")
         landuse_array = garray.array(mapname="landuse")
+        Netcat_array = garray.array(mapname="Net_cat")
+        grass.run_command('r.out.gdal', input = 'ndir_Arcgis',output = os.path.join(self.tempfolder,'ndir.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
 
+        grass.run_command('r.out.gdal', input = 'dir_Arcgis',output = os.path.join(self.tempfolder,'dir.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
+        grass.run_command('r.out.gdal', input = 'acc_grass',output = os.path.join(self.tempfolder,'acc.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
         ## read landuse and lake infomation data 
         tempinfo = Dbf5(self.Path_allLakeply[:-3] + "dbf")
         allLakinfo = tempinfo.to_dataframe()
@@ -1610,7 +1570,6 @@ class LRRT:
         sqlstat="SELECT Gridcode, Area_m FROM Net_cat_F"
         catareainfo = pd.read_sql_query(sqlstat, con)
         
-        print(catareainfo)
     
         allcatid = np.unique(nstr_seg_array)
         allcatid = allcatid[allcatid > 0]
@@ -1620,9 +1579,9 @@ class LRRT:
                              'LakeArea','Laketype','IsObs','MeanElev','FloodP_n','Q_Mean','Ch_n'])                      
         catinfo= Generatecatinfo_riv(nstr_seg_array,acc_array,dir_array,Lake1_arr,dem_array,
              catinfodf,allcatid,width_array,depth_array,obs_array,slope_array,aspect_array,landuse_array,
-             slope_deg_array,Q_mean_array,landuseinfo,allLakinfo,self.nrows,self.ncols,rivleninfo.astype(float),catareainfo.astype(float))
-             
-        catinfo["SubId"]= catinfo["SubId"].astype(str)          
+             slope_deg_array,Q_mean_array,Netcat_array,landuseinfo,allLakinfo,self.nrows,self.ncols,
+             rivleninfo.astype(float),catareainfo.astype(float))
+                 
         catinfo.to_csv(self.Path_finalcatinfo_riv, index = None, header=True)
     
         ### add lake info to selected laeks 

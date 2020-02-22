@@ -5,6 +5,48 @@ from Calculate_River_Len_Slope import Getcatrivlenslope_hydroshed
 import copy
 
 
+
+def Writecatinfotodbf(catinfo):
+    for i in range(0,len(catinfo)):
+        if catinfo['SubId'].values[i] == catinfo['DowSubId'].values[i]:
+            catinfo.loc[i,'DowSubId'] = -1
+        
+        if catinfo['BkfWidth'].values[i] < 0:           #### if no bankfulll width data avaiable for this catchment
+            twidth = catinfo['BkfWidth'].values[i]      
+            ccurid = catinfo['SubId'].values[i]      ### ccurid  is the current catchment id 
+            isdown = -1
+            while(twidth < 0 and ccurid > 0):     
+                downid = catinfo[catinfo['SubId'] == ccurid]['DowSubId'].values[0]   ### get the downstream if of current catchment 
+                if downid <= 0:                                   ### if no donwstream catchment exist 
+                    twidth = 1.2345                               #### define a default value if not downstream exist and upstream do not have bankfull width data
+                    ccurid = -1
+                    isdown = -1
+                else:                                              ### if down stream exist
+                    if ccurid == downid:                           ### if downstream id = current catchment id;; downstream catchemnt is not exist
+                        twidth = 1.2345
+                        ccurid = -1
+                        isdown = -1
+                    else:
+                        isdown = 1                                    
+                        dowcatinfo = catinfo[catinfo['SubId'] ==downid]  ### get downstream id  
+                        twidth = dowcatinfo['BkfWidth'].values[0]                      ### update twidth catchment with  the downstream id 
+                        ccurid = dowcatinfo['SubId'].values[0]                       ### set currid with
+#                arcpy.AddMessage(str(sinfo[0,0]) +"       "+ str(twidth))
+            if twidth == 1.2345 and ccurid == -1:
+                catinfo.loc[i,'BkfWidth'] = 1.2345
+                catinfo.loc[i,'BkfDepth'] = 1.2345
+                catinfo.loc[i,'Q_Mean'] = 1.2345
+            elif isdown == 1:
+                catinfo.loc[i,'BkfWidth'] =dowcatinfo['BkfWidth'].values[0]
+                catinfo.loc[i,'BkfDepth'] =dowcatinfo['BkfDepth'].values[0]
+                catinfo.loc[i,'Q_Mean'] = dowcatinfo['Q_Mean'].values[0]
+                            
+        catinfo.loc[i,'Ch_n'] = calculateChannaln(catinfo['BkfWidth'].values[i],catinfo['BkfDepth'].values[i],
+                                           catinfo['Q_Mean'].values[i],catinfo['RivSlope'].values[i])
+
+    return catinfo
+    
+    
 def calculateChannaln(width,depth,Q,slope):
     zch = 2
     sidwd = zch * depth ###river side width
@@ -64,7 +106,6 @@ def Generatecatinfo(Watseds,fac,fdir,lake,dem,area,catinfo,allcatid,lakeinfo,wid
     rivpath = copy.copy(Watseds)
     rivpath[:,:] = -9999
     for i in range(0,len(allcatid)):
-#        print("subid      " + str(allcatid[i].astype(int)))
         catid = allcatid[i].astype(int)
         catinfo.loc[i,'SubId'] = catid
         rowcol = np.argwhere(finalcat==catid).astype(int)
@@ -131,25 +172,31 @@ def Generatecatinfo(Watseds,fac,fdir,lake,dem,area,catinfo,allcatid,lakeinfo,wid
      
 
 def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
-                    obs,slope,aspect,landuse,slop_deg,Q_Mean,landuseinfo,lakeinfo,
+                    obs,slope,aspect,landuse,slop_deg,Q_Mean,netcat,landuseinfo,lakeinfo,
                     nrows,ncols,leninfo,areainfo):
     finalcat = copy.copy(Watseds)
     for i in range(0,len(allcatid)):
         catid = allcatid[i].astype(int)
-        print(i,catid)
+        catmask2 = netcat ==catid
         catinfo.loc[i,'SubId'] = catid
         catmask = Watseds == catid
         trow,tcol = Getbasinoutlet(catid,finalcat,fac,fdir,nrows,ncols)
-        nrow,ncol = Nextcell(fdir,trow,tcol)### get the downstream catchment id
-        if nrow < 0 or ncol < 0:
-            catinfo.loc[i,'DowSubId'] = -1
-        elif nrow >= nrows or ncol >= ncols:
-            catinfo.loc[i,'DowSubId'] = -1
-        elif finalcat[nrow,ncol] <= 0:
-            catinfo.loc[i,'DowSubId'] = -1
-        else:
-            catinfo.loc[i,'DowSubId'] = finalcat[nrow,ncol]
-
+        k = 1
+        while catinfo['DowSubId'].values[i] < 0 and k < 20:
+            nrow,ncol = Nextcell(fdir,trow,tcol)### get the downstream catchment id
+            if nrow < 0 or ncol < 0:
+                catinfo.loc[i,'DowSubId'] = -1
+                break;
+            elif nrow >= nrows or ncol >= ncols:
+                catinfo.loc[i,'DowSubId'] = -1
+                break;
+            elif finalcat[nrow,ncol] <= 0:
+                catinfo.loc[i,'DowSubId'] = -1
+            else:
+                catinfo.loc[i,'DowSubId'] = finalcat[nrow,ncol]
+            k = k + 1
+            trow = nrow
+            tcol = ncol 
 ################################## Get lake information        
         lakeinriv = lake[catmask]
         lakeids = np.unique(lakeinriv)
@@ -180,46 +227,53 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
 
 
 ########Slopes slope,aspect,landuse,slop_deg
-        slopeinriv = slope[catmask]
-        aspectinriv = aspect[catmask]
-        slop_deginriv = slop_deg[catmask]
+        slopeinriv = slope[catmask2]
+        aspectinriv = aspect[catmask2]
+        slop_deginriv = slop_deg[catmask2]
         deminriv = dem[catmask]
+        deminriv2 = dem[catmask2]
         
         if(len(slop_deginriv[slop_deginriv > 0])) > 0:
             slop_deginriv[slop_deginriv <=0] = np.NaN  
             catinfo.loc[i,'BasSlope'] = np.nanmean(slop_deginriv)
         else:
-            catinfo.loc[i,'BasSlope'] = 1.2345      
+            catinfo.loc[i,'BasSlope'] = -1.2345      
 
         if(len(aspectinriv[aspectinriv > 0])) > 0:
             aspectinriv[aspectinriv <=0] = np.NaN  
             catinfo.loc[i,'BasAspect'] = np.nanmean(aspectinriv)
         else:
-            catinfo.loc[i,'BasAspect'] = 1.2345  
+            catinfo.loc[i,'BasAspect'] = -1.2345  
         
         if(len(deminriv[deminriv > 0])) > 0:
             deminriv[deminriv <=0] = np.NaN
             maxdem = np.nanmax(deminriv)
             mindem = np.nanmin(deminriv)
-            catinfo.loc[i,'MeanElev'] =np.nanmean(deminriv)
         else:
-            maxdem = 1.2345
-            mindem = 1.2345
+            maxdem = -1.2345
+            mindem = -1.2345
+
+        if(len(deminriv2[deminriv2 > 0])) > 0:
+            deminriv2[deminriv2 <=0] = np.NaN  
+            catinfo.loc[i,'MeanElev'] = np.nanmean(deminriv2)
+        else:
+            catinfo.loc[i,'MeanElev'] =-1.2345
+                    
             
         rivlen = np.unique(leninfo.loc[leninfo['Gridcode'] == catid]['Length_m'].values)  #'Area_m'
         if len(rivlen) == 1:
             catinfo.loc[i,'RivLength'] = rivlen
-            if rivlen > 0:
+            if rivlen >= 0:
                 if max(0,float((maxdem - mindem))/float(rivlen)) == 0:
-                    catinfo.loc[i,'RivSlope'] = 0.0012345
+                    catinfo.loc[i,'RivSlope'] = 0.00012345
                 else:
                     catinfo.loc[i,'RivSlope'] = max(0,float((maxdem - mindem))/float(rivlen))
             else:
-                catinfo.loc[i,'RivSlope'] = 0.0012345
+                catinfo.loc[i,'RivSlope'] = -1.2345
         else:
             print("Warning  river length of stream  " , catid, "   need check   ", len(rivlen) )
-            catinfo.loc[i,'RivLength'] = 1.2345
-            catinfo.loc[i,'RivSlope'] = 0.0012345
+            catinfo.loc[i,'RivLength'] = -1.2345
+            catinfo.loc[i,'RivSlope'] = -1.2345
             
             
         catarea = np.unique(areainfo.loc[areainfo['Gridcode'] == catid]['Area_m'].values)  #'Area_m'
@@ -227,7 +281,7 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
             catinfo.loc[i,'BasArea'] = catarea
         else:
             print("Warning  basin area of stream  " , catid, "   need check   ", len(catarea) )
-            catinfo.loc[i,'BasArea'] = 1.2345
+            catinfo.loc[i,'BasArea'] = -1.2345
 
 ##########
         Landtypes = landuse[catmask]
@@ -244,8 +298,6 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
         else:
             floodn = 0.035
         catinfo.loc[i,'FloodP_n'] = floodn
-        
-        
             
 ########Got basin width and depth
         widthinriv = width[catmask]
@@ -254,7 +306,7 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
         
         widthids = np.unique(widthinriv)
         widthids = widthids[widthids > 0]
-        print(i,catid)
+
         if(len(widthids)) > 0:
             widthinriv[widthinriv <=0] = np.NaN
             depthinriv[depthinriv <=0] = np.NaN
@@ -262,19 +314,12 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
             catinfo.loc[i,'BkfWidth'] = np.nanmean(widthinriv)
             catinfo.loc[i,'BkfDepth'] = np.nanmean(depthinriv)
             catinfo.loc[i,'Q_Mean'] = np.nanmean(Q_Meaninriv)
-#            print(i,len(widthids),np.nanmean(widthinriv))           
         else:
-            catinfo.loc[i,'BkfWidth'] = 1.2345
-            catinfo.loc[i,'BkfDepth'] = 1.2345
-            catinfo.loc[i,'Q_Mean'] =  1.2345
-            print(i,len(widthids),np.nanmean(widthinriv))    
-        
-        if catinfo['BkfWidth'].values[i] != 1.2345 and catinfo['RivSlope'].values[i] != 0.0012345:
-            catinfo.loc[i,'Ch_n']  = calculateChannaln(catinfo['BkfWidth'].values[i],catinfo['BkfDepth'].values[i],
-                                                        catinfo['Q_Mean'].values[i],catinfo['RivSlope'].values[i])
-        else:
-            catinfo.loc[i,'Ch_n']  = 0.0012345
-
+            catinfo.loc[i,'BkfWidth'] = -1.2345
+            catinfo.loc[i,'BkfDepth'] = -1.2345
+            catinfo.loc[i,'Q_Mean'] =  -1.2345    
+    
+    catinfo = Writecatinfotodbf(catinfo)
     return catinfo
 
 
