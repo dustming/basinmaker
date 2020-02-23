@@ -394,14 +394,12 @@ def ChangeDIR(dir,lake1,acc,ncols,nrows,outlakeids,nlakegrids,cat3):
         lid = outlakeids[i,0]
         goodpoint = np.full((20000,2),-99999)
         lrowcol = np.argwhere(lake1==lid).astype(int)
-        print("start modify lake flow direction, the lake id is    " + str(int(lid)) + "  The number of lake grids is   " + str(int(len(lrowcol))) +
-                "The ratio between lake grids in lake's cat and all lake grids is   " + str(outlakeids[i,1]),len(lrowcol) > nlakegrids,outlakeids[i,1] > 0.9 )
-
-        if len(lrowcol) > nlakegrids and outlakeids[i,1] > 0.9:
+        
+        if len(lrowcol) > nlakegrids and outlakeids[i,1] > 0.9:   ### smaller than nlakegrids or smaller than 0.9
             continue
-        print("start modify lake flow direction, the lake id is    " + str(int(lid)) + "  The number of lake grids is   " + str(int(len(lrowcol))) +
-                "The ratio between lake grids in lake's cat and all lake grids is   " + str(outlakeids[i,1]) )
-
+        if outlakeids[i,1] > 0.97: ### smaller than 0.97
+            continue
+            
         prow,pcol = Getbasinoutlet(lid,lake1,acc,dir,nrows,ncols)
 
         goodpoint[0,0] = prow
@@ -530,7 +528,7 @@ def check_lakecatchment(cat3,lake,fac,fdir,bsid,nrows,ncols):
         Lakeincat1 = lake[lakecatrowcol[:,0],lakecatrowcol[:,1]]
         nlake = np.argwhere(Lakeincat1==lakeid).astype(int)
         outlakeids[i,0] = lakeid
-        outlakeids[i,1] = float(len(nlake)/len(lrowcol))) 
+        outlakeids[i,1] = float(len(nlake)/len(lrowcol)) 
 #        print(lakeid,arclakeid,len(nlake),len(lrowcol),float(len(nlake)/len(lrowcol))) 
     outlakeids= outlakeids[outlakeids[:,0] > 0]
     return outlakeids
@@ -1092,6 +1090,7 @@ class LRRT:
                 grass.run_command('r.watershed',elevation = 'dem', drainage = 'dir_grass',accumulation = 'acc_grass',flags = 's', overwrite = True)
                 grass.run_command('r.water.outlet',input = 'dir_grass', output = 'wat_mask', coordinates  = Path_OutletPoint,overwrite = True)
                 grass.run_command('r.mask'  , raster='wat_mask', maskcats = '*',overwrite = True)
+                grass.run_command('g.region', raster='wat_mask',overwrite = True)
             else:
                 grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
             
@@ -1306,7 +1305,6 @@ class LRRT:
         os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
         PERMANENT = Session()
         PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
-        grass.run_command('g.region', raster='dem')
         con = sqlite3.connect(self.sqlpath)
         
         VolThreshold =Thre_Lake_Area_Connect ### lake area thresthold for connected lakes 
@@ -1468,7 +1466,6 @@ class LRRT:
         os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
         PERMANENT = Session()
         PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
-        grass.run_command('g.region', raster='dem')
         
         con = sqlite3.connect(self.sqlpath)
       
@@ -1670,7 +1667,6 @@ class LRRT:
         
             PERMANENT = Session()
             PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
-            grass.run_command('g.region', raster='dem')
             grass.run_command('v.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'str_finalcat',overwrite = True)
             grass.run_command('v.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'finalcat_F',overwrite = True) 
             grass.run_command('r.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'tanslopedegree',overwrite = True) 
@@ -1679,7 +1675,6 @@ class LRRT:
         else:
             PERMANENT = Session()
             PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
-            grass.run_command('g.region', raster='dem')
         
             grass.run_command('v.db.addcolumn', map= 'finalcat_F', columns = "Area double precision") 
             grass.run_command('v.db.addcolumn', map= 'str_finalcat', columns = "Length double precision")
@@ -1800,7 +1795,6 @@ class LRRT:
         os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='-1'))
         PERMANENT = Session()
         PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
-        grass.run_command('g.region', raster='dem')
                 
         if Out == 'Simple':
 #            grass.run_command('v.out.ogr', input = 'finalcat_F',output = os.path.join(self.OutputFolder,'finalcat_info.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
@@ -1842,7 +1836,6 @@ class LRRT:
             os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='-1'))
             PERMANENT = Session()
             PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
-            grass.run_command('g.region', raster='dem')
 
             finalcat_arr = garray.array(mapname="finalcat")
             acc_array = garray.array(mapname="acc_grass")
