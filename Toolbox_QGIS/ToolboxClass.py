@@ -13,7 +13,7 @@ import copy
 import pandas as pd
 import sqlite3
 from GetBasinoutlet import Getbasinoutlet,Nextcell
-from Generatecatinfo import Generatecatinfo,Generatecatinfo_riv,calculateChannaln,Writecatinfotodbf
+from Generatecatinfo import Generatecatinfo,Generatecatinfo_riv,calculateChannaln,Writecatinfotodbf,Streamorderanddrainagearea
 
 def writechanel(chname,chwd,chdep,chslope,orchnl,elev,floodn,channeln,iscalmanningn):
     ### Following SWAT instructions, assume a trapezoidal shape channel, with channel sides has depth and width ratio of 2. zch = 2
@@ -1609,15 +1609,16 @@ class LRRT:
     
         allcatid = np.unique(nstr_seg_array)
         allcatid = allcatid[allcatid > 0]
-        catinfo2 = np.full((len(allcatid),23),-9999.00000)    
+        catinfo2 = np.full((len(allcatid),24),-9999.00000)    
         catinfodf = pd.DataFrame(catinfo2, columns = ['SubId', "DowSubId",'RivSlope','RivLength','BasSlope','BasAspect','BasArea',
                             'BkfWidth','BkfDepth','IsLake','HyLakeId','LakeVol','LakeDepth',
-                             'LakeArea','Laketype','IsObs','MeanElev','FloodP_n','Q_Mean','Ch_n','DA','Strahler','Sub_order'])                      
+                             'LakeArea','Laketype','IsObs','MeanElev','FloodP_n','Q_Mean','Ch_n','DA','Strahler','Seg_ID','Seg_order'])                      
         catinfo= Generatecatinfo_riv(nstr_seg_array,acc_array,dir_array,Lake1_arr,dem_array,
              catinfodf,allcatid,width_array,depth_array,obs_array,slope_array,aspect_array,landuse_array,
              slope_deg_array,Q_mean_array,Netcat_array,landuseinfo,allLakinfo,self.nrows,self.ncols,
              rivleninfo.astype(float),catareainfo.astype(float))
-                 
+             
+        catinfo = Streamorderanddrainagearea(catinfo)         
         catinfo.to_csv(self.Path_finalcatinfo_riv, index = None, header=True)
     
         ### add lake info to selected laeks 
