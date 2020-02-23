@@ -388,16 +388,19 @@ def Dirpoints2(N_dir,p_row,p_col,lake1,lid,goodpoint,k,ncols,nrows):
 #    arcpy.AddMessage(goodpoint[goodpoint[:,0]>0,])
     return ndir,goodpoint,ip
 
-def ChangeDIR(dir,lake1,acc,ncols,nrows,outlakeids,nlakegrids):
+def ChangeDIR(dir,lake1,acc,ncols,nrows,outlakeids,nlakegrids,cat3):
     ndir = copy.copy(dir)
     for i in range(0,len(outlakeids)):
         lid = outlakeids[i,0]
         goodpoint = np.full((20000,2),-99999)
         lrowcol = np.argwhere(lake1==lid).astype(int)
+        print("start modify lake flow direction, the lake id is    " + str(int(lid)) + "  The number of lake grids is   " + str(int(len(lrowcol))) +
+                "The ratio between lake grids in lake's cat and all lake grids is   " + str(outlakeids[i,1]),len(lrowcol) > nlakegrids,outlakeids[i,1] > 0.9 )
+
         if len(lrowcol) > nlakegrids and outlakeids[i,1] > 0.9:
             continue
-#        print("start modify lake flow direction, the lake id is    " + str(int(lid)) + "  The number of lake grids is   " + str(int(len(lrowcol))) +
-#                "The ratio between lake grids in lake's cat and all lake grids is   " + str(outlakeids[i,1]) )
+        print("start modify lake flow direction, the lake id is    " + str(int(lid)) + "  The number of lake grids is   " + str(int(len(lrowcol))) +
+                "The ratio between lake grids in lake's cat and all lake grids is   " + str(outlakeids[i,1]) )
 
         prow,pcol = Getbasinoutlet(lid,lake1,acc,dir,nrows,ncols)
 
@@ -507,6 +510,31 @@ def selectlake2(hylake,Lakehres,hylakeinfo):
 
 ##################################################################3
 
+def check_lakecatchment(cat3,lake,fac,fdir,bsid,nrows,ncols):
+    cat = copy.copy(cat3)
+    arlakeid = np.unique(lake)
+    arlakeid = arlakeid[arlakeid>=0]
+    outlakeids = np.full((1000000,2),-99999.999)
+    for i in range(0,len(arlakeid)):
+        lakeid = arlakeid[i]
+        lrowcol = np.argwhere(lake==lakeid).astype(int)
+        lakacc = np.full((len(lrowcol),3),-9999)
+        lakacc[:,0] = lrowcol[:,0]
+        lakacc[:,1] = lrowcol[:,1]
+        lakacc[:,2] = fac[lrowcol[:,0],lrowcol[:,1]]
+        lakacc = lakacc[lakacc[:,2].argsort()]
+        lorow = lakacc[len(lakacc)-1,0]
+        locol = lakacc[len(lakacc)-1,1]  ###### lake outlet row and col
+        arclakeid = cat[lorow,locol]  ####### lake catchment id 
+        lakecatrowcol = np.argwhere(cat==arclakeid).astype(int)    #### lake catchment cells 
+        Lakeincat1 = lake[lakecatrowcol[:,0],lakecatrowcol[:,1]]
+        nlake = np.argwhere(Lakeincat1==lakeid).astype(int)
+        outlakeids[i,0] = lakeid
+        outlakeids[i,1] = float(len(nlake)/len(lrowcol))) 
+#        print(lakeid,arclakeid,len(nlake),len(lrowcol),float(len(nlake)/len(lrowcol))) 
+    outlakeids= outlakeids[outlakeids[:,0] > 0]
+    return outlakeids
+######################################################################3
 def Addobspoints(obs,pourpoints,boid,cat):
     obsids = np.unique(obs)
     obsids = obsids[obsids>=0]
@@ -1288,6 +1316,8 @@ class LRRT:
         temparray = garray.array()
         temparray[:,:] = -9999
         temparray.write(mapname="tempraster", overwrite=True)
+        self.ncols = int(temparray.shape[1])
+        self.nrows = int(temparray.shape[0])
 ##### begin processing 
 
         blid = 1000000    #### begining of new lake id
@@ -1321,9 +1351,7 @@ class LRRT:
         grass.run_command('r.null', map='Pourpoints_1',setnull=-9999)
         grass.run_command('r.to.vect', input='Pourpoints_1',output='Pourpoints_1_F',type='point', overwrite = True)
         
-        grass.run_command('r.stream.basins',direction = 'dir_grass', points = 'Pourpoints_1_F', basins = 'cat2_t',overwrite = True)
-        
-        
+        grass.run_command('r.stream.basins',direction = 'dir_grass', points = 'Pourpoints_1_F', basins = 'cat2_t',overwrite = True)        
         sqlstat="SELECT cat, value FROM Pourpoints_1_F"
         df_P_1_F = pd.read_sql_query(sqlstat, con)
         df_P_1_F.loc[len(df_P_1_F),'cat'] = '*'
@@ -1343,7 +1371,7 @@ class LRRT:
         temparray.write(mapname="cat3", overwrite=True)
         grass.run_command('r.null', map='cat3',setnull=-9999)
 
-#        grass.run_command('r.out.gdal', input = 'cat2',output = os.path.join(self.tempfolder,'cat2.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
+        grass.run_command('r.out.gdal', input = 'cat2',output = os.path.join(self.tempfolder,'cat2.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
 #        grass.run_command('r.out.gdal', input = 'cat3',output = os.path.join(self.tempfolder,'cat3.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
     
         nPourpoints = GenerateFinalPourpoints(acc_array,dir_array,Lake1,temcat2,bsid,blid,boid,self.nrows,self.ncols,cat1_arr,obs_array)
@@ -1351,11 +1379,26 @@ class LRRT:
         temparray.write(mapname="Pourpoints_2", overwrite=True)
         grass.run_command('r.null', map='Pourpoints_2',setnull=-9999)
         grass.run_command('r.to.vect', input='Pourpoints_2',output='Pourpoints_2_F',type='point', overwrite = True)    
-
         grass.run_command('v.out.ogr', input = 'Pourpoints_2_F',output = os.path.join(self.tempfolder, "Pourpoints_2_F.shp"),format= 'ESRI_Shapefile',overwrite = True)
+
+        ## with new pour points
+        grass.run_command('r.stream.basins',direction = 'dir_grass', points = 'Pourpoints_2_F', basins = 'cat3_t',overwrite = True)        
+        sqlstat="SELECT cat, value FROM Pourpoints_2_F"
+        df_P_1_F = pd.read_sql_query(sqlstat, con)
+        df_P_1_F.loc[len(df_P_1_F),'cat'] = '*'
+        df_P_1_F.loc[len(df_P_1_F)-1,'value'] = 'NULL'
+        df_P_1_F['eq'] = '='
+        df_P_1_F.to_csv(os.path.join(self.tempfolder,'rule_cat3.txt'),sep = ' ',columns = ['cat','eq','value'],header = False,index=False)
+        grass.run_command('r.reclass', input='cat3_t',output = 'cat3',rules =os.path.join(self.tempfolder,'rule_cat3.txt'), overwrite = True)
+        cat3_array =  garray.array(mapname="cat3")
+        grass.run_command('r.out.gdal', input = 'cat3',output = os.path.join(self.tempfolder,'cat3.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
+                
+        outlakeids= check_lakecatchment(cat3_array,Lake1,acc_array,dir_array,bsid,self.nrows,self.ncols)
+
+
     
         ### Modify lake flow directions
-        ndir = ChangeDIR(dir_array,Lake1,acc_array,self.ncols,self.nrows,outlakeids,nlakegrids)
+        ndir = ChangeDIR(dir_array,Lake1,acc_array,self.ncols,self.nrows,outlakeids,nlakegrids,cat3_array)
         temparray[:,:] = ndir[:,:]
         temparray.write(mapname="ndir_Arcgis", overwrite=True)
         grass.run_command('r.null', map='ndir_Arcgis',setnull=-9999)    
@@ -1429,10 +1472,6 @@ class LRRT:
         
         con = sqlite3.connect(self.sqlpath)
       
-        
-        
-
-        
         #### generate new stream raster based on str_grass_r from acc thresthold and finalcat.
          
         finalcat_arr = garray.array(mapname="finalcat")
@@ -1573,10 +1612,10 @@ class LRRT:
     
         allcatid = np.unique(nstr_seg_array)
         allcatid = allcatid[allcatid > 0]
-        catinfo2 = np.full((len(allcatid),20),-9999.00000)    
+        catinfo2 = np.full((len(allcatid),23),-9999.00000)    
         catinfodf = pd.DataFrame(catinfo2, columns = ['SubId', "DowSubId",'RivSlope','RivLength','BasSlope','BasAspect','BasArea',
                             'BkfWidth','BkfDepth','IsLake','HyLakeId','LakeVol','LakeDepth',
-                             'LakeArea','Laketype','IsObs','MeanElev','FloodP_n','Q_Mean','Ch_n'])                      
+                             'LakeArea','Laketype','IsObs','MeanElev','FloodP_n','Q_Mean','Ch_n','DA','Strahler','Sub_order'])                      
         catinfo= Generatecatinfo_riv(nstr_seg_array,acc_array,dir_array,Lake1_arr,dem_array,
              catinfodf,allcatid,width_array,depth_array,obs_array,slope_array,aspect_array,landuse_array,
              slope_deg_array,Q_mean_array,Netcat_array,landuseinfo,allLakinfo,self.nrows,self.ncols,

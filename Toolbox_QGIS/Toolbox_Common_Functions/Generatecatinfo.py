@@ -6,6 +6,32 @@ import copy
 
 
 
+def Streamorderanddrainagearea(catinfo):
+    catlist = np.full((len(catinfo)), -9)
+    icat = 0
+    iStrahler = 1
+    isub = 1
+    for i in range(0,len(catinfo)):
+        if catinfo['SubId'].values[i] == catinfo['DowSubId'].values[i]:
+            catinfo.loc[i,'DowSubId'] = -1
+        
+        if len(catinfo[catinfo['DowSubId'] == catinfo['SubId'].values[i]]) == 0: ### the catchment has no upstream catchemnt 
+            catlist[icat] = catinfo['SubId'].values[i]
+            catinfo.loc[i,'DA'] = catinfo['BasArea'].values[i]
+            catinfo.loc[i,'Strahler'] = iStrahler
+            catinfo.loc[i,'Sub_order'] = isub
+
+    iStrahler = 1
+    isub = 1
+    catlist = catlist[catlist > 0]
+    ncatlist = np.full((len(catinfo)), -9)
+#    for i in range(0,len(catlist)):
+#        catinfo[catinfo['SubId'] == catinfo['SubId']
+
+    return catinfo 
+
+
+
 def Writecatinfotodbf(catinfo):
     for i in range(0,len(catinfo)):
         if catinfo['SubId'].values[i] == catinfo['DowSubId'].values[i]:
