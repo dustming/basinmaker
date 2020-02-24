@@ -1586,7 +1586,6 @@ class LRRT:
         ncatinfo2 = ncatinfo.drop_duplicates('SubId', keep='first')
         Writervhchanl(ncatinfo2,self.Raveinputsfolder,lenThres,iscalmanningn)
         writelake(ncatinfo2,self.Raveinputsfolder)
-        print(self.Raveinputsfolder)
         
 
     def selectpolygonsfromroutingproduct(self,Path_shpfile = '#',sub_colnm = 'SubId',down_colnm = 'DowSubId',mostdownid = -1,mostupstreamid = -1):
