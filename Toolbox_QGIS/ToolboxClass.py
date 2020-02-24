@@ -991,6 +991,7 @@ class LRRT:
         self.Path_Landuseinfo = os.path.join(self.tempfolder,'landuseinfo.csv')
         self.Path_allLakeRas = os.path.join(self.tempfolder,'hylakegdal.tif')
         self.Path_finalcatinfo_riv = os.path.join(self.tempfolder,'catinfo_riv.csv')
+        self.Path_finalcatinfo_cat = os.path.join(self.tempfolder,'catinfo_cat.csv')
         self.Path_finalcatinfo = os.path.join(self.tempfolder,'catinfo.csv')
         self.Path_finalcatinfo_riv_type = os.path.join(self.tempfolder,'catinfo_riv.csvt')
         self.Path_finalcatinfo_type = os.path.join(self.tempfolder,'catinfo.csvt')
@@ -1136,7 +1137,8 @@ class LRRT:
                                                                     'OUTPUT': self.Path_dem}
             dem = processing.run('gdal:cliprasterbymasklayer',params)  #### extract dem
         
-          
+        copyfile(os.path.join(self.RoutingToolPath,'catinfo_riv.csvt'),os.path.join(self.tempfolder,'catinfo_riv.csvt')) 
+        copyfile(os.path.join(self.RoutingToolPath,'catinfo_riv.csvt'),os.path.join(self.tempfolder,'catinfo_cat.csvt')) 
 ###### set up GRASS environment for translate vector to rasters and clip rasters
         import grass.script as grass
         from grass.script import array as garray
@@ -1588,7 +1590,7 @@ class LRRT:
         slope_deg_array = garray.array(mapname="slope")
         nstr_seg_array = garray.array(mapname="nstr_seg")
         acc_array = garray.array(mapname="acc_grass")
-        dir_array = garray.array(mapname="dir_Arcgis")#ndir_Arcgis
+        dir_array = garray.array(mapname="ndir_Arcgis")#ndir_Arcgis
         Q_mean_array = garray.array(mapname="qmean")
         landuse_array = garray.array(mapname="landuse")
         Netcat_array = garray.array(mapname="Net_cat")
@@ -1606,13 +1608,15 @@ class LRRT:
         sqlstat="SELECT Gridcode, Area_m FROM Net_cat_F"
         catareainfo = pd.read_sql_query(sqlstat, con)
         
-    
+        grass.run_command('r.out.gdal', input = 'obs',output =os.path.join(self.tempfolder,'obs.tif'),format= 'GTiff',overwrite = True)    
+        
         allcatid = np.unique(nstr_seg_array)
         allcatid = allcatid[allcatid > 0]
-        catinfo2 = np.full((len(allcatid),24),-9999.00000)    
+        catinfo2 = np.full((len(allcatid),26),-9999.00000)    
         catinfodf = pd.DataFrame(catinfo2, columns = ['SubId', "DowSubId",'RivSlope','RivLength','BasSlope','BasAspect','BasArea',
                             'BkfWidth','BkfDepth','IsLake','HyLakeId','LakeVol','LakeDepth',
-                             'LakeArea','Laketype','IsObs','MeanElev','FloodP_n','Q_Mean','Ch_n','DA','Strahler','Seg_ID','Seg_order'])                      
+                             'LakeArea','Laketype','IsObs','MeanElev','FloodP_n','Q_Mean','Ch_n','DA','Strahler','Seg_ID','Seg_order'
+                             ,'Max_DEM','Min_DEM'])                      
         catinfo= Generatecatinfo_riv(nstr_seg_array,acc_array,dir_array,Lake1_arr,dem_array,
              catinfodf,allcatid,width_array,depth_array,obs_array,slope_array,aspect_array,landuse_array,
              slope_deg_array,Q_mean_array,Netcat_array,landuseinfo,allLakinfo,self.nrows,self.ncols,
@@ -1630,9 +1634,7 @@ class LRRT:
         grass.run_command('v.out.ogr', input = 'nstr_nfinalcat_F',output = os.path.join(self.tempfolder,'finalriv_info1.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
         PERMANENT.close()
         
-            
-
-    def RoutingNetworkTopologyUpdateToolset(self,projection = 'default'):
+    def RoutingNetworkTopologyUpdateToolset_cat(self,projection = 'default'):
         import grass.script as grass
         from grass.script import array as garray
         import grass.script.setup as gsetup
@@ -1640,148 +1642,89 @@ class LRRT:
         from grass.pygrass.modules.shortcuts import raster as r
         from grass.pygrass.modules import Module
         from grass_session import Session
-
-        os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='-1'))
-        
-    
-        if projection != 'default':
-
-            os.system('gdalwarp ' + "\"" + self.Path_dem +"\""+ "    "+ "\""+self.Path_demproj+"\""+ ' -t_srs  ' + "\""+projection+"\"")
-
-            project = Session()
-            project.open(gisdb=self.grassdb, location=self.grass_location_pro,create_opts=projection)
-            grass.run_command("r.import", input = self.Path_demproj, output = 'dem_proj', overwrite = True)
-            grass.run_command('g.region', raster='dem_proj')  
-        
-            grass.run_command('v.proj', location=self.grass_location_geo,mapset = 'PERMANENT', input = 'str_finalcat',overwrite = True)
-            grass.run_command('v.proj', location=self.grass_location_geo,mapset = 'PERMANENT', input = 'finalcat_F',overwrite = True)
-        
-            grass.run_command('v.db.addcolumn', map= 'finalcat_F', columns = "Area double precision") 
-            grass.run_command('v.db.addcolumn', map= 'str_finalcat', columns = "Length double precision")
-              
-            grass.run_command('v.to.db', map= 'finalcat_F',option = 'area',columns = "Area", units = 'meters') 
-            grass.run_command('v.to.db', map= 'str_finalcat',option = 'length', columns = "Length",units = 'meters')
-        
-            grass.run_command('r.slope.aspect', elevation= 'dem_proj',slope = 'slope',aspect = 'aspect',precision = 'DCELL',overwrite = True)
-            grass.run_command('r.mapcalc',expression = 'tanslopedegree = tan(slope) ',overwrite = True) 
-            project.close 
-        
-            PERMANENT = Session()
-            PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
-            grass.run_command('v.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'str_finalcat',overwrite = True)
-            grass.run_command('v.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'finalcat_F',overwrite = True) 
-            grass.run_command('r.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'tanslopedegree',overwrite = True) 
-            grass.run_command('r.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'aspect',overwrite = True) 
-             
-        else:
-            PERMANENT = Session()
-            PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
-        
-            grass.run_command('v.db.addcolumn', map= 'finalcat_F', columns = "Area double precision") 
-            grass.run_command('v.db.addcolumn', map= 'str_finalcat', columns = "Length double precision")
-              
-            grass.run_command('v.to.db', map= 'finalcat_F',option = 'area',columns = "Area", units = 'meters') 
-            grass.run_command('v.to.db', map= 'str_finalcat',option = 'length', columns = "Length",units = 'meters')
-        
-            grass.run_command('r.slope.aspect', elevation= 'dem_proj',slope = 'slope',aspect = 'aspect',precision = 'DCELL',overwrite = True)
-            grass.run_command('r.mapcalc',expression = 'tanslopedegree = tan(slope) ',overwrite = True)       
+        os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
+        PERMANENT = Session()
+        PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
+                    
+        Netcat_array = garray.array(mapname="Net_cat")
+        catinfo = pd.read_csv(self.Path_finalcatinfo_riv)
+        lakeids = catinfo['HyLakeId'].values
+        lakeids = np.unique(lakeids)
+        lakeids = lakeids[lakeids > 0]
+        maxsubid = np.max(catinfo['SubId'].values)
+        for i in range(0,len(lakeids)):
+            lakeid = lakeids[i]
+            nlakecatid = maxsubid + 10 + i
+            lakeindex = catinfo['HyLakeId'] == lakeid   #### rows in catinfo that has this lake id
+            row_lakeindex = np.argwhere(catinfo['HyLakeId'].values == lakeid)   #### rows in catinfo that has this lake id 
+            lakecat_info = catinfo[lakeindex]
             
-              
-
-        grass.run_command('v.to.rast',input = 'finalcat_F',output = 'Area',use = 'attr',attribute_column = 'Area',overwrite = True)  
-        grass.run_command('v.to.rast',input = 'str_finalcat',output = 'Length',use = 'attr',attribute_column = 'Length',overwrite = True)
-        grass.run_command('v.out.ogr', input = 'str_finalcat',output = os.path.join(self.tempfolder,'str_finalcat2.shp'),format= 'ESRI_Shapefile',overwrite = True)
-
-        grass.run_command('v.to.rast',input = 'str_finalcat',output = 'b_value',use = 'attr',attribute_column = 'b_value',overwrite = True)
-        grass.run_command('r.out.gdal', input = 'b_value',output =os.path.join(self.tempfolder,'b_value.tif'),format= 'GTiff',overwrite = True)
-
+            catscoverlays = catinfo[lakeindex]['SubId'].values  #### catid that covered by this lake
+            catscoverlays = np.unique(catscoverlays) 
+            #### find lake catchment downstream id 
+            downcatid = -1 
+            for icat in range(0,len(lakecat_info)):
+                if len(np.argwhere(catscoverlays == lakecat_info['DowSubId'].values[icat])) <= 0:
+                    downcatid = lakecat_info['DowSubId'].values[icat]
     
-        grass.run_command('r.out.gdal', input = 'Length',output =os.path.join(self.tempfolder,'rivlength.tif'),format= 'GTiff',overwrite = True)
-        grass.run_command('r.out.gdal', input = 'finalcat',output =os.path.join(self.tempfolder,'finalcat.tif'),format= 'GTiff',overwrite = True)
-#        grass.run_command('r.out.gdal', input = 'tanslopedegree',output = outputFolder  + 'slope.tif',format= 'GTiff',overwrite = True)
-#        grass.run_command('r.out.gdal', input = 'aspect',output = outputFolder  + 'aspect.tif',format= 'GTiff',overwrite = True)    
-#        grass.run_command('v.out.ogr', input = 'str_finalcat',output = outputFolder  + 'str_finalcat.shp',format= 'ESRI_Shapefile',overwrite = True)
+            ### change upstream catchment's downstream catchment id  to newlakecatid 
+            upcats_to_lakecats = catinfo['DowSubId'].isin(catscoverlays)#### rows that downstream id is the lake catchment
+            upcatrows  = np.argwhere(upcats_to_lakecats == True)
+            for iupcatrowidx in range(0,len(upcatrows)):
+                iupcatrow =upcatrows[iupcatrowidx] 
+                catinfo.loc[iupcatrow,'DowSubId'] = nlakecatid
 
+            ## change catchment raster merge lake catchments 
+            for j in range(0,len(lakecat_info)):
+                jcat = lakecat_info['SubId'].values[j]
+                jcatrowcol = np.argwhere(Netcat_array==jcat).astype(int)
+                Netcat_array[jcatrowcol[:,0],jcatrowcol[:,1]] = nlakecatid
 
-#####
-        tempinfo = Dbf5(self.Path_allLakeply[:-3] + "dbf")
-        allLakinfo = tempinfo.to_dataframe()
-        landuseinfo = pd.read_csv(self.Path_Landuseinfo_in,sep=",",low_memory=False)
-    
-        finalcat_arr = garray.array(mapname="finalcat")
-        acc_array = garray.array(mapname="acc_grass")
-        dir_array = garray.array(mapname="dir_Arcgis")#ndir_Arcgis
-        Lake1_arr = garray.array(mapname="SelectedLakes")    
-        dem_array = garray.array(mapname="dem")
-        rivlen_array = garray.array(mapname="Length")
-        area_array = garray.array(mapname="Area")
-        width_array = garray.array(mapname="width")
-        depth_array = garray.array(mapname="depth")
-        obs_array = garray.array(mapname="obs")
-        Q_mean_array = garray.array(mapname="qmean")
-        slope_array = garray.array(mapname="tanslopedegree")
-        landuse_array = garray.array(mapname="landuse")
-    
-        self.ncols = int(finalcat_arr.shape[1])
-        self.nrows = int(finalcat_arr.shape[0])
-            
+            #### change lake catchemt infomation 
+            for irow in range(0,len(row_lakeindex)):
+                irow_idx = row_lakeindex[irow]
+                catinfo.loc[irow_idx,'SubId'] = nlakecatid
+                catinfo.loc[lakeindex,'DowSubId'] = downcatid
+                catinfo.loc[lakeindex,'RivSlope'] = -1.2345
+                catinfo.loc[lakeindex,'RivLength'] =0.0
+                catinfo.loc[lakeindex,'BasAspect'] = np.average(lakecat_info['BasAspect'].values,weights = lakecat_info['BasArea'].values)
+                catinfo.loc[lakeindex,'BasArea'] = np.sum(lakecat_info['BasArea'].values)
+                catinfo.loc[lakeindex,'BasSlope'] = np.average(lakecat_info['BasSlope'].values,weights = lakecat_info['BasArea'].values)
+                catinfo.loc[lakeindex,'BkfWidth'] = -1.2345
+                catinfo.loc[lakeindex,'BkfDepth'] = -1.2345
+                catinfo.loc[lakeindex,'MeanElev'] = np.average(lakecat_info['MeanElev'].values,weights = lakecat_info['BasArea'].values)
+                catinfo.loc[lakeindex,'IsObs'] = np.max(lakecat_info['IsObs'].values)
+                catinfo.loc[lakeindex,'FloodP_n'] = -1.2345
+                catinfo.loc[lakeindex,'Q_Mean'] = -1.2345
+                catinfo.loc[lakeindex,'Ch_n'] = -1.2345
+                catinfo.loc[lakeindex,'DA'] = np.max(lakecat_info['DA'].values)
+                catinfo.loc[lakeindex,'Strahler'] =np.max(lakecat_info['Strahler'].values)
+                catinfo.loc[lakeindex,'Seg_ID'] = -1.2345
+                catinfo.loc[lakeindex,'Seg_order'] = -1.2345
+                catinfo.loc[lakeindex,'Max_DEM'] = np.max(lakecat_info['Max_DEM'].values)
+                catinfo.loc[lakeindex,'Min_DEM'] = np.min(lakecat_info['Min_DEM'].values)
+                
+        catinfo.to_csv(self.Path_finalcatinfo_cat, index = None, header=True)
         temparray = garray.array()
         temparray[:,:] = -9999
-    
+        temparray[:,:] = Netcat_array[:,:]
+        temparray.write(mapname="Cat_Lake_combined", overwrite=True)  #### write new stream id to a grass raster 
+        grass.run_command('r.null', map='Cat_Lake_combined',setnull=-9999)
+        grass.run_command('r.mapcalc',expression = 'Cat_Lake_combined = int(Cat_Lake_combined)',overwrite = True)
+        grass.run_command('r.out.gdal', input = 'Cat_Lake_combined',output = os.path.join(self.tempfolder,'Cat_Lake_combined.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
+        grass.run_command('r.to.vect', input='Cat_Lake_combined',output='Cat_Lake_combined_F1',type='area', overwrite = True)    ## save to vector 
+        grass.run_command('v.db.addcolumn', map= 'Cat_Lake_combined_F1', columns = "GC VARCHAR(40)")     
+        grass.run_command('v.db.update', map= 'Cat_Lake_combined_F1', column = "GC",qcol = 'value')
+        grass.run_command('v.dissolve', input= 'Cat_Lake_combined_F1', column = "GC",output = 'Cat_Lake_combined_F',overwrite = True) ### dissolve based on gridcode
+        grass.run_command('v.db.addcolumn', map= 'Cat_Lake_combined_F', columns = "Gridcode INT")        
+        grass.run_command('v.db.update', map= 'Cat_Lake_combined_F', column = "Gridcode",qcol = 'GC')
+        
+        grass.run_command('db.in.ogr', input=self.Path_finalcatinfo_cat,output = 'result_cat',overwrite = True)
+        grass.run_command('v.db.join', map= 'Cat_Lake_combined_F',column = 'Gridcode', other_table = 'result_cat',other_column ='SubId', overwrite = True)
+        grass.run_command('v.out.ogr', input = 'Cat_Lake_combined_F',output = os.path.join(self.tempfolder,'finalcatinfo_cat1.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
+        PERMANENT.close()
 
-        allcatid = np.unique(finalcat_arr)
-        allcatid = allcatid[allcatid >= 0]
-        catinfo2 = np.full((len(allcatid),18),-9999.00000)
-    
-        catinfodf = pd.DataFrame(catinfo2, columns = ['SubId', "DowSubId","Rivlen",'RivSlope','BasinSlope',
-                            'BkfWidth','BkfDepth','IsLake','HyLakeId','LakeVol','LakeDepth',
-                             'LakeArea','Laketype','IsObs','MeanElev','FloodP_n','Q_Mean','Ch_n'])
-                                 
-        catinfo,rivpath= Generatecatinfo(finalcat_arr,acc_array,dir_array,Lake1_arr,dem_array,
-             area_array,catinfodf,allcatid,allLakinfo,width_array,depth_array,rivlen_array,obs_array,self.nrows,self.ncols,
-             slope_array,landuse_array,landuseinfo,Q_mean_array)
-        catinfo = Writecatinfotodbf(catinfo)
-        
-        catinfo.to_csv(self.Path_finalcatinfo, index = None, header=True)
-    
-    
-        temparray[:,:] = rivpath[:,:]
-        temparray.write(mapname="rivpath", overwrite=True)
-        grass.run_command('r.null', map='rivpath',setnull=-9999)
-        grass.run_command('r.out.gdal', input = 'rivpath',output =os.path.join(self.tempfolder,'rivpath.tif'),format= 'GTiff',overwrite = True)
-        
-        grass.run_command('db.in.ogr', input=self.Path_alllakeinfoinfo,output = 'alllakeinfo',overwrite = True)
-        grass.run_command('v.db.join', map= 'SelectedLakes_F',column = 'value', other_table = 'alllakeinfo',other_column ='Hylak_id', overwrite = True)
-        grass.run_command('db.in.ogr', input=self.Path_finalcatinfo,output = 'result',overwrite = True)
-        grass.run_command('v.db.join', map= 'finalcat_F',column = 'Gridcode', other_table = 'result',other_column ='SubId', overwrite = True)
-        grass.run_command('v.out.ogr', input = 'finalcat_F',output = os.path.join(self.tempfolder,'finalcat_info1.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
-        
-        
-#        grass.run_command('v.out.ogr', input = 'finalcat_F',output = outputFolder  + 'finalcat_info.shp',format= 'ESRI_Shapefile',overwrite = True)
-        PERMANENT.close
-        
-        QgsApplication.setPrefixPath(self.qgisPP, True)
-        Qgs = QgsApplication([],False)
-        Qgs.initQgis()
-        from qgis import processing
-        from processing.core.Processing import Processing   
-        feedback = QgsProcessingFeedback()
-        Processing.initialize()
-        QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
-        from processing.tools import dataobjects
-        context = dataobjects.createContext()
-        context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
-        
-        processing.run("native:centroids", {'INPUT':os.path.join(self.tempfolder,'finalcat_info1.shp'),'ALL_PARTS':False,'OUTPUT':os.path.join(self.tempfolder,'Centerpoints.shp')},context = context)
-        processing.run("native:addxyfields", {'INPUT':os.path.join(self.tempfolder,'Centerpoints.shp'),'CRS':QgsCoordinateReferenceSystem(self.SpRef_in),'OUTPUT':os.path.join(self.tempfolder,'ctwithxy.shp')},context = context)
-        processing.run("native:joinattributestable",{'INPUT':os.path.join(self.tempfolder,'finalcat_info1.shp'),'FIELD':'SubId','INPUT_2':os.path.join(self.tempfolder,'ctwithxy.shp'),'FIELD_2':'SubId',
-                          'FIELDS_TO_COPY':['x','y'],'METHOD':0,'DISCARD_NONMATCHING':False,'PREFIX':'centroid_','OUTPUT':os.path.join(self.tempfolder,'finalcat_info2.shp')},context = context)
-                          
-        Qgs.exit()  
-                   
-#        selectpolygonsfromroutingproduct(os.path.join(self.tempfolder,'finalcat_info2.shp'),'SubId','DowSubId',os.path.join(self.OutputFolder,'finalcat_info.shp'),subid_with_largestacc_obs,-1,self.qgisPP)
-        return
-        
+             
 ###########################################################################3
     def Output_Clean(self,Out = 'Simple',clean = 'True',):
         

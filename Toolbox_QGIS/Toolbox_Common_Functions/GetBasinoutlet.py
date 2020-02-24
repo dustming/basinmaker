@@ -12,9 +12,9 @@ def Getbasinoutlet(ID,basin,fac,dir,nrows,ncols):
     ### check if it is a real basin outlet 
     crow = catacc[len(catrowcol)-1,0]
     ccol = catacc[len(catrowcol)-1,1]
-          
-    nrow,ncol =  Nextcell(dir,crow,ccol)
     
+    nrow,ncol =  Nextcell(dir,crow,ccol)
+#    print(ID,basin[nrow,ncol],basin[crow,ccol],fac[nrow,ncol],fac[crow,ccol],crow,ccol)
     if nrow < 0 or ncol < 0:
         return crow, ccol
     elif nrow >= nrows or ncol >= ncols:

@@ -59,8 +59,9 @@ def Streamorderanddrainagearea(catinfo):
                     else:
                         max_straorder = np.max(Up_Reaches_info['Strahler'].values)
                         catinfo.loc[curcat_idx,'Strahler']  = max_straorder
-                        catinfo.loc[curcat_idx,'Seg_order'] = Up_Reaches_info[Up_Reaches_info['Strahler'] == max_straorder]['Seg_order'].values[0] + 1  ### need check  if has three reach with oder 3 3 2
-                        catinfo.loc[curcat_idx,'Seg_ID'] = Up_Reaches_info[Up_Reaches_info['Strahler'] == max_straorder]['Seg_ID'].values[0]
+                        catinfo.loc[curcat_idx,'Seg_order'] = 1
+                        catinfo.loc[curcat_idx,'Seg_ID'] = iseg +1
+                        iseg = iseg +1
 #                        print('3',catid,catinfo.loc[catinfo['SubId'] == catid,'DA'].values,catinfo.loc[catinfo['SubId'] == catid,'Strahler'].values,catinfo.loc[catinfo['SubId'] == catid,'Sub_order'].values) 
                     catid =  int(cur_Reach_info['DowSubId'].values[0])
                 else:  ## there are some reach has not been processed, save id to the list and wait for another loob 
@@ -70,7 +71,58 @@ def Streamorderanddrainagearea(catinfo):
 
     newcatlist = np.unique(newcatlist)
     newcatlist = newcatlist[newcatlist>0]   
+#####################################
+    riv_segs = catinfo['Seg_ID'].values
+    riv_segs = np.unique(riv_segs)
+    riv_segs = riv_segs[riv_segs>0]
+    for i in range(0,len(riv_segs)):
+        iriv_seg = riv_segs[i]
+        catinfo_saseg = catinfo[catinfo['Seg_ID'] == iriv_seg]
+        segs_nobkf_idx = catinfo_saseg['BkfWidth'] < 0  ### index that do not have bankfull width data 
+        segs_bkf_idx = catinfo_saseg['BkfWidth'] > 0 
+        segs_norivslop_idx = catinfo_saseg['RivSlope'] < 0  ### index that do not have bankfull width data 
+        if len(catinfo_saseg[segs_nobkf_idx]) > 0 or len(catinfo_saseg[segs_norivslop_idx]) > 0:      ####bankfulll width data not avaiable for some of 
+            nobkfdatarives = catinfo_saseg[segs_nobkf_idx]
+            bkfdatarives = catinfo_saseg[segs_bkf_idx]
+            norivsloperives = catinfo_saseg[segs_norivslop_idx]
 
+            seg_rivslope_ave = -1.2345
+            seg_bkfwidth_ave = -1.2345
+            seg_bkfdepth_ave = -1.2345
+            seg_bkfqmean_ave = -1.2345
+
+            seg_max_dems = catinfo_saseg['Max_DEM'].values
+            seg_min_dems = catinfo_saseg['Min_DEM'].values
+            seg_max_dem = np.max(seg_max_dems[seg_max_dems > 0])
+            seg_min_dem = np.max(seg_min_dems[seg_min_dems > 0])
+            
+            if (seg_max_dem > seg_min_dem and np.sum(catinfo_saseg['RivLength'].values > 0)):
+                seg_rivslope_ave = (seg_max_dem - seg_min_dem)/np.sum(catinfo_saseg['RivLength'].values)
+            else:
+                seg_rivslope_ave = 0.00012345
+
+            if len(bkfdatarives) > 0:
+                seg_bkfwidth_ave = np.average(bkfdatarives['BkfWidth'].values,weights = bkfdatarives['RivLength'].values)
+                seg_bkfdepth_ave = np.average(bkfdatarives['BkfDepth'].values,weights = bkfdatarives['RivLength'].values)
+                seg_bkfqmean_ave = np.average(bkfdatarives['Q_Mean'].values,weights = bkfdatarives['RivLength'].values)
+            ### calcuate river 
+            for i in range(0,len(nobkfdatarives)):
+                icat = nobkfdatarives['SubId'].vaues[i]
+                icat_idx = catinfo['SubId'] == icat
+                catinfo.loc[icat_idx,'BkfWidth']  = seg_bkfwidth_ave
+                catinfo.loc[icat_idx,'BkfDepth']  = seg_bkfdepth_ave
+                catinfo.loc[icat_idx,'Q_Mean']  = seg_bkfqmean_ave
+
+            for i in range(0,len(norivsloperives)):
+                icat = norivsloperives['SubId'].values[i]
+                icat_idx = catinfo['SubId'] == icat
+                catinfo.loc[icat_idx,'RivSlope']  = seg_rivslope_ave           
+                
+    ### calcuate channel manning's coefficient     
+    for i in range(0,len(catinfo)):
+        if catinfo['BkfWidth'].values[i] > 0 and catinfo['RivSlope'].values[i] > 0 :
+            catinfo.loc[i,'Ch_n'] = calculateChannaln(catinfo['BkfWidth'].values[i],catinfo['BkfDepth'].values[i],
+                              catinfo['Q_Mean'].values[i],catinfo['RivSlope'].values[i])
     return catinfo 
 
 
@@ -251,8 +303,9 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
         catmask = Watseds == catid
         trow,tcol = Getbasinoutlet(catid,finalcat,fac,fdir,nrows,ncols)
         k = 1
+        ttrow,ttcol = trow,tcol
         while catinfo['DowSubId'].values[i] < 0 and k < 20:
-            nrow,ncol = Nextcell(fdir,trow,tcol)### get the downstream catchment id
+            nrow,ncol = Nextcell(fdir,ttrow,ttcol)### get the downstream catchment id
             if nrow < 0 or ncol < 0:
                 catinfo.loc[i,'DowSubId'] = -1
                 break;
@@ -264,8 +317,8 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
             else:
                 catinfo.loc[i,'DowSubId'] = finalcat[nrow,ncol]
             k = k + 1
-            trow = nrow
-            tcol = ncol 
+            ttrow = nrow
+            ttcol = ncol 
 ################################## Get lake information        
         lakeinriv = lake[catmask]
         lakeids = np.unique(lakeinriv)
@@ -290,6 +343,7 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
             catinfo.loc[i,'LakeDepth']= slakeinfo.iloc[0]['Depth_avg']
             catinfo.loc[i,'Laketype'] = slakeinfo.iloc[0]['Lake_type']
 ########Check if it is observation points
+#        print(catid,obs[trow,tcol],fac[trow,tcol],fac[nrow,ncol],finalcat[trow,tcol],finalcat[nrow,ncol])
         if obs[trow,tcol]  >= 0:
 #            arcpy.AddMessage(str(catid)+"      "+str(obs[trow,tcol]))
             catinfo.loc[i,'IsObs'] =  obs[trow,tcol]
@@ -318,6 +372,8 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
             deminriv[deminriv <=0] = np.NaN
             maxdem = np.nanmax(deminriv)
             mindem = np.nanmin(deminriv)
+            catinfo.loc[i,'Min_DEM'] = mindem
+            catinfo.loc[i,'Max_DEM'] = maxdem
         else:
             maxdem = -1.2345
             mindem = -1.2345
@@ -334,7 +390,7 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
             catinfo.loc[i,'RivLength'] = rivlen
             if rivlen >= 0:
                 if max(0,float((maxdem - mindem))/float(rivlen)) == 0:
-                    catinfo.loc[i,'RivSlope'] = 0.00012345
+                    catinfo.loc[i,'RivSlope'] =-1.2345
                 else:
                     catinfo.loc[i,'RivSlope'] = max(0,float((maxdem - mindem))/float(rivlen))
             else:
