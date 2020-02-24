@@ -209,8 +209,8 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn):
         orvh.write("  "+StrGid+tab+StrGidarea+StrGidelev+lat+lon+catid+LAND_USE_CLASS+VEG_CLASS+SOIL_PROFILE+AQUIFER_PROFILE+TERRAIN_CLASS+SLOPE+ASPECT+"\n")
         if catinfo.iloc[i]['IsLake'] > 0:
             hruid = int(catinfo.iloc[i]['SubId']) + int(maxcatid)
-            catslope = catinfo.iloc[i]['BasinSlope']
-            if float(catinfo.iloc[i]['Area'])/1000.00/1000.00 <= float(catinfo.iloc[i]['LakeArea']):
+            catslope = catinfo.iloc[i]['BasSlope']
+            if float(catinfo.iloc[i]['BasArea'])/1000.00/1000.00 <= float(catinfo.iloc[i]['LakeArea']):
                 catarea2 = float(catinfo.iloc[i]['Area'])*0.95/1000/1000
             else:
                 catarea2 = float(catinfo.iloc[i]['LakeArea'])
