@@ -211,7 +211,7 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn):
             hruid = int(catinfo.iloc[i]['SubId']) + int(maxcatid)
             catslope = catinfo.iloc[i]['BasSlope']
             if float(catinfo.iloc[i]['BasArea'])/1000.00/1000.00 <= float(catinfo.iloc[i]['LakeArea']):
-                catarea2 = float(catinfo.iloc[i]['Area'])*0.95/1000/1000
+                catarea2 = float(catinfo.iloc[i]['BasArea'])*0.95/1000/1000
             else:
                 catarea2 = float(catinfo.iloc[i]['LakeArea'])
             StrGid =  str(hruid)+tab

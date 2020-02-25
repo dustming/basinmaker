@@ -1584,6 +1584,7 @@ class LRRT:
         tempinfo = Dbf5( finalcatchpath + ".dbf")#np.genfromtxt(hyinfocsv,delimiter=',')
         ncatinfo = tempinfo.to_dataframe()
         ncatinfo2 = ncatinfo.drop_duplicates('SubId', keep='first')
+        ncatinfo2 = ncatinfo2[ncatinfo2['SubId'] > 0]
         Writervhchanl(ncatinfo2,self.Raveinputsfolder,lenThres,iscalmanningn)
         writelake(ncatinfo2,self.Raveinputsfolder)
         
