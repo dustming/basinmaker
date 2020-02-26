@@ -948,7 +948,7 @@ class LRRT:
         self.ncols = int(strtemp_array.shape[1])
         self.nrows = int(strtemp_array.shape[0])
 
-        ### process vector data, clip and import 
+        ### process vector data, clip and import
         processing.run("native:clip", {'INPUT':self.Path_Lakefile_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_allLakeply},context = context)
         processing.run("native:clip", {'INPUT':self.Path_WiDep_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_WidDepLine},context = context)
         processing.run("native:clip", {'INPUT':self.Path_obspoint_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_ObsPoint},context = context)
@@ -979,7 +979,7 @@ class LRRT:
         ### rasterize other vectors 
         grass.run_command('v.to.rast',input = 'WidDep',output = 'width',use = 'attr',attribute_column = 'WIDTH',overwrite = True)
         grass.run_command('v.to.rast',input = 'WidDep',output = 'depth',use = 'attr',attribute_column = 'DEPTH',overwrite = True)
-        grass.run_command('v.to.rast',input = 'WidDep',output = 'qmean',use = 'attr',attribute_column = 'Q_Mean2',overwrite = True)
+        grass.run_command('v.to.rast',input = 'WidDep',output = 'qmean',use = 'attr',attribute_column = 'Q_Mean',overwrite = True)
         grass.run_command('v.to.rast',input = 'obspoint',output = 'obs',use = 'attr',attribute_column = 'Obs_ID',overwrite = True)
 
         PERMANENT.close()
@@ -1602,23 +1602,24 @@ class LRRT:
             os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='-1'))
             PERMANENT = Session()
             PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
-
-            finalcat_arr = garray.array(mapname="finalcat")
-            acc_array = garray.array(mapname="acc_grass")
-            obs_array = garray.array(mapname="obs")
             
-            obsids = np.unique(obs_array)
-            obsids = obsids[obsids>0]
-            obsinfo = np.full((len(obsids),3),-9999)
+            if mostdownid < 0: 
+                finalcat_arr = garray.array(mapname="finalcat")
+                acc_array = garray.array(mapname="acc_grass")
+                obs_array = garray.array(mapname="obs")
+            
+                obsids = np.unique(obs_array)
+                obsids = obsids[obsids>0]
+                obsinfo = np.full((len(obsids),3),-9999)
         
-            for i in range(0,len(obsids)):
-                rowcol = np.argwhere(obs_array==obsids[i]).astype(int)
-                obsinfo[i,0] = obsids[i]
-                obsinfo[i,1] = finalcat_arr[rowcol[0,0],rowcol[0,1]]
-                obsinfo[i,2] = acc_array[rowcol[0,0],rowcol[0,1]]
+                for i in range(0,len(obsids)):
+                    rowcol = np.argwhere(obs_array==obsids[i]).astype(int)
+                    obsinfo[i,0] = obsids[i]
+                    obsinfo[i,1] = finalcat_arr[rowcol[0,0],rowcol[0,1]]
+                    obsinfo[i,2] = acc_array[rowcol[0,0],rowcol[0,1]]
             
-            obsinfo = obsinfo[obsinfo[:,2].argsort()].astype(int)
-            mostdownid = obsinfo[len(obsinfo) - 1,1]
+                    obsinfo = obsinfo[obsinfo[:,2].argsort()].astype(int)
+                mostdownid = obsinfo[len(obsinfo) - 1,1]
 
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
