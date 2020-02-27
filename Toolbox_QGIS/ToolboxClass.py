@@ -1546,7 +1546,7 @@ class LRRT:
         Qgs.exit()
              
 ###########################################################################3
-    def Output_Clean(self,Out = 'Simple',clean = 'True',):
+    def Output_Clean(self,Out = 'Simple',clean = 'True'):
         
         import grass.script as grass
         from grass.script import array as garray
