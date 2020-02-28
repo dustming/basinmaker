@@ -1059,6 +1059,7 @@ class LRRT:
 
         
 ################ check connected lakes  and non connected lakes 
+        grass.run_command('v.out.ogr', input = 'str_grass_v',output = os.path.join(self.tempfolder, "str_grass_v.shp"),format= 'ESRI_Shapefile',overwrite = True)
         grass.run_command('v.select',ainput = 'Hylake',binput = 'str',output = 'lake_str',overwrite = True)
         grass.run_command('v.out.ogr', input = 'lake_str',output = os.path.join(self.tempfolder, "Connect_lake.shp"),format= 'ESRI_Shapefile',overwrite = True)
         os.system('gdal_rasterize -at -of GTiff -a_nodata -9999 -a Hylak_id -tr  '+ str(self.cellSize) + "  " +str(self.cellSize) +"   " + "\"" +  os.path.join(self.tempfolder, "Connect_lake.shp") +"\""+ "    "+ "\""+os.path.join(self.tempfolder, "cnhylakegdal.tif")+"\"")
@@ -1316,9 +1317,9 @@ class LRRT:
         
 
         # create a river network shpfile that have river segment based on   'Net_cat_F.shp'
-        grass.run_command('r.mapcalc',expression = 'str1 = if(isnull(str_grass_r),null(),1)',overwrite = True) ## a rive 
-        grass.run_command('r.to.vect',  input = 'str1',output = 'str1', type ='line' ,overwrite = True)
-        grass.run_command('v.overlay',ainput = 'str1',binput = 'Net_cat_F',operator = 'and',output = 'nstr_nfinalcat',overwrite = True)  
+#        grass.run_command('r.mapcalc',expression = 'str1 = if(isnull(str_grass_r),null(),1)',overwrite = True) ## a rive 
+#        grass.run_command('r.to.vect',  input = 'str1',output = 'str1', type ='line' ,overwrite = True)
+        grass.run_command('v.overlay',ainput = 'str_grass_v',binput = 'Net_cat_F',operator = 'and',output = 'nstr_nfinalcat',overwrite = True)  
         grass.run_command('v.out.ogr', input = 'nstr_nfinalcat',output = os.path.join(self.tempfolder,'nstr_nfinalcat.shp'),format= 'ESRI_Shapefile',overwrite = True)
         processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'nstr_nfinalcat.shp'),'FIELD':'b_GC_str','OUTPUT':os.path.join(self.tempfolder, "nstr_nfinalcat_F.shp")}) 
         grass.run_command("v.import", input =os.path.join(self.tempfolder, "nstr_nfinalcat_F.shp"), output = 'nstr_nfinalcat_F', overwrite = True)               
@@ -1433,6 +1434,25 @@ class LRRT:
                           
         processing.run("native:joinattributestable",{'INPUT':os.path.join(self.tempfolder,'finalriv_info1.shp'),'FIELD':'SubId','INPUT_2':os.path.join(self.tempfolder,'ctwithxy.shp'),'FIELD_2':'SubId',
                           'FIELDS_TO_COPY':['x','y'],'METHOD':0,'DISCARD_NONMATCHING':False,'PREFIX':'centroid_','OUTPUT':os.path.join(self.OutputFolder,'finalriv_info.shp')},context = context)
+
+        Slakes = np.unique(Lake1_arr)
+        Slakes = Slakes[Slakes > 0]
+        hylakes_ply_lay = QgsVectorLayer(self.Path_allLakeply, "")    
+        where_clause = '"Hylak_id" IN'+ " ("
+        for i in range(0,len(Slakes)):
+            if i == 0:
+                where_clause = where_clause + str(int(Slakes[i]))
+            else:
+                where_clause = where_clause + "," + str(int(Slakes[i]))
+        where_clause = where_clause + ")"
+        req = QgsFeatureRequest().setFlags( QgsFeatureRequest.NoGeometry )
+        req.setFilterExpression(where_clause)
+        it = hylakes_ply_lay.getFeatures( req )
+        selectedFeatureID = []
+        for feature in it:
+            selectedFeatureID.append(feature.id())
+        hylakes_ply_lay.select(selectedFeatureID)   ### select with polygon id
+        _writer = QgsVectorFileWriter.writeAsVectorFormat(hylakes_ply_lay, os.path.join(self.OutputFolder, 'All_Selected_Lakes.shp'), "UTF-8", hylakes_ply_lay.crs(), "ESRI Shapefile", onlySelected=True)
        
         Qgs.exit()  
         
@@ -1562,7 +1582,7 @@ class LRRT:
                 
         if Out == 'Simple':
 #            grass.run_command('v.out.ogr', input = 'finalcat_F',output = os.path.join(self.OutputFolder,'finalcat_info.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
-            grass.run_command('v.out.ogr', input = 'SelectedLakes_F',output = os.path.join(self.OutputFolder,'SelectedLakes.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
+#            grass.run_command('v.out.ogr', input = 'SelectedLakes_F',output = os.path.join(self.OutputFolder,'SelectedLakes.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
 #            grass.run_command('v.out.ogr', input = 'nstr_nfinalcat_F',output = os.path.join(self.OutputFolder,'finalriv_info.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
 #            grass.run_command('v.out.ogr', input = 'Cat_Lake_combined_F',output = os.path.join(self.OutputFolder,'finalcat_info.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
             grass.run_command('v.out.ogr', input = 'Hylake',output = os.path.join(self.OutputFolder,'AllLakes.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
