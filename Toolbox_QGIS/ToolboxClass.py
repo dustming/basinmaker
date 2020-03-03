@@ -404,10 +404,14 @@ def CE_mcat4lake(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints):
     outlakeids= outlakeids[outlakeids[:,0] > 0]
     return cat,outlakeids
 ###################################################33
-def CE_mcat4lake2(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints):
+def CE_mcat4lake2(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints,noncnlake):
     cat = copy.copy(cat1)
+    Non_con_lake_cat = copy.copy(cat1)
+    Non_con_lake_cat[:,:] = -9999
     arlakeid = np.unique(lake)
     arlakeid = arlakeid[arlakeid>=0]
+    noncnlake = np.unique(noncnlake)
+    noncnlake = noncnlake[noncnlake>=0]
     for i in range(0,len(arlakeid)):
         lakeid = arlakeid[i]
         lrowcol = np.argwhere(lake==lakeid).astype(int)
@@ -427,6 +431,14 @@ def CE_mcat4lake2(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints):
                 cat[lrowcol[:,0],lrowcol[:,1]] = pp
             else:
                 cat[lrowcol[:,0],lrowcol[:,1]] = arclakeid
+
+            if len(np.argwhere(noncnlake==lakeid)) > 0: ##if lake belong to non connected lakes
+                if arclakeid < 0:
+                    nonlrowcol = np.argwhere(cat==pp).astype(int)
+                    Non_con_lake_cat[nonlrowcol[:,0],nonlrowcol[:,1]] = lakeid
+                else:
+                    nonlrowcol = np.argwhere(cat==arclakeid).astype(int)
+                    Non_con_lake_cat[nonlrowcol[:,0],nonlrowcol[:,1]] = lakeid
 #### For some reason pour point was missing in non-contribute catchment 
     Pours = np.unique(Pourpoints)
     Pours = Pours[Pours>0]
@@ -441,7 +453,7 @@ def CE_mcat4lake2(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints):
     rowcol2 = cat < 0
     noncontribuite = np.logical_and(rowcol1, rowcol2)
     cat[noncontribuite] = 2*max(np.unique(cat)) + 1
-    return cat
+    return cat,Non_con_lake_cat
 ######################################################
 def CE_Lakeerror(fac,fdir,lake,cat2,bsid,blid,boid,nrows,ncols,cat):
     Watseds = copy.copy(cat2)
@@ -927,6 +939,7 @@ class LRRT:
 ###### set up GRASS environment for translate vector to rasters and clip rasters
         import grass.script as grass
         from grass.script import array as garray
+        from grass.script import core as gcore
         import grass.script.setup as gsetup
         from grass.pygrass.modules.shortcuts import general as g
         from grass.pygrass.modules.shortcuts import raster as r
@@ -947,7 +960,7 @@ class LRRT:
         strtemp_array = garray.array(mapname="dem")
         self.ncols = int(strtemp_array.shape[1])
         self.nrows = int(strtemp_array.shape[0])
-
+        grsregion = gcore.region()
         ### process vector data, clip and import
         processing.run("native:clip", {'INPUT':self.Path_Lakefile_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_allLakeply},context = context)
         processing.run("native:clip", {'INPUT':self.Path_WiDep_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_WidDepLine},context = context)
@@ -972,7 +985,7 @@ class LRRT:
         grass.run_command("r.clip", input = 'landuse_in', output = 'landuse', overwrite = True)        
     
         ### change lake vector to lake raster.... with -at option 
-        os.system('gdal_rasterize -at -of GTiff -a_nodata -9999 -a Hylak_id -tr  '+ str(self.cellSize) + "  " +str(self.cellSize) +"   " + "\"" +  self.Path_allLakeply +"\""+ "    "+ "\""+self.Path_allLakeRas+"\"")
+        os.system('gdal_rasterize -at -of GTiff -a_nodata -9999 -a Hylak_id -tr  '+ str(self.cellSize) + "  " +str(self.cellSize)+'  -te   '+ str(grsregion['w'])+"   " +str(grsregion['s'])+"   " +str(grsregion['e'])+"   " +str(grsregion['n'])+"   " + "\"" +  self.Path_allLakeply +"\""+ "    "+ "\""+self.Path_allLakeRas+"\"")
         grass.run_command("r.in.gdal", input = self.Path_allLakeRas, output = 'alllakeraster_in', overwrite = True)
         grass.run_command('r.mapcalc',expression = 'alllake = int(alllakeraster_in)',overwrite = True)
         grass.run_command("r.null", map = 'alllake', setnull = -9999)
@@ -992,6 +1005,7 @@ class LRRT:
     def WatershedDiscretizationToolset(self,accthresold):
         import grass.script as grass
         from grass.script import array as garray
+        from grass.script import core as gcore
         import grass.script.setup as gsetup
         from grass.pygrass.modules.shortcuts import general as g
         from grass.pygrass.modules.shortcuts import raster as r
@@ -1002,7 +1016,7 @@ class LRRT:
         PERMANENT = Session()
         PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
 
-
+        grsregion = gcore.region()
         if self.Path_dir_in == '#':  ### did not provide dir, use dem to generate watershed. recommand !!
             grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =accthresold,stream_raster = 'str_grass_r',
                               stream_vector = 'str_grass_v',overwrite = True)
@@ -1062,14 +1076,15 @@ class LRRT:
 #        grass.run_command('v.out.ogr', input = 'str_grass_v',output = os.path.join(self.tempfolder, "str_grass_v.shp"),format= 'ESRI_Shapefile',overwrite = True)
         grass.run_command('v.select',ainput = 'Hylake',binput = 'str',output = 'lake_str',overwrite = True)
         grass.run_command('v.out.ogr', input = 'lake_str',output = os.path.join(self.tempfolder, "Connect_lake.shp"),format= 'ESRI_Shapefile',overwrite = True)
-        os.system('gdal_rasterize -at -of GTiff -a_nodata -9999 -a Hylak_id -tr  '+ str(self.cellSize) + "  " +str(self.cellSize) +"   " + "\"" +  os.path.join(self.tempfolder, "Connect_lake.shp") +"\""+ "    "+ "\""+os.path.join(self.tempfolder, "cnhylakegdal.tif")+"\"")
+        os.system('gdal_rasterize -at -of GTiff -a_nodata -9999 -a Hylak_id -tr  '+ str(self.cellSize) + "  " +str(self.cellSize) +'   -te   '+ str(grsregion['w'])+"   " +str(grsregion['s'])+"   " +str(grsregion['e'])+"   " +str(grsregion['n'])+"   " +"\"" +  os.path.join(self.tempfolder, "Connect_lake.shp") +"\""+ "    "+ "\""+os.path.join(self.tempfolder, "cnhylakegdal.tif")+"\"")
         grass.run_command("r.in.gdal", input = os.path.join(self.tempfolder, "cnhylakegdal.tif"), output = 'cnlakeraster_in', overwrite = True)
         grass.run_command('r.mapcalc',expression = 'Connect_Lake = int(cnlakeraster_in)',overwrite = True)    
-        grass.run_command('r.mapcalc',expression = 'Nonconnect_Lake = if(isnull(Connect_Lake),alllake,-9)',overwrite = True)
+        grass.run_command('r.mapcalc',expression = 'Nonconnect_Lake = if(isnull(Connect_Lake),alllake,null())',overwrite = True)
     
 #        grass.run_command('v.out.ogr', input = 'finalcat_F',output = os.path.join(self.tempfolder,'finalcat_info1.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
         grass.run_command('r.out.gdal', input = 'cat1',output = os.path.join(self.tempfolder,'cat1.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')    
-        grass.run_command('r.out.gdal', input = 'Connect_Lake',output = os.path.join(self.tempfolder,'Connect_Lake.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')    
+        grass.run_command('r.out.gdal', input = 'Connect_Lake',output = os.path.join(self.tempfolder,'Connect_Lake.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
+        grass.run_command('r.out.gdal', input = 'Nonconnect_Lake',output = os.path.join(self.tempfolder,'Nonconnect_Lake.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')    
         grass.run_command('r.out.gdal', input = 'str_grass_r',output = os.path.join(self.tempfolder,'str_grass_r.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')    
 
         PERMANENT.close()
@@ -1136,7 +1151,7 @@ class LRRT:
         temparray.write(mapname="Pourpoints_1", overwrite=True)
         grass.run_command('r.null', map='Pourpoints_1',setnull=-9999)
         grass.run_command('r.to.vect', input='Pourpoints_1',output='Pourpoints_1_F',type='point', overwrite = True)
-        
+### cat2        
         grass.run_command('r.stream.basins',direction = 'dir_grass', points = 'Pourpoints_1_F', basins = 'cat2_t',overwrite = True)        
         sqlstat="SELECT cat, value FROM Pourpoints_1_F"
         df_P_1_F = pd.read_sql_query(sqlstat, con)
@@ -1144,12 +1159,10 @@ class LRRT:
         df_P_1_F.loc[len(df_P_1_F)-1,'value'] = 'NULL'
         df_P_1_F['eq'] = '='
         df_P_1_F.to_csv(os.path.join(self.tempfolder,'rule_cat2.txt'),sep = ' ',columns = ['cat','eq','value'],header = False,index=False)
-        grass.run_command('r.reclass', input='cat2_t',output = 'cat2',rules =os.path.join(self.tempfolder,'rule_cat2.txt'), overwrite = True)
-        
-        
+        grass.run_command('r.reclass', input='cat2_t',output = 'cat2',rules =os.path.join(self.tempfolder,'rule_cat2.txt'), overwrite = True)    
         grass.run_command('v.out.ogr', input = 'Pourpoints_1_F',output = os.path.join(self.tempfolder, "Pourpoints_1_F.shp"),format= 'ESRI_Shapefile',overwrite = True)
 #        grass.run_command('r.out.gdal', input = 'cat1',output = os.path.join(self.tempfolder,'cat1.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')    
-    
+# cat3   
         cat2_array =  garray.array(mapname="cat2")
         temcat,outlakeids =CE_mcat4lake(cat2_array,Lake1,acc_array,dir_array,bsid,self.nrows,self.ncols,Pourpoints) 
         temcat2 = CE_Lakeerror(acc_array,dir_array,Lake1,temcat,bsid,blid,boid,self.nrows,self.ncols,cat1_arr)
@@ -1157,7 +1170,7 @@ class LRRT:
         temparray.write(mapname="cat3", overwrite=True)
         grass.run_command('r.null', map='cat3',setnull=-9999)
 
-        grass.run_command('r.out.gdal', input = 'cat2',output = os.path.join(self.tempfolder,'cat2.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
+        grass.run_command('r.out.gdal', input = 'cat3',output = os.path.join(self.tempfolder,'cat3.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
 #        grass.run_command('r.out.gdal', input = 'cat3',output = os.path.join(self.tempfolder,'cat3.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
     
         nPourpoints = GenerateFinalPourpoints(acc_array,dir_array,Lake1,temcat2,bsid,blid,boid,self.nrows,self.ncols,cat1_arr,obs_array)
@@ -1168,49 +1181,52 @@ class LRRT:
         grass.run_command('v.out.ogr', input = 'Pourpoints_2_F',output = os.path.join(self.tempfolder, "Pourpoints_2_F.shp"),format= 'ESRI_Shapefile',overwrite = True)
 
         ## with new pour points
-        grass.run_command('r.stream.basins',direction = 'dir_grass', points = 'Pourpoints_2_F', basins = 'cat3_t',overwrite = True)        
+# cat 4
+        grass.run_command('r.stream.basins',direction = 'dir_grass', points = 'Pourpoints_2_F', basins = 'cat4_t',overwrite = True)        
         sqlstat="SELECT cat, value FROM Pourpoints_2_F"
         df_P_1_F = pd.read_sql_query(sqlstat, con)
         df_P_1_F.loc[len(df_P_1_F),'cat'] = '*'
         df_P_1_F.loc[len(df_P_1_F)-1,'value'] = 'NULL'
         df_P_1_F['eq'] = '='
-        df_P_1_F.to_csv(os.path.join(self.tempfolder,'rule_cat3.txt'),sep = ' ',columns = ['cat','eq','value'],header = False,index=False)
-        grass.run_command('r.reclass', input='cat3_t',output = 'cat3',rules =os.path.join(self.tempfolder,'rule_cat3.txt'), overwrite = True)
-        cat3_array =  garray.array(mapname="cat3")
-        grass.run_command('r.out.gdal', input = 'cat3',output = os.path.join(self.tempfolder,'cat3.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
+        df_P_1_F.to_csv(os.path.join(self.tempfolder,'rule_cat4.txt'),sep = ' ',columns = ['cat','eq','value'],header = False,index=False)
+        grass.run_command('r.reclass', input='cat4_t',output = 'cat4',rules =os.path.join(self.tempfolder,'rule_cat4.txt'), overwrite = True)
+        cat4_array =  garray.array(mapname="cat4")
+        grass.run_command('r.out.gdal', input = 'cat4',output = os.path.join(self.tempfolder,'cat4.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
                 
-        outlakeids= check_lakecatchment(cat3_array,Lake1,acc_array,dir_array,bsid,self.nrows,self.ncols)
+        outlakeids= check_lakecatchment(cat4_array,Lake1,acc_array,dir_array,bsid,self.nrows,self.ncols)
 
 
     
         ### Modify lake flow directions
-        ndir = ChangeDIR(dir_array,Lake1,acc_array,self.ncols,self.nrows,outlakeids,nlakegrids,cat3_array)
+        ndir = ChangeDIR(dir_array,Lake1,acc_array,self.ncols,self.nrows,outlakeids,nlakegrids,cat4_array)
         temparray[:,:] = ndir[:,:]
         temparray.write(mapname="ndir_Arcgis", overwrite=True)
         grass.run_command('r.null', map='ndir_Arcgis',setnull=-9999)    
         grass.run_command('r.reclass', input='ndir_Arcgis',output = 'ndir_grass',rules =os.path.join(self.RoutingToolPath,'Arcgis2GrassDIR.txt'),overwrite = True)
-     
-        grass.run_command('r.stream.basins',direction = 'ndir_grass', points = 'Pourpoints_2_F', basins = 'cat4_t',overwrite = True)
-
+# cat5     
+        grass.run_command('r.stream.basins',direction = 'ndir_grass', points = 'Pourpoints_2_F', basins = 'cat5_t',overwrite = True)
         sqlstat="SELECT cat, value FROM Pourpoints_2_F"
         df_P_2_F = pd.read_sql_query(sqlstat, con)
         df_P_2_F.loc[len(df_P_2_F),'cat'] = '*'
         df_P_2_F.loc[len(df_P_2_F)-1,'value'] = 'NULL'
         df_P_2_F['eq'] = '='
-        df_P_2_F.to_csv(os.path.join(self.tempfolder,'rule_cat4.txt'),sep = ' ',columns = ['cat','eq','value'],header = False,index=False)
-        grass.run_command('r.reclass', input='cat4_t',output = 'cat4',rules =os.path.join(self.tempfolder,'rule_cat4.txt'), overwrite = True)
-
-
-        grass.run_command('r.out.gdal', input = 'cat4',output = os.path.join(self.tempfolder,'cat4.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
-        cat4_array =  garray.array(mapname="cat4")
-        rowcols = np.argwhere(cat4_array == 0)
-        cat4_array[rowcols[:,0],rowcols[:,1]] = -9999
-        finalcat = CE_mcat4lake2(cat4_array,Lake1,acc_array,dir_array,bsid,self.nrows,self.ncols,nPourpoints)
+        df_P_2_F.to_csv(os.path.join(self.tempfolder,'rule_cat5.txt'),sep = ' ',columns = ['cat','eq','value'],header = False,index=False)
+        grass.run_command('r.reclass', input='cat5_t',output = 'cat5',rules =os.path.join(self.tempfolder,'rule_cat5.txt'), overwrite = True)
+        grass.run_command('r.out.gdal', input = 'cat5',output = os.path.join(self.tempfolder,'cat5.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
+        cat5_array =  garray.array(mapname="cat5")
+        rowcols = np.argwhere(cat5_array == 0)
+        cat5_array[rowcols[:,0],rowcols[:,1]] = -9999
+        
+        
+        finalcat,Non_con_lake_cat = CE_mcat4lake2(cat5_array,Lake1,acc_array,dir_array,bsid,self.nrows,self.ncols,nPourpoints,noncnlake_arr)
         temparray[:,:] = finalcat[:,:]
         temparray.write(mapname="finalcat", overwrite=True)
         grass.run_command('r.null', map='finalcat',setnull=-9999)    
         grass.run_command('r.to.vect', input='finalcat',output='finalcat_F1',type='area', overwrite = True)    
-
+        temparray[:,:] = Non_con_lake_cat[:,:]
+        temparray.write(mapname="Non_con_lake_cat", overwrite=True)
+        grass.run_command('r.null', map='Non_con_lake_cat',setnull=-9999)    
+        grass.run_command('r.to.vect', input='Non_con_lake_cat',output='Non_con_lake_cat_1',type='area', overwrite = True)   
 ####   dissolve final catchment polygons    
         grass.run_command('v.db.addcolumn', map= 'finalcat_F1', columns = "Gridcode VARCHAR(40)")
         grass.run_command('v.db.update', map= 'finalcat_F1', column = "Gridcode",qcol = 'value')
@@ -1219,7 +1235,8 @@ class LRRT:
 #    grass.run_command('v.select',ainput = 'str',binput = 'finalcat_F',output = 'str_finalcat',overwrite = True)
         grass.run_command('v.overlay',ainput = 'str',binput = 'finalcat_F1',operator = 'and',output = 'str_finalcat',overwrite = True)  
         grass.run_command('v.out.ogr', input = 'str_finalcat',output = os.path.join(self.tempfolder,'str_finalcat.shp'),format= 'ESRI_Shapefile',overwrite = True)
-        
+        grass.run_command('v.out.ogr', input = 'finalcat_F1',output = os.path.join(self.tempfolder,'finalcat_F1.shp'),format= 'ESRI_Shapefile',overwrite = True)        
+        grass.run_command('v.out.ogr', input = 'Non_con_lake_cat_1',output = os.path.join(self.tempfolder,'Non_con_lake_cat_1.shp'),format= 'ESRI_Shapefile',overwrite = True)        
         grass.run_command('v.out.ogr', input = 'str',output = os.path.join(self.tempfolder,'str.shp'),format= 'ESRI_Shapefile',overwrite = True)    
         grass.run_command('r.to.vect', input='SelectedLakes',output='SelectedLakes_F',type='area', overwrite = True) 
         grass.run_command('v.out.ogr', input = 'str_finalcat',output = os.path.join(self.tempfolder,'str_finalcat.shp'),format= 'ESRI_Shapefile',overwrite = True)
@@ -1331,7 +1348,9 @@ class LRRT:
         
         grass.run_command('v.db.addcolumn', map= 'nstr_nfinalcat_F', columns = "Gridcode INT")
         grass.run_command('v.db.addcolumn', map= 'nstr_nfinalcat_F', columns = "Length_m double")
-        
+        grass.run_command('v.db.addcolumn', map = 'Non_con_lake_cat_1',columns = "Area_m double")
+        grass.run_command('v.db.addcolumn', map= 'Non_con_lake_cat_1', columns = "Gridcode INT")
+        grass.run_command('v.db.update', map= 'Non_con_lake_cat_1', column = "Gridcode",qcol = 'value')
         grass.run_command('v.db.update', map= 'nstr_nfinalcat_F', column = "Gridcode",qcol = 'b_GC_str')
         grass.run_command('v.db.dropcolumn', map= 'nstr_nfinalcat_F', columns = ['b_GC_str'])       
 #        grass.run_command('v.out.ogr', input = 'nstr_nfinalcat_F',output = os.path.join(self.tempfolder,'nstr_nfinalcat_F_Final.shp'),format= 'ESRI_Shapefile',overwrite = True)
@@ -1353,7 +1372,8 @@ class LRRT:
         
             grass.run_command('v.to.db', map= 'Net_cat_F',option = 'area',columns = "Area_m", units = 'meters') 
             grass.run_command('v.to.db', map= 'nstr_nfinalcat_F',option = 'length', columns = "Length_m",units = 'meters')
-        
+            grass.run_command('v.to.db', map = 'Non_con_lake_cat_1',option = 'area',columns = "Area_m", units = 'meters')
+            
             grass.run_command('r.slope.aspect', elevation= 'dem_proj',slope = 'slope',aspect = 'aspect',precision = 'DCELL',overwrite = True)
             grass.run_command('r.mapcalc',expression = 'tanslopedegree = tan(slope) ',overwrite = True) 
             project.close 
@@ -1369,7 +1389,9 @@ class LRRT:
 
         ### Add attributes to each catchments 
         # read raster arrays 
-        Lake1_arr = garray.array(mapname="SelectedLakes")    
+        Lake1_arr = garray.array(mapname="SelectedLakes")  
+        noncnlake_arr = garray.array(mapname="Nonconnect_Lake")
+        conlake_arr = garray.array(mapname="Connect_Lake")  
         dem_array = garray.array(mapname="dem")
         width_array = garray.array(mapname="width")
         depth_array = garray.array(mapname="depth")
@@ -1396,6 +1418,8 @@ class LRRT:
         rivleninfo = pd.read_sql_query(sqlstat, con)
         sqlstat="SELECT Gridcode, Area_m FROM Net_cat_F"
         catareainfo = pd.read_sql_query(sqlstat, con)
+        sqlstat="SELECT Gridcode, Area_m FROM Non_con_lake_cat_1"
+        NonConcLakeInfo = pd.read_sql_query(sqlstat, con)
         
         grass.run_command('r.out.gdal', input = 'obs',output =os.path.join(self.tempfolder,'obs.tif'),format= 'GTiff',overwrite = True)    
         
@@ -1437,7 +1461,7 @@ class LRRT:
                           
         processing.run("native:joinattributestable",{'INPUT':os.path.join(self.tempfolder,'finalriv_info1.shp'),'FIELD':'SubId','INPUT_2':os.path.join(self.tempfolder,'ctwithxy.shp'),'FIELD_2':'SubId',
                           'FIELDS_TO_COPY':['x','y'],'METHOD':0,'DISCARD_NONMATCHING':False,'PREFIX':'centroid_','OUTPUT':os.path.join(self.OutputFolder,'finalriv_info.shp')},context = context)
-
+        ##### export selected lakes
         Slakes = np.unique(Lake1_arr)
         Slakes = Slakes[Slakes > 0]
         hylakes_ply_lay = QgsVectorLayer(self.Path_allLakeply, "")    
