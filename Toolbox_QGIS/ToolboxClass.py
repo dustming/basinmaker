@@ -1016,7 +1016,7 @@ class LRRT:
         PERMANENT = Session()
         PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
 
-        grsregion = gcore.region()
+        grsregion = gcore.region()        
         if self.Path_dir_in == '#':  ### did not provide dir, use dem to generate watershed. recommand !!
             grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =accthresold,stream_raster = 'str_grass_r',
                               stream_vector = 'str_grass_v',overwrite = True)
@@ -1038,7 +1038,7 @@ class LRRT:
             for i in range(0,len(strids)):
                 strid = strids[i]
 
-                trow,tcol = Getbasinoutlet(strid,strtemp_array,acc_array,dirarc_array,self.ncols,self.nrows)
+                trow,tcol = Getbasinoutlet(strid,strtemp_array,acc_array,dirarc_array,self.nrows,self.ncols)
                 nrow,ncol = Nextcell(dirarc_array,trow,tcol)### get the downstream catchment id
                 if nrow <= 0 or ncol <=0 or nrow >=self.nrows or ncol >= self.ncols:
                     continue
@@ -1369,6 +1369,7 @@ class LRRT:
         
             grass.run_command('v.proj', location=self.grass_location_geo,mapset = 'PERMANENT', input = 'nstr_nfinalcat_F',overwrite = True)
             grass.run_command('v.proj', location=self.grass_location_geo,mapset = 'PERMANENT', input = 'Net_cat_F',overwrite = True)
+            grass.run_command('v.proj', location=self.grass_location_geo,mapset = 'PERMANENT', input = 'Non_con_lake_cat_1',overwrite = True)
         
             grass.run_command('v.to.db', map= 'Net_cat_F',option = 'area',columns = "Area_m", units = 'meters') 
             grass.run_command('v.to.db', map= 'nstr_nfinalcat_F',option = 'length', columns = "Length_m",units = 'meters')

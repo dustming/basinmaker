@@ -93,8 +93,11 @@ def Streamorderanddrainagearea(catinfo):
 
             seg_max_dems = catinfo_saseg['Max_DEM'].values
             seg_min_dems = catinfo_saseg['Min_DEM'].values
-            seg_max_dem = np.max(seg_max_dems[seg_max_dems > 0])
-            seg_min_dem = np.max(seg_min_dems[seg_min_dems > 0])
+            if len(seg_max_dems[seg_max_dems > -1000]) > 0:
+                seg_max_dem = np.max(seg_max_dems[seg_max_dems > -1000])
+                seg_min_dem = np.max(seg_min_dems[seg_min_dems > -1000])
+            else:
+                continue
             
             if (seg_max_dem > seg_min_dem and np.sum(catinfo_saseg['RivLength'].values > 0)):
                 seg_rivslope_ave = (seg_max_dem - seg_min_dem)/np.sum(catinfo_saseg['RivLength'].values)
