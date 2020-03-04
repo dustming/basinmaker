@@ -1540,8 +1540,8 @@ class LRRT:
                 catinfo.loc[lakeindex,'BasAspect'] = np.average(lakecat_info['BasAspect'].values,weights = lakecat_info['BasArea'].values)
                 catinfo.loc[lakeindex,'BasArea'] = np.sum(lakecat_info['BasArea'].values)
                 catinfo.loc[lakeindex,'BasSlope'] = np.average(lakecat_info['BasSlope'].values,weights = lakecat_info['BasArea'].values)
-                catinfo.loc[lakeindex,'BkfWidth'] = -1.2345
-                catinfo.loc[lakeindex,'BkfDepth'] = -1.2345
+                catinfo.loc[lakeindex,'BkfWidth'] = np.max(lakecat_info['BkfWidth'].values)
+                catinfo.loc[lakeindex,'BkfDepth'] = np.max(lakecat_info['BkfDepth'].values)
                 catinfo.loc[lakeindex,'MeanElev'] = np.average(lakecat_info['MeanElev'].values,weights = lakecat_info['BasArea'].values)
                 catinfo.loc[lakeindex,'IsObs'] = np.max(lakecat_info['IsObs'].values)
                 catinfo.loc[lakeindex,'FloodP_n'] = -1.2345

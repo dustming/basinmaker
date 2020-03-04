@@ -857,10 +857,15 @@ def Maphru2forceply(forcingply,outfolder,forcinggrid,outFolderraven,Boundaryply,
         arcpy.env.CoordinateSystem = arcpy.SpatialReference(3573)####wgs84 - north pore canada
     arcpy.AddField_management(outfolder +"finalcat_Frocing_diso.shp","s_area","DOUBLE","#","#","#","#","NULLABLE","NON_REQUIRED","#")
     arcpy.CalculateField_management(outfolder +"finalcat_Frocing_diso.shp","s_area","!shape.area@squaremeters!","PYTHON_9.3","#")
+#####    
     dbf2 = Dbf5(outfolder+ "finalcat_Frocing_diso.dbf")
     Mapforcing = dbf2.to_dataframe()
+####
     dbf2 = Dbf5(outfolder+ "finalcat_info.dbf")
     Catinfofff = dbf2.to_dataframe()
+    Catinfofff = Catinfofff.drop_duplicates('SubId', keep='first')
+    Catinfofff = Catinfofff[Catinfofff['SubId'] > 0]
+####
     catids = Mapforcing['SubId'].values
     catids = np.unique(catids)
     Lakeids = Catinfofff['HyLakeId'].values

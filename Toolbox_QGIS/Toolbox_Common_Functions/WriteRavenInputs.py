@@ -171,7 +171,7 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn):
         writechanel(pronam,max(catinfo.iloc[i]['BkfWidth'],1),max(catinfo.iloc[i]['BkfDepth'],1),
         chslope,ochn,catinfo.iloc[i]['MeanElev'],floodn,nchn,iscalmanningn)
         
-        if catinfo.iloc[i]['IsObs'] >= 0 :
+        if catinfo.iloc[i]['IsObs'] > 0 :
             Guage = '1'
         else:
             Guage = '0'
@@ -197,8 +197,8 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn):
         catid = str(int(catinfo.iloc[i]['SubId']))+tab
         StrGidarea = str(catarea2)+tab
         StrGidelev = str(catinfo.iloc[i]['MeanElev'])+tab
-        lat = str(catinfo.iloc[i]['centroid_x'])+tab
-        lon = str(catinfo.iloc[i]['centroid_y'])+tab
+        lat = str(catinfo.iloc[i]['centroid_y'])+tab
+        lon = str(catinfo.iloc[i]['centroid_x'])+tab
         LAND_USE_CLASS = 'FOREST'+tab
         VEG_CLASS = 'FOREST'+tab
         SOIL_PROFILE ='SOILPROF'+tab
@@ -218,8 +218,8 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn):
             catid = str(int(catinfo.iloc[i]['SubId']))+tab
             StrGidarea = str(catarea2)+tab
             StrGidelev = str(catinfo.iloc[i]['MeanElev'])+tab
-            lat = str(catinfo.iloc[i]['centroid_x'])+tab
-            lon = str(catinfo.iloc[i]['centroid_y'])+tab
+            lat = str(catinfo.iloc[i]['centroid_y'])+tab
+            lon = str(catinfo.iloc[i]['centroid_x'])+tab
             LAND_USE_CLASS = 'WATER'+tab
             VEG_CLASS = 'WATER'+tab
             SOIL_PROFILE ='SOILPROF'+tab
