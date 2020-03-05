@@ -126,6 +126,9 @@ def Streamorderanddrainagearea(catinfo):
         if catinfo['BkfWidth'].values[i] > 0 and catinfo['RivSlope'].values[i] > 0 :
             catinfo.loc[i,'Ch_n'] = calculateChannaln(catinfo['BkfWidth'].values[i],catinfo['BkfDepth'].values[i],
                               catinfo['Q_Mean'].values[i],catinfo['RivSlope'].values[i])
+        if catinfo['IsObs'].values[i] > 0:
+            if catinfo['DA_Obs'].values[i] >0:
+                catinfo.loc[i,'DA_error'] = (catinfo['DA'].values[i]/1000.0/1000.0 - catinfo['DA_Obs'].values[i])/catinfo['DA_Obs'].values[i]
     return catinfo 
 
 
@@ -297,7 +300,7 @@ def Generatecatinfo(Watseds,fac,fdir,lake,dem,area,catinfo,allcatid,lakeinfo,wid
 
 def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
                     obs,slope,aspect,landuse,slop_deg,Q_Mean,netcat,landuseinfo,lakeinfo,
-                    nrows,ncols,leninfo,areainfo):
+                    nrows,ncols,leninfo,areainfo,obsinfo):
     finalcat = copy.copy(Watseds)
     for i in range(0,len(allcatid)):
         catid = allcatid[i].astype(int)
@@ -347,10 +350,12 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
             catinfo.loc[i,'Laketype'] = slakeinfo.iloc[0]['Lake_type']
 ########Check if it is observation points
 #        print(catid,obs[trow,tcol],fac[trow,tcol],fac[nrow,ncol],finalcat[trow,tcol],finalcat[nrow,ncol])
-        if obs[trow,tcol]  >= 0:
+        if obs[trow,tcol]  > 0:
 #            arcpy.AddMessage(str(catid)+"      "+str(obs[trow,tcol]))
             catinfo.loc[i,'IsObs'] =  obs[trow,tcol]
-
+            obsid = float(obs[trow,tcol])
+            catinfo.loc[i,'DA_Obs'] = obsinfo.loc[obsinfo['Obs_ID'] == obsid]['DA_obs'].values[0]
+            catinfo.loc[i,'Obs_NM'] = obsinfo.loc[obsinfo['Obs_ID'] == obsid]['STATION_NU'].values[0]
 
 ########Slopes slope,aspect,landuse,slop_deg
         slopeinriv = slope[catmask2]

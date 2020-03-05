@@ -1421,20 +1421,25 @@ class LRRT:
         catareainfo = pd.read_sql_query(sqlstat, con)
         sqlstat="SELECT Gridcode, Area_m FROM Non_con_lake_cat_1"
         NonConcLakeInfo = pd.read_sql_query(sqlstat, con)
+        sqlstat="SELECT Obs_ID, DA_obs, STATION_NU FROM obspoint"
+        obsinfo = pd.read_sql_query(sqlstat, con)
+        obsinfo['Obs_ID'] = obsinfo['Obs_ID'].astype(float) 
+        obsinfo['DA_obs'] = obsinfo['DA_obs'].astype(float) 
         
-        grass.run_command('r.out.gdal', input = 'obs',output =os.path.join(self.tempfolder,'obs.tif'),format= 'GTiff',overwrite = True)    
-        
+                  
         allcatid = np.unique(nstr_seg_array)
         allcatid = allcatid[allcatid > 0]
-        catinfo2 = np.full((len(allcatid),26),-9999.00000)    
+        catinfo2 = np.full((len(allcatid),29),-9999.00000)    
         catinfodf = pd.DataFrame(catinfo2, columns = ['SubId', "DowSubId",'RivSlope','RivLength','BasSlope','BasAspect','BasArea',
                             'BkfWidth','BkfDepth','IsLake','HyLakeId','LakeVol','LakeDepth',
                              'LakeArea','Laketype','IsObs','MeanElev','FloodP_n','Q_Mean','Ch_n','DA','Strahler','Seg_ID','Seg_order'
-                             ,'Max_DEM','Min_DEM'])                      
+                             ,'Max_DEM','Min_DEM','DA_Obs','DA_error','Obs_NM'])
+        catinfodf['Obs_NM']  =catinfodf['Obs_NM'].astype(str)         
+                     
         catinfo= Generatecatinfo_riv(nstr_seg_array,acc_array,dir_array,Lake1_arr,dem_array,
              catinfodf,allcatid,width_array,depth_array,obs_array,slope_array,aspect_array,landuse_array,
              slope_deg_array,Q_mean_array,Netcat_array,landuseinfo,allLakinfo,self.nrows,self.ncols,
-             rivleninfo.astype(float),catareainfo.astype(float))
+             rivleninfo.astype(float),catareainfo.astype(float),obsinfo)
              
         catinfo = Streamorderanddrainagearea(catinfo)         
         catinfo.to_csv(self.Path_finalcatinfo_riv, index = None, header=True)
@@ -1543,7 +1548,16 @@ class LRRT:
                 catinfo.loc[lakeindex,'BkfWidth'] = np.max(lakecat_info['BkfWidth'].values)
                 catinfo.loc[lakeindex,'BkfDepth'] = np.max(lakecat_info['BkfDepth'].values)
                 catinfo.loc[lakeindex,'MeanElev'] = np.average(lakecat_info['MeanElev'].values,weights = lakecat_info['BasArea'].values)
-                catinfo.loc[lakeindex,'IsObs'] = np.max(lakecat_info['IsObs'].values)
+                if len(lakecat_info.loc[lakecat_info['IsObs'] > 0]) > 0:
+                    catinfo.loc[lakeindex,'IsObs'] = lakecat_info.loc[lakecat_info['IsObs'] > 0]['IsObs'].values[0]
+                    catinfo.loc[lakeindex,'Obs_NM'] = lakecat_info.loc[lakecat_info['IsObs'] > 0]['Obs_NM'].values[0]
+                    catinfo.loc[lakeindex,'DA_Obs'] = lakecat_info.loc[lakecat_info['IsObs'] > 0]['DA_Obs'].values[0]
+                    catinfo.loc[lakeindex,'DA_error'] = lakecat_info.loc[lakecat_info['IsObs'] > 0]['DA_error'].values[0]
+                else:
+                    catinfo.loc[lakeindex,'IsObs'] = -1.2345
+                    catinfo.loc[lakeindex,'Obs_NM'] = -1.2345
+                    catinfo.loc[lakeindex,'DA_Obs'] = -1.2345
+                    catinfo.loc[lakeindex,'DA_error'] = -1.2345                    
                 catinfo.loc[lakeindex,'FloodP_n'] = -1.2345
                 catinfo.loc[lakeindex,'Q_Mean'] = -1.2345
                 catinfo.loc[lakeindex,'Ch_n'] = -1.2345
