@@ -1540,7 +1540,7 @@ class LRRT:
                 irow_idx = row_lakeindex[irow]
                 catinfo.loc[irow_idx,'SubId'] = nlakecatid
                 catinfo.loc[lakeindex,'DowSubId'] = downcatid
-                catinfo.loc[lakeindex,'RivSlope'] = -1.2345
+                catinfo.loc[lakeindex,'RivSlope'] = np.average(lakecat_info['RivSlope'].values,weights = lakecat_info['RivLength'].values)
                 catinfo.loc[lakeindex,'RivLength'] =0.0
                 catinfo.loc[lakeindex,'BasAspect'] = np.average(lakecat_info['BasAspect'].values,weights = lakecat_info['BasArea'].values)
                 catinfo.loc[lakeindex,'BasArea'] = np.sum(lakecat_info['BasArea'].values)
@@ -1558,13 +1558,13 @@ class LRRT:
                     catinfo.loc[lakeindex,'Obs_NM'] = -1.2345
                     catinfo.loc[lakeindex,'DA_Obs'] = -1.2345
                     catinfo.loc[lakeindex,'DA_error'] = -1.2345                    
-                catinfo.loc[lakeindex,'FloodP_n'] = -1.2345
-                catinfo.loc[lakeindex,'Q_Mean'] = -1.2345
-                catinfo.loc[lakeindex,'Ch_n'] = -1.2345
+                catinfo.loc[lakeindex,'FloodP_n'] = np.average(lakecat_info['FloodP_n'].values,weights = lakecat_info['RivLength'].values)
+                catinfo.loc[lakeindex,'Q_Mean'] = np.average(lakecat_info['Q_Mean'].values,weights = lakecat_info['RivLength'].values)
+                catinfo.loc[lakeindex,'Ch_n'] = np.average(lakecat_info['Ch_n'].values,weights = lakecat_info['RivLength'].values)
                 catinfo.loc[lakeindex,'DA'] = np.max(lakecat_info['DA'].values)
                 catinfo.loc[lakeindex,'Strahler'] =np.max(lakecat_info['Strahler'].values)
-                catinfo.loc[lakeindex,'Seg_ID'] = -1.2345
-                catinfo.loc[lakeindex,'Seg_order'] = -1.2345
+                catinfo.loc[lakeindex,'Seg_ID'] =  -1.2345
+                catinfo.loc[lakeindex,'Seg_order'] =  np.max(lakecat_info['Seg_order'].values)
                 catinfo.loc[lakeindex,'Max_DEM'] = np.max(lakecat_info['Max_DEM'].values)
                 catinfo.loc[lakeindex,'Min_DEM'] = np.min(lakecat_info['Min_DEM'].values)
                 

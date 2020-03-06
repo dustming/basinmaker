@@ -364,15 +364,15 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
         deminriv = dem[catmask]
         deminriv2 = dem[catmask2]
         
-        if(len(slop_deginriv[slop_deginriv > 0])) > 0:
-            slop_deginriv[slop_deginriv <=0] = np.NaN  
-            catinfo.loc[i,'BasSlope'] = np.nanmean(slop_deginriv)
+        if(len(slop_deginriv[slop_deginriv >= 0])) > 0:
+            slop_deginriv[slop_deginriv <0] = np.NaN  
+            catinfo.loc[i,'BasSlope'] = np.maximum(np.nanmean(slop_deginriv),0.1)
         else:
             catinfo.loc[i,'BasSlope'] = -1.2345      
 
-        if(len(aspectinriv[aspectinriv > 0])) > 0:
-            aspectinriv[aspectinriv <=0] = np.NaN  
-            catinfo.loc[i,'BasAspect'] = np.nanmean(aspectinriv)
+        if(len(aspectinriv[aspectinriv >= 0])) > 0:
+            aspectinriv[aspectinriv <0] = np.NaN  
+            catinfo.loc[i,'BasAspect'] = np.maximum(np.nanmean(aspectinriv),0.1)
         else:
             catinfo.loc[i,'BasAspect'] = -1.2345  
         
