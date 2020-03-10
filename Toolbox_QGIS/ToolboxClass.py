@@ -789,6 +789,7 @@ class LRRT:
         self.Path_allLakeRas = os.path.join(self.tempfolder,'hylakegdal.tif')
         self.Path_finalcatinfo_riv = os.path.join(self.tempfolder,'catinfo_riv.csv')
         self.Path_NonCLakeinfo = os.path.join(self.tempfolder,'NonC_Lakeinfo.csv')
+        self.Path_NonCLakeinfo_cat = os.path.join(self.tempfolder,'NonC_Lakeinfo_cat.csv')
         self.Path_finalcatinfo_cat = os.path.join(self.tempfolder,'catinfo_cat.csv')
         self.Path_finalcatinfo = os.path.join(self.tempfolder,'catinfo.csv')
         self.Path_finalcatinfo_riv_type = os.path.join(self.tempfolder,'catinfo_riv.csvt')
@@ -937,7 +938,8 @@ class LRRT:
         
         copyfile(os.path.join(self.RoutingToolPath,'catinfo_riv.csvt'),os.path.join(self.tempfolder,'catinfo_riv.csvt')) 
         copyfile(os.path.join(self.RoutingToolPath,'catinfo_riv.csvt'),os.path.join(self.tempfolder,'catinfo_cat.csvt')) 
-        copyfile(os.path.join(self.RoutingToolPath,'Nonlakeinfo.csvt'),os.path.join(self.tempfolder,'Nonlakeinfo.csvt')) 
+        copyfile(os.path.join(self.RoutingToolPath,'Nonlakeinfo.csvt'),os.path.join(self.tempfolder,'Nonlakeinfo.csvt'))
+        copyfile(os.path.join(self.RoutingToolPath,'Nonlakeinfo.csvt'),os.path.join(self.tempfolder,'NonC_Lakeinfo_cat.csvt'))  
 ###### set up GRASS environment for translate vector to rasters and clip rasters
         import grass.script as grass
         from grass.script import array as garray
@@ -1425,7 +1427,7 @@ class LRRT:
         catareainfo = pd.read_sql_query(sqlstat, con)
         sqlstat="SELECT Gridcode, Area_m FROM Non_con_lake_cat_1"
         NonConcLakeInfo = pd.read_sql_query(sqlstat, con)
-        NonConcLakeInfo['SubId'] = -9999
+        NonConcLakeInfo['SubId_riv'] = -9999
         sqlstat="SELECT Obs_ID, DA_obs, STATION_NU FROM obspoint"
         obsinfo = pd.read_sql_query(sqlstat, con)
         obsinfo['Obs_ID'] = obsinfo['Obs_ID'].astype(float) 
@@ -1456,7 +1458,7 @@ class LRRT:
         
         grass.run_command('db.in.ogr', input=self.Path_NonCLakeinfo,output = 'result_nonlake',overwrite = True)
         grass.run_command('v.db.join', map= 'Non_con_lake_cat_1',column = 'Gridcode', other_table = 'result_nonlake',other_column ='Gridcode', overwrite = True)
-        grass.run_command('v.out.ogr', input = 'Non_con_lake_cat_1',output = os.path.join(self.OutputFolder,'Non_con_lake_riv.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
+#        grass.run_command('v.out.ogr', input = 'Non_con_lake_cat_1',output = os.path.join(self.OutputFolder,'Non_con_lake_riv.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
 
         ### add catchment info to all river segment 
         grass.run_command('db.in.ogr', input=self.Path_finalcatinfo_riv,output = 'result_riv',overwrite = True)
@@ -1511,9 +1513,12 @@ class LRRT:
         os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
         PERMANENT = Session()
         PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
-                    
+        
         Netcat_array = garray.array(mapname="Net_cat")
         catinfo = pd.read_csv(self.Path_finalcatinfo_riv)
+        NonConcLakeInfo= pd.read_csv(self.Path_NonCLakeinfo)
+        NonConcLakeInfo['SubId_cat'] = -9999
+        
         lakeids = catinfo['HyLakeId'].values
         lakeids = np.unique(lakeids)
         lakeids = lakeids[lakeids > 0]
@@ -1539,6 +1544,14 @@ class LRRT:
             for iupcatrowidx in range(0,len(upcatrows)):
                 iupcatrow =upcatrows[iupcatrowidx] 
                 catinfo.loc[iupcatrow,'DowSubId'] = nlakecatid
+                
+            ####change non connected lake's subbasin id 
+            NoncLakes_inthesecats = NonConcLakeInfo['SubId_riv'].isin(catscoverlays)
+            NoncLakes_rows  = np.argwhere(NoncLakes_inthesecats == True)
+            for nonclrowidx in range(0,len(NoncLakes_rows)):
+                nonclrow =NoncLakes_rows[nonclrowidx] 
+                NonConcLakeInfo.loc[nonclrow,'SubId_cat'] = nlakecatid
+                            
 
             ## change catchment raster merge lake catchments 
             for j in range(0,len(lakecat_info)):
@@ -1578,8 +1591,13 @@ class LRRT:
                 catinfo.loc[lakeindex,'Seg_order'] =  np.max(lakecat_info['Seg_order'].values)
                 catinfo.loc[lakeindex,'Max_DEM'] = np.max(lakecat_info['Max_DEM'].values)
                 catinfo.loc[lakeindex,'Min_DEM'] = np.min(lakecat_info['Min_DEM'].values)
-                
+        
+        for inoncl in range(0,len(NonConcLakeInfo)):
+            if NonConcLakeInfo['SubId_cat'].values[inoncl] < 0:
+                NonConcLakeInfo.loc[inoncl,'SubId_cat'] = NonConcLakeInfo['SubId_riv'].values[inoncl]
+    
         catinfo.to_csv(self.Path_finalcatinfo_cat, index = None, header=True)
+        NonConcLakeInfo.to_csv(self.Path_NonCLakeinfo_cat, index = None, header=True)
         temparray = garray.array()
         temparray[:,:] = -9999
         temparray[:,:] = Netcat_array[:,:]
@@ -1593,6 +1611,13 @@ class LRRT:
         grass.run_command('v.dissolve', input= 'Cat_Lake_combined_F1', column = "GC",output = 'Cat_Lake_combined_F',overwrite = True) ### dissolve based on gridcode
         grass.run_command('v.db.addcolumn', map= 'Cat_Lake_combined_F', columns = "Gridcode INT")        
         grass.run_command('v.db.update', map= 'Cat_Lake_combined_F', column = "Gridcode",qcol = 'GC')
+        
+        
+        grass.run_command('db.in.ogr', input=self.Path_NonCLakeinfo_cat,output = 'result_nonlake2',overwrite = True)
+        grass.run_command('v.db.join', map= 'Non_con_lake_cat_1',column = 'Gridcode', other_table = 'result_nonlake2',other_column ='Gridcode', subset_columns = 'SubId_cat', overwrite = True)
+        grass.run_command('v.out.ogr', input = 'Non_con_lake_cat_1',output = os.path.join(self.OutputFolder,'Non_con_lake.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
+
+        
         
         grass.run_command('db.in.ogr', input=self.Path_finalcatinfo_cat,output = 'result_cat',overwrite = True)
         grass.run_command('v.db.join', map= 'Cat_Lake_combined_F',column = 'Gridcode', other_table = 'result_cat',other_column ='SubId', overwrite = True)
