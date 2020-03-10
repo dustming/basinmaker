@@ -937,6 +937,7 @@ class LRRT:
         
         copyfile(os.path.join(self.RoutingToolPath,'catinfo_riv.csvt'),os.path.join(self.tempfolder,'catinfo_riv.csvt')) 
         copyfile(os.path.join(self.RoutingToolPath,'catinfo_riv.csvt'),os.path.join(self.tempfolder,'catinfo_cat.csvt')) 
+        copyfile(os.path.join(self.RoutingToolPath,'Nonlakeinfo.csvt'),os.path.join(self.tempfolder,'Nonlakeinfo.csvt')) 
 ###### set up GRASS environment for translate vector to rasters and clip rasters
         import grass.script as grass
         from grass.script import array as garray
@@ -1452,6 +1453,11 @@ class LRRT:
         ### add lake info to selected laeks 
         grass.run_command('db.in.ogr', input=self.Path_alllakeinfoinfo,output = 'alllakeinfo',overwrite = True)
         grass.run_command('v.db.join', map= 'SelectedLakes_F',column = 'value', other_table = 'alllakeinfo',other_column ='Hylak_id', overwrite = True)
+        
+        grass.run_command('db.in.ogr', input=self.Path_NonCLakeinfo,output = 'result_nonlake',overwrite = True)
+        grass.run_command('v.db.join', map= 'Non_con_lake_cat_1',column = 'Gridcode', other_table = 'result_nonlake',other_column ='Gridcode', overwrite = True)
+        grass.run_command('v.out.ogr', input = 'Non_con_lake_cat_1',output = os.path.join(self.OutputFolder,'Non_con_lake_riv.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
+
         ### add catchment info to all river segment 
         grass.run_command('db.in.ogr', input=self.Path_finalcatinfo_riv,output = 'result_riv',overwrite = True)
         grass.run_command('v.db.join', map= 'nstr_nfinalcat_F',column = 'Gridcode', other_table = 'result_riv',other_column ='SubId', overwrite = True)
@@ -1491,7 +1497,7 @@ class LRRT:
             selectedFeatureID.append(feature.id())
         hylakes_ply_lay.select(selectedFeatureID)   ### select with polygon id
         _writer = QgsVectorFileWriter.writeAsVectorFormat(hylakes_ply_lay, os.path.join(self.OutputFolder, 'All_Selected_Lakes.shp'), "UTF-8", hylakes_ply_lay.crs(), "ESRI Shapefile", onlySelected=True)
-       
+        del hylakes_ply_lay
         Qgs.exit()  
         
     def RoutingNetworkTopologyUpdateToolset_cat(self,projection = 'default'):
