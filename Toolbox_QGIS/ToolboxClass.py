@@ -426,12 +426,12 @@ def CE_mcat4lake2(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints,noncnlake):
         pp = Pourpoints[lorow,locol]
         pp = np.unique(pp)
         pp = pp[pp > 0]
+#        print(lakeid,len(np.argwhere(noncnlake==lakeid)),pp,Pourpoints[lorow,locol],arclakeid)
         if len(pp) == 1:
             if arclakeid < 0:
                 cat[lrowcol[:,0],lrowcol[:,1]] = pp
             else:
                 cat[lrowcol[:,0],lrowcol[:,1]] = arclakeid
-
             if len(np.argwhere(noncnlake==lakeid)) > 0: ##if lake belong to non connected lakes
                 if arclakeid < 0:
                     nonlrowcol = np.argwhere(cat==pp).astype(int)
@@ -788,6 +788,7 @@ class LRRT:
         self.Path_Landuseinfo = os.path.join(self.tempfolder,'landuseinfo.csv')
         self.Path_allLakeRas = os.path.join(self.tempfolder,'hylakegdal.tif')
         self.Path_finalcatinfo_riv = os.path.join(self.tempfolder,'catinfo_riv.csv')
+        self.Path_NonCLakeinfo = os.path.join(self.tempfolder,'NonC_Lakeinfo.csv')
         self.Path_finalcatinfo_cat = os.path.join(self.tempfolder,'catinfo_cat.csv')
         self.Path_finalcatinfo = os.path.join(self.tempfolder,'catinfo.csv')
         self.Path_finalcatinfo_riv_type = os.path.join(self.tempfolder,'catinfo_riv.csvt')
@@ -1384,9 +1385,10 @@ class LRRT:
             grass.run_command('g.region', raster='dem')
             grass.run_command('v.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'nstr_nfinalcat_F',overwrite = True)
             grass.run_command('v.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'Net_cat_F',overwrite = True) 
+            grass.run_command('v.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'Non_con_lake_cat_1',overwrite = True) 
             grass.run_command('r.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'tanslopedegree',overwrite = True) 
             grass.run_command('r.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'slope',overwrite = True) 
-            grass.run_command('r.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'aspect',overwrite = True) 
+            grass.run_command('r.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'aspect',overwrite = True)
 
         ### Add attributes to each catchments 
         # read raster arrays 
@@ -1406,6 +1408,7 @@ class LRRT:
         Q_mean_array = garray.array(mapname="qmean")
         landuse_array = garray.array(mapname="landuse")
         Netcat_array = garray.array(mapname="Net_cat")
+        NonCL_array = garray.array(mapname="Non_con_lake_cat")
         grass.run_command('r.out.gdal', input = 'ndir_Arcgis',output = os.path.join(self.tempfolder,'ndir.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
 
         grass.run_command('r.out.gdal', input = 'dir_Arcgis',output = os.path.join(self.tempfolder,'dir.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
@@ -1421,6 +1424,7 @@ class LRRT:
         catareainfo = pd.read_sql_query(sqlstat, con)
         sqlstat="SELECT Gridcode, Area_m FROM Non_con_lake_cat_1"
         NonConcLakeInfo = pd.read_sql_query(sqlstat, con)
+        NonConcLakeInfo['SubId'] = -9999
         sqlstat="SELECT Obs_ID, DA_obs, STATION_NU FROM obspoint"
         obsinfo = pd.read_sql_query(sqlstat, con)
         obsinfo['Obs_ID'] = obsinfo['Obs_ID'].astype(float) 
@@ -1429,20 +1433,21 @@ class LRRT:
                   
         allcatid = np.unique(nstr_seg_array)
         allcatid = allcatid[allcatid > 0]
-        catinfo2 = np.full((len(allcatid),29),-9999.00000)    
+        catinfo2 = np.full((len(allcatid),30),-9999.00000)    
         catinfodf = pd.DataFrame(catinfo2, columns = ['SubId', "DowSubId",'RivSlope','RivLength','BasSlope','BasAspect','BasArea',
                             'BkfWidth','BkfDepth','IsLake','HyLakeId','LakeVol','LakeDepth',
                              'LakeArea','Laketype','IsObs','MeanElev','FloodP_n','Q_Mean','Ch_n','DA','Strahler','Seg_ID','Seg_order'
-                             ,'Max_DEM','Min_DEM','DA_Obs','DA_error','Obs_NM'])
+                             ,'Max_DEM','Min_DEM','DA_Obs','DA_error','Obs_NM','NonLDArea'])
         catinfodf['Obs_NM']  =catinfodf['Obs_NM'].astype(str)         
                      
-        catinfo= Generatecatinfo_riv(nstr_seg_array,acc_array,dir_array,Lake1_arr,dem_array,
+        catinfo,NonConcLakeInfo= Generatecatinfo_riv(nstr_seg_array,acc_array,dir_array,Lake1_arr,dem_array,
              catinfodf,allcatid,width_array,depth_array,obs_array,slope_array,aspect_array,landuse_array,
              slope_deg_array,Q_mean_array,Netcat_array,landuseinfo,allLakinfo,self.nrows,self.ncols,
-             rivleninfo.astype(float),catareainfo.astype(float),obsinfo)
+             rivleninfo.astype(float),catareainfo.astype(float),obsinfo,NonConcLakeInfo,NonCL_array)
              
         catinfo = Streamorderanddrainagearea(catinfo)         
         catinfo.to_csv(self.Path_finalcatinfo_riv, index = None, header=True)
+        NonConcLakeInfo.to_csv(self.Path_NonCLakeinfo, index = None, header=True)
     
         ### add lake info to selected laeks 
         grass.run_command('db.in.ogr', input=self.Path_alllakeinfoinfo,output = 'alllakeinfo',overwrite = True)

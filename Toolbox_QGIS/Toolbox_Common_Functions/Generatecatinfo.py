@@ -300,7 +300,7 @@ def Generatecatinfo(Watseds,fac,fdir,lake,dem,area,catinfo,allcatid,lakeinfo,wid
 
 def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
                     obs,slope,aspect,landuse,slop_deg,Q_Mean,netcat,landuseinfo,lakeinfo,
-                    nrows,ncols,leninfo,areainfo,obsinfo):
+                    nrows,ncols,leninfo,areainfo,obsinfo,NonConcLakeInfo,NonCL_array):
     finalcat = copy.copy(Watseds)
     for i in range(0,len(allcatid)):
         catid = allcatid[i].astype(int)
@@ -450,10 +450,45 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
         else:
             catinfo.loc[i,'BkfWidth'] = -1.2345
             catinfo.loc[i,'BkfDepth'] = -1.2345
-            catinfo.loc[i,'Q_Mean'] =  -1.2345    
-    
+            catinfo.loc[i,'Q_Mean'] =  -1.2345   
+             
+######## Non connected lakes
+        catinfo.loc[i,'NonLDArea'] =  0.0
+        Nonlakes = NonCL_array[catmask2]
+        Nonlakes = Nonlakes[Nonlakes > 0]
+        Nonlakes = np.unique(Nonlakes)
+        Daarea = 0.0
+        if len(Nonlakes) > 0:
+            for inl in range(0,len(Nonlakes)):
+                NLid = int(Nonlakes[inl])
+                nlakeinfoidx = NonConcLakeInfo['Gridcode'] == NLid
+                SubID_NL = -1
+               ### find non connect lake drainage subid 
+                trow,tcol = Getbasinoutlet(NLid,NonCL_array,fac,fdir,nrows,ncols)
+                k = 1
+                ttrow,ttcol = trow,tcol
+                while SubID_NL < 0 and k < 20:
+                    nrow,ncol = Nextcell(fdir,ttrow,ttcol)### get the downstream catchment id
+                    if nrow < 0 or ncol < 0:
+                        SubID_NL = -1
+                        break;
+                    elif nrow >= nrows or ncol >= ncols:
+                        SubID_NL = -1
+                        break;
+                    elif NonCL_array[nrow,ncol] == NLid:
+                        SubID_NL = -1
+                    else:
+                        SubID_NL = netcat[nrow,ncol]
+                    k = k + 1
+                    ttrow = nrow
+                    ttcol = ncol 
+                if SubID_NL == catid: ### the non connected lake drainage to this catid 
+                    print(NonConcLakeInfo.loc[nlakeinfoidx])
+                    Daarea = Daarea + NonConcLakeInfo.loc[nlakeinfoidx]['Area_m'].values[0]
+                NonConcLakeInfo.loc[nlakeinfoidx,'SubID'] = SubID_NL
+            catinfo.loc[i,'NonLDArea'] =  Daarea
     catinfo = Writecatinfotodbf(catinfo)
-    return catinfo
+    return catinfo,NonConcLakeInfo
 
 
 
