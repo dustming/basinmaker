@@ -1035,7 +1035,7 @@ arcpy.AddMessage(dataset)
 SptailRef = arcpy.Describe(dataset).spatialReference
 arcpy.AddMessage(SptailRef)
 arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryCode)) 
-Nonconnectlake = 1
+Nonconnectlake = -1
 if Nonconnectlake > 0:
     NonconLakeinfopath = OutputFolder + "/" +"Non_connect_Lake_routing_info.csv" 
     nclakeinfo = pd.read_csv(NonconLakeinfopath,sep=",",low_memory=False)
