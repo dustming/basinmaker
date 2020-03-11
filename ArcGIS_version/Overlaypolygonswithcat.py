@@ -834,7 +834,7 @@ def Maphru2force(orank,cat,catinfo,fnrows,fncols,outfolder,forcinggrid,outFolder
 ######################################################
 ################################################################################33
 #################################################
-def Maphru2forceply(forcingply,outfolder,forcinggrid,outFolderraven,Boundaryply,missrow,misscol):
+def Maphru2forceply(forcingply,outfolder,forcinggrid,outFolderraven,Boundaryply,missrow,misscol,nclakeinfo):
     arcpy.AddMessage(forcingply[:-3])
     dbf1 = Dbf5(forcingply[:-3]+'dbf')
     Forcinfo = dbf1.to_dataframe()
@@ -876,7 +876,8 @@ def Maphru2forceply(forcingply,outfolder,forcinggrid,outFolderraven,Boundaryply,
     ogridforc.write(":GridWeights" +"\n")
     ogridforc.write("   #      " +"\n")
     ogridforc.write("   # [# HRUs]"+"\n")
-    sNhru = len(catids) + len(Lakeids)
+    sNhru = len(catids) + len(Lakeids) + len(nclakeinfo.loc[nclakeinfo['new_HruID'] > 0]) + len(nclakeinfo.loc[nclakeinfo['new_HruID'] > 0])
+#    arcpy.AddMessage(len(catids) + len(Lakeids),len(nclakeinfo.loc[nclakeinfo['new_HruID'] > 0]))
     ogridforc.write("   :NumberHRUs       "+ str(sNhru) + "\n")
     sNcell = (max(Forcinfo['Row'].values)+1+missrow) * (max(Forcinfo['Col'].values)+1+misscol)
     ogridforc.write("   :NumberGridCells  "+str(sNcell)+"\n")
@@ -938,6 +939,54 @@ def Maphru2forceply(forcingply,outfolder,forcinggrid,outFolderraven,Boundaryply,
                     Strcellid = str(int(scat['Row'].values * (max(Forcinfo['Col'].values)+ 1 + misscol) + scat['Col'].values)) + "      " 
                 ### str((ncrowcol[0,0] * ncncols + ncrowcol[0,1]))
                 ogridforc.write("    "+str(int(catid) + int(maxcatid)) + "     "+Strcellid+str(wt) +"\n")
+                
+                
+        Non_con_lake_info = nclakeinfo.loc[nclakeinfo['SubId_cat'] == catid]
+        for idx_nonclake in range(0,len(Non_con_lake_info)):
+            
+            tarea = sum(cats['s_area'].values)
+            fids = cats['FGID'].values
+            fids = np.unique(fids)
+            sumwt = 0.0
+            for j in range(len(fids)):
+                scat = cats[cats['FGID'] == fids[j]]
+                if j < len(fids) - 1:
+                    sarea = sum(scat['s_area'].values)
+                    wt = float(sarea)/float(tarea)
+                    sumwt = sumwt + wt
+                else:
+                    wt = 1- sumwt
+#            arcpy.AddMessage(scat)
+                if(len(scat['Row'].values) > 1):
+                    arcpy.AddMessage(str(catid)+"error..............")
+                    Strcellid = str(int(scat['Row'].values[0] * (max(Forcinfo['Col'].values)+ 1 + misscol) + scat['Col'].values[0])) + "      "
+                else:
+                    Strcellid = str(int(scat['Row'].values * (max(Forcinfo['Col'].values)+ 1 + misscol) + scat['Col'].values)) + "      " 
+                ### str((ncrowcol[0,0] * ncncols + ncrowcol[0,1]))
+                ogridforc.write("    "+str(Non_con_lake_info['new_HruID'].values[idx_nonclake]) + "     "+Strcellid+str(wt) +"\n")
+                
+            tarea = sum(cats['s_area'].values)
+            fids = cats['FGID'].values
+            fids = np.unique(fids)
+            sumwt = 0.0        
+            for j in range(len(fids)):
+                scat = cats[cats['FGID'] == fids[j]]
+                if j < len(fids) - 1:
+                    sarea = sum(scat['s_area'].values)
+                    wt = float(sarea)/float(tarea)
+                    sumwt = sumwt + wt
+                else:
+                    wt = 1- sumwt
+#            arcpy.AddMessage(scat)
+                if(len(scat['Row'].values) > 1):
+                    arcpy.AddMessage(str(catid)+"error..............")
+                    Strcellid = str(int(scat['Row'].values[0] * (max(Forcinfo['Col'].values)+ 1 + misscol) + scat['Col'].values[0])) + "      "
+                else:
+                    Strcellid = str(int(scat['Row'].values * (max(Forcinfo['Col'].values)+ 1 + misscol) + scat['Col'].values)) + "      " 
+                ### str((ncrowcol[0,0] * ncncols + ncrowcol[0,1]))
+                ogridforc.write("    "+str(Non_con_lake_info['new_SubID'].values[idx_nonclake]) + "     "+Strcellid+str(wt) +"\n")
+
+
     ogridforc.write(":EndGridWeights")
     ogridforc.close()
 ########
@@ -981,9 +1030,18 @@ misscol = float(sys.argv[5])
 arcpy.env.workspace =OutputFolder
 dataset = OutputFolder+"/"+"finalcat_info.shp"
 
+arcpy.AddMessage(dataset)
+
 SptailRef = arcpy.Describe(dataset).spatialReference
+arcpy.AddMessage(SptailRef)
 arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryCode)) 
-
-
+Nonconnectlake = 1
+if Nonconnectlake > 0:
+    NonconLakeinfopath = OutputFolder + "/" +"Non_connect_Lake_routing_info.csv" 
+    nclakeinfo = pd.read_csv(NonconLakeinfopath,sep=",",low_memory=False)
+    nclakeinfo = nclakeinfo.drop_duplicates('Gridcode', keep='first')
+else:
+    nclakeinfo = pd.DataFrame(np.full((1,4),-9999), columns = ['Gridcode', "SubId_riv","SubId_cat","Area_m"])
+            
 if forcingply !="#":
-    Maphru2forceply(forcingply,OutputFolder + "/","#",OutputFolder + "/",Boundaryply,missrow,misscol)
+    Maphru2forceply(forcingply,OutputFolder + "/","#",OutputFolder + "/",Boundaryply,missrow,misscol,nclakeinfo)

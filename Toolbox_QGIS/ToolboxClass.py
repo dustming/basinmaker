@@ -1672,7 +1672,7 @@ class LRRT:
             shutil.rmtree(self.tempfolder,ignore_errors=True)
 
 
-    def GenerateRavenInput(self,Finalcat_NM = 'finalcat_info',lenThres = 1,iscalmanningn = -1):
+    def GenerateRavenInput(self,Finalcat_NM = 'finalcat_info',lenThres = 1,iscalmanningn = -1,Nonconnectlake = -1,NonconLakeinfo = 'Non_con_lake'):
         
         if not os.path.exists(self.Raveinputsfolder):
             os.makedirs(self.Raveinputsfolder)
@@ -1683,9 +1683,22 @@ class LRRT:
         ncatinfo = tempinfo.to_dataframe()
         ncatinfo2 = ncatinfo.drop_duplicates('SubId', keep='first')
         ncatinfo2 = ncatinfo2[ncatinfo2['SubId'] > 0]
-        Writervhchanl(ncatinfo2,self.Raveinputsfolder,lenThres,iscalmanningn)
-        writelake(ncatinfo2,self.Raveinputsfolder)
         
+        if Nonconnectlake > 0:
+            NonconLakeinfopath = os.path.join(self.OutputFolder,NonconLakeinfo)
+            tempinfo = Dbf5( NonconLakeinfopath + ".dbf")#np.genfromtxt(hyinfocsv,delimiter=',')
+            nclakeinfo = tempinfo.to_dataframe()
+            nclakeinfo['Gridcode'] = nclakeinfo['Gridcode'].astype(float)
+            nclakeinfo['SubId_cat'] = nclakeinfo['SubId_cat'].astype(float)
+            nclakeinfo['Area_m'] = nclakeinfo['Area_m'].astype(float)
+            nclakeinfo = nclakeinfo.drop_duplicates('Gridcode', keep='first')
+        else:
+            nclakeinfo = pd.DataFrame(np.full((1,4),-9999), columns = ['Gridcode', "SubId_riv","SubId_cat","Area_m"])
+#            print(nclakeinfo)
+            
+        nclakeinfo = Writervhchanl(ncatinfo2,self.Raveinputsfolder,lenThres,iscalmanningn,nclakeinfo)
+        writelake(ncatinfo2,self.Raveinputsfolder,nclakeinfo)
+        nclakeinfo.to_csv(os.path.join(self.OutputFolder,'Non_connect_Lake_routing_info.csv'),index = None, header=True)
 
     def selectpolygonsfromroutingproduct(self,Path_shpfile = '#',sub_colnm = 'SubId',down_colnm = 'DowSubId',mostdownid = -1,mostupstreamid = -1):
         
