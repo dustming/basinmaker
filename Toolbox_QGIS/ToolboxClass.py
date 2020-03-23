@@ -887,7 +887,8 @@ class LRRT:
             grass.run_command('g.region', raster='dem')
             #### create watershed mask or use dem as mask
             if Path_OutletPoint != '#':
-                grass.run_command('r.watershed',elevation = 'dem', drainage = 'dir_grass',accumulation = 'acc_grass',flags = 's', overwrite = True)
+                grass.run_command('r.watershed',elevation = 'dem', drainage = 'dir_grass',accumulation = 'acc_grass2',flags = 's', overwrite = True)
+                grass.run_command('r.mapcalc',expression = "acc_grass = abs(acc_grass2@PERMANENT)",overwrite = True)
                 grass.run_command('r.water.outlet',input = 'dir_grass', output = 'wat_mask', coordinates  = Path_OutletPoint,overwrite = True)
                 grass.run_command('r.mask'  , raster='wat_mask', maskcats = '*',overwrite = True)
                 grass.run_command('g.region', raster='wat_mask',overwrite = True)
@@ -981,7 +982,8 @@ class LRRT:
         else:  ### non hydroshed if dir has been build 
             dirbuid = grass.find_file('dir_grass', element = 'cell')
             if (len(dirbuid['file']) <=0):
-                grass.run_command('r.watershed',elevation = 'dem', drainage = 'dir_grass', accumulation = 'acc_grass',flags = 's', overwrite = True)
+                grass.run_command('r.watershed',elevation = 'dem', drainage = 'dir_grass', accumulation = 'acc_grass2',flags = 's', overwrite = True)
+                grass.run_command('r.mapcalc',expression = "acc_grass = abs(acc_grass2@PERMANENT)",overwrite = True)
             grass.run_command('r.reclass', input='dir_grass',output = 'dir_Arcgis',rules = os.path.join(self.RoutingToolPath,'Grass2ArcgisDIR.txt'), overwrite = True)
     
         copyfile(self.Path_Landuseinfo_in, self.Path_Landuseinfo) 
@@ -1031,7 +1033,7 @@ class LRRT:
             grass.run_command('v.to.rast',input = 'str_grass_v',output = 'str_grass_r2',use = 'cat',overwrite = True)
     
             strtemp_array = garray.array(mapname="str_grass_r2")
-            acc_array = garray.array(mapname="acc_grass")
+            acc_array = np.absolute(garray.array(mapname="acc_grass"))
             dirarc_array = garray.array(mapname="dir_Arcgis")
     
     #####Correct stream network
@@ -1135,7 +1137,7 @@ class LRRT:
         conlake_arr = garray.array(mapname="Connect_Lake")
         cat1_arr = garray.array(mapname="cat1")
         str_array = garray.array(mapname="str_grass_r")
-        acc_array = garray.array(mapname="acc_grass")
+        acc_array = np.absolute(garray.array(mapname="acc_grass"))
         dir_array = garray.array(mapname="dir_Arcgis")
         obs_array = garray.array(mapname="obs")
 
@@ -1406,7 +1408,7 @@ class LRRT:
         aspect_array = garray.array(mapname="aspect")
         slope_deg_array = garray.array(mapname="slope")
         nstr_seg_array = garray.array(mapname="nstr_seg")
-        acc_array = garray.array(mapname="acc_grass")
+        acc_array = np.absolute(garray.array(mapname="acc_grass"))
         dir_array = garray.array(mapname="ndir_Arcgis")#ndir_Arcgis
         Q_mean_array = garray.array(mapname="qmean")
         landuse_array = garray.array(mapname="landuse")
@@ -1716,7 +1718,7 @@ class LRRT:
             
             if mostdownid < 0: 
                 finalcat_arr = garray.array(mapname="finalcat")
-                acc_array = garray.array(mapname="acc_grass")
+                acc_array = np.absolute(garray.array(mapname="acc_grass"))
                 obs_array = garray.array(mapname="obs")
             
                 obsids = np.unique(obs_array)
