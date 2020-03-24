@@ -296,7 +296,7 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn,nclakeinfo):
             lon = str(catinfo.iloc[i]['centroid_x'])+tab
             LAND_USE_CLASS = 'WATER'+tab
             VEG_CLASS = 'WATER'+tab
-            SOIL_PROFILE ='SOILPROF'+tab
+            SOIL_PROFILE ='LAKE'+tab
             AQUIFER_PROFILE ='[NONE]'+tab
             TERRAIN_CLASS ='[NONE]'+tab
             SLOPE = str(catslope)+tab
@@ -343,7 +343,7 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn,nclakeinfo):
             lon = str(catinfo.iloc[i]['centroid_x'])+tab
             LAND_USE_CLASS = 'WATER'+tab
             VEG_CLASS = 'WATER'+tab
-            SOIL_PROFILE ='SOILPROF'+tab
+            SOIL_PROFILE ='LAKE'+tab
             AQUIFER_PROFILE ='[NONE]'+tab
             TERRAIN_CLASS ='[NONE]'+tab
             SLOPE = str(catslope)+tab
