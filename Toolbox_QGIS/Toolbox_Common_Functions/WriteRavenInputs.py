@@ -238,6 +238,7 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn,nclakeinfo):
     for i in range(0,len(catinfo.index)):
         hruid = int(catinfo.iloc[i]['SubId'])
         catslope = catinfo.iloc[i]['BasSlope']
+        cataspect= catinfo.iloc[i]['BasAspect']
         Non_con_lake_info = nclakeinfo.loc[nclakeinfo['SubId_cat'] == hruid]
         ### calculate Non conneced lake da
         if len(Non_con_lake_info) < 0:
@@ -274,12 +275,13 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn,nclakeinfo):
         AQUIFER_PROFILE ='[NONE]'+tab
         TERRAIN_CLASS ='[NONE]'+tab
         SLOPE = str(catslope)+tab
-        ASPECT = '200'+tab
+        ASPECT = str(cataspect)+tab
         orvh.write("  "+StrGid+tab+StrGidarea+StrGidelev+lat+lon+catid+LAND_USE_CLASS+VEG_CLASS+SOIL_PROFILE+AQUIFER_PROFILE+TERRAIN_CLASS+SLOPE+ASPECT+"\n")
         
         if catinfo.iloc[i]['IsLake'] > 0:
             hruid = int(catinfo.iloc[i]['SubId']) + int(maxcatid)
             catslope = catinfo.iloc[i]['BasSlope']
+            cataspect= catinfo.iloc[i]['BasAspect']
             
             if Restarea <= float(catinfo.iloc[i]['LakeArea']):
                 catarea2 = Restarea*0.95
@@ -300,7 +302,7 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn,nclakeinfo):
             AQUIFER_PROFILE ='[NONE]'+tab
             TERRAIN_CLASS ='[NONE]'+tab
             SLOPE = str(catslope)+tab
-            ASPECT = '200'+tab
+            ASPECT = str(cataspect)+tab
             orvh.write("  "+StrGid+tab+StrGidarea+StrGidelev+lat+lon+catid+LAND_USE_CLASS+VEG_CLASS+SOIL_PROFILE+AQUIFER_PROFILE+TERRAIN_CLASS+SLOPE+ASPECT+"\n")
             
         Leftarea = float(catinfo.iloc[i]['BasArea'])/1000.00/1000.00 - landarea - Con_L_area
@@ -328,7 +330,7 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn,nclakeinfo):
             AQUIFER_PROFILE ='[NONE]'+tab
             TERRAIN_CLASS ='[NONE]'+tab
             SLOPE = str(catslope)+tab
-            ASPECT = '200'+tab
+            ASPECT = str(cataspect)+tab
             orvh.write("  "+StrGid+tab+StrGidarea+StrGidelev+lat+lon+catid+LAND_USE_CLASS+VEG_CLASS+SOIL_PROFILE+AQUIFER_PROFILE+TERRAIN_CLASS+SLOPE+ASPECT+"\n")  
 
             StrGid =  str(int(maxcatidnclake + nonlake_kkk))+tab
@@ -347,7 +349,7 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn,nclakeinfo):
             AQUIFER_PROFILE ='[NONE]'+tab
             TERRAIN_CLASS ='[NONE]'+tab
             SLOPE = str(catslope)+tab
-            ASPECT = '200'+tab
+            ASPECT = str(cataspect)+tab
             orvh.write("  "+StrGid+tab+StrGidarea+StrGidelev+lat+lon+catid+LAND_USE_CLASS+VEG_CLASS+SOIL_PROFILE+AQUIFER_PROFILE+TERRAIN_CLASS+SLOPE+ASPECT+"\n")              
             
         
