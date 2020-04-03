@@ -1702,38 +1702,9 @@ class LRRT:
         writelake(ncatinfo2,self.Raveinputsfolder,nclakeinfo)
         nclakeinfo.to_csv(os.path.join(self.OutputFolder,'Non_connect_Lake_routing_info.csv'),index = None, header=True)
 
-    def selectpolygonsfromroutingproduct(self,Path_shpfile = '#',sub_colnm = 'SubId',down_colnm = 'DowSubId',mostdownid = -1,mostupstreamid = -1):
-        
-        if mostdownid == -1:
-            import grass.script as grass
-            from grass.script import array as garray
-            import grass.script.setup as gsetup
-            from grass.pygrass.modules.shortcuts import general as g
-            from grass.pygrass.modules.shortcuts import raster as r
-            from grass.pygrass.modules import Module
-            from grass_session import Session
-            os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='-1'))
-            PERMANENT = Session()
-            PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
-            
-            if mostdownid < 0: 
-                finalcat_arr = garray.array(mapname="finalcat")
-                acc_array = np.absolute(garray.array(mapname="acc_grass"))
-                obs_array = garray.array(mapname="obs")
-            
-                obsids = np.unique(obs_array)
-                obsids = obsids[obsids>0]
-                obsinfo = np.full((len(obsids),3),-9999)
-        
-                for i in range(0,len(obsids)):
-                    rowcol = np.argwhere(obs_array==obsids[i]).astype(int)
-                    obsinfo[i,0] = obsids[i]
-                    obsinfo[i,1] = finalcat_arr[rowcol[0,0],rowcol[0,1]]
-                    obsinfo[i,2] = acc_array[rowcol[0,0],rowcol[0,1]]
-            
-                    obsinfo = obsinfo[obsinfo[:,2].argsort()].astype(int)
-                mostdownid = obsinfo[len(obsinfo) - 1,1]
 
+    def Locate_subid_needsbyuser(self,Path_Points = '#',Guage_Col_Name = 'Obs_NM',Guage_NMS = '#',subid_col_Name='SubId',Path_products='#'):
+        
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
         Qgs.initQgis()
@@ -1742,53 +1713,78 @@ class LRRT:
         feedback = QgsProcessingFeedback()
         Processing.initialize()
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
-        OutHyID = mostdownid
-        OutHyID2 = mostupstreamid
         
-        if Path_shpfile == '#':
-            Path_shpfile = os.path.join(self.tempfolder,'finalcat_info2.shp')
+        SubId_Selected = -1 
+        if Guage_NMS[0] != '#':
+            hyinfocsv  = Path_products[:-3] + "dbf"
+            tempinfo   = Dbf5(hyinfocsv)
+            hyshdinfo2 = tempinfo.to_dataframe().drop_duplicates(subid_col_Name, keep='first')
+            hyshdinfo2 = hyshdinfo2.loc[hyshdinfo2[Guage_Col_Name].isin(Guage_NMS)]
+            hyshdinfo2 = hyshdinfo2[[Guage_Col_Name,subid_col_Name]]
+            hyshdinfo2.to_csv(os.path.join(self.OutputFolder,'SubIds_Selected.csv'),sep=',', index = None)
+            SubId_Selected = hyshdinfo2[subid_col_Name].values
+        
+        if Path_Points != '#':
+            processing.run("saga:addpolygonattributestopoints", {'INPUT':Path_Points,'POLYGONS':Path_products,'FIELDS':subid_col_Name,'OUTPUT':os.path.join(self.tempfolder,'Sub_Selected_by_Points.shp')})
+            hyinfocsv  = os.path.join(self.tempfolder,'Sub_Selected_by_Points.shp')[:-3] + "dbf"
+            tempinfo   = Dbf5(hyinfocsv)
+            hyshdinfo2 = tempinfo.to_dataframe()
+            hyshdinfo2.to_csv(os.path.join(self.OutputFolder,'SubIds_Selected.csv'),sep=',', index = None)
+            SubId_Selected = hyshdinfo2[subid_col_Name].values
+        
+        
+        self.selectfeaturebasedonID(Path_shpfile = Path_products,sub_colnm = 'SubId',down_colnm = 'DowSubId',mostdownid = SubId_Selected,mostupstreamid = np.full(len(SubId_Selected),-1),OutBaseName='finalcat_info')
+        return SubId_Selected
+            
+
+
+
+    def selectfeaturebasedonID(self,Path_shpfile = '#',sub_colnm = 'SubId',down_colnm = 'DowSubId',mostdownid = -1,mostupstreamid = -1,OutBaseName='finalcat_info'):
+        
+        QgsApplication.setPrefixPath(self.qgisPP, True)
+        Qgs = QgsApplication([],False)
+        Qgs.initQgis()
+        from qgis import processing
+        from processing.core.Processing import Processing   
+        feedback = QgsProcessingFeedback()
+        Processing.initialize()
+        QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
+
+        
+        
         hyinfocsv = Path_shpfile[:-3] + "dbf"
         tempinfo = Dbf5(hyinfocsv)
         hyshdinfo2 = tempinfo.to_dataframe().drop_duplicates(sub_colnm, keep='first')
         hyshdinfo =  hyshdinfo2[[sub_colnm,down_colnm]].astype('float').values
-    
-        HydroBasins1 = Defcat(hyshdinfo,OutHyID) ### return fid of polygons that needs to be select 
-        if OutHyID2 > 0:
-            HydroBasins2 = Defcat(hyshdinfo,self.OutHyID2)            
+        
+        for isub in range(0,len(mostdownid)):
+            OutHyID  = mostdownid[isub]
+            OutHyID2 = mostupstreamid[isub]
+            HydroBasins1 = Defcat(hyshdinfo,OutHyID) ### return fid of polygons that needs to be select 
+            if OutHyID2 > 0:
+                HydroBasins2 = Defcat(hyshdinfo,self.OutHyID2)            
     ###  exculde the Ids in HydroBasins2 from HydroBasins1
-            for i in range(len(HydroBasins2)):
-                rows =np.argwhere(HydroBasins1 == HydroBasins2[i])
-                HydroBasins1 = np.delete(HydroBasins1, rows)
-            HydroBasins = HydroBasins1            
-        else:
-            HydroBasins = HydroBasins1
-    ### Load HydroSHED Layers 
-        hyshedl12 = QgsVectorLayer(Path_shpfile, "")
-        
-        where_clause = '"SubId" IN'+ " ("
-        for i in range(0,len(HydroBasins)):
-            if i == 0:
-                where_clause = where_clause + str(HydroBasins[i])
+                for i in range(len(HydroBasins2)):
+                    rows =np.argwhere(HydroBasins1 == HydroBasins2[i])
+                    HydroBasins1 = np.delete(HydroBasins1, rows)
+                HydroBasins = HydroBasins1            
             else:
-                where_clause = where_clause + "," + str(HydroBasins[i])
-        where_clause = where_clause + ")"
-    
-        req = QgsFeatureRequest().setFlags( QgsFeatureRequest.NoGeometry )
-        req.setFilterExpression(where_clause)
-        it = hyshedl12.getFeatures( req )
+                HydroBasins = HydroBasins1
         
-        ### obtain all feature id of selected polygons
-        selectedFeatureID = []
-    
-        for feature in it:
-            selectedFeatureID.append(feature.id())
+            exp =sub_colnm + '  IN  (  ' +  str(HydroBasins[0]) #'SubId  IN  ( \'1\',\'1404\',\'1851\') '   
+            for i in range(1,len(HydroBasins)):
+                exp = exp + " , "+str(HydroBasins[i])  
+            exp = exp + ')'
+            print(exp)
+    ### Load feature layers
+
+            outputfolder_subid = os.path.join(self.OutputFolder,sub_colnm +'_'+str(OutHyID))
         
-        hyshedl12.select(selectedFeatureID)   ### select with polygon id
+            if not os.path.exists(outputfolder_subid):
+                os.makedirs(outputfolder_subid)
         
-        # Save selected polygons to output 
-        _writer = QgsVectorFileWriter.writeAsVectorFormat(hyshedl12, os.path.join(self.OutputFolder,'finalcat_info.shp'), "UTF-8", hyshedl12.crs(), "ESRI Shapefile", onlySelected=True)
-        del hyshedl12
-        Qgs.exit()
+            outfilename = os.path.join(outputfolder_subid,OutBaseName+'_'+sub_colnm+'_'+str(OutHyID)+'.shp')
+            processing.run("native:extractbyexpression", {'INPUT':Path_shpfile,'EXPRESSION':exp,'OUTPUT':outfilename})
         return 
 
         
