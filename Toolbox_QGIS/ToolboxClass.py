@@ -1704,7 +1704,7 @@ class LRRT:
 
 
     def Locate_subid_needsbyuser(self,Path_Points = '#',Guage_Col_Name = 'Obs_NM',Guage_NMS = '#',subid_col_Name='SubId',Path_products='#'):
-        
+        # obtain subbasin ID based on either points or guage names
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
         Qgs.initQgis()
@@ -1732,15 +1732,16 @@ class LRRT:
             hyshdinfo2.to_csv(os.path.join(self.OutputFolder,'SubIds_Selected.csv'),sep=',', index = None)
             SubId_Selected = hyshdinfo2[subid_col_Name].values
         
+        Qgs.exit()
         
-        self.selectfeaturebasedonID(Path_shpfile = Path_products,sub_colnm = 'SubId',down_colnm = 'DowSubId',mostdownid = SubId_Selected,mostupstreamid = np.full(len(SubId_Selected),-1),OutBaseName='finalcat_info')
+#        self.selectfeaturebasedonID(Path_shpfile = Path_products,sub_colnm = 'SubId',down_colnm = 'DowSubId',mostdownid = SubId_Selected,mostupstreamid = np.full(len(SubId_Selected),-1),OutBaseName='finalcat_info')
         return SubId_Selected
             
 
+    
 
-
-    def selectfeaturebasedonID(self,Path_shpfile = '#',sub_colnm = 'SubId',down_colnm = 'DowSubId',mostdownid = -1,mostupstreamid = -1,OutBaseName='finalcat_info'):
-        
+    def selectfeaturebasedonID(self,Path_shpfile = '#',sub_colnm = 'SubId',down_colnm = 'DowSubId',mostdownid = [-1],mostupstreamid = [-1],OutBaseName='finalcat_info'):
+        #selection feature based on subbasin ID
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
         Qgs.initQgis()
@@ -1757,6 +1758,10 @@ class LRRT:
         hyshdinfo2 = tempinfo.to_dataframe().drop_duplicates(sub_colnm, keep='first')
         hyshdinfo =  hyshdinfo2[[sub_colnm,down_colnm]].astype('float').values
         
+        
+        if mostupstreamid[0] == -1:
+            mostupstreamid = np.full(len(mostdownid),-1)
+            
         for isub in range(0,len(mostdownid)):
             OutHyID  = mostdownid[isub]
             OutHyID2 = mostupstreamid[isub]
@@ -1775,7 +1780,6 @@ class LRRT:
             for i in range(1,len(HydroBasins)):
                 exp = exp + " , "+str(HydroBasins[i])  
             exp = exp + ')'
-            print(exp)
     ### Load feature layers
 
             outputfolder_subid = os.path.join(self.OutputFolder,sub_colnm +'_'+str(OutHyID))
@@ -1785,6 +1789,7 @@ class LRRT:
         
             outfilename = os.path.join(outputfolder_subid,OutBaseName+'_'+sub_colnm+'_'+str(OutHyID)+'.shp')
             processing.run("native:extractbyexpression", {'INPUT':Path_shpfile,'EXPRESSION':exp,'OUTPUT':outfilename})
+        Qgs.exit()
         return 
 
         
