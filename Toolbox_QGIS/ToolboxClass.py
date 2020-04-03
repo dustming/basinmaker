@@ -1504,7 +1504,7 @@ class LRRT:
         del hylakes_ply_lay
         Qgs.exit()  
         
-    def RoutingNetworkTopologyUpdateToolset_cat(self,projection = 'default'):
+    def RoutingNetworkTopologyUpdateToolset_cat_default(self,projection = 'default'):
         import grass.script as grass
         from grass.script import array as garray
         import grass.script.setup as gsetup
