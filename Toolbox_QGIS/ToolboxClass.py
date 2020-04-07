@@ -728,45 +728,61 @@ def Defcat(out,outletid):
     return Shedid
 ###########
     
-def Modify_feature_Attributs_ToSubid(subid,upsubid,Path_feagure,catchmentinfo,mapoldnew_info):
+def New_SubId_To_Dissolve(subid,Path_feagure,catchmentinfo,mapoldnew_info,upsubid = -1,ismodifids = -1,modifiidin = [-1]):
+    sub_colnm = 'SubId'
+    routing_info      = catchmentinfo[['SubId','DowSubId']].astype('float').values
+
+        
+    Modify_subids1            = Defcat(routing_info,subid)   ### find all subids drainage to this subid  
+    if upsubid > 0:
+        Modify_subids2        = Defcat(routing_info,upsubid)    
+        mask = np.in1d(Modify_subids1, Modify_subids2)
+        Modify_subids = Modify_subids1[np.logical_not(mask)]  
+    else:
+        Modify_subids =  Modify_subids1  
+        
+    if ismodifids > 0:
+        del Modify_subids
+        Modify_subids =  modifiidin  
+               
+    cbranch                  = catchmentinfo[catchmentinfo[sub_colnm].isin(Modify_subids)]
+    tarinfo                  = catchmentinfo[catchmentinfo[sub_colnm] == subid]   ### define these subs attributes
+     
+    for m in range(0,len(Modify_subids)):
+        mapoldnew_info.loc[mapoldnew_info[sub_colnm] == Modify_subids[m],'nsubid'] = subid
+    return mapoldnew_info
+
+def Modify_Feature_info(Path_feagure,mapoldnew_info):
     sub_colnm = 'SubId'
     layer_cat=QgsVectorLayer(Path_feagure,"")
-    routing_info      = catchmentinfo[['SubId','DowSubId']].astype('float').values
-    Attri_Name = layer_cat.fields().names()         
+    Attri_Name = layer_cat.fields().names()     
+    features = layer_cat.getFeatures()      
     with edit(layer_cat):
         
-        Modify_subids1            = Defcat(routing_info,subid)   ### find all subids drainage to this subid  
-        if upsubid > 0:
-            Modify_subids2       = Defcat(routing_info,upsubid)    
-            mask = np.in1d(Modify_subids1, Modify_subids2)
-            Modify_subids = Modify_subids1[np.logical_not(mask)]  
-        else:
-            Modify_subids =  Modify_subids1  
-              
-        cbranch                  = catchmentinfo[catchmentinfo[sub_colnm].isin(Modify_subids)]
-        tarinfo                  = catchmentinfo[catchmentinfo[sub_colnm] == subid]   ### define these subs attributes
-     
-        exp =sub_colnm + '  IN  (  ' +  str(Modify_subids[0]) ### selected these features   
-        for m in range(0,len(Modify_subids)):
-            exp = exp + " , "+str(Modify_subids[m])  
-            mapoldnew_info.loc[mapoldnew_info[sub_colnm] == Modify_subids[m],'nsubid'] = subid
-        exp = exp + ')'    
-        req = QgsFeatureRequest()            
-        req.setFilterExpression(exp)
-        select_features = layer_cat.getFeatures(req)     ### selected these features 
-                    
-        for sf in select_features:
+        for sf in features:
             Atti_Valu    = sf.attributes()
+            sf_subid     = sf[sub_colnm]
+            tarinfo      = mapoldnew_info[mapoldnew_info[sub_colnm] == sf_subid]
+            
             for icolnm in range(0,len(Attri_Name)):     ### copy infomaiton 
                 if Attri_Name[icolnm] == 'BasArea':
                     sf[Attri_Name[icolnm]] = float(tarinfo['DA'].values[0])
                 elif Attri_Name[icolnm] == 'Obs_NM':
                     sf[Attri_Name[icolnm]] = str(tarinfo[Attri_Name[icolnm]].values[0])
+                elif Attri_Name[icolnm] == sub_colnm:
+                    nsubid = tarinfo['nsubid'].values[0]
+                    if nsubid <0:
+                        sf[Attri_Name[icolnm]] = float(tarinfo[Attri_Name[icolnm]].values[0])
+                    else:
+                        sf[Attri_Name[icolnm]] = float(nsubid)
                 else:    
                     sf[Attri_Name[icolnm]] = float(tarinfo[Attri_Name[icolnm]].values[0])
+#            print(sf_subid,nsubid,sf[sub_colnm])
             layer_cat.updateFeature(sf)
     del layer_cat
-    return mapoldnew_info
+    return 
+    
+    
 #######
 def Select_SubId_Lakes(ConLakeId,catchmentinfo,sub_mainstr):
     Select_SubId_Link = np.full(100000,-9999.00)
@@ -1882,19 +1898,20 @@ class LRRT:
         mapoldnew_info   = finalriv_info.copy(deep = True)
         Selected_riv     = finalriv_info.loc[finalriv_info[DA_colnm] >= Area_Min*1000*1000] # find river with drainage area larger than area thresthold  
         Subid_main       = Selected_riv[sub_colnm].values
-            
+        routing_info     = finalriv_info[['SubId','DowSubId']].astype('float').values
+        
         mapoldnew_info['nsubid']     = -1
         mapoldnew_info['ndownsubid'] = -1        
         
         ### Obtain connected lakes based on current river segment
         Connected_Lake_Mainriv = Selected_riv['HyLakeId'].values
         Connected_Lake_Mainriv = np.unique(Connected_Lake_Mainriv[Connected_Lake_Mainriv>0])
-        Lakecover_riv    = finalriv_info.loc[finalriv_info['HyLakeId'].isin(Connected_Lake_Mainriv)]
-        Subid_lakes      = Lakecover_riv[sub_colnm].values
+        Lakecover_riv          = finalriv_info.loc[finalriv_info['HyLakeId'].isin(Connected_Lake_Mainriv)]
+        Subid_lakes            = Lakecover_riv[sub_colnm].values
         
 #        Select_SubId_Link= Select_SubId_Lakes(ConLakeId,finalriv_info,Subid_main)
         ### obtain rivsegments that covered by remaining lakes  
-        Selected_riv_ids = np.unique(np.concatenate([Subid_main,Subid_lakes]))
+        Selected_riv_ids = np.unique(Subid_main) #np.unique(np.concatenate([Subid_main,Subid_lakes]))
         
         
         
@@ -1914,14 +1931,11 @@ class LRRT:
         
         #### Process riv polygons 
         
-        layer_cat=QgsVectorLayer(Path_final_cat,"")
+        layer_cat=QgsVectorLayer(Path_final_cat,"")  ## copy ply to new folder 
         outfilename = os.path.join(outputfolder_subid,'finalcat_info'+'_'+sub_colnm+'_'+str(Area_Min)+'.shp')  
         _writer = QgsVectorFileWriter.writeAsVectorFormat(layer_cat, outfilename, "UTF-8", layer_cat.crs(), "ESRI Shapefile")
         del layer_cat
         
-        layer_cat=QgsVectorLayer(outfilename,"")
-        Attri_Name = layer_cat.fields().names()    
-        subid_col_idx = Attri_Name.index(sub_colnm)
         
         for i in range(0,len(Selected_riv_ids)):
             subid     = Selected_riv_ids[i]
@@ -1934,46 +1948,143 @@ class LRRT:
             sub_lakid = sub_info['HyLakeId'].values[0] 
             
             if len(Selected_riv_ids[np.in1d(Selected_riv_ids, up_subids)]) == 0 and sub_lakid < 0:  # all upstream are not selected --> all upstream change to current subid 
-                mapoldnew_info = Modify_feature_Attributs_ToSubid(subid,-1,outfilename,finalriv_info,mapoldnew_info)
+                mapoldnew_info = New_SubId_To_Dissolve(subid = subid,Path_feagure = outfilename,catchmentinfo= finalriv_info,mapoldnew_info= mapoldnew_info)
 
             
             elif len(Selected_riv_ids[np.in1d(Selected_riv_ids, up_subids)]) == 0 and sub_lakid > 0: ## the sub is covered by lake, need merge to upstream subs respectively 
 #                print(subid,sub_lakid,up_subids)
                 for iup in range(0,len(up_subids)):
                     up_sub_id = up_subids[iup]
-                    mapoldnew_info = Modify_feature_Attributs_ToSubid(up_sub_id,-1,outfilename,finalriv_info,mapoldnew_info) 
-
+                    mapoldnew_info = New_SubId_To_Dissolve(subid = up_sub_id,Path_feagure = outfilename,catchmentinfo = finalriv_info,mapoldnew_info = mapoldnew_info) 
             else:   ### Only start from the last segment of river system 
                 continue
             
+
+                
             down_subid = sub_info[down_colnm].values[0]
             
             if mapoldnew_info.loc[mapoldnew_info[sub_colnm] == down_subid]['nsubid'].values[0] > 0: ## downstream segment already modified 
                 continue 
-            
+                
+            if sub_lakid > 0:
+                loopid     = subid
+            else:
+                loopid     = down_subid
+                
             curbranch_DA   = sub_info['DA'].values[0]
-            loopid         = down_subid
+            preloopid      = loopid
             subid_merge    = np.full(1000000,-1)
-            idx            = 0
-#            while loopid > 0: 
-#                loopinfo         = finalriv_info.loc[finalriv_info[sub_colnm]  == loopid]
-#                loop_up_subids   = finalriv_info.loc[finalriv_info[down_colnm] == loopid][sub_colnm].values
-#                subid_merge[idx] = loopid
-#                idx              = idx + 1
-#                loopsub_lakid    = loopinfo['HyLakeId'].values[0] 
-#                
-#                looparea = loopinfo['DA'].values[0] - curbranch_DAle
-#                
-#                if len(Selected_riv_ids[np.in1d(Selected_riv_ids, up_subids)]) == 2 and :
-#                    loopid = -1
-                
-                
-                
-                
+            idx            = 1
+            nseg           = - 1 
 
+            while loopid > 0: 
+                processed_subid    = np.unique(mapoldnew_info.loc[mapoldnew_info['nsubid'] > 0][sub_colnm].values)
+                
+                #### current loop subid info 
+                loopinfo           = finalriv_info.loc[finalriv_info[sub_colnm]  == loopid]
+                if len(loopinfo) == 0:   ### end of the watershed 
+                    loopid = -1
+                    continue
+                    
+                ismodified         = mapoldnew_info.loc[mapoldnew_info[sub_colnm] == loopid]['nsubid'].values[0]
+                loopsub_lakid      = loopinfo['HyLakeId'].values[0]  
+                
+                iLakecover_riv     = finalriv_info.loc[finalriv_info['HyLakeId']==loopsub_lakid] ## river covered by lake
+                routing_info_ilake = iLakecover_riv[['SubId','DowSubId']].astype('float').values  ## only contain lake covered branches  
+                #### upstream sub id info              
+                loop_up_info       = finalriv_info.loc[finalriv_info[down_colnm] == loopid][sub_colnm]
+                loop_up_subids     = finalriv_info.loc[finalriv_info[down_colnm] == loopid][sub_colnm].values
+                ## downstram sub id info 
+                loop_dw_subid      = loopinfo[down_colnm].values[0]
+                loop_dw_info       = finalriv_info.loc[finalriv_info[sub_colnm] == loop_dw_subid]
+                ## previous loopid                
+                loopreinfo         = finalriv_info.loc[finalriv_info[sub_colnm]  == preloopid]
+                ##
+                curr_mids          = np.unique(subid_merge[subid_merge > 0])
+                curr_mids_info     = finalriv_info.loc[finalriv_info[sub_colnm].isin(curr_mids)]
+            
+                print(1,subid,loopid,ismodified)
+                        
+                if ismodified > 0:  ### next down stream already modified 
+                    nseg      = 1
+                    loopid    = -1  ### down stream segment already modified, stop loop for this   
+                else:    
+                    looparea = np.sum(curr_mids_info['BasArea'].values)
+                    looparea = np.max(looparea,0) + loopinfo['BasArea'].values[0]
+                
+#                if preloopid < 0:   ### start of the loop, record and go to next loop
+#                    subid_merge[idx] = loopid 
+#                    preloopid        = loopid
+#                    loopid           = loop_dw_subid
+#                    idx              = idx + 1
+#                    continue
+#                print(1,subid,loopid,preloopid,nseg,ismodified,loopsub_lakid,loopreinfo['HyLakeId'].values[0])
+                
+                
+                    if loopreinfo['HyLakeId'].values[0] == loopsub_lakid:   ### previous and current sub covered by the same lake or both not covered by lakes
+                    
+                        if looparea >= Area_Min*1000*1000  or len(Selected_riv_ids[np.in1d(Selected_riv_ids, loop_up_subids)]) >=2:  ###exceed area thresthold or meet another main stream
+                            
+                            if preloopid != loopid:   ## not the begin of new segment 
+                                nseg      = 1    ### start a new segment 
+#                                preloopid = loopid  ## start over again 
+                            else: ###not begining of the seg, process upstreamids 
+                                for iup in range(0,len(loop_up_subids)):
+                                    if loop_up_subids[iup] != preloopid and len(processed_subid[processed_subid == loop_up_subids[iup]]) == 0 and len(Selected_riv_ids[Selected_riv_ids == loop_up_subids[iup]]) ==0:  ## not processed and not belong to main stream
+                                        upstrems = Defcat(routing_info,loop_up_subids[iup])
+                                        for jup in range(0,len(upstrems)):
+                                            subid_merge[idx] = upstrems[jup] 
+                                            idx              = idx + 1   
+                                                                                                   
+                                subid_merge[idx] = loopid 
+                                preloopid        = loopid
+                                loopid           = loop_dw_subid
+                                idx              = idx + 1                                   
+                             
+                            
+                        else: ## need continue loop
+                            # if there are different branch and upstream of that branch has not been processed 
+                            # add upstream catchment inside the lakes  of that branch, 
+                            for iup in range(0,len(loop_up_subids)):
+                                if loop_up_subids[iup] != preloopid and len(processed_subid[processed_subid == loop_up_subids[iup]]) == 0 and len(Selected_riv_ids[Selected_riv_ids == loop_up_subids[iup]]) ==0:
+                                    upstrems = Defcat(routing_info,loop_up_subids[iup])
+                                    for jup in range(0,len(upstrems)):
+                                        subid_merge[idx] = upstrems[jup] 
+                                        idx              = idx + 1   
+                                                                                                   
+                            subid_merge[idx] = loopid 
+                            preloopid        = loopid
+                            loopid           = loop_dw_subid
+                            idx              = idx + 1  
+                    else:  ###either enther into the lake or go out of the lake 
+                        nseg      = 1    ### start a new segment 
+#                        preloopid = loopid  ## start over again  
+                            
+                     
+
+                if nseg > 0:  #the loopid start a new segment, merge current catchments
+                    nseg = -1
+#                    print(2,subid,loopid,preloopid,nseg,ismodified)
+                    subid_merge = np.unique(subid_merge[subid_merge > 0])
+                    if len(subid_merge) > 0: 
+                        
+                        print(subid,preloopid,loopsub_lakid)      
+                        print(subid_merge) 
+                             
+                        mapoldnew_info = New_SubId_To_Dissolve(subid = preloopid,Path_feagure = outfilename,catchmentinfo = finalriv_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = subid_merge)        
+                    subid_merge    = np.full(1000000,-1)
+                    preloopid = loopid
+                    if(len(finalriv_info.loc[finalriv_info[sub_colnm]  == loopid])) == 0: # this loopid is not exist in river system, end of simulation
+                        loopid = -1
+                    
+                
+                
+        Modify_Feature_info(outfilename,mapoldnew_info)
+        
         outfilename = os.path.join(outputfolder_subid,'finalcat_info'+'_'+sub_colnm+'_'+str(Area_Min)+'.shp')  
         outfilename2 = os.path.join(outputfolder_subid,'finalcat_info'+'_'+sub_colnm+'_'+str(Area_Min)+'_f.shp')  
         processing.run("native:dissolve", {'INPUT':outfilename,'FIELD':['SubId'],'OUTPUT':outfilename2},context = context)
+        mapoldnew_info.to_csv(os.path.join(outputfolder_subid,'mapoldnew.csv'),index=False)
         
         Qgs.exit()      
 
