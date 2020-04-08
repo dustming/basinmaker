@@ -728,7 +728,7 @@ def Defcat(out,outletid):
     return Shedid
 ###########
     
-def New_SubId_To_Dissolve(subid,Path_feagure,catchmentinfo,mapoldnew_info,upsubid = -1,ismodifids = -1,modifiidin = [-1]):
+def New_SubId_To_Dissolve(subid,Path_feagure,catchmentinfo,mapoldnew_info,upsubid = -1,ismodifids = -1,modifiidin = [-1],mainriv = [-1]):
     sub_colnm = 'SubId'
     routing_info      = catchmentinfo[['SubId','DowSubId']].astype('float').values
 
@@ -747,9 +747,42 @@ def New_SubId_To_Dissolve(subid,Path_feagure,catchmentinfo,mapoldnew_info,upsubi
                
     cbranch                  = catchmentinfo[catchmentinfo[sub_colnm].isin(Modify_subids)]
     tarinfo                  = catchmentinfo[catchmentinfo[sub_colnm] == subid]   ### define these subs attributes
+    print(subid,Modify_subids) 
+    ### average river slope info 
+    mainriv_merg_info = mainriv.loc[mainriv['SubId'].isin(Modify_subids)]
+    
+    if len(mainriv_merg_info) > 0:
+        tarinfo.loc[0,'RivLength'] = np.sum(mainriv_merg_info['RivLength'].values)    
+        tarinfo.loc[0,'RivSlope']  = np.average(mainriv_merg_info['RivSlope'].values ,weights = mainriv_merg_info['RivLength'].values)
+        tarinfo.loc[0,'FloodP_n']  = np.average(mainriv_merg_info['FloodP_n'].values ,weights = mainriv_merg_info['RivLength'].values)
+        tarinfo.loc[0,'Q_Mean']    = np.average(mainriv_merg_info['Q_Mean'].values   ,weights = mainriv_merg_info['RivLength'].values)
+        tarinfo.loc[0,'Ch_n']      = np.average(mainriv_merg_info['Ch_n'].values     ,weights = mainriv_merg_info['RivLength'].values)
+        tarinfo.loc[0,'BkfWidth']  = np.max(mainriv_merg_info['BkfWidth'].values)
+        tarinfo.loc[0,'BkfDepth']  = np.max(mainriv_merg_info['BkfDepth'].values)
+    
+    tarinfo.loc[0,'BasArea']       = np.sum(cbranch['BasArea'].values)
+    tarinfo.loc[0,'BasSlope']      = np.average(cbranch['BasSlope'].values,  weights = cbranch['BasArea'].values)
+    tarinfo.loc[0,'MeanElev']      = np.average(cbranch['MeanElev'].values,  weights = cbranch['BasArea'].values)
+    tarinfo.loc[0,'BasAspect']     = np.average(cbranch['BasAspect'].values, weights = cbranch['BasArea'].values)
+    
+    tarinfo.loc[0,'Max_DEM']       = np.max(cbranch['Max_DEM'].values)
+    tarinfo.loc[0,'Min_DEM']       = np.min(cbranch['Min_DEM'].values)
+
+    tarinfo.loc[0,'Strahler']      = -1.2345
+    tarinfo.loc[0,'Seg_ID']        = -1.2345
+    tarinfo.loc[0,'Seg_order']     = -1.2345
+    tarinfo.loc[0,'DA']            = -1.2345
+    tarinfo.loc[0,'NonLDArea']     = -1.2345
+    tarinfo.loc[0,'centroid_x']    = -1.2345
+    tarinfo.loc[0,'centroid_y']    = -1.2345
      
-    for m in range(0,len(Modify_subids)):
-        mapoldnew_info.loc[mapoldnew_info[sub_colnm] == Modify_subids[m],'nsubid'] = subid
+    
+    mask = mapoldnew_info['SubId'].isin(Modify_subids)
+    for col in tarinfo.columns:
+        if col == 'SubId':
+            mapoldnew_info.loc[mask,'nsubid']     = tarinfo[col].values[0]
+        else:
+            mapoldnew_info.loc[mask, col]         = tarinfo[col].values[0]
     return mapoldnew_info
 
 def Modify_Feature_info(Path_feagure,mapoldnew_info):
@@ -764,45 +797,49 @@ def Modify_Feature_info(Path_feagure,mapoldnew_info):
             sf_subid     = sf[sub_colnm]
             tarinfo      = mapoldnew_info[mapoldnew_info[sub_colnm] == sf_subid]
             
-            for icolnm in range(0,len(Attri_Name)):     ### copy infomaiton 
-                if Attri_Name[icolnm] == 'BasArea':
-                    sf[Attri_Name[icolnm]] = float(tarinfo['DA'].values[0])
-                elif Attri_Name[icolnm] == 'Obs_NM':
-                    sf[Attri_Name[icolnm]] = str(tarinfo[Attri_Name[icolnm]].values[0])
-                elif Attri_Name[icolnm] == sub_colnm:
-                    nsubid = tarinfo['nsubid'].values[0]
-                    if nsubid <0:
-                        sf[Attri_Name[icolnm]] = float(tarinfo[Attri_Name[icolnm]].values[0])
-                    else:
-                        sf[Attri_Name[icolnm]] = float(nsubid)
+            for icolnm in range(0,len(Attri_Name)):     ### copy infomaiton
+                if   Attri_Name[icolnm] == 'Obs_NM':
+                    sf[Attri_Name[icolnm]] = str(  tarinfo[Attri_Name[icolnm]].values[0])
+                elif Attri_Name[icolnm] == 'SubId':
+                    sf[Attri_Name[icolnm]] = float(tarinfo['nsubid'].values[0])
+                elif Attri_Name[icolnm] == 'DowSubId':
+                    sf[Attri_Name[icolnm]] = float(tarinfo['ndownsubid'].values[0])
                 else:    
                     sf[Attri_Name[icolnm]] = float(tarinfo[Attri_Name[icolnm]].values[0])
-#            print(sf_subid,nsubid,sf[sub_colnm])
             layer_cat.updateFeature(sf)
     del layer_cat
     return 
+##########
+def UpdateTopology(mapoldnew_info):
     
+    for i in range(0,len(mapoldnew_info)):
+        nsubid     = mapoldnew_info.loc[i,'nsubid']
+        subid      = mapoldnew_info.loc[i,'SubId']
+        odownsubid = mapoldnew_info.loc[i,'DowSubId']
+        
+        donsubidinfo = mapoldnew_info[mapoldnew_info['SubId'] == odownsubid]
+        if (len(donsubidinfo) >0):
+            mapoldnew_info.loc[i,'ndownsubid'] = donsubidinfo['nsubid'].values[0]
+        else:
+            mapoldnew_info.loc[i,'ndownsubid'] = -1
+    
+    mapoldnew_info['SubId']    = mapoldnew_info['nsubid']
+    mapoldnew_info['DowSubId'] = mapoldnew_info['ndownsubid']
+    
+    mapoldnew_info_unique        = mapoldnew_info.drop_duplicates('SubId', keep='first')
+    mapoldnew_info_unique = Streamorderanddrainagearea(mapoldnew_info_unique)
+    
+    for i in range(0,len(mapoldnew_info_unique)):
+        isubid    =  mapoldnew_info_unique['SubId'].values[i]
+        mapoldnew_info.loc[mapoldnew_info['SubId'] == isubid,'Strahler']  = mapoldnew_info_unique['Strahler'].values[i]
+        mapoldnew_info.loc[mapoldnew_info['SubId'] == isubid,'Seg_ID']    = mapoldnew_info_unique['Seg_ID'].values[i]
+        mapoldnew_info.loc[mapoldnew_info['SubId'] == isubid,'Seg_order'] = mapoldnew_info_unique['Seg_order'].values[i]
+        mapoldnew_info.loc[mapoldnew_info['SubId'] == isubid,'DA']        = mapoldnew_info_unique['DA'].values[i]
+        
+    return mapoldnew_info   
     
 #######
-def Select_SubId_Lakes(ConLakeId,catchmentinfo,sub_mainstr):
-    Select_SubId_Link = np.full(100000,-9999.00)
-    idx               = 0 
-    for i in range(0,len(ConLakeId)):
-        lakeid = ConLakeId[i]
-        Lakecover_riv    = catchmentinfo[catchmentinfo['HyLakeId'] == lakeid]
-        Lakecover_riv    = Lakecover_riv.sort_values(by=['DA'])
-        subid_lake_out   = Lakecover_riv['SubId'].values[len(Lakecover_riv) -1]
-        if len(sub_mainstr[np.in1d(sub_mainstr,subid_lake_out)]) == 0:   # the lake is not connected to main stream 
-            csubid = subid_lake_out
-            Select_SubId_Link[idx] = csubid
-            idx = idx + 1
-            while len(sub_mainstr[sub_mainstr==csubid]) == 0:  ### find all subid that needed to connecte lake to main str
-                csubid = catchmentinfo[catchmentinfo['SubId'] == csubid]['DowSubId'].values[0]
-                Select_SubId_Link[idx] = csubid
-                idx = idx +1
-                
-    Select_SubId_Link = Select_SubId_Link[Select_SubId_Link > 0]
-    return Select_SubId_Link   
+
 ############    
 class LRRT:
     def __init__(self, dem_in = '#',dir_in = '#',hyshdply = '#',WidDep = '#',Lakefile = '#'
@@ -1926,14 +1963,14 @@ class LRRT:
             os.makedirs(outputfolder_subid)
         
         #selected riv features 
-        outfilename = os.path.join(outputfolder_subid,'finalriv_info'+'_'+sub_colnm+'_'+str(Area_Min)+'.shp')
-        processing.run("native:extractbyexpression", {'INPUT':Path_final_riv,'EXPRESSION':exp,'OUTPUT':outfilename})
+        outfilename_riv = os.path.join(outputfolder_subid,'finalriv_info'+'_'+sub_colnm+'_'+str(Area_Min)+'.shp')
+        processing.run("native:extractbyexpression", {'INPUT':Path_final_riv,'EXPRESSION':exp,'OUTPUT':outfilename_riv})
         
         #### Process riv polygons 
         
         layer_cat=QgsVectorLayer(Path_final_cat,"")  ## copy ply to new folder 
-        outfilename = os.path.join(outputfolder_subid,'finalcat_info'+'_'+sub_colnm+'_'+str(Area_Min)+'.shp')  
-        _writer = QgsVectorFileWriter.writeAsVectorFormat(layer_cat, outfilename, "UTF-8", layer_cat.crs(), "ESRI Shapefile")
+        outfilename_cat = os.path.join(outputfolder_subid,'finalcat_info'+'_'+sub_colnm+'_'+str(Area_Min)+'.shp')  
+        _writer = QgsVectorFileWriter.writeAsVectorFormat(layer_cat, outfilename_cat, "UTF-8", layer_cat.crs(), "ESRI Shapefile")
         del layer_cat
         
         
@@ -1948,14 +1985,14 @@ class LRRT:
             sub_lakid = sub_info['HyLakeId'].values[0] 
             
             if len(Selected_riv_ids[np.in1d(Selected_riv_ids, up_subids)]) == 0 and sub_lakid < 0:  # all upstream are not selected --> all upstream change to current subid 
-                mapoldnew_info = New_SubId_To_Dissolve(subid = subid,Path_feagure = outfilename,catchmentinfo= finalriv_info,mapoldnew_info= mapoldnew_info)
+                mapoldnew_info = New_SubId_To_Dissolve(subid = subid,Path_feagure = outfilename_cat,catchmentinfo= finalriv_info,mapoldnew_info= mapoldnew_info,mainriv = Selected_riv)
 
             
             elif len(Selected_riv_ids[np.in1d(Selected_riv_ids, up_subids)]) == 0 and sub_lakid > 0: ## the sub is covered by lake, need merge to upstream subs respectively 
 #                print(subid,sub_lakid,up_subids)
                 for iup in range(0,len(up_subids)):
                     up_sub_id = up_subids[iup]
-                    mapoldnew_info = New_SubId_To_Dissolve(subid = up_sub_id,Path_feagure = outfilename,catchmentinfo = finalriv_info,mapoldnew_info = mapoldnew_info) 
+                    mapoldnew_info = New_SubId_To_Dissolve(subid = up_sub_id,Path_feagure = outfilename_cat,catchmentinfo = finalriv_info,mapoldnew_info = mapoldnew_info,mainriv = Selected_riv) 
             else:   ### Only start from the last segment of river system 
                 continue
             
@@ -2003,7 +2040,6 @@ class LRRT:
                 curr_mids          = np.unique(subid_merge[subid_merge > 0])
                 curr_mids_info     = finalriv_info.loc[finalriv_info[sub_colnm].isin(curr_mids)]
             
-                print(1,subid,loopid,ismodified)
                         
                 if ismodified > 0:  ### next down stream already modified 
                     nseg      = 1
@@ -2058,32 +2094,27 @@ class LRRT:
                             idx              = idx + 1  
                     else:  ###either enther into the lake or go out of the lake 
                         nseg      = 1    ### start a new segment 
-#                        preloopid = loopid  ## start over again  
-                            
-                     
+#                        preloopid = loopid  ## start over again                  
 
                 if nseg > 0:  #the loopid start a new segment, merge current catchments
                     nseg = -1
 #                    print(2,subid,loopid,preloopid,nseg,ismodified)
                     subid_merge = np.unique(subid_merge[subid_merge > 0])
                     if len(subid_merge) > 0: 
-                        
-                        print(subid,preloopid,loopsub_lakid)      
-                        print(subid_merge) 
-                             
-                        mapoldnew_info = New_SubId_To_Dissolve(subid = preloopid,Path_feagure = outfilename,catchmentinfo = finalriv_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = subid_merge)        
+                                                     
+                        mapoldnew_info = New_SubId_To_Dissolve(subid = preloopid,Path_feagure = outfilename_cat,catchmentinfo = finalriv_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = subid_merge,mainriv = Selected_riv)        
                     subid_merge    = np.full(1000000,-1)
                     preloopid = loopid
                     if(len(finalriv_info.loc[finalriv_info[sub_colnm]  == loopid])) == 0: # this loopid is not exist in river system, end of simulation
                         loopid = -1
                     
                 
-                
-        Modify_Feature_info(outfilename,mapoldnew_info)
-        
-        outfilename = os.path.join(outputfolder_subid,'finalcat_info'+'_'+sub_colnm+'_'+str(Area_Min)+'.shp')  
-        outfilename2 = os.path.join(outputfolder_subid,'finalcat_info'+'_'+sub_colnm+'_'+str(Area_Min)+'_f.shp')  
-        processing.run("native:dissolve", {'INPUT':outfilename,'FIELD':['SubId'],'OUTPUT':outfilename2},context = context)
+        UpdateTopology(mapoldnew_info)        
+        Modify_Feature_info(outfilename_cat,mapoldnew_info)
+        Modify_Feature_info(outfilename_riv,mapoldnew_info)
+
+        outfilename_cat2 = os.path.join(outputfolder_subid,'finalcat_info'+'_'+sub_colnm+'_'+str(Area_Min)+'_f.shp')  
+        processing.run("native:dissolve", {'INPUT':outfilename_cat,'FIELD':['SubId'],'OUTPUT':outfilename_cat2},context = context)
         mapoldnew_info.to_csv(os.path.join(outputfolder_subid,'mapoldnew.csv'),index=False)
         
         Qgs.exit()      
