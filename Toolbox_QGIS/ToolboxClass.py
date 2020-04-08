@@ -778,6 +778,7 @@ def New_SubId_To_Dissolve(subid,Path_feagure,catchmentinfo,mapoldnew_info,upsubi
      
     
     mask = mapoldnew_info['SubId'].isin(Modify_subids)
+    ### the old downsub id of the dissolved polygon is stored in DowSubId
     for col in tarinfo.columns:
         if col == 'SubId':
             mapoldnew_info.loc[mask,'nsubid']     = tarinfo[col].values[0]
@@ -795,15 +796,14 @@ def Modify_Feature_info(Path_feagure,mapoldnew_info):
         for sf in features:
             Atti_Valu    = sf.attributes()
             sf_subid     = sf[sub_colnm]
-            tarinfo      = mapoldnew_info[mapoldnew_info[sub_colnm] == sf_subid]
+            tarinfo      = mapoldnew_info[mapoldnew_info['Old_SubId'] == sf_subid]
             
             for icolnm in range(0,len(Attri_Name)):     ### copy infomaiton
+                
                 if   Attri_Name[icolnm] == 'Obs_NM':
-                    sf[Attri_Name[icolnm]] = str(  tarinfo[Attri_Name[icolnm]].values[0])
-                elif Attri_Name[icolnm] == 'SubId':
-                    sf[Attri_Name[icolnm]] = float(tarinfo['nsubid'].values[0])
-                elif Attri_Name[icolnm] == 'DowSubId':
-                    sf[Attri_Name[icolnm]] = float(tarinfo['ndownsubid'].values[0])
+                    sf[Attri_Name[icolnm]] = str(tarinfo[Attri_Name[icolnm]].values[0])
+                elif Attri_Name[icolnm] == 'cat':
+                    continue
                 else:    
                     sf[Attri_Name[icolnm]] = float(tarinfo[Attri_Name[icolnm]].values[0])
             layer_cat.updateFeature(sf)
@@ -811,23 +811,27 @@ def Modify_Feature_info(Path_feagure,mapoldnew_info):
     return 
 ##########
 def UpdateTopology(mapoldnew_info):
+    idx = mapoldnew_info.index
     
-    for i in range(0,len(mapoldnew_info)):
-        nsubid     = mapoldnew_info.loc[i,'nsubid']
-        subid      = mapoldnew_info.loc[i,'SubId']
-        odownsubid = mapoldnew_info.loc[i,'DowSubId']
-        
-        donsubidinfo = mapoldnew_info[mapoldnew_info['SubId'] == odownsubid]
+    for i in range(0,len(idx)):
+        nsubid     = mapoldnew_info.loc[idx[i],'nsubid']
+        subid      = mapoldnew_info.loc[idx[i],'SubId']
+        odownsubid = mapoldnew_info.loc[idx[i],'DowSubId']
+                
+        donsubidinfo = mapoldnew_info.loc[mapoldnew_info['SubId'] == odownsubid]
+                
         if (len(donsubidinfo) >0):
-            mapoldnew_info.loc[i,'ndownsubid'] = donsubidinfo['nsubid'].values[0]
+            mapoldnew_info.loc[idx[i],'ndownsubid'] = donsubidinfo['nsubid'].values[0]
         else:
-            mapoldnew_info.loc[i,'ndownsubid'] = -1
-    
+            mapoldnew_info.loc[idx[i],'ndownsubid'] = -1
+    mapoldnew_info['Old_SubId']    = mapoldnew_info['SubId']
+    mapoldnew_info['Old_DowSubId'] = mapoldnew_info['DowSubId']
     mapoldnew_info['SubId']    = mapoldnew_info['nsubid']
     mapoldnew_info['DowSubId'] = mapoldnew_info['ndownsubid']
     
-    mapoldnew_info_unique        = mapoldnew_info.drop_duplicates('SubId', keep='first')
-    mapoldnew_info_unique = Streamorderanddrainagearea(mapoldnew_info_unique)
+    mapoldnew_info_unique      = mapoldnew_info.drop_duplicates('SubId', keep='first')
+    print(mapoldnew_info_unique)
+    mapoldnew_info_unique      = Streamorderanddrainagearea(mapoldnew_info_unique)
     
     for i in range(0,len(mapoldnew_info_unique)):
         isubid    =  mapoldnew_info_unique['SubId'].values[i]
@@ -1938,8 +1942,9 @@ class LRRT:
         routing_info     = finalriv_info[['SubId','DowSubId']].astype('float').values
         
         mapoldnew_info['nsubid']     = -1
-        mapoldnew_info['ndownsubid'] = -1        
-        
+        mapoldnew_info['ndownsubid'] = -1   
+        mapoldnew_info.reset_index(drop=True, inplace=True)     
+#        UpdateTopology(mapoldnew_info) 
         ### Obtain connected lakes based on current river segment
         Connected_Lake_Mainriv = Selected_riv['HyLakeId'].values
         Connected_Lake_Mainriv = np.unique(Connected_Lake_Mainriv[Connected_Lake_Mainriv>0])
