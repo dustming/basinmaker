@@ -747,7 +747,7 @@ def New_SubId_To_Dissolve(subid,Path_feagure,catchmentinfo,mapoldnew_info,upsubi
                
     cbranch                  = catchmentinfo[catchmentinfo[sub_colnm].isin(Modify_subids)]
     tarinfo                  = catchmentinfo[catchmentinfo[sub_colnm] == subid]   ### define these subs attributes
-    print(subid,Modify_subids) 
+#    print(subid,Modify_subids) 
     ### average river slope info 
     mainriv_merg_info = mainriv.loc[mainriv['SubId'].isin(Modify_subids)]
     
@@ -830,7 +830,6 @@ def UpdateTopology(mapoldnew_info):
     mapoldnew_info['DowSubId'] = mapoldnew_info['ndownsubid']
     
     mapoldnew_info_unique      = mapoldnew_info.drop_duplicates('SubId', keep='first')
-    print(mapoldnew_info_unique)
     mapoldnew_info_unique      = Streamorderanddrainagearea(mapoldnew_info_unique)
     
     for i in range(0,len(mapoldnew_info_unique)):
@@ -2059,7 +2058,7 @@ class LRRT:
 #                    loopid           = loop_dw_subid
 #                    idx              = idx + 1
 #                    continue
-#                print(1,subid,loopid,preloopid,nseg,ismodified,loopsub_lakid,loopreinfo['HyLakeId'].values[0])
+#                    print(1,subid,loopid,preloopid,nseg,ismodified,loopsub_lakid,loopreinfo['HyLakeId'].values[0])
                 
                 
                     if loopreinfo['HyLakeId'].values[0] == loopsub_lakid:   ### previous and current sub covered by the same lake or both not covered by lakes
@@ -2067,7 +2066,7 @@ class LRRT:
                         if looparea >= Area_Min*1000*1000  or len(Selected_riv_ids[np.in1d(Selected_riv_ids, loop_up_subids)]) >=2:  ###exceed area thresthold or meet another main stream
                             
                             if preloopid != loopid:   ## not the begin of new segment 
-                                nseg      = 1    ### start a new segment 
+                                nseg      = 2    ### start a new segment 
 #                                preloopid = loopid  ## start over again 
                             else: ###not begining of the seg, process upstreamids 
                                 for iup in range(0,len(loop_up_subids)):
@@ -2098,21 +2097,28 @@ class LRRT:
                             loopid           = loop_dw_subid
                             idx              = idx + 1  
                     else:  ###either enther into the lake or go out of the lake 
-                        nseg      = 1    ### start a new segment 
+                        nseg      = 3    ### start a new segment 
 #                        preloopid = loopid  ## start over again                  
-
+#                print(2,subid,loopid,preloopid,len(finalriv_info.loc[finalriv_info[sub_colnm]  == loopid]))
+                
+                if len(finalriv_info.loc[finalriv_info[sub_colnm]  == loopid]) == 0:  ### check if already reach the outlet
+#                    print(4,subid,loopid,preloopid)
+                    subid_merge[idx] = preloopid
+                    idx = idx + 1
+                    nseg = 4
+                
                 if nseg > 0:  #the loopid start a new segment, merge current catchments
-                    nseg = -1
-#                    print(2,subid,loopid,preloopid,nseg,ismodified)
+                
                     subid_merge = np.unique(subid_merge[subid_merge > 0])
                     if len(subid_merge) > 0: 
-                                                     
+#                        print(3,subid,loopid,preloopid,nseg,subid_merge)                                 
                         mapoldnew_info = New_SubId_To_Dissolve(subid = preloopid,Path_feagure = outfilename_cat,catchmentinfo = finalriv_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = subid_merge,mainriv = Selected_riv)        
-                    subid_merge    = np.full(1000000,-1)
-                    preloopid = loopid
+                    subid_merge = np.full(1000000,-1)
+                    preloopid   = loopid
+                    idx         = 0
                     if(len(finalriv_info.loc[finalriv_info[sub_colnm]  == loopid])) == 0: # this loopid is not exist in river system, end of simulation
                         loopid = -1
-                    
+                    nseg = -1
                 
         UpdateTopology(mapoldnew_info)        
         Modify_Feature_info(outfilename_cat,mapoldnew_info)
