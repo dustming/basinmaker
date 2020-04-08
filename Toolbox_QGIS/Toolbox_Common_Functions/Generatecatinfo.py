@@ -12,15 +12,16 @@ def Streamorderanddrainagearea(catinfo):
     iseg = 1
     ### find first segments of all reaches, no upstream reaches 
     for i in range(0,len(catinfo)):
+        idx = catinfo.index[i]
         if catinfo['SubId'].values[i] == catinfo['DowSubId'].values[i]:
-            catinfo.loc[i,'DowSubId'] = -1
+            catinfo.loc[idx,'DowSubId'] = -1
         catid = catinfo['SubId'].values[i]
         if len(catinfo[catinfo['DowSubId'] == catid]) == 0: ### the river seg has no upstream segment 
             catlist[icat] = int(catinfo['DowSubId'].values[i])   #### store next reach segment 
-            catinfo.loc[i,'DA'] = catinfo['BasArea'].values[i]
-            catinfo.loc[i,'Strahler'] = 1
-            catinfo.loc[i,'Seg_order'] = 1
-            catinfo.loc[i,'Seg_ID'] = iseg
+            catinfo.loc[idx,'DA'] = catinfo['BasArea'].values[i]
+            catinfo.loc[idx,'Strahler'] = 1
+            catinfo.loc[idx,'Seg_order'] = 1
+            catinfo.loc[idx,'Seg_ID'] = iseg
             icat = icat + 1
             iseg = iseg +1
             
@@ -123,12 +124,13 @@ def Streamorderanddrainagearea(catinfo):
                 
     ### calcuate channel manning's coefficient     
     for i in range(0,len(catinfo)):
+        idx =  catinfo.index[i]
         if catinfo['BkfWidth'].values[i] > 0 and catinfo['RivSlope'].values[i] > 0 :
-            catinfo.loc[i,'Ch_n'] = calculateChannaln(catinfo['BkfWidth'].values[i],catinfo['BkfDepth'].values[i],
+            catinfo.loc[idx,'Ch_n'] = calculateChannaln(catinfo['BkfWidth'].values[i],catinfo['BkfDepth'].values[i],
                               catinfo['Q_Mean'].values[i],catinfo['RivSlope'].values[i])
         if catinfo['IsObs'].values[i] > 0:
             if catinfo['DA_Obs'].values[i] >0:
-                catinfo.loc[i,'DA_error'] = (catinfo['DA'].values[i]/1000.0/1000.0 - catinfo['DA_Obs'].values[i])/catinfo['DA_Obs'].values[i]
+                catinfo.loc[idx,'DA_error'] = (catinfo['DA'].values[i]/1000.0/1000.0 - catinfo['DA_Obs'].values[i])/catinfo['DA_Obs'].values[i]
     return catinfo 
 
 

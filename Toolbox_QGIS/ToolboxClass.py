@@ -708,11 +708,11 @@ def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir):
 ##### out has two column the first column has sub id , the second has down sub id 
 def Defcat(out,outletid):
     otsheds = np.full((1,1),outletid)
-    Shedid = np.full((10000000,1),-99999999999999999)
+    Shedid = np.full((len(out),1),-999)
     psid = 0
     rout = copy.copy(out)
     while len(otsheds) > 0:
-        noutshd = np.full((10000000,1),-999999999999999)
+        noutshd = np.full((len(out),1),-999)
         poshdid = 0
         for i in range(0,len(otsheds)):
             Shedid[psid] = otsheds[i]
@@ -727,6 +727,12 @@ def Defcat(out,outletid):
     Shedid = Shedid[Shedid>=0]
     return Shedid
 ###########
+
+
+##### out has two column the first column has sub id , the second has down sub id 
+
+###########
+
     
 def New_SubId_To_Dissolve(subid,Path_feagure,catchmentinfo,mapoldnew_info,upsubid = -1,ismodifids = -1,modifiidin = [-1],mainriv = [-1]):
     sub_colnm = 'SubId'
@@ -750,33 +756,38 @@ def New_SubId_To_Dissolve(subid,Path_feagure,catchmentinfo,mapoldnew_info,upsubi
 #    print(subid,Modify_subids) 
     ### average river slope info 
     mainriv_merg_info = mainriv.loc[mainriv['SubId'].isin(Modify_subids)]
-    
+    idx = tarinfo.index[0]
     if len(mainriv_merg_info) > 0:
-        tarinfo.loc[0,'RivLength'] = np.sum(mainriv_merg_info['RivLength'].values)    
-        tarinfo.loc[0,'RivSlope']  = np.average(mainriv_merg_info['RivSlope'].values ,weights = mainriv_merg_info['RivLength'].values)
-        tarinfo.loc[0,'FloodP_n']  = np.average(mainriv_merg_info['FloodP_n'].values ,weights = mainriv_merg_info['RivLength'].values)
-        tarinfo.loc[0,'Q_Mean']    = np.average(mainriv_merg_info['Q_Mean'].values   ,weights = mainriv_merg_info['RivLength'].values)
-        tarinfo.loc[0,'Ch_n']      = np.average(mainriv_merg_info['Ch_n'].values     ,weights = mainriv_merg_info['RivLength'].values)
-        tarinfo.loc[0,'BkfWidth']  = np.max(mainriv_merg_info['BkfWidth'].values)
-        tarinfo.loc[0,'BkfDepth']  = np.max(mainriv_merg_info['BkfDepth'].values)
+        tarinfo.loc[idx,'RivLength'] = np.sum(mainriv_merg_info['RivLength'].values)    
+        tarinfo.loc[idx,'RivSlope']  = np.average(mainriv_merg_info['RivSlope'].values ,weights = mainriv_merg_info['RivLength'].values)
+        tarinfo.loc[idx,'FloodP_n']  = np.average(mainriv_merg_info['FloodP_n'].values ,weights = mainriv_merg_info['RivLength'].values)
+        tarinfo.loc[idx,'Q_Mean']    = np.average(mainriv_merg_info['Q_Mean'].values   ,weights = mainriv_merg_info['RivLength'].values)
+        tarinfo.loc[idx,'Ch_n']      = np.average(mainriv_merg_info['Ch_n'].values     ,weights = mainriv_merg_info['RivLength'].values)
+        tarinfo.loc[idx,'BkfWidth']  = np.max(mainriv_merg_info['BkfWidth'].values)
+        tarinfo.loc[idx,'BkfDepth']  = np.max(mainriv_merg_info['BkfDepth'].values)
     
-    tarinfo.loc[0,'BasArea']       = np.sum(cbranch['BasArea'].values)
-    tarinfo.loc[0,'BasSlope']      = np.average(cbranch['BasSlope'].values,  weights = cbranch['BasArea'].values)
-    tarinfo.loc[0,'MeanElev']      = np.average(cbranch['MeanElev'].values,  weights = cbranch['BasArea'].values)
-    tarinfo.loc[0,'BasAspect']     = np.average(cbranch['BasAspect'].values, weights = cbranch['BasArea'].values)
+    tarinfo.loc[idx,'BasArea']       = np.sum(cbranch['BasArea'].values)
+    tarinfo.loc[idx,'NonLDArea']     = np.sum(cbranch['NonLDArea'].values)
+    tarinfo.loc[idx,'BasSlope']      = np.average(cbranch['BasSlope'].values,  weights = cbranch['BasArea'].values)
+    tarinfo.loc[idx,'MeanElev']      = np.average(cbranch['MeanElev'].values,  weights = cbranch['BasArea'].values)
+    tarinfo.loc[idx,'BasAspect']     = np.average(cbranch['BasAspect'].values, weights = cbranch['BasArea'].values)
     
-    tarinfo.loc[0,'Max_DEM']       = np.max(cbranch['Max_DEM'].values)
-    tarinfo.loc[0,'Min_DEM']       = np.min(cbranch['Min_DEM'].values)
+    tarinfo.loc[idx,'Max_DEM']       = np.max(cbranch['Max_DEM'].values)
+    tarinfo.loc[idx,'Min_DEM']       = np.min(cbranch['Min_DEM'].values)
 
-    tarinfo.loc[0,'Strahler']      = -1.2345
-    tarinfo.loc[0,'Seg_ID']        = -1.2345
-    tarinfo.loc[0,'Seg_order']     = -1.2345
-    tarinfo.loc[0,'DA']            = -1.2345
-    tarinfo.loc[0,'NonLDArea']     = -1.2345
-    tarinfo.loc[0,'centroid_x']    = -1.2345
-    tarinfo.loc[0,'centroid_y']    = -1.2345
+    tarinfo.loc[idx,'Strahler']      = -1.2345
+    tarinfo.loc[idx,'Seg_ID']        = -1.2345
+    tarinfo.loc[idx,'Seg_order']     = -1.2345
+    tarinfo.loc[idx,'DA']            = -1.2345
+    tarinfo.loc[idx,'centroid_x']    = -1.2345
+    tarinfo.loc[idx,'centroid_y']    = -1.2345
      
-    
+#    print(subid)
+#    print(Modify_subids)
+#    print(mainriv_merg_info['RivLength'].values)
+#    print(np.sum(mainriv_merg_info['RivLength'].values))
+#    print(tarinfo)
+#    print(mainriv_merg_info)
     mask = mapoldnew_info['SubId'].isin(Modify_subids)
     ### the old downsub id of the dissolved polygon is stored in DowSubId
     for col in tarinfo.columns:
@@ -824,14 +835,17 @@ def UpdateTopology(mapoldnew_info):
             mapoldnew_info.loc[idx[i],'ndownsubid'] = donsubidinfo['nsubid'].values[0]
         else:
             mapoldnew_info.loc[idx[i],'ndownsubid'] = -1
+            
     mapoldnew_info['Old_SubId']    = mapoldnew_info['SubId']
     mapoldnew_info['Old_DowSubId'] = mapoldnew_info['DowSubId']
-    mapoldnew_info['SubId']    = mapoldnew_info['nsubid']
+    mapoldnew_info['SubId']        = mapoldnew_info['nsubid']
+    
     mapoldnew_info['DowSubId'] = mapoldnew_info['ndownsubid']
-    
     mapoldnew_info_unique      = mapoldnew_info.drop_duplicates('SubId', keep='first')
+#    mapoldnew_info_unique      = mapoldnew_info_unique.reset_index(drop=True, inplace=True) 
+
     mapoldnew_info_unique      = Streamorderanddrainagearea(mapoldnew_info_unique)
-    
+
     for i in range(0,len(mapoldnew_info_unique)):
         isubid    =  mapoldnew_info_unique['SubId'].values[i]
         mapoldnew_info.loc[mapoldnew_info['SubId'] == isubid,'Strahler']  = mapoldnew_info_unique['Strahler'].values[i]
