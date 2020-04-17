@@ -3,6 +3,11 @@ import copy
 import os
 
 
+def WriteObsfiles(catinfo,outFolderraven,startyear,endyear):
+    obsnms  = np.unique(catinfo['Obs_NM'].values)
+    print(obsnms)
+
+
 def writechanel(chname,chwd,chdep,chslope,orchnl,elev,floodn,channeln,iscalmanningn):
     ### Following SWAT instructions, assume a trapezoidal shape channel, with channel sides has depth and width ratio of 2. zch = 2
     zch = 2

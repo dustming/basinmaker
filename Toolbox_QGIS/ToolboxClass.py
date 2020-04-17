@@ -15,7 +15,7 @@ import sqlite3
 from GetBasinoutlet import Getbasinoutlet,Nextcell
 from Generatecatinfo import Generatecatinfo,Generatecatinfo_riv,calculateChannaln,Writecatinfotodbf,Streamorderanddrainagearea
 from WriteRavenInputs import writelake,Writervhchanl
-
+from WriteRavenInputs import WriteObsfiles
 
 
 
@@ -1567,7 +1567,7 @@ class LRRT:
         sqlstat="SELECT Gridcode, Area_m FROM Non_con_lake_cat_1"
         NonConcLakeInfo = pd.read_sql_query(sqlstat, con)
         NonConcLakeInfo['SubId_riv'] = -9999
-        sqlstat="SELECT Obs_ID, DA_obs, STATION_NU FROM obspoint"
+        sqlstat="SELECT Obs_ID, DA_obs, STATION_NU, SRC_obs FROM obspoint"
         obsinfo = pd.read_sql_query(sqlstat, con)
         obsinfo['Obs_ID'] = obsinfo['Obs_ID'].astype(float) 
         obsinfo['DA_obs'] = obsinfo['DA_obs'].astype(float) 
@@ -1575,13 +1575,14 @@ class LRRT:
                   
         allcatid = np.unique(nstr_seg_array)
         allcatid = allcatid[allcatid > 0]
-        catinfo2 = np.full((len(allcatid),30),-9999.00000)    
+        catinfo2 = np.full((len(allcatid),31),-9999.00000)    
         catinfodf = pd.DataFrame(catinfo2, columns = ['SubId', "DowSubId",'RivSlope','RivLength','BasSlope','BasAspect','BasArea',
                             'BkfWidth','BkfDepth','IsLake','HyLakeId','LakeVol','LakeDepth',
                              'LakeArea','Laketype','IsObs','MeanElev','FloodP_n','Q_Mean','Ch_n','DA','Strahler','Seg_ID','Seg_order'
-                             ,'Max_DEM','Min_DEM','DA_Obs','DA_error','Obs_NM','NonLDArea'])
-        catinfodf['Obs_NM']  =catinfodf['Obs_NM'].astype(str)         
-                     
+                             ,'Max_DEM','Min_DEM','DA_Obs','DA_error','Obs_NM','SRC_obs','NonLDArea'])
+        catinfodf['Obs_NM']   =catinfodf['Obs_NM'].astype(str)         
+        catinfodf['SRC_obs']  =catinfodf['SRC_obs'].astype(str)   
+                   
         catinfo,NonConcLakeInfo= Generatecatinfo_riv(nstr_seg_array,acc_array,dir_array,Lake1_arr,dem_array,
              catinfodf,allcatid,width_array,depth_array,obs_array,slope_array,aspect_array,landuse_array,
              slope_deg_array,Q_mean_array,Netcat_array,landuseinfo,allLakinfo,self.nrows,self.ncols,
@@ -1717,11 +1718,13 @@ class LRRT:
                     catinfo.loc[lakeindex,'Obs_NM'] = lakecat_info.loc[lakecat_info['IsObs'] > 0]['Obs_NM'].values[0]
                     catinfo.loc[lakeindex,'DA_Obs'] = lakecat_info.loc[lakecat_info['IsObs'] > 0]['DA_Obs'].values[0]
                     catinfo.loc[lakeindex,'DA_error'] = lakecat_info.loc[lakecat_info['IsObs'] > 0]['DA_error'].values[0]
+                    catinfo.loc[lakeindex,'SRC_obs'] = lakecat_info.loc[lakecat_info['IsObs'] > 0]['SRC_obs'].values[0]
                 else:
                     catinfo.loc[lakeindex,'IsObs'] = -1.2345
                     catinfo.loc[lakeindex,'Obs_NM'] = -1.2345
                     catinfo.loc[lakeindex,'DA_Obs'] = -1.2345
-                    catinfo.loc[lakeindex,'DA_error'] = -1.2345                    
+                    catinfo.loc[lakeindex,'DA_error'] = -1.2345  
+                    catinfo.loc[lakeindex,'SRC_obs'] = -1.2345                    
                 catinfo.loc[lakeindex,'FloodP_n'] = np.average(lakecat_info['FloodP_n'].values,weights = lakecat_info['RivLength'].values)
                 catinfo.loc[lakeindex,'Q_Mean'] = np.average(lakecat_info['Q_Mean'].values,weights = lakecat_info['RivLength'].values)
                 catinfo.loc[lakeindex,'Ch_n'] = np.average(lakecat_info['Ch_n'].values,weights = lakecat_info['RivLength'].values)
@@ -1812,7 +1815,7 @@ class LRRT:
             shutil.rmtree(self.tempfolder,ignore_errors=True)
 
 
-    def GenerateRavenInput(self,Finalcat_NM = 'finalcat_info',lenThres = 1,iscalmanningn = -1,Nonconnectlake = -1,NonconLakeinfo = 'Non_con_lake'):
+    def GenerateRavenInput(self,Finalcat_NM = 'finalcat_info',lenThres = 1,iscalmanningn = -1,Nonconnectlake = -1,NonconLakeinfo = 'Non_con_lake',Startyear = 1980,EndYear = 2010):
         
         if not os.path.exists(self.Raveinputsfolder):
             os.makedirs(self.Raveinputsfolder)
@@ -1839,7 +1842,7 @@ class LRRT:
         nclakeinfo = Writervhchanl(ncatinfo2,self.Raveinputsfolder,lenThres,iscalmanningn,nclakeinfo)
         writelake(ncatinfo2,self.Raveinputsfolder,nclakeinfo)
         nclakeinfo.to_csv(os.path.join(self.OutputFolder,'Non_connect_Lake_routing_info.csv'),index = None, header=True)
-
+        WriteObsfiles(ncatinfo2,self.Raveinputsfolder,Startyear,EndYear)
 
     def Locate_subid_needsbyuser(self,Path_Points = '#',Guage_Col_Name = 'Obs_NM',Guage_NMS = '#',subid_col_Name='SubId',Path_products='#'):
         # obtain subbasin ID based on either points or guage names

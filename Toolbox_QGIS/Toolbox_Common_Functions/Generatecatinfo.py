@@ -356,8 +356,9 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
 #            arcpy.AddMessage(str(catid)+"      "+str(obs[trow,tcol]))
             catinfo.loc[i,'IsObs'] =  obs[trow,tcol]
             obsid = float(obs[trow,tcol])
-            catinfo.loc[i,'DA_Obs'] = obsinfo.loc[obsinfo['Obs_ID'] == obsid]['DA_obs'].values[0]
-            catinfo.loc[i,'Obs_NM'] = obsinfo.loc[obsinfo['Obs_ID'] == obsid]['STATION_NU'].values[0]
+            catinfo.loc[i,'DA_Obs']  = obsinfo.loc[obsinfo['Obs_ID'] == obsid]['DA_obs'].values[0]
+            catinfo.loc[i,'Obs_NM']  = obsinfo.loc[obsinfo['Obs_ID'] == obsid]['STATION_NU'].values[0]
+            catinfo.loc[i,'SRC_obs'] = obsinfo.loc[obsinfo['Obs_ID'] == obsid]['SRC_obs'].values[0]
 
 ########Slopes slope,aspect,landuse,slop_deg
         slopeinriv = slope[catmask2]
