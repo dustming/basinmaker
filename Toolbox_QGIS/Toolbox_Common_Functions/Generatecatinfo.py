@@ -359,7 +359,7 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
             catinfo.loc[i,'DA_Obs']  = obsinfo.loc[obsinfo['Obs_ID'] == obsid]['DA_obs'].values[0]
             catinfo.loc[i,'Obs_NM']  = obsinfo.loc[obsinfo['Obs_ID'] == obsid]['STATION_NU'].values[0]
             catinfo.loc[i,'SRC_obs'] = obsinfo.loc[obsinfo['Obs_ID'] == obsid]['SRC_obs'].values[0]
-
+#            print(obsinfo.loc[obsinfo['Obs_ID'] == obsid]['SRC_obs'])
 ########Slopes slope,aspect,landuse,slop_deg
         slopeinriv = slope[catmask2]
         aspectinriv = aspect[catmask2]

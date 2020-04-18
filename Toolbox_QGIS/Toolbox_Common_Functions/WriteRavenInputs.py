@@ -4,7 +4,8 @@ import os
 
 
 def WriteObsfiles(catinfo,outFolderraven,startyear,endyear):
-    obsnms  = np.unique(catinfo['Obs_NM'].values)
+    obsnms  = catinfo[['Obs_NM','SRC_obs']]
+    obsnms  = obsnms.drop_duplicates('Obs_NM', keep='first')
     print(obsnms)
 
 

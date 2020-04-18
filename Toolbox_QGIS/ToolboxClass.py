@@ -1570,7 +1570,6 @@ class LRRT:
         sqlstat="SELECT Obs_ID, DA_obs, STATION_NU, SRC_obs FROM obspoint"
         obsinfo = pd.read_sql_query(sqlstat, con)
         obsinfo['Obs_ID'] = obsinfo['Obs_ID'].astype(float) 
-        obsinfo['DA_obs'] = obsinfo['DA_obs'].astype(float) 
         
                   
         allcatid = np.unique(nstr_seg_array)
@@ -1586,8 +1585,7 @@ class LRRT:
         catinfo,NonConcLakeInfo= Generatecatinfo_riv(nstr_seg_array,acc_array,dir_array,Lake1_arr,dem_array,
              catinfodf,allcatid,width_array,depth_array,obs_array,slope_array,aspect_array,landuse_array,
              slope_deg_array,Q_mean_array,Netcat_array,landuseinfo,allLakinfo,self.nrows,self.ncols,
-             rivleninfo.astype(float),catareainfo.astype(float),obsinfo,NonConcLakeInfo,NonCL_array)
-             
+             rivleninfo.astype(float),catareainfo.astype(float),obsinfo,NonConcLakeInfo,NonCL_array) 
         catinfo = Streamorderanddrainagearea(catinfo)         
         catinfo.to_csv(self.Path_finalcatinfo_riv, index = None, header=True)
         NonConcLakeInfo.to_csv(self.Path_NonCLakeinfo, index = None, header=True)
@@ -1843,6 +1841,8 @@ class LRRT:
         writelake(ncatinfo2,self.Raveinputsfolder,nclakeinfo)
         nclakeinfo.to_csv(os.path.join(self.OutputFolder,'Non_connect_Lake_routing_info.csv'),index = None, header=True)
         WriteObsfiles(ncatinfo2,self.Raveinputsfolder,Startyear,EndYear)
+        
+        
 
     def Locate_subid_needsbyuser(self,Path_Points = '#',Guage_Col_Name = 'Obs_NM',Guage_NMS = '#',subid_col_Name='SubId',Path_products='#'):
         # obtain subbasin ID based on either points or guage names
