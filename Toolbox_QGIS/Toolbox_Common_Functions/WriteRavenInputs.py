@@ -48,7 +48,7 @@ def DownloadStreamflowdata_CA(Station_NM,CA_HYDAT,StartYear,EndYear):
         for iday in range(1,NDays+1):
             cdate = pd.to_datetime({'year': [row['YEAR']],'month': [row['MONTH']],'day': [iday]}).values
 #            cdates = pd.to_datetime(str(row['YEAR'])+'-'+str(row['MONTH'])+'-'+str(iday))
-            if row['FLOW'+str(iday)] != np.nan and row['FLOW'+str(iday)] != None:
+            if row['FLOW'+str(iday)] != np.nan and row['FLOW'+str(iday)] != None and float(row['FLOW'+str(iday)]) > 0:
                 flowdata.loc[cdate,'Flow'] = row['FLOW'+str(iday)]
                 flowdata.loc[cdate,'QC']   = row['FLOW_SYMBOL'+str(iday)]
     return flowdata,obs_DA,obtaindata
