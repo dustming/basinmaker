@@ -164,7 +164,7 @@ def WriteObsfiles(catinfo,outFolderraven,outObsfileFolder,startyear,endyear,CA_H
         if Template_Folder != '#':
             Modify_template_rvt(outFolderraven,outObsfileFolder,obsnm)
         ### Modify rvt file
-        
+        obsnms.to_csv(os.path.join(outObsfileFolder,'obsinfo.csv'),sep=',',index=False)
      
 
 
