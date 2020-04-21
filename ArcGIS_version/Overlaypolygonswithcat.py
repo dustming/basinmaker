@@ -1041,7 +1041,7 @@ if Nonconnectlake > 0:
     nclakeinfo = pd.read_csv(NonconLakeinfopath,sep=",",low_memory=False)
     nclakeinfo = nclakeinfo.drop_duplicates('Gridcode', keep='first')
 else:
-    nclakeinfo = pd.DataFrame(np.full((1,4),-9999), columns = ['Gridcode', "SubId_riv","SubId_cat","Area_m"])
+    nclakeinfo = pd.DataFrame(np.full((1,5),-9999), columns = ['Gridcode', "SubId_riv","SubId_cat","Area_m","new_HruID"])
             
 if forcingply !="#":
     Maphru2forceply(forcingply,OutputFolder + "/","#",OutputFolder + "/",Boundaryply,missrow,misscol,nclakeinfo)
