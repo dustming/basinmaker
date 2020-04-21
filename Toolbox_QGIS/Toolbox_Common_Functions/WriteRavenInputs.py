@@ -461,8 +461,8 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn,nclakeinfo):
             StrGidelev = str(catinfo.iloc[i]['MeanElev'])+tab
             lat = str(catinfo.iloc[i]['centroid_y'])+tab
             lon = str(catinfo.iloc[i]['centroid_x'])+tab
-            LAND_USE_CLASS = 'WATER'+tab
-            VEG_CLASS = 'WATER'+tab
+            LAND_USE_CLASS = 'LAKE'+tab
+            VEG_CLASS = 'LAKE'+tab
             SOIL_PROFILE ='LAKE'+tab
             AQUIFER_PROFILE ='[NONE]'+tab
             TERRAIN_CLASS ='[NONE]'+tab
@@ -508,8 +508,8 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn,nclakeinfo):
             StrGidelev = str(catinfo.iloc[i]['MeanElev'])+tab
             lat = str(catinfo.iloc[i]['centroid_y'])+tab
             lon = str(catinfo.iloc[i]['centroid_x'])+tab
-            LAND_USE_CLASS = 'WATER'+tab
-            VEG_CLASS = 'WATER'+tab
+            LAND_USE_CLASS = 'LAKE'+tab
+            VEG_CLASS = 'LAKE'+tab
             SOIL_PROFILE ='LAKE'+tab
             AQUIFER_PROFILE ='[NONE]'+tab
             TERRAIN_CLASS ='[NONE]'+tab
