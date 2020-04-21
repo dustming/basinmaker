@@ -8,6 +8,7 @@ import sys
 import numpy as np
 import shutil
 from shutil import copyfile
+from distutils.dir_util import copy_tree
 import tempfile
 import copy
 import pandas as pd
@@ -1813,14 +1814,33 @@ class LRRT:
             shutil.rmtree(self.tempfolder,ignore_errors=True)
 
 
-    def GenerateRavenInput(self,Finalcat_NM = 'finalcat_info',lenThres = 1,iscalmanningn = -1,Nonconnectlake = -1,NonconLakeinfo = 'Non_con_lake',Startyear = 1980,EndYear = 2010):
+    def GenerateRavenInput(self,Finalcat_NM = 'finalcat_info',lenThres = 1,iscalmanningn = -1,Nonconnectlake = -1,NonconLakeinfo = 'Non_con_lake',Startyear = 1980,EndYear = 2010
+                          ,CA_HYDAT = '#',WarmUp = 0,Template_Folder = '#'):
         
-        if not os.path.exists(self.Raveinputsfolder):
-            os.makedirs(self.Raveinputsfolder)
+        
+        Model_Folder     = os.path.join(self.OutputFolder,'Model')
+        Raveinputsfolder = os.path.join(Model_Folder,'RavenInput')
+        Obs_Folder       = os.path.join(Raveinputsfolder,'obs')
+        
+        if not os.path.exists(Model_Folder):
+            os.makedirs(Model_Folder)
+        
+        ### check if there is a model input template provided    
+        if Template_Folder != '#':
+            fromDirectory = Template_Folder
+            toDirectory   = Model_Folder
+            copy_tree(fromDirectory, toDirectory)
+            
+        if not os.path.exists(Raveinputsfolder):
+            os.makedirs(Raveinputsfolder)
+        if not os.path.exists(Obs_Folder):
+            os.makedirs(Obs_Folder)
+            
+
 
         finalcatchpath = os.path.join(self.OutputFolder,Finalcat_NM)
         
-        tempinfo = Dbf5( finalcatchpath + ".dbf")#np.genfromtxt(hyinfocsv,delimiter=',')
+        tempinfo = Dbf5(finalcatchpath + ".dbf")#np.genfromtxt(hyinfocsv,delimiter=',')
         ncatinfo = tempinfo.to_dataframe()
         ncatinfo2 = ncatinfo.drop_duplicates('SubId', keep='first')
         ncatinfo2 = ncatinfo2[ncatinfo2['SubId'] > 0]
@@ -1837,10 +1857,10 @@ class LRRT:
             nclakeinfo = pd.DataFrame(np.full((1,4),-9999), columns = ['Gridcode', "SubId_riv","SubId_cat","Area_m"])
 #            print(nclakeinfo)
             
-        nclakeinfo = Writervhchanl(ncatinfo2,self.Raveinputsfolder,lenThres,iscalmanningn,nclakeinfo)
-        writelake(ncatinfo2,self.Raveinputsfolder,nclakeinfo)
+        nclakeinfo = Writervhchanl(ncatinfo2,Raveinputsfolder,lenThres,iscalmanningn,nclakeinfo)
+        writelake(ncatinfo2,Raveinputsfolder,nclakeinfo)
         nclakeinfo.to_csv(os.path.join(self.OutputFolder,'Non_connect_Lake_routing_info.csv'),index = None, header=True)
-        WriteObsfiles(ncatinfo2,self.Raveinputsfolder,Startyear,EndYear)
+        WriteObsfiles(ncatinfo2,Raveinputsfolder,Obs_Folder,Startyear + WarmUp,EndYear,CA_HYDAT,Template_Folder)
         
         
 
