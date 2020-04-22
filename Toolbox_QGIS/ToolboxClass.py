@@ -1943,16 +1943,76 @@ class LRRT:
                 exp = exp + " , "+str(HydroBasins[i])  
             exp = exp + ')'
     ### Load feature layers
-
-            outputfolder_subid = os.path.join(self.OutputFolder,sub_colnm +'_'+str(OutHyID))
         
-            if not os.path.exists(outputfolder_subid):
-                os.makedirs(outputfolder_subid)
-        
-            outfilename = os.path.join(outputfolder_subid,OutBaseName+'_'+sub_colnm+'_'+str(OutHyID)+'.shp')
+            outfilename = os.path.join(self.OutputFolder,OutBaseName+'_'+str(OutHyID)+'.shp')
             processing.run("native:extractbyexpression", {'INPUT':Path_shpfile,'EXPRESSION':exp,'OUTPUT':outfilename})
         Qgs.exit()
         return 
+
+    def ExtractLakesForGivenWatersheds(self,Path_plyfile = '#',Path_Lakeinfo = '#',Path_NonClakeinfo = '#'):
+        #selection feature based on subbasin ID
+        QgsApplication.setPrefixPath(self.qgisPP, True)
+        Qgs = QgsApplication([],False)
+        Qgs.initQgis()
+        from qgis import processing
+        from processing.core.Processing import Processing   
+        feedback = QgsProcessingFeedback()
+        Processing.initialize()
+        QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
+        
+        finalcat_csv     = Path_plyfile[:-3] + "dbf"
+        finalcat_info    = Dbf5(finalcat_csv)
+        finalcat_info    = finalcat_info.to_dataframe().drop_duplicates('SubId', keep='first')
+        
+        Connect_Lakeids  = np.unique(finalcat_info['HyLakeId'].values)
+        Connect_Lakeids  = Connect_Lakeids[Connect_Lakeids > 0]
+        
+        SubIds           = np.unique(finalcat_info['SubId'].values)
+        SubIds           = SubIds[SubIds > 0]        
+        
+        NonConn_Lakes    = Path_NonClakeinfo[:-3] + "dbf"
+        NonConn_Lakes    = Dbf5(NonConn_Lakes)
+        NonConn_Lakes    = NonConn_Lakes.to_dataframe()
+        NonConn_Lakes['SubId_riv']    = pd.to_numeric(NonConn_Lakes['SubId_riv'], downcast='float')
+        
+        NonConn_Lakes_p  = NonConn_Lakes.loc[NonConn_Lakes['SubId_riv'].isin(SubIds)]
+        NonCL_Lakeids    = NonConn_Lakes_p['value'].values
+        
+        
+        ### obtain all lake in for in the domain of Path_plyfile
+        exp ='Hylak_id' + '  IN  (  ' +  str(int(Connect_Lakeids[0]))  
+        for i in range(1,len(Connect_Lakeids)):
+            exp = exp + " , "+str(int(Connect_Lakeids[i]))
+        exp = exp + ')'            
+        outfilename = os.path.join(self.OutputFolder,'Connect_Lake_info.shp')
+        processing.run("native:extractbyexpression", {'INPUT':Path_Lakeinfo,'EXPRESSION':exp,'OUTPUT':outfilename})
+        
+        
+        exp ='Hylak_id' + '  IN  (  ' +  str(int(NonCL_Lakeids[0]))      
+        for i in range(1,len(NonCL_Lakeids)):
+            exp = exp + " , "+str(int(NonCL_Lakeids[i]))        
+        exp = exp + ')'
+        outfilename = os.path.join(self.OutputFolder,'Non_Connect_Lake_info.shp')
+        processing.run("native:extractbyexpression", {'INPUT':Path_Lakeinfo,'EXPRESSION':exp,'OUTPUT':outfilename})
+
+
+        ### obtain all Non connected lake in for in the domain of Path_plyfile
+        exp ='value' + '  IN  (  ' +  str(int(NonCL_Lakeids[0])) 
+        for i in range(1,len(NonCL_Lakeids)):
+            exp = exp + " , "+str(int(NonCL_Lakeids[i]))        
+        exp = exp + ')'
+        outfilename = os.path.join(self.OutputFolder,'NonConLake_cat.shp')
+        processing.run("native:extractbyexpression", {'INPUT':Path_NonClakeinfo,'EXPRESSION':exp,'OUTPUT':outfilename})
+        
+                
+        Qgs.exit()  
+        
+        
+        
+        
+        return 
+
+
 
 
     def Customize_Routing_Topology(self,projection = 'default',Path_final_riv = '#',Path_final_cat = '#',Path_NonCLake = '#',CellSize = -1,Area_Min = -1,
