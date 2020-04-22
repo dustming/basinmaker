@@ -825,6 +825,15 @@ def Modify_Feature_info(Path_feagure,mapoldnew_info):
     del layer_cat
     return 
 ##########
+
+def Selectfeatureattributes(processing,Input = '#',Output='#',Attri_NM = '#',Values = []):
+    exp =Attri_NM + '  IN  (  ' +  str(int(Values[0]))      
+    for i in range(1,len(Values)):
+        exp = exp + " , "+str(int(Values[i]))        
+    exp = exp + ')'
+    processing.run("native:extractbyexpression", {'INPUT':Input,'EXPRESSION':exp,'OUTPUT':Output}) 
+       
+#####
 def UpdateTopology(mapoldnew_info):
     idx = mapoldnew_info.index
     
@@ -1568,6 +1577,12 @@ class LRRT:
         sqlstat="SELECT Gridcode, Area_m FROM Non_con_lake_cat_1"
         NonConcLakeInfo = pd.read_sql_query(sqlstat, con)
         NonConcLakeInfo['SubId_riv'] = -9999
+        NonConcLakeInfo['HyLakeId']  = -9999
+        NonConcLakeInfo['LakeVol']   = -9999
+        NonConcLakeInfo['LakeDepth'] = -9999
+        NonConcLakeInfo['LakeArea']  = -9999
+        NonConcLakeInfo['Laketype']  = -9999
+        
         sqlstat="SELECT Obs_ID, DA_obs, STATION_NU, SRC_obs FROM obspoint"
         obsinfo = pd.read_sql_query(sqlstat, con)
         obsinfo['Obs_ID'] = obsinfo['Obs_ID'].astype(float) 
@@ -1590,14 +1605,15 @@ class LRRT:
         catinfo = Streamorderanddrainagearea(catinfo)         
         catinfo.to_csv(self.Path_finalcatinfo_riv, index = None, header=True)
         NonConcLakeInfo.to_csv(self.Path_NonCLakeinfo, index = None, header=True)
-    
+        
+        
         ### add lake info to selected laeks 
         grass.run_command('db.in.ogr', input=self.Path_alllakeinfoinfo,output = 'alllakeinfo',overwrite = True)
         grass.run_command('v.db.join', map= 'SelectedLakes_F',column = 'value', other_table = 'alllakeinfo',other_column ='Hylak_id', overwrite = True)
         
         grass.run_command('db.in.ogr', input=self.Path_NonCLakeinfo,output = 'result_nonlake',overwrite = True)
         grass.run_command('v.db.join', map= 'Non_con_lake_cat_1',column = 'Gridcode', other_table = 'result_nonlake',other_column ='Gridcode', overwrite = True)
-#        grass.run_command('v.out.ogr', input = 'Non_con_lake_cat_1',output = os.path.join(self.OutputFolder,'Non_con_lake_riv.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
+        grass.run_command('v.out.ogr', input = 'Non_con_lake_cat_1',output = os.path.join(self.tempfolder,'Non_con_lake_cat_info.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
 
         ### add catchment info to all river segment 
         grass.run_command('db.in.ogr', input=self.Path_finalcatinfo_riv,output = 'result_riv',overwrite = True)
@@ -1611,34 +1627,48 @@ class LRRT:
 
         PERMANENT.close()
                 
-
-        processing.run("native:centroids", {'INPUT':os.path.join(self.tempfolder,'finalriv_catinfo1.shp'),'ALL_PARTS':False,'OUTPUT':os.path.join(self.tempfolder,'Centerpoints.shp')},context = context)
+        processing.run("native:dissolve", {'INPUT':os.path.join(self.tempfolder,'finalriv_catinfo1.shp'),'FIELD':['SubId'],'OUTPUT':os.path.join(self.tempfolder,'finalriv_catinfo_dis.shp')},context = context)
+        processing.run("native:dissolve", {'INPUT':os.path.join(self.tempfolder,'finalriv_info1.shp'),'FIELD':['SubId'],'OUTPUT':os.path.join(self.tempfolder,'finalriv_info_dis.shp')},context = context)
+        
+        processing.run("native:centroids", {'INPUT':os.path.join(self.tempfolder,'finalriv_catinfo_dis.shp'),'ALL_PARTS':False,'OUTPUT':os.path.join(self.tempfolder,'Centerpoints.shp')},context = context)
         processing.run("native:addxyfields", {'INPUT':os.path.join(self.tempfolder,'Centerpoints.shp'),'CRS':QgsCoordinateReferenceSystem(self.SpRef_in),'OUTPUT':os.path.join(self.tempfolder,'ctwithxy.shp')},context = context)
-        processing.run("native:joinattributestable",{'INPUT':os.path.join(self.tempfolder,'finalriv_catinfo1.shp'),'FIELD':'SubId','INPUT_2':os.path.join(self.tempfolder,'ctwithxy.shp'),'FIELD_2':'SubId',
+        processing.run("native:joinattributestable",{'INPUT':os.path.join(self.tempfolder,'finalriv_catinfo_dis.shp'),'FIELD':'SubId','INPUT_2':os.path.join(self.tempfolder,'ctwithxy.shp'),'FIELD_2':'SubId',
                           'FIELDS_TO_COPY':['x','y'],'METHOD':0,'DISCARD_NONMATCHING':False,'PREFIX':'centroid_','OUTPUT':os.path.join(self.OutputFolder,'finalriv_info_ply.shp')},context = context)
-                          
-        processing.run("native:joinattributestable",{'INPUT':os.path.join(self.tempfolder,'finalriv_info1.shp'),'FIELD':'SubId','INPUT_2':os.path.join(self.tempfolder,'ctwithxy.shp'),'FIELD_2':'SubId',
+        processing.run("native:joinattributestable",{'INPUT':os.path.join(self.tempfolder,'finalriv_info_dis.shp'),'FIELD':'SubId','INPUT_2':os.path.join(self.tempfolder,'ctwithxy.shp'),'FIELD_2':'SubId',
                           'FIELDS_TO_COPY':['x','y'],'METHOD':0,'DISCARD_NONMATCHING':False,'PREFIX':'centroid_','OUTPUT':os.path.join(self.OutputFolder,'finalriv_info.shp')},context = context)
-        ##### export selected lakes
-        Slakes = np.unique(Lake1_arr)
-        Slakes = Slakes[Slakes > 0]
-        hylakes_ply_lay = QgsVectorLayer(self.Path_allLakeply, "")    
-        where_clause = '"Hylak_id" IN'+ " ("
-        for i in range(0,len(Slakes)):
-            if i == 0:
-                where_clause = where_clause + str(int(Slakes[i]))
-            else:
-                where_clause = where_clause + "," + str(int(Slakes[i]))
-        where_clause = where_clause + ")"
-        req = QgsFeatureRequest().setFlags( QgsFeatureRequest.NoGeometry )
-        req.setFilterExpression(where_clause)
-        it = hylakes_ply_lay.getFeatures( req )
-        selectedFeatureID = []
-        for feature in it:
-            selectedFeatureID.append(feature.id())
-        hylakes_ply_lay.select(selectedFeatureID)   ### select with polygon id
-        _writer = QgsVectorFileWriter.writeAsVectorFormat(hylakes_ply_lay, os.path.join(self.OutputFolder, 'All_Selected_Lakes.shp'), "UTF-8", hylakes_ply_lay.crs(), "ESRI Shapefile", onlySelected=True)
-        del hylakes_ply_lay
+        
+        
+        ##### export  lakes
+        ## Non_Connected Lakes
+        NonConcLakeInfo = NonConcLakeInfo[NonConcLakeInfo['SubId_riv'] > 0]
+        NonCL_Lakeids = NonConcLakeInfo['Gridcode'].values
+        NonCL_Lakeids = np.unique(NonCL_Lakeids)
+        NonCL_Lakeids = NonCL_Lakeids[NonCL_Lakeids > 0]
+        
+        exp ='Hylak_id' + '  IN  (  ' +  str(int(NonCL_Lakeids[0]))      
+        for i in range(1,len(NonCL_Lakeids)):
+            exp = exp + " , "+str(int(NonCL_Lakeids[i]))        
+        exp = exp + ')'
+        processing.run("native:extractbyexpression", {'INPUT':self.Path_allLakeply,'EXPRESSION':exp,'OUTPUT':os.path.join(self.OutputFolder, 'Non_Con_Lake_Ply.shp')})
+
+
+        exp ='Gridcode' + '  IN  (  ' +  str(int(NonCL_Lakeids[0]))      
+        for i in range(1,len(NonCL_Lakeids)):
+            exp = exp + " , "+str(int(NonCL_Lakeids[i]))        
+        exp = exp + ')'
+        processing.run("native:extractbyexpression", {'INPUT':os.path.join(self.tempfolder,'Non_con_lake_cat_info.shp'),'EXPRESSION':exp,'OUTPUT':os.path.join(self.OutputFolder,'Non_con_lake_cat_info.shp')})
+        
+        
+        ### Non_Connected Lakes
+        CL_Lakeids = catinfo['HyLakeId'].values
+        CL_Lakeids = np.unique(CL_Lakeids)
+        CL_Lakeids = CL_Lakeids[CL_Lakeids > 0]
+        exp ='Hylak_id' + '  IN  (  ' +  str(int(CL_Lakeids[0]))      
+        for i in range(1,len(CL_Lakeids)):
+            exp = exp + " , "+str(int(CL_Lakeids[i]))        
+        exp = exp + ')'
+        processing.run("native:extractbyexpression", {'INPUT':self.Path_allLakeply,'EXPRESSION':exp,'OUTPUT':os.path.join(self.OutputFolder, 'Con_Lake_Ply.shp')})
+        
         Qgs.exit()  
 
         
@@ -1805,7 +1835,7 @@ class LRRT:
 #            grass.run_command('v.out.ogr', input = 'SelectedLakes_F',output = os.path.join(self.OutputFolder,'SelectedLakes.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
 #            grass.run_command('v.out.ogr', input = 'nstr_nfinalcat_F',output = os.path.join(self.OutputFolder,'finalriv_info.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
 #            grass.run_command('v.out.ogr', input = 'Cat_Lake_combined_F',output = os.path.join(self.OutputFolder,'finalcat_info.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
-            grass.run_command('v.out.ogr', input = 'Hylake',output = os.path.join(self.OutputFolder,'AllLakes.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
+#            grass.run_command('v.out.ogr', input = 'Hylake',output = os.path.join(self.OutputFolder,'AllLakes.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
             grass.run_command('v.out.ogr', input = 'obspoint',output = os.path.join(self.OutputFolder,'obspoint.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
         if Out == 'All':
             grass.run_command('r.out.gdal', input = 'SelectedLakes',output = os.path.join(self.OutputFolder,'SelectedLakes.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
@@ -1949,7 +1979,7 @@ class LRRT:
         Qgs.exit()
         return 
 
-    def ExtractLakesForGivenWatersheds(self,Path_plyfile = '#',Path_Lakeinfo = '#',Path_NonClakeinfo = '#'):
+    def ExtractLakesForGivenWatersheds(self,Path_plyfile = '#',Path_Con_Lake_ply = '#',Path_NonCon_Lake_ply='#',Path_NonClakeinfo = '#'):
         #selection feature based on subbasin ID
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
@@ -1979,47 +2009,13 @@ class LRRT:
         NonCL_Lakeids    = NonConn_Lakes_p['value'].values
         
         
-        ### obtain all lake in for in the domain of Path_plyfile
-        exp ='Hylak_id' + '  IN  (  ' +  str(int(Connect_Lakeids[0]))  
-        for i in range(1,len(Connect_Lakeids)):
-            exp = exp + " , "+str(int(Connect_Lakeids[i]))
-        exp = exp + ')'            
-        outfilename = os.path.join(self.OutputFolder,'Connect_Lake_info.shp')
-        processing.run("native:extractbyexpression", {'INPUT':Path_Lakeinfo,'EXPRESSION':exp,'OUTPUT':outfilename})
+        Selectfeatureattributes(processing,Input = Path_Con_Lake_ply,Output=os.path.join(self.OutputFolder,'Con_Lake_Ply.shp'),Attri_NM = 'Hylak_id',Values = Connect_Lakeids)
         
+        Selectfeatureattributes(processing,Input = Path_NonCon_Lake_ply,Output=os.path.join(self.OutputFolder,'Non_Con_Lake_Ply.shp'),Attri_NM = 'Hylak_id',Values = NonCL_Lakeids)
         
-        exp ='Hylak_id' + '  IN  (  ' +  str(int(NonCL_Lakeids[0]))      
-        for i in range(1,len(NonCL_Lakeids)):
-            exp = exp + " , "+str(int(NonCL_Lakeids[i]))        
-        exp = exp + ')'
-        outfilename = os.path.join(self.OutputFolder,'Non_Connect_Lake_info.shp')
-        processing.run("native:extractbyexpression", {'INPUT':Path_Lakeinfo,'EXPRESSION':exp,'OUTPUT':outfilename})
-
-
-        exp ='Hylak_id' + '  IN  (  ' +  str(int(NonCL_Lakeids[0]))      
-        for i in range(1,len(NonCL_Lakeids)):
-            exp = exp + " , "+str(int(NonCL_Lakeids[i]))  
-        for i in range(0,len(Connect_Lakeids)):
-            exp = exp + " , "+str(int(Connect_Lakeids[i]))            
-        exp = exp + ')'
-        outfilename = os.path.join(self.OutputFolder,'All_Selected_Lakes.shp')
-        processing.run("native:extractbyexpression", {'INPUT':Path_Lakeinfo,'EXPRESSION':exp,'OUTPUT':outfilename})
-        
-
-        ### obtain all Non connected lake in for in the domain of Path_plyfile
-        exp ='value' + '  IN  (  ' +  str(int(NonCL_Lakeids[0])) 
-        for i in range(1,len(NonCL_Lakeids)):
-            exp = exp + " , "+str(int(NonCL_Lakeids[i]))        
-        exp = exp + ')'
-        outfilename = os.path.join(self.OutputFolder,'NonConLake_cat.shp')
-        processing.run("native:extractbyexpression", {'INPUT':Path_NonClakeinfo,'EXPRESSION':exp,'OUTPUT':outfilename})
-        
-                
+        Selectfeatureattributes(processing,Input = Path_NonClakeinfo,Output=os.path.join(self.OutputFolder,'Non_con_lake_cat_info.shp'),Attri_NM = 'value',Values = NonCL_Lakeids)
+    
         Qgs.exit()  
-        
-        
-        
-        
         return 
 
 
@@ -2234,30 +2230,63 @@ class LRRT:
 
              
 ###########################################################################3
-    def SelectLakes(self,Datafolder,FileName_cat,Thres_Area_Conn_Lakes,Thres_Area_Non_Conn_Lakes = -1,FileName_NConn_Lake = '#',Selection_Method = 'ByArea',sub_colnm = 'SubId'):
+    def SelectLakes(self,Datafolder,finalcat_info_NM,Non_ConnL_Cat_NM,Non_ConnL_ply_NM='#',ConnL_ply_NM='#',Thres_Area_Conn_Lakes = -1,Thres_Area_Non_Conn_Lakes = -1,Selection_Method = 'ByArea',sub_colnm = 'SubId',SelectionName = 'All'):
+
+        QgsApplication.setPrefixPath(self.qgisPP, True)
+        Qgs = QgsApplication([],False)
+        Qgs.initQgis()
+        from qgis import processing
+        from processing.core.Processing import Processing   
+        feedback = QgsProcessingFeedback()
+        Processing.initialize()
+        QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
         
-        Path_final_cat = os.path.join(Datafolder,FileName_cat)
-        finalcat_csv     = Path_final_cat[:-3] + "dbf"
-        finalcat_info    = Dbf5(finalcat_csv)
-        finalcat_info    = finalcat_info.to_dataframe().drop_duplicates(sub_colnm, keep='first')
+                
+        Path_finalcat    = os.path.join(Datafolder,finalcat_info_NM)
+        finalcat_info    = Path_finalcat[:-3] + "dbf"
+        finalcat_info    = Dbf5(finalcat_info)
+        finalcat_info    = finalcat_info.to_dataframe()
         
+        Path_Non_ConnL_info  = os.path.join(Datafolder,Non_ConnL_Cat_NM)
+        Non_ConnL_info       = Path_Non_ConnL_info[:-3] + "dbf"
+        Non_ConnL_info       = Dbf5(Non_ConnL_info)
+        Non_ConnL_info       = Non_ConnL_info.to_dataframe()
+        
+        Non_ConnL_info['LakeArea'] = Non_ConnL_info['LakeArea'].astype(float)
+        Non_ConnL_info['HyLakeId'] = Non_ConnL_info['HyLakeId'].astype(int)
+        finalcat_info['LakeArea']  = finalcat_info['LakeArea'].astype(float)
+        finalcat_info['HyLakeId']  = finalcat_info['HyLakeId'].astype(int)        
         
         if Selection_Method == 'ByArea':
             ### process connected lakes first 
             Selected_ConnLakes = finalcat_info[finalcat_info['LakeArea'] > Thres_Area_Conn_Lakes]['HyLakeId'].values
-            Selected_ConnLakes = np.unique(Selected_ConnLakes)
+            Selected_ConnLakes = np.unique(Selected_ConnLakes)    
             ### process non connected selected lakes 
-            if Thres_Area_Non_Conn_Lakes > 0:
-                Selected_ConnLakes = np.full(2,-1)
-                print(1)
-            Selected_Lakes = np.unique(np.concatenate([Selected_ConnLakes,Selected_ConnLakes]))
+            if Thres_Area_Non_Conn_Lakes >= 0:
+                Selected_Non_ConnLakes = Non_ConnL_info[Non_ConnL_info['LakeArea'] > Thres_Area_Non_Conn_Lakes]['HyLakeId'].values
+                Selected_Non_ConnLakes = np.unique(Selected_Non_ConnLakes)
+            else:
+                Selected_Non_ConnLakes = np.full(1,-1)            
+            Selected_Lakes = np.unique(np.concatenate([Selected_ConnLakes,Selected_Non_ConnLakes]))
             Selected_Lakes = Selected_Lakes[Selected_Lakes > 0]
         else:
             print(todo)
+            
+        OutFolderSelectedLakes = os.path.join(Datafolder,SelectionName)    
+        if not os.path.exists(OutFolderSelectedLakes):
+            os.makedirs(OutFolderSelectedLakes)     
+               
+        Selectfeatureattributes(processing,Input = os.path.join(Datafolder,Non_ConnL_Cat_NM) ,Output=os.path.join(OutFolderSelectedLakes,Non_ConnL_Cat_NM),Attri_NM = 'value',Values = Selected_Non_ConnLakes)
+
+        Selectfeatureattributes(processing,Input = os.path.join(Datafolder,Non_ConnL_ply_NM),Output=os.path.join(OutFolderSelectedLakes,Non_ConnL_ply_NM),Attri_NM = 'Hylak_id',Values = Selected_Non_ConnLakes)
+        
+        Selectfeatureattributes(processing,Input = os.path.join(Datafolder,ConnL_ply_NM),Output=os.path.join(OutFolderSelectedLakes,ConnL_ply_NM),Attri_NM = 'Hylak_id',Values = Selected_ConnLakes)
+        
+
         return Selected_Lakes
         
 
-    def Define_Final_Catchment(self,Selected_Lakes,Datafolder,FileName_cat,FileName_riv,Includ_Non_ConnLakes = -1,OutFolderName = 'final',sub_colnm = 'SubId'):
+    def Define_Final_Catchment(self,Selected_Lakes,Datafolder,FileName_cat,FileName_riv,Includ_Non_ConnLakes = -1,OutFolderName = 'final',sub_colnm = 'SubId',SelectionName = 'All'):
         
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)

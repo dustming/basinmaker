@@ -466,6 +466,13 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
                 NLid = int(Nonlakes[inl])
                 nlakeinfoidx = NonConcLakeInfo['Gridcode'] == NLid
                 SubID_NL = -1
+                ### assign NONconnectlake attributes 
+                slakeinfo = lakeinfo.loc[lakeinfo['Hylak_id'] == NLid]
+                NonConcLakeInfo.loc[nlakeinfoidx,'HyLakeId']  = NLid
+                NonConcLakeInfo.loc[nlakeinfoidx,'LakeVol']   = slakeinfo.iloc[0]['Vol_total']
+                NonConcLakeInfo.loc[nlakeinfoidx,'LakeArea']  = slakeinfo.iloc[0]['Lake_area']
+                NonConcLakeInfo.loc[nlakeinfoidx,'LakeDepth'] = slakeinfo.iloc[0]['Depth_avg']
+                NonConcLakeInfo.loc[nlakeinfoidx,'Laketype']  = slakeinfo.iloc[0]['Lake_type']
                ### find non connect lake drainage subid 
                 trow,tcol = Getbasinoutlet(NLid,NonCL_array,fac,fdir,nrows,ncols)
                 k = 1
