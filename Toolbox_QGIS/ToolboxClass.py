@@ -791,8 +791,8 @@ def New_SubId_To_Dissolve(subid,catchmentinfo,mapoldnew_info,upsubid = -1,ismodi
 #    print(np.sum(mainriv_merg_info['RivLength'].values))
 #    print(tarinfo)
 #    print(mainriv_merg_info)
-    print(Modify_subids)
-    print(subid)
+#    print(Modify_subids)
+#    print(subid)
     mask = mapoldnew_info['SubId'].isin(Modify_subids)
     ### the old downsub id of the dissolved polygon is stored in DowSubId
     for col in tarinfo.columns:
@@ -1996,6 +1996,16 @@ class LRRT:
         processing.run("native:extractbyexpression", {'INPUT':Path_Lakeinfo,'EXPRESSION':exp,'OUTPUT':outfilename})
 
 
+        exp ='Hylak_id' + '  IN  (  ' +  str(int(NonCL_Lakeids[0]))      
+        for i in range(1,len(NonCL_Lakeids)):
+            exp = exp + " , "+str(int(NonCL_Lakeids[i]))  
+        for i in range(0,len(Connect_Lakeids)):
+            exp = exp + " , "+str(int(Connect_Lakeids[i]))            
+        exp = exp + ')'
+        outfilename = os.path.join(self.OutputFolder,'All_Selected_Lakes.shp')
+        processing.run("native:extractbyexpression", {'INPUT':Path_Lakeinfo,'EXPRESSION':exp,'OUTPUT':outfilename})
+        
+
         ### obtain all Non connected lake in for in the domain of Path_plyfile
         exp ='value' + '  IN  (  ' +  str(int(NonCL_Lakeids[0])) 
         for i in range(1,len(NonCL_Lakeids)):
@@ -2054,7 +2064,6 @@ class LRRT:
         ### obtain rivsegments that covered by remaining lakes  
         Selected_riv_ids = np.unique(Subid_main) #np.unique(np.concatenate([Subid_main,Subid_lakes]))
                 
-        
         for i in range(0,len(Selected_riv_ids)):
             subid     = Selected_riv_ids[i]
             sub_info  = finalriv_info.loc[finalriv_info[sub_colnm] == subid]
@@ -2077,9 +2086,7 @@ class LRRT:
                     Selected_riv_ids = np.unique(np.concatenate([Selected_riv_ids,np.full(1,up_sub_id)]))
             else:   ### Only start from the last segment of river system 
                 continue
-            
-
-                
+                    
             down_subid = sub_info[down_colnm].values[0]
             
             if mapoldnew_info.loc[mapoldnew_info[sub_colnm] == down_subid]['nsubid'].values[0] > 0: ## downstream segment already modified 
@@ -2129,16 +2136,7 @@ class LRRT:
                 else:    
                     looparea = np.sum(curr_mids_info['BasArea'].values)
                     looparea = np.max(looparea,0) + loopinfo['BasArea'].values[0]
-                
-#                if preloopid < 0:   ### start of the loop, record and go to next loop
-#                    subid_merge[idx] = loopid 
-#                    preloopid        = loopid
-#                    loopid           = loop_dw_subid
-#                    idx              = idx + 1
-#                    continue
-#                    print(1,subid,loopid,preloopid,nseg,ismodified,loopsub_lakid,loopreinfo['HyLakeId'].values[0])
-                
-                
+                                
                     if loopreinfo['HyLakeId'].values[0] == loopsub_lakid:   ### previous and current sub covered by the same lake or both not covered by lakes
                     
                         if looparea >= Area_Min*1000*1000  or len(Selected_riv_ids[np.in1d(Selected_riv_ids, loop_up_subids)]) >=2:  ###exceed area thresthold or meet another main stream
