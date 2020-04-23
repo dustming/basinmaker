@@ -739,23 +739,23 @@ def New_SubId_To_Dissolve(subid,catchmentinfo,mapoldnew_info,upsubid = -1,ismodi
     sub_colnm = 'SubId'
     routing_info      = catchmentinfo[['SubId','DowSubId']].astype('float').values
 
+    if ismodifids < 0:   
+        Modify_subids1            = Defcat(routing_info,subid)   ### find all subids drainage to this subid  
+        if upsubid > 0:
+            Modify_subids2        = Defcat(routing_info,upsubid)    
+            mask = np.in1d(Modify_subids1, Modify_subids2)
+            Modify_subids = Modify_subids1[np.logical_not(mask)]  
+        else:
+            Modify_subids =  Modify_subids1  
         
-    Modify_subids1            = Defcat(routing_info,subid)   ### find all subids drainage to this subid  
-    if upsubid > 0:
-        Modify_subids2        = Defcat(routing_info,upsubid)    
-        mask = np.in1d(Modify_subids1, Modify_subids2)
-        Modify_subids = Modify_subids1[np.logical_not(mask)]  
     else:
-        Modify_subids =  Modify_subids1  
-        
-    if ismodifids > 0:
-        del Modify_subids
         Modify_subids =  modifiidin  
                
     cbranch                  = catchmentinfo[catchmentinfo[sub_colnm].isin(Modify_subids)]
     tarinfo                  = catchmentinfo[catchmentinfo[sub_colnm] == subid]   ### define these subs attributes
 #    print(subid,Modify_subids) 
     ### average river slope info 
+    
     mainriv_merg_info = mainriv.loc[mainriv['SubId'].isin(Modify_subids)]
     idx = tarinfo.index[0]
     if len(mainriv_merg_info) > 0:
@@ -775,7 +775,8 @@ def New_SubId_To_Dissolve(subid,catchmentinfo,mapoldnew_info,upsubid = -1,ismodi
     
     tarinfo.loc[idx,'Max_DEM']       = np.max(cbranch['Max_DEM'].values)
     tarinfo.loc[idx,'Min_DEM']       = np.min(cbranch['Min_DEM'].values)
-    if Islake > 0:   ## Meger subbasin covered by lakes 
+    
+    if Islake > 0:   ## Meger subbasin covered by lakes, Keep lake outlet catchment  DA, stream order info 
         tarinfo.loc[idx,'RivLength'] = 0.0 
     else:
         tarinfo.loc[idx,'Strahler']      = -1.2345
@@ -785,14 +786,7 @@ def New_SubId_To_Dissolve(subid,catchmentinfo,mapoldnew_info,upsubid = -1,ismodi
         tarinfo.loc[idx,'centroid_x']    = -1.2345
         tarinfo.loc[idx,'centroid_y']    = -1.2345
      
-#    print(subid)
-#    print(Modify_subids)
-#    print(mainriv_merg_info['RivLength'].values)
-#    print(np.sum(mainriv_merg_info['RivLength'].values))
-#    print(tarinfo)
-#    print(mainriv_merg_info)
-#    print(Modify_subids)
-#    print(subid)
+
     mask = mapoldnew_info['SubId'].isin(Modify_subids)
     ### the old downsub id of the dissolved polygon is stored in DowSubId
     for col in tarinfo.columns:
@@ -814,8 +808,7 @@ def Modify_Feature_info(Path_feagure,mapoldnew_info):
             sf_subid     = sf[sub_colnm]
             tarinfo      = mapoldnew_info[mapoldnew_info['Old_SubId'] == sf_subid]
             for icolnm in range(0,len(Attri_Name)):     ### copy infomaiton
-            
-                if   Attri_Name[icolnm] == 'Obs_NM':
+                if  Attri_Name[icolnm] == 'Obs_NM' or Attri_Name[icolnm] == 'SRC_obs':
                     sf[Attri_Name[icolnm]] = str(tarinfo[Attri_Name[icolnm]].values[0])
                 elif Attri_Name[icolnm] == 'cat':
                     continue
@@ -825,7 +818,20 @@ def Modify_Feature_info(Path_feagure,mapoldnew_info):
     del layer_cat
     return 
 ##########
-
+def Add_centroid_to_feature(Path_feagure,centroidx_nm = '#',centroidy_nm='#'):
+    layer_cat=QgsVectorLayer(Path_feagure,"")
+    Attri_Name = layer_cat.fields().names()     
+    features = layer_cat.getFeatures()      
+    with edit(layer_cat):
+        for sf in features:
+            centroidxy = sf.geometry().centroid().asPoint()
+            sf[centroidx_nm] = centroidxy[0]
+            sf[centroidy_nm] = centroidxy[1]
+            layer_cat.updateFeature(sf)
+    del layer_cat
+    return 
+    
+##########
 def Selectfeatureattributes(processing,Input = '#',Output='#',Attri_NM = '#',Values = []):
     exp =Attri_NM + '  IN  (  ' +  str(int(Values[0]))      
     for i in range(1,len(Values)):
@@ -834,7 +840,7 @@ def Selectfeatureattributes(processing,Input = '#',Output='#',Attri_NM = '#',Val
     processing.run("native:extractbyexpression", {'INPUT':Input,'EXPRESSION':exp,'OUTPUT':Output}) 
        
 #####
-def UpdateTopology(mapoldnew_info):
+def UpdateTopology(mapoldnew_info,UpdateStreamorder = 1):
     idx = mapoldnew_info.index
     
     for i in range(0,len(idx)):
@@ -854,9 +860,11 @@ def UpdateTopology(mapoldnew_info):
     mapoldnew_info['SubId']        = mapoldnew_info['nsubid']
     
     mapoldnew_info['DowSubId'] = mapoldnew_info['ndownsubid']
+    
+    if UpdateStreamorder <0:
+        return mapoldnew_info
+        
     mapoldnew_info_unique      = mapoldnew_info.drop_duplicates('SubId', keep='first')
-#    mapoldnew_info_unique      = mapoldnew_info_unique.reset_index(drop=True, inplace=True) 
-
     mapoldnew_info_unique      = Streamorderanddrainagearea(mapoldnew_info_unique)
 
     for i in range(0,len(mapoldnew_info_unique)):
@@ -2230,19 +2238,22 @@ class LRRT:
 
              
 ###########################################################################3
-    def SelectLakes(self,Datafolder,finalcat_info_NM,Non_ConnL_Cat_NM,Non_ConnL_ply_NM='#',ConnL_ply_NM='#',Thres_Area_Conn_Lakes = -1,Thres_Area_Non_Conn_Lakes = -1,Selection_Method = 'ByArea',sub_colnm = 'SubId',SelectionName = 'All'):
+    def SelectLakes(self,Datafolder,finalrvi_ply_NM,Non_ConnL_Cat_NM,Non_ConnL_ply_NM='#',ConnL_ply_NM='#',finalriv_NM = '#',Thres_Area_Conn_Lakes = -1,Thres_Area_Non_Conn_Lakes = -1,Selection_Method = 'ByArea',sub_colnm = 'SubId',SelectionName = 'All'):
 
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
         Qgs.initQgis()
         from qgis import processing
-        from processing.core.Processing import Processing   
+        from processing.core.Processing import Processing
+        from processing.tools import dataobjects
         feedback = QgsProcessingFeedback()
         Processing.initialize()
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
+        context = dataobjects.createContext()
+        context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
         
                 
-        Path_finalcat    = os.path.join(Datafolder,finalcat_info_NM)
+        Path_finalcat    = os.path.join(Datafolder,finalrvi_ply_NM)
         finalcat_info    = Path_finalcat[:-3] + "dbf"
         finalcat_info    = Dbf5(finalcat_info)
         finalcat_info    = finalcat_info.to_dataframe()
@@ -2267,8 +2278,6 @@ class LRRT:
                 Selected_Non_ConnLakes = np.unique(Selected_Non_ConnLakes)
             else:
                 Selected_Non_ConnLakes = np.full(1,-1)            
-            Selected_Lakes = np.unique(np.concatenate([Selected_ConnLakes,Selected_Non_ConnLakes]))
-            Selected_Lakes = Selected_Lakes[Selected_Lakes > 0]
         else:
             print(todo)
             
@@ -2281,12 +2290,14 @@ class LRRT:
         Selectfeatureattributes(processing,Input = os.path.join(Datafolder,Non_ConnL_ply_NM),Output=os.path.join(OutFolderSelectedLakes,Non_ConnL_ply_NM),Attri_NM = 'Hylak_id',Values = Selected_Non_ConnLakes)
         
         Selectfeatureattributes(processing,Input = os.path.join(Datafolder,ConnL_ply_NM),Output=os.path.join(OutFolderSelectedLakes,ConnL_ply_NM),Attri_NM = 'Hylak_id',Values = Selected_ConnLakes)
+
+        processing.run("native:dissolve", {'INPUT':os.path.join(Datafolder,finalriv_NM),'FIELD':['SubId'],'OUTPUT':os.path.join(OutFolderSelectedLakes,finalriv_NM)},context = context)
+        processing.run("native:dissolve", {'INPUT':os.path.join(Datafolder,finalrvi_ply_NM),'FIELD':['SubId'],'OUTPUT':os.path.join(OutFolderSelectedLakes,finalrvi_ply_NM)},context = context)
+
+        return 
         
 
-        return Selected_Lakes
-        
-
-    def Define_Final_Catchment(self,Selected_Lakes,Datafolder,FileName_cat,FileName_riv,Includ_Non_ConnLakes = -1,OutFolderName = 'final',sub_colnm = 'SubId',SelectionName = 'All'):
+    def Define_Final_Catchment(self,Datafolder,finalrvi_ply_NM,finalriv_NM,Non_ConnL_Cat_NM,ConnL_ply_NM,sub_colnm = 'SubId'):
         
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
@@ -2300,45 +2311,66 @@ class LRRT:
         context = dataobjects.createContext()
         context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
         
-        Path_final_cat = os.path.join(Datafolder,FileName_cat)
-        Path_final_riv = os.path.join(Datafolder,FileName_riv)
+        Path_final_rviply = os.path.join(Datafolder,finalrvi_ply_NM)
+        Path_final_riv    = os.path.join(Datafolder,finalriv_NM)
+        Path_Non_ConL_cat = os.path.join(Datafolder,Non_ConnL_Cat_NM)
+        Path_ConL_ply     = os.path.join(Datafolder,ConnL_ply_NM)
+         
+         
+        Path_Temp_final_rviply = os.path.join(self.tempfolder,'temp_finalriv_ply.shp')
+        Path_Temp_final_rvi    = os.path.join(self.tempfolder,'temp_finalriv.shp')
+        
+        processing.run("native:dissolve", {'INPUT':Path_final_rviply,'FIELD':['SubId'],'OUTPUT':Path_Temp_final_rviply},context = context)
+        processing.run("native:dissolve", {'INPUT':Path_final_riv,'FIELD':['SubId'],'OUTPUT':Path_Temp_final_rvi},context = context)
+        
+        ### read riv ply info
+        finalrivply_csv     = Path_final_rviply[:-3] + "dbf"
+        finalrivply_info    = Dbf5(finalrivply_csv)
+        finalrivply_info    = finalrivply_info.to_dataframe().drop_duplicates(sub_colnm, keep='first')
+        mapoldnew_info      = finalrivply_info.copy(deep = True)
         
         
-        OutputFolder   = os.path.join(Datafolder,OutFolderName)
-        if not os.path.exists(OutputFolder):
-	           os.makedirs(OutputFolder)   
-                       
-        Out_Path_final_cat = os.path.join(OutputFolder,'Finalcat_info.shp')
-        Out_Path_final_riv = os.path.join(OutputFolder,'Finalriv_info.shp')
-        Out_Path_final_cat1 = os.path.join(OutputFolder,'Finalcat_info1.shp')
-        Out_Path_final_riv1 = os.path.join(OutputFolder,'Finalriv_info1.shp')
+        ### read connected lake info 
+        ConL_ply_csv     = Path_ConL_ply[:-3] + "dbf"
+        ConL_ply_info    = Dbf5(ConL_ply_csv)
+        ConL_ply_info    = ConL_ply_info.to_dataframe()
+        Selected_Con_LakeIds = ConL_ply_info['Hylak_id'].values
+        Selected_Con_LakeIds = Selected_Con_LakeIds[Selected_Con_LakeIds > 0]
+        Selected_Con_LakeIds = np.unique(Selected_Con_LakeIds)
+
+        ### read non connected lake info 
+        Non_ConL_cat_csv         = Path_Non_ConL_cat[:-3] + "dbf"
+        Non_ConL_cat_info        = Dbf5(Non_ConL_cat_csv)
+        Non_ConL_cat_info        = Non_ConL_cat_info.to_dataframe()
+        Selected_Non_Con_LakeIds = Non_ConL_cat_info['value'].values
+        Selected_Non_Con_LakeIds = Selected_Non_Con_LakeIds[Selected_Non_Con_LakeIds > 0]
+        Selected_Non_Con_LakeIds = np.unique(Selected_Non_Con_LakeIds)        
         
-        processing.run("native:dissolve", {'INPUT':Path_final_cat,'FIELD':['SubId'],'OUTPUT':Out_Path_final_cat1},context = context)
-        processing.run("native:dissolve", {'INPUT':Path_final_riv,'FIELD':['SubId'],'OUTPUT':Out_Path_final_riv1},context = context)
-        
-        finalriv_csv     = Path_final_riv[:-3] + "dbf"
-        finalriv_info    = Dbf5(finalriv_csv)
-        finalriv_info    = finalriv_info.to_dataframe().drop_duplicates(sub_colnm, keep='first')
-        mapoldnew_info   = finalriv_info.copy(deep = True)
         
         mapoldnew_info['nsubid'] = mapoldnew_info['SubId']
-        for i in range(0,len(Selected_Lakes)):
-            lakeid       = Selected_Lakes[i]
-            Lakesub_info = finalriv_info.loc[finalriv_info['HyLakeId'] == lakeid]
+        
+        
+        ### process connected lakes  merge polygons 
+        for i in range(0,len(Selected_Con_LakeIds)):
+            lakeid       = Selected_Con_LakeIds[i]
+            Lakesub_info = finalrivply_info.loc[finalrivply_info['HyLakeId'] == lakeid]
             Lakesub_info = Lakesub_info.sort_values(["DA"], ascending = (False))
             tsubid       = Lakesub_info[sub_colnm].values[0]
             lakesubids   = Lakesub_info[sub_colnm].values
             ### modify the lake covered subbasin informations 
-            mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalriv_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = lakesubids,mainriv = finalriv_info,Islake = 1) 
+            mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalrivply_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = lakesubids,mainriv = finalrivply_info,Islake = 1) 
             
-            mapoldnew_info['Old_SubId']    = mapoldnew_info['SubId']
-            mapoldnew_info['SubId']        = mapoldnew_info['nsubid']        
-        
-            Modify_Feature_info(Out_Path_final_cat1,mapoldnew_info)
-            Modify_Feature_info(Out_Path_final_riv1,mapoldnew_info)        
-        
-        processing.run("native:dissolve", {'INPUT':Out_Path_final_cat1,'FIELD':['SubId'],'OUTPUT':Out_Path_final_cat},context = context)
-        processing.run("native:dissolve", {'INPUT':Out_Path_final_riv1,'FIELD':['SubId'],'OUTPUT':Out_Path_final_riv},context = context)
+        UpdateTopology(mapoldnew_info,UpdateStreamorder = -1)          
+        mapoldnew_info.to_csv( os.path.join(Datafolder,'mapoldnew.csv'),sep=',',index=None)    
+
+        Modify_Feature_info(Path_Temp_final_rviply,mapoldnew_info)
+        Modify_Feature_info(Path_Temp_final_rvi,mapoldnew_info)        
+
+        Path_final_rviply = os.path.join(Datafolder,'finalcat_info.shp')
+        Path_final_rvi    = os.path.join(Datafolder,'finalcat_info_riv.shp')
+        processing.run("native:dissolve", {'INPUT':Path_Temp_final_rvi,'FIELD':['SubId'],'OUTPUT':Path_final_rvi},context = context)
+        processing.run("native:dissolve", {'INPUT':Path_Temp_final_rviply,'FIELD':['SubId'],'OUTPUT':Path_final_rviply},context = context)
+        Add_centroid_to_feature(Path_final_rviply,'centroid_x','centroid_y')
         
 
 ###############################################################################3,
