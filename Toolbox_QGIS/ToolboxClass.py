@@ -816,8 +816,48 @@ def Modify_Feature_info(Path_feagure,mapoldnew_info):
                     sf[Attri_Name[icolnm]] = float(tarinfo[Attri_Name[icolnm]].values[0])
             layer_cat.updateFeature(sf)
     del layer_cat
-    return 
+    return
+
+####### 
+def UpdateNonConnectedLakeCatchmentinfo(Path_Non_ConnL_Cat,mapoldnew_info):
+    layer_cat=QgsVectorLayer(Path_Non_ConnL_Cat,"")
+    Attri_Name = layer_cat.fields().names()     
+    features = layer_cat.getFeatures()      
+    with edit(layer_cat):
+        for sf in features:
+            sf_ocatid_lake  = float(sf['SubId_riv'])
+            tarinfo         = mapoldnew_info[mapoldnew_info['Old_SubId'] == sf_ocatid_lake]
+            sf['SubId_riv'] = float(tarinfo['SubId'].values[0])
+            layer_cat.updateFeature(sf)
+    del layer_cat
+    return
 ##########
+
+##########
+def UpdateNonConnectedLakeArea_In_Finalcatinfo(Path_Finalcatinfo,Non_ConnL_Cat_info):
+    layer_cat=QgsVectorLayer(Path_Finalcatinfo,"")
+    Attri_Name = layer_cat.fields().names()     
+    features = layer_cat.getFeatures()
+    Non_ConnL_Cat_info['SubId_riv'] = Non_ConnL_Cat_info['SubId_riv'].astype(float)
+    Non_ConnL_Cat_info['Area_m']    = Non_ConnL_Cat_info['Area_m'].astype(float)      
+    with edit(layer_cat):
+        for sf in features:
+            sf_subid        = float(sf['SubId'])
+            tarinfo         = Non_ConnL_Cat_info[Non_ConnL_Cat_info['SubId_riv'] == sf_subid]
+            if (len(tarinfo) == 0):
+                sf['NonLDArea']      = float(0)
+            else:
+                total_non_conn_lake_area = 0.0
+                for idx in tarinfo.index:
+                    total_non_conn_lake_area = total_non_conn_lake_area + float(tarinfo['Area_m'].values[0])
+                    
+                sf['NonLDArea'] = float(total_non_conn_lake_area)
+            layer_cat.updateFeature(sf)
+    del layer_cat
+    return
+#########
+
+#########
 def Add_centroid_to_feature(Path_feagure,centroidx_nm = '#',centroidy_nm='#'):
     layer_cat=QgsVectorLayer(Path_feagure,"")
     Attri_Name = layer_cat.fields().names()     
@@ -2337,16 +2377,7 @@ class LRRT:
         Selected_Con_LakeIds = ConL_ply_info['Hylak_id'].values
         Selected_Con_LakeIds = Selected_Con_LakeIds[Selected_Con_LakeIds > 0]
         Selected_Con_LakeIds = np.unique(Selected_Con_LakeIds)
-
-        ### read non connected lake info 
-        Non_ConL_cat_csv         = Path_Non_ConL_cat[:-3] + "dbf"
-        Non_ConL_cat_info        = Dbf5(Non_ConL_cat_csv)
-        Non_ConL_cat_info        = Non_ConL_cat_info.to_dataframe()
-        Selected_Non_Con_LakeIds = Non_ConL_cat_info['value'].values
-        Selected_Non_Con_LakeIds = Selected_Non_Con_LakeIds[Selected_Non_Con_LakeIds > 0]
-        Selected_Non_Con_LakeIds = np.unique(Selected_Non_Con_LakeIds)        
-        
-        
+           
         mapoldnew_info['nsubid'] = mapoldnew_info['SubId']
         
         
@@ -2371,7 +2402,15 @@ class LRRT:
         processing.run("native:dissolve", {'INPUT':Path_Temp_final_rvi,'FIELD':['SubId'],'OUTPUT':Path_final_rvi},context = context)
         processing.run("native:dissolve", {'INPUT':Path_Temp_final_rviply,'FIELD':['SubId'],'OUTPUT':Path_final_rviply},context = context)
         Add_centroid_to_feature(Path_final_rviply,'centroid_x','centroid_y')
+
+
+        UpdateNonConnectedLakeCatchmentinfo(Path_Non_ConL_cat,mapoldnew_info)
+
+        Non_ConL_cat_csv         = Path_Non_ConL_cat[:-3] + "dbf"
+        Non_ConL_cat_info        = Dbf5(Non_ConL_cat_csv)
+        Non_ConL_cat_info        = Non_ConL_cat_info.to_dataframe()
         
+        UpdateNonConnectedLakeArea_In_Finalcatinfo(Path_final_rviply,Non_ConL_cat_info)
 
 ###############################################################################3,
 
