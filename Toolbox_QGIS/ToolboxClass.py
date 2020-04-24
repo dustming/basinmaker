@@ -917,6 +917,31 @@ def UpdateTopology(mapoldnew_info,UpdateStreamorder = 1):
     return mapoldnew_info   
     
 #######
+def Copyfeature_to_another_shp_by_attribute(Source_shp,Target_shp,Attribue_NM='SubId',Values=[-1]):
+    print(Source_shp)
+    print(Target_shp)
+    layer_src=QgsVectorLayer(Source_shp,"")
+    layer_trg=QgsVectorLayer(Target_shp,"")
+    
+    src_features = layer_src.getFeatures()  
+    
+    #Selected_Features = []
+    for sf in src_features:
+        #centroidxy = sf.geometry().centroid().asPoint()
+        src_geometry =  sf.geometry()
+        
+        temp_feature=QgsFeature()
+        temp_feature.setGeometry(src_geometry)
+        temp_feature.setAttributes([177,102534,5584940.132977,102534,115,102534,4.3,3.9,1.1,1])
+        
+        Selected_Features = temp_feature
+        
+    layer_trg.startEditing()
+    layer_trg.addFeatures([temp_feature])
+    layer_trg.commitChanges()
+    layer_trg.updateExtents()
+    del layer_src
+    del layer_trg
 
 ############    
 class LRRT:
@@ -2411,7 +2436,7 @@ class LRRT:
         Non_ConL_cat_info        = Non_ConL_cat_info.to_dataframe()
         
         UpdateNonConnectedLakeArea_In_Finalcatinfo(Path_final_rviply,Non_ConL_cat_info)
-
+#        Copyfeature_to_another_shp_by_attribute(Path_final_rviply,Path_Non_ConL_cat)
 ###############################################################################3,
 
         
