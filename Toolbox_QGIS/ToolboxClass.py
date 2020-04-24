@@ -1446,13 +1446,18 @@ class LRRT:
         grass.run_command('r.to.vect', input='finalcat',output='finalcat_F1',type='area', overwrite = True)    
         temparray[:,:] = Non_con_lake_cat[:,:]
         temparray.write(mapname="Non_con_lake_cat", overwrite=True)
-        grass.run_command('r.null', map='Non_con_lake_cat',setnull=-9999)    
-        grass.run_command('r.to.vect', input='Non_con_lake_cat',output='Non_con_lake_cat_1',type='area', overwrite = True)   
+        grass.run_command('r.null', map='Non_con_lake_cat',setnull=-9999)   
+         
+        grass.run_command('r.to.vect', input='Non_con_lake_cat',output='Non_con_lake_cat_t',type='area', overwrite = True)
+        grass.run_command('v.db.addcolumn', map= 'Non_con_lake_cat_t', columns = "Gridcodes VARCHAR(40)")
+        grass.run_command('v.db.update', map= 'Non_con_lake_cat_t', column = "Gridcodes",qcol = 'value')
+        
+        grass.run_command('v.dissolve', input= 'Non_con_lake_cat_t', column = "Gridcodes",output = 'Non_con_lake_cat_1',overwrite = True)    
 ####   dissolve final catchment polygons    
         grass.run_command('v.db.addcolumn', map= 'finalcat_F1', columns = "Gridcode VARCHAR(40)")
         grass.run_command('v.db.update', map= 'finalcat_F1', column = "Gridcode",qcol = 'value')
 #    grass.run_command('v.reclass', input= 'finalcat_F1', column = "Gridcode",output = 'finalcat_F',overwrite = True)
-        grass.run_command('v.dissolve', input= 'finalcat_F1', column = "Gridcode",output = 'finalcat_F',overwrite = True)    
+        grass.run_command('v.dissolve', input= 'finalcat_F1', column = "Gridcode",output = 'finalcat_F',overwrite = True)   
 #    grass.run_command('v.select',ainput = 'str',binput = 'finalcat_F',output = 'str_finalcat',overwrite = True)
         grass.run_command('v.overlay',ainput = 'str',binput = 'finalcat_F1',operator = 'and',output = 'str_finalcat',overwrite = True)  
         grass.run_command('v.out.ogr', input = 'str_finalcat',output = os.path.join(self.tempfolder,'str_finalcat.shp'),format= 'ESRI_Shapefile',overwrite = True)
@@ -1573,7 +1578,9 @@ class LRRT:
         grass.run_command('v.db.addcolumn', map= 'nstr_nfinalcat_F', columns = "Length_m double")
         grass.run_command('v.db.addcolumn', map = 'Non_con_lake_cat_1',columns = "Area_m double")
         grass.run_command('v.db.addcolumn', map= 'Non_con_lake_cat_1', columns = "Gridcode INT")
-        grass.run_command('v.db.update', map= 'Non_con_lake_cat_1', column = "Gridcode",qcol = 'value')
+        grass.run_command('v.db.update', map= 'Non_con_lake_cat_1', column = "Gridcode",qcol = 'Gridcodes')
+        grass.run_command('v.db.addcolumn', map= 'Non_con_lake_cat_1', columns = "value INT")
+        grass.run_command('v.db.update', map= 'Non_con_lake_cat_1', column = "value",qcol = 'Gridcodes')        
         grass.run_command('v.db.update', map= 'nstr_nfinalcat_F', column = "Gridcode",qcol = 'b_GC_str')
         grass.run_command('v.db.dropcolumn', map= 'nstr_nfinalcat_F', columns = ['b_GC_str'])       
 #        grass.run_command('v.out.ogr', input = 'nstr_nfinalcat_F',output = os.path.join(self.tempfolder,'nstr_nfinalcat_F_Final.shp'),format= 'ESRI_Shapefile',overwrite = True)
@@ -1655,6 +1662,8 @@ class LRRT:
         NonConcLakeInfo['LakeDepth'] = -9999
         NonConcLakeInfo['LakeArea']  = -9999
         NonConcLakeInfo['Laketype']  = -9999
+        NonConcLakeInfo['DownLakeID'] = -9999
+        NonConcLakeInfo['DA_Area'] = NonConcLakeInfo['Area_m'].values
         
         sqlstat="SELECT Obs_ID, DA_obs, STATION_NU, SRC_obs FROM obspoint"
         obsinfo = pd.read_sql_query(sqlstat, con)

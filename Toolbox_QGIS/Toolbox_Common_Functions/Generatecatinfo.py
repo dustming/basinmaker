@@ -477,24 +477,37 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
                 trow,tcol = Getbasinoutlet(NLid,NonCL_array,fac,fdir,nrows,ncols)
                 k = 1
                 ttrow,ttcol = trow,tcol
+                Dow_Non_Lakeid = -1
                 while SubID_NL < 0 and k < 20:
                     nrow,ncol = Nextcell(fdir,ttrow,ttcol)### get the downstream catchment id
                     if nrow < 0 or ncol < 0:
                         SubID_NL = -1
+                        Dow_Non_Lakeid = -1
                         break;
                     elif nrow >= nrows or ncol >= ncols:
                         SubID_NL = -1
+                        Dow_Non_Lakeid = -1
                         break;
                     elif NonCL_array[nrow,ncol] == NLid:
                         SubID_NL = -1
+                        Dow_Non_Lakeid = -1
                     else:
                         SubID_NL = netcat[nrow,ncol]
+                        Dow_Non_Lakeid = NonCL_array[nrow,ncol]
                     k = k + 1
                     ttrow = nrow
                     ttcol = ncol 
                 if SubID_NL == catid: ### the non connected lake drainage to this catid 
                     Daarea = Daarea + NonConcLakeInfo.loc[nlakeinfoidx]['Area_m'].values[0]
                 NonConcLakeInfo.loc[nlakeinfoidx,'SubId_riv'] = SubID_NL
+                NonConcLakeInfo.loc[nlakeinfoidx,'DownLakeID'] = Dow_Non_Lakeid
+                if Dow_Non_Lakeid > 0:
+                    nlakeinfoidx_dwn = NonConcLakeInfo['Gridcode'] == Dow_Non_Lakeid
+                    print(NonConcLakeInfo.loc[nlakeinfoidx_dwn,['DA_Area','Gridcode']])
+                    print("1")
+                    print( NonConcLakeInfo.loc[nlakeinfoidx,['Area_m','Gridcode']])
+                    
+                    NonConcLakeInfo.loc[nlakeinfoidx_dwn,'DA_Area'] = NonConcLakeInfo.loc[nlakeinfoidx_dwn,'DA_Area'].values[0] + NonConcLakeInfo.loc[nlakeinfoidx,'Area_m'].values[0]
             catinfo.loc[i,'NonLDArea'] =  Daarea
     catinfo = Writecatinfotodbf(catinfo)
     return catinfo,NonConcLakeInfo
