@@ -17,7 +17,7 @@ from GetBasinoutlet import Getbasinoutlet,Nextcell
 from Generatecatinfo import Generatecatinfo,Generatecatinfo_riv,calculateChannaln,Writecatinfotodbf,Streamorderanddrainagearea
 from WriteRavenInputs import writelake,Writervhchanl
 from WriteRavenInputs import WriteObsfiles
-
+from RavenOutputFuctions import plotGuagelineobs
 
 
 
@@ -2446,6 +2446,82 @@ class LRRT:
         
         UpdateNonConnectedLakeArea_In_Finalcatinfo(Path_final_rviply,Non_ConL_cat_info)
 #        Copyfeature_to_another_shp_by_attribute(Path_final_rviply,Path_Non_ConL_cat)
+
+    def PlotHydrography_Raven(self,Path_rvt_Folder = '#',Path_Hydrographs_output_file=['#'],Scenario_NM = ['#','#']):
+        
+        
+        Obs_rvt_NMS = []
+        ###obtain obs rvt file name 
+        for file in os.listdir(Path_rvt_Folder):
+            if file.endswith(".rvt"):
+                Obs_rvt_NMS.append(file)
+                
+        
+        Obs_subids = []                 
+        for i in range(0,len(Obs_rvt_NMS)):
+            ###find subID
+            obs_nm =  Obs_rvt_NMS[i]
+            ifilepath = os.path.join(Path_rvt_Folder,obs_nm)
+            f = open(ifilepath, "r")
+            
+            for line in f:
+                firstline_info = line.split()
+                if firstline_info[0] == ':ObservationData':
+                    obssubid  = firstline_info[2]
+                    break  ### only read first line
+                else:
+                    obssubid  = '#' 
+                    break     ### only read first line
+                    
+            Obs_subids.append(obssubid)
+            ## this is not a observation rvt file 
+            if obssubid =='#':
+                continue 
+            ####assign column name in the hydrography.csv
+            
+            colnm_obs = 'sub'+obssubid+' (observed) [m3/s]'
+            colnm_sim = 'sub'+obssubid+' [m3/s]'
+            colnm_Date = 'date'
+            colnm_hr   = 'hour'
+            
+            ##obtain data from all provided hydrograpy csv output files each hydrograpy csv need has a coorespond scenario name
+            Initial_data_frame = 1
+            readed_data_correc = 1
+            for j in range(0,len(Path_Hydrographs_output_file)):
+                
+                Path_Hydrographs_output_file_j = Path_Hydrographs_output_file[j]
+            
+                i_simresult = pd.read_csv(Path_Hydrographs_output_file[0],sep=',')
+                colnames = i_simresult.columns
+            
+                ## check if obs name exist in the hydrograpy csv output files
+                if colnm_obs in colnames:
+                    
+                    ## Initial lize the reaed in data frame 
+                    if Initial_data_frame == 1:
+                        Readed_Data = i_simresult[[colnm_Date,colnm_hr]]
+                        Readed_Data['Obs']  = i_simresult[colnm_obs] 
+                        Readed_Data[Scenario_NM[j]] = i_simresult[colnm_sim] 
+                        Readed_Data['Date'] = pd.to_datetime(i_simresult[colnm_Date] + ' ' + i_simresult[colnm_hr])
+                        Initial_data_frame = -1 
+                    else:
+                        Readed_Data[Scenario_NM[j]] = i_simresult[colnm_sim].values
+                else:
+                    readed_data_correc = -1
+                    continue 
+                    
+            if readed_data_correc == -1:
+                continue 
+                
+   
+            Readed_Data = Readed_Data.drop(columns=[colnm_Date,colnm_hr])     
+            Readed_Data = Readed_Data.set_index('Date') 
+            
+            Readed_Data = Readed_Data.resample('D').sum()
+            Readed_Data['ModelTime'] = Readed_Data.index.strftime('%m-%d-%Y')
+            plotGuagelineobs(Scenario_NM,Readed_Data,os.path.join(self.OutputFolder,obs_nm + '.pdf'))
+
+            
 ###############################################################################3,
 
         
