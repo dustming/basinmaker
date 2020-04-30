@@ -500,13 +500,9 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
                 if SubID_NL == catid: ### the non connected lake drainage to this catid 
                     Daarea = Daarea + NonConcLakeInfo.loc[nlakeinfoidx]['Area_m'].values[0]
                 NonConcLakeInfo.loc[nlakeinfoidx,'SubId_riv'] = SubID_NL
-                NonConcLakeInfo.loc[nlakeinfoidx,'DownLakeID'] = Dow_Non_Lakeid
                 if Dow_Non_Lakeid > 0:
-                    nlakeinfoidx_dwn = NonConcLakeInfo['Gridcode'] == Dow_Non_Lakeid
-                    print(NonConcLakeInfo.loc[nlakeinfoidx_dwn,['DA_Area','Gridcode']])
-                    print("1")
-                    print( NonConcLakeInfo.loc[nlakeinfoidx,['Area_m','Gridcode']])
-                    
+                    NonConcLakeInfo.loc[nlakeinfoidx,'DownLakeID'] = Dow_Non_Lakeid
+                    nlakeinfoidx_dwn = NonConcLakeInfo['Gridcode'] == Dow_Non_Lakeid                    
                     NonConcLakeInfo.loc[nlakeinfoidx_dwn,'DA_Area'] = NonConcLakeInfo.loc[nlakeinfoidx_dwn,'DA_Area'].values[0] + NonConcLakeInfo.loc[nlakeinfoidx,'Area_m'].values[0]
             catinfo.loc[i,'NonLDArea'] =  Daarea
     catinfo = Writecatinfotodbf(catinfo)
