@@ -2011,11 +2011,9 @@ class LRRT:
 #        self.selectfeaturebasedonID(Path_shpfile = Path_products,sub_colnm = 'SubId',down_colnm = 'DowSubId',mostdownid = SubId_Selected,mostupstreamid = np.full(len(SubId_Selected),-1),OutBaseName='finalcat_info')
         return SubId_Selected
             
+    def Select_Routing_product_based_SubId(self,Path_final_riv = '#',Path_final_riv_ply = '#',Path_Con_Lake_ply = '#',Path_NonCon_Lake_ply='#',Path_NonClakeinfo = '#',
+                                           sub_colnm = 'SubId',down_colnm = 'DowSubId',mostdownid = [-1],mostupstreamid = [-1]):
 
-    
-
-    def selectfeaturebasedonID(self,Path_shpfile = '#',sub_colnm = 'SubId',down_colnm = 'DowSubId',mostdownid = [-1],mostupstreamid = [-1],OutBaseName='finalcat_info'):
-        #selection feature based on subbasin ID
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
         Qgs.initQgis()
@@ -2025,84 +2023,71 @@ class LRRT:
         Processing.initialize()
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
 
-        
-        
-        hyinfocsv = Path_shpfile[:-3] + "dbf"
+        ##3
+        hyinfocsv = Path_final_riv[:-3] + "dbf"
         tempinfo = Dbf5(hyinfocsv)
         hyshdinfo2 = tempinfo.to_dataframe().drop_duplicates(sub_colnm, keep='first')
         hyshdinfo =  hyshdinfo2[[sub_colnm,down_colnm]].astype('float').values
-        
-        
+                        
+        #### incase  mostupstreamid did not procvided, automatically assgin -1 
         if mostupstreamid[0] == -1:
-            mostupstreamid = np.full(len(mostdownid),-1)
+            mostupstreamid = np.full(len(mostdownid),-1) 
             
+        ### Loop for each downstream id     
         for isub in range(0,len(mostdownid)):
             OutHyID  = mostdownid[isub]
             OutHyID2 = mostupstreamid[isub]
+                                    
+            OutputFolder_isub = os.path.join(self.OutputFolder,'SubId_'+str(OutHyID))
+            if not os.path.exists(OutputFolder_isub):
+                os.makedirs(OutputFolder_isub)
+                
+            ## find all subid control by this subid 
             HydroBasins1 = Defcat(hyshdinfo,OutHyID) ### return fid of polygons that needs to be select 
             if OutHyID2 > 0:
                 HydroBasins2 = Defcat(hyshdinfo,OutHyID2)            
-    ###  exculde the Ids in HydroBasins2 from HydroBasins1
+                ###  exculde the Ids in HydroBasins2 from HydroBasins1
                 for i in range(len(HydroBasins2)):
                     rows =np.argwhere(HydroBasins1 == HydroBasins2[i])
                     HydroBasins1 = np.delete(HydroBasins1, rows)
                 HydroBasins = HydroBasins1            
             else:
                 HydroBasins = HydroBasins1
+            
+            #### extract final_riv and final_riv_ply
+            Outputfilename_riv = os.path.join(OutputFolder_isub,os.path.basename(Path_final_riv))
+            Selectfeatureattributes(processing,Input = Path_final_riv,Output=Outputfilename_riv,Attri_NM = 'SubId',Values = HydroBasins)
+            Outputfilename_riv_ply = os.path.join(OutputFolder_isub,os.path.basename(Path_final_riv_ply))
+            Selectfeatureattributes(processing,Input = Path_final_riv_ply,Output=Outputfilename_riv_ply,Attri_NM = 'SubId',Values = HydroBasins)
+            
+            #### extract lakes 
+            finalcat_csv     = Outputfilename_riv_ply[:-3] + "dbf"
+            finalcat_info    = Dbf5(finalcat_csv)
+            finalcat_info    = finalcat_info.to_dataframe().drop_duplicates('SubId', keep='first')
         
-            exp =sub_colnm + '  IN  (  ' +  str(HydroBasins[0]) #'SubId  IN  ( \'1\',\'1404\',\'1851\') '   
-            for i in range(1,len(HydroBasins)):
-                exp = exp + " , "+str(HydroBasins[i])  
-            exp = exp + ')'
-    ### Load feature layers
+            Connect_Lakeids  = np.unique(finalcat_info['HyLakeId'].values)
+            Connect_Lakeids  = Connect_Lakeids[Connect_Lakeids > 0]
         
-            outfilename = os.path.join(self.OutputFolder,OutBaseName+'_'+str(OutHyID)+'.shp')
-            processing.run("native:extractbyexpression", {'INPUT':Path_shpfile,'EXPRESSION':exp,'OUTPUT':outfilename})
+            SubIds           = np.unique(finalcat_info['SubId'].values)
+            SubIds           = SubIds[SubIds > 0]        
+        
+            NonConn_Lakes    = Path_NonClakeinfo[:-3] + "dbf"
+            NonConn_Lakes    = Dbf5(NonConn_Lakes)
+            NonConn_Lakes    = NonConn_Lakes.to_dataframe()
+            NonConn_Lakes['SubId_riv']    = pd.to_numeric(NonConn_Lakes['SubId_riv'], downcast='float')
+        
+            NonConn_Lakes_p  = NonConn_Lakes.loc[NonConn_Lakes['SubId_riv'].isin(SubIds)]
+            NonCL_Lakeids    = NonConn_Lakes_p['value'].values
+        
+        
+            Selectfeatureattributes(processing,Input = Path_Con_Lake_ply,Output=os.path.join(OutputFolder_isub,os.path.basename(Path_Con_Lake_ply)),Attri_NM = 'Hylak_id',Values = Connect_Lakeids)
+        
+            Selectfeatureattributes(processing,Input = Path_NonCon_Lake_ply,Output=os.path.join(OutputFolder_isub,os.path.basename(Path_NonCon_Lake_ply)),Attri_NM = 'Hylak_id',Values = NonCL_Lakeids)
+        
+            Selectfeatureattributes(processing,Input = Path_NonClakeinfo,Output=os.path.join(OutputFolder_isub,os.path.basename(Path_NonClakeinfo)),Attri_NM = 'value',Values = NonCL_Lakeids)
+        
         Qgs.exit()
-        return 
-
-    def ExtractLakesForGivenWatersheds(self,Path_plyfile = '#',Path_Con_Lake_ply = '#',Path_NonCon_Lake_ply='#',Path_NonClakeinfo = '#'):
-        #selection feature based on subbasin ID
-        QgsApplication.setPrefixPath(self.qgisPP, True)
-        Qgs = QgsApplication([],False)
-        Qgs.initQgis()
-        from qgis import processing
-        from processing.core.Processing import Processing   
-        feedback = QgsProcessingFeedback()
-        Processing.initialize()
-        QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
-        
-        finalcat_csv     = Path_plyfile[:-3] + "dbf"
-        finalcat_info    = Dbf5(finalcat_csv)
-        finalcat_info    = finalcat_info.to_dataframe().drop_duplicates('SubId', keep='first')
-        
-        Connect_Lakeids  = np.unique(finalcat_info['HyLakeId'].values)
-        Connect_Lakeids  = Connect_Lakeids[Connect_Lakeids > 0]
-        
-        SubIds           = np.unique(finalcat_info['SubId'].values)
-        SubIds           = SubIds[SubIds > 0]        
-        
-        NonConn_Lakes    = Path_NonClakeinfo[:-3] + "dbf"
-        NonConn_Lakes    = Dbf5(NonConn_Lakes)
-        NonConn_Lakes    = NonConn_Lakes.to_dataframe()
-        NonConn_Lakes['SubId_riv']    = pd.to_numeric(NonConn_Lakes['SubId_riv'], downcast='float')
-        
-        NonConn_Lakes_p  = NonConn_Lakes.loc[NonConn_Lakes['SubId_riv'].isin(SubIds)]
-        NonCL_Lakeids    = NonConn_Lakes_p['value'].values
-        
-        
-        Selectfeatureattributes(processing,Input = Path_Con_Lake_ply,Output=os.path.join(self.OutputFolder,'Con_Lake_Ply.shp'),Attri_NM = 'Hylak_id',Values = Connect_Lakeids)
-        
-        Selectfeatureattributes(processing,Input = Path_NonCon_Lake_ply,Output=os.path.join(self.OutputFolder,'Non_Con_Lake_Ply.shp'),Attri_NM = 'Hylak_id',Values = NonCL_Lakeids)
-        
-        Selectfeatureattributes(processing,Input = Path_NonClakeinfo,Output=os.path.join(self.OutputFolder,'Non_con_lake_cat_info.shp'),Attri_NM = 'value',Values = NonCL_Lakeids)
     
-        Qgs.exit()  
-        return 
-
-
-
-
     def Customize_Routing_Topology(self,projection = 'default',Path_final_riv = '#',Path_final_cat = '#',Path_NonCLake = '#',CellSize = -1,Area_Min = -1,
                                    ConLakeId = [-1],NonConLakeId=[-1],sub_colnm='SubId',down_colnm='DowSubId',DA_colnm = 'DA',SegID_colnm = 'Seg_ID'):
         #### generate river catchments based on minmum area.
@@ -2520,8 +2505,97 @@ class LRRT:
             Readed_Data = Readed_Data.resample('D').sum()
             Readed_Data['ModelTime'] = Readed_Data.index.strftime('%m-%d-%Y')
             plotGuagelineobs(Scenario_NM,Readed_Data,os.path.join(self.OutputFolder,obs_nm + '.pdf'))
-
             
-###############################################################################3,
+            
+###########################################################################################33
+# Individule functions  not used in 
+###################################################################################
+    def selectfeaturebasedonID(self,Path_shpfile = '#',sub_colnm = 'SubId',down_colnm = 'DowSubId',mostdownid = [-1],mostupstreamid = [-1],OutputFileName = '#'):
+        #selection feature based on subbasin ID
+        QgsApplication.setPrefixPath(self.qgisPP, True)
+        Qgs = QgsApplication([],False)
+        Qgs.initQgis()
+        from qgis import processing
+        from processing.core.Processing import Processing   
+        feedback = QgsProcessingFeedback()
+        Processing.initialize()
+        QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
+
+        
+        
+        hyinfocsv = Path_shpfile[:-3] + "dbf"
+        tempinfo = Dbf5(hyinfocsv)
+        hyshdinfo2 = tempinfo.to_dataframe().drop_duplicates(sub_colnm, keep='first')
+        hyshdinfo =  hyshdinfo2[[sub_colnm,down_colnm]].astype('float').values
+        
+        
+        if mostupstreamid[0] == -1:
+            mostupstreamid = np.full(len(mostdownid),-1)
+            
+        for isub in range(0,len(mostdownid)):
+            OutHyID  = mostdownid[isub]
+            OutHyID2 = mostupstreamid[isub]
+            HydroBasins1 = Defcat(hyshdinfo,OutHyID) ### return fid of polygons that needs to be select 
+            if OutHyID2 > 0:
+                HydroBasins2 = Defcat(hyshdinfo,OutHyID2)            
+    ###  exculde the Ids in HydroBasins2 from HydroBasins1
+                for i in range(len(HydroBasins2)):
+                    rows =np.argwhere(HydroBasins1 == HydroBasins2[i])
+                    HydroBasins1 = np.delete(HydroBasins1, rows)
+                HydroBasins = HydroBasins1            
+            else:
+                HydroBasins = HydroBasins1
+        
+            exp =sub_colnm + '  IN  (  ' +  str(HydroBasins[0]) #'SubId  IN  ( \'1\',\'1404\',\'1851\') '   
+            for i in range(1,len(HydroBasins)):
+                exp = exp + " , "+str(HydroBasins[i])  
+            exp = exp + ')'
+    ### Load feature layers
+        
+            outfilename = os.path.join(self.OutputFolder,OutBaseName+'_'+str(OutHyID)+'.shp')
+            processing.run("native:extractbyexpression", {'INPUT':Path_shpfile,'EXPRESSION':exp,'OUTPUT':outfilename})
+        Qgs.exit()
+        return 
+
+    def ExtractLakesForGivenWatersheds(self,Path_plyfile = '#',Path_Con_Lake_ply = '#',Path_NonCon_Lake_ply='#',Path_NonClakeinfo = '#'):
+        #selection feature based on subbasin ID
+        QgsApplication.setPrefixPath(self.qgisPP, True)
+        Qgs = QgsApplication([],False)
+        Qgs.initQgis()
+        from qgis import processing
+        from processing.core.Processing import Processing   
+        feedback = QgsProcessingFeedback()
+        Processing.initialize()
+        QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
+        
+        finalcat_csv     = Path_plyfile[:-3] + "dbf"
+        finalcat_info    = Dbf5(finalcat_csv)
+        finalcat_info    = finalcat_info.to_dataframe().drop_duplicates('SubId', keep='first')
+        
+        Connect_Lakeids  = np.unique(finalcat_info['HyLakeId'].values)
+        Connect_Lakeids  = Connect_Lakeids[Connect_Lakeids > 0]
+        
+        SubIds           = np.unique(finalcat_info['SubId'].values)
+        SubIds           = SubIds[SubIds > 0]        
+        
+        NonConn_Lakes    = Path_NonClakeinfo[:-3] + "dbf"
+        NonConn_Lakes    = Dbf5(NonConn_Lakes)
+        NonConn_Lakes    = NonConn_Lakes.to_dataframe()
+        NonConn_Lakes['SubId_riv']    = pd.to_numeric(NonConn_Lakes['SubId_riv'], downcast='float')
+        
+        NonConn_Lakes_p  = NonConn_Lakes.loc[NonConn_Lakes['SubId_riv'].isin(SubIds)]
+        NonCL_Lakeids    = NonConn_Lakes_p['value'].values
+        
+        
+        Selectfeatureattributes(processing,Input = Path_Con_Lake_ply,Output=os.path.join(self.OutputFolder,'Con_Lake_Ply.shp'),Attri_NM = 'Hylak_id',Values = Connect_Lakeids)
+        
+        Selectfeatureattributes(processing,Input = Path_NonCon_Lake_ply,Output=os.path.join(self.OutputFolder,'Non_Con_Lake_Ply.shp'),Attri_NM = 'Hylak_id',Values = NonCL_Lakeids)
+        
+        Selectfeatureattributes(processing,Input = Path_NonClakeinfo,Output=os.path.join(self.OutputFolder,'Non_con_lake_cat_info.shp'),Attri_NM = 'value',Values = NonCL_Lakeids)
+    
+        Qgs.exit()  
+        return 
+
+
 
         
