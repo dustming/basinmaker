@@ -735,7 +735,7 @@ def Defcat(out,outletid):
 ###########
 
     
-def New_SubId_To_Dissolve(subid,catchmentinfo,mapoldnew_info,upsubid = -1,ismodifids = -1,modifiidin = [-1],mainriv = [-1],Islake = -1):
+def New_SubId_To_Dissolve(subid,catchmentinfo,mapoldnew_info,upsubid = -1,ismodifids = -1,modifiidin = [-1],mainriv = [-1],Islake = -1,seg_order = -1):
     sub_colnm = 'SubId'
     routing_info      = catchmentinfo[['SubId','DowSubId']].astype('float').values
 
@@ -778,14 +778,22 @@ def New_SubId_To_Dissolve(subid,catchmentinfo,mapoldnew_info,upsubid = -1,ismodi
     
     if Islake > 0:   ## Meger subbasin covered by lakes, Keep lake outlet catchment  DA, stream order info 
         tarinfo.loc[idx,'RivLength'] = 0.0 
-    else:
-        tarinfo.loc[idx,'Strahler']      = -1.2345
-        tarinfo.loc[idx,'Seg_ID']        = -1.2345
-        tarinfo.loc[idx,'Seg_order']     = -1.2345
-        tarinfo.loc[idx,'DA']            = -1.2345
         tarinfo.loc[idx,'centroid_x']    = -1.2345
-        tarinfo.loc[idx,'centroid_y']    = -1.2345
-     
+        tarinfo.loc[idx,'centroid_y']    = -1.2345   
+    else: 
+#        tarinfo.loc[idx,'Strahler']      = -1.2345
+#        tarinfo.loc[idx,'Seg_ID']        = -1.2345
+#        tarinfo.loc[idx,'Seg_order']     = -1.2345
+#        tarinfo.loc[idx,'DA']            = -1.2345 
+        tarinfo.loc[idx,'HyLakeId']      = -1.2345
+        tarinfo.loc[idx,'LakeVol']       = -1.2345
+        tarinfo.loc[idx,'LakeArea']      = -1.2345
+        tarinfo.loc[idx,'LakeDepth']     = -1.2345
+        tarinfo.loc[idx,'Laketype']      = -1.2345
+        tarinfo.loc[idx,'IsLake']        = -1.2345
+        
+    if seg_order >0 :
+        tarinfo.loc[idx,'Seg_order']      = seg_order
 
     mask = mapoldnew_info['SubId'].isin(Modify_subids)
     ### the old downsub id of the dissolved polygon is stored in DowSubId
@@ -856,6 +864,28 @@ def UpdateNonConnectedLakeArea_In_Finalcatinfo(Path_Finalcatinfo,Non_ConnL_Cat_i
     del layer_cat
     return
 #########
+
+def UpdateConnectedLakeArea_In_Finalcatinfo(Path_Finalcatinfo,Conn_Lake_Ids):
+    layer_cat=QgsVectorLayer(Path_Finalcatinfo,"")
+    Attri_Name = layer_cat.fields().names()     
+    features = layer_cat.getFeatures()     
+    with edit(layer_cat):
+        for sf in features:
+            sf_subid        = float(sf['HyLakeId'])
+            
+            if sf_subid in Conn_Lake_Ids:
+                continue 
+            sf['HyLakeId']      = float(-1.2345)
+            sf['LakeVol']       = float(-1.2345)
+            sf['LakeArea']      = float(-1.2345)
+            sf['LakeDepth']     = float(-1.2345)
+            sf['Laketype']      = float(-1.2345) 
+            sf['IsLake']        = float(-1.2345)     
+            layer_cat.updateFeature(sf)
+    del layer_cat
+    return
+    
+    
 
 #########
 def Add_centroid_to_feature(Path_feagure,centroidx_nm = '#',centroidy_nm='#'):
@@ -942,6 +972,8 @@ def Copyfeature_to_another_shp_by_attribute(Source_shp,Target_shp,Attribue_NM='S
     layer_trg.updateExtents()
     del layer_src
     del layer_trg
+###########
+
 
 ############    
 class LRRT:
@@ -2297,7 +2329,9 @@ class LRRT:
 
              
 ###########################################################################3
-    def SelectLakes(self,Datafolder,finalrvi_ply_NM,Non_ConnL_Cat_NM,Non_ConnL_ply_NM='#',ConnL_ply_NM='#',finalriv_NM = '#',Thres_Area_Conn_Lakes = -1,Thres_Area_Non_Conn_Lakes = -1,Selection_Method = 'ByArea',sub_colnm = 'SubId',SelectionName = 'All'):
+    def SelectLakes(self,Datafolder,finalrvi_ply_NM = 'finalriv_info_ply.shp',Non_ConnL_Cat_NM = 'Non_con_lake_cat_info.shp',Non_ConnL_ply_NM='Non_Con_Lake_Ply.shp',
+                    ConnL_ply_NM='Con_Lake_Ply.shp',finalriv_NM = 'finalriv_info.shp',Thres_Area_Conn_Lakes = -1,Thres_Area_Non_Conn_Lakes = -1,
+                    Selection_Method = 'ByArea',sub_colnm = 'SubId',SelectionName = 'All'):
 
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
@@ -2325,34 +2359,130 @@ class LRRT:
         Non_ConnL_info['LakeArea'] = Non_ConnL_info['LakeArea'].astype(float)
         Non_ConnL_info['HyLakeId'] = Non_ConnL_info['HyLakeId'].astype(int)
         finalcat_info['LakeArea']  = finalcat_info['LakeArea'].astype(float)
-        finalcat_info['HyLakeId']  = finalcat_info['HyLakeId'].astype(int)        
+        finalcat_info['HyLakeId']  = finalcat_info['HyLakeId'].astype(int)  
+        finalcat_info['Seg_ID']  = finalcat_info['Seg_ID'].astype(int)        
         
         if Selection_Method == 'ByArea':
             ### process connected lakes first 
-            Selected_ConnLakes = finalcat_info[finalcat_info['LakeArea'] > Thres_Area_Conn_Lakes]['HyLakeId'].values
-            Selected_ConnLakes = np.unique(Selected_ConnLakes)    
+            Selected_ConnLakes = finalcat_info[finalcat_info['LakeArea'] >= Thres_Area_Conn_Lakes]['HyLakeId'].values
+            Selected_ConnLakes = np.unique(Selected_ConnLakes) 
+            Un_Selected_ConnLakes_info  =finalcat_info.loc[(finalcat_info['LakeArea'] < Thres_Area_Conn_Lakes) & (finalcat_info['LakeArea'] > 0)]
             ### process non connected selected lakes 
             if Thres_Area_Non_Conn_Lakes >= 0:
-                Selected_Non_ConnLakes = Non_ConnL_info[Non_ConnL_info['LakeArea'] > Thres_Area_Non_Conn_Lakes]['HyLakeId'].values
+                Selected_Non_ConnLakes = Non_ConnL_info[Non_ConnL_info['LakeArea'] >= Thres_Area_Non_Conn_Lakes]['HyLakeId'].values
                 Selected_Non_ConnLakes = np.unique(Selected_Non_ConnLakes)
+                Selected_Non_ConnL_info = Non_ConnL_info[Non_ConnL_info['LakeArea'] >= Thres_Area_Non_Conn_Lakes]
             else:
-                Selected_Non_ConnLakes = np.full(1,-1)            
+                Selected_Non_ConnLakes = np.full(1,-1) 
+                Un_Selected_Non_ConnLakes =  Non_ConnL_info['HyLakeId'].values 
+                Selected_Non_ConnL_info = Non_ConnL_info[Non_ConnL_info['LakeArea'] <-1000000]         
         else:
             print(todo)
             
         OutFolderSelectedLakes = os.path.join(Datafolder,SelectionName)    
         if not os.path.exists(OutFolderSelectedLakes):
             os.makedirs(OutFolderSelectedLakes)     
+        
+        
                
         Selectfeatureattributes(processing,Input = os.path.join(Datafolder,Non_ConnL_Cat_NM) ,Output=os.path.join(OutFolderSelectedLakes,Non_ConnL_Cat_NM),Attri_NM = 'value',Values = Selected_Non_ConnLakes)
 
         Selectfeatureattributes(processing,Input = os.path.join(Datafolder,Non_ConnL_ply_NM),Output=os.path.join(OutFolderSelectedLakes,Non_ConnL_ply_NM),Attri_NM = 'Hylak_id',Values = Selected_Non_ConnLakes)
         
         Selectfeatureattributes(processing,Input = os.path.join(Datafolder,ConnL_ply_NM),Output=os.path.join(OutFolderSelectedLakes,ConnL_ply_NM),Attri_NM = 'Hylak_id',Values = Selected_ConnLakes)
+        
+        
+        
+        #### upate NoncalnUpdateNonConnectedLakeArea_In_Finalcatinfo
+        
+        Path_Temp_final_rviply = os.path.join(self.tempfolder,'temp_finalriv_ply_selectlake.shp')
+        Path_Temp_final_rvi    = os.path.join(self.tempfolder,'temp_finalriv_selectlake.shp')
+        
+        processing.run("native:dissolve", {'INPUT':os.path.join(Datafolder,finalriv_NM),'FIELD':['SubId'],'OUTPUT':Path_Temp_final_rvi},context = context)
+        processing.run("native:dissolve", {'INPUT':os.path.join(Datafolder,finalrvi_ply_NM),'FIELD':['SubId'],'OUTPUT':Path_Temp_final_rviply},context = context)
+        
+        ####disolve catchment that are covered by non selected connected lakes 
+                
+        UpdateConnectedLakeArea_In_Finalcatinfo(Path_Temp_final_rviply,Selected_ConnLakes)
+        UpdateConnectedLakeArea_In_Finalcatinfo(Path_Temp_final_rvi,Selected_ConnLakes)
+        
+        
+        finalcat_info_temp    = Path_Temp_final_rviply[:-3] + "dbf"
+        finalcat_info_temp    = Dbf5(finalcat_info_temp)
+        finalcat_info_temp    = finalcat_info_temp.to_dataframe()
+        
+        mapoldnew_info      = finalcat_info_temp.copy(deep = True)
+        mapoldnew_info['nsubid'] = mapoldnew_info['SubId']        
+        ### Loop each unselected lake stream seg 
+        
+        Seg_IDS = Un_Selected_ConnLakes_info['Seg_ID'].values
+        Seg_IDS = np.unique(Seg_IDS)
+        for iseg in range(0,len(Seg_IDS)):
+#            print('#########################################################################################33333')
+            i_seg_id   = Seg_IDS[iseg]
+            i_seg_info = finalcat_info_temp[finalcat_info_temp['Seg_ID'] == i_seg_id]                      
+            i_seg_info = i_seg_info.sort_values(["Seg_order"], ascending = (True))
+#            i_seg_info2 = finalcat_info_temp[finalcat_info_temp['Seg_ID'] == i_seg_id] 
+#            i_seg_info2 = i_seg_info2.sort_values(["Seg_order"], ascending = (True))
+#            print(i_seg_info[['SubId' ,'DowSubId','HyLakeId','Seg_ID','Seg_order']])
+#            print(i_seg_info2[['SubId','DowSubId','HyLakeId','Seg_ID','Seg_order']])
+            
+            ###each part of the segment are not avaiable to be merged 
+            N_Hylakeid = np.unique(i_seg_info['HyLakeId'].values)
+            if len(i_seg_info) == len(N_Hylakeid):
+                continue 
+            
+            ### All lakes in this segment are removed 
+            if np.max(N_Hylakeid)  < 0:   ##
+                tsubid        = i_seg_info['SubId'].values[len(i_seg_info) - 1]
+                seg_sub_ids   = i_seg_info['SubId'].values
+                mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalcat_info_temp,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = seg_sub_ids,mainriv = finalcat_info_temp,Islake = -1,seg_order = 1) 
+            
+            ### loop from the first order of the current segment
+            modifysubids = []
+            seg_order = 1
+            for iorder in range(0,len(i_seg_info)):
+                tsubid = i_seg_info['SubId'].values[iorder]
+                modifysubids.append(tsubid)
+                
+                ### two seg has the same HyLakeId id, can be merged 
+                if iorder == len(i_seg_info) - 1:
+                    seg_sub_ids   = np.asarray(modifysubids)
+                    mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalcat_info_temp,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = seg_sub_ids,mainriv = finalcat_info_temp,Islake = i_seg_info['HyLakeId'].values[iorder],seg_order = seg_order) 
+                    modifysubids = []
+                    seg_order    = seg_order + 1
+                        
+                elif i_seg_info['HyLakeId'].values[iorder] == i_seg_info['HyLakeId'].values[iorder + 1]:
+                    continue                    
+                else: 
+                    seg_sub_ids   = np.asarray(modifysubids)
+                    mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalcat_info_temp,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = seg_sub_ids,mainriv = finalcat_info_temp,Islake = i_seg_info['HyLakeId'].values[iorder],seg_order = seg_order) 
+                    modifysubids = []
+                    seg_order    = seg_order + 1
+                    
+            i_seg_info2 = mapoldnew_info[mapoldnew_info['Seg_ID'] == i_seg_id] 
+            i_seg_info2 = i_seg_info2.sort_values(["Seg_order"], ascending = (True))
+#            print(i_seg_info2[['SubId','DowSubId','HyLakeId','Seg_ID','Seg_order','nsubid']])            
 
-        processing.run("native:dissolve", {'INPUT':os.path.join(Datafolder,finalriv_NM),'FIELD':['SubId'],'OUTPUT':os.path.join(OutFolderSelectedLakes,finalriv_NM)},context = context)
-        processing.run("native:dissolve", {'INPUT':os.path.join(Datafolder,finalrvi_ply_NM),'FIELD':['SubId'],'OUTPUT':os.path.join(OutFolderSelectedLakes,finalrvi_ply_NM)},context = context)
+        UpdateTopology(mapoldnew_info,UpdateStreamorder = -1)          
+        mapoldnew_info.to_csv( os.path.join(Datafolder,'mapoldnew.csv'),sep=',',index=None)    
 
+        Modify_Feature_info(Path_Temp_final_rviply,mapoldnew_info)
+        Modify_Feature_info(Path_Temp_final_rvi,mapoldnew_info)        
+        
+
+        UpdateNonConnectedLakeCatchmentinfo(os.path.join(OutFolderSelectedLakes,Non_ConnL_Cat_NM),mapoldnew_info)
+
+        Non_ConL_cat_csv         = os.path.join(OutFolderSelectedLakes,Non_ConnL_Cat_NM)[:-3] + "dbf"
+        Non_ConL_cat_info        = Dbf5(Non_ConL_cat_csv)
+        Non_ConL_cat_info        = Non_ConL_cat_info.to_dataframe()
+        
+        UpdateNonConnectedLakeArea_In_Finalcatinfo(Path_Temp_final_rvi,Non_ConL_cat_info)
+        UpdateNonConnectedLakeArea_In_Finalcatinfo(Path_Temp_final_rviply,Non_ConL_cat_info)
+        
+        processing.run("native:dissolve", {'INPUT':Path_Temp_final_rvi,'FIELD':['SubId'],'OUTPUT':os.path.join(OutFolderSelectedLakes,finalriv_NM)},context = context)
+        processing.run("native:dissolve", {'INPUT':Path_Temp_final_rviply,'FIELD':['SubId'],'OUTPUT':os.path.join(OutFolderSelectedLakes,finalrvi_ply_NM)},context = context)
+                
         return 
         
 
@@ -2383,11 +2513,13 @@ class LRRT:
         processing.run("native:dissolve", {'INPUT':Path_final_riv,'FIELD':['SubId'],'OUTPUT':Path_Temp_final_rvi},context = context)
         
         ### read riv ply info
-        finalrivply_csv     = Path_final_rviply[:-3] + "dbf"
+        finalrivply_csv     = Path_Temp_final_rviply[:-3] + "dbf"
         finalrivply_info    = Dbf5(finalrivply_csv)
         finalrivply_info    = finalrivply_info.to_dataframe().drop_duplicates(sub_colnm, keep='first')
         mapoldnew_info      = finalrivply_info.copy(deep = True)
-        
+        mapoldnew_info['nsubid'] = mapoldnew_info['SubId']
+        AllConnectLakeIDS   = finalrivply_info['HyLakeId'].values
+        AllConnectLakeIDS   = np.unique(AllConnectLakeIDS)
         
         ### read connected lake info 
         ConL_ply_csv     = Path_ConL_ply[:-3] + "dbf"
@@ -2397,7 +2529,7 @@ class LRRT:
         Selected_Con_LakeIds = Selected_Con_LakeIds[Selected_Con_LakeIds > 0]
         Selected_Con_LakeIds = np.unique(Selected_Con_LakeIds)
            
-        mapoldnew_info['nsubid'] = mapoldnew_info['SubId']
+        
         
         
         ### process connected lakes  merge polygons 
@@ -2407,22 +2539,16 @@ class LRRT:
             Lakesub_info = Lakesub_info.sort_values(["DA"], ascending = (False))
             tsubid       = Lakesub_info[sub_colnm].values[0]
             lakesubids   = Lakesub_info[sub_colnm].values
-            ### modify the lake covered subbasin informations 
             mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalrivply_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = lakesubids,mainriv = finalrivply_info,Islake = 1) 
-            
+        
         UpdateTopology(mapoldnew_info,UpdateStreamorder = -1)          
         mapoldnew_info.to_csv( os.path.join(Datafolder,'mapoldnew.csv'),sep=',',index=None)    
 
         Modify_Feature_info(Path_Temp_final_rviply,mapoldnew_info)
         Modify_Feature_info(Path_Temp_final_rvi,mapoldnew_info)        
 
-        Path_final_rviply = os.path.join(Datafolder,'finalcat_info.shp')
-        Path_final_rvi    = os.path.join(Datafolder,'finalcat_info_riv.shp')
-        processing.run("native:dissolve", {'INPUT':Path_Temp_final_rvi,'FIELD':['SubId'],'OUTPUT':Path_final_rvi},context = context)
-        processing.run("native:dissolve", {'INPUT':Path_Temp_final_rviply,'FIELD':['SubId'],'OUTPUT':Path_final_rviply},context = context)
-        Add_centroid_to_feature(Path_final_rviply,'centroid_x','centroid_y')
-
-
+        ## process Non connected lakes
+        
         UpdateNonConnectedLakeCatchmentinfo(Path_Non_ConL_cat,mapoldnew_info)
 
         Non_ConL_cat_csv         = Path_Non_ConL_cat[:-3] + "dbf"
@@ -2431,6 +2557,13 @@ class LRRT:
         
         UpdateNonConnectedLakeArea_In_Finalcatinfo(Path_final_rviply,Non_ConL_cat_info)
 #        Copyfeature_to_another_shp_by_attribute(Path_final_rviply,Path_Non_ConL_cat)
+
+        Path_final_rviply = os.path.join(Datafolder,'finalcat_info.shp')
+        Path_final_rvi    = os.path.join(Datafolder,'finalcat_info_riv.shp')
+        processing.run("native:dissolve", {'INPUT':Path_Temp_final_rvi,'FIELD':['SubId'],'OUTPUT':Path_final_rvi},context = context)
+        processing.run("native:dissolve", {'INPUT':Path_Temp_final_rviply,'FIELD':['SubId'],'OUTPUT':Path_final_rviply},context = context)
+        Add_centroid_to_feature(Path_final_rviply,'centroid_x','centroid_y')
+        
 
     def PlotHydrography_Raven(self,Path_rvt_Folder = '#',Path_Hydrographs_output_file=['#'],Scenario_NM = ['#','#']):
         
