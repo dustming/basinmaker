@@ -2520,7 +2520,7 @@ class LRRT:
         return 
         
 
-    def Define_Final_Catchment(self,Datafolder,finalrvi_ply_NM,finalriv_NM,Non_ConnL_Cat_NM,ConnL_ply_NM,sub_colnm = 'SubId'):
+    def Define_Final_Catchment(self,Datafolder,finalrvi_ply_NM,finalriv_NM,Non_ConnL_Cat_NM,sub_colnm = 'SubId'):
         
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
@@ -2537,7 +2537,6 @@ class LRRT:
         Path_final_rviply = os.path.join(Datafolder,finalrvi_ply_NM)
         Path_final_riv    = os.path.join(Datafolder,finalriv_NM)
         Path_Non_ConL_cat = os.path.join(Datafolder,Non_ConnL_Cat_NM)
-        Path_ConL_ply     = os.path.join(Datafolder,ConnL_ply_NM)
          
          
         Path_Temp_final_rviply = os.path.join(self.tempfolder,'temp_finalriv_ply.shp')
@@ -2553,22 +2552,12 @@ class LRRT:
         mapoldnew_info      = finalrivply_info.copy(deep = True)
         mapoldnew_info['nsubid'] = mapoldnew_info['SubId']
         AllConnectLakeIDS   = finalrivply_info['HyLakeId'].values
+        AllConnectLakeIDS   = AllConnectLakeIDS[AllConnectLakeIDS > 0]
         AllConnectLakeIDS   = np.unique(AllConnectLakeIDS)
-        
-        ### read connected lake info 
-        ConL_ply_csv     = Path_ConL_ply[:-3] + "dbf"
-        ConL_ply_info    = Dbf5(ConL_ply_csv)
-        ConL_ply_info    = ConL_ply_info.to_dataframe()
-        Selected_Con_LakeIds = ConL_ply_info['Hylak_id'].values
-        Selected_Con_LakeIds = Selected_Con_LakeIds[Selected_Con_LakeIds > 0]
-        Selected_Con_LakeIds = np.unique(Selected_Con_LakeIds)
-           
-        
-        
-        
+            
         ### process connected lakes  merge polygons 
-        for i in range(0,len(Selected_Con_LakeIds)):
-            lakeid       = Selected_Con_LakeIds[i]
+        for i in range(0,len(AllConnectLakeIDS)):
+            lakeid       = AllConnectLakeIDS[i]
             Lakesub_info = finalrivply_info.loc[finalrivply_info['HyLakeId'] == lakeid]
             Lakesub_info = Lakesub_info.sort_values(["DA"], ascending = (False))
             tsubid       = Lakesub_info[sub_colnm].values[0]
