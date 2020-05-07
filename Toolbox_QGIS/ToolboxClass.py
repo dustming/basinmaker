@@ -949,7 +949,7 @@ def UpdateTopology(mapoldnew_info,UpdateStreamorder = 1,UpdateSubId = 1):
     return mapoldnew_info   
     
 #######
-def Copyfeature_to_another_shp_by_attribute(Source_shp,Target_shp,Attribue_NM='SubId',Values=[-1]):
+def Copyfeature_to_another_shp_by_attribute(Source_shp,Target_shp,Col_NM='SubId',Values=[-1],Attributes = [-1]):
     print(Source_shp)
     print(Target_shp)
     layer_src=QgsVectorLayer(Source_shp,"")
@@ -957,19 +957,20 @@ def Copyfeature_to_another_shp_by_attribute(Source_shp,Target_shp,Attribue_NM='S
     
     src_features = layer_src.getFeatures()  
     
-    #Selected_Features = []
+    Selected_Features = []
     for sf in src_features:
         #centroidxy = sf.geometry().centroid().asPoint()
-        src_geometry =  sf.geometry()
-        
-        temp_feature=QgsFeature()
-        temp_feature.setGeometry(src_geometry)
-        temp_feature.setAttributes([177,102534,5584940.132977,102534,115,102534,4.3,3.9,1.1,1])
-        
-        Selected_Features = temp_feature
+        Select_value = sf[Col_NM]
+        if Select_value in Values:
+            src_geometry =  sf.geometry()
+            attribute = Attributes.loc[Attributes[Col_NM] == Select_value].values
+            temp_feature=QgsFeature()
+            temp_feature.setGeometry(src_geometry)
+            temp_feature.setAttributes(attribute.tolist()[0])
+            Selected_Features.append(temp_feature)
         
     layer_trg.startEditing()
-    layer_trg.addFeatures([temp_feature])
+    layer_trg.addFeatures(Selected_Features)
     layer_trg.commitChanges()
     layer_trg.updateExtents()
     del layer_src
@@ -2212,17 +2213,6 @@ class LRRT:
             i_seg_id        = Seg_IDS[iseg]
             i_seg_info      = Selected_riv[Selected_riv['Seg_ID'] == i_seg_id]                      
             i_seg_info      = i_seg_info.sort_values(["Seg_order"], ascending = (True))
-            
-            N_Hylakeid = i_seg_info['HyLakeId'].values
-            N_Hylakeid = N_Hylakeid[N_Hylakeid > 0]
-            N_Hylakeid = np.unique(i_seg_info['HyLakeId'].values)
-            
-            ###All stream seg in this segment belongs to 1 lakes or do not covered by lake 
-            if len(N_Hylakeid)  <= 1:
-                tsubid         = i_seg_info['SubId'].values[len(i_seg_info) - 1]
-                seg_sub_ids    = i_seg_info['SubId'].values
-                mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = Selected_riv,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = seg_sub_ids,mainriv = Selected_riv,Islake = 2,seg_order = 1) ##Islake = 2 do not change Lake ids and keep river length 
-                continue  ### move to Next segment 
 
             modifysubids = []
             seg_order = 1
@@ -2231,8 +2221,7 @@ class LRRT:
                 iorder_Lakeid       = i_seg_info['HyLakeId'].values[iorder]
                 modifysubids.append(tsubid)
                 processed_subid = np.unique(mapoldnew_info.loc[mapoldnew_info['nsubid'] > 0][sub_colnm].values)
-                print("#####################################################")
-                print(iseg,iorder,tsubid,processed_subid)
+                
                 ### two seg has the same HyLakeId id, can be merged 
                 if iorder == len(i_seg_info) - 1:
                     seg_sub_ids   = np.asarray(modifysubids)
@@ -2254,7 +2243,6 @@ class LRRT:
                     seg_sub_ids   = seg_sub_ids[seg_sub_ids>0]            
                     mask          = np.in1d(seg_sub_ids, processed_subid)
                     seg_sub_ids   = seg_sub_ids[np.logical_not(mask)]
-                    print(seg_sub_ids,tsubid,i_seg_info['Strahler'].values[iorder],i_seg_info['Seg_ID'].values[iorder],i_seg_info['Seg_order'].values[iorder],tsubid in processed_subid,983 in processed_subid)
                     mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalriv_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = seg_sub_ids,mainriv = Selected_riv,Islake = 2,seg_order = seg_order) 
                     modifysubids   = []
                     seg_order      = seg_order + 1
@@ -2280,7 +2268,6 @@ class LRRT:
                     seg_sub_ids   = seg_sub_ids[seg_sub_ids>0]            
                     mask          = np.in1d(seg_sub_ids, processed_subid)
                     seg_sub_ids   = seg_sub_ids[np.logical_not(mask)]
-                    print(seg_sub_ids,tsubid,i_seg_info['Strahler'].values[iorder],i_seg_info['Seg_ID'].values[iorder],i_seg_info['Seg_order'].values[iorder],tsubid in processed_subid,983 in processed_subid)
                     mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalriv_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = seg_sub_ids,mainriv = Selected_riv,Islake = 2,seg_order = seg_order) 
                     modifysubids   = []
                     seg_order      = seg_order + 1
@@ -2297,16 +2284,48 @@ class LRRT:
         Modify_Feature_info(Path_Temp_final_rviply,mapoldnew_info)
         Modify_Feature_info(Path_Temp_final_rvi,mapoldnew_info)
 
+        ######################################################################################################3
         ## create output folder
         outputfolder_subid = os.path.join(self.OutputFolder,'SubArea' +'_'+str(Area_Min))
         if not os.path.exists(outputfolder_subid):
             os.makedirs(outputfolder_subid)
         
-        Path_out_final_rviply = os.path.join(outputfolder_subid,'finalriv_ply.shp')
-        Path_out_final_rvi    = os.path.join(outputfolder_subid,'finalriv.shp')
+        #### export lake polygons 
+        
+        NonConn_Lakes               = Path_Non_ConL_cat[:-3] + "dbf"
+        NonConn_Lakes               = Dbf5(NonConn_Lakes)
+        NonConn_Lakes               = NonConn_Lakes.to_dataframe()
+        NonConn_Lakes['SubId_riv']  = pd.to_numeric(NonConn_Lakes['SubId_riv'], downcast='float')
+        
+        Conn_Lakes               = Path_Conl_ply[:-3] + "dbf"
+        Conn_Lakes               = Dbf5(Conn_Lakes)
+        Conn_Lakes               = Conn_Lakes.to_dataframe()
+        Conn_Lakes               = Conn_Lakes.drop_duplicates('Hylak_id', keep='first')
+        All_Conn_Lakeids         = Conn_Lakes['Hylak_id'].values        
+        mask                     = np.in1d(All_Conn_Lakeids, Connected_Lake_Mainriv)
+        Conn_To_NonConlakeids    = All_Conn_Lakeids[np.logical_not(mask)]
                     
+        Selectfeatureattributes(processing,Input =Path_Conl_ply ,Output=os.path.join(outputfolder_subid,ConnL_ply_NM),Attri_NM = 'Hylak_id',Values = Connected_Lake_Mainriv)
+        
+        
+        
+        Selectfeatureattributes(processing,Input =Path_Non_ConL_ply ,Output=os.path.join(outputfolder_subid,Non_ConnL_ply_NM),Attri_NM = 'Hylak_id',Values = NonConn_Lakes['value'].values)
+        
+
+
+        Copyfeature_to_another_shp_by_attribute(Source_shp = Path_Conl_ply,Target_shp =os.path.join(outputfolder_subid,Non_ConnL_ply_NM),Col_NM='Hylak_id',Values=Conn_To_NonConlakeids,Attributes = Conn_Lakes)
+        
+        Path_out_final_rviply = os.path.join(outputfolder_subid,'finalriv_ply.shp')
+        Path_out_final_rvi    = os.path.join(outputfolder_subid,'finalriv.shp')            
         processing.run("native:dissolve", {'INPUT':Path_Temp_final_rviply,'FIELD':['SubId'],'OUTPUT':Path_out_final_rviply},context = context)
         processing.run("native:dissolve", {'INPUT':Path_Temp_final_rvi,'FIELD':['SubId'],'OUTPUT':Path_out_final_rvi},context = context)
+        
+#        Path_final_rviply = os.path.join(DataFolder,finalrvi_ply_NM)
+#        Path_final_riv    = os.path.join(DataFolder,finalriv_NM)
+#        Path_Non_ConL_cat = os.path.join(DataFolder,Non_ConnL_Cat_NM)
+#        Path_Conl_ply     = os.path.join(DataFolder,ConnL_ply_NM)
+#        Path_Non_ConL_ply = os.path.join(DataFolder,Non_ConnL_ply_NM)          
+        
                     
         Qgs.exit() 
         
