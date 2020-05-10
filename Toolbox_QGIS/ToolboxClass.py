@@ -977,35 +977,79 @@ def Copyfeature_to_another_shp_by_attribute(Source_shp,Target_shp,Col_NM='SubId'
     del layer_trg
 ###########
 
-def ConnectLake_to_NonConnectLake_Updateinfo(NonC_Lakeinfo,finalriv_info,Con_to_NonCon_Lakeids,Connect_Lake_ply_info):
+def ConnectLake_to_NonConnectLake_Updateinfo(NonC_Lakeinfo,finalriv_info,Merged_subids,Connect_Lake_ply_info,ConLakeId):
     
-    New_NonC_Lakeinfo = pd.DataFrame(np.full((len(Con_to_NonCon_Lakeids),len(NonC_Lakeinfo.columns)),np.nan), columns = NonC_Lakeinfo.columns)   
-    print(NonC_Lakeinfo.columns)
-    for i in range(0,len(Con_to_NonCon_Lakeids)):
-        New_Non_Lakeid       = Con_to_NonCon_Lakeids[i]
-        New_Lake_info        = Connect_Lake_ply_info.loc[Connect_Lake_ply_info['Hylak_id'] == New_Non_Lakeid]
-        sub_coverd_bylake    = finalriv_info.loc[finalriv_info['HyLakeId'] == New_Non_Lakeid]
-        sub_coverd_bylake    = sub_coverd_bylake.sort_values(["DA"], ascending = (True))
-        tsubid               = sub_coverd_bylake['SubId'].values[len(sub_coverd_bylake) - 1]
+    All_Mergedcatchments = finalriv_info[finalriv_info['SubId'].isin(Merged_subids)]
+    All_Mergedcatchments = All_Mergedcatchments.sort_values(["Strahler"], ascending = (True))
+    Seg_IDS              = All_Mergedcatchments['Seg_ID'].values
+    Seg_IDS              = np.unique(Seg_IDS)   
+    routing_info         = All_Mergedcatchments[['SubId','DowSubId']].astype('float').values  
+
+    for iseg in range(0,len(Seg_IDS)):
+#            print('#########################################################################################33333')
+        i_seg_id        = Seg_IDS[iseg]
+        i_seg_info      = All_Mergedcatchments[All_Mergedcatchments['Seg_ID'] == i_seg_id]                      
+        i_seg_info      = i_seg_info.sort_values(["Seg_order"], ascending = (True))    
         
-        New_NonC_Lakeinfo.loc[i,'Gridcode']    = New_Non_Lakeid
-        New_NonC_Lakeinfo.loc[i,'Gridcodes']    = New_Non_Lakeid
-        New_NonC_Lakeinfo.loc[i,'value']       = New_Non_Lakeid
-        New_NonC_Lakeinfo.loc[i,'DA_Area']     = sub_coverd_bylake['DA'].values[len(sub_coverd_bylake) - 1]
-        New_NonC_Lakeinfo.loc[i,'Area_m']      = sub_coverd_bylake['DA'].values[len(sub_coverd_bylake) - 1]
+        Lakeids_in_seg  = i_seg_info['HyLakeId'].values
+        Lakeids_in_seg  = Lakeids_in_seg[Lakeids_in_seg > 0]
+        Lakeids_in_seg  = np.unique(Lakeids_in_seg)
         
-        New_NonC_Lakeinfo.loc[i,'SubId_riv']   = tsubid
-        New_NonC_Lakeinfo.loc[i,'DownLakeID']  = -1.2345
         
-        New_NonC_Lakeinfo.loc[i,'HyLakeId']    = New_Lake_info['Hylak_id'].values
-        New_NonC_Lakeinfo.loc[i,'LakeVol']     = New_Lake_info['Vol_total'].values
-        New_NonC_Lakeinfo.loc[i,'LakeDepth']   = New_Lake_info['Depth_avg'].values
-        New_NonC_Lakeinfo.loc[i,'LakeArea']    = New_Lake_info['Lake_area'].values
-        New_NonC_Lakeinfo.loc[i,'Laketype']    = New_Lake_info['Lake_type'].values
+        if len(Lakeids_in_seg) <= 0:  ### No connected lake in this segment
+            continue
+            
+        if ConLakeId > 0:
+            Lakeids_in_seg = Lakeids_in_seg[Lakeids_in_seg != ConLakeId]
+            
+        Con_to_NonCon_Lakeids = Lakeids_in_seg            
+        print("################################################################################")
+        print(Con_to_NonCon_Lakeids,i_seg_id)
+        for i in range(0,len(Con_to_NonCon_Lakeids)):
+            New_Non_Lakeid       = Con_to_NonCon_Lakeids[i]
+            New_Lake_info        = Connect_Lake_ply_info.loc[Connect_Lake_ply_info['Hylak_id'] == New_Non_Lakeid]
+            sub_coverd_bylake    = finalriv_info.loc[finalriv_info['HyLakeId'] == New_Non_Lakeid]
+            sub_coverd_bylake    = sub_coverd_bylake.sort_values(["DA"], ascending = (True))
+            tsubid               = sub_coverd_bylake['SubId'].values[len(sub_coverd_bylake) - 1]
+            
+            if sub_coverd_bylake['Seg_ID'].values[len(sub_coverd_bylake) - 1] != i_seg_id:
+                print(New_Non_Lakeid,sub_coverd_bylake['Seg_ID'].values[len(sub_coverd_bylake) - 1],i_seg_id)
+                continue
+                
+            New_NonC_Lakeinfo = pd.DataFrame(np.full((1,len(NonC_Lakeinfo.columns)),np.nan), columns = NonC_Lakeinfo.columns)
+            
+            Upstreamcats         = Defcat(routing_info,tsubid)
+            
+            New_NonC_Lakeinfo.loc[0,'Gridcode']    = New_Non_Lakeid
+            New_NonC_Lakeinfo.loc[0,'Gridcodes']   = New_Non_Lakeid
+            New_NonC_Lakeinfo.loc[0,'value']       = New_Non_Lakeid
+            New_NonC_Lakeinfo.loc[0,'DA_Area']     = sub_coverd_bylake['DA'].values[len(sub_coverd_bylake) - 1]
+        
+            New_NonC_Lakeinfo.loc[0,'SubId_riv']   = tsubid
+            New_NonC_Lakeinfo.loc[0,'DownLakeID']  = -1.2345
+        
+            New_NonC_Lakeinfo.loc[0,'HyLakeId']    = New_Lake_info['Hylak_id'].values
+            New_NonC_Lakeinfo.loc[0,'LakeVol']     = New_Lake_info['Vol_total'].values
+            New_NonC_Lakeinfo.loc[0,'LakeDepth']   = New_Lake_info['Depth_avg'].values
+            New_NonC_Lakeinfo.loc[0,'LakeArea']    = New_Lake_info['Lake_area'].values
+            New_NonC_Lakeinfo.loc[0,'Laketype']    = New_Lake_info['Lake_type'].values
+            
+            mask1                                  = NonC_Lakeinfo['SubId_riv'].isin(Upstreamcats)
+            mask2                                  = NonC_Lakeinfo['DownLakeID'].values < 0 
+            
+            Lake_To_Current_Lake                   = np.logical_and(mask1,mask2)
+            
+            
+            NonC_Lakeinfo.loc[Lake_To_Current_Lake,'DownLakeID'] = New_Non_Lakeid
+            
+            DA_areas                                             = NonC_Lakeinfo.loc[Lake_To_Current_Lake,'DA_Area'].values
+            New_NonC_Lakeinfo.loc[0,'Area_m']                    = sub_coverd_bylake['DA'].values[len(sub_coverd_bylake) - 1] - np.sum(DA_areas)
+            
+            NonC_Lakeinfo = pd.concat([NonC_Lakeinfo, New_NonC_Lakeinfo], ignore_index=True)
+            print(New_NonC_Lakeinfo)
     
     
-    
-    return New_NonC_Lakeinfo    
+    return NonC_Lakeinfo    
 
 ############    
 class LRRT:
@@ -2238,6 +2282,11 @@ class LRRT:
         NonConn_Lakes               = Dbf5(NonConn_Lakes)
         NonConn_Lakes               = NonConn_Lakes.to_dataframe()
         NonConn_Lakes['SubId_riv']  = pd.to_numeric(NonConn_Lakes['SubId_riv'], downcast='float')
+        NonConn_Lakes['DownLakeID'] = pd.to_numeric(NonConn_Lakes['DownLakeID'], downcast='float')
+        NonConn_Lakes['Area_m']     = pd.to_numeric(NonConn_Lakes['Area_m'], downcast='float')
+        NonConn_Lakes['DA_Area']    = pd.to_numeric(NonConn_Lakes['DA_Area'], downcast='float')
+        
+        New_NonConn_Lakes           = NonConn_Lakes.copy(deep = True)
         
         Conn_Lakes_ply              = Path_Conl_ply[:-3] + "dbf"
         Conn_Lakes_ply              = Dbf5(Conn_Lakes_ply)
@@ -2290,6 +2339,7 @@ class LRRT:
                     mask          = np.in1d(seg_sub_ids, processed_subid)
                     seg_sub_ids   = seg_sub_ids[np.logical_not(mask)]
                     mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalriv_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = seg_sub_ids,mainriv = Selected_riv,Islake = 2,seg_order = seg_order) 
+                    New_NonConn_Lakes = ConnectLake_to_NonConnectLake_Updateinfo(NonC_Lakeinfo = New_NonConn_Lakes,finalriv_info = finalriv_info ,Merged_subids = seg_sub_ids,Connect_Lake_ply_info = Conn_Lakes_ply,ConLakeId = iorder_Lakeid)
                     modifysubids   = []
                     seg_order      = seg_order + 1
                         
@@ -2315,6 +2365,7 @@ class LRRT:
                     mask          = np.in1d(seg_sub_ids, processed_subid)
                     seg_sub_ids   = seg_sub_ids[np.logical_not(mask)]
                     mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalriv_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = seg_sub_ids,mainriv = Selected_riv,Islake = 2,seg_order = seg_order) 
+                    New_NonConn_Lakes = ConnectLake_to_NonConnectLake_Updateinfo(NonC_Lakeinfo = New_NonConn_Lakes,finalriv_info = finalriv_info ,Merged_subids = seg_sub_ids,Connect_Lake_ply_info = Conn_Lakes_ply,ConLakeId = iorder_Lakeid)
                     modifysubids   = []
                     seg_order      = seg_order + 1
 
@@ -2322,6 +2373,7 @@ class LRRT:
         ## select river based on river ids 
         Path_Temp_final_rviply = os.path.join(self.tempfolder,'temp1_finalriv_ply.shp')
         Path_Temp_final_rvi    = os.path.join(self.tempfolder,'temp1_finalriv.shp')
+        
             
         Selectfeatureattributes(processing,Input = Path_final_riv    ,Output=Path_Temp_final_rvi    ,Attri_NM = 'SubId',Values = Selected_riv_ids)
         processing.run("native:dissolve", {'INPUT':Path_final_rviply,'FIELD':['SubId'],'OUTPUT':Path_Temp_final_rviply},context = context)   
@@ -2338,7 +2390,7 @@ class LRRT:
         
         #### export lake polygons 
         
-                    
+        New_NonConn_Lakes.to_csv(os.path.join(outputfolder_subid,'Non_connect_lake_info.csv'),index='False')            
         Selectfeatureattributes(processing,Input =Path_Conl_ply ,Output=os.path.join(outputfolder_subid,ConnL_ply_NM),Attri_NM = 'Hylak_id',Values = Connected_Lake_Mainriv)        
         Selectfeatureattributes(processing,Input =Path_Non_ConL_ply ,Output=os.path.join(outputfolder_subid,Non_ConnL_ply_NM),Attri_NM = 'Hylak_id',Values = NonConn_Lakes['value'].values)
         
@@ -2346,7 +2398,6 @@ class LRRT:
         
         Copyfeature_to_another_shp_by_attribute(Source_shp = Path_Conl_ply,Target_shp =os.path.join(outputfolder_subid,Non_ConnL_ply_NM),Col_NM='Hylak_id',Values=Conn_To_NonConlakeids,Attributes = Conn_Lakes_ply)
         
-#        ConnectLake_to_NonConnectLake_Updateinfo(NonC_Lakeinfo = NonConn_Lakes,finalriv_info = finalriv_info,Con_to_NonCon_Lakeids = Conn_To_NonConlakeids,Connect_Lake_ply_info = Conn_Lakes)
         
         Path_out_final_rviply = os.path.join(outputfolder_subid,'finalriv_ply.shp')
         Path_out_final_rvi    = os.path.join(outputfolder_subid,'finalriv.shp')            
