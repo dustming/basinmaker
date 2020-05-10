@@ -950,8 +950,6 @@ def UpdateTopology(mapoldnew_info,UpdateStreamorder = 1,UpdateSubId = 1):
     
 #######
 def Copyfeature_to_another_shp_by_attribute(Source_shp,Target_shp,Col_NM='SubId',Values=[-1],Attributes = [-1]):
-    print(Source_shp)
-    print(Target_shp)
     layer_src=QgsVectorLayer(Source_shp,"")
     layer_trg=QgsVectorLayer(Target_shp,"")
     
@@ -1003,8 +1001,7 @@ def ConnectLake_to_NonConnectLake_Updateinfo(NonC_Lakeinfo,finalriv_info,Merged_
             Lakeids_in_seg = Lakeids_in_seg[Lakeids_in_seg != ConLakeId]
             
         Con_to_NonCon_Lakeids = Lakeids_in_seg            
-        print("################################################################################")
-        print(Con_to_NonCon_Lakeids,i_seg_id)
+
         for i in range(0,len(Con_to_NonCon_Lakeids)):
             New_Non_Lakeid       = Con_to_NonCon_Lakeids[i]
             New_Lake_info        = Connect_Lake_ply_info.loc[Connect_Lake_ply_info['Hylak_id'] == New_Non_Lakeid]
@@ -1013,7 +1010,7 @@ def ConnectLake_to_NonConnectLake_Updateinfo(NonC_Lakeinfo,finalriv_info,Merged_
             tsubid               = sub_coverd_bylake['SubId'].values[len(sub_coverd_bylake) - 1]
             
             if sub_coverd_bylake['Seg_ID'].values[len(sub_coverd_bylake) - 1] != i_seg_id:
-                print(New_Non_Lakeid,sub_coverd_bylake['Seg_ID'].values[len(sub_coverd_bylake) - 1],i_seg_id)
+#                print(New_Non_Lakeid,sub_coverd_bylake['Seg_ID'].values[len(sub_coverd_bylake) - 1],i_seg_id)
                 continue
                 
             New_NonC_Lakeinfo = pd.DataFrame(np.full((1,len(NonC_Lakeinfo.columns)),np.nan), columns = NonC_Lakeinfo.columns)
@@ -1046,7 +1043,6 @@ def ConnectLake_to_NonConnectLake_Updateinfo(NonC_Lakeinfo,finalriv_info,Merged_
             New_NonC_Lakeinfo.loc[0,'Area_m']                    = sub_coverd_bylake['DA'].values[len(sub_coverd_bylake) - 1] - np.sum(DA_areas)
             
             NonC_Lakeinfo = pd.concat([NonC_Lakeinfo, New_NonC_Lakeinfo], ignore_index=True)
-            print(New_NonC_Lakeinfo)
     
     
     return NonC_Lakeinfo    
@@ -2392,7 +2388,7 @@ class LRRT:
         
         New_NonConn_Lakes.to_csv(os.path.join(outputfolder_subid,'Non_connect_lake_info.csv'),index='False')            
         Selectfeatureattributes(processing,Input =Path_Conl_ply ,Output=os.path.join(outputfolder_subid,ConnL_ply_NM),Attri_NM = 'Hylak_id',Values = Connected_Lake_Mainriv)        
-        Selectfeatureattributes(processing,Input =Path_Non_ConL_ply ,Output=os.path.join(outputfolder_subid,Non_ConnL_ply_NM),Attri_NM = 'Hylak_id',Values = NonConn_Lakes['value'].values)
+        Selectfeatureattributes(processing,Input =Path_Non_ConL_ply ,Output=os.path.join(outputfolder_subid,Non_ConnL_ply_NM),Attri_NM = 'Hylak_id',Values = New_NonConn_Lakes['value'].values)
         
         ###
         
