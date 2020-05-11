@@ -2411,17 +2411,7 @@ class LRRT:
         
         ######################################################################
         
-        
 
-
-
-        
-     
-#        Path_final_rviply = os.path.join(Datafolder,finalrvi_ply_NM)
-#        Path_final_riv    = os.path.join(Datafolder,finalriv_NM)
-#        Path_Non_ConL_cat = os.path.join(Datafolder,Non_ConnL_Cat_NM)
-#        Path_Conl_ply     = os.path.join(Datafolder,ConnL_ply_NM)
-#        Path_Non_ConL_ply = os.path.join(Datafolder,Non_ConnL_ply_NM)   
              
 ###########################################################################3
     def SelectLakes(self,Datafolder,finalrvi_ply_NM = 'finalriv_info_ply.shp',Non_ConnL_Cat_NM = 'Non_con_lake_cat_info.shp',Non_ConnL_ply_NM='Non_Con_Lake_Ply.shp',
