@@ -2,6 +2,7 @@
 from qgis.core import *
 import qgis
 from qgis.analysis import QgsNativeAlgorithms
+from qgis.PyQt.QtCore import *
 from simpledbf import Dbf5
 import os
 import sys
@@ -1818,7 +1819,7 @@ class LRRT:
         catinfodf['Obs_NM']   =catinfodf['Obs_NM'].astype(str)         
         catinfodf['SRC_obs']  =catinfodf['SRC_obs'].astype(str)   
                    
-        catinfo,NonConcLakeInfo= Generatecatinfo_riv(nstr_seg_array,acc_array,dir_array,Lake1_arr,dem_array,
+        catinfo,NonConcLakeInfo= Generatecatinfo_riv(Netcat_array,acc_array,dir_array,Lake1_arr,dem_array,
              catinfodf,allcatid,width_array,depth_array,obs_array,slope_array,aspect_array,landuse_array,
              slope_deg_array,Q_mean_array,Netcat_array,landuseinfo,allLakinfo,self.nrows,self.ncols,
              rivleninfo.astype(float),catareainfo.astype(float),obsinfo,NonConcLakeInfo,NonCL_array) 
@@ -2713,7 +2714,137 @@ class LRRT:
             Readed_Data['ModelTime'] = Readed_Data.index.strftime('%m-%d-%Y')
             plotGuagelineobs(Scenario_NM,Readed_Data,os.path.join(self.OutputFolder,obs_nm + '.pdf'))
             
+    
+    def GeneratelandandlakeHRUS(self,Datafolder,Finalcat_NM = "finalcat_info.shp",Connect_Lake_ply = 'Con_Lake_Ply.shp'):
+        
+        QgsApplication.setPrefixPath(self.qgisPP, True)
+        Qgs = QgsApplication([],False)
+        Qgs.initQgis()
+        from qgis import processing
+        from processing.core.Processing import Processing
+        from processing.tools import dataobjects
+        feedback = QgsProcessingFeedback()
+        Processing.initialize()
+        QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
+        context = dataobjects.createContext()
+        context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
+        
+        
+        Path_finalcat_info    = os.path.join(Datafolder,Finalcat_NM)
+        Path_Connect_Lake_ply = os.path.join(Datafolder,Connect_Lake_ply)
+        Path_temp_finalcat_info    = os.path.join(self.tempfolder,Finalcat_NM)
+        Path_temp_Connect_Lake_ply = os.path.join(self.tempfolder,Connect_Lake_ply)
+        
+        Path_finalcat_hru     = os.path.join(Datafolder,"finalcat_hru_info.shp")
+        Path_finalcat_hru2    = os.path.join(Datafolder,"finalcat_hru_info2.shp")
+        
+        processing.run("native:fixgeometries", {'INPUT':Path_finalcat_info,'OUTPUT':Path_temp_finalcat_info})
+        processing.run("native:fixgeometries", {'INPUT':Path_Connect_Lake_ply,'OUTPUT':Path_temp_Connect_Lake_ply})
+        
+        processing.run("native:union", {'INPUT':Path_temp_finalcat_info,'OVERLAY':Path_temp_Connect_Lake_ply,'OVERLAY_FIELDS_PREFIX':'','OUTPUT':Path_finalcat_hru},context = context)        
+#        processing.run("native:dissolve", {'INPUT':Path_Temp_final_rviply,'FIELD':['SubId'],'OUTPUT':Path_final_rviply},context = context)
+#        processing.run("qgis:fieldcalculator", {'INPUT':,'FIELD_NAME':'HRU_ID','FIELD_TYPE':0,'FIELD_LENGTH':7,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1.2345','OUTPUT':Path_finalcat_hru2})
+        
+        finalcat_info_csv     = Path_finalcat_hru[:-3] + "dbf"
+        finalcat_info         = Dbf5(finalcat_info_csv)
+        finalcat_info         = finalcat_info.to_dataframe()
+        
+        finalcat_info['HyLakeId']  = finalcat_info['HyLakeId'].astype(float)
+        finalcat_info['Hylak_id']  = finalcat_info['Hylak_id'].astype(float)  
+        finalcat_info['SubId']     = finalcat_info['SubId'].astype(float)  
+                
+        mapoldnew_info        = finalcat_info.copy(deep = True)
+        mapoldnew_info['HRU_ID'] = np.nan
+        mapoldnew_info['HRU_Area'] = np.nan
+        
+        
+        Connect_Lakeids       = finalcat_info['HyLakeId'].values
+        Connect_Lakeids       = Connect_Lakeids[Connect_Lakeids > 0]
+        Connect_Lakeids       = np.unique(Connect_Lakeids)
+        
+#        print(mapoldnew_info['SubId'].values)
+        maxsubid              = np.nanmax(mapoldnew_info['SubId'].values)
+    
+        for i in range(0,len(mapoldnew_info)):
+            subid        = mapoldnew_info['SubId'].values[i]
+            sub_lakeid   = mapoldnew_info['HyLakeId'].values[i]
+            Lake_lakeid  = mapoldnew_info['Hylak_id'].values[i]
             
+            
+            
+            if sub_lakeid < 0:  ### non lake catchment
+                print("1",subid,sub_lakeid,Lake_lakeid)
+                mapoldnew_info.loc[i,'HRU_ID']   = int(subid)    ### each hru id is determined by subid and maxsubid 
+                mapoldnew_info.loc[i,'HRU_Area'] = mapoldnew_info['BasArea'].values[i]
+#                mapoldnew_info.loc[i,'Hylak_id'] = np.nan
+                
+            if sub_lakeid > 0: ### lake catchmen
+                print("2",subid,sub_lakeid,Lake_lakeid)
+                if sub_lakeid == Lake_lakeid:  ### lake hru 
+                    print("3",subid,sub_lakeid,Lake_lakeid)
+                    mapoldnew_info.loc[i,'HRU_ID']   = int(maxsubid) + int(subid)
+                    mapoldnew_info.loc[i,'HRU_Area'] = mapoldnew_info['LakeArea'].values[i]*1000*1000
+                else:
+                    mapoldnew_info.loc[i,'HRU_ID']   = int(subid)
+                    landarea = mapoldnew_info['BasArea'].values[i] - mapoldnew_info['LakeArea'].values[i]*1000*1000
+                    landarea = max(landarea,mapoldnew_info['BasArea'].values[i]*0.05)
+                    mapoldnew_info.loc[i,'HRU_Area'] = landarea
+#                    mapoldnew_info.loc[i,'Hylak_id'] = np.nan
+        
+        layer_cat=QgsVectorLayer(Path_finalcat_hru,"")
+        layer_cat.dataProvider().addAttributes([QgsField('HRU_ID', QVariant.Int),QgsField('HRU_Area', QVariant.Double)])
+        layer_cat.dataProvider().deleteAttributes([35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54])
+        layer_cat.updateFields()
+        layer_cat.commitChanges()
+        
+        
+        Attri_Name = layer_cat.fields().names()     
+        features = layer_cat.getFeatures()      
+        with edit(layer_cat):
+            for sf in features:
+                print("########################################################################")
+                subid_sf   = sf['SubId']
+                try:
+                    subid_sf = float(subid_sf)
+                except TypeError:
+                    subid_sf = -1
+                    pass
+                    
+                if subid_sf < 0:
+                    continue
+                                    
+                lakelakeid_sf   = sf['Hylak_id']
+                try:
+                    lakelakeid_sf = float(lakelakeid_sf)
+                except TypeError:
+                    lakelakeid_sf = -1
+                    pass
+                print(subid_sf,lakelakeid_sf)
+                
+                if lakelakeid_sf < 0:
+                    mask1           = mapoldnew_info['SubId'].values    == subid_sf
+                    mask2           = np.isnan(mapoldnew_info['Hylak_id'].values)
+                    maskand         = np.logical_and(mask1,mask2)
+                else:
+                    mask1           = mapoldnew_info['SubId'].values    == subid_sf
+                    mask2           = mapoldnew_info['Hylak_id'].values == lakelakeid_sf
+                    maskand         = np.logical_and(mask1,mask2)
+                srcinfo             = mapoldnew_info.loc[maskand,['HRU_ID','HRU_Area','Hylak_id']]
+
+#                centroidxy = sf.geometry().centroid().asPoint()
+                print(srcinfo)
+                sf['HRU_ID']   = float(srcinfo['HRU_ID'].values[0])
+                sf['HRU_Area'] = float(srcinfo['HRU_Area'].values[0])
+                sf['Hylak_id'] = float(srcinfo['Hylak_id'].values[0])
+                layer_cat.updateFeature(sf)
+        del layer_cat
+        
+        processing.run("native:dissolve", {'INPUT':Path_finalcat_hru,'FIELD':['HRU_ID'],'OUTPUT':Path_finalcat_hru2},context = context)
+        
+
+            
+
+        
 ###########################################################################################33
 # Individule functions  not used in 
 ###################################################################################

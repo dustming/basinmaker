@@ -312,21 +312,28 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
         trow,tcol = Getbasinoutlet(catid,finalcat,fac,fdir,nrows,ncols)
         k = 1
         ttrow,ttcol = trow,tcol
+        print("############################################################################################3")
+        print(trow,tcol)
         while catinfo['DowSubId'].values[i] < 0 and k < 20:
             nrow,ncol = Nextcell(fdir,ttrow,ttcol)### get the downstream catchment id
             if nrow < 0 or ncol < 0:
                 catinfo.loc[i,'DowSubId'] = -1
+                print(catid,catinfo.loc[i,'DowSubId'],nrow,ncol) 
                 break;
             elif nrow >= nrows or ncol >= ncols:
                 catinfo.loc[i,'DowSubId'] = -1
+                print(catid,catinfo.loc[i,'DowSubId'],nrow,ncol) 
                 break;
-            elif finalcat[nrow,ncol] <= 0:
+            elif finalcat[nrow,ncol] <= 0 or finalcat[nrow,ncol] == catid:
                 catinfo.loc[i,'DowSubId'] = -1
+                print(catid,catinfo.loc[i,'DowSubId'],nrow,ncol,finalcat[nrow,ncol]) 
             else:
                 catinfo.loc[i,'DowSubId'] = finalcat[nrow,ncol]
+                print(catid,catinfo.loc[i,'DowSubId'],nrow,ncol,finalcat[nrow,ncol]) 
             k = k + 1
             ttrow = nrow
-            ttcol = ncol 
+            ttcol = ncol
+
 ################################## Get lake information        
         lakeinriv = lake[catmask]
         lakeids = np.unique(lakeinriv)
