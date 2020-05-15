@@ -28,9 +28,16 @@ def DownloadStreamflowdata_CA(Station_NM,CA_HYDAT,StartYear,EndYear):
     ## obtain streamflow data
     sqlstat = "select * from DLY_FLOWS WHERE STATION_NUMBER = ?"
     Readed_Streamflow = pd.read_sql_query(sqlstat, con, params=[Station_NM])
+    
     Readed_Streamflow = Readed_Streamflow[Readed_Streamflow['YEAR'] >= StartYear]
     Readed_Streamflow = Readed_Streamflow[Readed_Streamflow['YEAR'] <= EndYear]
     ## Initial dataframe 
+    if len(Readed_Streamflow) == 0:
+        flowdata = -1
+        obs_DA   = -9999
+        obtaindata = -1 
+        return flowdata,obs_DA,obtaindata
+        
     year_ini  = Readed_Streamflow['YEAR'].values[0]
     mon_ini   = Readed_Streamflow['MONTH'].values[0]
     year_end  = Readed_Streamflow['YEAR'].values[len(Readed_Streamflow) - 1]
