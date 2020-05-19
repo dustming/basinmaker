@@ -938,10 +938,11 @@ def UpdateTopology(mapoldnew_info,UpdateStreamorder = 1,UpdateSubId = 1):
     
         mapoldnew_info['DowSubId'] = mapoldnew_info['ndownsubid']
     
-    if UpdateStreamorder <0:
+    if UpdateStreamorder < 0:
         return mapoldnew_info
         
     mapoldnew_info_unique      = mapoldnew_info.drop_duplicates('SubId', keep='first')
+
     mapoldnew_info_unique      = Streamorderanddrainagearea(mapoldnew_info_unique)
 
     for i in range(0,len(mapoldnew_info_unique)):
@@ -2277,6 +2278,7 @@ class LRRT:
         finalriv_info    = finalriv_info.to_dataframe().drop_duplicates(sub_colnm, keep='first')
               
         Selected_riv     = finalriv_info.loc[finalriv_info[DA_colnm] >= Area_Min*1000*1000] # find river with drainage area larger than area thresthold 
+
         Selected_riv     = UpdateTopology(Selected_riv,UpdateSubId = -1)
         Selected_riv     = Selected_riv.sort_values(["Strahler"], ascending = (True))   ###sort selected river by Strahler stream order 
         Subid_main       = Selected_riv[sub_colnm].values
@@ -2415,8 +2417,8 @@ class LRRT:
         Copyfeature_to_another_shp_by_attribute(Source_shp = Path_Conl_ply,Target_shp =os.path.join(outputfolder_subid,Non_ConnL_ply_NM),Col_NM='Hylak_id',Values=Conn_To_NonConlakeids,Attributes = Conn_Lakes_ply)
         
         
-        Path_out_final_rviply = os.path.join(outputfolder_subid,'finalriv_ply.shp')
-        Path_out_final_rvi    = os.path.join(outputfolder_subid,'finalriv.shp')            
+        Path_out_final_rviply = os.path.join(outputfolder_subid,finalrvi_ply_NM)
+        Path_out_final_rvi    = os.path.join(outputfolder_subid,finalriv_NM)            
         processing.run("native:dissolve", {'INPUT':Path_Temp_final_rviply,'FIELD':['SubId'],'OUTPUT':Path_out_final_rviply},context = context)
         processing.run("native:dissolve", {'INPUT':Path_Temp_final_rvi,'FIELD':['SubId'],'OUTPUT':Path_out_final_rvi},context = context)
         
@@ -2489,11 +2491,11 @@ class LRRT:
             os.makedirs(OutFolderSelectedLakes)     
         
         
-               
+        print(Selected_Non_ConnLakes)       
         Selectfeatureattributes(processing,Input = os.path.join(Datafolder,Non_ConnL_Cat_NM) ,Output=os.path.join(OutFolderSelectedLakes,Non_ConnL_Cat_NM),Attri_NM = 'value',Values = Selected_Non_ConnLakes)
 
         Selectfeatureattributes(processing,Input = os.path.join(Datafolder,Non_ConnL_ply_NM),Output=os.path.join(OutFolderSelectedLakes,Non_ConnL_ply_NM),Attri_NM = 'Hylak_id',Values = Selected_Non_ConnLakes)
-        
+        print(Selected_ConnLakes) 
         Selectfeatureattributes(processing,Input = os.path.join(Datafolder,ConnL_ply_NM),Output=os.path.join(OutFolderSelectedLakes,ConnL_ply_NM),Attri_NM = 'Hylak_id',Values = Selected_ConnLakes)
         
         

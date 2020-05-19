@@ -40,7 +40,10 @@ def Streamorderanddrainagearea(catinfo):
             Up_Reaches_info = catinfo[catinfo['DowSubId'] == catid]
             cur_Reach_info = catinfo[catinfo['SubId'] == catid]
             curcat_idx = catinfo['SubId'] == catid
-
+            
+            if(len(cur_Reach_info) <= 0):  ### reach the most downstream of the watersheds
+                break
+            
             if len(Up_Reaches_info) == 1:   ### only have one upstream 
                 catinfo.loc[curcat_idx,'DA'] = cur_Reach_info['BasArea'].values[0] + Up_Reaches_info['DA'].values[0]
                 catinfo.loc[curcat_idx,'Strahler'] = Up_Reaches_info['Strahler'].values[0]
