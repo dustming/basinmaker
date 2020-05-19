@@ -264,6 +264,7 @@ def selectlake(hylake,noncnlake,NonConLThres,hylakeinfo):
     sl_lake = copy.copy(hylake)
     arlakeid = np.unique(noncnlake)
     arlakeid = arlakeid[arlakeid>=0]
+    Non_con_lakeids = []
     for i in range(0,len(arlakeid)):
         sl_lid = arlakeid[i] ### get lake id
         sl_rowcol = np.argwhere(noncnlake==sl_lid).astype(int) ### get the row and col of lake
@@ -273,12 +274,14 @@ def selectlake(hylake,noncnlake,NonConLThres,hylakeinfo):
             continue
         if slakeinfo.iloc[0]['Lake_area'] >= NonConLThres:
             sl_lake[sl_rowcol[:,0],sl_rowcol[:,1]] = sl_lid
-    return sl_lake
+            Non_con_lakeids.append(sl_lid)
+    return sl_lake,Non_con_lakeids
 
 def selectlake2(hylake,Lakehres,hylakeinfo):
     sl_lake = copy.copy(hylake)
     arlakeid = np.unique(sl_lake)
     arlakeid = arlakeid[arlakeid>=0]
+    con_lakeids = []
     for i in range(0,len(arlakeid)):
         sl_lid = arlakeid[i] ### get lake id
         sl_rowcol = np.argwhere(sl_lake==sl_lid).astype(int) ### get the row and col of lake
@@ -291,7 +294,8 @@ def selectlake2(hylake,Lakehres,hylakeinfo):
         if slakeinfo.iloc[0]['Lake_area'] < Lakehres:
 #            print("Lake excluded     due to area " + str(sl_lid))
             sl_lake[sl_rowcol[:,0],sl_rowcol[:,1]] = -9999
-    return sl_lake
+            con_lakeids.append(sl_lid)
+    return sl_lake,con_lakeids
 
 ##################################################################3
 
@@ -1462,14 +1466,29 @@ class LRRT:
         obs_array     = garray.array(mapname="obs")
 
 ###### generate selected lakes 
-        hylake1 = selectlake2(conlake_arr,VolThreshold,allLakinfo) ### remove lakes with lake area smaller than the VolThreshold from connected lake raster 
+        hylake1,Selected_Con_Lakes = selectlake2(conlake_arr,VolThreshold,allLakinfo) ### remove lakes with lake area smaller than the VolThreshold from connected lake raster 
         if NonConLThres >= 0:
-            Lake1 = selectlake(hylake1,noncnlake_arr,NonConLThres,allLakinfo) ### remove lakes with lake area smaller than the NonConLThres from non-connected lake raster 
+            Lake1, Selected_Non_Con_Lakes_ids = selectlake(hylake1,noncnlake_arr,NonConLThres,allLakinfo) ### remove lakes with lake area smaller than the NonConLThres from non-connected lake raster 
         else:
             Lake1 = hylake1
+
+        temparray[:,:] = hylake1[:,:]
+        temparray.write(mapname="Select_Connected_lakes", overwrite=True)
+        grass.run_command('r.null', map='Select_Connected_lakes',setnull=-9999)
+        grass.run_command('r.out.gdal', input = 'Select_Connected_lakes',output = os.path.join(self.tempfolder,'Select_Connected_lakes.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
+        
+        Selectedlaeks = copy.deepcopy(Lake1)    
+        maks                = hylake1 > 0
+        Selectedlaeks[maks] = -9999
+        temparray[:,:] = Selectedlaeks[:,:]
+        temparray.write(mapname="Select_Noon_Connected_lakes", overwrite=True)
+        grass.run_command('r.null', map='Select_Noon_Connected_lakes',setnull=-9999)
+        grass.run_command('r.out.gdal', input = 'Select_Noon_Connected_lakes',output = os.path.join(self.tempfolder,'Select_Noon_Connected_lakes.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
+        
         temparray[:,:] = Lake1[:,:]
         temparray.write(mapname="SelectedLakes", overwrite=True)
         grass.run_command('r.null', map='SelectedLakes',setnull=-9999)
+        
 
 ####    
         Pourpoints = GenerPourpoint(cat1_arr,Lake1,str_array,self.nrows,self.ncols,blid,bsid,bcid,acc_array,dir_array)
@@ -1605,7 +1624,7 @@ class LRRT:
         str_grass_r_array = garray.array(mapname="str_grass_r")  # river networkt raster, each river has unique id
         acc_array         = np.absolute(garray.array(mapname="acc_grass"))
         NonCL_array       = garray.array(mapname="Non_con_lake_cat")
-        conlake_arr       = garray.array(mapname="Connect_Lake")
+        conlake_arr       = garray.array(mapname="Select_Connected_lakes")
         self.ncols        = int(finalcat_arr.shape[1])                  # obtain rows and cols
         self.nrows        = int(finalcat_arr.shape[0])  
         
@@ -1764,9 +1783,9 @@ class LRRT:
         ### Add attributes to each catchments 
         # read raster arrays 
         Lake1_arr = garray.array(mapname="SelectedLakes")  
-        noncnlake_arr = garray.array(mapname="Nonconnect_Lake")
+        noncnlake_arr = garray.array(mapname="Select_Noon_Connected_lakes")
         NonCL_array = garray.array(mapname="Non_con_lake_cat")
-        conlake_arr = garray.array(mapname="Connect_Lake")  
+        conlake_arr = garray.array(mapname="Select_Connected_lakes")  
         dem_array = garray.array(mapname="dem")
         width_array = garray.array(mapname="width")
         depth_array = garray.array(mapname="depth")
@@ -1819,7 +1838,7 @@ class LRRT:
         catinfodf['Obs_NM']   =catinfodf['Obs_NM'].astype(str)         
         catinfodf['SRC_obs']  =catinfodf['SRC_obs'].astype(str)   
                    
-        catinfo,NonConcLakeInfo= Generatecatinfo_riv(Netcat_array,acc_array,dir_array,Lake1_arr,dem_array,
+        catinfo,NonConcLakeInfo= Generatecatinfo_riv(nstr_seg_array,acc_array,dir_array,conlake_arr,dem_array,
              catinfodf,allcatid,width_array,depth_array,obs_array,slope_array,aspect_array,landuse_array,
              slope_deg_array,Q_mean_array,Netcat_array,landuseinfo,allLakinfo,self.nrows,self.ncols,
              rivleninfo.astype(float),catareainfo.astype(float),obsinfo,NonConcLakeInfo,NonCL_array) 
