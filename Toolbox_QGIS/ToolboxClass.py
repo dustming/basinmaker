@@ -1129,9 +1129,9 @@ class LRRT:
 ##### function to enerate mask based on the most donwstream polygon id
 ##### Output: For using hydroshed products the output is a mask polygon: self.Path_Maskply
 #####         For using non hydroshed product, the output is a mask based on either dem or 
-#####              a rough watershed delineaiton resut. depend on Path_OutletPoint value
+#####              a rough watershed delineaiton resut. depend on OutletPoint value
 #####              at the same time flow directio and accumulation is caculated for this region 
-    def Generatmaskregion(self,Path_OutletPoint = '#'):
+    def Generatmaskregion(self,OutletPoint = '#'):
         #### g
         ### Set up QGIS enviroment 
         QgsApplication.setPrefixPath(self.qgisPP, True)
@@ -1211,10 +1211,10 @@ class LRRT:
             grass.run_command("r.import", input = self.Path_dem, output = 'dem', overwrite = True)
             grass.run_command('g.region', raster='dem')
             #### create watershed mask or use dem as mask
-            if Path_OutletPoint != '#':
+            if OutletPoint != '#':
                 grass.run_command('r.watershed',elevation = 'dem', drainage = 'dir_grass',accumulation = 'acc_grass2',flags = 's', overwrite = True)
                 grass.run_command('r.mapcalc',expression = "acc_grass = abs(acc_grass2@PERMANENT)",overwrite = True)
-                grass.run_command('r.water.outlet',input = 'dir_grass', output = 'wat_mask', coordinates  = Path_OutletPoint,overwrite = True)
+                grass.run_command('r.water.outlet',input = 'dir_grass', output = 'wat_mask', coordinates  = OutletPoint,overwrite = True)
                 grass.run_command('r.mask'  , raster='wat_mask', maskcats = '*',overwrite = True)
                 grass.run_command('g.region', raster='wat_mask',overwrite = True)
             else:
