@@ -482,7 +482,7 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
             catinfo.loc[i,'Q_Mean'] =  -1.2345   
              
     catinfo = Writecatinfotodbf(catinfo)
-    return catinfo,NonConcLakeInfo
+    return catinfo
 
 
 

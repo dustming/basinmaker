@@ -1871,7 +1871,7 @@ class LRRT:
         catinfodf['Obs_NM']   =catinfodf['Obs_NM'].astype(str)         
         catinfodf['SRC_obs']  =catinfodf['SRC_obs'].astype(str)   
                    
-        catinfo,NonConcLakeInfo= Generatecatinfo_riv(nstr_seg_array,acc_array,dir_array,conlake_arr,dem_array,
+        catinfo = Generatecatinfo_riv(nstr_seg_array,acc_array,dir_array,conlake_arr,dem_array,
              catinfodf,allcatid,width_array,depth_array,obs_array,slope_array,aspect_array,landuse_array,
              slope_deg_array,Q_mean_array,Netcat_array,landuseinfo,allLakinfo,self.nrows,self.ncols,
              rivleninfo.astype(float),catareainfo.astype(float),obsinfo,NonConcLakeInfo,NonCL_array,noncnlake_arr) 
@@ -1882,16 +1882,12 @@ class LRRT:
         
             
         catinfo.to_csv(self.Path_finalcatinfo_riv, index = None, header=True)
-        NonConcLakeInfo.to_csv(self.Path_NonCLakeinfo, index = None, header=True)
         
         
         ### add lake info to selected laeks 
         grass.run_command('db.in.ogr', input=self.Path_alllakeinfoinfo,output = 'alllakeinfo',overwrite = True)
         grass.run_command('v.db.join', map= 'SelectedLakes_F',column = 'value', other_table = 'alllakeinfo',other_column ='Hylak_id', overwrite = True)
         
-        grass.run_command('db.in.ogr', input=self.Path_NonCLakeinfo,output = 'result_nonlake',overwrite = True)
-        grass.run_command('v.db.join', map= 'Non_con_lake_cat_1',column = 'Gridcode', other_table = 'result_nonlake',other_column ='Gridcode', overwrite = True)
-        grass.run_command('v.out.ogr', input = 'Non_con_lake_cat_1',output = os.path.join(self.tempfolder,'Non_con_lake_cat_info.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
 
         ### add catchment info to all river segment 
         grass.run_command('db.in.ogr', input=self.Path_finalcatinfo_riv,output = 'result_riv',overwrite = True)
@@ -1917,35 +1913,35 @@ class LRRT:
         
         
         ##### export  lakes
-        ## Non_Connected Lakes
-        NonConcLakeInfo = NonConcLakeInfo[NonConcLakeInfo['SubId_riv'] > 0]
-        NonCL_Lakeids = NonConcLakeInfo['Gridcode'].values
+        NonCL_Lakeids = catinfo.loc[catinfo['IsLake'] == 2]['HyLakeId'].values
         NonCL_Lakeids = np.unique(NonCL_Lakeids)
         NonCL_Lakeids = NonCL_Lakeids[NonCL_Lakeids > 0]
         
-        exp ='Hylak_id' + '  IN  (  ' +  str(int(NonCL_Lakeids[0]))      
-        for i in range(1,len(NonCL_Lakeids)):
-            exp = exp + " , "+str(int(NonCL_Lakeids[i]))        
-        exp = exp + ')'
-        processing.run("native:extractbyexpression", {'INPUT':self.Path_allLakeply,'EXPRESSION':exp,'OUTPUT':os.path.join(self.OutputFolder, 'Non_Con_Lake_Ply.shp')})
+        if len(NonCL_Lakeids) > 0:
+            exp ='Hylak_id' + '  IN  (  ' +  str(int(NonCL_Lakeids[0]))      
+            for i in range(1,len(NonCL_Lakeids)):
+                exp = exp + " , "+str(int(NonCL_Lakeids[i]))        
+            exp = exp + ')'
+            processing.run("native:extractbyexpression", {'INPUT':self.Path_allLakeply,'EXPRESSION':exp,'OUTPUT':os.path.join(self.OutputFolder, 'Non_Con_Lake_Ply.shp')})
 
 
-        exp ='Gridcode' + '  IN  (  ' +  str(int(NonCL_Lakeids[0]))      
-        for i in range(1,len(NonCL_Lakeids)):
-            exp = exp + " , "+str(int(NonCL_Lakeids[i]))        
-        exp = exp + ')'
-        processing.run("native:extractbyexpression", {'INPUT':os.path.join(self.tempfolder,'Non_con_lake_cat_info.shp'),'EXPRESSION':exp,'OUTPUT':os.path.join(self.OutputFolder,'Non_con_lake_cat_info.shp')})
+            exp ='Gridcode' + '  IN  (  ' +  str(int(NonCL_Lakeids[0]))      
+            for i in range(1,len(NonCL_Lakeids)):
+                exp = exp + " , "+str(int(NonCL_Lakeids[i]))        
+            exp = exp + ')'
+            processing.run("native:extractbyexpression", {'INPUT':os.path.join(self.tempfolder,'Non_con_lake_cat_info.shp'),'EXPRESSION':exp,'OUTPUT':os.path.join(self.OutputFolder,'Non_con_lake_cat_info.shp')})
         
         
         ### Non_Connected Lakes
-        CL_Lakeids = catinfo['HyLakeId'].values
+        CL_Lakeids =  catinfo.loc[catinfo['IsLake'] == 1]['HyLakeId'].values
         CL_Lakeids = np.unique(CL_Lakeids)
         CL_Lakeids = CL_Lakeids[CL_Lakeids > 0]
-        exp ='Hylak_id' + '  IN  (  ' +  str(int(CL_Lakeids[0]))      
-        for i in range(1,len(CL_Lakeids)):
-            exp = exp + " , "+str(int(CL_Lakeids[i]))        
-        exp = exp + ')'
-        processing.run("native:extractbyexpression", {'INPUT':self.Path_allLakeply,'EXPRESSION':exp,'OUTPUT':os.path.join(self.OutputFolder, 'Con_Lake_Ply.shp')})
+        if(len(CL_Lakeids)) > 0:
+            exp ='Hylak_id' + '  IN  (  ' +  str(int(CL_Lakeids[0]))      
+            for i in range(1,len(CL_Lakeids)):
+                exp = exp + " , "+str(int(CL_Lakeids[i]))        
+            exp = exp + ')'
+            processing.run("native:extractbyexpression", {'INPUT':self.Path_allLakeply,'EXPRESSION':exp,'OUTPUT':os.path.join(self.OutputFolder, 'Con_Lake_Ply.shp')})
         
         Qgs.exit()  
 
