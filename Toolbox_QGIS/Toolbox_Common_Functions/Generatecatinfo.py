@@ -305,56 +305,66 @@ def Generatecatinfo(Watseds,fac,fdir,lake,dem,area,catinfo,allcatid,lakeinfo,wid
 
 def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
                     obs,slope,aspect,landuse,slop_deg,Q_Mean,netcat,landuseinfo,lakeinfo,
-                    nrows,ncols,leninfo,areainfo,obsinfo,NonConcLakeInfo,NonCL_array):
+                    nrows,ncols,leninfo,areainfo,obsinfo,NonConcLakeInfo,NonCL_array,noncnlake_arr):
     finalcat = copy.copy(netcat)
     for i in range(0,len(allcatid)):
         catid = allcatid[i].astype(int)
-        catmask2 = netcat ==catid
+        catmask2 = netcat ==catid      #### catchemnt mask
         catinfo.loc[i,'SubId'] = catid
-        catmask = Watseds == catid
+        catmask = Watseds == catid     ###  river segment mask 
         trow,tcol = Getbasinoutlet(catid,finalcat,fac,fdir,nrows,ncols)
         k = 1
         ttrow,ttcol = trow,tcol
-        print("############################################################################################3")
-        print(trow,tcol)
+        
+###############################################################################33        
+        #### parameter need  catchment map 
+################################################################################3        
         while catinfo['DowSubId'].values[i] < 0 and k < 20:
             nrow,ncol = Nextcell(fdir,ttrow,ttcol)### get the downstream catchment id
             if nrow < 0 or ncol < 0:
                 catinfo.loc[i,'DowSubId'] = -1
-                print(catid,catinfo.loc[i,'DowSubId'],nrow,ncol) 
+#                print(catid,catinfo.loc[i,'DowSubId'],nrow,ncol) 
                 break;
             elif nrow >= nrows or ncol >= ncols:
                 catinfo.loc[i,'DowSubId'] = -1
-                print(catid,catinfo.loc[i,'DowSubId'],nrow,ncol) 
+#                print(catid,catinfo.loc[i,'DowSubId'],nrow,ncol) 
                 break;
             elif finalcat[nrow,ncol] <= 0 or finalcat[nrow,ncol] == catid:
                 catinfo.loc[i,'DowSubId'] = -1
-                print(catid,catinfo.loc[i,'DowSubId'],nrow,ncol,finalcat[nrow,ncol]) 
+#                print(catid,catinfo.loc[i,'DowSubId'],nrow,ncol,finalcat[nrow,ncol]) 
             else:
                 catinfo.loc[i,'DowSubId'] = finalcat[nrow,ncol]
-                print(catid,catinfo.loc[i,'DowSubId'],nrow,ncol,finalcat[nrow,ncol]) 
+#                print(catid,catinfo.loc[i,'DowSubId'],nrow,ncol,finalcat[nrow,ncol]) 
             k = k + 1
             ttrow = nrow
             ttcol = ncol
 
-################################## Get lake information        
-        lakeinriv = lake[catmask]
-        lakeids = np.unique(lakeinriv)
-        lakeids = lakeids[lakeids > 0]
-        if len(lakeids) == 1:
-            lakeid = lakeids[0]
-        elif len(lakeids) > 1:
-            print('Warning:  stream    ',catid,'connected with ',len(lakeids),'   Lakes')
-            lakeid = lakeids[0]
-            for j in range(1,len(lakeids)):
-                if len(np.argwhere(lakeinriv == lakeid)) < len(np.argwhere(lakeinriv == lakeids[j])):
-                    lakeid = lakeids[j]
-        else:
-            lakeid = -1 
+################################## Get connected lake lake information   
+        if len(np.unique(catmask[catmask > 0])) > 0: ### catchments with river segments 
+            lakeinriv = lake[catmask]
+            lakeids = np.unique(lakeinriv)
+            lakeids = lakeids[lakeids > 0]
+            if len(lakeids) == 1:
+                lakeid = lakeids[0]
+            elif len(lakeids) > 1:
+                print('Warning:  stream    ',catid,'connected with ',len(lakeids),'   Lakes')
+                lakeid = lakeids[0]
+                for j in range(1,len(lakeids)):
+                    if len(np.argwhere(lakeinriv == lakeid)) < len(np.argwhere(lakeinriv == lakeids[j])):
+                        lakeid = lakeids[j]
+            else:
+                lakeid = -1
+        else: ### for none connected lake ids 
+            lakeid = noncnlake_arr[trow,tcol]
+            
             
         if lakeid > 0:
+            if len(np.unique(catmask[catmask > 0])) > 0:
+                catinfo.loc[i,'IsLake'] = 1
+            else:
+                catinfo.loc[i,'IsLake'] = 2
+                
             slakeinfo = lakeinfo.loc[lakeinfo['Hylak_id'] == lakeid]
-            catinfo.loc[i,'IsLake'] = 1
             catinfo.loc[i,'HyLakeId'] = lakeid
             catinfo.loc[i,'LakeVol'] = slakeinfo.iloc[0]['Vol_total']
             catinfo.loc[i,'LakeArea']= slakeinfo.iloc[0]['Lake_area']
@@ -371,11 +381,10 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
             catinfo.loc[i,'SRC_obs'] = obsinfo.loc[obsinfo['Obs_ID'] == obsid]['SRC_obs'].values[0]
 #            print(obsinfo.loc[obsinfo['Obs_ID'] == obsid]['SRC_obs'])
 ########Slopes slope,aspect,landuse,slop_deg
-        slopeinriv = slope[catmask2]
-        aspectinriv = aspect[catmask2]
-        slop_deginriv = slop_deg[catmask2]
-        deminriv = dem[catmask]
-        deminriv2 = dem[catmask2]
+        slopeinriv = slope[catmask2]   #### catchment mask
+        aspectinriv = aspect[catmask2]  #### catchment mask
+        slop_deginriv = slop_deg[catmask2]  #### catchment mask
+        deminriv2 = dem[catmask2]    ###catchment mask 
         
         if(len(slop_deginriv[slop_deginriv >= 0])) > 0:
             slop_deginriv[slop_deginriv <0] = np.NaN  
@@ -389,39 +398,12 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
         else:
             catinfo.loc[i,'BasAspect'] = -1.2345  
         
-        if(len(deminriv[deminriv > 0])) > 0:
-            deminriv[deminriv <=0] = np.NaN
-            maxdem = np.nanmax(deminriv)
-            mindem = np.nanmin(deminriv)
-            catinfo.loc[i,'Min_DEM'] = mindem
-            catinfo.loc[i,'Max_DEM'] = maxdem
-        else:
-            maxdem = -1.2345
-            mindem = -1.2345
-
         if(len(deminriv2[deminriv2 > 0])) > 0:
             deminriv2[deminriv2 <=0] = np.NaN  
             catinfo.loc[i,'MeanElev'] = np.nanmean(deminriv2)
         else:
             catinfo.loc[i,'MeanElev'] =-1.2345
-                    
-            
-        rivlen = np.unique(leninfo.loc[leninfo['Gridcode'] == catid]['Length_m'].values)  #'Area_m'
-        if len(rivlen) == 1:
-            catinfo.loc[i,'RivLength'] = rivlen
-            if rivlen >= 0:
-                if max(0,float((maxdem - mindem))/float(rivlen)) == 0:
-                    catinfo.loc[i,'RivSlope'] =-1.2345
-                else:
-                    catinfo.loc[i,'RivSlope'] = max(0,float((maxdem - mindem))/float(rivlen))
-            else:
-                catinfo.loc[i,'RivSlope'] = -1.2345
-        else:
-            print("Warning  river length of stream  " , catid, "   need check   ", len(rivlen) )
-            catinfo.loc[i,'RivLength'] = -1.2345
-            catinfo.loc[i,'RivSlope'] = -1.2345
-            
-            
+
         catarea = np.unique(areainfo.loc[areainfo['Gridcode'] == catid]['Area_m'].values)  #'Area_m'
         if len(catarea) == 1:
             catinfo.loc[i,'BasArea'] = catarea
@@ -444,11 +426,45 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
         else:
             floodn = 0.035
         catinfo.loc[i,'FloodP_n'] = floodn
-            
+
+                
+                
+###############################################################################33        
+        #### parameter need  river map 
+################################################################################3    
+        if len(np.unique(catmask[catmask > 0])) <= 0:   ### None connected catchment do not update these parameters
+            continue              
+                    
+        deminriv = dem[catmask]      ###rive segment mas
+        if(len(deminriv[deminriv > 0])) > 0:
+            deminriv[deminriv <=0] = np.NaN
+            maxdem = np.nanmax(deminriv)
+            mindem = np.nanmin(deminriv)
+            catinfo.loc[i,'Min_DEM'] = mindem
+            catinfo.loc[i,'Max_DEM'] = maxdem
+        else:
+            maxdem = -1.2345
+            mindem = -1.2345
+                    
+        rivlen = np.unique(leninfo.loc[leninfo['Gridcode'] == catid]['Length_m'].values)  #'Area_m'
+        if len(rivlen) == 1:
+            catinfo.loc[i,'RivLength'] = rivlen
+            if rivlen >= 0:
+                if max(0,float((maxdem - mindem))/float(rivlen)) == 0:
+                    catinfo.loc[i,'RivSlope'] =-1.2345
+                else:
+                    catinfo.loc[i,'RivSlope'] = max(0,float((maxdem - mindem))/float(rivlen))
+            else:
+                catinfo.loc[i,'RivSlope'] = -1.2345
+        else:
+            print("Warning  river length of stream  " , catid, "   need check   ", len(rivlen) )
+            catinfo.loc[i,'RivLength'] = -1.2345
+            catinfo.loc[i,'RivSlope'] = -1.2345
+                        
 ########Got basin width and depth
-        widthinriv = width[catmask]
-        depthinriv = depth[catmask]
-        Q_Meaninriv = Q_Mean[catmask]
+        widthinriv = width[catmask]   ###rive segment mask
+        depthinriv = depth[catmask]  ###rive segment mask
+        Q_Meaninriv = Q_Mean[catmask]  ###rive segment mask
         
         widthids = np.unique(widthinriv)
         widthids = widthids[widthids > 0]
@@ -465,56 +481,6 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
             catinfo.loc[i,'BkfDepth'] = -1.2345
             catinfo.loc[i,'Q_Mean'] =  -1.2345   
              
-######## Non connected lakes
-        catinfo.loc[i,'NonLDArea'] =  0.0
-        Nonlakes = NonCL_array[catmask2]
-        Nonlakes = Nonlakes[Nonlakes > 0]
-        Nonlakes = np.unique(Nonlakes)
-        Daarea = 0.0
-        if len(Nonlakes) > 0:
-            for inl in range(0,len(Nonlakes)):
-                NLid = int(Nonlakes[inl])
-                nlakeinfoidx = NonConcLakeInfo['Gridcode'] == NLid
-                SubID_NL = -1
-                ### assign NONconnectlake attributes 
-                slakeinfo = lakeinfo.loc[lakeinfo['Hylak_id'] == NLid]
-                NonConcLakeInfo.loc[nlakeinfoidx,'HyLakeId']  = NLid
-                NonConcLakeInfo.loc[nlakeinfoidx,'LakeVol']   = slakeinfo.iloc[0]['Vol_total']
-                NonConcLakeInfo.loc[nlakeinfoidx,'LakeArea']  = slakeinfo.iloc[0]['Lake_area']
-                NonConcLakeInfo.loc[nlakeinfoidx,'LakeDepth'] = slakeinfo.iloc[0]['Depth_avg']
-                NonConcLakeInfo.loc[nlakeinfoidx,'Laketype']  = slakeinfo.iloc[0]['Lake_type']
-               ### find non connect lake drainage subid 
-                trow,tcol = Getbasinoutlet(NLid,NonCL_array,fac,fdir,nrows,ncols)
-                k = 1
-                ttrow,ttcol = trow,tcol
-                Dow_Non_Lakeid = -1
-                while SubID_NL < 0 and k < 20:
-                    nrow,ncol = Nextcell(fdir,ttrow,ttcol)### get the downstream catchment id
-                    if nrow < 0 or ncol < 0:
-                        SubID_NL = -1
-                        Dow_Non_Lakeid = -1
-                        break;
-                    elif nrow >= nrows or ncol >= ncols:
-                        SubID_NL = -1
-                        Dow_Non_Lakeid = -1
-                        break;
-                    elif NonCL_array[nrow,ncol] == NLid:
-                        SubID_NL = -1
-                        Dow_Non_Lakeid = -1
-                    else:
-                        SubID_NL = netcat[nrow,ncol]
-                        Dow_Non_Lakeid = NonCL_array[nrow,ncol]
-                    k = k + 1
-                    ttrow = nrow
-                    ttcol = ncol 
-                if SubID_NL == catid: ### the non connected lake drainage to this catid 
-                    Daarea = Daarea + NonConcLakeInfo.loc[nlakeinfoidx]['Area_m'].values[0]
-                NonConcLakeInfo.loc[nlakeinfoidx,'SubId_riv'] = SubID_NL
-                if Dow_Non_Lakeid > 0:
-                    NonConcLakeInfo.loc[nlakeinfoidx,'DownLakeID'] = Dow_Non_Lakeid
-                    nlakeinfoidx_dwn = NonConcLakeInfo['Gridcode'] == Dow_Non_Lakeid                    
-                    NonConcLakeInfo.loc[nlakeinfoidx_dwn,'DA_Area'] = NonConcLakeInfo.loc[nlakeinfoidx_dwn,'DA_Area'].values[0] + NonConcLakeInfo.loc[nlakeinfoidx,'Area_m'].values[0]
-            catinfo.loc[i,'NonLDArea'] =  Daarea
     catinfo = Writecatinfotodbf(catinfo)
     return catinfo,NonConcLakeInfo
 

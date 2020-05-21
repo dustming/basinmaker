@@ -1690,7 +1690,26 @@ class LRRT:
         grass.run_command('r.out.gdal', input = 'nstr_seg',output =os.path.join(self.tempfolder,'nstr_seg.tif'),format= 'GTiff',overwrite = True)  
         
         ### Generate new catchment based on new stream   
-        grass.run_command('r.stream.basins',direction = 'ndir_grass', stream = 'nstr_seg', basins = 'Net_cat',overwrite = True)        
+        grass.run_command('r.stream.basins',direction = 'ndir_grass', stream = 'nstr_seg', basins = 'Net_cat_connect_lake',overwrite = True)        
+        
+        ### add none connected lake catchment into here 
+        conlake_arr       = garray.array(mapname="Net_cat_connect_lake")
+        NoneCLakeids      = np.unique(NonCL_array)
+        NoneCLakeids      = NoneCLakeids[NoneCLakeids > 0]
+        for kk in range(0,len(NoneCLakeids)):
+            mask              = NonCL_array == NoneCLakeids[kk]
+            conlake_arr[mask] = nstrid
+            nstrid            = nstrid + 1
+            
+        mask = conlake_arr <= 0
+        conlake_arr[mask] = -9999
+        
+        temparray[:,:] = -9999
+        temparray[:,:] = conlake_arr[:,:]
+        temparray.write(mapname="Net_cat", overwrite=True)  #### write new stream id to a grass raster 
+        grass.run_command('r.null', map='Net_cat',setnull=-9999)
+                
+        
         grass.run_command('r.out.gdal', input = 'Net_cat',output =os.path.join(self.tempfolder,'Net_cat.tif'),format= 'GTiff',overwrite = True)
         grass.run_command('r.to.vect', input='Net_cat',output='Net_cat_F1',type='area', overwrite = True)    ## save to vector 
         grass.run_command('v.db.addcolumn', map= 'Net_cat_F1', columns = "GC_str VARCHAR(40)")
@@ -1760,16 +1779,6 @@ class LRRT:
         
         con = sqlite3.connect(self.sqlpath)
       
-        #### generate new stream raster based on str_grass_r from acc thresthold and finalcat.
-         
-   
-#        grass.run_command('v.out.ogr', input = 'nstr_nfinalcat_F',output = os.path.join(self.tempfolder,'nstr_nfinalcat_F_Final.shp'),format= 'ESRI_Shapefile',overwrite = True)
-#        Qgs.exit()       
-#        PERMANENT.close()
-        
-        
-        #### 
-        
         ### Calulate catchment area slope river length under projected coordinates system. 
         if projection != 'default':
 
@@ -1849,8 +1858,10 @@ class LRRT:
         obsinfo = pd.read_sql_query(sqlstat, con)
         obsinfo['Obs_ID'] = obsinfo['Obs_ID'].astype(float) 
         
-                  
-        allcatid = np.unique(nstr_seg_array)
+        ######  All catchment with a river segments           
+        Riv_Cat_IDS = np.unique(nstr_seg_array)
+        Riv_Cat_IDS = Riv_Cat_IDS > 0
+        allcatid    = np.unique(Netcat_array)
         allcatid = allcatid[allcatid > 0]
         catinfo2 = np.full((len(allcatid),31),-9999.00000)    
         catinfodf = pd.DataFrame(catinfo2, columns = ['SubId', "DowSubId",'RivSlope','RivLength','BasSlope','BasAspect','BasArea',
@@ -1863,8 +1874,13 @@ class LRRT:
         catinfo,NonConcLakeInfo= Generatecatinfo_riv(nstr_seg_array,acc_array,dir_array,conlake_arr,dem_array,
              catinfodf,allcatid,width_array,depth_array,obs_array,slope_array,aspect_array,landuse_array,
              slope_deg_array,Q_mean_array,Netcat_array,landuseinfo,allLakinfo,self.nrows,self.ncols,
-             rivleninfo.astype(float),catareainfo.astype(float),obsinfo,NonConcLakeInfo,NonCL_array) 
-        catinfo = Streamorderanddrainagearea(catinfo)         
+             rivleninfo.astype(float),catareainfo.astype(float),obsinfo,NonConcLakeInfo,NonCL_array,noncnlake_arr) 
+        catinfo = Streamorderanddrainagearea(catinfo)     
+        
+        ########None connected lake catchments 
+        
+        
+            
         catinfo.to_csv(self.Path_finalcatinfo_riv, index = None, header=True)
         NonConcLakeInfo.to_csv(self.Path_NonCLakeinfo, index = None, header=True)
         
