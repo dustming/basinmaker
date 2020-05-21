@@ -1708,8 +1708,42 @@ class LRRT:
         temparray[:,:] = conlake_arr[:,:]
         temparray.write(mapname="Net_cat", overwrite=True)  #### write new stream id to a grass raster 
         grass.run_command('r.null', map='Net_cat',setnull=-9999)
-                
+                  
         
+        con.close()
+        PERMANENT.close()
+                
+############################################################################3
+    def RoutingNetworkTopologyUpdateToolset_riv(self,projection = 'default'):
+        import grass.script as grass
+        from grass.script import array as garray
+        import grass.script.setup as gsetup
+        from grass.pygrass.modules.shortcuts import general as g
+        from grass.pygrass.modules.shortcuts import raster as r
+        from grass.pygrass.modules import Module
+        from grass_session import Session
+
+        QgsApplication.setPrefixPath(self.qgisPP, True)
+        Qgs = QgsApplication([],False)
+        Qgs.initQgis()
+        from qgis import processing
+        from processing.core.Processing import Processing
+        from processing.tools import dataobjects
+           
+        feedback = QgsProcessingFeedback()
+        Processing.initialize()
+        QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
+        context = dataobjects.createContext()
+        context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
+
+
+        os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
+        PERMANENT = Session()
+        PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
+        
+        con = sqlite3.connect(self.sqlpath)
+        
+
         grass.run_command('r.out.gdal', input = 'Net_cat',output =os.path.join(self.tempfolder,'Net_cat.tif'),format= 'GTiff',overwrite = True)
         grass.run_command('r.to.vect', input='Net_cat',output='Net_cat_F1',type='area', overwrite = True)    ## save to vector 
         grass.run_command('v.db.addcolumn', map= 'Net_cat_F1', columns = "GC_str VARCHAR(40)")
@@ -1744,40 +1778,10 @@ class LRRT:
         grass.run_command('v.db.addcolumn', map= 'Non_con_lake_cat_1', columns = "value INT")
         grass.run_command('v.db.update', map= 'Non_con_lake_cat_1', column = "value",qcol = 'Gridcodes')        
         grass.run_command('v.db.update', map= 'nstr_nfinalcat_F', column = "Gridcode",qcol = 'b_GC_str')
-        grass.run_command('v.db.dropcolumn', map= 'nstr_nfinalcat_F', columns = ['b_GC_str'])    
+        grass.run_command('v.db.dropcolumn', map= 'nstr_nfinalcat_F', columns = ['b_GC_str'])  
         
-        con.close()
-        PERMANENT.close()
-                
-############################################################################3
-    def RoutingNetworkTopologyUpdateToolset_riv(self,projection = 'default'):
-        import grass.script as grass
-        from grass.script import array as garray
-        import grass.script.setup as gsetup
-        from grass.pygrass.modules.shortcuts import general as g
-        from grass.pygrass.modules.shortcuts import raster as r
-        from grass.pygrass.modules import Module
-        from grass_session import Session
-
-        QgsApplication.setPrefixPath(self.qgisPP, True)
-        Qgs = QgsApplication([],False)
-        Qgs.initQgis()
-        from qgis import processing
-        from processing.core.Processing import Processing
-        from processing.tools import dataobjects
-           
-        feedback = QgsProcessingFeedback()
-        Processing.initialize()
-        QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
-        context = dataobjects.createContext()
-        context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
-
-
-        os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
-        PERMANENT = Session()
-        PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
         
-        con = sqlite3.connect(self.sqlpath)
+        
       
         ### Calulate catchment area slope river length under projected coordinates system. 
         if projection != 'default':
@@ -1830,10 +1834,9 @@ class LRRT:
         Q_mean_array = garray.array(mapname="qmean")
         landuse_array = garray.array(mapname="landuse")
         Netcat_array = garray.array(mapname="Net_cat")
-        grass.run_command('r.out.gdal', input = 'ndir_Arcgis',output = os.path.join(self.tempfolder,'ndir.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
-
-        grass.run_command('r.out.gdal', input = 'dir_Arcgis',output = os.path.join(self.tempfolder,'dir.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
-        grass.run_command('r.out.gdal', input = 'acc_grass',output = os.path.join(self.tempfolder,'acc.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
+#        grass.run_command('r.out.gdal', input = 'ndir_Arcgis',output = os.path.join(self.tempfolder,'ndir.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
+#        grass.run_command('r.out.gdal', input = 'dir_Arcgis',output = os.path.join(self.tempfolder,'dir.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
+#        grass.run_command('r.out.gdal', input = 'acc_grass',output = os.path.join(self.tempfolder,'acc.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
         ## read landuse and lake infomation data 
         tempinfo = Dbf5(self.Path_allLakeply[:-3] + "dbf")
         allLakinfo = tempinfo.to_dataframe()
@@ -1845,14 +1848,7 @@ class LRRT:
         catareainfo = pd.read_sql_query(sqlstat, con)
         sqlstat="SELECT Gridcode, Area_m FROM Non_con_lake_cat_1"
         NonConcLakeInfo = pd.read_sql_query(sqlstat, con)
-        NonConcLakeInfo['SubId_riv'] = -9999
-        NonConcLakeInfo['HyLakeId']  = -9999
-        NonConcLakeInfo['LakeVol']   = -9999
-        NonConcLakeInfo['LakeDepth'] = -9999
-        NonConcLakeInfo['LakeArea']  = -9999
-        NonConcLakeInfo['Laketype']  = -9999
-        NonConcLakeInfo['DownLakeID'] = -9999
-        NonConcLakeInfo['DA_Area'] = NonConcLakeInfo['Area_m'].values
+
         
         sqlstat="SELECT Obs_ID, DA_obs, STATION_NU, SRC_obs FROM obspoint"
         obsinfo = pd.read_sql_query(sqlstat, con)
@@ -1892,11 +1888,11 @@ class LRRT:
         ### add catchment info to all river segment 
         grass.run_command('db.in.ogr', input=self.Path_finalcatinfo_riv,output = 'result_riv',overwrite = True)
         grass.run_command('v.db.join', map= 'nstr_nfinalcat_F',column = 'Gridcode', other_table = 'result_riv',other_column ='SubId', overwrite = True)
-        grass.run_command('v.db.dropcolumn', map= 'nstr_nfinalcat_F', columns = ['Length_m','Gridcode'])
+#        grass.run_command('v.db.dropcolumn', map= 'nstr_nfinalcat_F', columns = ['Length_m','Gridcode'])
         grass.run_command('v.out.ogr', input = 'nstr_nfinalcat_F',output = os.path.join(self.tempfolder,'finalriv_info1.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
         
         grass.run_command('v.db.join', map= 'Net_cat_F',column = 'Gridcode', other_table = 'result_riv',other_column ='SubId', overwrite = True)
-        grass.run_command('v.db.dropcolumn', map= 'Net_cat_F', columns = ['Area_m','Gridcode','GC_str'])
+#        grass.run_command('v.db.dropcolumn', map= 'Net_cat_F', columns = ['Area_m','Gridcode','GC_str'])
         grass.run_command('v.out.ogr', input = 'Net_cat_F',output = os.path.join(self.tempfolder,'finalriv_catinfo1.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
 
         PERMANENT.close()
@@ -1923,13 +1919,6 @@ class LRRT:
                 exp = exp + " , "+str(int(NonCL_Lakeids[i]))        
             exp = exp + ')'
             processing.run("native:extractbyexpression", {'INPUT':self.Path_allLakeply,'EXPRESSION':exp,'OUTPUT':os.path.join(self.OutputFolder, 'Non_Con_Lake_Ply.shp')})
-
-
-            exp ='Gridcode' + '  IN  (  ' +  str(int(NonCL_Lakeids[0]))      
-            for i in range(1,len(NonCL_Lakeids)):
-                exp = exp + " , "+str(int(NonCL_Lakeids[i]))        
-            exp = exp + ')'
-            processing.run("native:extractbyexpression", {'INPUT':os.path.join(self.tempfolder,'Non_con_lake_cat_info.shp'),'EXPRESSION':exp,'OUTPUT':os.path.join(self.OutputFolder,'Non_con_lake_cat_info.shp')})
         
         
         ### Non_Connected Lakes
