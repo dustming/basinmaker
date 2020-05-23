@@ -1636,6 +1636,8 @@ class LRRT:
 #            print(i_nstrinfodf)
             for j in range(0,len(i_nstrinfodf) - 1):
                 if i_nstrinfodf['MaxAcc'].values[j] > i_nstrinfodf['MaxAcc'].values[j +1]:
+#                    print('###########################################################################3')
+#                    print(i_nstrinfodf)
                     mask = nstrarray == i_nstrinfodf['With_Lake_SubId'].values[j+1]   ### build mask for grids belong to current stream and current cat
                     nstrarray[mask]   = i_nstrinfodf['With_Lake_SubId'].values[j]   ## assgin new stream id to mask region                    
                     connected_Lakeids = conlake_arr[mask]
