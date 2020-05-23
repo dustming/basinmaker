@@ -1,10 +1,87 @@
 
 import numpy as np
-from GetBasinoutlet import Getbasinoutlet,Nextcell
+from GetBasinoutlet import Getbasinoutlet,Nextcell,Defcat
 from Calculate_River_Len_Slope import Getcatrivlenslope_hydroshed
 import copy
+from scipy.optimize import curve_fit
+    
+def func_Q_DA(A, k, c):
+    return k * A**c 
+    
+        
+def FindQ_mean_Da_relaitonship(tsubid,routing_info,Netcat_array,SubId_WidDep_array,WidDep_info,excludesubids = [-1]):
+    
+    Upstreamcats         = Defcat(routing_info,tsubid)
+    
+    print(tsubid)
+    print(Upstreamcats)
+    if excludesubids[0] == -1:
+        catids = Upstreamcats
+    else: 
+        mask1     = np.in1d(Upstreamcats, excludesubids)  ### exluced ids that belongs to main river stream 
+        catids    = Upstreamcats[np.logical_not(mask1)]     
+        
+    mask_cats =  np.isin(Netcat_array, catids)
+    print('#################################################################################3')
 
+    WidDep_SubIds  = SubId_WidDep_array[mask_cats]
+    WidDep_SubIds  = np.unique(WidDep_SubIds)
+    WidDep_SubIds  = WidDep_SubIds[WidDep_SubIds > 0]
+    print(WidDep_SubIds)
+    
+    Sub_WidDep_info = WidDep_info.loc[WidDep_info['HYBAS_ID'].isin(WidDep_SubIds)]
+    WidDep_out_subid = -1
+    Max_Upstream_WidDep_Sub_Num = 0
+    
+    for i in range(0,len(WidDep_SubIds)):
+        WidDep_SubId = WidDep_SubIds[i]
+        Up_Sub_WidDep = Sub_WidDep_info[Sub_WidDep_info['NEXT_DOWN'] == WidDep_SubId]
+        if len(Up_Sub_WidDep) > Max_Upstream_WidDep_Sub_Num:
+            Max_Upstream_WidDep_Sub_Num = len(Up_Sub_WidDep)
+            WidDep_out_subid           = WidDep_SubId
+            
+    print(Max_Upstream_WidDep_Sub_Num,WidDep_out_subid)
+    
+    if WidDep_out_subid > 0:   #### has more than 1 subbains within the domain
+        Up_Sub_WidDep        = Sub_WidDep_info.loc[(Sub_WidDep_info['NEXT_DOWN'] == WidDep_out_subid) | (Sub_WidDep_info['HYBAS_ID'] == WidDep_out_subid)]
+        Up_Sub_WidDep        = Up_Sub_WidDep.groupby("HYBAS_ID")
+        max_of_Subs          = Up_Sub_WidDep.max()
+#        print(max_of_Subs)
+        max_of_Subs          = max_of_Subs.groupby("Q_Mean")
+        max_of_Subs_Q_mean   = max_of_Subs.max()
+        
+        
+        Q_mean = max_of_Subs_Q_mean.index.values
+        DA     = max_of_Subs_Q_mean['UP_AREA'].values
+        
+        if len(Q_mean) >= 2:
+            print(Q_mean)
+            print(DA)
+            popt2, pcov2 = curve_fit(func_Q_DA, DA, Q_mean)
+            print(tuple(popt2))    
+            k=popt2[0]
+            c=popt2[1]
+            width = -1
+            depth = -1
+            print(k,c,width,depth)
+    
+    
+    
+    
 
+def UpdateChannelinfo(catinfo,allcatid,Netcat_array,SubId_WidDep_array,WidDep_info,Min_DA_for_func_Q_DA):
+    routing_info         = catinfo[['SubId','DowSubId']].astype('float').values
+    catinfo_riv          = catinfo.loc[catinfo['IsLake'] < 2]
+    
+    catinfo_riv_segs = catinfo_riv.loc[catinfo_riv['DA'] > Min_DA_for_func_Q_DA * 1000*1000]  ## find segment with DA larger than Min_DA_for_func_Q_DA
+    
+    if len(catinfo_riv_segs) == 0:
+        catinfo_riv  = catinfo_riv.sort_values(["DA"], ascending = (False))
+        tsubid       = catinfo_riv['SubId'].values[0]
+        FindQ_mean_Da_relaitonship(tsubid,routing_info,Netcat_array,SubId_WidDep_array,WidDep_info)
+        
+#################################################################        
+        
 
 def Streamorderanddrainagearea(catinfoall):
     catinfo = catinfoall.loc[catinfoall['IsLake'] != 2]  ### remove none connected lake catchments, which do not connected to the river system 
@@ -331,18 +408,18 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
             nrow,ncol = Nextcell(fdir,ttrow,ttcol)### get the downstream catchment id
             if nrow < 0 or ncol < 0:
                 catinfo.loc[i,'DowSubId'] = -1
-#                print(catid,catinfo.loc[i,'DowSubId'],nrow,ncol) 
+#                print(catid,catinfo.loc[i,'DowSubId'],nrow,ncol,"           1              ") 
                 break;
             elif nrow >= nrows or ncol >= ncols:
                 catinfo.loc[i,'DowSubId'] = -1
-#                print(catid,catinfo.loc[i,'DowSubId'],nrow,ncol) 
+#                print(catid,catinfo.loc[i,'DowSubId'],nrow,ncol,"           2              ",nrows,ncols) 
                 break;
             elif finalcat[nrow,ncol] <= 0 or finalcat[nrow,ncol] == catid:
                 catinfo.loc[i,'DowSubId'] = -1
-#                print(catid,catinfo.loc[i,'DowSubId'],nrow,ncol,finalcat[nrow,ncol]) 
+#                print(catid,catinfo.loc[i,'DowSubId'],nrow,ncol,finalcat[nrow,ncol],"           3              ") 
             else:
                 catinfo.loc[i,'DowSubId'] = finalcat[nrow,ncol]
-#                print(catid,catinfo.loc[i,'DowSubId'],nrow,ncol,finalcat[nrow,ncol]) 
+#                print(catid,catinfo.loc[i,'DowSubId'],nrow,ncol,finalcat[nrow,ncol],"           4              ") 
             k = k + 1
             ttrow = nrow
             ttcol = ncol
@@ -355,7 +432,7 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
             if len(lakeids) == 1:
                 lakeid = lakeids[0]
             elif len(lakeids) > 1:
-                print('Warning:  stream    ',catid,'connected with ',len(lakeids),'   Lakes')
+                print('Warning:  stream    ',catid,'connected with ',len(lakeids),'   Lakes',print(lakeids))
                 lakeid = lakeids[0]
                 for j in range(1,len(lakeids)):
                     if len(np.argwhere(lakeinriv == lakeid)) < len(np.argwhere(lakeinriv == lakeids[j])):
@@ -457,41 +534,40 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
         rivlen = np.unique(leninfo.loc[leninfo['Gridcode'] == catid]['Length_m'].values)  #'Area_m'
         if len(rivlen) == 1:
             catinfo.loc[i,'RivLength'] = rivlen
-            if rivlen >= 0:
-                if max(0,float((maxdem - mindem))/float(rivlen)) == 0:
-                    catinfo.loc[i,'RivSlope'] =-1.2345
-                else:
-                    catinfo.loc[i,'RivSlope'] = max(0,float((maxdem - mindem))/float(rivlen))
-            else:
-                catinfo.loc[i,'RivSlope'] = -1.2345
+# #            if rivlen >= 0:
+#                 if max(0,float((maxdem - mindem))/float(rivlen)) == 0:
+# #                    catinfo.loc[i,'RivSlope'] =-1.2345
+#                 else:
+# #                    catinfo.loc[i,'RivSlope'] = max(0,float((maxdem - mindem))/float(rivlen))
+#             else:
+# #                catinfo.loc[i,'RivSlope'] = -1.2345
         else:
             print("Warning  river length of stream  " , catid, "   need check   ", len(rivlen) )
             catinfo.loc[i,'RivLength'] = -1.2345
-            catinfo.loc[i,'RivSlope'] = -1.2345
+#            catinfo.loc[i,'RivSlope'] = -1.2345
                         
 ########Got basin width and depth
-        widthinriv = width[catmask2]   ###rive segment mask
-        depthinriv = depth[catmask2]  ###rive segment mask
-        Q_Meaninriv = Q_Mean[catmask2]  ###rive segment mask
-        
-        widthids = np.unique(widthinriv)
-        widthids = widthids[widthids > 0]
-
-        if(len(widthids)) > 0:
-            widthinriv[widthinriv <=0] = np.NaN
-            depthinriv[depthinriv <=0] = np.NaN
-            Q_Meaninriv[Q_Meaninriv <=0] = np.NaN
-            catinfo.loc[i,'BkfWidth'] = np.nanmean(widthinriv)
-            catinfo.loc[i,'BkfDepth'] = np.nanmean(depthinriv)
-            catinfo.loc[i,'Q_Mean'] = np.nanmean(Q_Meaninriv)
-        else:
-            catinfo.loc[i,'BkfWidth'] = -1.2345
-            catinfo.loc[i,'BkfDepth'] = -1.2345
-            catinfo.loc[i,'Q_Mean'] =  -1.2345   
-    
-    for i in range(0,len(catinfo)):
-        if catinfo['SubId'].values[i] == catinfo['DowSubId'].values[i]:
-            catinfo.loc[i,'DowSubId'] = -1         
+        # widthinriv = width[catmask2]   ###rive segment mask
+        # depthinriv = depth[catmask2]  ###rive segment mask
+        # Q_Meaninriv = Q_Mean[catmask2]  ###rive segment mask
+        # 
+        # widthids = np.unique(widthinriv)
+        # widthids = widthids[widthids > 0]
+        # 
+        # if(len(widthids)) > 0:
+        #     widthinriv[widthinriv <=0] = np.NaN
+        #     depthinriv[depthinriv <=0] = np.NaN
+        #     Q_Meaninriv[Q_Meaninriv <=0] = np.NaN
+        #     catinfo.loc[i,'BkfWidth'] = np.nanmean(widthinriv)
+        #     catinfo.loc[i,'BkfDepth'] = np.nanmean(depthinriv)
+        #     catinfo.loc[i,'Q_Mean'] = np.nanmean(Q_Meaninriv)
+        # else:
+        #     catinfo.loc[i,'BkfWidth'] = -1.2345
+        #     catinfo.loc[i,'BkfDepth'] = -1.2345
+        #     catinfo.loc[i,'Q_Mean'] =  -1.2345   
+#        if catinfo['SubId'].values[i] == catinfo['DowSubId'].values[i]:
+#            catinfo.loc[i,'DowSubId'] = -1  
+                   
     return catinfo
 
 

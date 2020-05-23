@@ -14,8 +14,8 @@ import tempfile
 import copy
 import pandas as pd
 import sqlite3
-from GetBasinoutlet import Getbasinoutlet,Nextcell
-from Generatecatinfo import Generatecatinfo,Generatecatinfo_riv,calculateChannaln,Writecatinfotodbf,Streamorderanddrainagearea
+from GetBasinoutlet import Getbasinoutlet,Nextcell,Defcat
+from Generatecatinfo import Generatecatinfo,Generatecatinfo_riv,calculateChannaln,Writecatinfotodbf,Streamorderanddrainagearea,UpdateChannelinfo
 from WriteRavenInputs import writelake,Writervhchanl
 from WriteRavenInputs import WriteObsfiles
 from RavenOutputFuctions import plotGuagelineobs
@@ -712,27 +712,7 @@ def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir):
 ###################################################################3
 
 ##### out has two column the first column has sub id , the second has down sub id 
-def Defcat(out,outletid):
-    otsheds = np.full((1,1),outletid)
-    Shedid = np.full((len(out),1),-999)
-    psid = 0
-    rout = copy.copy(out)
-    while len(otsheds) > 0:
-        noutshd = np.full((len(out),1),-999)
-        poshdid = 0
-        for i in range(0,len(otsheds)):
-            Shedid[psid] = otsheds[i]
-            psid = psid + 1
-            irow = np.argwhere(rout[:,1]==otsheds[i]).astype(int)
-            for j in range(0,len(irow)):
-                noutshd[poshdid] = rout[irow[j],0]
-                poshdid = poshdid + 1
-        noutshd = np.unique(noutshd)
-        otsheds = noutshd[noutshd>=0]
-    Shedid = np.unique(Shedid)
-    Shedid = Shedid[Shedid>=0]
-    return Shedid
-###########
+
 
 
 ##### out has two column the first column has sub id , the second has down sub id 
@@ -1263,9 +1243,7 @@ class LRRT:
             dem = processing.run('gdal:cliprasterbymasklayer',params)  #### extract dem
         
         copyfile(os.path.join(self.RoutingToolPath,'catinfo_riv.csvt'),os.path.join(self.tempfolder,'catinfo_riv.csvt')) 
-        copyfile(os.path.join(self.RoutingToolPath,'catinfo_riv.csvt'),os.path.join(self.tempfolder,'catinfo_cat.csvt')) 
-        copyfile(os.path.join(self.RoutingToolPath,'Nonlakeinfo.csvt'),os.path.join(self.tempfolder,'Nonlakeinfo.csvt'))
-        copyfile(os.path.join(self.RoutingToolPath,'Nonlakeinfo.csvt'),os.path.join(self.tempfolder,'NonC_Lakeinfo_cat.csvt'))  
+        copyfile(os.path.join(self.RoutingToolPath,'catinfo_riv.csvt'),os.path.join(self.tempfolder,'catinfo_cat.csvt'))  
 ###### set up GRASS environment for translate vector to rasters and clip rasters
         import grass.script as grass
         from grass.script import array as garray
@@ -1320,10 +1298,12 @@ class LRRT:
         grass.run_command("r.in.gdal", input = self.Path_allLakeRas, output = 'alllakeraster_in', overwrite = True)
         grass.run_command('r.mapcalc',expression = 'alllake = int(alllakeraster_in)',overwrite = True)
         grass.run_command("r.null", map = 'alllake', setnull = -9999)
-        ### rasterize other vectors 
+        ### rasterize other vectors UP_AREA
         grass.run_command('v.to.rast',input = 'WidDep',output = 'width',use = 'attr',attribute_column = 'WIDTH',overwrite = True)
         grass.run_command('v.to.rast',input = 'WidDep',output = 'depth',use = 'attr',attribute_column = 'DEPTH',overwrite = True)
         grass.run_command('v.to.rast',input = 'WidDep',output = 'qmean',use = 'attr',attribute_column = 'Q_Mean',overwrite = True)
+        grass.run_command('v.to.rast',input = 'WidDep',output = 'up_area',use = 'attr',attribute_column = 'UP_AREA',overwrite = True)
+        grass.run_command('v.to.rast',input = 'WidDep',output = 'SubId_WidDep',use = 'attr',attribute_column = 'HYBAS_ID',overwrite = True)
         grass.run_command('v.to.rast',input = 'obspoint',output = 'obs',use = 'attr',attribute_column = 'Obs_ID',overwrite = True)
 
         PERMANENT.close()
@@ -1714,7 +1694,7 @@ class LRRT:
         PERMANENT.close()
                 
 ############################################################################3
-    def RoutingNetworkTopologyUpdateToolset_riv(self,projection = 'default'):
+    def RoutingNetworkTopologyUpdateToolset_riv(self,projection = 'default', Min_DA_for_func_Q_DA = 1000):
         import grass.script as grass
         from grass.script import array as garray
         import grass.script.setup as gsetup
@@ -1834,9 +1814,11 @@ class LRRT:
         Q_mean_array = garray.array(mapname="qmean")
         landuse_array = garray.array(mapname="landuse")
         Netcat_array = garray.array(mapname="Net_cat")
-#        grass.run_command('r.out.gdal', input = 'ndir_Arcgis',output = os.path.join(self.tempfolder,'ndir.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
-#        grass.run_command('r.out.gdal', input = 'dir_Arcgis',output = os.path.join(self.tempfolder,'dir.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
-#        grass.run_command('r.out.gdal', input = 'acc_grass',output = os.path.join(self.tempfolder,'acc.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
+        SubId_WidDep_array = garray.array(mapname="SubId_WidDep")
+
+        self.ncols        = int(nstr_seg_array.shape[1])                  # obtain rows and cols
+        self.nrows        = int(nstr_seg_array.shape[0])  
+        
         ## read landuse and lake infomation data 
         tempinfo = Dbf5(self.Path_allLakeply[:-3] + "dbf")
         allLakinfo = tempinfo.to_dataframe()
@@ -1848,6 +1830,9 @@ class LRRT:
         catareainfo = pd.read_sql_query(sqlstat, con)
         sqlstat="SELECT Gridcode, Area_m FROM Non_con_lake_cat_1"
         NonConcLakeInfo = pd.read_sql_query(sqlstat, con)
+        sqlstat="SELECT HYBAS_ID, NEXT_DOWN, UP_AREA, Q_Mean FROM WidDep"
+        WidDep_info = pd.read_sql_query(sqlstat, con)
+        
 
         
         sqlstat="SELECT Obs_ID, DA_obs, STATION_NU, SRC_obs FROM obspoint"
@@ -1870,8 +1855,13 @@ class LRRT:
         catinfo = Generatecatinfo_riv(nstr_seg_array,acc_array,dir_array,conlake_arr,dem_array,
              catinfodf,allcatid,width_array,depth_array,obs_array,slope_array,aspect_array,landuse_array,
              slope_deg_array,Q_mean_array,Netcat_array,landuseinfo,allLakinfo,self.nrows,self.ncols,
-             rivleninfo.astype(float),catareainfo.astype(float),obsinfo,NonConcLakeInfo,NonCL_array,noncnlake_arr) 
+             rivleninfo.astype(float),catareainfo.astype(float),obsinfo,NonConcLakeInfo,NonCL_array,noncnlake_arr)
+        routing_info         = catinfo[['SubId','DowSubId']].astype('float').values
+#        print(routing_info) 
+#        print(catinfo)
         catinfo = Streamorderanddrainagearea(catinfo)     
+        
+        UpdateChannelinfo(catinfo,allcatid,Netcat_array,SubId_WidDep_array,WidDep_info,Min_DA_for_func_Q_DA)
         
         ########None connected lake catchments 
         

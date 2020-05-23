@@ -1,4 +1,29 @@
 import numpy as np
+import copy
+
+
+def Defcat(out,outletid):
+    otsheds = np.full((1,1),outletid)
+    Shedid = np.full((len(out),1),-999)
+    psid = 0
+    rout = copy.copy(out)
+    while len(otsheds) > 0:
+        noutshd = np.full((len(out),1),-999)
+        poshdid = 0
+        for i in range(0,len(otsheds)):
+            Shedid[psid] = otsheds[i]
+            psid = psid + 1
+            irow = np.argwhere(rout[:,1]==otsheds[i]).astype(int)
+            for j in range(0,len(irow)):
+                noutshd[poshdid] = rout[irow[j],0]
+                poshdid = poshdid + 1
+        noutshd = np.unique(noutshd)
+        otsheds = noutshd[noutshd>=0]
+    Shedid = np.unique(Shedid)
+    Shedid = Shedid[Shedid>=0]
+    return Shedid
+###########
+
 
 
 def Getbasinoutlet(ID,basin,fac,dir,nrows,ncols):
