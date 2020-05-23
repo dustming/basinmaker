@@ -13,8 +13,8 @@ def FindQ_mean_Da_relaitonship(tsubid,routing_info,Netcat_array,SubId_WidDep_arr
     
     Upstreamcats         = Defcat(routing_info,tsubid)
     
-    print(tsubid)
-    print(Upstreamcats)
+#    print(tsubid)
+#    print(Upstreamcats)
     if excludesubids[0] == -1:
         catids = Upstreamcats
     else: 
@@ -22,12 +22,12 @@ def FindQ_mean_Da_relaitonship(tsubid,routing_info,Netcat_array,SubId_WidDep_arr
         catids    = Upstreamcats[np.logical_not(mask1)]     
         
     mask_cats =  np.isin(Netcat_array, catids)
-    print('#################################################################################3')
+#    print('#################################################################################3')
 
     WidDep_SubIds  = SubId_WidDep_array[mask_cats]
     WidDep_SubIds  = np.unique(WidDep_SubIds)
     WidDep_SubIds  = WidDep_SubIds[WidDep_SubIds > 0]
-    print(WidDep_SubIds)
+#    print(WidDep_SubIds)
     
     Sub_WidDep_info = WidDep_info.loc[WidDep_info['HYBAS_ID'].isin(WidDep_SubIds)]
     WidDep_out_subid = -1
@@ -40,7 +40,7 @@ def FindQ_mean_Da_relaitonship(tsubid,routing_info,Netcat_array,SubId_WidDep_arr
             Max_Upstream_WidDep_Sub_Num = len(Up_Sub_WidDep)
             WidDep_out_subid           = WidDep_SubId
             
-    print(Max_Upstream_WidDep_Sub_Num,WidDep_out_subid)
+#    print(Max_Upstream_WidDep_Sub_Num,WidDep_out_subid)
     
     if WidDep_out_subid > 0:   #### has more than 1 subbains within the domain
         Up_Sub_WidDep        = Sub_WidDep_info.loc[(Sub_WidDep_info['NEXT_DOWN'] == WidDep_out_subid) | (Sub_WidDep_info['HYBAS_ID'] == WidDep_out_subid)]
@@ -55,17 +55,24 @@ def FindQ_mean_Da_relaitonship(tsubid,routing_info,Netcat_array,SubId_WidDep_arr
         DA     = max_of_Subs_Q_mean['UP_AREA'].values
         
         if len(Q_mean) >= 2:
-            print(Q_mean)
-            print(DA)
+#            print(Q_mean)
+#            print(DA)
             popt2, pcov2 = curve_fit(func_Q_DA, DA, Q_mean)
-            print(tuple(popt2))    
+#            print(tuple(popt2))    
             k=popt2[0]
             c=popt2[1]
             width = -1
             depth = -1
-            print(k,c,width,depth)
-    
-    
+            qmean = -1
+        else:
+            k=-1
+            c=-1
+            width = max_of_Subs_Q_mean['WIDTH'].values[0]
+            depth = max_of_Subs_Q_mean['DEPTH'].values[0]   
+            qmean = Q_mean[0]      
+#            print(k,c,width,depth)
+
+    return k,c,width,depth,qmean,catids
     
     
 
@@ -75,10 +82,49 @@ def UpdateChannelinfo(catinfo,allcatid,Netcat_array,SubId_WidDep_array,WidDep_in
     
     catinfo_riv_segs = catinfo_riv.loc[catinfo_riv['DA'] > Min_DA_for_func_Q_DA * 1000*1000]  ## find segment with DA larger than Min_DA_for_func_Q_DA
     
-    if len(catinfo_riv_segs) == 0:
+    if len(catinfo_riv_segs) <= 1:
         catinfo_riv  = catinfo_riv.sort_values(["DA"], ascending = (False))
         tsubid       = catinfo_riv['SubId'].values[0]
-        FindQ_mean_Da_relaitonship(tsubid,routing_info,Netcat_array,SubId_WidDep_array,WidDep_info)
+        k,c,width,depth,qmean,catids = FindQ_mean_Da_relaitonship(tsubid,routing_info,Netcat_array,SubId_WidDep_array,WidDep_info)
+        if width > 0:
+            catinfo.loc[catinfo['SubId'].isin(catids),'Q_Mean'] = qmean
+            catinfo.loc[catinfo['SubId'].isin(catids),'BkfWidth'] = width
+            catinfo.loc[catinfo['SubId'].isin(catids),'BkfDepth'] = depth
+        else:
+            catinfo.loc[catinfo['SubId'].isin(catids),'Q_Mean'] = k*(catinfo.loc[catinfo['SubId'].isin(catids),'DA'].values/1000/1000)**c
+            catinfo.loc[catinfo['SubId'].isin(catids),'BkfWidth'] = 7.2 * catinfo.loc[catinfo['SubId'].isin(catids),'Q_Mean'].values**0.5
+            catinfo.loc[catinfo['SubId'].isin(catids),'BkfDepth'] = 0.27 * catinfo.loc[catinfo['SubId'].isin(catids),'Q_Mean'].values**0.3 
+    else:
+        catinfo_riv     = catinfo_riv.sort_values(["Strahler"], ascending = (True)) 
+        Seg_IDS         = catinfo_riv['Seg_ID'].values
+        Seg_IDS         = np.unique(Seg_IDS)   
+        
+        for iseg in range(0,len(Seg_IDS)):
+            i_seg_id        = Seg_IDS[iseg]
+            i_seg_info      = Selected_riv[Selected_riv['Seg_ID'] == i_seg_id]                      
+            i_seg_info      = i_seg_info.sort_values(["Seg_order"], ascending = (True))   
+            tsubid          = i_seg_info['SubId'].values[len(i_seg_info) - 1]
+            
+            if(iseg == 0):
+                k,c,width,depth,qmean,catids = FindQ_mean_Da_relaitonship(tsubid,routing_info,Netcat_array,SubId_WidDep_array,WidDep_info,excludesubids = [-1])
+                modifysubids = catids
+            else:
+                k,c,width,depth,qmean,catids = FindQ_mean_Da_relaitonship(tsubid,routing_info,Netcat_array,SubId_WidDep_array,WidDep_info,excludesubids = modifysubids)
+                print(len(catids),len(modifysubids))
+                
+                modifysubids = np.unique(np.concatenate([modifysubids,catids])) 
+                print(len(modifysubids))   
+                 
+        if width > 0:
+            catinfo.loc[catinfo['SubId'].isin(catids),'Q_Mean'] = qmean
+            catinfo.loc[catinfo['SubId'].isin(catids),'BkfWidth'] = width
+            catinfo.loc[catinfo['SubId'].isin(catids),'BkfDepth'] = depth
+        else:
+            catinfo.loc[catinfo['SubId'].isin(catids),'Q_Mean'] = k*(catinfo.loc[catinfo['SubId'].isin(catids),'DA'].values/1000/1000)**c
+            catinfo.loc[catinfo['SubId'].isin(catids),'BkfWidth'] = 7.2 * catinfo.loc[catinfo['SubId'].isin(catids),'Q_Mean'].values**0.5
+            catinfo.loc[catinfo['SubId'].isin(catids),'BkfDepth'] = 0.27 * catinfo.loc[catinfo['SubId'].isin(catids),'Q_Mean'].values**0.3 
+                                
+    return catinfo
         
 #################################################################        
         

@@ -1832,7 +1832,7 @@ class LRRT:
         catareainfo = pd.read_sql_query(sqlstat, con)
         sqlstat="SELECT Gridcode, Area_m FROM Non_con_lake_cat_1"
         NonConcLakeInfo = pd.read_sql_query(sqlstat, con)
-        sqlstat="SELECT HYBAS_ID, NEXT_DOWN, UP_AREA, Q_Mean FROM WidDep"
+        sqlstat="SELECT HYBAS_ID, NEXT_DOWN, UP_AREA, Q_Mean, WIDTH, DEPTH FROM WidDep"
         WidDep_info = pd.read_sql_query(sqlstat, con)
         
 
@@ -1863,7 +1863,7 @@ class LRRT:
 #        print(catinfo)
         catinfo = Streamorderanddrainagearea(catinfo)     
         
-        UpdateChannelinfo(catinfo,allcatid,Netcat_array,SubId_WidDep_array,WidDep_info,Min_DA_for_func_Q_DA)
+        catinfo = UpdateChannelinfo(catinfo,allcatid,Netcat_array,SubId_WidDep_array,WidDep_info,Min_DA_for_func_Q_DA)
         
         ########None connected lake catchments 
         
