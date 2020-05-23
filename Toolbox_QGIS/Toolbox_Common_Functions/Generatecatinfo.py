@@ -101,7 +101,7 @@ def UpdateChannelinfo(catinfo,allcatid,Netcat_array,SubId_WidDep_array,WidDep_in
         
         for iseg in range(0,len(Seg_IDS)):
             i_seg_id        = Seg_IDS[iseg]
-            i_seg_info      = Selected_riv[Selected_riv['Seg_ID'] == i_seg_id]                      
+            i_seg_info      = catinfo_riv[catinfo_riv['Seg_ID'] == i_seg_id]                      
             i_seg_info      = i_seg_info.sort_values(["Seg_order"], ascending = (True))   
             tsubid          = i_seg_info['SubId'].values[len(i_seg_info) - 1]
             
@@ -123,6 +123,28 @@ def UpdateChannelinfo(catinfo,allcatid,Netcat_array,SubId_WidDep_array,WidDep_in
             catinfo.loc[catinfo['SubId'].isin(catids),'Q_Mean'] = k*(catinfo.loc[catinfo['SubId'].isin(catids),'DA'].values/1000/1000)**c
             catinfo.loc[catinfo['SubId'].isin(catids),'BkfWidth'] = 7.2 * catinfo.loc[catinfo['SubId'].isin(catids),'Q_Mean'].values**0.5
             catinfo.loc[catinfo['SubId'].isin(catids),'BkfDepth'] = 0.27 * catinfo.loc[catinfo['SubId'].isin(catids),'Q_Mean'].values**0.3 
+            
+            
+            
+        ###################################################################################################################################
+        catinfo_riv     = catinfo_riv.sort_values(["Strahler"], ascending = (True)) 
+        Seg_IDS         = catinfo_riv['Seg_ID'].values
+        Seg_IDS         = np.unique(Seg_IDS)   
+        
+        for iseg in range(0,len(Seg_IDS)):
+            i_seg_id        = Seg_IDS[iseg]
+            i_seg_info      = catinfo_riv[catinfo_riv['Seg_ID'] == i_seg_id]                      
+            max_elve        = np.maximum(i_seg_info['Max_DEM'].values)
+            min_elve        = np.maximum(i_seg_info['Min_DEM'].values) 
+            length          = np.sum(i_seg_info['RivLength'].values)
+            qmean_seg       = np.mean(i_seg_info['Q_Mean'].values) 
+            width_seg       = np.mean(i_seg_info['BkfWidth'].values) 
+            depth_Seg       = np.mean(i_seg_info['BkfDepth'].values) 
+            slope_seg       = (max_elve - min_elve)/length
+            n_seg           = calculateChannaln(width_seg,depth_Seg,qmean_seg,slope_seg)
+            
+            catinfo.loc[catinfo['Seg_ID'] == i_seg_id,'Seg_Slope'] = slope_seg
+            catinfo.loc[catinfo['Seg_ID'] == i_seg_id,'Seg_n']     = n_seg
                                 
     return catinfo
         
@@ -332,7 +354,7 @@ def calculateChannaln(width,depth,Q,slope):
     if (V > 0):
         n = (Rch**(2.0/3.0))*(slope**(1.0/2.0))/V
     else:
-        n = 0.0012345
+        n = -1.2345
     return n
 
 
@@ -580,17 +602,17 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
         rivlen = np.unique(leninfo.loc[leninfo['Gridcode'] == catid]['Length_m'].values)  #'Area_m'
         if len(rivlen) == 1:
             catinfo.loc[i,'RivLength'] = rivlen
-# #            if rivlen >= 0:
-#                 if max(0,float((maxdem - mindem))/float(rivlen)) == 0:
-# #                    catinfo.loc[i,'RivSlope'] =-1.2345
-#                 else:
-# #                    catinfo.loc[i,'RivSlope'] = max(0,float((maxdem - mindem))/float(rivlen))
-#             else:
-# #                catinfo.loc[i,'RivSlope'] = -1.2345
+            if rivlen >= 0:
+                if max(0,float((maxdem - mindem))/float(rivlen)) == 0:
+                    catinfo.loc[i,'RivSlope'] =-1.2345
+                else:
+                    catinfo.loc[i,'RivSlope'] = max(0,float((maxdem - mindem))/float(rivlen))
+            else:
+                catinfo.loc[i,'RivSlope'] = -1.2345
         else:
             print("Warning  river length of stream  " , catid, "   need check   ", len(rivlen) )
             catinfo.loc[i,'RivLength'] = -1.2345
-#            catinfo.loc[i,'RivSlope'] = -1.2345
+            catinfo.loc[i,'RivSlope'] = -1.2345
                         
 ########Got basin width and depth
         # widthinriv = width[catmask2]   ###rive segment mask

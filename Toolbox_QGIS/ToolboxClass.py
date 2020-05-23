@@ -1862,7 +1862,8 @@ class LRRT:
 #        print(routing_info) 
 #        print(catinfo)
         catinfo = Streamorderanddrainagearea(catinfo)     
-        
+        catinfo['Seg_Slope'] = -1.2345
+        catinfo['Seg_n'] = -1.2345
         catinfo = UpdateChannelinfo(catinfo,allcatid,Netcat_array,SubId_WidDep_array,WidDep_info,Min_DA_for_func_Q_DA)
         
         ########None connected lake catchments 
