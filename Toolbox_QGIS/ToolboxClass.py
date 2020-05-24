@@ -1101,6 +1101,7 @@ class LRRT:
         self.Path_finalcatinfo_type = os.path.join(self.tempfolder,'catinfo.csvt')
         self.Path_alllakeinfoinfo = os.path.join(self.tempfolder,'hylake.csv')
         self.Path_Maskply = os.path.join(self.tempfolder, 'HyMask2.shp')
+        
        
 ########################################################################################
 ### Remove tempfolders
@@ -1696,7 +1697,7 @@ class LRRT:
         PERMANENT.close()
                 
 ############################################################################3
-    def RoutingNetworkTopologyUpdateToolset_riv(self,projection = 'default', Min_DA_for_func_Q_DA = 1000):
+    def RoutingNetworkTopologyUpdateToolset_riv(self,projection = 'default', Min_DA_for_func_Q_DA = 1000,max_manning_n = 0.15,min_manning_n = 0.01):
         import grass.script as grass
         from grass.script import array as garray
         import grass.script.setup as gsetup
@@ -1864,7 +1865,10 @@ class LRRT:
         catinfo = Streamorderanddrainagearea(catinfo)     
         catinfo['Seg_Slope'] = -1.2345
         catinfo['Seg_n'] = -1.2345
-        catinfo = UpdateChannelinfo(catinfo,allcatid,Netcat_array,SubId_WidDep_array,WidDep_info,Min_DA_for_func_Q_DA)
+        catinfo['Reg_Slope'] = -1.2345
+        catinfo['Reg_n'] = -1.2345
+        
+        catinfo = UpdateChannelinfo(catinfo,allcatid,Netcat_array,SubId_WidDep_array,WidDep_info,Min_DA_for_func_Q_DA,max_manning_n,min_manning_n)
         
         ########None connected lake catchments 
         
