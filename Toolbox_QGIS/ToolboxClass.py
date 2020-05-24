@@ -1637,19 +1637,18 @@ class LRRT:
 #            print(i_nstrinfodf)
             for j in range(0,len(i_nstrinfodf) - 1):
                 if i_nstrinfodf['MaxAcc'].values[j] > i_nstrinfodf['MaxAcc'].values[j +1]:
-#                    print('###########################################################################3')
-#                    print(i_nstrinfodf)
+                    print('###########################################################################3')
+                    print(i_nstrinfodf)
                     mask = nstrarray == i_nstrinfodf['With_Lake_SubId'].values[j+1]   ### build mask for grids belong to current stream and current cat
                     nstrarray[mask]   = i_nstrinfodf['With_Lake_SubId'].values[j]   ## assgin new stream id to mask region                    
-                    connected_Lakeids = conlake_arr[mask]
-                    connected_Lakeids = connected_Lakeids[connected_Lakeids > 0]
-                    connected_Lakeids = np.unique(connected_Lakeids)
-                    if(len(connected_Lakeids) == 1):
-                        catid                       = i_nstrinfodf['Finalcat_SubId'].values[j+1]
-                        finalcatmask2               = finalcat_arr == catid
-                        NonCL_array[finalcatmask2]  = connected_Lakeids
+                    # connected_Lakeids = conlake_arr[mask]
+                    # connected_Lakeids = connected_Lakeids[connected_Lakeids > 0]
+                    # connected_Lakeids = np.unique(connected_Lakeids)
+                    # if(len(connected_Lakeids) == 1):
+                    #     catid                       = i_nstrinfodf['Finalcat_SubId'].values[j+1]
+                    #     finalcatmask2               = finalcat_arr == catid
+                    #     NonCL_array[finalcatmask2]  = connected_Lakeids
         
-            
         temparray = garray.array()
         temparray[:,:] = -9999
         temparray[:,:] = NonCL_array[:,:]
