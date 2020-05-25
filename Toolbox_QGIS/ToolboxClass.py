@@ -1088,6 +1088,7 @@ class LRRT:
         self.Path_dem = os.path.join(self.tempfolder,'dem.tif')
         self.Path_demproj = os.path.join(self.tempfolder,'dem_proj.tif')
         self.Path_allLakeply = os.path.join(self.tempfolder,'Hylake.shp')
+        self.Path_allLakeply_Temp = os.path.join(self.tempfolder,'Hylake_fix_geom.shp')
         self.Path_WidDepLine = os.path.join(self.tempfolder,'WidDep.shp')
         self.Path_ObsPoint = os.path.join(self.tempfolder,'obspoint.shp')
         self.Path_Landuseinfo = os.path.join(self.tempfolder,'landuseinfo.csv')
@@ -1272,10 +1273,11 @@ class LRRT:
         grsregion = gcore.region()
         ### process vector data, clip and import
         
+        processing.run("native:fixgeometries", {'INPUT':self.Path_Lakefile_in,'OUTPUT':self.Path_allLakeply_Temp})
         
-        processing.run("native:extractbylocation", {'INPUT':self.Path_Lakefile_in,'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_allLakeply})
-        processing.run("native:extractbylocation", {'INPUT':self.Path_WiDep_in,'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_WidDepLine})
-        processing.run("native:extractbylocation", {'INPUT':self.Path_obspoint_in,'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_ObsPoint})
+        processing.run("native:extractbylocation", {'INPUT':self.Path_allLakeply_Temp,'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_allLakeply},context = context)
+        processing.run("native:extractbylocation", {'INPUT':self.Path_WiDep_in,'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_WidDepLine},context = context)
+        processing.run("native:extractbylocation", {'INPUT':self.Path_obspoint_in,'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_ObsPoint},context = context)
         
         # processing.run("native:clip", {'INPUT':self.Path_Lakefile_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_allLakeply},context = context)
         # processing.run("native:clip", {'INPUT':self.Path_WiDep_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_WidDepLine},context = context)
