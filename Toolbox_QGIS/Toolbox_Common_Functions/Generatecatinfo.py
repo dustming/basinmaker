@@ -8,6 +8,21 @@ from scipy.optimize import curve_fit
 def func_Q_DA(A, k, c):
     return k * A**c 
     
+
+# def UpdateNonConnectedcatchmentinfo(catinfo):
+#     catinfo_non_connected         = catinfo.loc[catinfo['IsLake'] == 2]
+# 
+#     catids_nc  = catinfo_non_connected['SubId']
+# 
+#     catinfo.loc[catinfo['SubId'].isin(catids_nc),'RivLength'] = 0.0 ## no reiver length since not connected.
+    
+    
+    
+    
+    
+        
+        
+
         
 def FindQ_mean_Da_relaitonship(tsubid,routing_info,Netcat_array,SubId_WidDep_array,WidDep_info,excludesubids = [-1]):
     

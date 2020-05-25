@@ -1271,9 +1271,16 @@ class LRRT:
         self.nrows = int(strtemp_array.shape[0])
         grsregion = gcore.region()
         ### process vector data, clip and import
-        processing.run("native:clip", {'INPUT':self.Path_Lakefile_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_allLakeply},context = context)
-        processing.run("native:clip", {'INPUT':self.Path_WiDep_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_WidDepLine},context = context)
-        processing.run("native:clip", {'INPUT':self.Path_obspoint_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_ObsPoint},context = context)
+        
+        
+        processing.run("native:extractbylocation", {'INPUT':self.Path_Lakefile_in,'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_allLakeply})
+        processing.run("native:extractbylocation", {'INPUT':self.Path_WiDep_in,'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_WidDepLine})
+        processing.run("native:extractbylocation", {'INPUT':self.Path_obspoint_in,'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_ObsPoint})
+        
+        # processing.run("native:clip", {'INPUT':self.Path_Lakefile_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_allLakeply},context = context)
+        # processing.run("native:clip", {'INPUT':self.Path_WiDep_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_WidDepLine},context = context)
+        # processing.run("native:clip", {'INPUT':self.Path_obspoint_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_ObsPoint},context = context)
+        
         grass.run_command("v.import", input = self.Path_WidDepLine, output = 'WidDep', overwrite = True)
         grass.run_command("v.import", input = self.Path_ObsPoint, output = 'obspoint', overwrite = True)
         grass.run_command("v.import", input = self.Path_allLakeply, output = 'Hylake', overwrite = True)
