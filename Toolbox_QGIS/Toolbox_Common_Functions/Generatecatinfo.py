@@ -78,8 +78,9 @@ def FindQ_mean_Da_relaitonship(tsubid,routing_info,Netcat_array,SubId_WidDep_arr
 
 def UpdateChannelinfo(catinfo,allcatid,Netcat_array,SubId_WidDep_array,WidDep_info,Min_DA_for_func_Q_DA,max_manning_n,min_manning_n,Min_DA_for_Reg_Riv_Slope = 100):
     routing_info         = catinfo[['SubId','DowSubId']].astype('float').values
-    catinfo_riv          = catinfo.loc[catinfo['IsLake'] < 2]
     
+    #########################Define bankfull width and depth
+    catinfo_riv          = catinfo.loc[catinfo['IsLake'] < 2]
     catinfo_riv_segs = catinfo_riv.loc[catinfo_riv['DA'] > Min_DA_for_func_Q_DA * 1000*1000]  ## find segment with DA larger than Min_DA_for_func_Q_DA
     print("###########################################################################################################################3     ")
     if len(catinfo_riv_segs) <= 1:
@@ -128,51 +129,50 @@ def UpdateChannelinfo(catinfo,allcatid,Netcat_array,SubId_WidDep_array,WidDep_in
             
             
     ###################################################################################################################################
-    catinfo_riv     = catinfo.loc[catinfo['IsLake'] < 2]
-    catinfo_riv     = catinfo_riv.sort_values(["Strahler"], ascending = (True)) 
-    
-        
-    catinfo_riv_segs_slope = catinfo_riv.loc[catinfo_riv['DA'] > Min_DA_for_Reg_Riv_Slope * 1000*1000]
-    
-    if len(catinfo_riv_segs_slope) <= 1:    #### Caludate an averaged slope for an all watershed 
-        max_elve_reg    = np.max(catinfo_riv['Max_DEM'].values)
-        min_elve_reg    = np.max(catinfo_riv['Min_DEM'].values) 
-        length_reg      = np.sum(catinfo_riv['RivLength'].values)
-        qmean_reg       = np.average(catinfo_riv['Q_Mean'].values) 
-        width_reg       = np.average(catinfo_riv['BkfWidth'].values) 
-        depth_reg       = np.average(catinfo_riv['BkfDepth'].values) 
-        slope_reg       = (max_elve_reg - min_elve_reg)/length_reg  
-        n_reg           = calculateChannaln(width_reg,depth_reg,qmean_reg,slope_reg)
-        catids          = catinfo_riv['SubID'].values 
-          
-        catinfo.loc[catinfo['SubId'].isin(catids),'Seg_Slope'] = slope_reg
-        catinfo.loc[catinfo['SubId'].isin(catids),'Seg_n']     = n_reg        
-              
-    else:
-        catinfo_riv_segs_slope     = catinfo_riv_segs_slope.sort_values(["Strahler"], ascending = (True)) 
-        Seg_IDS                    = catinfo_riv_segs_slope['Seg_ID'].values
-        Seg_IDS                    = np.unique(Seg_IDS)   
-        
-        for iseg in range(0,len(Seg_IDS)):
-            i_seg_id          = Seg_IDS[iseg]
-            i_seg_info        = catinfo_riv_segs_slope[catinfo_riv_segs_slope['Seg_ID'] == i_seg_id]                      
-            i_seg_info        = i_seg_info.sort_values(["Seg_order"], ascending = (True))   
-            tsubid            = i_seg_info['SubId'].values[len(i_seg_info) - 1]
+    #########################define regional slope manning's coefficient 
+    # catinfo_riv     = catinfo.loc[catinfo['IsLake'] < 2]
+    # catinfo_riv     = catinfo_riv.sort_values(["Strahler"], ascending = (True)) 
+    # 
+    # 
+    # catinfo_riv_segs_slope = catinfo_riv.loc[catinfo_riv['DA'] > Min_DA_for_Reg_Riv_Slope * 1000*1000]
+    # 
+    # if len(catinfo_riv_segs_slope) <= 1:    #### Caludate an averaged slope for an all watershed 
+    #     max_elve_reg    = np.max(catinfo_riv['Max_DEM'].values)
+    #     min_elve_reg    = np.max(catinfo_riv['Min_DEM'].values) 
+    #     length_reg      = np.sum(catinfo_riv['RivLength'].values)
+    #     qmean_reg       = np.average(catinfo_riv['Q_Mean'].values) 
+    #     width_reg       = np.average(catinfo_riv['BkfWidth'].values) 
+    #     depth_reg       = np.average(catinfo_riv['BkfDepth'].values) 
+    #     slope_reg       = (max_elve_reg - min_elve_reg)/length_reg  
+    #     n_reg           = calculateChannaln(width_reg,depth_reg,qmean_reg,slope_reg)
+    #     catids          = catinfo_riv['SubID'].values 
+    # 
+    #     catinfo.loc[catinfo['SubId'].isin(catids),'Seg_Slope'] = slope_reg
+    #     catinfo.loc[catinfo['SubId'].isin(catids),'Seg_n']     = n_reg        
+    # 
+    # else:
+    #     catinfo_riv_segs_slope     = catinfo_riv_segs_slope.sort_values(["Strahler"], ascending = (True)) 
+    #     Seg_IDS                    = catinfo_riv_segs_slope['Seg_ID'].values
+    #     Seg_IDS                    = np.unique(Seg_IDS)   
+    # 
+    #     for iseg in range(0,len(Seg_IDS)):
+    #         i_seg_id          = Seg_IDS[iseg]
+    #         i_seg_info        = catinfo_riv_segs_slope[catinfo_riv_segs_slope['Seg_ID'] == i_seg_id]                      
+    #         i_seg_info        = i_seg_info.sort_values(["Seg_order"], ascending = (True))   
+    #         tsubid            = i_seg_info['SubId'].values[len(i_seg_info) - 1]
             
 #            Upstreamcats      = Defcat(routing_info,tsubid)     ### alll subuds 
             
 
     
-    
     ###################################################################################################################################3
-
-    Seg_IDS         = catinfo_riv['Seg_ID'].values
-    Seg_IDS         = np.unique(Seg_IDS)   
+    catinfo_riv          = catinfo.loc[catinfo['IsLake'] < 2]
+    Seg_IDS              = catinfo_riv['Seg_ID'].values
+    Seg_IDS              = np.unique(Seg_IDS)   
         
     for iseg in range(0,len(Seg_IDS)):
         i_seg_id        = Seg_IDS[iseg]
-        i_seg_info      = catinfo_riv[catinfo_riv['Seg_ID'] == i_seg_id]   
-        print(i_seg_info)                   
+        i_seg_info      = catinfo_riv[catinfo_riv['Seg_ID'] == i_seg_id]                     
         max_elve_seg    = np.max(i_seg_info['Max_DEM'].values)
         min_elve_seg    = np.max(i_seg_info['Min_DEM'].values) 
         length_seg      = np.sum(i_seg_info['RivLength'].values)
@@ -180,8 +180,10 @@ def UpdateChannelinfo(catinfo,allcatid,Netcat_array,SubId_WidDep_array,WidDep_in
         width_seg       = np.average(i_seg_info['BkfWidth'].values) 
         depth_Seg       = np.average(i_seg_info['BkfDepth'].values) 
         slope_seg       = (max_elve_seg - min_elve_seg)/length_seg
-        
+        if slope_seg < 0.000000001:
+            slope_seg       = 0.00012345    #### Needs to update later
         print(max_elve_seg,min_elve_seg,length_seg,qmean_seg,width_seg,depth_Seg,slope_seg)
+        
         n_seg           = calculateChannaln(width_seg,depth_Seg,qmean_seg,slope_seg)
             
         catinfo.loc[catinfo['Seg_ID'] == i_seg_id,'Seg_Slope'] = slope_seg
@@ -196,10 +198,26 @@ def UpdateChannelinfo(catinfo,allcatid,Netcat_array,SubId_WidDep_array,WidDep_in
             width_rch       = i_seg_info['BkfWidth'].values[i] 
             depth_rch       = i_seg_info['BkfDepth'].values[i] 
             slope_rch       = (max_elve_seg - min_elve_seg)/length_rch
+            
+            if slope_rch < 0.000000001:
+                slope_rch = slope_seg
+                
             n_rch           = calculateChannaln(width_rch,depth_rch,qmean_rch,slope_rch)
+            
+#            if length_rch < 1000:  ### for smaller reach, use segmen manning's coefficient
+            n_rch = n_seg
+                
+            if n_rch < min_manning_n or n_rch > max_manning_n:
+                if n_seg < min_manning_n or n_seg > max_manning_n:
+                    if n_rch < min_manning_n:
+                        n_rch = min_manning_n
+                    else:
+                        n_rch = max_manning_n
+                else:
+                    n_rch = n_seg
 
-#            catinfo.loc[catinfo['SubId'] == subid,'RivSlope'] = slope_rch
-#            catinfo.loc[catinfo['SubId'] == subid,'Ch_n']     = n_rch                
+            catinfo.loc[catinfo['SubId'] == subid,'RivSlope'] = slope_rch
+            catinfo.loc[catinfo['SubId'] == subid,'Ch_n']     = n_rch                
                 
                                                     
     return catinfo
