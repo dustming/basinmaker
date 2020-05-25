@@ -1892,11 +1892,11 @@ class LRRT:
         ### add catchment info to all river segment 
         grass.run_command('db.in.ogr', input=self.Path_finalcatinfo_riv,output = 'result_riv',overwrite = True)
         grass.run_command('v.db.join', map= 'nstr_nfinalcat_F',column = 'Gridcode', other_table = 'result_riv',other_column ='SubId', overwrite = True)
-#        grass.run_command('v.db.dropcolumn', map= 'nstr_nfinalcat_F', columns = ['Length_m','Gridcode'])
+        grass.run_command('v.db.dropcolumn', map= 'nstr_nfinalcat_F', columns = ['Length_m','Gridcode'])
         grass.run_command('v.out.ogr', input = 'nstr_nfinalcat_F',output = os.path.join(self.tempfolder,'finalriv_info1.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
         
         grass.run_command('v.db.join', map= 'Net_cat_F',column = 'Gridcode', other_table = 'result_riv',other_column ='SubId', overwrite = True)
-#        grass.run_command('v.db.dropcolumn', map= 'Net_cat_F', columns = ['Area_m','Gridcode','GC_str'])
+        grass.run_command('v.db.dropcolumn', map= 'Net_cat_F', columns = ['Area_m','Gridcode','GC_str'])
         grass.run_command('v.out.ogr', input = 'Net_cat_F',output = os.path.join(self.tempfolder,'finalriv_catinfo1.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
 
         PERMANENT.close()
@@ -2647,8 +2647,10 @@ class LRRT:
         finalrivply_csv     = Path_Temp_final_rviply[:-3] + "dbf"
         finalrivply_info    = Dbf5(finalrivply_csv)
         finalrivply_info    = finalrivply_info.to_dataframe().drop_duplicates(sub_colnm, keep='first')
+        
         mapoldnew_info      = finalrivply_info.copy(deep = True)
         mapoldnew_info['nsubid'] = mapoldnew_info['SubId']
+        
         AllConnectLakeIDS   = finalrivply_info['HyLakeId'].values
         AllConnectLakeIDS   = AllConnectLakeIDS[AllConnectLakeIDS > 0]
         AllConnectLakeIDS   = np.unique(AllConnectLakeIDS)
@@ -2660,7 +2662,8 @@ class LRRT:
             Lakesub_info = Lakesub_info.sort_values(["DA"], ascending = (False))
             tsubid       = Lakesub_info[sub_colnm].values[0]
             lakesubids   = Lakesub_info[sub_colnm].values
-            mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalrivply_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = lakesubids,mainriv = finalrivply_info,Islake = 1) 
+            if len(lakesubids) > 1:  ## only for connected lakes 
+                mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalrivply_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = lakesubids,mainriv = finalrivply_info,Islake = 1) 
         
         UpdateTopology(mapoldnew_info,UpdateStreamorder = -1)          
         mapoldnew_info.to_csv( os.path.join(Datafolder,'mapoldnew.csv'),sep=',',index=None)    
@@ -2670,15 +2673,6 @@ class LRRT:
 
         ## process Non connected lakes
         
-        UpdateNonConnectedLakeCatchmentinfo(Path_Non_ConL_cat,mapoldnew_info)
-
-        Non_ConL_cat_csv         = Path_Non_ConL_cat[:-3] + "dbf"
-        Non_ConL_cat_info        = Dbf5(Non_ConL_cat_csv)
-        Non_ConL_cat_info        = Non_ConL_cat_info.to_dataframe()
-        
-        UpdateNonConnectedLakeArea_In_Finalcatinfo(Path_final_rviply,Non_ConL_cat_info)
-#        Copyfeature_to_another_shp_by_attribute(Path_final_rviply,Path_Non_ConL_cat)
-
         Path_final_rviply = os.path.join(Datafolder,'finalcat_info.shp')
         Path_final_rvi    = os.path.join(Datafolder,'finalcat_info_riv.shp')
         processing.run("native:dissolve", {'INPUT':Path_Temp_final_rvi,'FIELD':['SubId'],'OUTPUT':Path_final_rvi},context = context)
