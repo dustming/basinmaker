@@ -15,7 +15,7 @@ import copy
 import pandas as pd
 import sqlite3
 from GetBasinoutlet import Getbasinoutlet,Nextcell,Defcat
-from Generatecatinfo import Generatecatinfo,Generatecatinfo_riv,calculateChannaln,Writecatinfotodbf,Streamorderanddrainagearea,UpdateChannelinfo
+from Generatecatinfo import Generatecatinfo,Generatecatinfo_riv,calculateChannaln,Writecatinfotodbf,Streamorderanddrainagearea,UpdateChannelinfo,UpdateNonConnectedcatchmentinfo
 from WriteRavenInputs import writelake,Writervhchanl
 from WriteRavenInputs import WriteObsfiles
 from RavenOutputFuctions import plotGuagelineobs
@@ -1868,14 +1868,15 @@ class LRRT:
         routing_info         = catinfo[['SubId','DowSubId']].astype('float').values
 #        print(routing_info) 
 #        print(catinfo)
-        catinfo = Streamorderanddrainagearea(catinfo)     
+        catinfo = Streamorderanddrainagearea(catinfo)  
+           
         catinfo['Seg_Slope'] = -1.2345
         catinfo['Seg_n'] = -1.2345
         catinfo['Reg_Slope'] = -1.2345
         catinfo['Reg_n'] = -1.2345
         
         catinfo = UpdateChannelinfo(catinfo,allcatid,Netcat_array,SubId_WidDep_array,WidDep_info,Min_DA_for_func_Q_DA,max_manning_n,min_manning_n)
-        
+        catinfo = UpdateNonConnectedcatchmentinfo(catinfo)
         ########None connected lake catchments 
         
         
@@ -2618,7 +2619,7 @@ class LRRT:
         return 
         
 
-    def Define_Final_Catchment(self,Datafolder,finalrvi_ply_NM = 'finalriv_info_ply.shp',finalriv_NM = 'finalriv_info.shp',Non_ConnL_Cat_NM = 'Non_con_lake_cat_info.shp',sub_colnm = 'SubId'):
+    def Define_Final_Catchment(self,Datafolder,finalrvi_ply_NM = 'finalriv_info_ply.shp',finalriv_NM = 'finalriv_info.shp',sub_colnm = 'SubId'):
         
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
@@ -2634,7 +2635,6 @@ class LRRT:
         
         Path_final_rviply = os.path.join(Datafolder,finalrvi_ply_NM)
         Path_final_riv    = os.path.join(Datafolder,finalriv_NM)
-        Path_Non_ConL_cat = os.path.join(Datafolder,Non_ConnL_Cat_NM)
          
          
         Path_Temp_final_rviply = os.path.join(self.tempfolder,'temp_finalriv_ply.shp')
