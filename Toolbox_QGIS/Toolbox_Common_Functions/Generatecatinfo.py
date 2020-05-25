@@ -84,12 +84,12 @@ def FindQ_mean_Da_relaitonship(tsubid,routing_info,Netcat_array,SubId_WidDep_arr
     WidDep_SubIds  = SubId_WidDep_array[mask_cats]
     WidDep_SubIds  = np.unique(WidDep_SubIds)
     WidDep_SubIds  = WidDep_SubIds[WidDep_SubIds > 0]
-#    print(WidDep_SubIds)
+    print(WidDep_SubIds)
     
     Sub_WidDep_info = WidDep_info.loc[WidDep_info['HYBAS_ID'].isin(WidDep_SubIds)]
     WidDep_out_subid = -1
-    Max_Upstream_WidDep_Sub_Num = 0
-    
+    Max_Upstream_WidDep_Sub_Num = -1
+
     for i in range(0,len(WidDep_SubIds)):
         WidDep_SubId = WidDep_SubIds[i]
         Up_Sub_WidDep = Sub_WidDep_info[Sub_WidDep_info['NEXT_DOWN'] == WidDep_SubId]
@@ -97,7 +97,7 @@ def FindQ_mean_Da_relaitonship(tsubid,routing_info,Netcat_array,SubId_WidDep_arr
             Max_Upstream_WidDep_Sub_Num = len(Up_Sub_WidDep)
             WidDep_out_subid           = WidDep_SubId
             
-#    print(Max_Upstream_WidDep_Sub_Num,WidDep_out_subid)
+    print(Max_Upstream_WidDep_Sub_Num,WidDep_out_subid)
     
     if WidDep_out_subid > 0:   #### has more than 1 subbains within the domain
         Up_Sub_WidDep        = Sub_WidDep_info.loc[(Sub_WidDep_info['NEXT_DOWN'] == WidDep_out_subid) | (Sub_WidDep_info['HYBAS_ID'] == WidDep_out_subid)]
