@@ -1705,7 +1705,7 @@ class LRRT:
         PERMANENT.close()
                 
 ############################################################################3
-    def RoutingNetworkTopologyUpdateToolset_riv(self,projection = 'default', Min_DA_for_func_Q_DA = 1000,max_manning_n = 0.15,min_manning_n = 0.01):
+    def RoutingNetworkTopologyUpdateToolset_riv(self,projection = 'default', Min_DA_for_func_Q_DA = 100000000, max_manning_n = 0.15,min_manning_n = 0.01):
         import grass.script as grass
         from grass.script import array as garray
         import grass.script.setup as gsetup

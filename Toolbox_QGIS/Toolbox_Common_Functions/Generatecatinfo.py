@@ -113,13 +113,29 @@ def FindQ_mean_Da_relaitonship(tsubid,routing_info,Netcat_array,SubId_WidDep_arr
         if len(Q_mean) >= 2:
 #            print(Q_mean)
 #            print(DA)
-            popt2, pcov2 = curve_fit(func_Q_DA, DA, Q_mean)
-#            print(tuple(popt2))    
-            k=popt2[0]
-            c=popt2[1]
-            width = -1
-            depth = -1
-            qmean = -1
+            try:
+                popt2, pcov2 = curve_fit(func_Q_DA, DA, Q_mean)
+            except RuntimeError:
+                print('##########################################################################################33')
+                print(tsubid)
+                print(DA)
+                print(Q_mean)
+                print(excludesubids)
+                pcov2 = np.full(2,-1)
+                    
+#            print(tuple(popt2)) 
+            if popt2[0] > 0:
+                k=popt2[0]
+                c=popt2[1]
+                width = -1
+                depth = -1
+                qmean = -1
+            else:
+                k=-1
+                c=-1
+                width = max_of_Subs_Q_mean['WIDTH'].values[0]
+                depth = max_of_Subs_Q_mean['DEPTH'].values[0]   
+                qmean = Q_mean[0]                  
         else:
             k=-1
             c=-1
@@ -138,12 +154,12 @@ def UpdateChannelinfo(catinfo,allcatid,Netcat_array,SubId_WidDep_array,WidDep_in
     #########################Define bankfull width and depth
     catinfo_riv          = catinfo.loc[catinfo['IsLake'] < 2]
     catinfo_riv_segs = catinfo_riv.loc[catinfo_riv['DA'] > Min_DA_for_func_Q_DA * 1000*1000]  ## find segment with DA larger than Min_DA_for_func_Q_DA
-    print("###########################################################################################################################3     ")
+#    print("###########################################################################################################################3     ")
     if len(catinfo_riv_segs) <= 1:
         catinfo_riv  = catinfo_riv.sort_values(["DA"], ascending = (False))
         tsubid       = catinfo_riv['SubId'].values[0]
         k,c,width,depth,qmean,catids = FindQ_mean_Da_relaitonship(tsubid,routing_info,Netcat_array,SubId_WidDep_array,WidDep_info)
-        print(k,c,width,depth,qmean)
+#        print(k,c,width,depth,qmean)
         if width > 0:
             catinfo.loc[catinfo['SubId'].isin(catids),'Q_Mean'] = qmean
             catinfo.loc[catinfo['SubId'].isin(catids),'BkfWidth'] = width
@@ -168,10 +184,10 @@ def UpdateChannelinfo(catinfo,allcatid,Netcat_array,SubId_WidDep_array,WidDep_in
                 modifysubids = catids
             else:
                 k,c,width,depth,qmean,catids = FindQ_mean_Da_relaitonship(tsubid,routing_info,Netcat_array,SubId_WidDep_array,WidDep_info,excludesubids = modifysubids)
-                print(len(catids),len(modifysubids))
+#                print(len(catids),len(modifysubids))
                 
                 modifysubids = np.unique(np.concatenate([modifysubids,catids])) 
-                print(len(modifysubids))   
+#                print(len(modifysubids))   
                  
         if width > 0:
             catinfo.loc[catinfo['SubId'].isin(catids),'Q_Mean'] = qmean
