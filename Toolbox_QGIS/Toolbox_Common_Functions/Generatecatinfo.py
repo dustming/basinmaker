@@ -84,6 +84,15 @@ def FindQ_mean_Da_relaitonship(tsubid,routing_info,Netcat_array,SubId_WidDep_arr
     WidDep_SubIds  = SubId_WidDep_array[mask_cats]
     WidDep_SubIds  = np.unique(WidDep_SubIds)
     WidDep_SubIds  = WidDep_SubIds[WidDep_SubIds > 0]
+    if len(WidDep_SubIds) < 1:
+        k = -1
+        c = -1
+        k=-1
+        c=-1
+        width = 1.2345
+        depth = 1.2345   
+        qmean = 1.2345           
+        return  k,c,width,depth,qmean,catids
     
     Sub_WidDep_info = WidDep_info.loc[WidDep_info['HYBAS_ID'].isin(WidDep_SubIds)]
     WidDep_out_subid = -1
@@ -254,7 +263,7 @@ def UpdateChannelinfo(catinfo,allcatid,Netcat_array,SubId_WidDep_array,WidDep_in
         slope_seg       = (max_elve_seg - min_elve_seg)/length_seg
         if slope_seg < 0.000000001:
             slope_seg       = 0.00012345    #### Needs to update later
-        print(max_elve_seg,min_elve_seg,length_seg,qmean_seg,width_seg,depth_Seg,slope_seg)
+#        print(max_elve_seg,min_elve_seg,length_seg,qmean_seg,width_seg,depth_Seg,slope_seg)
         
         n_seg           = calculateChannaln(width_seg,depth_Seg,qmean_seg,slope_seg)
             

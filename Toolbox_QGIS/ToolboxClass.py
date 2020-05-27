@@ -1276,14 +1276,17 @@ class LRRT:
         processing.run("native:fixgeometries", {'INPUT':self.Path_Lakefile_in,'OUTPUT':self.Path_allLakeply_Temp})
         
         processing.run("native:extractbylocation", {'INPUT':self.Path_allLakeply_Temp,'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_allLakeply},context = context)
-        processing.run("native:extractbylocation", {'INPUT':self.Path_WiDep_in,'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_WidDepLine},context = context)
+        
+        if self.Path_WiDep_in != '#':
+            processing.run("native:extractbylocation", {'INPUT':self.Path_WiDep_in,'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_WidDepLine},context = context)
+            grass.run_command("v.import", input = self.Path_WidDepLine, output = 'WidDep', overwrite = True)
+        
         processing.run("native:extractbylocation", {'INPUT':self.Path_obspoint_in,'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_ObsPoint},context = context)
         
         # processing.run("native:clip", {'INPUT':self.Path_Lakefile_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_allLakeply},context = context)
         # processing.run("native:clip", {'INPUT':self.Path_WiDep_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_WidDepLine},context = context)
         # processing.run("native:clip", {'INPUT':self.Path_obspoint_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_ObsPoint},context = context)
         
-        grass.run_command("v.import", input = self.Path_WidDepLine, output = 'WidDep', overwrite = True)
         grass.run_command("v.import", input = self.Path_ObsPoint, output = 'obspoint', overwrite = True)
         grass.run_command("v.import", input = self.Path_allLakeply, output = 'Hylake', overwrite = True)
 
@@ -1298,10 +1301,23 @@ class LRRT:
                 grass.run_command('r.watershed',elevation = 'dem', drainage = 'dir_grass', accumulation = 'acc_grass2',flags = 's', overwrite = True)
                 grass.run_command('r.mapcalc',expression = "acc_grass = abs(acc_grass2@PERMANENT)",overwrite = True)
             grass.run_command('r.reclass', input='dir_grass',output = 'dir_Arcgis',rules = os.path.join(self.RoutingToolPath,'Grass2ArcgisDIR.txt'), overwrite = True)
-    
-        copyfile(self.Path_Landuseinfo_in, self.Path_Landuseinfo) 
-        grass.run_command("r.external", input = self.Path_Landuse_in, output = 'landuse_in', overwrite = True)
-        grass.run_command("r.clip", input = 'landuse_in', output = 'landuse', overwrite = True)        
+            
+            
+        if self.Path_Landuseinfo_in != '#':
+            copyfile(self.Path_Landuseinfo_in, self.Path_Landuseinfo) 
+            grass.run_command("r.external", input = self.Path_Landuse_in, output = 'landuse_in', overwrite = True)
+            grass.run_command("r.clip", input = 'landuse_in', output = 'landuse', overwrite = True)     
+        else:
+            kk = pd.DataFrame(columns=['RasterV', 'MannV'],index=range(0,1))
+            kk.loc[0,'RasterV'] = -9999
+            kk.loc[0,'MannV'] = 0.035
+            kk.to_csv(self.Path_Landuseinfo,sep=",")  
+            temparray = garray.array()
+            temparray[:,:] = -9999
+            temparray.write(mapname="landuse", overwrite=True) 
+            
+            
+        
     
         ### change lake vector to lake raster.... with -at option 
         os.system('gdal_rasterize -at -of GTiff -a_nodata -9999 -a Hylak_id -tr  '+ str(self.cellSize) + "  " +str(self.cellSize)+'  -te   '+ str(grsregion['w'])+"   " +str(grsregion['s'])+"   " +str(grsregion['e'])+"   " +str(grsregion['n'])+"   " + "\"" +  self.Path_allLakeply +"\""+ "    "+ "\""+self.Path_allLakeRas+"\"")
@@ -1309,11 +1325,23 @@ class LRRT:
         grass.run_command('r.mapcalc',expression = 'alllake = int(alllakeraster_in)',overwrite = True)
         grass.run_command("r.null", map = 'alllake', setnull = -9999)
         ### rasterize other vectors UP_AREA
-        grass.run_command('v.to.rast',input = 'WidDep',output = 'width',use = 'attr',attribute_column = 'WIDTH',overwrite = True)
-        grass.run_command('v.to.rast',input = 'WidDep',output = 'depth',use = 'attr',attribute_column = 'DEPTH',overwrite = True)
-        grass.run_command('v.to.rast',input = 'WidDep',output = 'qmean',use = 'attr',attribute_column = 'Q_Mean',overwrite = True)
-        grass.run_command('v.to.rast',input = 'WidDep',output = 'up_area',use = 'attr',attribute_column = 'UP_AREA',overwrite = True)
-        grass.run_command('v.to.rast',input = 'WidDep',output = 'SubId_WidDep',use = 'attr',attribute_column = 'HYBAS_ID',overwrite = True)
+        
+        if self.Path_WiDep_in != '#':
+            grass.run_command('v.to.rast',input = 'WidDep',output = 'width',use = 'attr',attribute_column = 'WIDTH',overwrite = True)
+            grass.run_command('v.to.rast',input = 'WidDep',output = 'depth',use = 'attr',attribute_column = 'DEPTH',overwrite = True)
+            grass.run_command('v.to.rast',input = 'WidDep',output = 'qmean',use = 'attr',attribute_column = 'Q_Mean',overwrite = True)
+            grass.run_command('v.to.rast',input = 'WidDep',output = 'up_area',use = 'attr',attribute_column = 'UP_AREA',overwrite = True)
+            grass.run_command('v.to.rast',input = 'WidDep',output = 'SubId_WidDep',use = 'attr',attribute_column = 'HYBAS_ID',overwrite = True)
+        else:
+            temparray = garray.array()
+            temparray[:,:] = -9999
+            temparray.write(mapname="width", overwrite=True) 
+            temparray.write(mapname="depth", overwrite=True) 
+            temparray.write(mapname="qmean", overwrite=True) 
+            temparray.write(mapname="up_area", overwrite=True) 
+            temparray.write(mapname="SubId_WidDep", overwrite=True) 
+            
+                        
         grass.run_command('v.to.rast',input = 'obspoint',output = 'obs',use = 'attr',attribute_column = 'Obs_ID',overwrite = True)
 
         PERMANENT.close()
@@ -1833,7 +1861,7 @@ class LRRT:
         ## read landuse and lake infomation data 
         tempinfo = Dbf5(self.Path_allLakeply[:-3] + "dbf")
         allLakinfo = tempinfo.to_dataframe()
-        landuseinfo = pd.read_csv(self.Path_Landuseinfo_in,sep=",",low_memory=False)
+        landuseinfo = pd.read_csv(self.Path_Landuseinfo,sep=",",low_memory=False)
     ### read length and area
         sqlstat="SELECT Gridcode, Length_m FROM nstr_nfinalcat_F"
         rivleninfo = pd.read_sql_query(sqlstat, con)
@@ -1841,9 +1869,13 @@ class LRRT:
         catareainfo = pd.read_sql_query(sqlstat, con)
         sqlstat="SELECT Gridcode, Area_m FROM Non_con_lake_cat_1"
         NonConcLakeInfo = pd.read_sql_query(sqlstat, con)
-        sqlstat="SELECT HYBAS_ID, NEXT_DOWN, UP_AREA, Q_Mean, WIDTH, DEPTH FROM WidDep"
-        WidDep_info = pd.read_sql_query(sqlstat, con)
         
+        if self.Path_WiDep_in != '#':
+            sqlstat="SELECT HYBAS_ID, NEXT_DOWN, UP_AREA, Q_Mean, WIDTH, DEPTH FROM WidDep"
+            WidDep_info = pd.read_sql_query(sqlstat, con)
+        else:
+            temparray = np.full((3,6),-9999.00000)
+            WidDep_info = pd.DataFrame(temparray, columns = ['HYBAS_ID', 'NEXT_DOWN', 'UP_AREA', 'Q_Mean', 'WIDTH', 'DEPTH'])
 
         
         sqlstat="SELECT Obs_ID, DA_obs, STATION_NU, SRC_obs FROM obspoint"
