@@ -1129,10 +1129,12 @@ class LRRT:
         if self.OutHyID > 0:
             hyinfocsv = self.Path_hyshdply_in[:-3] + "dbf"
             tempinfo = Dbf5(hyinfocsv)
-            hyshdinfo = tempinfo.to_dataframe().values 
+            hyshdinfo = tempinfo.to_dataframe()
+            routing_info = hyshdinfo[['HYBAS_ID','NEXT_DOWN']].astype('float').values
            
-            HydroBasins1 = Defcat(hyshdinfo,self.OutHyID) ### return fid of polygons that needs to be select 
-            if self.OutHyID > 0:
+            HydroBasins1 = Defcat(routing_info,self.OutHyID) ### return fid of polygons that needs to be select 
+            
+            if self.OutHyID2 > 0:
                 HydroBasins2 = Defcat(hyshdinfo,self.OutHyID2)            
     ###  exculde the Ids in HydroBasins2 from HydroBasins1
                 for i in range(len(HydroBasins2)):
@@ -1141,7 +1143,7 @@ class LRRT:
                 HydroBasins = HydroBasins1            
             else:
                 HydroBasins = HydroBasins1
-        
+                
     ### Load HydroSHED Layers 
             hyshedl12 = QgsVectorLayer(self.Path_hyshdply_in, "")
         
