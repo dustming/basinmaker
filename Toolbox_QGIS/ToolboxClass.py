@@ -1131,7 +1131,12 @@ class LRRT:
         feedback = QgsProcessingFeedback()
         Processing.initialize()
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
-
+        
+        shutil.rmtree(self.grassdb,ignore_errors=True)
+        shutil.rmtree(self.tempfolder,ignore_errors=True)
+        if not os.path.exists(self.tempfolder):
+	            os.makedirs(self.tempfolder)
+                
         if self.OutHyID > 0:
             hyinfocsv = self.Path_hyshdply_in[:-3] + "dbf"
             tempinfo = Dbf5(hyinfocsv)
@@ -1364,16 +1369,22 @@ class LRRT:
         self.nrows = int(strtemp_array.shape[0])
         grsregion = gcore.region()
         ### process vector data, clip and import
-        
-        processing.run("native:fixgeometries", {'INPUT':self.Path_Lakefile_in,'OUTPUT':self.Path_allLakeply_Temp})
-        
-        processing.run("native:extractbylocation", {'INPUT':self.Path_allLakeply_Temp,'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_allLakeply},context = context)
+        processing.run("native:reprojectlayer", {'INPUT':self.Path_Lakefile_in,'TARGET_CRS':QgsCoordinateReferenceSystem(self.SpRef_in),'OUTPUT':os.path.join(self.tempfolder,'Lake_project.shp')})
+        try:
+            processing.run("native:extractbylocation", {'INPUT':os.path.join(self.tempfolder,'Lake_project.shp'),'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_allLakeply},context = context)
+        except:
+            print("Need fix lake boundary geometry to speed up")
+            processing.run("native:fixgeometries", {'INPUT':os.path.join(self.tempfolder,'Lake_project.shp'),'OUTPUT':self.Path_allLakeply_Temp})
+            processing.run("native:extractbylocation", {'INPUT':self.Path_allLakeply_Temp,'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_allLakeply},context = context)
+
 #        print(self.Path_WiDep_in)
         if self.Path_WiDep_in != '#':
-            processing.run("native:extractbylocation", {'INPUT':self.Path_WiDep_in,'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_WidDepLine},context = context)
+            processing.run("native:reprojectlayer", {'INPUT':self.Path_WiDep_in,'TARGET_CRS':QgsCoordinateReferenceSystem(self.SpRef_in),'OUTPUT':os.path.join(self.tempfolder,'WiDep_project.shp')})        
+            processing.run("native:extractbylocation", {'INPUT':os.path.join(self.tempfolder,'WiDep_project.shp'),'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_WidDepLine},context = context)
             grass.run_command("v.import", input = self.Path_WidDepLine, output = 'WidDep', overwrite = True)
         
-        processing.run("native:extractbylocation", {'INPUT':self.Path_obspoint_in,'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_ObsPoint},context = context)
+        processing.run("native:reprojectlayer", {'INPUT':self.Path_obspoint_in,'TARGET_CRS':QgsCoordinateReferenceSystem(self.SpRef_in),'OUTPUT':os.path.join(self.tempfolder,'Obspoint_project.shp')})        
+        processing.run("native:extractbylocation", {'INPUT':os.path.join(self.tempfolder,'Obspoint_project.shp'),'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_ObsPoint},context = context)
         
         # processing.run("native:clip", {'INPUT':self.Path_Lakefile_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_allLakeply},context = context)
         # processing.run("native:clip", {'INPUT':self.Path_WiDep_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_WidDepLine},context = context)
@@ -2309,7 +2320,10 @@ class LRRT:
             SubId_Selected = hyshdinfo2[subid_col_Name].values
         
         if Path_Points != '#':
-            processing.run("saga:addpolygonattributestopoints", {'INPUT':Path_Points,'POLYGONS':Path_products,'FIELDS':subid_col_Name,'OUTPUT':os.path.join(self.tempfolder,'Sub_Selected_by_Points.shp')})
+            r_dem_layer = QgsRasterLayer(self.Path_dem, "") ### load DEM raster as a  QGIS raster object to obtain attribute        
+            SpRef_in = r_dem_layer.crs().authid()   ### get Raster spatialReference i
+            processing.run("native:reprojectlayer", {'INPUT':Path_Points,'TARGET_CRS':QgsCoordinateReferenceSystem(SpRef_in),'OUTPUT':os.path.join(self.tempfolder,'Obspoint_project2.shp')})        
+            processing.run("saga:addpolygonattributestopoints", {'INPUT':os.path.join(self.tempfolder,'Obspoint_project2.shp'),'POLYGONS':Path_products,'FIELDS':subid_col_Name,'OUTPUT':os.path.join(self.tempfolder,'Sub_Selected_by_Points.shp')})
             hyinfocsv  = os.path.join(self.tempfolder,'Sub_Selected_by_Points.shp')[:-3] + "dbf"
             tempinfo   = Dbf5(hyinfocsv)
             hyshdinfo2 = tempinfo.to_dataframe()
