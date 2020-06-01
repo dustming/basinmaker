@@ -2376,10 +2376,10 @@ class LRRT:
             NonCL_Lakeids  = np.unique(NConnect_Lake_info['HyLakeId'].values)
             NonCL_Lakeids  = NonCL_Lakeids[NonCL_Lakeids > 0]        
         
-        
-            Selectfeatureattributes(processing,Input = Path_Con_Lake_ply,Output=os.path.join(OutputFolder_isub,os.path.basename(Path_Con_Lake_ply)),Attri_NM = 'Hylak_id',Values = Connect_Lakeids)
-        
-            Selectfeatureattributes(processing,Input = Path_NonCon_Lake_ply,Output=os.path.join(OutputFolder_isub,os.path.basename(Path_NonCon_Lake_ply)),Attri_NM = 'Hylak_id',Values = NonCL_Lakeids)
+            if len(Connect_Lakeids) > 0:
+                Selectfeatureattributes(processing,Input = Path_Con_Lake_ply,Output=os.path.join(OutputFolder_isub,os.path.basename(Path_Con_Lake_ply)),Attri_NM = 'Hylak_id',Values = Connect_Lakeids)
+            if len(NonCL_Lakeids) > 0:
+                Selectfeatureattributes(processing,Input = Path_NonCon_Lake_ply,Output=os.path.join(OutputFolder_isub,os.path.basename(Path_NonCon_Lake_ply)),Attri_NM = 'Hylak_id',Values = NonCL_Lakeids)
                 
         Qgs.exit()
     
