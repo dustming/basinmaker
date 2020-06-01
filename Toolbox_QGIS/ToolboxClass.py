@@ -1072,6 +1072,7 @@ class LRRT:
 		
         self.grass_location_geo = 'Geographic'
         self.grass_location_geo_temp = 'Geographic_temp'
+        self.grass_location_geo_temp = 'Geographic_temp1'
         self.grass_location_pro = 'Projected'
         
         self.tempfolder = os.path.join(tempfile.gettempdir(), 'grassdata_toolbox_temp',self.ProjectNM)
@@ -1207,9 +1208,14 @@ class LRRT:
         
             os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
             PERMANENT = Session()
-            PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts="EPSG:4326")
 
-            grass.run_command("r.import", input = self.Path_dem, output = 'dem', overwrite = True)   
+            PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo_temp,create_opts='EPSG:4326')
+            
+            grass.run_command("r.in.gdal", input = self.Path_dem, output = 'dem', overwrite = True,location =self.grass_location_geo)
+            PERMANENT.close()
+            
+            PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
+               
             grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
             grass.run_command('g.region', raster='dem')  
                       
@@ -1236,8 +1242,17 @@ class LRRT:
                 print("Mask Region:   Using Watershed boundary of given pour points: ",OutletPoint)
                 
                 os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
-                PERMANENT_Temp = Session()
-                PERMANENT_Temp.open(gisdb=self.grassdb, location=self.grass_location_geo_temp,create_opts=self.SpRef_in)
+                PERMANENT_Temp1 = Session()
+                PERMANENT_Temp1.open(gisdb=self.grassdb, location=self.grass_location_geo_temp1,create_opts='EPSG:4326')
+            
+                grass.run_command("r.in.gdal", input = self.Path_dem, output = 'dem', overwrite = True,location =self.grass_location_geo_temp)
+                PERMANENT_Temp1.close()
+            
+                PERMANENT_Temp.open(gisdb=self.grassdb, location=self.grass_location_geo_temp,create_opts='')
+               
+                grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
+                grass.run_command('g.region', raster='dem')  
+
                 
                 grass.run_command("r.import", input = self.Path_dem, output = 'dem', overwrite = True)
                 grass.run_command('g.region', raster='dem')
@@ -1254,12 +1269,13 @@ class LRRT:
                 processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask.shp'),'FIELD':'DN','OUTPUT':self.Path_Maskply})
                 processing.run("saga:cliprasterwithpolygon", {'INPUT':self.Path_dem,'POLYGONS':self.Path_Maskply,'OUTPUT':os.path.join(self.tempfolder, 'dem_mask.sdat')})
                 
+                grass.run_command("r.in.gdal", input = os.path.join(self.tempfolder, 'dem_mask.sdat'), output = 'dem', overwrite = True,location =self.grass_location_geo)
                 PERMANENT_Temp.close()
                 
 #                print("###########################################################################################")
                 PERMANENT = Session()
-                PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
-                grass.run_command("r.import", input =os.path.join(self.tempfolder, 'dem_mask.sdat'), output = 'dem', overwrite = True)
+                PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
+#                grass.run_command("r.import", input =os.path.join(self.tempfolder, 'dem_mask.sdat'), output = 'dem', overwrite = True)
                 grass.run_command('g.region', raster='dem')
                 grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
                                 
@@ -1268,10 +1284,15 @@ class LRRT:
                 print("Mask Region:   Using provided DEM : ")
                 os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
                 PERMANENT = Session()
-                PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
-                grass.run_command("r.in.gdal", input = self.Path_dem, output = 'dem', overwrite = True)
-                grass.run_command('g.region', raster='dem')
+                PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo_temp,create_opts='EPSG:4326')
+            
+                grass.run_command("r.in.gdal", input = self.Path_dem, output = 'dem', overwrite = True,location =self.grass_location_geo)
+                PERMANENT.close()
+            
+                PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
+               
                 grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
+                grass.run_command('g.region', raster='dem')  
             
                 grass.run_command('r.out.gdal', input = 'MASK',output = os.path.join(self.tempfolder, 'Mask1.tif'),format= 'GTiff',overwrite = True)
                 processing.run("gdal:polygonize", {'INPUT':os.path.join(self.tempfolder, 'Mask1.tif'),'BAND':1,'FIELD':'DN','EIGHT_CONNECTEDNESS':False,'EXTRA':'','OUTPUT':os.path.join(self.tempfolder, 'HyMask.shp')})
