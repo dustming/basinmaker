@@ -1077,8 +1077,13 @@ class LRRT:
         self.tempfolder = os.path.join(tempfile.gettempdir(), 'grassdata_toolbox_temp',self.ProjectNM)
 
         if not os.path.exists(self.tempfolder):
-	           os.makedirs(self.tempfolder)
-        
+	            os.makedirs(self.tempfolder)
+        # 
+        # if not os.path.exists(os.path.join(self.grassdb,self.grass_location_geo_temp)):
+	    #        os.makedirs(os.path.join(self.grassdb,self.grass_location_geo_temp))
+        # 
+        # if not os.path.exists(os.path.join(self.grassdb,self.grass_location_pro)):
+	    #        os.makedirs(os.path.join(self.grassdb,self.grass_location_pro))                    
         
         self.sqlpath = os.path.join(self.grassdb,'Geographic\\PERMANENT\\sqlite\\sqlite.db')       
         self.cellSize = -9.9999
@@ -1171,7 +1176,44 @@ class LRRT:
         
         # Save selected polygons to output 
             _writer = QgsVectorFileWriter.writeAsVectorFormat(hyshedl12, os.path.join(self.tempfolder, 'HyMask.shp'), "UTF-8", hyshedl12.crs(), "ESRI Shapefile", onlySelected=True)
-            processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask.shp'),'FIELD':'MAIN_BAS','OUTPUT':self.Path_Maskply})
+            if self.Path_dir_in != '#':
+                print("Mask Region:   Using HydroBasin product polygons ")
+                processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask.shp'),'FIELD':'MAIN_BAS','OUTPUT':self.Path_Maskply})
+            else:
+                print("Mask Region:   Using buffered hydroBasin product polygons ")
+                processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask.shp'),'FIELD':'MAIN_BAS','OUTPUT':os.path.join(self.tempfolder, 'HyMask1.shp')})
+                processing.run("native:buffer", {'INPUT':os.path.join(self.tempfolder, 'HyMask1.shp'),'DISTANCE':0.05,'SEGMENTS':5,'END_CAP_STYLE':0,'JOIN_STYLE':0,'MITER_LIMIT':2,'DISSOLVE':True,'OUTPUT':os.path.join(self.tempfolder, 'HyMask3.shp')})
+                processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask3.shp'),'FIELD':'MAIN_BAS','OUTPUT':self.Path_Maskply})
+                
+            params = {'INPUT': self.Path_dem_in,'MASK': self.Path_Maskply,'NODATA': -9999,'ALPHA_BAND': False,'CROP_TO_CUTLINE': True,
+                                                                    'SOURCE_CRS':None,'TARGET_CRS':None,
+                                                                    'KEEP_RESOLUTION': True,'SET_RESOLUTION':False,'X_RESOLUTION':None,'Y_RESOLUTION':None,
+                                                                    'OPTIONS': '', #'COMPRESS=LZW',
+                                                                    'DATA_TYPE': 6,  # Byte
+                                                                    'OUTPUT': self.Path_dem}
+            
+            dem = processing.run('gdal:cliprasterbymasklayer',params)  #### extract dem
+            r_dem_layer = QgsRasterLayer(self.Path_dem, "") ### load DEM raster as a  QGIS raster object to obtain attribute        
+            self.cellSize = float(r_dem_layer.rasterUnitsPerPixelX())  ### Get Raster cell size
+            self.SpRef_in = r_dem_layer.crs().authid()   ### get Raster spatialReference id
+            import grass.script as grass
+            from grass.script import array as garray
+            from grass.script import core as gcore
+            import grass.script.setup as gsetup
+            from grass.pygrass.modules.shortcuts import general as g
+            from grass.pygrass.modules.shortcuts import raster as r
+            from grass.pygrass.modules import Module
+            from grass_session import Session
+        
+            os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
+            PERMANENT = Session()
+            PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts="EPSG:4326")
+
+            grass.run_command("r.import", input = self.Path_dem, output = 'dem', overwrite = True)   
+            grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
+            grass.run_command('g.region', raster='dem')  
+                      
+            PERMANENT.close()
             
             del hyshedl12
             
@@ -1191,6 +1233,7 @@ class LRRT:
             
             #### create watershed mask or use dem as mask
             if OutletPoint != '#':
+                print("Mask Region:   Using Watershed boundary of given pour points: ",OutletPoint)
                 
                 os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
                 PERMANENT_Temp = Session()
@@ -1213,7 +1256,7 @@ class LRRT:
                 
                 PERMANENT_Temp.close()
                 
-                print("###########################################################################################")
+#                print("###########################################################################################")
                 PERMANENT = Session()
                 PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
                 grass.run_command("r.import", input =os.path.join(self.tempfolder, 'dem_mask.sdat'), output = 'dem', overwrite = True)
@@ -1222,11 +1265,11 @@ class LRRT:
                                 
                 
             else:
-                
+                print("Mask Region:   Using provided DEM : ")
                 os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
                 PERMANENT = Session()
                 PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
-                grass.run_command("r.import", input = self.Path_dem, output = 'dem', overwrite = True)
+                grass.run_command("r.in.gdal", input = self.Path_dem, output = 'dem', overwrite = True)
                 grass.run_command('g.region', raster='dem')
                 grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
             
@@ -1242,7 +1285,7 @@ class LRRT:
 ##################################################################################################  
 #### functions to preprocess data, Output:
 ##  self.Path_dem,self.cellSize,self.SpRef_in
-##  
+##            
     def Generateinputdata(self):
 
         QgsApplication.setPrefixPath(self.qgisPP, True)
@@ -1257,20 +1300,20 @@ class LRRT:
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
         context = dataobjects.createContext()
         context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
-    
+
         r_dem_layer = QgsRasterLayer(self.Path_dem_in, "") ### load DEM raster as a  QGIS raster object to obtain attribute        
         self.cellSize = float(r_dem_layer.rasterUnitsPerPixelX())  ### Get Raster cell size
         self.SpRef_in = r_dem_layer.crs().authid()   ### get Raster spatialReference id
         print("Working with a  sptail reference  :   " , r_dem_layer.crs().description(), "      ", self.SpRef_in )
         print("The cell cize is   ",self.cellSize)
     
-        if  self.OutHyID > 0:   #### input is using hydroshed  hydroshed polygons 
-            params = {'INPUT': self.Path_dem_in,'MASK': self.Path_Maskply,'NODATA': -9999,'ALPHA_BAND': False,'CROP_TO_CUTLINE': True,
-                                                                    'KEEP_RESOLUTION': True,
-                                                                    'OPTIONS': 'COMPRESS=LZW',
-                                                                    'DATA_TYPE': 0,  # Byte
-                                                                    'OUTPUT': self.Path_dem}
-            dem = processing.run('gdal:cliprasterbymasklayer',params)  #### extract dem
+#        if  self.OutHyID > 0:   #### input is using hydroshed  hydroshed polygons 
+            # params = {'INPUT': self.Path_dem_in,'MASK': self.Path_Maskply,'NODATA': -9999,'ALPHA_BAND': False,'CROP_TO_CUTLINE': True,
+            #                                                         'KEEP_RESOLUTION': True,
+            #                                                         'OPTIONS': 'COMPRESS=LZW',
+            #                                                         'DATA_TYPE': 0,  # Byte
+            #                                                         'OUTPUT': self.Path_dem}
+            # dem = processing.run('gdal:cliprasterbymasklayer',params)  #### extract dem
         
         copyfile(os.path.join(self.RoutingToolPath,'catinfo_riv.csvt'),os.path.join(self.tempfolder,'catinfo_riv.csvt')) 
         copyfile(os.path.join(self.RoutingToolPath,'catinfo_riv.csvt'),os.path.join(self.tempfolder,'catinfo_cat.csvt'))  
@@ -1290,10 +1333,10 @@ class LRRT:
         PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
         ###  hydroshed product use cliped dem to setup g.region and g.mask 
         ###  non hydroshed product the g.region and g.mask is defined in generatemask funciton 
-        if self.OutHyID > 0:   
-            grass.run_command("r.import", input = self.Path_dem, output = 'dem', overwrite = True)
-            grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
-            grass.run_command('g.region', raster='dem')
+        # if self.OutHyID > 0:   
+        #     grass.run_command("r.import", input = self.Path_dem, output = 'dem', overwrite = True)
+        #     grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
+        #     grass.run_command('g.region', raster='dem')
 
         strtemp_array = garray.array(mapname="dem")
         self.ncols = int(strtemp_array.shape[1])
@@ -1304,7 +1347,7 @@ class LRRT:
         processing.run("native:fixgeometries", {'INPUT':self.Path_Lakefile_in,'OUTPUT':self.Path_allLakeply_Temp})
         
         processing.run("native:extractbylocation", {'INPUT':self.Path_allLakeply_Temp,'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_allLakeply},context = context)
-        
+#        print(self.Path_WiDep_in)
         if self.Path_WiDep_in != '#':
             processing.run("native:extractbylocation", {'INPUT':self.Path_WiDep_in,'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_WidDepLine},context = context)
             grass.run_command("v.import", input = self.Path_WidDepLine, output = 'WidDep', overwrite = True)
@@ -1452,7 +1495,7 @@ class LRRT:
 #        grass.run_command('v.out.ogr', input = 'str_grass_v',output = os.path.join(self.tempfolder, "str_grass_v.shp"),format= 'ESRI_Shapefile',overwrite = True)
         grass.run_command('v.select',ainput = 'Hylake',binput = 'str',output = 'lake_str',overwrite = True)
         grass.run_command('v.out.ogr', input = 'lake_str',output = os.path.join(self.tempfolder, "Connect_lake.shp"),format= 'ESRI_Shapefile',overwrite = True)
-        os.system('gdal_rasterize -at -of GTiff -a_nodata -9999 -a Hylak_id -tr  '+ str(self.cellSize) + "  " +str(self.cellSize) +'   -te   '+ str(grsregion['w'])+"   " +str(grsregion['s'])+"   " +str(grsregion['e'])+"   " +str(grsregion['n'])+"   " +"\"" +  os.path.join(self.tempfolder, "Connect_lake.shp") +"\""+ "    "+ "\""+os.path.join(self.tempfolder, "cnhylakegdal.tif")+"\"")
+        os.system('gdal_rasterize -at -of GTiff -a_nodata -9999 -a Hylak_id -tr  '+ str(grsregion['nsres']) + "  " +str(grsregion['ewres']) +'   -te   '+ str(grsregion['w'])+"   " +str(grsregion['s'])+"   " +str(grsregion['e'])+"   " +str(grsregion['n'])+"   " +"\"" +  os.path.join(self.tempfolder, "Connect_lake.shp") +"\""+ "    "+ "\""+os.path.join(self.tempfolder, "cnhylakegdal.tif")+"\"")
         grass.run_command("r.in.gdal", input = os.path.join(self.tempfolder, "cnhylakegdal.tif"), output = 'cnlakeraster_in', overwrite = True)
         grass.run_command('r.mapcalc',expression = 'Connect_Lake = int(cnlakeraster_in)',overwrite = True)    
         grass.run_command('r.mapcalc',expression = 'Nonconnect_Lake = if(isnull(Connect_Lake),alllake,null())',overwrite = True)
@@ -2251,13 +2294,14 @@ class LRRT:
             hyshdinfo2 = tempinfo.to_dataframe()
             hyshdinfo2.to_csv(os.path.join(self.OutputFolder,'SubIds_Selected.csv'),sep=',', index = None)
             SubId_Selected = hyshdinfo2[subid_col_Name].values
+            SubId_Selected = SubId_Selected[SubId_Selected > 0]
         
         Qgs.exit()
         
 #        self.selectfeaturebasedonID(Path_shpfile = Path_products,sub_colnm = 'SubId',down_colnm = 'DowSubId',mostdownid = SubId_Selected,mostupstreamid = np.full(len(SubId_Selected),-1),OutBaseName='finalcat_info')
         return SubId_Selected
             
-    def Select_Routing_product_based_SubId(self,Path_final_riv = '#',Path_final_riv_ply = '#',Path_Con_Lake_ply = '#',Path_NonCon_Lake_ply='#',Path_NonClakeinfo = '#',
+    def Select_Routing_product_based_SubId(self,Path_final_riv = '#',Path_final_riv_ply = '#',Path_Con_Lake_ply = '#',Path_NonCon_Lake_ply='#',Path_final_cat = '#',
                                            sub_colnm = 'SubId',down_colnm = 'DowSubId',mostdownid = [-1],mostupstreamid = [-1]):
 
         QgsApplication.setPrefixPath(self.qgisPP, True)
@@ -2270,10 +2314,16 @@ class LRRT:
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
 
         ##3
-        hyinfocsv = Path_final_riv[:-3] + "dbf"
-        tempinfo = Dbf5(hyinfocsv)
-        hyshdinfo2 = tempinfo.to_dataframe().drop_duplicates(sub_colnm, keep='first')
-        hyshdinfo =  hyshdinfo2[[sub_colnm,down_colnm]].astype('float').values
+        if Path_final_cat != '#':
+            hyinfocsv = Path_final_cat[:-3] + "dbf"
+            tempinfo = Dbf5(hyinfocsv)
+            hyshdinfo2 = tempinfo.to_dataframe().drop_duplicates(sub_colnm, keep='first')
+            hyshdinfo =  hyshdinfo2[[sub_colnm,down_colnm]].astype('float').values
+        else:
+            hyinfocsv = Path_final_riv[:-3] + "dbf"
+            tempinfo = Dbf5(hyinfocsv)
+            hyshdinfo2 = tempinfo.to_dataframe().drop_duplicates(sub_colnm, keep='first')
+            hyshdinfo =  hyshdinfo2[[sub_colnm,down_colnm]].astype('float').values            
                         
         #### incase  mostupstreamid did not procvided, automatically assgin -1 
         if mostupstreamid[0] == -1:
@@ -2301,37 +2351,36 @@ class LRRT:
                 HydroBasins = HydroBasins1
             
             #### extract final_riv and final_riv_ply
-            Outputfilename_riv = os.path.join(OutputFolder_isub,os.path.basename(Path_final_riv))
-            Selectfeatureattributes(processing,Input = Path_final_riv,Output=Outputfilename_riv,Attri_NM = 'SubId',Values = HydroBasins)
-            Outputfilename_riv_ply = os.path.join(OutputFolder_isub,os.path.basename(Path_final_riv_ply))
-            Selectfeatureattributes(processing,Input = Path_final_riv_ply,Output=Outputfilename_riv_ply,Attri_NM = 'SubId',Values = HydroBasins)
+            if Path_final_cat == '#':
+                Outputfilename_riv = os.path.join(OutputFolder_isub,os.path.basename(Path_final_riv))
+                Selectfeatureattributes(processing,Input = Path_final_riv,Output=Outputfilename_riv,Attri_NM = 'SubId',Values = HydroBasins)
+                Outputfilename_riv_ply = os.path.join(OutputFolder_isub,os.path.basename(Path_final_riv_ply))
+                Selectfeatureattributes(processing,Input = Path_final_riv_ply,Output=Outputfilename_riv_ply,Attri_NM = 'SubId',Values = HydroBasins)
+                finalcat_csv     = Outputfilename_riv_ply[:-3] + "dbf"
+                finalcat_info    = Dbf5(finalcat_csv)
+                finalcat_info    = finalcat_info.to_dataframe().drop_duplicates('SubId', keep='first')
+            else:
+                Outputfilename_cat = os.path.join(OutputFolder_isub,os.path.basename(Path_final_cat))
+                Selectfeatureattributes(processing,Input = Path_final_cat,Output=Outputfilename_cat,Attri_NM = 'SubId',Values = HydroBasins)
+                finalcat_csv     = Outputfilename_cat[:-3] + "dbf"
+                finalcat_info    = Dbf5(finalcat_csv)
+                finalcat_info    = finalcat_info.to_dataframe().drop_duplicates('SubId', keep='first')                
             
             #### extract lakes 
-            finalcat_csv     = Outputfilename_riv_ply[:-3] + "dbf"
-            finalcat_info    = Dbf5(finalcat_csv)
-            finalcat_info    = finalcat_info.to_dataframe().drop_duplicates('SubId', keep='first')
-        
-            Connect_Lakeids  = np.unique(finalcat_info['HyLakeId'].values)
+
+            Connect_Lake_info = finalcat_info.loc[finalcat_info['IsLake'] == 1]
+            Connect_Lakeids  = np.unique(Connect_Lake_info['HyLakeId'].values)
             Connect_Lakeids  = Connect_Lakeids[Connect_Lakeids > 0]
-        
-            SubIds           = np.unique(finalcat_info['SubId'].values)
-            SubIds           = SubIds[SubIds > 0]        
-        
-            NonConn_Lakes    = Path_NonClakeinfo[:-3] + "dbf"
-            NonConn_Lakes    = Dbf5(NonConn_Lakes)
-            NonConn_Lakes    = NonConn_Lakes.to_dataframe()
-            NonConn_Lakes['SubId_riv']    = pd.to_numeric(NonConn_Lakes['SubId_riv'], downcast='float')
-        
-            NonConn_Lakes_p  = NonConn_Lakes.loc[NonConn_Lakes['SubId_riv'].isin(SubIds)]
-            NonCL_Lakeids    = NonConn_Lakes_p['value'].values
+
+            NConnect_Lake_info = finalcat_info.loc[finalcat_info['IsLake'] == 2]
+            NonCL_Lakeids  = np.unique(NConnect_Lake_info['HyLakeId'].values)
+            NonCL_Lakeids  = NonCL_Lakeids[NonCL_Lakeids > 0]        
         
         
             Selectfeatureattributes(processing,Input = Path_Con_Lake_ply,Output=os.path.join(OutputFolder_isub,os.path.basename(Path_Con_Lake_ply)),Attri_NM = 'Hylak_id',Values = Connect_Lakeids)
         
             Selectfeatureattributes(processing,Input = Path_NonCon_Lake_ply,Output=os.path.join(OutputFolder_isub,os.path.basename(Path_NonCon_Lake_ply)),Attri_NM = 'Hylak_id',Values = NonCL_Lakeids)
-        
-            Selectfeatureattributes(processing,Input = Path_NonClakeinfo,Output=os.path.join(OutputFolder_isub,os.path.basename(Path_NonClakeinfo)),Attri_NM = 'value',Values = NonCL_Lakeids)
-        
+                
         Qgs.exit()
     
     def Customize_Routing_Topology(self,DataFolder = '#',finalrvi_ply_NM = 'finalriv_info_ply.shp',Non_ConnL_Cat_NM = 'Non_con_lake_cat_info.shp',Non_ConnL_ply_NM='Non_Con_Lake_Ply.shp',

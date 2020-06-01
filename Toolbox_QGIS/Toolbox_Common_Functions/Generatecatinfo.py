@@ -24,6 +24,9 @@ def UpdateNonConnectedcatchmentinfo(catinfo):
         d_sub_info = catinfo.loc[catinfo['SubId'] == d_subid]
          
         lc_subid = d_subid
+        if len(d_sub_info) < 1:
+            continue
+            
         while d_sub_info['IsLake'].values[0]  == 2:
              
             lc_subid_info = catinfo.loc[catinfo['SubId'] == lc_subid]
