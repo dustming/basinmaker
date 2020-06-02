@@ -1072,7 +1072,7 @@ class LRRT:
 		
         self.grass_location_geo = 'Geographic'
         self.grass_location_geo_temp = 'Geographic_temp'
-        self.grass_location_geo_temp = 'Geographic_temp1'
+        self.grass_location_geo_temp1 = 'Geographic_temp1'
         self.grass_location_pro = 'Projected'
         
         self.tempfolder = os.path.join(tempfile.gettempdir(), 'grassdata_toolbox_temp',self.ProjectNM)
@@ -1252,7 +1252,8 @@ class LRRT:
             
                 grass.run_command("r.in.gdal", input = self.Path_dem, output = 'dem', overwrite = True,location =self.grass_location_geo_temp)
                 PERMANENT_Temp1.close()
-            
+                
+                PERMANENT_Temp = Session()
                 PERMANENT_Temp.open(gisdb=self.grassdb, location=self.grass_location_geo_temp,create_opts='')
                
                 grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
