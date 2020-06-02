@@ -102,3 +102,4 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+Toolbox_QGIS/QGIS_Toolbox.bat
