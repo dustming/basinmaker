@@ -1134,6 +1134,10 @@ class LRRT:
         
         shutil.rmtree(self.grassdb,ignore_errors=True)
         shutil.rmtree(self.tempfolder,ignore_errors=True)
+        r_dem_layer = QgsRasterLayer(self.Path_dem_in, "") ### load DEM raster as a  QGIS raster object to obtain attribute        
+        self.cellSize = float(r_dem_layer.rasterUnitsPerPixelX())  ### Get Raster cell size
+        self.SpRef_in = r_dem_layer.crs().authid()   ### get Raster spatialReference id
+        
         if not os.path.exists(self.tempfolder):
 	            os.makedirs(self.tempfolder)
                 
@@ -1184,13 +1188,15 @@ class LRRT:
             _writer = QgsVectorFileWriter.writeAsVectorFormat(hyshedl12, os.path.join(self.tempfolder, 'HyMask.shp'), "UTF-8", hyshedl12.crs(), "ESRI Shapefile", onlySelected=True)
             if self.Path_dir_in != '#':
                 print("Mask Region:   Using HydroBasin product polygons ")
-                processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask.shp'),'FIELD':'MAIN_BAS','OUTPUT':self.Path_Maskply})
+                processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask.shp'),'FIELD':'MAIN_BAS','OUTPUT':os.path.join(self.tempfolder, 'HyMask4.shp')})
             else:
                 print("Mask Region:   Using buffered hydroBasin product polygons ")
                 processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask.shp'),'FIELD':'MAIN_BAS','OUTPUT':os.path.join(self.tempfolder, 'HyMask1.shp')})
                 processing.run("native:buffer", {'INPUT':os.path.join(self.tempfolder, 'HyMask1.shp'),'DISTANCE':0.05,'SEGMENTS':5,'END_CAP_STYLE':0,'JOIN_STYLE':0,'MITER_LIMIT':2,'DISSOLVE':True,'OUTPUT':os.path.join(self.tempfolder, 'HyMask3.shp')})
-                processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask3.shp'),'FIELD':'MAIN_BAS','OUTPUT':self.Path_Maskply})
+                processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask3.shp'),'FIELD':'MAIN_BAS','OUTPUT':os.path.join(self.tempfolder, 'HyMask4.shp')})
                 
+            processing.run("native:reprojectlayer", {'INPUT':os.path.join(self.tempfolder, 'HyMask4.shp'),'TARGET_CRS':QgsCoordinateReferenceSystem(self.SpRef_in),'OUTPUT':self.Path_Maskply})  
+              
             params = {'INPUT': self.Path_dem_in,'MASK': self.Path_Maskply,'NODATA': -9999,'ALPHA_BAND': False,'CROP_TO_CUTLINE': True,
                                                                     'SOURCE_CRS':None,'TARGET_CRS':None,
                                                                     'KEEP_RESOLUTION': True,'SET_RESOLUTION':False,'X_RESOLUTION':None,'Y_RESOLUTION':None,

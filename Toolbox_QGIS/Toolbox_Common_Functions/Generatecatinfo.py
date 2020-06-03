@@ -24,6 +24,7 @@ def UpdateNonConnectedcatchmentinfo(catinfo):
         d_sub_info = catinfo.loc[catinfo['SubId'] == d_subid]
          
         lc_subid = d_subid
+        
         if len(d_sub_info) < 1:
             continue
             
@@ -32,9 +33,14 @@ def UpdateNonConnectedcatchmentinfo(catinfo):
             lc_subid_info = catinfo.loc[catinfo['SubId'] == lc_subid]
             d_subid = lc_subid_info['DowSubId'].values[0]
             d_sub_info = catinfo.loc[catinfo['SubId'] == d_subid]
+            if len(d_sub_info) < 1:
+                lc_subid   = -1
+                break
             lc_subid   = d_subid
         
-        
+        if lc_subid == -1:
+            continue
+
         catinfo.loc[catinfo['SubId'] == c_subid,'RivSlope'] = d_sub_info['RivSlope'].values[0]
         catinfo.loc[catinfo['SubId'] == c_subid,'Ch_n']     = d_sub_info['Ch_n'].values[0]
         catinfo.loc[catinfo['SubId'] == c_subid,'Q_Mean']   = d_sub_info['Q_Mean'].values[0]  
