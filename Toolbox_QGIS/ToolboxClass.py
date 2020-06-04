@@ -1134,6 +1134,7 @@ class LRRT:
         
         shutil.rmtree(self.grassdb,ignore_errors=True)
         shutil.rmtree(self.tempfolder,ignore_errors=True)
+        
         r_dem_layer = QgsRasterLayer(self.Path_dem_in, "") ### load DEM raster as a  QGIS raster object to obtain attribute        
         self.cellSize = float(r_dem_layer.rasterUnitsPerPixelX())  ### Get Raster cell size
         self.SpRef_in = r_dem_layer.crs().authid()   ### get Raster spatialReference id
@@ -1194,7 +1195,7 @@ class LRRT:
                 processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask.shp'),'FIELD':'MAIN_BAS','OUTPUT':os.path.join(self.tempfolder, 'HyMask1.shp')})
                 processing.run("native:buffer", {'INPUT':os.path.join(self.tempfolder, 'HyMask1.shp'),'DISTANCE':0.05,'SEGMENTS':5,'END_CAP_STYLE':0,'JOIN_STYLE':0,'MITER_LIMIT':2,'DISSOLVE':True,'OUTPUT':os.path.join(self.tempfolder, 'HyMask3.shp')})
                 processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask3.shp'),'FIELD':'MAIN_BAS','OUTPUT':os.path.join(self.tempfolder, 'HyMask4.shp')})
-                
+              
             processing.run("native:reprojectlayer", {'INPUT':os.path.join(self.tempfolder, 'HyMask4.shp'),'TARGET_CRS':QgsCoordinateReferenceSystem(self.SpRef_in),'OUTPUT':self.Path_Maskply})  
               
             params = {'INPUT': self.Path_dem_in,'MASK': self.Path_Maskply,'NODATA': -9999,'ALPHA_BAND': False,'CROP_TO_CUTLINE': True,
@@ -1218,13 +1219,14 @@ class LRRT:
             from grass_session import Session
         
             os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
-            PERMANENT = Session()
+            PERMANENT_temp = Session()
 
-            PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo_temp,create_opts='EPSG:4326')
+            PERMANENT_temp.open(gisdb=self.grassdb, location=self.grass_location_geo_temp,create_opts='EPSG:4326')
             
             grass.run_command("r.in.gdal", input = self.Path_dem, output = 'dem', overwrite = True,location =self.grass_location_geo)
-            PERMANENT.close()
+            PERMANENT_temp.close()
             
+            PERMANENT = Session() 
             PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
                
             grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
@@ -2344,7 +2346,7 @@ class LRRT:
         return SubId_Selected
             
     def Select_Routing_product_based_SubId(self,Path_final_riv = '#',Path_final_riv_ply = '#',Path_Con_Lake_ply = '#',Path_NonCon_Lake_ply='#',Path_final_cat = '#',
-                                           sub_colnm = 'SubId',down_colnm = 'DowSubId',mostdownid = [-1],mostupstreamid = [-1]):
+                                           Path_final_cat_riv = '#', sub_colnm = 'SubId',down_colnm = 'DowSubId',mostdownid = [-1],mostupstreamid = [-1]):
 
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
@@ -2403,7 +2405,9 @@ class LRRT:
                 finalcat_info    = finalcat_info.to_dataframe().drop_duplicates('SubId', keep='first')
             else:
                 Outputfilename_cat = os.path.join(OutputFolder_isub,os.path.basename(Path_final_cat))
+                Outputfilename_cat_riv = os.path.join(OutputFolder_isub,os.path.basename(Path_final_cat_riv))
                 Selectfeatureattributes(processing,Input = Path_final_cat,Output=Outputfilename_cat,Attri_NM = 'SubId',Values = HydroBasins)
+                Selectfeatureattributes(processing,Input = Path_final_cat_riv,Output=Outputfilename_cat_riv,Attri_NM = 'SubId',Values = HydroBasins)
                 finalcat_csv     = Outputfilename_cat[:-3] + "dbf"
                 finalcat_info    = Dbf5(finalcat_csv)
                 finalcat_info    = finalcat_info.to_dataframe().drop_duplicates('SubId', keep='first')                
