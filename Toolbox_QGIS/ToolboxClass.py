@@ -261,45 +261,65 @@ def Checkcat(prow,pcol,nrows,ncols,lid,lake):
 
 def selectlake(hylake,noncnlake,NonConLThres,hylakeinfo):
 #    arcpy.AddMessage("123asdfasdfasdfasd")
-    sl_lake = copy.copy(hylake)
-    arlakeid = np.unique(noncnlake)
-    arlakeid = arlakeid[arlakeid>=0]
-    Non_con_lakeids = []
-    for i in range(0,len(arlakeid)):
-        sl_lid = arlakeid[i] ### get lake id
-        sl_rowcol = np.argwhere(noncnlake==sl_lid).astype(int) ### get the row and col of lake
-        sl_nrow = sl_rowcol.shape[0]
-        slakeinfo = hylakeinfo.loc[hylakeinfo['Hylak_id'] == sl_lid]
-        if len(slakeinfo) <=0:
-            continue
-        if slakeinfo.iloc[0]['Lake_area'] >= NonConLThres:
-            sl_lake[sl_rowcol[:,0],sl_rowcol[:,1]] = sl_lid
-            Non_con_lakeids.append(sl_lid)
-    return sl_lake,Non_con_lakeids
+    sl_lake = copy.copy(noncnlake)
+    sl_lakeall = copy.copy(hylake)
+    Un_selectedlake_info = hylakeinfo.loc[hylakeinfo['Lake_area'] < NonConLThres]
+    Un_selectedlake_ids  = np.unique(Un_selectedlake_info['Hylak_id'].values)
+    Un_selectedlake_ids  = Un_selectedlake_ids[Un_selectedlake_ids > 0]
+    mask                 = np.isin(sl_lake, Un_selectedlake_ids)
+    sl_lake[mask]        = -9999 ## change unselected lake into -9999
+    Non_con_lakeids      = np.unique(sl_lake)
+    Non_con_lakeids      = Non_con_lakeids[Non_con_lakeids > 0] 
+    
+    mask2 = sl_lake > 0
+    sl_lakeall[mask2]  = sl_lake[mask2]
+    
+    # sl_lake = copy.copy(hylake)
+    # arlakeid = np.unique(noncnlake)
+    # arlakeid = arlakeid[arlakeid>=0]
+    # Non_con_lakeids = []
+    # for i in range(0,len(arlakeid)):
+    #     sl_lid = arlakeid[i] ### get lake id
+    #     sl_rowcol = np.argwhere(noncnlake==sl_lid).astype(int) ### get the row and col of lake
+    #     sl_nrow = sl_rowcol.shape[0]
+    #     slakeinfo = hylakeinfo.loc[hylakeinfo['Hylak_id'] == sl_lid]
+    #     if len(slakeinfo) <=0:
+    #         continue
+    #     if slakeinfo.iloc[0]['Lake_area'] >= NonConLThres:
+    #         sl_lake[sl_rowcol[:,0],sl_rowcol[:,1]] = sl_lid
+    #         Non_con_lakeids.append(sl_lid)
+    return sl_lakeall,Non_con_lakeids
 
 def selectlake2(hylake,Lakehres,hylakeinfo):
     sl_lake = copy.copy(hylake)
-    arlakeid = np.unique(sl_lake)
-    arlakeid = arlakeid[arlakeid>=0]
-    con_lakeids = []
-    for i in range(0,len(arlakeid)):
-        sl_lid = arlakeid[i] ### get lake id
-        sl_rowcol = np.argwhere(sl_lake==sl_lid).astype(int) ### get the row and col of lake
-        sl_nrow = sl_rowcol.shape[0]
-        slakeinfo = hylakeinfo.loc[hylakeinfo['Hylak_id'] == sl_lid]
-        if len(slakeinfo)<=0:
-#            print("Lake excluded     asdfasd " + str(sl_lid))
-            sl_lake[sl_rowcol[:,0],sl_rowcol[:,1]] = -9999
-            continue
-        if slakeinfo.iloc[0]['Lake_area'] < Lakehres:
-#            print("Lake excluded     due to area " + str(sl_lid))
-            sl_lake[sl_rowcol[:,0],sl_rowcol[:,1]] = -9999
-            con_lakeids.append(sl_lid)
+    Un_selectedlake_info = hylakeinfo.loc[hylakeinfo['Lake_area'] < Lakehres]
+    Un_selectedlake_ids  = np.unique(Un_selectedlake_info['Hylak_id'].values)
+    Un_selectedlake_ids  = Un_selectedlake_ids[Un_selectedlake_ids > 0]
+    mask                 = np.isin(sl_lake, Un_selectedlake_ids)
+    sl_lake[mask]        = -9999 ## change unselected lake into -9999
+    con_lakeids          = np.unique(sl_lake)
+    con_lakeids          = con_lakeids[con_lakeids > 0] 
+#     arlakeid = np.unique(sl_lake)
+#     arlakeid = arlakeid[arlakeid>=0]
+#     con_lakeids = []
+#     for i in range(0,len(arlakeid)):
+#         sl_lid = arlakeid[i] ### get lake id
+#         sl_rowcol = np.argwhere(sl_lake==sl_lid).astype(int) ### get the row and col of lake
+#         sl_nrow = sl_rowcol.shape[0]
+#         slakeinfo = hylakeinfo.loc[hylakeinfo['Hylak_id'] == sl_lid]
+#         if len(slakeinfo)<=0:
+# #            print("Lake excluded     asdfasd " + str(sl_lid))
+#             sl_lake[sl_rowcol[:,0],sl_rowcol[:,1]] = -9999
+#             continue
+#         if slakeinfo.iloc[0]['Lake_area'] < Lakehres:
+# #            print("Lake excluded     due to area " + str(sl_lid))
+#             sl_lake[sl_rowcol[:,0],sl_rowcol[:,1]] = -9999
+#             con_lakeids.append(sl_lid)
     return sl_lake,con_lakeids
 
 ##################################################################3
 
-def check_lakecatchment(cat3,lake,fac,fdir,bsid,nrows,ncols):
+def check_lakecatchment(cat3,lake,fac,fdir,bsid,nrows,ncols,LakeBD_array):
     cat = copy.copy(cat3)
     arlakeid = np.unique(lake)
     arlakeid = arlakeid[arlakeid>=0]
@@ -1385,7 +1405,8 @@ class LRRT:
             print("Need fix lake boundary geometry to speed up")
             processing.run("native:fixgeometries", {'INPUT':os.path.join(self.tempfolder,'Lake_project.shp'),'OUTPUT':self.Path_allLakeply_Temp})
             processing.run("native:extractbylocation", {'INPUT':self.Path_allLakeply_Temp,'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_allLakeply},context = context)
-
+        processing.run("native:polygonstolines", {'INPUT':self.Path_allLakeply,'OUTPUT':os.path.join(self.tempfolder,'Hylake_boundary.shp')})
+        
 #        print(self.Path_WiDep_in)
         if self.Path_WiDep_in != '#':
             processing.run("native:reprojectlayer", {'INPUT':self.Path_WiDep_in,'TARGET_CRS':QgsCoordinateReferenceSystem(self.SpRef_in),'OUTPUT':os.path.join(self.tempfolder,'WiDep_project.shp')})        
@@ -1401,6 +1422,7 @@ class LRRT:
         
         grass.run_command("v.import", input = self.Path_ObsPoint, output = 'obspoint', overwrite = True)
         grass.run_command("v.import", input = self.Path_allLakeply, output = 'Hylake', overwrite = True)
+        grass.run_command("v.import", input = os.path.join(self.tempfolder,'Hylake_boundary.shp'), output = 'Hylake_boundary', overwrite = True)
 
 
         if self.Path_dir_in != '#':  ### Hydroshed provided with dir 
@@ -1432,9 +1454,13 @@ class LRRT:
     
         ### change lake vector to lake raster.... with -at option 
         os.system('gdal_rasterize -at -of GTiff -a_nodata -9999 -a Hylak_id -tr  '+ str(self.cellSize) + "  " +str(self.cellSize)+'  -te   '+ str(grsregion['w'])+"   " +str(grsregion['s'])+"   " +str(grsregion['e'])+"   " +str(grsregion['n'])+"   " + "\"" +  self.Path_allLakeply +"\""+ "    "+ "\""+self.Path_allLakeRas+"\"")
+        os.system('gdal_rasterize -at -of GTiff -a_nodata -9999 -a Hylak_id -tr  '+ str(self.cellSize) + "  " +str(self.cellSize)+'  -te   '+ str(grsregion['w'])+"   " +str(grsregion['s'])+"   " +str(grsregion['e'])+"   " +str(grsregion['n'])+"   " + "\"" +  os.path.join(self.tempfolder,'Hylake_boundary.shp') +"\""+ "    "+ "\""+os.path.join(self.tempfolder,'Hylake_boundary.tif')+"\"")
         grass.run_command("r.in.gdal", input = self.Path_allLakeRas, output = 'alllakeraster_in', overwrite = True)
         grass.run_command('r.mapcalc',expression = 'alllake = int(alllakeraster_in)',overwrite = True)
         grass.run_command("r.null", map = 'alllake', setnull = -9999)
+        grass.run_command("r.in.gdal", input = os.path.join(self.tempfolder,'Hylake_boundary.tif'), output = 'Lake_Bound', overwrite = True)
+        grass.run_command('r.mapcalc',expression = 'Lake_Bound = int(Lake_Bound)',overwrite = True)
+        grass.run_command("r.null", map = 'Lake_Bound', setnull = -9999)
         ### rasterize other vectors UP_AREA
         
         if self.Path_WiDep_in != '#':
@@ -1608,6 +1634,7 @@ class LRRT:
         acc_array     = np.absolute(garray.array(mapname="acc_grass"))
         dir_array     = garray.array(mapname="dir_Arcgis")
         obs_array     = garray.array(mapname="obs")
+        LakeBD_array  = garray.array(mapname="Lake_Bound")
 
 ###### generate selected lakes 
         hylake1,Selected_Con_Lakes = selectlake2(conlake_arr,VolThreshold,allLakinfo) ### remove lakes with lake area smaller than the VolThreshold from connected lake raster 
@@ -1682,7 +1709,7 @@ class LRRT:
         cat4_array =  garray.array(mapname="cat4")
         grass.run_command('r.out.gdal', input = 'cat4',output = os.path.join(self.tempfolder,'cat4.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
                 
-        outlakeids= check_lakecatchment(cat4_array,Lake1,acc_array,dir_array,bsid,self.nrows,self.ncols)
+        outlakeids= check_lakecatchment(cat4_array,Lake1,acc_array,dir_array,bsid,self.nrows,self.ncols,LakeBD_array)
 
 
     
