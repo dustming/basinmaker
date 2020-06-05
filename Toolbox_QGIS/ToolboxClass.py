@@ -179,8 +179,8 @@ def ChangeDIR(dir,lake1,acc,ncols,nrows,outlakeids,nlakegrids,cat3):
     ndir = copy.copy(dir)
     for i in range(0,len(outlakeids)):
         lid = outlakeids[i,0]
-        goodpoint = np.full((20000,2),-99999)
         lrowcol = np.argwhere(lake1==lid).astype(int)
+        goodpoint = np.full((len(lrowcol),2),-99999)
         
         if len(lrowcol) > nlakegrids and outlakeids[i,1] > 0.9:   ### smaller than nlakegrids or smaller than 0.9
             continue
