@@ -148,7 +148,7 @@ def Dirpoints_v3(N_dir,p_row,p_col,lake1,lid,goodpoint,k,ncols,nrows,BD_Out_Lake
     return ndir,goodpoint,ip,changed_ndir
     
     
-def check_lakecatchment(cat3,lake,fac,fdir,bsid,nrows,ncols,LakeBD_array,nlakegrids,str_array,dir):
+def check_lakecatchment(cat3,lake,fac,fdir,bsid,nrows,ncols,LakeBD_array,nlakegrids,str_array,dir,Pec_Grid_outlier,MaximumLakegrids):
     cat = copy.copy(cat3)
     ndir = copy.copy(dir)
     changed_ndir = copy.copy(dir)
@@ -177,10 +177,14 @@ def check_lakecatchment(cat3,lake,fac,fdir,bsid,nrows,ncols,LakeBD_array,nlakegr
         outlakeids[i,1] = float(len(nlake)/len(lrowcol)) 
 #        print("########################################################################3")
 #        print(lakeid,arclakeid,len(nlake),len(lrowcol),float(len(nlake)/len(lrowcol))) 
-        if len(lrowcol) > nlakegrids and outlakeids[i,1] > 0.9:   ### smaller than nlakegrids or smaller than 0.9
+        if outlakeids[i,1] > Pec_Grid_outlier:
+            continue 
+            
+        if len(lrowcol) - len(nlake)  > MaximumLakegrids:   ### smaller than nlakegrids or smaller than 0.9
             continue
-        if outlakeids[i,1] > 0.97: ### smaller than 0.97
-            continue
+            
+#        if outlakeids[i,1] > Pec_Grid_outlier: ### smaller than 0.97
+#            continue
         
 #        print(lakeid,arclakeid,len(nlake),len(lrowcol),float(len(nlake)/len(lrowcol))) 
         BD_mask        = LakeBD_array == lakeid
@@ -196,58 +200,19 @@ def check_lakecatchment(cat3,lake,fac,fdir,bsid,nrows,ncols,LakeBD_array,nlakegr
         
         BD_Out_Lakecat_Nriv_mask = np.logical_and(BD_Out_Lakecat_mask,np.logical_not(stream_mask))
         BD_problem[BD_Out_Lakecat_Nriv_mask] = 1
-#        print("Lake ID : ",lakeid,"Lake Cat ID   ",arclakeid, "Total numer of Lake grids   ",len(lrowcol), "Numer of Lake grids in Lake Cat:  ",nlake2,len(nlake))
-#        print("# of Lake boundary grids:   ", np.sum(BD_mask),"# of grids do not flow to lake catchments",np.sum(Lakeoutcat_mask) ,"# of lake boundary grids not flow to lake catchment   ", np.sum(BD_Out_Lakecat_mask),"  # of lake boundary grids not flow to lake catchment not a river gird  ", np.sum(BD_Out_Lakecat_Nriv_mask))
+        print("Lake ID : ",lakeid,"Lake Cat ID   ",arclakeid, "Total numer of Lake grids   ",len(lrowcol), "Numer of Lake grids in Lake Cat:  ",nlake2,len(nlake))
+        print("# of Lake boundary grids:   ", np.sum(BD_mask),"# of grids do not flow to lake catchments",np.sum(Lakeoutcat_mask) ,"# of lake boundary grids not flow to lake catchment   ", np.sum(BD_Out_Lakecat_mask),"  # of lake boundary grids not flow to lake catchment not a river gird  ", np.sum(BD_Out_Lakecat_Nriv_mask))
         
         
         #####  Locate the grids that at the target grids ege 
         Grid_Nee_Mo = np.argwhere(BD_Out_Lakecat_Nriv_mask == 1)
 #        print(print(Grid_Nee_Mo[:,0], Grid_Nee_Mo[:,1]))
-        
-        ind = np.lexsort((Grid_Nee_Mo[:,1], Grid_Nee_Mo[:,0]))    
-        Grid_Nee_Mo_row = Grid_Nee_Mo[ind]
-#        print("#### row ")
-#        print(Grid_Nee_Mo_row[:,0], Grid_Nee_Mo_row[:,1])
-        
-        
-        ind = np.lexsort((Grid_Nee_Mo[:,0], Grid_Nee_Mo[:,1]))    
-        Grid_Nee_Mo_col = Grid_Nee_Mo[ind]
-#        print("#### col ")
-#        print(Grid_Nee_Mo_col[:,0], Grid_Nee_Mo_col[:,1])
-        
-        goodpoint = np.full((len(BD_Out_Lakecat_Nriv_mask) + 100,2),-99999)
-        
-        
-        ###### for row 
-        minrow    = Grid_Nee_Mo_row[:,0][0]
-        maxrow    = Grid_Nee_Mo_row[:,0][len(Grid_Nee_Mo_row) - 1]
-        ## point with in min row, minmum and maxin column 
-        goodpoint[0,:] = Grid_Nee_Mo_row[0,:] 
-        idxr  = np.argwhere(Grid_Nee_Mo_row[:,0] == minrow)
-        goodpoint[1,:] = Grid_Nee_Mo_row[len(idxr) - 1,:]
-         
-         
-        goodpoint[2,:] = Grid_Nee_Mo_row[len(Grid_Nee_Mo_row) - 1,:] 
-        idxr  = np.argwhere(Grid_Nee_Mo_row[:,0] == maxrow)
-        goodpoint[3,:] = Grid_Nee_Mo_row[len(Grid_Nee_Mo_row) - len(idxr),:]  
-
-
-        ###### for col 
-        mincol    = Grid_Nee_Mo_col[:,1][0]
-        maxcol    = Grid_Nee_Mo_col[:,1][len(Grid_Nee_Mo_col) - 1]
-        ## point with in min row, minmum and maxin column 
-        goodpoint[4,:] = Grid_Nee_Mo_col[0,:] 
-        idxr  = np.argwhere(Grid_Nee_Mo_col[:,1] == mincol)
-        goodpoint[5,:] = Grid_Nee_Mo_col[len(idxr) - 1,:]
-         
-        goodpoint[6,:] = Grid_Nee_Mo_col[len(Grid_Nee_Mo_col) - 1,:] 
-        idxr  = np.argwhere(Grid_Nee_Mo_col[:,1] == maxcol)
-        goodpoint[7,:] = Grid_Nee_Mo_col[len(Grid_Nee_Mo_col) - len(idxr),:]  
-        
-        goodpoint_2 = copy.copy(goodpoint)
+                
+        goodpoint = copy.copy(Grid_Nee_Mo)
+        goodpoint_2 = copy.copy(Grid_Nee_Mo)
         goodpoint_2[:,:] =  -9999
         idx = 0
-        for i in range(0,8):
+        for i in range(0,len(goodpoint)):
             trow = goodpoint[i,0]
             tcol = goodpoint[i,1]
 #                print(i,ipo,trow,tcol)
@@ -258,7 +223,6 @@ def check_lakecatchment(cat3,lake,fac,fdir,bsid,nrows,ncols,LakeBD_array,nlakegr
             if IS_Change > 0:
                 goodpoint_2[idx] = goodpoint[i,:]
                 idx = idx + 1
-        
         goodpoint = goodpoint_2
 #        print(goodpoint[goodpoint[:,0]>0,])
         ### add just these flow direction of edge grids to lake domian 
