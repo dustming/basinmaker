@@ -19,7 +19,7 @@ from Generatecatinfo import Generatecatinfo,Generatecatinfo_riv,calculateChannal
 from WriteRavenInputs import writelake,Writervhchanl
 from WriteRavenInputs import WriteObsfiles
 from RavenOutputFuctions import plotGuagelineobs
-
+from AddlakesintoRoutingNetWork import Dirpoints_v3,check_lakecatchment
 
 
 
@@ -319,30 +319,7 @@ def selectlake2(hylake,Lakehres,hylakeinfo):
 
 ##################################################################3
 
-def check_lakecatchment(cat3,lake,fac,fdir,bsid,nrows,ncols,LakeBD_array):
-    cat = copy.copy(cat3)
-    arlakeid = np.unique(lake)
-    arlakeid = arlakeid[arlakeid>=0]
-    outlakeids = np.full((1000000,2),-99999.999)
-    for i in range(0,len(arlakeid)):
-        lakeid = arlakeid[i]
-        lrowcol = np.argwhere(lake==lakeid).astype(int)
-        lakacc = np.full((len(lrowcol),3),-9999)
-        lakacc[:,0] = lrowcol[:,0]
-        lakacc[:,1] = lrowcol[:,1]
-        lakacc[:,2] = fac[lrowcol[:,0],lrowcol[:,1]]
-        lakacc = lakacc[lakacc[:,2].argsort()]
-        lorow = lakacc[len(lakacc)-1,0]
-        locol = lakacc[len(lakacc)-1,1]  ###### lake outlet row and col
-        arclakeid = cat[lorow,locol]  ####### lake catchment id 
-        lakecatrowcol = np.argwhere(cat==arclakeid).astype(int)    #### lake catchment cells 
-        Lakeincat1 = lake[lakecatrowcol[:,0],lakecatrowcol[:,1]]
-        nlake = np.argwhere(Lakeincat1==lakeid).astype(int)
-        outlakeids[i,0] = lakeid
-        outlakeids[i,1] = float(len(nlake)/len(lrowcol)) 
-#        print(lakeid,arclakeid,len(nlake),len(lrowcol),float(len(nlake)/len(lrowcol))) 
-    outlakeids= outlakeids[outlakeids[:,0] > 0]
-    return outlakeids
+
 ######################################################################3
 def Addobspoints(obs,pourpoints,boid,cat):
     obsids = np.unique(obs)
@@ -435,9 +412,9 @@ def CE_mcat4lake2(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints,noncnlake):
     Non_con_lake_cat = copy.copy(cat1)
     Non_con_lake_cat[:,:] = -9999
     arlakeid = np.unique(lake)
-    arlakeid = arlakeid[arlakeid>=0]
+    arlakeid = arlakeid[arlakeid>0]
     noncnlake = np.unique(noncnlake)
-    noncnlake = noncnlake[noncnlake>=0]
+    noncnlake = noncnlake[noncnlake>0]
     for i in range(0,len(arlakeid)):
         lakeid = arlakeid[i]
         lrowcol = np.argwhere(lake==lakeid).astype(int)
@@ -466,19 +443,19 @@ def CE_mcat4lake2(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints,noncnlake):
                     nonlrowcol = np.argwhere(cat==arclakeid).astype(int)
                     Non_con_lake_cat[nonlrowcol[:,0],nonlrowcol[:,1]] = lakeid
 #### For some reason pour point was missing in non-contribute catchment 
-    Pours = np.unique(Pourpoints)
-    Pours = Pours[Pours>0]
-    for i in range(0,len(Pours)):
-        pourid = Pours[i]
-        rowcol = Pourpoints == pourid
-        if cat[rowcol] < 0:
-            nout = Checkcat(rowcol[0,0],rowcol[0,1],nrows,ncols,pourid,cat)
-            if len(cat[cat == pourid]) > 0 and nout < 8:
-                cat[rowcol] = pourid
-    rowcol1 = fac > 0
-    rowcol2 = cat < 0
-    noncontribuite = np.logical_and(rowcol1, rowcol2)
-    cat[noncontribuite] = 2*max(np.unique(cat)) + 1
+    # Pours = np.unique(Pourpoints)
+    # Pours = Pours[Pours>0]
+    # for i in range(0,len(Pours)):
+    #     pourid = Pours[i]
+    #     rowcol = Pourpoints == pourid
+    #     if cat[rowcol] < 0:
+    #         nout = Checkcat(rowcol[0,0],rowcol[0,1],nrows,ncols,pourid,cat)
+    #         if len(cat[cat == pourid]) > 0 and nout < 8:
+    #             cat[rowcol] = pourid
+    # rowcol1 = fac > 0
+    # rowcol2 = cat < 0
+    # noncontribuite = np.logical_and(rowcol1, rowcol2)
+    # cat[noncontribuite] = 2*max(np.unique(cat)) + 1
     return cat,Non_con_lake_cat
 ######################################################
 def CE_Lakeerror(fac,fdir,lake,cat2,bsid,blid,boid,nrows,ncols,cat):
@@ -1642,7 +1619,10 @@ class LRRT:
             Lake1, Selected_Non_Con_Lakes_ids = selectlake(hylake1,noncnlake_arr,NonConLThres,allLakinfo) ### remove lakes with lake area smaller than the NonConLThres from non-connected lake raster 
         else:
             Lake1 = hylake1
-
+        
+        mask3 = hylake1 == 0
+        hylake1[mask3]   = -9999
+                
         temparray[:,:] = hylake1[:,:]
         temparray.write(mapname="Select_Connected_lakes", overwrite=True)
         grass.run_command('r.null', map='Select_Connected_lakes',setnull=-9999)
@@ -1651,11 +1631,15 @@ class LRRT:
         Selectedlaeks = copy.deepcopy(Lake1)    
         maks                = hylake1 > 0
         Selectedlaeks[maks] = -9999
+        mask2 = Selectedlaeks == 0
+        Selectedlaeks[mask2]   = -9999
         temparray[:,:] = Selectedlaeks[:,:]
         temparray.write(mapname="Select_Noon_Connected_lakes", overwrite=True)
         grass.run_command('r.null', map='Select_Noon_Connected_lakes',setnull=-9999)
         grass.run_command('r.out.gdal', input = 'Select_Noon_Connected_lakes',output = os.path.join(self.tempfolder,'Select_Noon_Connected_lakes.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
         
+        mask1 = Lake1 == 0
+        Lake1[mask1]   = -9999
         temparray[:,:] = Lake1[:,:]
         temparray.write(mapname="SelectedLakes", overwrite=True)
         grass.run_command('r.null', map='SelectedLakes',setnull=-9999)
@@ -1709,12 +1693,19 @@ class LRRT:
         cat4_array =  garray.array(mapname="cat4")
         grass.run_command('r.out.gdal', input = 'cat4',output = os.path.join(self.tempfolder,'cat4.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
                 
-        outlakeids= check_lakecatchment(cat4_array,Lake1,acc_array,dir_array,bsid,self.nrows,self.ncols,LakeBD_array)
+        outlakeids,chandir,ndir,BD_problem= check_lakecatchment(cat4_array,Lake1,acc_array,dir_array,bsid,self.nrows,self.ncols,LakeBD_array,nlakegrids,str_array,dir_array)
+
+        temparray[:,:] = chandir[:,:]
+        temparray.write(mapname="chandir", overwrite=True)
+        grass.run_command('r.null', map='chandir',setnull=-9999)    
+        grass.run_command('r.out.gdal', input = 'chandir',output = os.path.join(self.tempfolder,'chandir.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
+
+        temparray[:,:] = BD_problem[:,:]
+        temparray.write(mapname="BD_problem", overwrite=True)
+        grass.run_command('r.null', map='BD_problem',setnull=-9999)    
+        grass.run_command('r.out.gdal', input = 'BD_problem',output = os.path.join(self.tempfolder,'BD_problem.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
 
 
-    
-        ### Modify lake flow directions
-        ndir = ChangeDIR(dir_array,Lake1,acc_array,self.ncols,self.nrows,outlakeids,nlakegrids,cat4_array)
         temparray[:,:] = ndir[:,:]
         temparray.write(mapname="ndir_Arcgis", overwrite=True)
         grass.run_command('r.null', map='ndir_Arcgis',setnull=-9999)    
@@ -1738,7 +1729,8 @@ class LRRT:
         temparray[:,:] = finalcat[:,:]
         temparray.write(mapname="finalcat", overwrite=True)
         grass.run_command('r.null', map='finalcat',setnull=-9999)    
-        grass.run_command('r.to.vect', input='finalcat',output='finalcat_F1',type='area', overwrite = True)    
+        grass.run_command('r.to.vect', input='finalcat',output='finalcat_F1',type='area', overwrite = True)   
+        grass.run_command('r.out.gdal', input = 'finalcat',output = os.path.join(self.tempfolder,'cat_finaltddd.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')  
         temparray[:,:] = Non_con_lake_cat[:,:]
         temparray.write(mapname="Non_con_lake_cat", overwrite=True)
         grass.run_command('r.null', map='Non_con_lake_cat',setnull=-9999)   
