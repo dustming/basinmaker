@@ -443,19 +443,19 @@ def CE_mcat4lake2(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints,noncnlake):
                     nonlrowcol = np.argwhere(cat==arclakeid).astype(int)
                     Non_con_lake_cat[nonlrowcol[:,0],nonlrowcol[:,1]] = lakeid
 #### For some reason pour point was missing in non-contribute catchment 
-    # Pours = np.unique(Pourpoints)
-    # Pours = Pours[Pours>0]
-    # for i in range(0,len(Pours)):
-    #     pourid = Pours[i]
-    #     rowcol = Pourpoints == pourid
-    #     if cat[rowcol] < 0:
-    #         nout = Checkcat(rowcol[0,0],rowcol[0,1],nrows,ncols,pourid,cat)
-    #         if len(cat[cat == pourid]) > 0 and nout < 8:
-    #             cat[rowcol] = pourid
-    # rowcol1 = fac > 0
-    # rowcol2 = cat < 0
-    # noncontribuite = np.logical_and(rowcol1, rowcol2)
-    # cat[noncontribuite] = 2*max(np.unique(cat)) + 1
+    Pours = np.unique(Pourpoints)
+    Pours = Pours[Pours>0]
+    for i in range(0,len(Pours)):
+        pourid = Pours[i]
+        rowcol = Pourpoints == pourid
+        if cat[rowcol] < 0:
+            nout = Checkcat(rowcol[0,0],rowcol[0,1],nrows,ncols,pourid,cat)
+            if len(cat[cat == pourid]) > 0 and nout < 8:
+                cat[rowcol] = pourid
+    rowcol1 = fac > 0
+    rowcol2 = cat < 0
+    noncontribuite = np.logical_and(rowcol1, rowcol2)
+    cat[noncontribuite] = 2*max(np.unique(cat)) + 1
     return cat,Non_con_lake_cat
 ######################################################
 def CE_Lakeerror(fac,fdir,lake,cat2,bsid,blid,boid,nrows,ncols,cat):
@@ -1554,7 +1554,7 @@ class LRRT:
 ###########################################################################################3
 
 ############################################################################################
-    def AutomatedWatershedsandLakesFilterToolset(self,Thre_Lake_Area_Connect = 0,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 1600):
+    def AutomatedWatershedsandLakesFilterToolset(self,Thre_Lake_Area_Connect = 0,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 1600,Postprocessing = 1):
 
         tempinfo = Dbf5(self.Path_allLakeply[:-3] + "dbf")
         allLakinfo = tempinfo.to_dataframe()
@@ -1845,18 +1845,24 @@ class LRRT:
         conlake_arr       = garray.array(mapname="Net_cat_connect_lake")
         NoneCLakeids      = np.unique(NonCL_array)
         NoneCLakeids      = NoneCLakeids[NoneCLakeids > 0]
-        for kk in range(0,len(NoneCLakeids)):
-            mask              = NonCL_array == NoneCLakeids[kk]
-            conlake_arr[mask] = nstrid
-            nstrid            = nstrid + 1
-            
-        mask = conlake_arr <= 0
-        conlake_arr[mask] = -9999
         
-        temparray[:,:] = -9999
-        temparray[:,:] = conlake_arr[:,:]
-        temparray.write(mapname="Net_cat", overwrite=True)  #### write new stream id to a grass raster 
-        grass.run_command('r.null', map='Net_cat',setnull=-9999)
+        
+        grass.run_command('r.null', map='Non_con_lake_cat',setnull=[-9999,0]) 
+        grass.run_command('r.mapcalc',expression = 'Non_con_lake_cat = int(Non_con_lake_cat) + ' + str(int(nstrid +10)),overwrite = True) 
+        grass.run_command('r.mapcalc',expression = 'Net_cat = if(isnull(Non_con_lake_cat),Net_cat_connect_lake,Non_con_lake_cat)',overwrite = True)    
+    
+        # for kk in range(0,len(NoneCLakeids)):
+        #     mask              = NonCL_array == NoneCLakeids[kk]
+        #     conlake_arr[mask] = nstrid
+        #     nstrid            = nstrid + 1
+        # 
+        # mask = conlake_arr <= 0
+        # conlake_arr[mask] = -9999
+        # 
+        # temparray[:,:] = -9999
+        # temparray[:,:] = conlake_arr[:,:]
+        # temparray.write(mapname="Net_cat", overwrite=True)  #### write new stream id to a grass raster 
+        # grass.run_command('r.null', map='Net_cat',setnull=-9999)
                   
         
         con.close()
