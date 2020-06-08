@@ -1148,7 +1148,7 @@ class LRRT:
             HydroBasins1 = Defcat(routing_info,self.OutHyID) ### return fid of polygons that needs to be select 
             
             if self.OutHyID2 > 0:
-                HydroBasins2 = Defcat(hyshdinfo,self.OutHyID2)            
+                HydroBasins2 = Defcat(routing_info,self.OutHyID2)            
     ###  exculde the Ids in HydroBasins2 from HydroBasins1
                 for i in range(len(HydroBasins2)):
                     rows =np.argwhere(HydroBasins1 == HydroBasins2[i])
