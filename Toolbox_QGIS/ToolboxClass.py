@@ -1151,6 +1151,8 @@ class LRRT:
                 HydroBasins2 = Defcat(routing_info,self.OutHyID2)            
     ###  exculde the Ids in HydroBasins2 from HydroBasins1
                 for i in range(len(HydroBasins2)):
+                    if HydroBasins2[i] == self.OutHyID2:
+                        continue
                     rows =np.argwhere(HydroBasins1 == HydroBasins2[i])
                     HydroBasins1 = np.delete(HydroBasins1, rows)
                 HydroBasins = HydroBasins1            
