@@ -1299,7 +1299,8 @@ class LRRT:
             
                 grass.run_command("r.in.gdal", input = self.Path_dem, output = 'dem', overwrite = True,location =self.grass_location_geo)
                 PERMANENT.close()
-            
+                
+                PERMANENT = Session()
                 PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
                
                 grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
