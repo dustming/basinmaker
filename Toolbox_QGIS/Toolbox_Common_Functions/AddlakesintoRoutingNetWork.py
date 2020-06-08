@@ -200,6 +200,7 @@ def check_lakecatchment(cat3,lake,fac,fdir,bsid,nrows,ncols,LakeBD_array,nlakegr
         
         BD_Out_Lakecat_Nriv_mask = np.logical_and(BD_Out_Lakecat_mask,np.logical_not(stream_mask))
         BD_problem[BD_Out_Lakecat_Nriv_mask] = 1
+        print("Total # of lakes: ", len(arlakeid), " Processing    ",i,"th lake" )
         print("Lake ID : ",lakeid,"Lake Cat ID   ",arclakeid, "Total numer of Lake grids   ",len(lrowcol), "Numer of Lake grids in Lake Cat:  ",nlake2,len(nlake))
         print("# of Lake boundary grids:   ", np.sum(BD_mask),"# of grids do not flow to lake catchments",np.sum(Lakeoutcat_mask) ,"# of lake boundary grids not flow to lake catchment   ", np.sum(BD_Out_Lakecat_mask),"  # of lake boundary grids not flow to lake catchment not a river gird  ", np.sum(BD_Out_Lakecat_Nriv_mask))
         
