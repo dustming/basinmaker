@@ -139,7 +139,7 @@ def FindQ_mean_Da_relaitonship(tsubid,routing_info,Netcat_array,SubId_WidDep_arr
                 print(DA)
                 print(Q_mean)
                 print(excludesubids)
-                pcov2 = np.full(2,-1)
+                popt2 = np.full(2,-1)
                     
 #            print(tuple(popt2)) 
             if popt2[0] > 0:
