@@ -1052,7 +1052,8 @@ def ConnectLake_to_NonConnectLake_Updateinfo(NonC_Lakeinfo,finalriv_info,Merged_
 class LRRT:
     def __init__(self, dem_in = '#',dir_in = '#',hyshdply = '#',WidDep = '#',Lakefile = '#'
                                      ,Landuse = '#',Landuseinfo = '#',obspoint = '#',OutHyID = -1 ,OutHyID2 = -1, 
-                                     OutputFolder = '#',ProjectNM = '#',Sub_reg_outlets = '#'):
+                                     OutputFolder = '#',ProjectNM = '#',Sub_reg_outlets = '#',Sub_reg_grass_dir = '#',
+                                     Sub_reg_arcgis_dir = '#'):
         self.Path_dem_in = dem_in
         self.Path_dir_in = dir_in
         self.Path_hyshdply_in = hyshdply
@@ -1063,6 +1064,8 @@ class LRRT:
         self.Path_obspoint_in = obspoint
         self.Path_OutputFolder = OutputFolder
         self.Path_Sub_reg_outlets = Sub_reg_outlets
+        self.Path_Sub_reg_grass_dir = Sub_reg_grass_dir
+        self.Path_Sub_reg_arcgis_dir = Sub_reg_arcgis_dir
         
 
         
@@ -1572,10 +1575,15 @@ class LRRT:
             grass.run_command("r.clip", input = 'dir_in', output = 'dir_Arcgis', overwrite = True, flags = 'r')
             grass.run_command('r.reclass', input='dir_Arcgis',output = 'dir_grass',rules =os.path.join(self.RoutingToolPath,'Arcgis2GrassDIR.txt'), overwrite = True)
         else:  ### non hydroshed if dir has been build 
-
-            grass.run_command('r.watershed',elevation = 'dem', drainage = 'dir_grass', accumulation = 'acc_grass2',flags = 's', overwrite = True)
-            grass.run_command('r.mapcalc',expression = "acc_grass = abs(acc_grass2@PERMANENT)",overwrite = True)
-            grass.run_command('r.reclass', input='dir_grass',output = 'dir_Arcgis',rules = os.path.join(self.RoutingToolPath,'Grass2ArcgisDIR.txt'), overwrite = True)
+            if self.Path_Sub_reg_grass_dir != '#':
+                grass.run_command('r.watershed',elevation = 'dem', accumulation = 'acc_grass2',flags = 's', overwrite = True)
+                grass.run_command('r.mapcalc',expression = "acc_grass = abs(acc_grass2@PERMANENT)",overwrite = True)
+                grass.run_command("r.in.gdal", input = self.Path_Sub_reg_grass_dir, output = 'dir_grass', overwrite = True)
+                grass.run_command("r.in.gdal", input = self.Path_Sub_reg_arcgis_dir, output = 'dir_Arcgis', overwrite = True)
+            else:
+                grass.run_command('r.watershed',elevation = 'dem', drainage = 'dir_grass', accumulation = 'acc_grass2',flags = 's', overwrite = True)
+                grass.run_command('r.mapcalc',expression = "acc_grass = abs(acc_grass2@PERMANENT)",overwrite = True)
+                grass.run_command('r.reclass', input='dir_grass',output = 'dir_Arcgis',rules = os.path.join(self.RoutingToolPath,'Grass2ArcgisDIR.txt'), overwrite = True)
             
             
         if self.Path_Landuseinfo_in != '#':
