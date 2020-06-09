@@ -1352,23 +1352,23 @@ class LRRT:
         PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
         N_Basin = 0
         Acc     = Initaial_Acc
-        # while N_Basin < Min_Num_Domain or N_Basin > Max_Num_Domain:
-        #     grass.run_command('r.watershed',elevation = 'dem',flags = 's', basin = 'testbasin',drainage = 'dir_grass_reg',accumulation = 'acc_grass_reg2',threshold = Acc,overwrite = True)
-        #     strtemp_array = garray.array(mapname="testbasin")
-        #     N_Basin = np.unique(strtemp_array)
-        #     N_Basin = len(N_Basin[N_Basin > 0])
-        #     print(N_Basin,Acc,Delta_Acc)
-        #     if N_Basin > Max_Num_Domain:
-        #         Acc = Acc + Delta_Acc
-        #     if N_Basin < Min_Num_Domain:
-        #         Acc = Acc - Delta_Acc
-        # 
-        # PERMANENT.close()
-        # 
-        # self.Generateinputdata()
-        # self.WatershedDiscretizationToolset(Acc,Is_divid_region = 1)
-        # self.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = CheckLakeArea,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 9000,Pec_Grid_outlier = 0.99,Is_divid_region=1)
-        # 
+        while N_Basin < Min_Num_Domain or N_Basin > Max_Num_Domain:
+            grass.run_command('r.watershed',elevation = 'dem',flags = 's', basin = 'testbasin',drainage = 'dir_grass_reg',accumulation = 'acc_grass_reg2',threshold = Acc,overwrite = True)
+            strtemp_array = garray.array(mapname="testbasin")
+            N_Basin = np.unique(strtemp_array)
+            N_Basin = len(N_Basin[N_Basin > 0])
+            print(N_Basin,Acc,Delta_Acc)
+            if N_Basin > Max_Num_Domain:
+                Acc = Acc + Delta_Acc
+            if N_Basin < Min_Num_Domain:
+                Acc = Acc - Delta_Acc
+        
+        PERMANENT.close()
+        
+        self.Generateinputdata()
+        self.WatershedDiscretizationToolset(Acc,Is_divid_region = 1)
+        self.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = CheckLakeArea,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 9000,Pec_Grid_outlier = 0.99,Is_divid_region=1)
+        
 
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
