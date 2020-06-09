@@ -1318,7 +1318,7 @@ class LRRT:
         return 
 
 
-    def Generatesubdomain(self,Min_Num_Domain = 9,Max_Num_Domain = 13,Initaial_Acc = 5000,Delta_Acc = 1000,Out_Sub_Reg_Dem_Folder = '#'):
+    def Generatesubdomain(self,Min_Num_Domain = 9,Max_Num_Domain = 13,Initaial_Acc = 5000,Delta_Acc = 1000,Out_Sub_Reg_Dem_Folder = '#',ProjectNM = 'Sub_Reg'):
         import grass.script as grass
         from grass.script import array as garray
         from grass.script import core as gcore
@@ -1333,7 +1333,7 @@ class LRRT:
         N_Basin = 0
         Acc     = Initaial_Acc
         while N_Basin < Min_Num_Domain or N_Basin > Max_Num_Domain:
-            grass.run_command('r.watershed',elevation = 'dem',flags = 's', basin = 'testbasin',threshold = Acc,overwrite = True)
+            grass.run_command('r.watershed',elevation = 'dem',flags = 's', basin = 'testbasin',drainage = 'dir_grass_reg',accumulation = 'acc_grass_reg2',threshold = Acc,overwrite = True)
             strtemp_array = garray.array(mapname="testbasin")
             N_Basin = np.unique(strtemp_array)
             N_Basin = len(N_Basin[N_Basin > 0])
@@ -1342,14 +1342,28 @@ class LRRT:
                 Acc = Acc + Delta_Acc
             if N_Basin < Min_Num_Domain:
                 Acc = Acc - Delta_Acc
-        strtemp_array = garray.array(mapname="testbasin")
+
+        grass.run_command('r.reclass', input='dir_grass_reg',output = 'dir_Arcgis_reg',rules = os.path.join(self.RoutingToolPath,'Grass2ArcgisDIR.txt'), overwrite = True)
+        grass.run_command('r.mapcalc',expression = "acc_grass_reg = abs(acc_grass_reg2@PERMANENT)",overwrite = True)
         
-        Basins = np.unique(strtemp_array)
-        Basins = Basins[Basins > 0]
-        orgdem        = garray.array(mapname="dem")
+        strtemp_array = garray.array(mapname="testbasin") 
+        dir           = garray.array(mapname="dir_Arcgis_reg") 
+        acc           = garray.array(mapname="acc_grass_reg")  
+             
+        ncols = int(strtemp_array.shape[1])
+        nrows = int(strtemp_array.shape[0])
+        
+        Basins        = np.unique(strtemp_array)
+        Basins        = Basins[Basins > 0]
 
         if not os.path.exists(Out_Sub_Reg_Dem_Folder):
 	            os.makedirs(Out_Sub_Reg_Dem_Folder)
+                
+        subregin_info=pd.DataFrame(Basins,columns = ['Sub_Reg_ID'])
+        subregin_info["Dow_Sub_Reg_Id"] = -9999
+        subregin_info["ProjectNM"] = -9999
+        subregin_info["Nun_Grids"] = -9999
+        
         for i in range(0,len(Basins)):
             basinid = int(Basins[i])
             exp = 'dem_reg_'+str(basinid)+'= if(testbasin == '+str(basinid)+',dem, -9999)'
@@ -1360,9 +1374,39 @@ class LRRT:
             
             grass.run_command('r.out.gdal', input = 'dem_reg_'+str(basinid),output = os.path.join(Out_Sub_Reg_Dem_Folder,'dem_reg_'+str(basinid)+'.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
             
-        grass.run_command('r.out.gdal', input = 'testbasin',output = os.path.join(self.tempfolder,'testbasin.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')    
+            catmask = strtemp_array == basinid
+            subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"ProjectNM"]      = ProjectNM + '_'+str(basinid)
+            subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"Nun_Grids"]      = np.sum(catmask)
+            
+            trow,tcol = Getbasinoutlet(basinid,strtemp_array,acc,dir,nrows,ncols)
+            
+            k = 1
+            ttrow,ttcol = trow,tcol
+            dowsubreginid = -1
+        
+            while dowsubreginid < 0 and k < 20:
+                nrow,ncol = Nextcell(dir,ttrow,ttcol)### get the downstream catchment id
+                if nrow < 0 or ncol < 0:
+                    dowsubreginid = -1
+                    break;
+                elif nrow >= nrows or ncol >= ncols:
+                    dowsubreginid = -1
+                    break;
+                elif strtemp_array[nrow,ncol] <= 0 or strtemp_array[nrow,ncol] == basinid:
+                    dowsubreginid = -1
+                else:
+                    dowsubreginid = strtemp_array[nrow,ncol]
+                k = k + 1
+                ttrow = nrow
+                ttcol = ncol       
+                 
+            subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"Dow_Sub_Reg_Id"] = dowsubreginid
+            
+        grass.run_command('r.out.gdal', input = 'testbasin',output = os.path.join(self.tempfolder,'testbasin.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')  
+        subregin_info.to_csv(os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_reg_info.csv'),index = None, header=True)
+          
         return Basins
-                        
+                         
 ##################################################################################################  
 #### functions to preprocess data, Output:
 ##  self.Path_dem,self.cellSize,self.SpRef_in
