@@ -1349,11 +1349,9 @@ class LRRT:
 
         if not os.path.exists(Out_Sub_Reg_Dem_Folder):
 	            os.makedirs(Out_Sub_Reg_Dem_Folder)
-        print(Basins)
         for i in range(0,len(Basins)):
             basinid = Basins[i]
             exp = 'dem_reg_'+str(i)+'= if(testbasin == '+str(basinid)+',dem, -9999)'
-            print(exp)
             
             grass.run_command('r.mapcalc',expression = exp,overwrite = True) 
             
@@ -1362,7 +1360,7 @@ class LRRT:
             grass.run_command('r.out.gdal', input = 'dem_reg_'+str(i),output = os.path.join(Out_Sub_Reg_Dem_Folder,'dem_reg_'+str(i)+'.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
             
         grass.run_command('r.out.gdal', input = 'testbasin',output = os.path.join(self.tempfolder,'testbasin.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')    
-        
+        return len(Basins)
                         
 ##################################################################################################  
 #### functions to preprocess data, Output:
