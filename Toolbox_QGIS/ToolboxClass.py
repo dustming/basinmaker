@@ -1576,6 +1576,10 @@ class LRRT:
             grass.run_command('r.reclass', input='dir_Arcgis',output = 'dir_grass',rules =os.path.join(self.RoutingToolPath,'Arcgis2GrassDIR.txt'), overwrite = True)
         else:  ### non hydroshed if dir has been build 
             if self.Path_Sub_reg_grass_dir != '#':
+                # grass.run_command('r.watershed',elevation = 'dem', drainage = 'dir_grass', accumulation = 'acc_grass2',flags = 's', overwrite = True)
+                # grass.run_command('r.mapcalc',expression = "acc_grass = abs(acc_grass2@PERMANENT)",overwrite = True)
+                # grass.run_command('r.reclass', input='dir_grass',output = 'dir_Arcgis',rules = os.path.join(self.RoutingToolPath,'Grass2ArcgisDIR.txt'), overwrite = True)
+                
                 grass.run_command('r.watershed',elevation = 'dem', accumulation = 'acc_grass2',flags = 's', overwrite = True)
                 grass.run_command('r.mapcalc',expression = "acc_grass = abs(acc_grass2@PERMANENT)",overwrite = True)
                 grass.run_command("r.in.gdal", input = self.Path_Sub_reg_grass_dir, output = 'dir_grass1', overwrite = True)
@@ -1661,13 +1665,26 @@ class LRRT:
         PERMANENT = Session()
         PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
         
-        grsregion = gcore.region()        
+        grsregion = gcore.region()     
+        
+        #### if subregion oulet is inlcuded , use minmum acc of subregion outlet.  
+        acc_in = accthresold
+        if self.Path_Sub_reg_outlets != '#':
+            acc_array           = garray.array(mapname="acc_grass")
+            Sub_reg_outlets     = garray.array(mapname="Sub_reg_outlets")
+            mask                = Sub_reg_outlets > 0
+            Sub_reg_outlets_ids = Sub_reg_outlets[mask]
+            acc                 = np.min(acc_array[mask]) - int(np.min(acc_array[mask])/2)
+            if acc < accthresold: 
+                acc_in = int(acc)
+            print('SubRegion outlet ids are ', np.unique(Sub_reg_outlets_ids), 'minmum acc are :', acc,acc_in) 
+            
         if self.Path_dir_in == '#':  ### did not provide dir, use dem to generate watershed. recommand !!
             if Is_divid_region > 0:
-                grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =accthresold,stream_raster = 'str_grass_r',
+                grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =acc_in,stream_raster = 'str_grass_r',
                                   overwrite = True, memory = max_memroy)
             else:
-                grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =accthresold,stream_raster = 'str_grass_r',
+                grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =acc_in,stream_raster = 'str_grass_r',
                                 stream_vector = 'str_grass_v',overwrite = True,memory = max_memroy)
         else:
         ## generate correct stream raster, when the dir is not derived from dem. for Hydroshed Cases 
@@ -2294,7 +2311,17 @@ class LRRT:
                     upregid               =reg_outlet_info['SubId'].values[i]
                     HydroBasins_remove   = Defcat(routing_info_ext,upregid)  
                     mask                 = np.in1d(HydroBasins1, HydroBasins_remove)  ### exluced ids that belongs to main river stream 
-                    HydroBasins1         = HydroBasins1[np.logical_not(mask1)]     
+                    HydroBasins1         = HydroBasins1[np.logical_not(mask)]   
+                    
+            # outlet_info  = hyshdinfo2[hyshdinfo2['DowSubId'] == -1]  
+            # 
+            # for i in range(0,len(outlet_info)):
+            #     outid = outlet_info['SubId'].values[i]
+            #     if outid == outletid:
+            #         continue 
+            #     HydroBasins_remove   = Defcat(routing_info_ext,outid)  
+            #     mask                 = np.in1d(HydroBasins1, HydroBasins_remove)  ### exluced ids that belongs to main river stream 
+            #     HydroBasins1         = HydroBasins1[np.logical_not(mask)]                  
                            
             HydroBasins = HydroBasins1
         else:
