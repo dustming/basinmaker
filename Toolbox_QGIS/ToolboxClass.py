@@ -2074,20 +2074,47 @@ class LRRT:
         grass.run_command('v.out.ogr', input = 'Net_cat_F',output = os.path.join(self.tempfolder,'finalriv_catinfo1.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
 
         PERMANENT.close()
-                
+
         processing.run("native:dissolve", {'INPUT':os.path.join(self.tempfolder,'finalriv_catinfo1.shp'),'FIELD':['SubId'],'OUTPUT':os.path.join(self.tempfolder,'finalriv_catinfo_dis.shp')},context = context)
         processing.run("native:dissolve", {'INPUT':os.path.join(self.tempfolder,'finalriv_info1.shp'),'FIELD':['SubId'],'OUTPUT':os.path.join(self.tempfolder,'finalriv_info_dis.shp')},context = context)
         
-        processing.run("native:centroids", {'INPUT':os.path.join(self.tempfolder,'finalriv_catinfo_dis.shp'),'ALL_PARTS':False,'OUTPUT':os.path.join(self.tempfolder,'Centerpoints.shp')},context = context)
+        
+        ### extract the watershed with maximum drianage area
+        Path_final_riv = os.path.join(self.tempfolder,'finalriv_catinfo_dis.shp')
+        hyinfocsv = Path_final_riv[:-3] + "dbf"
+        tempinfo = Dbf5(hyinfocsv)
+        hyshdinfo2 = tempinfo.to_dataframe().drop_duplicates('SubId', keep='first')
+        routing_info_ext =  hyshdinfo2[['SubId','DowSubId']].astype('float').values 
+         
+        ##find outlet id with maximum drainage area  
+        outlet_info  = hyshdinfo2[hyshdinfo2['DowSubId'] == -1]
+        outlet_info  = outlet_info.sort_values(by='DA', ascending=False)
+        outletid     = outlet_info['SubId'].values[0]
+        ##find upsteam catchment id
+        HydroBasins  = Defcat(routing_info_ext,outletid)
+        
+        ### extract region of interest
+        Selectfeatureattributes(processing,Input = os.path.join(self.tempfolder,'finalriv_catinfo_dis.shp'),Output=os.path.join(self.tempfolder,'finalriv_catinfo_dis_sel.shp'),Attri_NM = 'SubId',Values = HydroBasins)
+        Selectfeatureattributes(processing,Input = os.path.join(self.tempfolder,'finalriv_info_dis.shp'),Output=os.path.join(self.tempfolder,'finalriv_info_dis_sel.shp'),Attri_NM = 'SubId',Values = HydroBasins)
+        
+        
+                    
+        processing.run("native:centroids", {'INPUT':os.path.join(self.tempfolder,'finalriv_catinfo_dis_sel.shp'),'ALL_PARTS':False,'OUTPUT':os.path.join(self.tempfolder,'Centerpoints.shp')},context = context)
         processing.run("native:addxyfields", {'INPUT':os.path.join(self.tempfolder,'Centerpoints.shp'),'CRS':QgsCoordinateReferenceSystem(self.SpRef_in),'OUTPUT':os.path.join(self.tempfolder,'ctwithxy.shp')},context = context)
-        processing.run("native:joinattributestable",{'INPUT':os.path.join(self.tempfolder,'finalriv_catinfo_dis.shp'),'FIELD':'SubId','INPUT_2':os.path.join(self.tempfolder,'ctwithxy.shp'),'FIELD_2':'SubId',
+        processing.run("native:joinattributestable",{'INPUT':os.path.join(self.tempfolder,'finalriv_catinfo_dis_sel.shp'),'FIELD':'SubId','INPUT_2':os.path.join(self.tempfolder,'ctwithxy.shp'),'FIELD_2':'SubId',
                           'FIELDS_TO_COPY':['x','y'],'METHOD':0,'DISCARD_NONMATCHING':False,'PREFIX':'centroid_','OUTPUT':os.path.join(self.OutputFolder,'finalriv_info_ply.shp')},context = context)
-        processing.run("native:joinattributestable",{'INPUT':os.path.join(self.tempfolder,'finalriv_info_dis.shp'),'FIELD':'SubId','INPUT_2':os.path.join(self.tempfolder,'ctwithxy.shp'),'FIELD_2':'SubId',
+        processing.run("native:joinattributestable",{'INPUT':os.path.join(self.tempfolder,'finalriv_info_dis_sel.shp'),'FIELD':'SubId','INPUT_2':os.path.join(self.tempfolder,'ctwithxy.shp'),'FIELD_2':'SubId',
                           'FIELDS_TO_COPY':['x','y'],'METHOD':0,'DISCARD_NONMATCHING':False,'PREFIX':'centroid_','OUTPUT':os.path.join(self.OutputFolder,'finalriv_info.shp')},context = context)
         
         
         ##### export  lakes
-        NonCL_Lakeids = catinfo.loc[catinfo['IsLake'] == 2]['HyLakeId'].values
+        
+        Path_final_riv = os.path.join(self.tempfolder,'finalriv_catinfo_dis_sel.shp')
+        hyinfocsv = Path_final_riv[:-3] + "dbf"
+        tempinfo = Dbf5(hyinfocsv)
+        hyshdinfo2 = tempinfo.to_dataframe().drop_duplicates('SubId', keep='first')
+        
+        NonCL_Lakeids = hyshdinfo2.loc[hyshdinfo2['IsLake'] == 2]['HyLakeId'].values
         NonCL_Lakeids = np.unique(NonCL_Lakeids)
         NonCL_Lakeids = NonCL_Lakeids[NonCL_Lakeids > 0]
         
@@ -2100,7 +2127,7 @@ class LRRT:
         
         
         ### Non_Connected Lakes
-        CL_Lakeids =  catinfo.loc[catinfo['IsLake'] == 1]['HyLakeId'].values
+        CL_Lakeids =  hyshdinfo2.loc[hyshdinfo2['IsLake'] == 1]['HyLakeId'].values
         CL_Lakeids = np.unique(CL_Lakeids)
         CL_Lakeids = CL_Lakeids[CL_Lakeids > 0]
         if(len(CL_Lakeids)) > 0:
