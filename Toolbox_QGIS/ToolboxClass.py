@@ -1052,7 +1052,7 @@ def ConnectLake_to_NonConnectLake_Updateinfo(NonC_Lakeinfo,finalriv_info,Merged_
 class LRRT:
     def __init__(self, dem_in = '#',dir_in = '#',hyshdply = '#',WidDep = '#',Lakefile = '#'
                                      ,Landuse = '#',Landuseinfo = '#',obspoint = '#',OutHyID = -1 ,OutHyID2 = -1, 
-                                     OutputFolder = '#',ProjectNM = '#'):
+                                     OutputFolder = '#',ProjectNM = '#',Sub_reg_outlets = '#'):
         self.Path_dem_in = dem_in
         self.Path_dir_in = dir_in
         self.Path_hyshdply_in = hyshdply
@@ -1062,6 +1062,7 @@ class LRRT:
         self.Path_Landuseinfo_in = Landuseinfo
         self.Path_obspoint_in = obspoint
         self.Path_OutputFolder = OutputFolder
+        self.Path_Sub_reg_outlets = Sub_reg_outlets
         
 
         
@@ -1351,23 +1352,23 @@ class LRRT:
         PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
         N_Basin = 0
         Acc     = Initaial_Acc
-        while N_Basin < Min_Num_Domain or N_Basin > Max_Num_Domain:
-            grass.run_command('r.watershed',elevation = 'dem',flags = 's', basin = 'testbasin',drainage = 'dir_grass_reg',accumulation = 'acc_grass_reg2',threshold = Acc,overwrite = True)
-            strtemp_array = garray.array(mapname="testbasin")
-            N_Basin = np.unique(strtemp_array)
-            N_Basin = len(N_Basin[N_Basin > 0])
-            print(N_Basin,Acc,Delta_Acc)
-            if N_Basin > Max_Num_Domain:
-                Acc = Acc + Delta_Acc
-            if N_Basin < Min_Num_Domain:
-                Acc = Acc - Delta_Acc
-        
-        PERMANENT.close()
-        
-        self.Generateinputdata()
-        self.WatershedDiscretizationToolset(Acc,Is_divid_region = 1)
-        self.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = CheckLakeArea,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 9000,Pec_Grid_outlier = 0.99,Is_divid_region=1)
-
+        # while N_Basin < Min_Num_Domain or N_Basin > Max_Num_Domain:
+        #     grass.run_command('r.watershed',elevation = 'dem',flags = 's', basin = 'testbasin',drainage = 'dir_grass_reg',accumulation = 'acc_grass_reg2',threshold = Acc,overwrite = True)
+        #     strtemp_array = garray.array(mapname="testbasin")
+        #     N_Basin = np.unique(strtemp_array)
+        #     N_Basin = len(N_Basin[N_Basin > 0])
+        #     print(N_Basin,Acc,Delta_Acc)
+        #     if N_Basin > Max_Num_Domain:
+        #         Acc = Acc + Delta_Acc
+        #     if N_Basin < Min_Num_Domain:
+        #         Acc = Acc - Delta_Acc
+        # 
+        # PERMANENT.close()
+        # 
+        # self.Generateinputdata()
+        # self.WatershedDiscretizationToolset(Acc,Is_divid_region = 1)
+        # self.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = CheckLakeArea,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 9000,Pec_Grid_outlier = 0.99,Is_divid_region=1)
+        # 
 
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
@@ -1391,6 +1392,8 @@ class LRRT:
         strtemp_array = garray.array(mapname="finalcat") 
         dir           = garray.array(mapname="ndir_Arcgis") 
         acc           = garray.array(mapname="acc_grass")  
+        Cat_outlets   = copy.copy(strtemp_array)
+        Cat_outlets[:,:] = -9999
         ncols = int(strtemp_array.shape[1])
         nrows = int(strtemp_array.shape[0])
         Basins        = np.unique(strtemp_array)
@@ -1422,9 +1425,9 @@ class LRRT:
             grass.run_command('r.out.gdal', input = 'MASK',output = os.path.join(self.tempfolder, 'Mask1.tif'),format= 'GTiff',overwrite = True)
             processing.run("gdal:polygonize", {'INPUT':os.path.join(self.tempfolder, 'Mask1.tif'),'BAND':1,'FIELD':'DN','EIGHT_CONNECTEDNESS':False,'EXTRA':'','OUTPUT':os.path.join(self.tempfolder, 'HyMask_region_'+ str(basinid)+'.shp')})
             processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask_region_'+ str(basinid)+'.shp'),'FIELD':'DN','OUTPUT':os.path.join(self.tempfolder, 'HyMask_region_f'+ str(basinid)+'.shp')})
-
+            processing.run("native:buffer", {'INPUT':os.path.join(self.tempfolder, 'HyMask_region_f'+ str(basinid)+'.shp'),'DISTANCE':0.01,'SEGMENTS':5,'END_CAP_STYLE':0,'JOIN_STYLE':0,'MITER_LIMIT':2,'DISSOLVE':True,'OUTPUT':os.path.join(self.tempfolder, 'HyMask_region_f1'+ str(basinid)+'.shp')})
             try:
-                processing.run("saga:cliprasterwithpolygon", {'INPUT':self.Path_dem,'POLYGONS':os.path.join(self.tempfolder, 'HyMask_region_f'+ str(basinid)+'.shp'),'OUTPUT':os.path.join(Out_Sub_Reg_Dem_Folder,'dem_reg_'+str(basinid)+'.sdat')})
+                processing.run("saga:cliprasterwithpolygon", {'INPUT':self.Path_dem,'POLYGONS':os.path.join(self.tempfolder, 'HyMask_region_f1'+ str(basinid)+'.shp'),'OUTPUT':os.path.join(Out_Sub_Reg_Dem_Folder,'dem_reg_'+str(basinid)+'.sdat')})
             except:
                 continue
                 print("remove subid ", basinid)
@@ -1453,15 +1456,30 @@ class LRRT:
                     dowsubreginid = -1
                 else:
                     dowsubreginid = strtemp_array[nrow,ncol]
+                    Cat_outlets[ttrow,ttcol] = basinid + 10000
                 k = k + 1
                 ttrow = nrow
                 ttcol = ncol       
                 
-            subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"ProjectNM"]      = ProjectNM + '_'+str(basinid)
+            subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"ProjectNM"]      = ProjectNM + '_'+str(basinid+10000)
             subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"Nun_Grids"]      = np.sum(catmask)
-            subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"DEM_Name"]       = 'dem_reg_'+str(basinid)+'.sdat'
+            subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"DEM_Name"]       = 'dem_reg_'+str(basinid+10000)+'.sdat'
             subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"Max_ACC"]        = np.max(np.unique(catacc))
-            subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"Dow_Sub_Reg_Id"] = dowsubreginid  
+            subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"Dow_Sub_Reg_Id"] = dowsubreginid + 10000  
+            
+            
+        grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True) 
+        temparray = garray.array()    
+        temparray[:,:] = Cat_outlets[:,:]
+        print(np.unique(Cat_outlets))
+        temparray.write(mapname="Sub_Reg_Outlets", overwrite=True)
+        grass.run_command('r.mapcalc',expression = 'Sub_Reg_Outlets_1 = int(Sub_Reg_Outlets)',overwrite = True)  
+        grass.run_command('r.null', map='Sub_Reg_Outlets_1',setnull=-9999) 
+         
+        grass.run_command('r.to.vect',  input = 'Sub_Reg_Outlets_1',output = 'Sub_Reg_Outlets_point', type ='point' ,overwrite = True)
+        grass.run_command('r.out.gdal', input = 'Sub_Reg_Outlets_1',output = os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_Reg_Outlets.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
+        grass.run_command('v.out.ogr', input = 'Sub_Reg_Outlets_point',output = os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_Reg_Outlets.shp"),format= 'ESRI_Shapefile',overwrite = True)
+        
         grass.run_command('r.out.gdal', input = 'testbasin',output = os.path.join(self.tempfolder,'testbasin.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')  
         subregin_info.to_csv(os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_reg_info.csv'),index = None, header=True)
           
@@ -1608,9 +1626,16 @@ class LRRT:
             temparray.write(mapname="up_area", overwrite=True) 
             temparray.write(mapname="SubId_WidDep", overwrite=True) 
             
-                        
-        grass.run_command('v.to.rast',input = 'obspoint',output = 'obs',use = 'attr',attribute_column = 'Obs_ID',overwrite = True)
-
+        
+        if self.Path_Sub_reg_outlets != '#':
+            grass.run_command("r.in.gdal", input = self.Path_Sub_reg_outlets, output = 'Sub_reg_outlets', overwrite = True)
+            grass.run_command('v.to.rast',input = 'obspoint',output = 'obs1',use = 'attr',attribute_column = 'Obs_ID',overwrite = True)
+            grass.run_command('r.mapcalc',expression = "obs = if(isnull(Sub_reg_outlets),obs1,Sub_reg_outlets)",overwrite = True)
+            grass.run_command("r.null", map = 'obs', setnull = [-9999,0])            
+            
+        else:                    
+            grass.run_command('v.to.rast',input = 'obspoint',output = 'obs',use = 'attr',attribute_column = 'Obs_ID',overwrite = True)
+        
         PERMANENT.close()
         del r_dem_layer
         Qgs.exit()
@@ -1682,7 +1707,7 @@ class LRRT:
             temparray[:,:] = 0
             temparray[:,:] = strtemp_array[:,:]
             temparray.write(mapname="str_grass_rf", overwrite=True)
-            grass.run_command('r.null', map='str_grass_rf',setnull=0,)
+            grass.run_command('r.null', map='str_grass_rf',setnull=0)
             grass.run_command('r.mapcalc',expression = 'str_grass_r = int(str_grass_rf)',overwrite = True)
              
 #        grass.run_command('r.thin',input = 'str_grass_rfn', output = 'str_grass_r',overwrite = True)
@@ -2244,11 +2269,39 @@ class LRRT:
         routing_info_ext =  hyshdinfo2[['SubId','DowSubId']].astype('float').values 
          
         ##find outlet id with maximum drainage area  
-        outlet_info  = hyshdinfo2[hyshdinfo2['DowSubId'] == -1]
-        outlet_info  = outlet_info.sort_values(by='DA', ascending=False)
-        outletid     = outlet_info['SubId'].values[0]
+        if self.Path_Sub_reg_outlets != '#':
+            Sub_reg_outlets     = garray.array(mapname="Sub_reg_outlets")
+            Sub_reg_outlets_ids = np.unique(Sub_reg_outlets)
+            Sub_reg_outlets_ids = Sub_reg_outlets_ids[Sub_reg_outlets_ids > 0]
+            reg_outlet_info     = hyshdinfo2.loc[hyshdinfo2['IsObs'].isin(Sub_reg_outlets_ids)]
+            reg_outlet_info     = reg_outlet_info.sort_values(by='DA', ascending=False)
+            
+            if len(reg_outlet_info) > 0: ### has reg outlets 
+                outletid            = outlet_info['SubId'].values[0] ### the most downstream regin outlet 
+            else:### do not include a reginoutlet 
+                outlet_info  = hyshdinfo2[hyshdinfo2['DowSubId'] == -1]
+                outlet_info  = outlet_info.sort_values(by='DA', ascending=False)
+                outletid     = outlet_info['SubId'].values[0]    
+                
+            HydroBasins1   = Defcat(routing_info_ext,outletid)   
+            
+            if len(reg_outlet_info) >= 2:  ### has upstream regin outlet s
+                ### remove subbains drainage to upstream regin outlet s
+                for i in range(1,len(reg_outlet_info)):
+                    upregid              =outlet_info['SubId'].values[i]
+                    HydroBasins_remove   = Defcat(routing_info_ext,upregid)  
+                    mask                 = np.in1d(HydroBasins1, HydroBasins_remove)  ### exluced ids that belongs to main river stream 
+                    HydroBasins1         = HydroBasins1[np.logical_not(mask1)]     
+                           
+            HydroBasins = HydroBasins1
+        else:
+            outlet_info  = hyshdinfo2[hyshdinfo2['DowSubId'] == -1]
+            outlet_info  = outlet_info.sort_values(by='DA', ascending=False)
+            outletid     = outlet_info['SubId'].values[0]
         ##find upsteam catchment id
-        HydroBasins  = Defcat(routing_info_ext,outletid)
+            HydroBasins  = Defcat(routing_info_ext,outletid)
+
+
         
         ### extract region of interest
         Selectfeatureattributes(processing,Input = os.path.join(self.tempfolder,'finalriv_catinfo_dis.shp'),Output=os.path.join(self.tempfolder,'finalriv_catinfo_dis_sel.shp'),Attri_NM = 'SubId',Values = HydroBasins)
