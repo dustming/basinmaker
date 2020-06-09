@@ -1337,6 +1337,7 @@ class LRRT:
             strtemp_array = garray.array(mapname="testbasin")
             N_Basin = np.unique(strtemp_array)
             N_Basin = len(N_Basin[N_Basin > 0])
+            print(N_Basin,Acc,Delta_Acc)
             if N_Basin > Max_Num_Domain:
                 Acc = Acc + Delta_Acc
             if N_Basin < Min_Num_Domain:
