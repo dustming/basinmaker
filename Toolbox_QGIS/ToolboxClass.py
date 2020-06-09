@@ -1468,9 +1468,10 @@ class LRRT:
         temparray.write(mapname="Sub_Reg_Outlets", overwrite=True)
         grass.run_command('r.mapcalc',expression = 'Sub_Reg_Outlets_1 = int(Sub_Reg_Outlets)',overwrite = True)  
         grass.run_command('r.null', map='Sub_Reg_Outlets_1',setnull=-9999) 
-         
+
         grass.run_command('r.to.vect',  input = 'Sub_Reg_Outlets_1',output = 'Sub_Reg_Outlets_point', type ='point' ,overwrite = True)
-        grass.run_command('r.out.gdal', input = 'Sub_Reg_Outlets_1',output = os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_Reg_Outlets.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
+        grass.run_command('r.out.gdal', input = 'ndir_grass',output = os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_Reg_ndir_grass.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
+        grass.run_command('r.out.gdal', input = 'ndir_Arcgis',output = os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_Reg_ndir_Arcgis.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
         grass.run_command('v.out.ogr', input = 'Sub_Reg_Outlets_point',output = os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_Reg_Outlets.shp"),format= 'ESRI_Shapefile',overwrite = True)
         
         grass.run_command('r.out.gdal', input = 'testbasin',output = os.path.join(self.tempfolder,'testbasin.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')  
