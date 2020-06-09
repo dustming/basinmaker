@@ -1591,7 +1591,7 @@ class LRRT:
 
 ####################################################################################################3
                 
-    def WatershedDiscretizationToolset(self,accthresold,Is_divid_region = -1):
+    def WatershedDiscretizationToolset(self,accthresold,Is_divid_region = -1,max_memroy = 1024):
         import grass.script as grass
         from grass.script import array as garray
         from grass.script import core as gcore
@@ -1609,10 +1609,10 @@ class LRRT:
         if self.Path_dir_in == '#':  ### did not provide dir, use dem to generate watershed. recommand !!
             if Is_divid_region > 0:
                 grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =accthresold,stream_raster = 'str_grass_r',
-                                  overwrite = True)
+                                  overwrite = True, memory = max_memroy)
             else:
                 grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =accthresold,stream_raster = 'str_grass_r',
-                                stream_vector = 'str_grass_v',overwrite = True)
+                                stream_vector = 'str_grass_v',overwrite = True,memory = max_memroy)
         else:
         ## generate correct stream raster, when the dir is not derived from dem. for Hydroshed Cases 
             grass.run_command('r.accumulate', direction='dir_grass',format = '45degree',accumulation ='acc_grass',
@@ -1655,14 +1655,14 @@ class LRRT:
             temparray[:,:] = 0
             temparray[:,:] = strtemp_array[:,:]
             temparray.write(mapname="str_grass_rf", overwrite=True)
-            grass.run_command('r.null', map='str_grass_rf',setnull=0)
+            grass.run_command('r.null', map='str_grass_rf',setnull=0,)
             grass.run_command('r.mapcalc',expression = 'str_grass_r = int(str_grass_rf)',overwrite = True)
              
 #        grass.run_command('r.thin',input = 'str_grass_rfn', output = 'str_grass_r',overwrite = True)
         grass.run_command('r.to.vect',  input = 'str_grass_r',output = 'str', type ='line' ,overwrite = True)
 
         ##### generate catchment without lakes based on 'str_grass_r'        
-        grass.run_command('r.stream.basins',direction = 'dir_grass', stream = 'str_grass_r', basins = 'cat1',overwrite = True)
+        grass.run_command('r.stream.basins',direction = 'dir_grass', stream = 'str_grass_r', basins = 'cat1',overwrite = True,memory = max_memroy)
 
         
 ################ check connected lakes  and non connected lakes 
@@ -1684,7 +1684,8 @@ class LRRT:
 ###########################################################################################3
 
 ############################################################################################
-    def AutomatedWatershedsandLakesFilterToolset(self,Thre_Lake_Area_Connect = 0,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 3000,Pec_Grid_outlier = 0.99,Is_divid_region = -1):
+    def AutomatedWatershedsandLakesFilterToolset(self,Thre_Lake_Area_Connect = 0,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 3000,Pec_Grid_outlier = 0.99,Is_divid_region = -1,
+    max_memroy = 1024):
 
         tempinfo = Dbf5(self.Path_allLakeply[:-3] + "dbf")
         allLakinfo = tempinfo.to_dataframe()
@@ -1782,7 +1783,7 @@ class LRRT:
         grass.run_command('r.null', map='Pourpoints_1',setnull=-9999)
         grass.run_command('r.to.vect', input='Pourpoints_1',output='Pourpoints_1_F',type='point', overwrite = True)
 ### cat2        
-        grass.run_command('r.stream.basins',direction = 'dir_grass', points = 'Pourpoints_1_F', basins = 'cat2_t',overwrite = True)        
+        grass.run_command('r.stream.basins',direction = 'dir_grass', points = 'Pourpoints_1_F', basins = 'cat2_t',overwrite = True,memory = max_memroy)        
         sqlstat="SELECT cat, value FROM Pourpoints_1_F"
         df_P_1_F = pd.read_sql_query(sqlstat, con)
         df_P_1_F.loc[len(df_P_1_F),'cat'] = '*'
@@ -1813,7 +1814,7 @@ class LRRT:
 
         ## with new pour points
 # cat 4
-        grass.run_command('r.stream.basins',direction = 'dir_grass', points = 'Pourpoints_2_F', basins = 'cat4_t',overwrite = True)        
+        grass.run_command('r.stream.basins',direction = 'dir_grass', points = 'Pourpoints_2_F', basins = 'cat4_t',overwrite = True,memory = max_memroy)        
         sqlstat="SELECT cat, value FROM Pourpoints_2_F"
         df_P_1_F = pd.read_sql_query(sqlstat, con)
         df_P_1_F.loc[len(df_P_1_F),'cat'] = '*'
@@ -1842,7 +1843,7 @@ class LRRT:
         grass.run_command('r.null', map='ndir_Arcgis',setnull=-9999)    
         grass.run_command('r.reclass', input='ndir_Arcgis',output = 'ndir_grass',rules =os.path.join(self.RoutingToolPath,'Arcgis2GrassDIR.txt'),overwrite = True)
 # cat5     
-        grass.run_command('r.stream.basins',direction = 'ndir_grass', points = 'Pourpoints_2_F', basins = 'cat5_t',overwrite = True)
+        grass.run_command('r.stream.basins',direction = 'ndir_grass', points = 'Pourpoints_2_F', basins = 'cat5_t',overwrite = True,memory = max_memroy)
         sqlstat="SELECT cat, value FROM Pourpoints_2_F"
         df_P_2_F = pd.read_sql_query(sqlstat, con)
         df_P_2_F.loc[len(df_P_2_F),'cat'] = '*'
