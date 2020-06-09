@@ -1471,7 +1471,6 @@ class LRRT:
         grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True) 
         temparray = garray.array()    
         temparray[:,:] = Cat_outlets[:,:]
-        print(np.unique(Cat_outlets))
         temparray.write(mapname="Sub_Reg_Outlets", overwrite=True)
         grass.run_command('r.mapcalc',expression = 'Sub_Reg_Outlets_1 = int(Sub_Reg_Outlets)',overwrite = True)  
         grass.run_command('r.null', map='Sub_Reg_Outlets_1',setnull=-9999) 
