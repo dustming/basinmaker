@@ -1422,7 +1422,7 @@ class LRRT:
             grass.run_command('r.out.gdal', input = 'MASK',output = os.path.join(self.tempfolder, 'Mask1.tif'),format= 'GTiff',overwrite = True)
             processing.run("gdal:polygonize", {'INPUT':os.path.join(self.tempfolder, 'Mask1.tif'),'BAND':1,'FIELD':'DN','EIGHT_CONNECTEDNESS':False,'EXTRA':'','OUTPUT':os.path.join(self.tempfolder, 'HyMask_region_'+ str(basinid)+'.shp')})
             processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask_region_'+ str(basinid)+'.shp'),'FIELD':'DN','OUTPUT':os.path.join(self.tempfolder, 'HyMask_region_f'+ str(basinid)+'.shp')})
-            processing.run("native:buffer", {'INPUT':os.path.join(self.tempfolder, 'HyMask_region_f'+ str(basinid)+'.shp'),'DISTANCE':0.01,'SEGMENTS':5,'END_CAP_STYLE':0,'JOIN_STYLE':0,'MITER_LIMIT':2,'DISSOLVE':True,'OUTPUT':os.path.join(self.tempfolder, 'HyMask_region_f1'+ str(basinid)+'.shp')})
+            processing.run("native:buffer", {'INPUT':os.path.join(self.tempfolder, 'HyMask_region_f'+ str(basinid)+'.shp'),'DISTANCE':0.05,'SEGMENTS':5,'END_CAP_STYLE':0,'JOIN_STYLE':0,'MITER_LIMIT':2,'DISSOLVE':True,'OUTPUT':os.path.join(self.tempfolder, 'HyMask_region_f1'+ str(basinid)+'.shp')})
             try:
                 processing.run("saga:cliprasterwithpolygon", {'INPUT':self.Path_dem,'POLYGONS':os.path.join(self.tempfolder, 'HyMask_region_f1'+ str(basinid)+'.shp'),'OUTPUT':os.path.join(Out_Sub_Reg_Dem_Folder,'dem_reg_'+str(basinid+10000)+'.sdat')})
             except:
@@ -1578,8 +1578,10 @@ class LRRT:
             if self.Path_Sub_reg_grass_dir != '#':
                 grass.run_command('r.watershed',elevation = 'dem', accumulation = 'acc_grass2',flags = 's', overwrite = True)
                 grass.run_command('r.mapcalc',expression = "acc_grass = abs(acc_grass2@PERMANENT)",overwrite = True)
-                grass.run_command("r.in.gdal", input = self.Path_Sub_reg_grass_dir, output = 'dir_grass', overwrite = True)
-                grass.run_command("r.in.gdal", input = self.Path_Sub_reg_arcgis_dir, output = 'dir_Arcgis', overwrite = True)
+                grass.run_command("r.in.gdal", input = self.Path_Sub_reg_grass_dir, output = 'dir_grass1', overwrite = True)
+                grass.run_command("r.in.gdal", input = self.Path_Sub_reg_arcgis_dir, output = 'dir_Arcgis1', overwrite = True)
+                grass.run_command('r.mapcalc',expression = "dir_grass = int(dir_grass1@PERMANENT)",overwrite = True)
+                grass.run_command('r.mapcalc',expression = "dir_Arcgis = abs(dir_Arcgis1@PERMANENT)",overwrite = True)
             else:
                 grass.run_command('r.watershed',elevation = 'dem', drainage = 'dir_grass', accumulation = 'acc_grass2',flags = 's', overwrite = True)
                 grass.run_command('r.mapcalc',expression = "acc_grass = abs(acc_grass2@PERMANENT)",overwrite = True)
