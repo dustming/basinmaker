@@ -1317,6 +1317,53 @@ class LRRT:
         
         return 
 
+
+    def Generatesubdomain(self,Min_Num_Domain = 9,Max_Num_Domain = 13,Initaial_Acc = 5000,Delta_Acc = 1000,Out_Sub_Reg_Dem_Folder = '#'):
+        import grass.script as grass
+        from grass.script import array as garray
+        from grass.script import core as gcore
+        import grass.script.setup as gsetup
+        from grass.pygrass.modules.shortcuts import general as g
+        from grass.pygrass.modules.shortcuts import raster as r
+        from grass.pygrass.modules import Module
+        from grass_session import Session
+        os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='-1'))
+        PERMANENT = Session()
+        PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
+        N_Basin = 0
+        Acc     = Initaial_Acc
+        while N_Basin < Min_Num_Domain or N_Basin > Max_Num_Domain:
+            grass.run_command('r.watershed',elevation = 'dem',flags = 's', basin = 'testbasin',threshold = Acc,overwrite = True)
+            strtemp_array = garray.array(mapname="testbasin")
+            N_Basin = np.unique(strtemp_array)
+            N_Basin = len(N_Basin[N_Basin > 0])
+            if N_Basin > Max_Num_Domain:
+                Acc = Acc + Delta_Acc
+            if N_Basin < Min_Num_Domain:
+                Acc = Acc - Delta_Acc
+        strtemp_array = garray.array(mapname="testbasin")
+        
+        Basins = np.unique(strtemp_array)
+        Basins = Basins[Basins > 0]
+        orgdem        = garray.array(mapname="dem")
+
+        if not os.path.exists(Out_Sub_Reg_Dem_Folder):
+	            os.makedirs(Out_Sub_Reg_Dem_Folder)
+        print(Basins)
+        for i in range(0,len(Basins)):
+            basinid = Basins[i]
+            exp = 'dem_reg_'+str(i)+'= if(testbasin == '+str(basinid)+',dem, -9999)'
+            print(exp)
+            
+            grass.run_command('r.mapcalc',expression = exp,overwrite = True) 
+            
+            grass.run_command("r.null", map = 'dem_reg_'+str(i), setnull = [-9999,0])
+            
+            grass.run_command('r.out.gdal', input = 'dem_reg_'+str(i),output = os.path.join(Out_Sub_Reg_Dem_Folder,'dem_reg_'+str(i)+'.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
+            
+        grass.run_command('r.out.gdal', input = 'testbasin',output = os.path.join(self.tempfolder,'testbasin.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')    
+        
+                        
 ##################################################################################################  
 #### functions to preprocess data, Output:
 ##  self.Path_dem,self.cellSize,self.SpRef_in
@@ -2139,8 +2186,7 @@ class LRRT:
         
         Qgs.exit()  
 
-        
-             
+                     
 ###########################################################################3
     def Output_Clean(self,Out = 'Simple',clean = 'True'):
         
@@ -3043,7 +3089,6 @@ class LRRT:
     
         Qgs.exit()  
         return 
-
 
 
         
