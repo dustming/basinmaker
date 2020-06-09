@@ -1337,6 +1337,19 @@ class LRRT:
 
 
     def Generatesubdomain(self,Min_Num_Domain = 9,Max_Num_Domain = 13,Initaial_Acc = 5000,Delta_Acc = 1000,Out_Sub_Reg_Dem_Folder = '#',ProjectNM = 'Sub_Reg',CheckLakeArea = 1):
+        QgsApplication.setPrefixPath(self.qgisPP, True)
+        Qgs = QgsApplication([],False)
+        Qgs.initQgis()
+        from qgis import processing
+        from processing.core.Processing import Processing
+        from processing.tools import dataobjects
+           
+        feedback = QgsProcessingFeedback()
+        Processing.initialize()
+        QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
+        context = dataobjects.createContext()
+        context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
+
         import grass.script as grass
         from grass.script import array as garray
         from grass.script import core as gcore
@@ -1344,28 +1357,28 @@ class LRRT:
         from grass.pygrass.modules.shortcuts import general as g
         from grass.pygrass.modules.shortcuts import raster as r
         from grass.pygrass.modules import Module
-        from grass_session import Session
+        from grass_session import Session    
         os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='-1'))
         PERMANENT = Session()
         PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
         N_Basin = 0
         Acc     = Initaial_Acc
-        while N_Basin < Min_Num_Domain or N_Basin > Max_Num_Domain:
-            grass.run_command('r.watershed',elevation = 'dem',flags = 's', basin = 'testbasin',drainage = 'dir_grass_reg',accumulation = 'acc_grass_reg2',threshold = Acc,overwrite = True)
-            strtemp_array = garray.array(mapname="testbasin")
-            N_Basin = np.unique(strtemp_array)
-            N_Basin = len(N_Basin[N_Basin > 0])
-            print(N_Basin,Acc,Delta_Acc)
-            if N_Basin > Max_Num_Domain:
-                Acc = Acc + Delta_Acc
-            if N_Basin < Min_Num_Domain:
-                Acc = Acc - Delta_Acc
-        
-        PERMANENT.close()
-        
-        self.Generateinputdata()
-        self.WatershedDiscretizationToolset(Acc,Is_divid_region = 1)
-        self.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = CheckLakeArea,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 9000,Pec_Grid_outlier = 0.99,Is_divid_region=1)
+        # while N_Basin < Min_Num_Domain or N_Basin > Max_Num_Domain:
+        #     grass.run_command('r.watershed',elevation = 'dem',flags = 's', basin = 'testbasin',drainage = 'dir_grass_reg',accumulation = 'acc_grass_reg2',threshold = Acc,overwrite = True)
+        #     strtemp_array = garray.array(mapname="testbasin")
+        #     N_Basin = np.unique(strtemp_array)
+        #     N_Basin = len(N_Basin[N_Basin > 0])
+        #     print(N_Basin,Acc,Delta_Acc)
+        #     if N_Basin > Max_Num_Domain:
+        #         Acc = Acc + Delta_Acc
+        #     if N_Basin < Min_Num_Domain:
+        #         Acc = Acc - Delta_Acc
+        # 
+        # PERMANENT.close()
+        # 
+        # self.Generateinputdata()
+        # self.WatershedDiscretizationToolset(Acc,Is_divid_region = 1)
+        # self.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = CheckLakeArea,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 9000,Pec_Grid_outlier = 0.99,Is_divid_region=1)
 
 
         os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='-1'))
@@ -1395,15 +1408,25 @@ class LRRT:
         
         for i in range(0,len(Basins)):
             basinid = int(Basins[i])
+            print(i)
             exp = 'dem_reg_'+str(basinid)+'= if(finalcat == '+str(basinid)+',dem, -9999)'
             
             grass.run_command('r.mapcalc',expression = exp,overwrite = True) 
             
             grass.run_command("r.null", map = 'dem_reg_'+str(basinid), setnull = [-9999,0])
             
-            grass.run_command('r.out.gdal', input = 'dem_reg_'+str(basinid),output = os.path.join(Out_Sub_Reg_Dem_Folder,'dem_reg_'+str(basinid)+'.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
+#            grass.run_command("r.in.gdal", input = self.Path_dem, output = 'dem', overwrite = True,location =os.path.join())
             
+#            grass.run_command('v.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'nstr_nfinalcat_F',overwrite = True)
+            
+            grass.run_command('r.mask'  , raster='dem_reg_'+str(basinid), maskcats = '*',overwrite = True)            
+            grass.run_command('r.out.gdal', input = 'MASK',output = os.path.join(self.tempfolder, 'Mask1.tif'),format= 'GTiff',overwrite = True)
+            processing.run("gdal:polygonize", {'INPUT':os.path.join(self.tempfolder, 'Mask1.tif'),'BAND':1,'FIELD':'DN','EIGHT_CONNECTEDNESS':False,'EXTRA':'','OUTPUT':os.path.join(self.tempfolder, 'HyMask.shp')})
+            processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask.shp'),'FIELD':'DN','OUTPUT':self.Path_Maskply})
+            processing.run("saga:cliprasterwithpolygon", {'INPUT':self.Path_dem,'POLYGONS':self.Path_Maskply,'OUTPUT':os.path.join(Out_Sub_Reg_Dem_Folder,'dem_reg_'+str(basinid)+'.sdat')})
+             
             catmask = strtemp_array == basinid
+            
             catacc  = acc[catmask]
             
             trow,tcol = Getbasinoutlet(basinid,strtemp_array,acc,dir,nrows,ncols)
@@ -1430,11 +1453,10 @@ class LRRT:
                 
             subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"ProjectNM"]      = ProjectNM + '_'+str(basinid)
             subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"Nun_Grids"]      = np.sum(catmask)
-            subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"DEM_Name"]       = 'dem_reg_'+str(basinid)+'.tif'
+            subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"DEM_Name"]       = 'dem_reg_'+str(basinid)+'.sdat'
             subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"Max_ACC"]        = np.max(np.unique(catacc))
             subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"Dow_Sub_Reg_Id"] = dowsubreginid
-            
-            
+            grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)  
         grass.run_command('r.out.gdal', input = 'testbasin',output = os.path.join(self.tempfolder,'testbasin.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')  
         subregin_info.to_csv(os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_reg_info.csv'),index = None, header=True)
           
