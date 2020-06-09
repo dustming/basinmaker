@@ -1384,31 +1384,26 @@ class LRRT:
         os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='-1'))
         PERMANENT = Session()
         PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')   
+        grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True) 
         
-                             
         strtemp_array = garray.array(mapname="finalcat") 
         dir           = garray.array(mapname="ndir_Arcgis") 
         acc           = garray.array(mapname="acc_grass")  
-             
         ncols = int(strtemp_array.shape[1])
         nrows = int(strtemp_array.shape[0])
-        
         Basins        = np.unique(strtemp_array)
         Basins        = Basins[Basins > 0]
-
         if not os.path.exists(Out_Sub_Reg_Dem_Folder):
 	            os.makedirs(Out_Sub_Reg_Dem_Folder)
-                
         subregin_info=pd.DataFrame(Basins,columns = ['Sub_Reg_ID'])
         subregin_info["Dow_Sub_Reg_Id"] = -9999
         subregin_info["ProjectNM"] = -9999
         subregin_info["Nun_Grids"] = -9999
         subregin_info["DEM_Name"] = -9999
         subregin_info["Max_ACC"] = -9999
-        
         for i in range(0,len(Basins)):
             basinid = int(Basins[i])
-            print(i)
+            print(basinid)
             exp = 'dem_reg_'+str(basinid)+'= if(finalcat == '+str(basinid)+',dem, -9999)'
             
             grass.run_command('r.mapcalc',expression = exp,overwrite = True) 
@@ -1421,10 +1416,17 @@ class LRRT:
             
             grass.run_command('r.mask'  , raster='dem_reg_'+str(basinid), maskcats = '*',overwrite = True)            
             grass.run_command('r.out.gdal', input = 'MASK',output = os.path.join(self.tempfolder, 'Mask1.tif'),format= 'GTiff',overwrite = True)
-            processing.run("gdal:polygonize", {'INPUT':os.path.join(self.tempfolder, 'Mask1.tif'),'BAND':1,'FIELD':'DN','EIGHT_CONNECTEDNESS':False,'EXTRA':'','OUTPUT':os.path.join(self.tempfolder, 'HyMask.shp')})
-            processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask.shp'),'FIELD':'DN','OUTPUT':self.Path_Maskply})
-            processing.run("saga:cliprasterwithpolygon", {'INPUT':self.Path_dem,'POLYGONS':self.Path_Maskply,'OUTPUT':os.path.join(Out_Sub_Reg_Dem_Folder,'dem_reg_'+str(basinid)+'.sdat')})
-             
+            processing.run("gdal:polygonize", {'INPUT':os.path.join(self.tempfolder, 'Mask1.tif'),'BAND':1,'FIELD':'DN','EIGHT_CONNECTEDNESS':False,'EXTRA':'','OUTPUT':os.path.join(self.tempfolder, 'HyMask_region_'+ str(basinid)+'.shp')})
+            processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask_region_'+ str(basinid)+'.shp'),'FIELD':'DN','OUTPUT':os.path.join(self.tempfolder, 'HyMask_region_f'+ str(basinid)+'.shp')})
+
+            try:
+                processing.run("saga:cliprasterwithpolygon", {'INPUT':self.Path_dem,'POLYGONS':os.path.join(self.tempfolder, 'HyMask_region_f'+ str(basinid)+'.shp'),'OUTPUT':os.path.join(Out_Sub_Reg_Dem_Folder,'dem_reg_'+str(basinid)+'.sdat')})
+            except:
+                continue
+                print("remove subid ", basinid)
+#            grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True) 
+            
+            
             catmask = strtemp_array == basinid
             
             catacc  = acc[catmask]
@@ -1455,8 +1457,7 @@ class LRRT:
             subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"Nun_Grids"]      = np.sum(catmask)
             subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"DEM_Name"]       = 'dem_reg_'+str(basinid)+'.sdat'
             subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"Max_ACC"]        = np.max(np.unique(catacc))
-            subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"Dow_Sub_Reg_Id"] = dowsubreginid
-            grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)  
+            subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"Dow_Sub_Reg_Id"] = dowsubreginid  
         grass.run_command('r.out.gdal', input = 'testbasin',output = os.path.join(self.tempfolder,'testbasin.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')  
         subregin_info.to_csv(os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_reg_info.csv'),index = None, header=True)
           
