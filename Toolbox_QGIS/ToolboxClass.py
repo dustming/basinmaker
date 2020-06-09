@@ -1636,7 +1636,8 @@ class LRRT:
             
         
         if self.Path_Sub_reg_outlets != '#':
-            grass.run_command("r.in.gdal", input = self.Path_Sub_reg_outlets, output = 'Sub_reg_outlets', overwrite = True)
+            grass.run_command("v.import", input = self.Path_Sub_reg_outlets, output = 'Sub_reg_outlets_pt', overwrite = True)
+            grass.run_command('v.to.rast',input = 'Sub_reg_outlets_pt',output = 'Sub_reg_outlets',use = 'attr',attribute_column = 'value',overwrite = True)
             grass.run_command('v.to.rast',input = 'obspoint',output = 'obs1',use = 'attr',attribute_column = 'Obs_ID',overwrite = True)
             grass.run_command('r.mapcalc',expression = "obs = if(isnull(Sub_reg_outlets),obs1,Sub_reg_outlets)",overwrite = True)
             grass.run_command("r.null", map = 'obs', setnull = [-9999,0])            
