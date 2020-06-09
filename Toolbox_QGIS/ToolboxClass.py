@@ -1355,12 +1355,12 @@ class LRRT:
             
             grass.run_command('r.mapcalc',expression = exp,overwrite = True) 
             
-            grass.run_command("r.null", map = 'dem_reg_'+str(i), setnull = [-9999,0])
+            grass.run_command("r.null", map = 'dem_reg_'+str(basinid), setnull = [-9999,0])
             
-            grass.run_command('r.out.gdal', input = 'dem_reg_'+str(i),output = os.path.join(Out_Sub_Reg_Dem_Folder,'dem_reg_'+str(i)+'.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
+            grass.run_command('r.out.gdal', input = 'dem_reg_'+str(basinid),output = os.path.join(Out_Sub_Reg_Dem_Folder,'dem_reg_'+str(basinid)+'.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
             
         grass.run_command('r.out.gdal', input = 'testbasin',output = os.path.join(self.tempfolder,'testbasin.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')    
-        return len(Basins)
+        return Basins
                         
 ##################################################################################################  
 #### functions to preprocess data, Output:
