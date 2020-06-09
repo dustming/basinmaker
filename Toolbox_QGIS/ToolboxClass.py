@@ -1351,7 +1351,7 @@ class LRRT:
 	            os.makedirs(Out_Sub_Reg_Dem_Folder)
         for i in range(0,len(Basins)):
             basinid = Basins[i]
-            exp = 'dem_reg_'+str(i)+'= if(testbasin == '+str(basinid)+',dem, -9999)'
+            exp = 'dem_reg_'+str(basinid)+'= if(testbasin == '+str(basinid)+',dem, -9999)'
             
             grass.run_command('r.mapcalc',expression = exp,overwrite = True) 
             
