@@ -2248,7 +2248,6 @@ class LRRT:
         grass.run_command('v.db.dropcolumn', map= 'Net_cat_F', columns = ['Area_m','Gridcode','GC_str'])
         grass.run_command('v.out.ogr', input = 'Net_cat_F',output = os.path.join(self.tempfolder,'finalriv_catinfo1.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
 
-        PERMANENT.close()
 
         processing.run("native:dissolve", {'INPUT':os.path.join(self.tempfolder,'finalriv_catinfo1.shp'),'FIELD':['SubId'],'OUTPUT':os.path.join(self.tempfolder,'finalriv_catinfo_dis.shp')},context = context)
         processing.run("native:dissolve", {'INPUT':os.path.join(self.tempfolder,'finalriv_info1.shp'),'FIELD':['SubId'],'OUTPUT':os.path.join(self.tempfolder,'finalriv_info_dis.shp')},context = context)
@@ -2270,7 +2269,7 @@ class LRRT:
             reg_outlet_info     = reg_outlet_info.sort_values(by='DA', ascending=False)
             
             if len(reg_outlet_info) > 0: ### has reg outlets 
-                outletid            = outlet_info['SubId'].values[0] ### the most downstream regin outlet 
+                outletid            = reg_outlet_info['SubId'].values[0] ### the most downstream regin outlet 
             else:### do not include a reginoutlet 
                 outlet_info  = hyshdinfo2[hyshdinfo2['DowSubId'] == -1]
                 outlet_info  = outlet_info.sort_values(by='DA', ascending=False)
@@ -2281,7 +2280,7 @@ class LRRT:
             if len(reg_outlet_info) >= 2:  ### has upstream regin outlet s
                 ### remove subbains drainage to upstream regin outlet s
                 for i in range(1,len(reg_outlet_info)):
-                    upregid              =outlet_info['SubId'].values[i]
+                    upregid               =reg_outlet_info['SubId'].values[i]
                     HydroBasins_remove   = Defcat(routing_info_ext,upregid)  
                     mask                 = np.in1d(HydroBasins1, HydroBasins_remove)  ### exluced ids that belongs to main river stream 
                     HydroBasins1         = HydroBasins1[np.logical_not(mask1)]     
@@ -2339,7 +2338,7 @@ class LRRT:
                 exp = exp + " , "+str(int(CL_Lakeids[i]))        
             exp = exp + ')'
             processing.run("native:extractbyexpression", {'INPUT':self.Path_allLakeply,'EXPRESSION':exp,'OUTPUT':os.path.join(self.OutputFolder, 'Con_Lake_Ply.shp')})
-        
+        PERMANENT.close()
         Qgs.exit()  
 
                      
