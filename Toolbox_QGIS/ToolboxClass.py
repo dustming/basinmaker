@@ -1364,7 +1364,7 @@ class LRRT:
         PERMANENT.close()
         
         self.Generateinputdata()
-        self.WatershedDiscretizationToolset(Acc)
+        self.WatershedDiscretizationToolset(Acc,Is_divid_region = 1)
         self.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = CheckLakeArea,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 9000,Pec_Grid_outlier = 0.99,Is_divid_region=1)
 
 
@@ -1591,7 +1591,7 @@ class LRRT:
 
 ####################################################################################################3
                 
-    def WatershedDiscretizationToolset(self,accthresold):
+    def WatershedDiscretizationToolset(self,accthresold,Is_divid_region = -1):
         import grass.script as grass
         from grass.script import array as garray
         from grass.script import core as gcore
@@ -1604,11 +1604,15 @@ class LRRT:
         os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
         PERMANENT = Session()
         PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
-        print(self.grassdb)
+        
         grsregion = gcore.region()        
         if self.Path_dir_in == '#':  ### did not provide dir, use dem to generate watershed. recommand !!
-            grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =accthresold,stream_raster = 'str_grass_r',
-                              stream_vector = 'str_grass_v',overwrite = True)
+            if Is_divid_region > 0:
+                grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =accthresold,stream_raster = 'str_grass_r',
+                                  overwrite = True)
+            else:
+                grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =accthresold,stream_raster = 'str_grass_r',
+                                stream_vector = 'str_grass_v',overwrite = True)
         else:
         ## generate correct stream raster, when the dir is not derived from dem. for Hydroshed Cases 
             grass.run_command('r.accumulate', direction='dir_grass',format = '45degree',accumulation ='acc_grass',
