@@ -148,7 +148,7 @@ def Dirpoints_v3(N_dir,p_row,p_col,lake1,lid,goodpoint,k,ncols,nrows,BD_Out_Lake
     return ndir,goodpoint,ip,changed_ndir
     
     
-def check_lakecatchment(cat3,lake,fac,fdir,bsid,nrows,ncols,LakeBD_array,nlakegrids,str_array,dir,Pec_Grid_outlier,MaximumLakegrids):
+def check_lakecatchment(cat3,lake,fac,fdir,bsid,nrows,ncols,LakeBD_array,nlakegrids,str_array,dir,Pec_Grid_outlier,MaximumLakegrids,Lakemorestream):
     cat = copy.copy(cat3)
     ndir = copy.copy(dir)
     changed_ndir = copy.copy(dir)
@@ -161,6 +161,11 @@ def check_lakecatchment(cat3,lake,fac,fdir,bsid,nrows,ncols,LakeBD_array,nlakegr
     stream_mask = str_array > 0
     for i in range(0,len(arlakeid)):
         lakeid = arlakeid[i]
+        if len(Lakemorestream) >0:
+            testmaks = Lakemorestream == lakeid
+            if np.sum(testmaks)>=1:
+                continue
+                
         lrowcol = np.argwhere(lake==lakeid).astype(int)
         lakacc = np.full((len(lrowcol),3),-9999)
         lakacc[:,0] = lrowcol[:,0]

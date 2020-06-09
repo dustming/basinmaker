@@ -521,7 +521,7 @@ def GenerateFinalPourpoints(fac,fdir,lake,cat3,bsid,blid,boid,nrows,ncols,cat,ob
 # ####################################################33
 
 
-def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir):
+def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir,Is_divid_region):
     GP_cat = copy.copy(cat)
     sblid = copy.copy(blid)
     ############### Part 1 Get all pourpoints of hydroshed catchment
@@ -543,6 +543,9 @@ def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir):
     ##################Part 2 Get pourpoints of Lake inflow streams
     arlakeid = np.unique(lake)
     arlakeid = arlakeid[arlakeid>=0]
+    Lakemorestream = copy.copy(arlakeid)
+    Lakemorestream[:] = -9999
+    idxlakemorestream = 0
     for i in range(0,len(arlakeid)): #### loop for each lake
         lid = arlakeid[i]       ##### obtain lake id 
         rowcol = np.argwhere(lake==lid.astype(int))  ### got row anc col of lake grids 
@@ -551,6 +554,12 @@ def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir):
         Stridinlake[:] = Str[rowcol[:,0],rowcol[:,1]]  ### get all stream with in the lake domain 
         Strid_L  = np.unique(Stridinlake[np.argwhere(Stridinlake > 0).astype(int)]) ### Get unique stream id of sach stream 
         ##### find the intercept point of stream and lake
+        if Is_divid_region > 0:
+            if len(Strid_L) <= 1:
+                Lakemorestream[idxlakemorestream]  = lid
+                idxlakemorestream = idxlakemorestream + 1
+                continue 
+
         for j in range(0,len(Strid_L)):  #### loop for each stream intercept with lake
             strid = Strid_L[j]
             strrowcol = np.argwhere(Str == strid).astype(int)
@@ -652,8 +661,15 @@ def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir):
 ################################################################################
 ################## Part 3Get Lake pourpoint id and remove cat pourpoint that contribute to lake
 #    writeraster(outFolder+"Pourpoints_2.asc",GP_cat)
+    Lakemorestream = Lakemorestream[Lakemorestream > 0]
     for i in range(0,len(arlakeid)):
         lakeid = arlakeid[i]
+        
+        if Is_divid_region > 0:
+            mask = Lakemorestream == lakeid            
+            if np.sum(mask) >= 1:
+                continue 
+                
         lrowcol = np.argwhere(lake==lakeid).astype(int)
         arcatid = np.unique(cat[lrowcol[:,0],lrowcol[:,1]]) ## Get all catchment that intercept with lake
         lakeacc = np.full((len(lrowcol),3),-9999)
@@ -698,7 +714,7 @@ def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir):
         #### add lake outlet 
         GP_cat[lakeacc[len(lakeacc)-1,0],lakeacc[len(lakeacc)-1,1]]= sblid
         sblid = sblid + 1
-    return GP_cat
+    return GP_cat,Lakemorestream
 ###################################################################3
 
 
@@ -1318,7 +1334,7 @@ class LRRT:
         return 
 
 
-    def Generatesubdomain(self,Min_Num_Domain = 9,Max_Num_Domain = 13,Initaial_Acc = 5000,Delta_Acc = 1000,Out_Sub_Reg_Dem_Folder = '#',ProjectNM = 'Sub_Reg'):
+    def Generatesubdomain(self,Min_Num_Domain = 9,Max_Num_Domain = 13,Initaial_Acc = 5000,Delta_Acc = 1000,Out_Sub_Reg_Dem_Folder = '#',ProjectNM = 'Sub_Reg',CheckLakeArea = 1):
         import grass.script as grass
         from grass.script import array as garray
         from grass.script import core as gcore
@@ -1342,12 +1358,21 @@ class LRRT:
                 Acc = Acc + Delta_Acc
             if N_Basin < Min_Num_Domain:
                 Acc = Acc - Delta_Acc
-
-        grass.run_command('r.reclass', input='dir_grass_reg',output = 'dir_Arcgis_reg',rules = os.path.join(self.RoutingToolPath,'Grass2ArcgisDIR.txt'), overwrite = True)
-        grass.run_command('r.mapcalc',expression = "acc_grass_reg = abs(acc_grass_reg2@PERMANENT)",overwrite = True)
         
-        strtemp_array = garray.array(mapname="testbasin") 
-        dir           = garray.array(mapname="dir_Arcgis_reg") 
+        PERMANENT.close()
+        
+        self.Generateinputdata()
+        self.WatershedDiscretizationToolset(Acc)
+        self.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = CheckLakeArea,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 9000,Pec_Grid_outlier = 0.99,Is_divid_region=1)
+
+
+        os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='-1'))
+        PERMANENT = Session()
+        PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')   
+        
+                             
+        strtemp_array = garray.array(mapname="finalcat") 
+        dir           = garray.array(mapname="ndir_Arcgis") 
         acc           = garray.array(mapname="acc_grass_reg")  
              
         ncols = int(strtemp_array.shape[1])
@@ -1363,10 +1388,12 @@ class LRRT:
         subregin_info["Dow_Sub_Reg_Id"] = -9999
         subregin_info["ProjectNM"] = -9999
         subregin_info["Nun_Grids"] = -9999
+        subregin_info["DEM_Name"] = -9999
+        subregin_info["Max_ACC"] = -9999
         
         for i in range(0,len(Basins)):
             basinid = int(Basins[i])
-            exp = 'dem_reg_'+str(basinid)+'= if(testbasin == '+str(basinid)+',dem, -9999)'
+            exp = 'dem_reg_'+str(basinid)+'= if(finalcat == '+str(basinid)+',dem, -9999)'
             
             grass.run_command('r.mapcalc',expression = exp,overwrite = True) 
             
@@ -1375,8 +1402,7 @@ class LRRT:
             grass.run_command('r.out.gdal', input = 'dem_reg_'+str(basinid),output = os.path.join(Out_Sub_Reg_Dem_Folder,'dem_reg_'+str(basinid)+'.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
             
             catmask = strtemp_array == basinid
-            subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"ProjectNM"]      = ProjectNM + '_'+str(basinid)
-            subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"Nun_Grids"]      = np.sum(catmask)
+            catacc  = acc[catmask]
             
             trow,tcol = Getbasinoutlet(basinid,strtemp_array,acc,dir,nrows,ncols)
             
@@ -1399,8 +1425,13 @@ class LRRT:
                 k = k + 1
                 ttrow = nrow
                 ttcol = ncol       
-                 
+                
+            subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"ProjectNM"]      = ProjectNM + '_'+str(basinid)
+            subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"Nun_Grids"]      = np.sum(catmask)
+            subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"DEM_Name"]       = 'dem_reg_'+str(basinid)+'.tif'
+            subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"Max_ACC"]        = np.max(np.unique(catacc))
             subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"Dow_Sub_Reg_Id"] = dowsubreginid
+            
             
         grass.run_command('r.out.gdal', input = 'testbasin',output = os.path.join(self.tempfolder,'testbasin.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')  
         subregin_info.to_csv(os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_reg_info.csv'),index = None, header=True)
@@ -1647,7 +1678,7 @@ class LRRT:
 ###########################################################################################3
 
 ############################################################################################
-    def AutomatedWatershedsandLakesFilterToolset(self,Thre_Lake_Area_Connect = 0,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 3000,Pec_Grid_outlier = 0.99):
+    def AutomatedWatershedsandLakesFilterToolset(self,Thre_Lake_Area_Connect = 0,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 3000,Pec_Grid_outlier = 0.99,Is_divid_region = -1):
 
         tempinfo = Dbf5(self.Path_allLakeply[:-3] + "dbf")
         allLakinfo = tempinfo.to_dataframe()
@@ -1739,7 +1770,7 @@ class LRRT:
         
 
 ####    
-        Pourpoints = GenerPourpoint(cat1_arr,Lake1,str_array,self.nrows,self.ncols,blid,bsid,bcid,acc_array,dir_array)
+        Pourpoints,Lakemorestream = GenerPourpoint(cat1_arr,Lake1,str_array,self.nrows,self.ncols,blid,bsid,bcid,acc_array,dir_array,Is_divid_region)
         temparray[:,:] = Pourpoints[:,:]
         temparray.write(mapname="Pourpoints_1", overwrite=True)
         grass.run_command('r.null', map='Pourpoints_1',setnull=-9999)
@@ -1787,7 +1818,7 @@ class LRRT:
         cat4_array =  garray.array(mapname="cat4")
         grass.run_command('r.out.gdal', input = 'cat4',output = os.path.join(self.tempfolder,'cat4.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
                 
-        outlakeids,chandir,ndir,BD_problem= check_lakecatchment(cat4_array,Lake1,acc_array,dir_array,bsid,self.nrows,self.ncols,LakeBD_array,nlakegrids,str_array,dir_array,Pec_Grid_outlier,MaximumLakegrids)
+        outlakeids,chandir,ndir,BD_problem= check_lakecatchment(cat4_array,Lake1,acc_array,dir_array,bsid,self.nrows,self.ncols,LakeBD_array,nlakegrids,str_array,dir_array,Pec_Grid_outlier,MaximumLakegrids,Lakemorestream)
 
         temparray[:,:] = chandir[:,:]
         temparray.write(mapname="chandir", overwrite=True)
@@ -1943,7 +1974,8 @@ class LRRT:
         
         grass.run_command('r.null', map='Non_con_lake_cat',setnull=[-9999,0]) 
         grass.run_command('r.mapcalc',expression = 'Non_con_lake_cat = int(Non_con_lake_cat) + ' + str(int(nstrid +10)),overwrite = True) 
-        grass.run_command('r.mapcalc',expression = 'Net_cat = if(isnull(Non_con_lake_cat),Net_cat_connect_lake,Non_con_lake_cat)',overwrite = True)    
+        grass.run_command('r.mapcalc',expression = 'Net_cat = if(isnull(Non_con_lake_cat),Net_cat_connect_lake,Non_con_lake_cat)',overwrite = True)
+        grass.run_command('r.out.gdal', input = 'Net_cat',output =os.path.join(self.tempfolder,'Net_cat_test.tif'),format= 'GTiff',overwrite = True)      
     
         # for kk in range(0,len(NoneCLakeids)):
         #     mask              = NonCL_array == NoneCLakeids[kk]
