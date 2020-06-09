@@ -487,7 +487,7 @@ def CE_Lakeerror(fac,fdir,lake,cat2,bsid,blid,boid,nrows,ncols,cat):
     return Watseds
 
 #########################################33
-def GenerateFinalPourpoints(fac,fdir,lake,cat3,bsid,blid,boid,nrows,ncols,cat,obs):
+def GenerateFinalPourpoints(fac,fdir,lake,cat3,bsid,blid,boid,nrows,ncols,cat,obs,Is_divid_region):
     Poups = copy.copy(cat3)
     Poups[:,:]=-9999
     GWat = copy.copy(cat3)
@@ -508,6 +508,8 @@ def GenerateFinalPourpoints(fac,fdir,lake,cat3,bsid,blid,boid,nrows,ncols,cat,ob
             if Poups[trow,tcol] < 0:
                 Poups[trow,tcol] = ncatid
                 ncatid = ncatid + 1
+    if Is_divid_region > 0:
+        return Poups
     obsids = np.unique(obs)
     obsids = obsids[obsids>0]
     for i in range(0,len(obsids)):
@@ -1798,7 +1800,7 @@ class LRRT:
         grass.run_command('r.out.gdal', input = 'cat3',output = os.path.join(self.tempfolder,'cat3.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
 #        grass.run_command('r.out.gdal', input = 'cat3',output = os.path.join(self.tempfolder,'cat3.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
     
-        nPourpoints = GenerateFinalPourpoints(acc_array,dir_array,Lake1,temcat2,bsid,blid,boid,self.nrows,self.ncols,cat1_arr,obs_array)
+        nPourpoints = GenerateFinalPourpoints(acc_array,dir_array,Lake1,temcat2,bsid,blid,boid,self.nrows,self.ncols,cat1_arr,obs_array,Is_divid_region)
         temparray[:,:] = nPourpoints[:,:]
         temparray.write(mapname="Pourpoints_2", overwrite=True)
         grass.run_command('r.null', map='Pourpoints_2',setnull=-9999)
