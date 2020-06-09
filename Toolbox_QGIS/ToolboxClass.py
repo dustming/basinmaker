@@ -1375,7 +1375,7 @@ class LRRT:
                              
         strtemp_array = garray.array(mapname="finalcat") 
         dir           = garray.array(mapname="ndir_Arcgis") 
-        acc           = garray.array(mapname="acc_grass_reg")  
+        acc           = garray.array(mapname="acc_grass")  
              
         ncols = int(strtemp_array.shape[1])
         nrows = int(strtemp_array.shape[0])
