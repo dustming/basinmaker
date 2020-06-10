@@ -2118,7 +2118,7 @@ class LRRT:
         PERMANENT.close()
                 
 ############################################################################3
-    def RoutingNetworkTopologyUpdateToolset_riv(self,projection = 'default', Min_DA_for_func_Q_DA = 100000000, max_manning_n = 0.15,min_manning_n = 0.01):
+    def RoutingNetworkTopologyUpdateToolset_riv(self,projection = 'default', Min_DA_for_func_Q_DA = 100000000, max_manning_n = 0.15,min_manning_n = 0.01,Outlet_Obs_ID = -1):
         import grass.script as grass
         from grass.script import array as garray
         import grass.script.setup as gsetup
@@ -2331,17 +2331,25 @@ class LRRT:
         routing_info_ext =  hyshdinfo2[['SubId','DowSubId']].astype('float').values 
          
         ##find outlet id with maximum drainage area  
-        if self.Path_Sub_reg_outlets != '#':
+        if self.Is_Sub_Region > 0:
+            
             Sub_reg_outlets     = garray.array(mapname="Sub_reg_outlets")
             Sub_reg_outlets_ids = np.unique(Sub_reg_outlets)
             Sub_reg_outlets_ids = Sub_reg_outlets_ids[Sub_reg_outlets_ids > 0]
             reg_outlet_info     = hyshdinfo2.loc[hyshdinfo2['IsObs'].isin(Sub_reg_outlets_ids)]
             reg_outlet_info     = reg_outlet_info.sort_values(by='DA', ascending=False)
             
-            if len(reg_outlet_info) > 0: ### has reg outlets 
+            #### Define outlet ID
+            outletid = -1
+            if Outlet_Obs_ID > 0:
+                outletID_info = hyshdinfo2.loc[hyshdinfo2['IsObs'] == Outlet_Obs_ID]
+                if len(outletID_info) > 0:
+                    outletid = outletID_info['SubId'].values[0] 
+                    
+            if len(reg_outlet_info) > 0 and outletid < 0: ### has reg outlets 
                 outletid            = reg_outlet_info['SubId'].values[0] ### the most downstream regin outlet 
             else:### do not include a reginoutlet 
-                outlet_info  = hyshdinfo2[hyshdinfo2['DowSubId'] == -1]
+                outlet_info  = hyshdinfo2[hyshdinfo2['DowSubId'] < 0]
                 outlet_info  = outlet_info.sort_values(by='DA', ascending=False)
                 outletid     = outlet_info['SubId'].values[0]    
                 
@@ -2354,22 +2362,19 @@ class LRRT:
                     HydroBasins_remove   = Defcat(routing_info_ext,upregid)  
                     mask                 = np.in1d(HydroBasins1, HydroBasins_remove)  ### exluced ids that belongs to main river stream 
                     HydroBasins1         = HydroBasins1[np.logical_not(mask)]   
-                    
-            # outlet_info  = hyshdinfo2[hyshdinfo2['DowSubId'] == -1]  
-            # 
-            # for i in range(0,len(outlet_info)):
-            #     outid = outlet_info['SubId'].values[i]
-            #     if outid == outletid:
-            #         continue 
-            #     HydroBasins_remove   = Defcat(routing_info_ext,outid)  
-            #     mask                 = np.in1d(HydroBasins1, HydroBasins_remove)  ### exluced ids that belongs to main river stream 
-            #     HydroBasins1         = HydroBasins1[np.logical_not(mask)]                  
+                                  
                            
             HydroBasins = HydroBasins1
         else:
-            outlet_info  = hyshdinfo2[hyshdinfo2['DowSubId'] == -1]
-            outlet_info  = outlet_info.sort_values(by='DA', ascending=False)
-            outletid     = outlet_info['SubId'].values[0]
+            outletid = -1
+            if Outlet_Obs_ID > 0:
+                outletID_info = hyshdinfo2.loc[hyshdinfo2['IsObs'] == Outlet_Obs_ID]
+                if len(outletID_info) > 0:
+                    outletid = outletID_info['SubId'].values[0] 
+            if outletid < 0:
+                outlet_info  = hyshdinfo2[hyshdinfo2['DowSubId'] == -1]
+                outlet_info  = outlet_info.sort_values(by='DA', ascending=False)
+                outletid     = outlet_info['SubId'].values[0]
         ##find upsteam catchment id
             HydroBasins  = Defcat(routing_info_ext,outletid)
 
