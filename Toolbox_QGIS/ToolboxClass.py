@@ -1052,8 +1052,7 @@ def ConnectLake_to_NonConnectLake_Updateinfo(NonC_Lakeinfo,finalriv_info,Merged_
 class LRRT:
     def __init__(self, dem_in = '#',dir_in = '#',hyshdply = '#',WidDep = '#',Lakefile = '#'
                                      ,Landuse = '#',Landuseinfo = '#',obspoint = '#',OutHyID = -1 ,OutHyID2 = -1, 
-                                     OutputFolder = '#',ProjectNM = '#',Sub_reg_outlets = '#',Sub_reg_grass_dir = '#',
-                                     Sub_reg_arcgis_dir = '#'):
+                                     OutputFolder = '#',ProjectNM = '#',Path_Sub_Reg_Out_Folder = '#',Is_Sub_Region = -1):
         self.Path_dem_in = dem_in
         self.Path_dir_in = dir_in
         self.Path_hyshdply_in = hyshdply
@@ -1063,11 +1062,18 @@ class LRRT:
         self.Path_Landuseinfo_in = Landuseinfo
         self.Path_obspoint_in = obspoint
         self.Path_OutputFolder = OutputFolder
-        self.Path_Sub_reg_outlets = Sub_reg_outlets
-        self.Path_Sub_reg_grass_dir = Sub_reg_grass_dir
-        self.Path_Sub_reg_arcgis_dir = Sub_reg_arcgis_dir
+        self.Path_Sub_Reg_Out_Folder = '#'
         
-
+        if Path_Sub_Reg_Out_Folder != '#':
+            self.Path_Sub_reg_outlets_r    = os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_Reg_Outlets_point_r.pack')
+            self.Path_Sub_reg_outlets_v    = os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_Reg_Outlets_point_v.pack')
+            self.Path_Sub_reg_grass_dir    = os.path.join(Out_Sub_Reg_Dem_Folder,'dir_grass.pack')
+            self.Path_Sub_reg_arcgis_dir   = os.path.join(Out_Sub_Reg_Dem_Folder,'dir_Arcgis.pack')
+            self.Path_Sub_reg_grass_acc    = os.path.join(Out_Sub_Reg_Dem_Folder,'acc_grass.pack')
+            self.Path_Sub_reg_grass_str_r  = os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_Reg_str_grass_r.pack')
+            self.Path_Sub_reg_grass_str_v  = os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_Reg_str_grass_v.pack') 
+            self.Path_Sub_reg_dem          = os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_Reg_dem.pack')    
+        
         
         self.OutHyID = OutHyID
         self.OutHyID2 = OutHyID2
@@ -1139,7 +1145,7 @@ class LRRT:
 #####         For using non hydroshed product, the output is a mask based on either dem or 
 #####              a rough watershed delineaiton resut. depend on OutletPoint value
 #####              at the same time flow directio and accumulation is caculated for this region 
-    def Generatmaskregion(self,OutletPoint = '#'):
+    def Generatmaskregion(self,OutletPoint = '#',Path_Sub_Polygon = '#'):
         #### g
         ### Set up QGIS enviroment 
         QgsApplication.setPrefixPath(self.qgisPP, True)
@@ -1316,24 +1322,49 @@ class LRRT:
                                 
                 
             else:
-                print("Mask Region:   Using provided DEM : ")
-                os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
-                PERMANENT = Session()
-                PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo_temp,create_opts='EPSG:4326')
+                if self.Is_Sub_Region < 0:
+                    print("Mask Region:   Using provided DEM : ")
+                    os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
+                    PERMANENT = Session()
+                    PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo_temp,create_opts='EPSG:4326')
             
-                grass.run_command("r.in.gdal", input = self.Path_dem, output = 'dem', overwrite = True,location =self.grass_location_geo)
-                PERMANENT.close()
+                    grass.run_command("r.in.gdal", input = self.Path_dem, output = 'dem', overwrite = True,location =self.grass_location_geo)
+                    PERMANENT.close()
                 
-                PERMANENT = Session()
-                PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
+                    PERMANENT = Session()
+                    PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
                
-                grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
-                grass.run_command('g.region', raster='dem')  
+                    grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
+                    grass.run_command('g.region', raster='dem')  
             
-                grass.run_command('r.out.gdal', input = 'MASK',output = os.path.join(self.tempfolder, 'Mask1.tif'),format= 'GTiff',overwrite = True)
-                processing.run("gdal:polygonize", {'INPUT':os.path.join(self.tempfolder, 'Mask1.tif'),'BAND':1,'FIELD':'DN','EIGHT_CONNECTEDNESS':False,'EXTRA':'','OUTPUT':os.path.join(self.tempfolder, 'HyMask.shp')})
-                processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask.shp'),'FIELD':'DN','OUTPUT':self.Path_Maskply})
-                PERMANENT.close()
+                    grass.run_command('r.out.gdal', input = 'MASK',output = os.path.join(self.tempfolder, 'Mask1.tif'),format= 'GTiff',overwrite = True)
+                    processing.run("gdal:polygonize", {'INPUT':os.path.join(self.tempfolder, 'Mask1.tif'),'BAND':1,'FIELD':'DN','EIGHT_CONNECTEDNESS':False,'EXTRA':'','OUTPUT':os.path.join(self.tempfolder, 'HyMask.shp')})
+                    processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask.shp'),'FIELD':'DN','OUTPUT':self.Path_Maskply})
+                    PERMANENT.close()
+                else:
+                    print("Mask Region:  Using subregion buffered mask : ")
+                    os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
+                    PERMANENT = Session()
+                    PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo_temp,create_opts='EPSG:4326')
+            
+                    grass.run_command("v.in.ogr", input = os.path.dirname(Path_Sub_Polygon),layer =os.path.basename(Path_Sub_Polygon),output = 'Sub_Region_Mask_ply', overwrite = True,location =self.grass_location_geo)
+                    PERMANENT.close()
+                
+                    PERMANENT = Session()
+                    
+                    PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
+                    
+                    grass.run_command('g.region', vector='Sub_Region_Mask_ply')  
+                    
+                    grass.run_command('r.unpack', input = Path_Sub_reg_dem, output = 'dem',overwrite = True)
+                    
+                    grass.run_command('r.mask'  , vector='dem', maskcats = '*',overwrite = True)
+                    
+                    grass.run_command('r.out.gdal', input = 'MASK',output = os.path.join(self.tempfolder, 'Mask1.tif'),format= 'GTiff',overwrite = True)
+                    processing.run("gdal:polygonize", {'INPUT':os.path.join(self.tempfolder, 'Mask1.tif'),'BAND':1,'FIELD':'DN','EIGHT_CONNECTEDNESS':False,'EXTRA':'','OUTPUT':os.path.join(self.tempfolder, 'HyMask.shp')})
+                    processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask.shp'),'FIELD':'DN','OUTPUT':self.Path_Maskply})
+                    PERMANENT.close()
+                    
             del r_dem_layer
         Qgs.exit()
         
@@ -1350,28 +1381,40 @@ class LRRT:
         from grass.pygrass.modules.shortcuts import raster as r
         from grass.pygrass.modules import Module
         from grass_session import Session    
-        os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='-1'))
+        os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
         PERMANENT = Session()
         PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
         N_Basin = 0
         Acc     = Initaial_Acc
-        while N_Basin < Min_Num_Domain or N_Basin > Max_Num_Domain:
-            grass.run_command('r.watershed',elevation = 'dem',flags = 's', basin = 'testbasin',drainage = 'dir_grass_reg',accumulation = 'acc_grass_reg2',threshold = Acc,overwrite = True)
-            strtemp_array = garray.array(mapname="testbasin")
-            N_Basin = np.unique(strtemp_array)
-            N_Basin = len(N_Basin[N_Basin > 0])
-            print(N_Basin,Acc,Delta_Acc)
-            if N_Basin > Max_Num_Domain:
-                Acc = Acc + Delta_Acc
-            if N_Basin < Min_Num_Domain:
-                Acc = Acc - Delta_Acc
+        # while N_Basin < Min_Num_Domain or N_Basin > Max_Num_Domain:
+        #     grass.run_command('r.watershed',elevation = 'dem',flags = 's', basin = 'testbasin',drainage = 'dir_grass_reg',accumulation = 'acc_grass_reg2',threshold = Acc,overwrite = True)
+        #     strtemp_array = garray.array(mapname="testbasin")
+        #     N_Basin = np.unique(strtemp_array)
+        #     N_Basin = len(N_Basin[N_Basin > 0])
+        #     print(N_Basin,Acc,Delta_Acc)
+        #     if N_Basin > Max_Num_Domain:
+        #         Acc = Acc + Delta_Acc
+        #     if N_Basin < Min_Num_Domain:
+        #         Acc = Acc - Delta_Acc
+        # 
+        # PERMANENT.close()
+        # 
+        # self.Generateinputdata()
+        # self.WatershedDiscretizationToolset(Acc,Is_divid_region = 1)
+        # self.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = CheckLakeArea,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 9000,Pec_Grid_outlier = 0.99,Is_divid_region=1)
         
-        PERMANENT.close()
-        
-        self.Generateinputdata()
-        self.WatershedDiscretizationToolset(Acc,Is_divid_region = 1)
-        self.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = CheckLakeArea,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 9000,Pec_Grid_outlier = 0.99,Is_divid_region=1)
-        
+        grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =30,stream_raster = 'Sub_Reg_str_grass_r',
+                            stream_vector = 'Sub_Reg_str_grass_v',overwrite = True,memory = 1024)
+
+
+          
+        grass.run_command('r.pack',input = 'ndir_grass',output = self.Path_Sub_reg_grass_dir,overwrite = True)
+        grass.run_command('r.pack',input = 'ndir_Arcgis',output = self.Path_Sub_reg_arcgis_dir,overwrite = True)
+        grass.run_command('r.pack',input = 'acc_grass',output = self.Path_Sub_reg_grass_acc,overwrite = True)
+        grass.run_command('r.pack',input = 'dem',output = self.Path_Sub_reg_dem,overwrite = True)
+        grass.run_command('v.pack',input = 'Sub_Reg_str_grass_v',output = self.Path_Sub_reg_grass_str_v,overwrite = True)
+        grass.run_command('r.pack',input = 'Sub_Reg_str_grass_r',output = self.Path_Sub_reg_grass_str_r ,overwrite = True)
+                            
 
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
@@ -1411,23 +1454,20 @@ class LRRT:
         subregin_info["Max_ACC"] = -9999
         for i in range(0,len(Basins)):
             basinid = int(Basins[i])
-            print(basinid)
-            # grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)            
-            # exp = 'dem_reg_'+str(basinid)+'= if(finalcat == '+str(basinid)+',dem, -9999)'
-            # grass.run_command('r.mapcalc',expression = exp,overwrite = True) 
-            # grass.run_command("r.null", map = 'dem_reg_'+str(basinid), setnull = [-9999,0])
-            # 
-            # grass.run_command('r.mask'  , raster='dem_reg_'+str(basinid), maskcats = '*',overwrite = True)            
-            # grass.run_command('r.out.gdal', input = 'MASK',output = os.path.join(self.tempfolder, 'Mask1.tif'),format= 'GTiff',overwrite = True)
-            # processing.run("gdal:polygonize", {'INPUT':os.path.join(self.tempfolder, 'Mask1.tif'),'BAND':1,'FIELD':'DN','EIGHT_CONNECTEDNESS':False,'EXTRA':'','OUTPUT':os.path.join(self.tempfolder, 'HyMask_region_'+ str(basinid)+'.shp')})
-            # processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask_region_'+ str(basinid)+'.shp'),'FIELD':'DN','OUTPUT':os.path.join(self.tempfolder, 'HyMask_region_f'+ str(basinid)+'.shp')})
-            # processing.run("native:buffer", {'INPUT':os.path.join(self.tempfolder, 'HyMask_region_f'+ str(basinid)+'.shp'),'DISTANCE':0.05,'SEGMENTS':5,'END_CAP_STYLE':0,'JOIN_STYLE':0,'MITER_LIMIT':2,'DISSOLVE':True,'OUTPUT':os.path.join(self.tempfolder, 'HyMask_region_f1'+ str(basinid)+'.shp')})
-            # try:
-            #     processing.run("saga:cliprasterwithpolygon", {'INPUT':self.Path_dem,'POLYGONS':os.path.join(self.tempfolder, 'HyMask_region_f1'+ str(basinid)+'.shp'),'OUTPUT':os.path.join(Out_Sub_Reg_Dem_Folder,'dem_reg_'+str(basinid+10000)+'.sdat')})
-            # except:
-            #     continue
-            #     print("remove subid ", basinid)
-#            grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True) 
+            grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)            
+            exp = 'dem_reg_'+str(basinid)+'= if(finalcat == '+str(basinid)+',dem, -9999)'
+            grass.run_command('r.mapcalc',expression = exp,overwrite = True) 
+            grass.run_command("r.null", map = 'dem_reg_'+str(basinid), setnull = [-9999,0])
+            
+            ####define mask
+            grass.run_command('r.mask'  , raster='dem_reg_'+str(basinid), maskcats = '*',overwrite = True)  
+            grass.run_command('r.out.gdal', input = 'MASK',output = os.path.join(self.tempfolder, 'Mask1.tif'),format= 'GTiff',overwrite = True)
+            processing.run("gdal:polygonize", {'INPUT':os.path.join(self.tempfolder, 'Mask1.tif'),'BAND':1,'FIELD':'DN','EIGHT_CONNECTEDNESS':False,'EXTRA':'','OUTPUT':os.path.join(self.tempfolder, 'HyMask_region_'+ str(basinid)+'.shp')})
+            processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask_region_'+ str(basinid)+'.shp'),'FIELD':'DN','OUTPUT':os.path.join(self.tempfolder, 'HyMask_region_f'+ str(basinid)+'.shp')})
+            processing.run("native:buffer", {'INPUT':os.path.join(self.tempfolder, 'HyMask_region_f'+ str(basinid)+'.shp'),'DISTANCE':0.01,'SEGMENTS':5,'END_CAP_STYLE':0,'JOIN_STYLE':0,'MITER_LIMIT':2,'DISSOLVE':True,'OUTPUT':os.path.join(Out_Sub_Reg_Dem_Folder, 'HyMask_region_'+ str(basinid)+'.shp')})
+
+                
+            grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True) 
             
             
             catmask = strtemp_array == basinid
@@ -1459,23 +1499,22 @@ class LRRT:
             subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"DEM_Name"]       = 'dem_reg_'+str(basinid+10000)+'.sdat'
             subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"Max_ACC"]        = np.max(np.unique(catacc))
             subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"Dow_Sub_Reg_Id"] = dowsubreginid + 10000  
-            
-        subregin_info.loc[:,'Sub_Reg_ID'] =  subregin_info.loc['Sub_Reg_ID'].values + 1000   
+                
         grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True) 
         temparray = garray.array()    
         temparray[:,:] = Cat_outlets[:,:]
         temparray.write(mapname="Sub_Reg_Outlets", overwrite=True)
         grass.run_command('r.mapcalc',expression = 'Sub_Reg_Outlets_1 = int(Sub_Reg_Outlets)',overwrite = True)  
         grass.run_command('r.null', map='Sub_Reg_Outlets_1',setnull=-9999) 
+        
 
         grass.run_command('r.to.vect',  input = 'Sub_Reg_Outlets_1',output = 'Sub_Reg_Outlets_point', type ='point' ,overwrite = True)
-        # grass.run_command('r.out.gdal', input = 'ndir_grass',output = os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_Reg_ndir_grass.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
-        # grass.run_command('r.out.gdal', input = 'ndir_Arcgis',output = os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_Reg_ndir_Arcgis.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
         grass.run_command('v.out.ogr', input = 'Sub_Reg_Outlets_point',output = os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_Reg_Outlets.shp"),format= 'ESRI_Shapefile',overwrite = True)
+        grass.run_command('r.pack',input = 'Sub_Reg_Outlets_1',    output =self.Path_Sub_reg_outlets_r,overwrite = True)
+        grass.run_command('v.pack',input = 'Sub_Reg_Outlets_point',output =self.Path_Sub_reg_outlets_v,overwrite = True)
         subregin_info.to_csv(os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_reg_info.csv'),index = None, header=True)
           
-        return subregin_info
-                         
+        return subregin_info                        
 ##################################################################################################  
 #### functions to preprocess data, Output:
 ##  self.Path_dem,self.cellSize,self.SpRef_in
@@ -1574,12 +1613,14 @@ class LRRT:
                 # grass.run_command('r.mapcalc',expression = "acc_grass = abs(acc_grass2@PERMANENT)",overwrite = True)
                 # grass.run_command('r.reclass', input='dir_grass',output = 'dir_Arcgis',rules = os.path.join(self.RoutingToolPath,'Grass2ArcgisDIR.txt'), overwrite = True)
                 
-                grass.run_command('r.watershed',elevation = 'dem', accumulation = 'acc_grass2',flags = 's', overwrite = True)
-                grass.run_command('r.mapcalc',expression = "acc_grass = abs(acc_grass2@PERMANENT)",overwrite = True)
+#                grass.run_command('r.watershed',elevation = 'dem', accumulation = 'acc_grass2',flags = 's', overwrite = True)
+#                grass.run_command('r.mapcalc',expression = "acc_grass = abs(acc_grass2@PERMANENT)",overwrite = True)
                 grass.run_command("r.in.gdal", input = self.Path_Sub_reg_grass_dir, output = 'dir_grass1', overwrite = True)
                 grass.run_command("r.in.gdal", input = self.Path_Sub_reg_arcgis_dir, output = 'dir_Arcgis1', overwrite = True)
+                grass.run_command("r.in.gdal", input = self.Path_Sub_reg_grass_acc, output = 'grass_acc1', overwrite = True)
                 grass.run_command('r.mapcalc',expression = "dir_grass = int(dir_grass1@PERMANENT)",overwrite = True)
-                grass.run_command('r.mapcalc',expression = "dir_Arcgis = abs(dir_Arcgis1@PERMANENT)",overwrite = True)
+                grass.run_command('r.mapcalc',expression = "dir_Arcgis = int(dir_Arcgis1@PERMANENT)",overwrite = True)
+                grass.run_command('r.mapcalc',expression = "acc_grass = abs(grass_acc1@PERMANENT)",overwrite = True)
             else:
                 grass.run_command('r.watershed',elevation = 'dem', drainage = 'dir_grass', accumulation = 'acc_grass2',flags = 's', overwrite = True)
                 grass.run_command('r.mapcalc',expression = "acc_grass = abs(acc_grass2@PERMANENT)",overwrite = True)
@@ -1663,24 +1704,20 @@ class LRRT:
         grsregion = gcore.region()     
         
         #### if subregion oulet is inlcuded , use minmum acc of subregion outlet.  
-        acc_in = accthresold
-        if self.Path_Sub_reg_outlets != '#':
-            acc_array           = garray.array(mapname="acc_grass")
-            Sub_reg_outlets     = garray.array(mapname="Sub_reg_outlets")
-            mask                = Sub_reg_outlets > 0
-            Sub_reg_outlets_ids = Sub_reg_outlets[mask]
-            acc                 = np.min(acc_array[mask]) - int(np.min(acc_array[mask])/2)
-            if acc < accthresold: 
-                acc_in = int(acc)
-            print('SubRegion outlet ids are ', np.unique(Sub_reg_outlets_ids), 'minmum acc are :', acc,acc_in) 
-            
+        
         if self.Path_dir_in == '#':  ### did not provide dir, use dem to generate watershed. recommand !!
             if Is_divid_region > 0:
-                grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =acc_in,stream_raster = 'str_grass_r',
+                grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =accthresold,stream_raster = 'str_grass_r',
                                   overwrite = True, memory = max_memroy)
             else:
-                grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =acc_in,stream_raster = 'str_grass_r',
-                                stream_vector = 'str_grass_v',overwrite = True,memory = max_memroy)
+                if self.Path_Sub_reg_grass_str_r !='#':
+                    grass.run_command("r.in.gdal", input = self.Path_Sub_reg_grass_str_r, output = 'str_grass_r1', overwrite = True)
+                    grass.run_command('r.mapcalc',expression = "str_grass_r = int(str_grass_r1@PERMANENT)",overwrite = True)    
+                    grass.run_command("v.import", input = self.Path_Sub_reg_grass_str_v, output = 'str_grass_v', overwrite = True)
+                                    
+                else:    
+                    grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =accthresold,stream_raster = 'str_grass_r',
+                                    stream_vector = 'str_grass_v',overwrite = True,memory = max_memroy)
         else:
         ## generate correct stream raster, when the dir is not derived from dem. for Hydroshed Cases 
             grass.run_command('r.accumulate', direction='dir_grass',format = '45degree',accumulation ='acc_grass',
