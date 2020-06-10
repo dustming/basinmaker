@@ -1372,8 +1372,12 @@ class LRRT:
             
             grass.run_command('r.mask'  , raster='dem', overwrite = True)  ##3 set dem as mask 
             
-            ### exmport polygonsa     
+            ### exmport polygonsa   
+            
+            self.Path_dem_in = os.path.join(self.tempfolder, 'dem.tif')
+            self.Path_dem    = os.path.join(self.tempfolder, 'dem.tif')
             grass.run_command('r.out.gdal', input = 'MASK',output = os.path.join(self.tempfolder, 'Mask1.tif'),format= 'GTiff',overwrite = True)
+            grass.run_command('r.out.gdal', input = 'dem',output = os.path.join(self.tempfolder, 'dem.tif'),format= 'GTiff',overwrite = True)
             processing.run("gdal:polygonize", {'INPUT':os.path.join(self.tempfolder, 'Mask1.tif'),'BAND':1,'FIELD':'DN','EIGHT_CONNECTEDNESS':False,'EXTRA':'','OUTPUT':os.path.join(self.tempfolder, 'HyMask.shp')})
             processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask.shp'),'FIELD':'DN','OUTPUT':self.Path_Maskply})
             PERMANENT.close()
@@ -1462,7 +1466,7 @@ class LRRT:
         subregin_info["Dow_Sub_Reg_Id"] = -9999
         subregin_info["ProjectNM"] = -9999
         subregin_info["Nun_Grids"] = -9999
-        subregin_info["DEM_Name"] = -9999
+        subregin_info["Ply_Name"] = -9999
         subregin_info["Max_ACC"] = -9999
         for i in range(0,len(Basins)):
             basinid = int(Basins[i])
@@ -1508,7 +1512,7 @@ class LRRT:
               
             subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"ProjectNM"]      = ProjectNM + '_'+str(basinid+10000)
             subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"Nun_Grids"]      = np.sum(catmask)
-            subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"DEM_Name"]       = 'dem_reg_'+str(basinid+10000)+'.sdat'
+            subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"Ply_Name"]       = 'HyMask_region_'+ str(basinid)+'.shp'
             subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"Max_ACC"]        = np.max(np.unique(catacc))
             subregin_info.loc[subregin_info['Sub_Reg_ID'] == basinid,"Dow_Sub_Reg_Id"] = dowsubreginid + 10000  
                 
@@ -1573,15 +1577,9 @@ class LRRT:
         from grass_session import Session
     
        
-        os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='-1'))
+        os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
         PERMANENT = Session()
-        PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
-        ###  hydroshed product use cliped dem to setup g.region and g.mask 
-        ###  non hydroshed product the g.region and g.mask is defined in generatemask funciton 
-        # if self.OutHyID > 0:   
-        #     grass.run_command("r.import", input = self.Path_dem, output = 'dem', overwrite = True)
-        #     grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
-        #     grass.run_command('g.region', raster='dem')
+        PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
 
         strtemp_array = garray.array(mapname="dem")
         self.ncols = int(strtemp_array.shape[1])
@@ -1620,19 +1618,15 @@ class LRRT:
             grass.run_command("r.clip", input = 'dir_in', output = 'dir_Arcgis', overwrite = True, flags = 'r')
             grass.run_command('r.reclass', input='dir_Arcgis',output = 'dir_grass',rules =os.path.join(self.RoutingToolPath,'Arcgis2GrassDIR.txt'), overwrite = True)
         else:  ### non hydroshed if dir has been build 
-            if self.Path_Sub_reg_grass_dir != '#':
-                # grass.run_command('r.watershed',elevation = 'dem', drainage = 'dir_grass', accumulation = 'acc_grass2',flags = 's', overwrite = True)
-                # grass.run_command('r.mapcalc',expression = "acc_grass = abs(acc_grass2@PERMANENT)",overwrite = True)
-                # grass.run_command('r.reclass', input='dir_grass',output = 'dir_Arcgis',rules = os.path.join(self.RoutingToolPath,'Grass2ArcgisDIR.txt'), overwrite = True)
+            if self.Is_Sub_Region >0: #### use inputs from whole watershed and 
+                ### import data for the whole watershed
+                grass.run_command('r.unpack', input = self.Path_Sub_reg_arcgis_dir, output = 'dir_Arcgis1',overwrite = True)
+                grass.run_command('r.unpack', input = self.Path_Sub_reg_grass_acc, output = 'grass_acc1',overwrite = True)
+                ### clip them to currnet sub region extent 
+                grass.run_command('r.mapcalc',expression = "dir_Arcgis  = dir_Arcgis1",overwrite = True)
+                grass.run_command('r.reclass', input='dir_Arcgis',output = 'dir_grass',rules =os.path.join(self.RoutingToolPath,'Arcgis2GrassDIR.txt'),overwrite = True)
+                grass.run_command('r.mapcalc',expression = "acc_grass   = grass_acc1",overwrite = True)
                 
-#                grass.run_command('r.watershed',elevation = 'dem', accumulation = 'acc_grass2',flags = 's', overwrite = True)
-#                grass.run_command('r.mapcalc',expression = "acc_grass = abs(acc_grass2@PERMANENT)",overwrite = True)
-                grass.run_command("r.in.gdal", input = self.Path_Sub_reg_grass_dir, output = 'dir_grass1', overwrite = True)
-                grass.run_command("r.in.gdal", input = self.Path_Sub_reg_arcgis_dir, output = 'dir_Arcgis1', overwrite = True)
-                grass.run_command("r.in.gdal", input = self.Path_Sub_reg_grass_acc, output = 'grass_acc1', overwrite = True)
-                grass.run_command('r.mapcalc',expression = "dir_grass = int(dir_grass1@PERMANENT)",overwrite = True)
-                grass.run_command('r.mapcalc',expression = "dir_Arcgis = int(dir_Arcgis1@PERMANENT)",overwrite = True)
-                grass.run_command('r.mapcalc',expression = "acc_grass = abs(grass_acc1@PERMANENT)",overwrite = True)
             else:
                 grass.run_command('r.watershed',elevation = 'dem', drainage = 'dir_grass', accumulation = 'acc_grass2',flags = 's', overwrite = True)
                 grass.run_command('r.mapcalc',expression = "acc_grass = abs(acc_grass2@PERMANENT)",overwrite = True)
@@ -1682,10 +1676,13 @@ class LRRT:
             temparray.write(mapname="SubId_WidDep", overwrite=True) 
             
         
-        if self.Path_Sub_reg_outlets != '#':
-            grass.run_command("v.import", input = self.Path_Sub_reg_outlets, output = 'Sub_reg_outlets_pt', overwrite = True)
+        if self.Is_Sub_Region > 0:
+            ### load subregion outlet id
+            grass.run_command('v.unpack', input = self.Path_Sub_reg_outlets_v, output = 'Sub_reg_outlets_pt',overwrite = True)
             grass.run_command('v.to.rast',input = 'Sub_reg_outlets_pt',output = 'Sub_reg_outlets',use = 'attr',attribute_column = 'value',overwrite = True)
+            ## load observation points
             grass.run_command('v.to.rast',input = 'obspoint',output = 'obs1',use = 'attr',attribute_column = 'Obs_ID',overwrite = True)
+            ### combine both as observation datasets
             grass.run_command('r.mapcalc',expression = "obs = if(isnull(Sub_reg_outlets),obs1,Sub_reg_outlets)",overwrite = True)
             grass.run_command("r.null", map = 'obs', setnull = [-9999,0])            
             
@@ -1722,11 +1719,11 @@ class LRRT:
                 grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =accthresold,stream_raster = 'str_grass_r',
                                   overwrite = True, memory = max_memroy)
             else:
-                if self.Path_Sub_reg_grass_str_r !='#':
-                    grass.run_command("r.in.gdal", input = self.Path_Sub_reg_grass_str_r, output = 'str_grass_r1', overwrite = True)
-                    grass.run_command('r.mapcalc',expression = "str_grass_r = int(str_grass_r1@PERMANENT)",overwrite = True)    
-                    grass.run_command("v.import", input = self.Path_Sub_reg_grass_str_v, output = 'str_grass_v', overwrite = True)
-                                    
+                if self.Is_Sub_Region > 0:
+                    ### use stream predefined stream segments of whole watershed 
+                    grass.run_command('v.unpack', input = self.Path_Sub_reg_grass_str_v, output = 'str_grass_v',overwrite = True)
+                    grass.run_command('r.unpack', input = self.Path_Sub_reg_grass_str_r, output = 'str_grass_r1',overwrite = True)
+                    grass.run_command('r.mapcalc',expression = "str_grass_r = str_grass_r1",overwrite = True)    
                 else:    
                     grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =accthresold,stream_raster = 'str_grass_r',
                                     stream_vector = 'str_grass_v',overwrite = True,memory = max_memroy)
