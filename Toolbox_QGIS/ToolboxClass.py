@@ -1742,7 +1742,7 @@ class LRRT:
 
 ####################################################################################################3
                 
-    def WatershedDiscretizationToolset(self,accthresold,Is_divid_region = -1,max_memroy = 1024):
+    def WatershedDiscretizationToolset(self,accthresold = 100,Is_divid_region = -1,max_memroy = 1024):
         import grass.script as grass
         from grass.script import array as garray
         from grass.script import core as gcore
