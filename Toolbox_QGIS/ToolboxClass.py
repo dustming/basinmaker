@@ -1063,16 +1063,16 @@ class LRRT:
         self.Path_obspoint_in = obspoint
         self.Path_OutputFolder = OutputFolder
         self.Path_Sub_Reg_Out_Folder = '#'
-        
+        self.Is_Sub_Region          = Is_Sub_Region
         if Path_Sub_Reg_Out_Folder != '#':
-            self.Path_Sub_reg_outlets_r    = os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_Reg_Outlets_point_r.pack')
-            self.Path_Sub_reg_outlets_v    = os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_Reg_Outlets_point_v.pack')
-            self.Path_Sub_reg_grass_dir    = os.path.join(Out_Sub_Reg_Dem_Folder,'dir_grass.pack')
-            self.Path_Sub_reg_arcgis_dir   = os.path.join(Out_Sub_Reg_Dem_Folder,'dir_Arcgis.pack')
-            self.Path_Sub_reg_grass_acc    = os.path.join(Out_Sub_Reg_Dem_Folder,'acc_grass.pack')
-            self.Path_Sub_reg_grass_str_r  = os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_Reg_str_grass_r.pack')
-            self.Path_Sub_reg_grass_str_v  = os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_Reg_str_grass_v.pack') 
-            self.Path_Sub_reg_dem          = os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_Reg_dem.pack')    
+            self.Path_Sub_reg_outlets_r    = os.path.join(Path_Sub_Reg_Out_Folder,'Sub_Reg_Outlets_point_r.pack')
+            self.Path_Sub_reg_outlets_v    = os.path.join(Path_Sub_Reg_Out_Folder,'Sub_Reg_Outlets_point_v.pack')
+            self.Path_Sub_reg_grass_dir    = os.path.join(Path_Sub_Reg_Out_Folder,'dir_grass.pack')
+            self.Path_Sub_reg_arcgis_dir   = os.path.join(Path_Sub_Reg_Out_Folder,'dir_Arcgis.pack')
+            self.Path_Sub_reg_grass_acc    = os.path.join(Path_Sub_Reg_Out_Folder,'acc_grass.pack')
+            self.Path_Sub_reg_grass_str_r  = os.path.join(Path_Sub_Reg_Out_Folder,'Sub_Reg_str_grass_r.pack')
+            self.Path_Sub_reg_grass_str_v  = os.path.join(Path_Sub_Reg_Out_Folder,'Sub_Reg_str_grass_v.pack') 
+            self.Path_Sub_reg_dem          = os.path.join(Path_Sub_Reg_Out_Folder,'Sub_Reg_dem.pack')    
         
         
         self.OutHyID = OutHyID
@@ -1160,14 +1160,15 @@ class LRRT:
         shutil.rmtree(self.grassdb,ignore_errors=True)
         shutil.rmtree(self.tempfolder,ignore_errors=True)
         
-        r_dem_layer = QgsRasterLayer(self.Path_dem_in, "") ### load DEM raster as a  QGIS raster object to obtain attribute        
-        self.cellSize = float(r_dem_layer.rasterUnitsPerPixelX())  ### Get Raster cell size
-        self.SpRef_in = r_dem_layer.crs().authid()   ### get Raster spatialReference id
         
         if not os.path.exists(self.tempfolder):
 	            os.makedirs(self.tempfolder)
                 
         if self.OutHyID > 0:
+            r_dem_layer = QgsRasterLayer(self.Path_dem_in, "") ### load DEM raster as a  QGIS raster object to obtain attribute        
+            self.cellSize = float(r_dem_layer.rasterUnitsPerPixelX())  ### Get Raster cell size
+            self.SpRef_in = r_dem_layer.crs().authid()   ### get Raster spatialReference id
+
             hyinfocsv = self.Path_hyshdply_in[:-3] + "dbf"
             tempinfo = Dbf5(hyinfocsv)
             hyshdinfo = tempinfo.to_dataframe()
@@ -1263,7 +1264,7 @@ class LRRT:
             
             del hyshedl12
             
-        else:
+        elif self.Is_Sub_Region < 0 and self.OutHyID <= 0:
             r_dem_layer = QgsRasterLayer(self.Path_dem_in, "") ### load DEM raster as a  QGIS raster object to obtain attribute        
             self.cellSize = float(r_dem_layer.rasterUnitsPerPixelX())  ### Get Raster cell size
             self.SpRef_in = r_dem_layer.crs().authid()   ### get Raster spatialReference id
@@ -1322,50 +1323,61 @@ class LRRT:
                                 
                 
             else:
-                if self.Is_Sub_Region < 0:
-                    print("Mask Region:   Using provided DEM : ")
-                    os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
-                    PERMANENT = Session()
-                    PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo_temp,create_opts='EPSG:4326')
+                print("Mask Region:   Using provided DEM : ")
+                os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
+                PERMANENT = Session()
+                PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo_temp,create_opts='EPSG:4326')
             
-                    grass.run_command("r.in.gdal", input = self.Path_dem, output = 'dem', overwrite = True,location =self.grass_location_geo)
-                    PERMANENT.close()
+                grass.run_command("r.in.gdal", input = self.Path_dem, output = 'dem', overwrite = True,location =self.grass_location_geo)
+                PERMANENT.close()
                 
-                    PERMANENT = Session()
-                    PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
+                PERMANENT = Session()
+                PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
                
-                    grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
-                    grass.run_command('g.region', raster='dem')  
+                grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
+                grass.run_command('g.region', raster='dem')  
             
-                    grass.run_command('r.out.gdal', input = 'MASK',output = os.path.join(self.tempfolder, 'Mask1.tif'),format= 'GTiff',overwrite = True)
-                    processing.run("gdal:polygonize", {'INPUT':os.path.join(self.tempfolder, 'Mask1.tif'),'BAND':1,'FIELD':'DN','EIGHT_CONNECTEDNESS':False,'EXTRA':'','OUTPUT':os.path.join(self.tempfolder, 'HyMask.shp')})
-                    processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask.shp'),'FIELD':'DN','OUTPUT':self.Path_Maskply})
-                    PERMANENT.close()
-                else:
-                    print("Mask Region:  Using subregion buffered mask : ")
-                    os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
-                    PERMANENT = Session()
-                    PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo_temp,create_opts='EPSG:4326')
+                grass.run_command('r.out.gdal', input = 'MASK',output = os.path.join(self.tempfolder, 'Mask1.tif'),format= 'GTiff',overwrite = True)
+                processing.run("gdal:polygonize", {'INPUT':os.path.join(self.tempfolder, 'Mask1.tif'),'BAND':1,'FIELD':'DN','EIGHT_CONNECTEDNESS':False,'EXTRA':'','OUTPUT':os.path.join(self.tempfolder, 'HyMask.shp')})
+                processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask.shp'),'FIELD':'DN','OUTPUT':self.Path_Maskply})
+                PERMANENT.close()
+        else:
+            import grass.script as grass
+            from grass.script import array as garray
+            import grass.script.setup as gsetup
+            from grass.pygrass.modules.shortcuts import general as g
+            from grass.pygrass.modules.shortcuts import raster as r
+            from grass.pygrass.modules import Module
+            from grass_session import Session
+            print("Mask Region:  Using subregion buffered mask : ")
+            os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
             
-                    grass.run_command("v.in.ogr", input = os.path.dirname(Path_Sub_Polygon),layer =os.path.basename(Path_Sub_Polygon),output = 'Sub_Region_Mask_ply', overwrite = True,location =self.grass_location_geo)
-                    PERMANENT.close()
+            PERMANENT = Session()
+            PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo_temp,create_opts='EPSG:4326')
+            grass.run_command("v.in.ogr", input = Path_Sub_Polygon,output = 'Sub_Region_Mask_ply', overwrite = True,location =self.grass_location_geo)
+            PERMANENT.close()
                 
-                    PERMANENT = Session()
+            PERMANENT = Session()
+            PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
+            
+            grass.run_command('r.unpack', input = self.Path_Sub_reg_dem, output = 'dem_big',overwrite = True)
+            
+            ###Use polygon to define a smaller region         
+            grass.run_command('g.region', raster='dem_big') ### Initially set as big DEM  
+            grass.run_command('r.mask'  , vector='Sub_Region_Mask_ply', overwrite = True)  ### define a mask 
+            grass.run_command('g.region', zoom='MASK')  ### define new region with this maks
+            
+            grass.run_command('r.mask'  , vector='Sub_Region_Mask_ply', overwrite = True) ### mask with current region 
+            grass.run_command('r.mapcalc',expression = "dem = dem_big",overwrite = True)  ###clip big dem using mask
+            
+            grass.run_command('r.mask'  , raster='dem', overwrite = True)  ##3 set dem as mask 
+            
+            ### exmport polygonsa     
+            grass.run_command('r.out.gdal', input = 'MASK',output = os.path.join(self.tempfolder, 'Mask1.tif'),format= 'GTiff',overwrite = True)
+            processing.run("gdal:polygonize", {'INPUT':os.path.join(self.tempfolder, 'Mask1.tif'),'BAND':1,'FIELD':'DN','EIGHT_CONNECTEDNESS':False,'EXTRA':'','OUTPUT':os.path.join(self.tempfolder, 'HyMask.shp')})
+            processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask.shp'),'FIELD':'DN','OUTPUT':self.Path_Maskply})
+            PERMANENT.close()
                     
-                    PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
-                    
-                    grass.run_command('g.region', vector='Sub_Region_Mask_ply')  
-                    
-                    grass.run_command('r.unpack', input = Path_Sub_reg_dem, output = 'dem',overwrite = True)
-                    
-                    grass.run_command('r.mask'  , vector='dem', maskcats = '*',overwrite = True)
-                    
-                    grass.run_command('r.out.gdal', input = 'MASK',output = os.path.join(self.tempfolder, 'Mask1.tif'),format= 'GTiff',overwrite = True)
-                    processing.run("gdal:polygonize", {'INPUT':os.path.join(self.tempfolder, 'Mask1.tif'),'BAND':1,'FIELD':'DN','EIGHT_CONNECTEDNESS':False,'EXTRA':'','OUTPUT':os.path.join(self.tempfolder, 'HyMask.shp')})
-                    processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask.shp'),'FIELD':'DN','OUTPUT':self.Path_Maskply})
-                    PERMANENT.close()
-                    
-            del r_dem_layer
         Qgs.exit()
         
         return 
