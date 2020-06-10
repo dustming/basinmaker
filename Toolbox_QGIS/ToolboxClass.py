@@ -1387,7 +1387,8 @@ class LRRT:
         return 
 
 
-    def Generatesubdomain(self,Min_Num_Domain = 9,Max_Num_Domain = 13,Initaial_Acc = 5000,Delta_Acc = 1000,Out_Sub_Reg_Dem_Folder = '#',ProjectNM = 'Sub_Reg',CheckLakeArea = 1):
+    def Generatesubdomain(self,Min_Num_Domain = 9,Max_Num_Domain = 13,Initaial_Acc = 5000,Delta_Acc = 1000,Out_Sub_Reg_Dem_Folder = '#',
+                        ProjectNM = 'Sub_Reg',CheckLakeArea = 1,Acc_Thresthold_stream = 500,max_memory = 2048):
 
         import grass.script as grass
         from grass.script import array as garray
@@ -1402,25 +1403,25 @@ class LRRT:
         PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
         N_Basin = 0
         Acc     = Initaial_Acc
-        # while N_Basin < Min_Num_Domain or N_Basin > Max_Num_Domain:
-        #     grass.run_command('r.watershed',elevation = 'dem',flags = 's', basin = 'testbasin',drainage = 'dir_grass_reg',accumulation = 'acc_grass_reg2',threshold = Acc,overwrite = True)
-        #     strtemp_array = garray.array(mapname="testbasin")
-        #     N_Basin = np.unique(strtemp_array)
-        #     N_Basin = len(N_Basin[N_Basin > 0])
-        #     print(N_Basin,Acc,Delta_Acc)
-        #     if N_Basin > Max_Num_Domain:
-        #         Acc = Acc + Delta_Acc
-        #     if N_Basin < Min_Num_Domain:
-        #         Acc = Acc - Delta_Acc
-        # 
-        # PERMANENT.close()
-        # 
-        # self.Generateinputdata()
-        # self.WatershedDiscretizationToolset(Acc,Is_divid_region = 1)
-        # self.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = CheckLakeArea,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 9000,Pec_Grid_outlier = 0.99,Is_divid_region=1)
+        while N_Basin < Min_Num_Domain or N_Basin > Max_Num_Domain:
+            grass.run_command('r.watershed',elevation = 'dem',flags = 's', basin = 'testbasin',drainage = 'dir_grass_reg',accumulation = 'acc_grass_reg2',threshold = Acc,overwrite = True)
+            strtemp_array = garray.array(mapname="testbasin")
+            N_Basin = np.unique(strtemp_array)
+            N_Basin = len(N_Basin[N_Basin > 0])
+            print(N_Basin,Acc,Delta_Acc)
+            if N_Basin > Max_Num_Domain:
+                Acc = Acc + Delta_Acc
+            if N_Basin < Min_Num_Domain:
+                Acc = Acc - Delta_Acc
         
-        grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =30,stream_raster = 'Sub_Reg_str_grass_r',
-                            stream_vector = 'Sub_Reg_str_grass_v',overwrite = True,memory = 1024)
+        PERMANENT.close()
+        
+        self.Generateinputdata()
+        self.WatershedDiscretizationToolset(Acc,Is_divid_region = 1)
+        self.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = CheckLakeArea,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 9000,Pec_Grid_outlier = 0.99,Is_divid_region=1)
+        
+        grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =Acc_Thresthold_stream,stream_raster = 'Sub_Reg_str_grass_r',
+                            stream_vector = 'Sub_Reg_str_grass_v',overwrite = True,memory = max_memory)
 
 
           
