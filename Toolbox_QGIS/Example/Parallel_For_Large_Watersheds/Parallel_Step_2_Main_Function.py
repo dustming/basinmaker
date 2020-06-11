@@ -7,7 +7,7 @@ import pandas as pd
 
 ####define functtion
 def Generaterouting_subregion(i):
-	os.system("python QGIS_script_for_Tool_paper.py  " + str(i))
+	os.system("Parallel_Step_2_Script_For_Each_Sub_Region.py  " + str(i))
 	
 
 ###Read Sub Region info
