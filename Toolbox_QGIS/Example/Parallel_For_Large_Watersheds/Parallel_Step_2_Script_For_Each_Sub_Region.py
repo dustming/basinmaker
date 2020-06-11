@@ -78,7 +78,7 @@ try:
     RTtool.Generateinputdata()
     RTtool.WatershedDiscretizationToolset(max_memroy = 1024*2)
     RTtool.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = 5,Thre_Lake_Area_nonConnect = 5,max_memroy = 1024*2)
-    RTtool.RoutingNetworkTopologyUpdateToolset_riv('EPSG:3573',Outlet_Obs_ID = basinid + 1000,max_memroy = 1024*2)
+    RTtool.RoutingNetworkTopologyUpdateToolset_riv('EPSG:3573',Outlet_Obs_ID = basinid)
     RTtool.Output_Clean(clean = 'False')
 
     Datafolder_final = os.path.join(Outputfolder,ProjectName)

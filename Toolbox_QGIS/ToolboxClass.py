@@ -1757,7 +1757,7 @@ class LRRT:
 
         os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
         PERMANENT = Session()
-        PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
+        PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
         
         grsregion = gcore.region()     
         
@@ -1861,24 +1861,10 @@ class LRRT:
         from grass.pygrass.modules.shortcuts import raster as r
         from grass.pygrass.modules import Module
         from grass_session import Session
-
-        QgsApplication.setPrefixPath(self.qgisPP, True)
-        Qgs = QgsApplication([],False)
-        Qgs.initQgis()
-        from qgis import processing
-        from processing.core.Processing import Processing
-        from processing.tools import dataobjects
-           
-        feedback = QgsProcessingFeedback()
-        Processing.initialize()
-        QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
-        context = dataobjects.createContext()
-        context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
-        
         
         os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
         PERMANENT = Session()
-        PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
+        PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
         con = sqlite3.connect(self.sqlpath)
         
         VolThreshold =Thre_Lake_Area_Connect ### lake area thresthold for connected lakes 
@@ -2149,7 +2135,6 @@ class LRRT:
     
         
         con.close()
-        Qgs.exit()
         PERMANENT.close()
                 
 ############################################################################3
@@ -2178,7 +2163,7 @@ class LRRT:
 
         os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
         PERMANENT = Session()
-        PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
+        PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
         
         con = sqlite3.connect(self.sqlpath)
         
@@ -2218,7 +2203,7 @@ class LRRT:
         grass.run_command('v.db.update', map= 'Non_con_lake_cat_1', column = "value",qcol = 'Gridcodes')        
         grass.run_command('v.db.update', map= 'nstr_nfinalcat_F', column = "Gridcode",qcol = 'b_GC_str')
         grass.run_command('v.db.dropcolumn', map= 'nstr_nfinalcat_F', columns = ['b_GC_str'])  
-        
+        PERMANENT.close()
         
         
       
@@ -2242,10 +2227,10 @@ class LRRT:
             
             grass.run_command('r.slope.aspect', elevation= 'dem_proj',slope = 'slope',aspect = 'aspect',precision = 'DCELL',overwrite = True)
             grass.run_command('r.mapcalc',expression = 'tanslopedegree = tan(slope) ',overwrite = True) 
-            project.close 
+            project.close() 
         
             PERMANENT = Session()
-            PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
+            PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
             grass.run_command('g.region', raster='dem')
             grass.run_command('v.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'nstr_nfinalcat_F',overwrite = True)
             grass.run_command('v.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'Net_cat_F',overwrite = True) 
@@ -2373,31 +2358,35 @@ class LRRT:
             Sub_reg_outlets_ids = Sub_reg_outlets_ids[Sub_reg_outlets_ids > 0]
             reg_outlet_info     = hyshdinfo2.loc[hyshdinfo2['IsObs'].isin(Sub_reg_outlets_ids)]
             reg_outlet_info     = reg_outlet_info.sort_values(by='DA', ascending=False)
-            
+
             #### Define outlet ID
             outletid = -1
             if Outlet_Obs_ID > 0:
                 outletID_info = hyshdinfo2.loc[hyshdinfo2['IsObs'] == Outlet_Obs_ID]
                 if len(outletID_info) > 0:
                     outletid = outletID_info['SubId'].values[0] 
-                    
-            if len(reg_outlet_info) > 0 and outletid < 0: ### has reg outlets 
-                outletid            = reg_outlet_info['SubId'].values[0] ### the most downstream regin outlet 
-            else:### do not include a reginoutlet 
-                outlet_info  = hyshdinfo2[hyshdinfo2['DowSubId'] < 0]
-                outlet_info  = outlet_info.sort_values(by='DA', ascending=False)
-                outletid     = outlet_info['SubId'].values[0]    
-                
-            HydroBasins1   = Defcat(routing_info_ext,outletid)   
             
+            if outletid < 0:
+                if len(reg_outlet_info) > 0: ### has reg outlets 
+                    outletid            = reg_outlet_info['SubId'].values[0] ### the most downstream regin outlet 
+                else:### do not include a reginoutlet 
+                    outlet_info  = hyshdinfo2[hyshdinfo2['DowSubId'] < 0]
+                    outlet_info  = outlet_info.sort_values(by='DA', ascending=False)
+                    outletid     = outlet_info['SubId'].values[0]    
+                
+            HydroBasins1   = Defcat(routing_info_ext,outletid) 
+
             if len(reg_outlet_info) >= 2:  ### has upstream regin outlet s
                 ### remove subbains drainage to upstream regin outlet s
-                for i in range(1,len(reg_outlet_info)):
+                for i in range(0,len(reg_outlet_info)):
                     upregid               =reg_outlet_info['SubId'].values[i]
+                    if upregid == outletid or np.sum(np.in1d(HydroBasins1, upregid)) < 1: ### the subregion ouetlet not within the target domain neglect 
+                        continue
+                    print(upregid)
                     HydroBasins_remove   = Defcat(routing_info_ext,upregid)  
                     mask                 = np.in1d(HydroBasins1, HydroBasins_remove)  ### exluced ids that belongs to main river stream 
                     HydroBasins1         = HydroBasins1[np.logical_not(mask)]   
-                                  
+                print(HydroBasins1)
                            
             HydroBasins = HydroBasins1
         else:
@@ -2475,7 +2464,7 @@ class LRRT:
 
         os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='-1'))
         PERMANENT = Session()
-        PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts=self.SpRef_in)
+        PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
                 
         if Out == 'Simple':
 #            grass.run_command('v.out.ogr', input = 'finalcat_F',output = os.path.join(self.OutputFolder,'finalcat_info.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
