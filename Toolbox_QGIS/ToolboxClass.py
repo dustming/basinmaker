@@ -1426,8 +1426,8 @@ class LRRT:
         
         ##### Determine subregion with lake
         self.Generateinputdata()
-        self.WatershedDiscretizationToolset(Acc,Is_divid_region = 1)
-        self.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = CheckLakeArea,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 9000,Pec_Grid_outlier = 0.99,Is_divid_region=1)
+        self.WatershedDiscretizationToolset(Acc,Is_divid_region = 1,max_memroy = max_memroy)
+        self.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = CheckLakeArea,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 9000,Pec_Grid_outlier = 0.99,Is_divid_region=1,max_memroy = max_memroy)
                    
         ####Determin river network for whole watersheds
         PERMANENT = Session()
