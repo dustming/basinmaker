@@ -2147,19 +2147,6 @@ class LRRT:
         grass.run_command('r.mapcalc',expression = 'Net_cat = if(isnull(Non_con_lake_cat),Net_cat_connect_lake,Non_con_lake_cat)',overwrite = True)
         grass.run_command('r.out.gdal', input = 'Net_cat',output =os.path.join(self.tempfolder,'Net_cat_test.tif'),format= 'GTiff',overwrite = True)      
     
-        # for kk in range(0,len(NoneCLakeids)):
-        #     mask              = NonCL_array == NoneCLakeids[kk]
-        #     conlake_arr[mask] = nstrid
-        #     nstrid            = nstrid + 1
-        # 
-        # mask = conlake_arr <= 0
-        # conlake_arr[mask] = -9999
-        # 
-        # temparray[:,:] = -9999
-        # temparray[:,:] = conlake_arr[:,:]
-        # temparray.write(mapname="Net_cat", overwrite=True)  #### write new stream id to a grass raster 
-        # grass.run_command('r.null', map='Net_cat',setnull=-9999)
-                  
         
         con.close()
         Qgs.exit()
