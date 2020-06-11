@@ -1047,12 +1047,16 @@ def ConnectLake_to_NonConnectLake_Updateinfo(NonC_Lakeinfo,finalriv_info,Merged_
     
     
     return NonC_Lakeinfo    
+##############################
+#def Add_Attributes_To_shpfile(processing,Filepath = '#',Attris_NM = ['#'],Value_From_Exist_Attri = ['SubId'],Add_Addional_value = [0]):
+    
 
 ############    
 class LRRT:
     def __init__(self, dem_in = '#',dir_in = '#',hyshdply = '#',WidDep = '#',Lakefile = '#'
                                      ,Landuse = '#',Landuseinfo = '#',obspoint = '#',OutHyID = -1 ,OutHyID2 = -1, 
-                                     OutputFolder = '#',ProjectNM = '#',Path_Sub_Reg_Out_Folder = '#',Is_Sub_Region = -1):
+                                     OutputFolder = '#',ProjectNM = '#',Path_Sub_Reg_Out_Folder = '#',Is_Sub_Region = -1
+                                     ,Base_SubId = 200000):
         self.Path_dem_in = dem_in
         self.Path_dir_in = dir_in
         self.Path_hyshdply_in = hyshdply
@@ -1111,6 +1115,7 @@ class LRRT:
         # if not os.path.exists(os.path.join(self.grassdb,self.grass_location_pro)):
 	    #        os.makedirs(os.path.join(self.grassdb,self.grass_location_pro))                    
         
+        self.Base_SubId = Base_SubId
         self.maximum_obs_id = 80000
         self.sqlpath = os.path.join(self.grassdb,'Geographic\\PERMANENT\\sqlite\\sqlite.db')       
         self.cellSize = -9.9999
@@ -2303,7 +2308,7 @@ class LRRT:
         catinfo = Generatecatinfo_riv(nstr_seg_array,acc_array,dir_array,conlake_arr,dem_array,
              catinfodf,allcatid,width_array,depth_array,obs_array,slope_array,aspect_array,landuse_array,
              slope_deg_array,Q_mean_array,Netcat_array,landuseinfo,allLakinfo,self.nrows,self.ncols,
-             rivleninfo.astype(float),catareainfo.astype(float),obsinfo,NonConcLakeInfo,NonCL_array,noncnlake_arr)
+             rivleninfo.astype(float),catareainfo.astype(float),obsinfo,NonConcLakeInfo,NonCL_array,noncnlake_arr,self.maximum_obs_id)
         routing_info         = catinfo[['SubId','DowSubId']].astype('float').values
 #        print(routing_info) 
 #        print(catinfo)
@@ -3354,5 +3359,37 @@ class LRRT:
         Qgs.exit()  
         return 
 
+    def Combine_Sub_Region_Results(self,Sub_Region_info = '#',Sub_Region_OutputFolder = '#', OutputFolder = '#'):
+
+        QgsApplication.setPrefixPath(self.qgisPP, True)
+        Qgs = QgsApplication([],False)
+        Qgs.initQgis()
+        from qgis import processing
+        from processing.core.Processing import Processing   
+        feedback = QgsProcessingFeedback()
+        Processing.initialize()
+        QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
+        
+                
+        ### add new attribte 
+        for i in range(0,len(Sub_Region_info)):
+            isubregion = Sub_Region_info['Sub_Reg_ID'].values[i]
+            ProjectNM  = Sub_Region_info['ProjectNM'].values[i]
+            SubFolder  = os.path.join(Sub_Region_OutputFolder,ProjectNM)
+            
+            Path_Finalcat_info = os.path.join(SubFolder,'finalcat_info.shp')
+            
+            
+            if os.path.exists(Path_Finalcat_info) == 0:
+                continue 
+            
+            
+            # layer_cat=QgsVectorLayer(Path_Finalcat_info,"")
+            # layer_cat.dataProvider().addAttributes([QgsField('HRU_ID', QVariant.Int),QgsField('HRU_Area', QVariant.Double)])
+            # layer_cat.dataProvider().deleteAttributes([35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54])
+            # layer_cat.updateFields()
+            # layer_cat.commitChanges()
+        
+        
 
         

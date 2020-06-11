@@ -622,7 +622,7 @@ def Generatecatinfo(Watseds,fac,fdir,lake,dem,area,catinfo,allcatid,lakeinfo,wid
 
 def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
                     obs,slope,aspect,landuse,slop_deg,Q_Mean,netcat,landuseinfo,lakeinfo,
-                    nrows,ncols,leninfo,areainfo,obsinfo,NonConcLakeInfo,NonCL_array,noncnlake_arr):
+                    nrows,ncols,leninfo,areainfo,obsinfo,NonConcLakeInfo,NonCL_array,noncnlake_arr,maximum_obs_id):
     finalcat = copy.copy(netcat)
     for i in range(0,len(allcatid)):
         catid = allcatid[i].astype(int)
@@ -689,7 +689,7 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
             catinfo.loc[i,'Laketype'] = slakeinfo.iloc[0]['Lake_type']
 ########Check if it is observation points
 #        print(catid,obs[trow,tcol],fac[trow,tcol],fac[nrow,ncol],finalcat[trow,tcol],finalcat[nrow,ncol])
-        if obs[trow,tcol]  > 0:
+        if obs[trow,tcol]  > 0 and obs[trow,tcol] < maximum_obs_id:
 #            arcpy.AddMessage(str(catid)+"      "+str(obs[trow,tcol]))
             catinfo.loc[i,'IsObs'] =  obs[trow,tcol]
             obsid = float(obs[trow,tcol])
