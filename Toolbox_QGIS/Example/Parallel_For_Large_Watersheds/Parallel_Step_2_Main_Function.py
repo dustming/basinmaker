@@ -7,7 +7,7 @@ import pandas as pd
 
 ####define functtion
 def Generaterouting_subregion(i):
-	os.system("Parallel_Step_2_Script_For_Each_Sub_Region.py  " + str(i))
+	os.system("python Parallel_Step_2_Script_For_Each_Sub_Region.py  " + str(i))
 	
 
 ###Read Sub Region info
