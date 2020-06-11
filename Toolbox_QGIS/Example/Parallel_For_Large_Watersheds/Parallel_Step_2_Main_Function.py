@@ -14,7 +14,6 @@ def Generaterouting_subregion(i):
 Datafolder = "C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/RoutingTool/Samples/Examples/Data_Lakeofwoods/"
 Out_Sub_Reg_Dem_Folder = os.path.join(Datafolder,'SubRegion') 
 SubReg_info_main = pd.read_csv(os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_reg_info.csv'))
-
 arg_instances = range(0,len(SubReg_info_main))
 
 #### Run

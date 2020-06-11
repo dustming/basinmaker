@@ -38,8 +38,6 @@ import sys
 
 Datafolder = "C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/RoutingTool/Samples/Examples/Data_Lakeofwoods/"
 Outputfolder = "C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/RoutingTool/Samples/Examples/Outputs1/"
-
-Datafolder2 = "C:/Users/dustm/Documents/ubuntu/share/OneDrive/OneDrive - University of Waterloo/Documents/RoutingTool/Database/"
 ####
 
 ith_subregion = int(sys.argv[1])
@@ -58,6 +56,7 @@ CA_HYDAT =os.path.join(Datafolder,'Hydat.sqlite3')
 Out_Sub_Reg_Dem_Folder = os.path.join(Datafolder,'SubRegion') 
 
 
+### open log file 
 if ith_subregion == 0:
     file_object = open(os.path.join(Out_Sub_Reg_Dem_Folder,'Log'), 'w')
     file_object.write('SubRegion Id,           Status' + '\n')
@@ -77,17 +76,19 @@ try:
     RTtool=LRRT(Lakefile = in_lake,Landuse = landuse,Landuseinfo = landuseinfo,obspoint = in_obs,OutputFolder = Outputfolder, ProjectNM = ProjectName,Path_Sub_Reg_Out_Folder = Out_Sub_Reg_Dem_Folder,Is_Sub_Region = 1)
     RTtool.Generatmaskregion(Path_Sub_Polygon = Path_Sub_Polygon)
     RTtool.Generateinputdata()
-    RTtool.WatershedDiscretizationToolset()
-    RTtool.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = 5,Thre_Lake_Area_nonConnect = 5)
-    RTtool.RoutingNetworkTopologyUpdateToolset_riv('EPSG:3573',Outlet_Obs_ID = basinid + 1000)
+    RTtool.WatershedDiscretizationToolset(max_memroy = 1024*2)
+    RTtool.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = 5,Thre_Lake_Area_nonConnect = 5,max_memroy = 1024*2)
+    RTtool.RoutingNetworkTopologyUpdateToolset_riv('EPSG:3573',Outlet_Obs_ID = basinid + 1000,max_memroy = 1024*2)
     RTtool.Output_Clean(clean = 'False')
 
     Datafolder_final = os.path.join(Outputfolder,ProjectName)
     RTtool.Define_Final_Catchment(Datafolder = Datafolder_final)
     file_object.write(str(basinid) + '          Successful ' + '\n')
+    file_object.close()
 except:
     shutil.rmtree(os.path.join(Outputfolder,ProjectName),ignore_errors=True)
     print(basinid)
     file_object.write(str(basinid) + '          Failed ' + '\n')
+    file_object.close()
     pass
-file_object.close()
+
