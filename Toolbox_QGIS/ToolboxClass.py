@@ -1048,8 +1048,47 @@ def ConnectLake_to_NonConnectLake_Updateinfo(NonC_Lakeinfo,finalriv_info,Merged_
     
     return NonC_Lakeinfo    
 ##############################
-#def Add_Attributes_To_shpfile(processing,Filepath = '#',Attris_NM = ['#'],Value_From_Exist_Attri = ['SubId'],Add_Addional_value = [0]):
+def Add_Attributes_To_shpfile(processing,context,Layer,Attris_NM = ['Reg_ID','nSubId','nDowSubId'],Value_From_Exist_Attri = ['SubId'],
+                            Add_Addional_value = [0,2000000,2000000],Field_Length = [10,10,10],Field_Precision = [0,0,0],OutputPath = '#',Region_ID = 1):
+
+
+    alg_params = {
+        'FIELD_LENGTH': Field_Length[0],
+        'FIELD_NAME': Attris_NM[0],
+        'FIELD_PRECISION': Field_Precision[0],
+        'FIELD_TYPE': 0,
+        'FORMULA':str(int(Region_ID)), #' \"'+'SubId'+'\"'  + '2000000',   #
+        'INPUT': Layer,
+        'NEW_FIELD': True,
+        'OUTPUT':'memory:'
+        }
+        
+    add_regionid = processing.run('qgis:fieldcalculator', alg_params, context=context)
     
+                                
+    alg_params = {
+        'FIELD_LENGTH': Field_Length[1],
+        'FIELD_NAME': Attris_NM[1],
+        'FIELD_PRECISION': Field_Precision[1],
+        'FIELD_TYPE': 0,
+        'FORMULA':' \"SubId\"  +  \"Reg_ID\"  * 200000', #' \"'+'SubId'+'\"'  + '2000000',   #
+        'INPUT': add_regionid['OUTPUT'],
+        'NEW_FIELD': True,
+        'OUTPUT':'memory:'
+        }        
+    add_subid = processing.run('qgis:fieldcalculator', alg_params, context=context)
+
+    alg_params = {
+        'FIELD_LENGTH': Field_Length[2],
+        'FIELD_NAME': Attris_NM[2],
+        'FIELD_PRECISION': Field_Precision[2],
+        'FIELD_TYPE': 0,
+        'FORMULA':' \"DowSubId\"  +  \"Reg_ID\"  * 200000', #' \"'+'SubId'+'\"'  + '2000000',   #
+        'INPUT': add_subid['OUTPUT'],
+        'NEW_FIELD': True,
+        'OUTPUT':OutputPath
+        }        
+    processing.run('qgis:fieldcalculator', alg_params, context=context)    
 
 ############    
 class LRRT:
@@ -3359,17 +3398,28 @@ class LRRT:
         Qgs.exit()  
         return 
 
-    def Combine_Sub_Region_Results(self,Sub_Region_info = '#',Sub_Region_OutputFolder = '#', OutputFolder = '#'):
+    def Combine_Sub_Region_Results(self,Sub_Region_info = '#',Sub_Region_OutputFolder = '#', OutputFolder = '#',Is_Only_Final_Result = 1):
 
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
         Qgs.initQgis()
         from qgis import processing
-        from processing.core.Processing import Processing   
+        from processing.core.Processing import Processing
+        from processing.tools import dataobjects
         feedback = QgsProcessingFeedback()
         Processing.initialize()
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
+        context = dataobjects.createContext()
+        context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
         
+        
+        Paths_Finalcat_ply      = []
+        Paths_Finalcat_line     = []
+        Paths_Finalriv_ply      = []
+        Paths_Finalriv_line     = []
+        Paths_Con_Lake_ply      = []
+        Paths_None_Con_Lake_ply = []
+        Paths_obs_point         = []
                 
         ### add new attribte 
         for i in range(0,len(Sub_Region_info)):
@@ -3377,11 +3427,59 @@ class LRRT:
             ProjectNM  = Sub_Region_info['ProjectNM'].values[i]
             SubFolder  = os.path.join(Sub_Region_OutputFolder,ProjectNM)
             
-            Path_Finalcat_info = os.path.join(SubFolder,'finalcat_info.shp')
+            ### define path of the output file in this sub region
+            Path_Finalcat_ply      = os.path.join(SubFolder,'finalcat_info.shp')
+            Path_Finalcat_line     = os.path.join(SubFolder,'finalcat_info_riv.shp')
+            Path_Finalriv_ply      = os.path.join(SubFolder,'finalriv_info_ply.shp')
+            Path_Finalriv_line     = os.path.join(SubFolder,'finalriv_info.shp')
+            Path_Con_Lake_ply      = os.path.join(SubFolder,'Con_Lake_Ply.shp')
+            Path_None_Con_Lake_ply = os.path.join(SubFolder,'Non_Con_Lake_Ply.shp')
+            Path_obs_point         = os.path.join(SubFolder,'obspoint.shp')  
             
-            
-            if os.path.exists(Path_Finalcat_info) == 0:
+                                 
+            if os.path.exists(Path_Finalcat_ply) != 1:   ### this sub region did not generate outputs
                 continue 
+                
+            if Is_Only_Final_Result == 1:
+                
+                layer_cat=QgsVectorLayer(Path_Finalcat_ply,"")
+                Add_Attributes_To_shpfile(processing,context,layer_cat, OutputPath = os.path.join(SubFolder,'finalcat_info_addatrri.shp'),Region_ID = i + 1)    
+                Paths_Finalcat_ply.append(os.path.join(SubFolder,'finalcat_info_addatrri.shp'))
+                del layer_cat
+
+                layer_cat=QgsVectorLayer(Path_Finalcat_line,"")
+                Add_Attributes_To_shpfile(processing,context,layer_cat, OutputPath = os.path.join(SubFolder,'finalcat_info_riv_addatrri.shp'),Region_ID = i + 1)    
+                Paths_Finalcat_line.append(os.path.join(SubFolder,'finalcat_info_riv_addatrri.shp'))
+                del layer_cat
+            
+                 
+                # layer_cat=QgsVectorLayer(Path_Finalriv_ply,"")
+                # Add_Attributes_To_shpfile(processing,context,layer_cat, OutputPath = os.path.join(SubFolder,'finalriv_info_ply_addatrri.shp'),Region_ID = i + 1)    
+                # Paths_Finalriv_ply.append(os.path.join(SubFolder,'finalriv_info_ply_addatrri.shp'))
+                # del layer_cat            
+                # 
+                # layer_cat=QgsVectorLayer(Path_Finalriv_line,"")
+                # Add_Attributes_To_shpfile(processing,context,layer_cat, OutputPath = os.path.join(SubFolder,'finalriv_info_addatrri.shp'),Region_ID = i + 1)    
+                # Paths_Finalriv_line.append(os.path.join(SubFolder,'finalriv_info_addatrri.shp'))
+                # del layer_cat
+            
+            if os.path.exists(Path_Con_Lake_ply) == 1:
+                Paths_Con_Lake_ply.append(Path_Con_Lake_ply)
+            if os.path.exists(Path_None_Con_Lake_ply) == 1:
+                Paths_None_Con_Lake_ply.append(Path_None_Con_Lake_ply)
+            if os.path.exists(Path_obs_point) == 1:
+                Paths_obs_point.append(Path_obs_point)
+                        
+
+        processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalcat_ply,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'finalcat_info.shp')})
+        processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalcat_line,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'finalcat_info_riv.shp')})
+        
+        if(len(Paths_Con_Lake_ply) > 0):
+            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Con_Lake_ply,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'Con_Lake_Ply.shp')})
+        if(len(Paths_None_Con_Lake_ply) > 0):
+            processing.run("native:mergevectorlayers", {'LAYERS':Paths_None_Con_Lake_ply,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'Non_Con_Lake_Ply.shp')})
+        if(len(Paths_obs_point) > 0):
+            processing.run("native:mergevectorlayers", {'LAYERS':Paths_obs_point,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'obspoint.shp')})
             
             
             # layer_cat=QgsVectorLayer(Path_Finalcat_info,"")
