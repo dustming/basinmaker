@@ -1558,10 +1558,11 @@ class LRRT:
             processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask_region_'+ str(basinid)+'.shp'),'FIELD':'DN','OUTPUT':os.path.join(self.tempfolder, 'HyMask_region_f'+ str(basinid)+'.shp')})
             processing.run("native:buffer", {'INPUT':os.path.join(self.tempfolder, 'HyMask_region_f'+ str(basinid)+'.shp'),'DISTANCE':0.005,'SEGMENTS':5,'END_CAP_STYLE':0,'JOIN_STYLE':0,'MITER_LIMIT':2,'DISSOLVE':True,'OUTPUT':os.path.join(Out_Sub_Reg_Dem_Folder, 'HyMask_region_'+ str(int(basinid+self.maximum_obs_id))+'.shp')})
 
-                
-            grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True) 
             
+        grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
             
+        for i in range(0,len(Basins)): 
+            basinid = int(Basins[i])   
             catmask = strtemp_array == basinid
             catacc  = acc[catmask]
             trow,tcol = Getbasinoutlet(basinid,strtemp_array,acc,dir,nrows,ncols)
@@ -1573,19 +1574,22 @@ class LRRT:
                 nrow,ncol = Nextcell(dir,ttrow,ttcol)### get the downstream catchment id
                 if nrow < 0 or ncol < 0:
                     dowsubreginid = -1
+                    Cat_outlets[trow,tcol] = int(basinid + self.maximum_obs_id)  ### for outlet of watershed, use trow tcol
                     break;
                 elif nrow >= nrows or ncol >= ncols:
                     dowsubreginid = -1
+                    Cat_outlets[trow,tcol] = int(basinid + self.maximum_obs_id)
                     break;
                 elif strtemp_array[nrow,ncol] <= 0 or strtemp_array[nrow,ncol] == basinid:
                     dowsubreginid = -1
+                    Cat_outlets[trow,tcol] = int(basinid + self.maximum_obs_id)
                 else:
                     dowsubreginid = strtemp_array[nrow,ncol]
                     Cat_outlets[ttrow,ttcol] = int(basinid + self.maximum_obs_id)
                 k = k + 1
                 ttrow = nrow
                 ttcol = ncol       
-              
+                          
             subregin_info.loc[i,"ProjectNM"]      = ProjectNM + '_'+str(int(basinid+self.maximum_obs_id))
             subregin_info.loc[i,"Nun_Grids"]      = np.sum(catmask)
             subregin_info.loc[i,"Ply_Name"]       = 'HyMask_region_'+ str(int(basinid+self.maximum_obs_id))+'.shp'
@@ -1600,12 +1604,13 @@ class LRRT:
         outlet_reg_info  = outlet_reg_info.sort_values(by='Max_ACC', ascending=False)
         outlet_reg_id    = outlet_reg_info['Sub_Reg_ID'].values[0] 
         
-        
+        print(subregin_info)
         mask  = subregin_info['Dow_Sub_Reg_Id'] == self.maximum_obs_id-1
         mask2 = np.logical_not(subregin_info['Sub_Reg_ID'] == outlet_reg_id)
         del_row_mask = np.logical_and(mask2,mask)
         
         subregin_info = subregin_info.loc[np.logical_not(del_row_mask),:]
+        print(subregin_info)
 #        subregin_info.drop(subregin_info.index[del_row_mask]) ### 
         subregin_info.to_csv(os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_reg_info.csv'),index = None, header=True)
         
