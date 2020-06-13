@@ -1740,9 +1740,9 @@ class LRRT:
                 grass.run_command('r.mapcalc',expression = "acc_grass   = grass_acc1",overwrite = True)
                 
             else:
-                grass.run_command('r.watershed',elevation = 'dem', drainage = 'dir_grass', accumulation = 'acc_grass2',flags = 's', overwrite = True)
+                grass.run_command('r.watershed',elevation = 'dem', accumulation = 'acc_grass2',flags = 's', overwrite = True)
                 grass.run_command('r.mapcalc',expression = "acc_grass = abs(acc_grass2@PERMANENT)",overwrite = True)
-                grass.run_command('r.reclass', input='dir_grass',output = 'dir_Arcgis',rules = os.path.join(self.RoutingToolPath,'Grass2ArcgisDIR.txt'), overwrite = True)
+#                grass.run_command('r.reclass', input='dir_grass',output = 'dir_Arcgis',rules = os.path.join(self.RoutingToolPath,'Grass2ArcgisDIR.txt'), overwrite = True)
             
             
         if self.Path_Landuseinfo_in != '#':
@@ -1829,7 +1829,8 @@ class LRRT:
         if self.Path_dir_in == '#':  ### did not provide dir, use dem to generate watershed. recommand !!
             if Is_divid_region > 0:
                 grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =accthresold,stream_raster = 'str_grass_r',
-                                  overwrite = True, memory = max_memroy)
+                                  direction = 'dir_grass',overwrite = True, memory = max_memroy)
+                grass.run_command('r.reclass', input='dir_grass',output = 'dir_Arcgis',rules = os.path.join(self.RoutingToolPath,'Grass2ArcgisDIR.txt'), overwrite = True)
             else:
                 if self.Is_Sub_Region > 0:
                     ### use stream predefined stream segments of whole watershed 
@@ -1838,7 +1839,8 @@ class LRRT:
                     grass.run_command('r.mapcalc',expression = "str_grass_r = str_grass_r1",overwrite = True)    
                 else:    
                     grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =accthresold,stream_raster = 'str_grass_r',
-                                    stream_vector = 'str_grass_v',overwrite = True,memory = max_memroy)
+                                    stream_vector = 'str_grass_v',direction = 'dir_grass',overwrite = True,memory = max_memroy)
+                    grass.run_command('r.reclass', input='dir_grass',output = 'dir_Arcgis',rules = os.path.join(self.RoutingToolPath,'Grass2ArcgisDIR.txt'), overwrite = True)
         else:
         ## generate correct stream raster, when the dir is not derived from dem. for Hydroshed Cases 
             grass.run_command('r.accumulate', direction='dir_grass',format = '45degree',accumulation ='acc_grass',
