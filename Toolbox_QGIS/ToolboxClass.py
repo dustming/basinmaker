@@ -1532,6 +1532,8 @@ class LRRT:
         acc           = garray.array(mapname="acc_grass")  
         Cat_outlets   = copy.copy(strtemp_array)
         Cat_outlets[:,:] = -9999
+        Cat_outlets_Down      = copy.copy(strtemp_array)
+        Cat_outlets_Down[:,:] = -9999
         ncols = int(strtemp_array.shape[1])
         nrows = int(strtemp_array.shape[0])
         Basins        = np.unique(strtemp_array)
@@ -1586,10 +1588,11 @@ class LRRT:
                 else:
                     dowsubreginid = strtemp_array[nrow,ncol]
                     Cat_outlets[ttrow,ttcol] = int(basinid + self.maximum_obs_id)
+                    Cat_outlets_Down[nrow,ncol] = int(basinid + self.maximum_obs_id)
                 k = k + 1
                 ttrow = nrow
                 ttcol = ncol       
-                          
+                              
             subregin_info.loc[i,"ProjectNM"]      = ProjectNM + '_'+str(int(basinid+self.maximum_obs_id))
             subregin_info.loc[i,"Nun_Grids"]      = np.sum(catmask)
             subregin_info.loc[i,"Ply_Name"]       = 'HyMask_region_'+ str(int(basinid+self.maximum_obs_id))+'.shp'
@@ -1622,13 +1625,23 @@ class LRRT:
         temparray.write(mapname="Sub_Reg_Outlets", overwrite=True)
         grass.run_command('r.mapcalc',expression = 'Sub_Reg_Outlets_1 = int(Sub_Reg_Outlets)',overwrite = True)  
         grass.run_command('r.null', map='Sub_Reg_Outlets_1',setnull=-9999) 
-        
+
+        temparray = garray.array()    
+        temparray[:,:] = Cat_outlets_Down[:,:]
+        temparray.write(mapname="Sub_Reg_Outlets_Down", overwrite=True)
+        grass.run_command('r.mapcalc',expression = 'Sub_Reg_Outlets_Down_1 = int(Sub_Reg_Outlets_Down)',overwrite = True)  
+        grass.run_command('r.null', map='Sub_Reg_Outlets_Down_1',setnull=-9999) 
+                
 
         grass.run_command('r.to.vect',  input = 'Sub_Reg_Outlets_1',output = 'Sub_Reg_Outlets_point', type ='point' ,overwrite = True)
         grass.run_command('v.out.ogr', input = 'Sub_Reg_Outlets_point',output = os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_Reg_Outlets.shp"),format= 'ESRI_Shapefile',overwrite = True)
         grass.run_command('r.pack',input = 'Sub_Reg_Outlets_1',    output =self.Path_Sub_reg_outlets_r,overwrite = True)
         grass.run_command('v.pack',input = 'Sub_Reg_Outlets_point',output =self.Path_Sub_reg_outlets_v,overwrite = True)
 
+
+        grass.run_command('r.to.vect',  input = 'Sub_Reg_Outlets_Down_1',output = 'Sub_Reg_Outlets_Down_point', type ='point' ,overwrite = True)
+        grass.run_command('v.out.ogr', input = 'Sub_Reg_Outlets_Down_point',output = os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_Reg_Outlets_Down.shp"),format= 'ESRI_Shapefile',overwrite = True)
+        
         return                         
 ##################################################################################################  
 #### functions to preprocess data, Output:
@@ -3404,7 +3417,7 @@ class LRRT:
         Qgs.exit()  
         return 
 
-    def Combine_Sub_Region_Results(self,Sub_Region_info = '#',Sub_Region_OutputFolder = '#', OutputFolder = '#',Is_Only_Final_Result = 1):
+    def Combine_Sub_Region_Results(self,Sub_Region_info = '#',Sub_Region_OutputFolder = '#', OutputFolder = '#',Is_Only_Final_Result = 1,Path_Down_Stream_Points= '#'):
 
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
@@ -3426,6 +3439,8 @@ class LRRT:
         Paths_Con_Lake_ply      = []
         Paths_None_Con_Lake_ply = []
         Paths_obs_point         = []
+        
+        Path_Outlet_Down_point = Path_Down_Stream_Points
                 
         ### add new attribte 
         for i in range(0,len(Sub_Region_info)):
@@ -3487,8 +3502,8 @@ class LRRT:
         if(len(Paths_obs_point) > 0):
             processing.run("native:mergevectorlayers", {'LAYERS':Paths_obs_point,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'obspoint.shp')})
 
-
-        ################################Update attritutes 
+        #### Obtain downstream # id: 
+        processing.run("qgis:joinattributesbylocation", {'INPUT':Path_Outlet_Down_point,'JOIN':os.path.join(self.tempfolder,'finalcat_info.shp'),'PREDICATE':[5],'JOIN_FIELDS':[],'METHOD':1,'DISCARD_NONMATCHING':True,'PREFIX':'','OUTPUT':os.path.join(self.tempfolder,'Down_Sub_ID.shp')},context = context)        
         
         tempinfo = Dbf5(os.path.join(self.tempfolder,'finalcat_info.shp')[:-3] + "dbf")
         AllCatinfo = tempinfo.to_dataframe().drop_duplicates('nSubId', keep='first')
