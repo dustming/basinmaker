@@ -3449,13 +3449,13 @@ class LRRT:
             if Is_Only_Final_Result == 1:
                 
                 layer_cat=QgsVectorLayer(Path_Finalcat_ply,"")
-                Add_Attributes_To_shpfile(processing,context,layer_cat, OutputPath = os.path.join(SubFolder,'finalcat_info_addatrri.shp'),Region_ID = i + 1)    
-                Paths_Finalcat_ply.append(os.path.join(SubFolder,'finalcat_info_addatrri.shp'))
+                Add_Attributes_To_shpfile(processing,context,layer_cat, OutputPath = os.path.join(self.tempfolder,'finalcat_info_Region_'+str(isubregion)+'addatrri.shp'),Region_ID = i + 1)    
+                Paths_Finalcat_ply.append(os.path.join(self.tempfolder,'finalcat_info_Region_'+str(isubregion)+'addatrri.shp'))
                 del layer_cat
 
                 layer_cat=QgsVectorLayer(Path_Finalcat_line,"")
-                Add_Attributes_To_shpfile(processing,context,layer_cat, OutputPath = os.path.join(SubFolder,'finalcat_info_riv_addatrri.shp'),Region_ID = i + 1)    
-                Paths_Finalcat_line.append(os.path.join(SubFolder,'finalcat_info_riv_addatrri.shp'))
+                Add_Attributes_To_shpfile(processing,context,layer_cat, OutputPath = os.path.join(self.tempfolder,'finalcat_info_riv_Region_'+str(isubregion)+'addatrri.shp'),Region_ID = i + 1)    
+                Paths_Finalcat_line.append(os.path.join(self.tempfolder,'finalcat_info_riv_Region_'+str(isubregion)+'addatrri.shp'))
                 del layer_cat
             
                  
@@ -3477,8 +3477,8 @@ class LRRT:
                 Paths_obs_point.append(Path_obs_point)
                         
 
-        processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalcat_ply,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'finalcat_info.shp')})
-        processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalcat_line,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'finalcat_info_riv.shp')})
+        processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalcat_ply,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalcat_info.shp')})
+        processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalcat_line,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalcat_info_riv.shp')})
         
         if(len(Paths_Con_Lake_ply) > 0):
             processing.run("native:mergevectorlayers", {'LAYERS':Paths_Con_Lake_ply,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'Con_Lake_Ply.shp')})
@@ -3486,6 +3486,13 @@ class LRRT:
             processing.run("native:mergevectorlayers", {'LAYERS':Paths_None_Con_Lake_ply,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'Non_Con_Lake_Ply.shp')})
         if(len(Paths_obs_point) > 0):
             processing.run("native:mergevectorlayers", {'LAYERS':Paths_obs_point,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'obspoint.shp')})
+
+
+        ################################Update attritutes 
+        
+        tempinfo = Dbf5(os.path.join(self.tempfolder,'finalcat_info.shp')[:-3] + "dbf")
+        AllCatinfo = tempinfo.to_dataframe().drop_duplicates('nSubId', keep='first')
+        print(AllCatinfo)
             
             
             # layer_cat=QgsVectorLayer(Path_Finalcat_info,"")
