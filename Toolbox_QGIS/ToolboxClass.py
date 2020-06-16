@@ -3538,9 +3538,16 @@ class LRRT:
         
             for i in range(0,len(Sub_Region_info)):
                 isubregion = Sub_Region_info['Sub_Reg_ID'].values[i] 
-                iReg_Outlet_nSubid = (isubregion - 80000) * 200000 - 1
+                
+                Sub_Region_cat_info = AllCatinfo.loc[AllCatinfo['Reg_ID'] == isubregion]
+                
+                if len(Sub_Region_cat_info) <= 0:
+                    continue 
+                    
+                Sub_Region_cat_info = Sub_Region_cat_info.sort_values(by='DA', ascending=False)
+                iReg_Outlet_nSubid = Sub_Region_cat_info['nSubId'].values[0]    #(isubregion - 80000) * 200000 - 1
             
-                outlet_mask = AllCatinfo['nDowSubId'] == iReg_Outlet_nSubid
+                outlet_mask = AllCatinfo['nSubId'] == iReg_Outlet_nSubid
             
                 Dow_Sub_Region_id = Sub_Region_info['Dow_Sub_Reg_Id'].values[i] 
             
@@ -3584,9 +3591,16 @@ class LRRT:
         
             for i in range(0,len(Sub_Region_info)):
                 isubregion = Sub_Region_info['Sub_Reg_ID'].values[i] 
-                iReg_Outlet_nSubid = (isubregion - 80000) * 200000 - 1
+                
+                Sub_Region_cat_info = AllCatinfo.loc[AllCatinfo['Reg_ID'] == isubregion]
+                
+                if len(Sub_Region_cat_info) <= 0:
+                    continue 
+                    
+                Sub_Region_cat_info = Sub_Region_cat_info.sort_values(by='DA', ascending=False)
+                iReg_Outlet_nSubid = Sub_Region_cat_info['nSubId'].values[0]    #(isubregion - 80000) * 200000 - 1
             
-                outlet_mask = AllCatinfo['nDowSubId'] == iReg_Outlet_nSubid
+                outlet_mask = AllCatinfo['nSubId'] == iReg_Outlet_nSubid
             
                 Dow_Sub_Region_id = Sub_Region_info['Dow_Sub_Reg_Id'].values[i] 
             
