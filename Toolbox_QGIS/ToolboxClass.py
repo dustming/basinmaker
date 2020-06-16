@@ -3558,11 +3558,15 @@ class LRRT:
                     AllCatinfo.loc[outlet_mask,'nDowSubId'] = DownSubid                    
                 else:
                     print(isubregion,iReg_Outlet_nSubid)
+                    AllCatinfo.loc[outlet_mask,'nDowSubId'] = -1
                 
             
         AllCatinfo['SubId'] = AllCatinfo['nSubId']
         AllCatinfo['DowSubId'] = AllCatinfo['nDowSubId']   
+        AllCatinfo = Streamorderanddrainagearea(AllCatinfo)
         Copy_Pddataframe_to_shpfile(os.path.join(self.tempfolder,'finalcat_info.shp'),AllCatinfo)
+        Copy_Pddataframe_to_shpfile(os.path.join(self.tempfolder,'finalcat_info_riv.shp'),AllCatinfo)
+        
             # layer_cat=QgsVectorLayer(Path_Finalcat_info,"")
             # layer_cat.dataProvider().addAttributes([QgsField('HRU_ID', QVariant.Int),QgsField('HRU_Area', QVariant.Double)])
             # layer_cat.dataProvider().deleteAttributes([35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54])
