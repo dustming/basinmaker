@@ -1209,7 +1209,7 @@ class LRRT:
 #####         For using non hydroshed product, the output is a mask based on either dem or 
 #####              a rough watershed delineaiton resut. depend on OutletPoint value
 #####              at the same time flow directio and accumulation is caculated for this region 
-    def Generatmaskregion(self,OutletPoint = '#',Path_Sub_Polygon = '#'):
+    def Generatmaskregion(self,OutletPoint = '#',Path_Sub_Polygon = '#',Buffer_Distance = 0.3):
         #### g
         ### Set up QGIS enviroment 
         QgsApplication.setPrefixPath(self.qgisPP, True)
@@ -1288,7 +1288,7 @@ class LRRT:
             else:
                 print("Mask Region:   Using buffered hydroBasin product polygons ")
                 processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask.shp'),'FIELD':'MAIN_BAS','OUTPUT':os.path.join(self.tempfolder, 'HyMask1.shp')},context = context)
-                processing.run("native:buffer", {'INPUT':os.path.join(self.tempfolder, 'HyMask1.shp'),'DISTANCE':0.05,'SEGMENTS':5,'END_CAP_STYLE':0,'JOIN_STYLE':0,'MITER_LIMIT':2,'DISSOLVE':True,'OUTPUT':os.path.join(self.tempfolder, 'HyMask3.shp')},context = context)
+                processing.run("native:buffer", {'INPUT':os.path.join(self.tempfolder, 'HyMask1.shp'),'DISTANCE':Buffer_Distance,'SEGMENTS':5,'END_CAP_STYLE':0,'JOIN_STYLE':0,'MITER_LIMIT':2,'DISSOLVE':True,'OUTPUT':os.path.join(self.tempfolder, 'HyMask3.shp')},context = context)
                 processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask3.shp'),'FIELD':'MAIN_BAS','OUTPUT':os.path.join(self.tempfolder, 'HyMask4.shp')},context = context)
               
             processing.run("native:reprojectlayer", {'INPUT':os.path.join(self.tempfolder, 'HyMask4.shp'),'TARGET_CRS':QgsCoordinateReferenceSystem(self.SpRef_in),'OUTPUT':self.Path_Maskply},context = context)  
@@ -1925,7 +1925,10 @@ class LRRT:
         grass.run_command('r.out.gdal', input = 'cat1',output = os.path.join(self.tempfolder,'cat1.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')    
         grass.run_command('r.out.gdal', input = 'Connect_Lake',output = os.path.join(self.tempfolder,'Connect_Lake.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
         grass.run_command('r.out.gdal', input = 'Nonconnect_Lake',output = os.path.join(self.tempfolder,'Nonconnect_Lake.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')    
-        grass.run_command('r.out.gdal', input = 'str_grass_r',output = os.path.join(self.tempfolder,'str_grass_r.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')    
+        grass.run_command('r.out.gdal', input = 'str_grass_r',output = os.path.join(self.tempfolder,'str_grass_r.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
+        # grass.run_command('r.out.gdal', input = 'dir_Arcgis',output = os.path.join(self.tempfolder,'dir_Arcgis.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
+        # grass.run_command('r.out.gdal', input = 'acc_grass',output = os.path.join(self.tempfolder,'acc_grass.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
+        # grass.run_command('r.out.gdal', input = 'acc_grass2',output = os.path.join(self.tempfolder,'acc_grass2.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')    
 
         PERMANENT.close()
 ###########################################################################################3
