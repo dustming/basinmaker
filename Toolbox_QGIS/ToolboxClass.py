@@ -886,7 +886,26 @@ def UpdateConnectedLakeArea_In_Finalcatinfo(Path_Finalcatinfo,Conn_Lake_Ids):
     del layer_cat
     return
     
-    
+#######
+def Copy_Pddataframe_to_shpfile(Path_shpfile,Pddataframe,link_col_nm = 'nSubId'):
+    layer_cat=QgsVectorLayer(Path_shpfile,"")
+    Attri_Name = layer_cat.fields().names()     
+    features = layer_cat.getFeatures()      
+    with edit(layer_cat):
+        for sf in features:
+            Atti_Valu    = sf.attributes()
+            sf_subid     = sf[link_col_nm]
+            tarinfo      = Pddataframe[Pddataframe[link_col_nm] == sf_subid]
+            for icolnm in range(0,len(Attri_Name)):     ### copy infomaiton
+                if  Attri_Name[icolnm] == 'Obs_NM' or Attri_Name[icolnm] == 'SRC_obs' or  Attri_Name[icolnm] == 'layer' or  Attri_Name[icolnm] == 'path'  :
+                    sf[Attri_Name[icolnm]] = str(tarinfo[Attri_Name[icolnm]].values[0])
+                elif Attri_Name[icolnm] == 'cat':
+                    continue
+                else:
+                    sf[Attri_Name[icolnm]] = float(tarinfo[Attri_Name[icolnm]].values[0])
+            layer_cat.updateFeature(sf)
+    del layer_cat
+            
 
 #########
 def Add_centroid_to_feature(Path_feagure,centroidx_nm = '#',centroidy_nm='#'):
@@ -1071,7 +1090,7 @@ def Add_Attributes_To_shpfile(processing,context,Layer,Attris_NM = ['Reg_ID','nS
         'FIELD_NAME': Attris_NM[1],
         'FIELD_PRECISION': Field_Precision[1],
         'FIELD_TYPE': 0,
-        'FORMULA':' \"SubId\"  +  \"Reg_ID\"  * 200000', #' \"'+'SubId'+'\"'  + '2000000',   #
+        'FORMULA':'  \"SubId\" +  ( \"Reg_ID\"  - 80000  ) * 200000 ', #' \"'+'SubId'+'\"'  + '2000000',   #
         'INPUT': add_regionid['OUTPUT'],
         'NEW_FIELD': True,
         'OUTPUT':'memory:'
@@ -1083,7 +1102,7 @@ def Add_Attributes_To_shpfile(processing,context,Layer,Attris_NM = ['Reg_ID','nS
         'FIELD_NAME': Attris_NM[2],
         'FIELD_PRECISION': Field_Precision[2],
         'FIELD_TYPE': 0,
-        'FORMULA':' \"DowSubId\"  +  \"Reg_ID\"  * 200000', #' \"'+'SubId'+'\"'  + '2000000',   #
+        'FORMULA':'  \"DowSubId\" +  ( \"Reg_ID\"  - 80000  ) * 200000 ', #' \"DowSubId\"  +  \"Reg_ID\"  * 200000', #' \"'+'SubId'+'\"'  + '2000000',   #
         'INPUT': add_subid['OUTPUT'],
         'NEW_FIELD': True,
         'OUTPUT':OutputPath
@@ -3466,12 +3485,12 @@ class LRRT:
             if Is_Only_Final_Result == 1:
                 
                 layer_cat=QgsVectorLayer(Path_Finalcat_ply,"")
-                Add_Attributes_To_shpfile(processing,context,layer_cat, OutputPath = os.path.join(self.tempfolder,'finalcat_info_Region_'+str(isubregion)+'addatrri.shp'),Region_ID = i + 1)    
+                Add_Attributes_To_shpfile(processing,context,layer_cat, OutputPath = os.path.join(self.tempfolder,'finalcat_info_Region_'+str(isubregion)+'addatrri.shp'),Region_ID = isubregion)    
                 Paths_Finalcat_ply.append(os.path.join(self.tempfolder,'finalcat_info_Region_'+str(isubregion)+'addatrri.shp'))
                 del layer_cat
 
                 layer_cat=QgsVectorLayer(Path_Finalcat_line,"")
-                Add_Attributes_To_shpfile(processing,context,layer_cat, OutputPath = os.path.join(self.tempfolder,'finalcat_info_riv_Region_'+str(isubregion)+'addatrri.shp'),Region_ID = i + 1)    
+                Add_Attributes_To_shpfile(processing,context,layer_cat, OutputPath = os.path.join(self.tempfolder,'finalcat_info_riv_Region_'+str(isubregion)+'addatrri.shp'),Region_ID = isubregion)    
                 Paths_Finalcat_line.append(os.path.join(self.tempfolder,'finalcat_info_riv_Region_'+str(isubregion)+'addatrri.shp'))
                 del layer_cat
             
@@ -3509,9 +3528,41 @@ class LRRT:
         
         tempinfo = Dbf5(os.path.join(self.tempfolder,'finalcat_info.shp')[:-3] + "dbf")
         AllCatinfo = tempinfo.to_dataframe().drop_duplicates('nSubId', keep='first')
-        print(AllCatinfo)
+#        print(AllCatinfo)
+        
+        tempinfo = Dbf5(os.path.join(self.tempfolder,'Down_Sub_ID.shp')[:-3] + "dbf")
+        DownCatinfo = tempinfo.to_dataframe().drop_duplicates('nSubId', keep='first')
+#        print(DownCatinfo) 
+        
+        for i in range(0,len(Sub_Region_info)):
+            isubregion = Sub_Region_info['Sub_Reg_ID'].values[i] 
+            iReg_Outlet_nSubid = (isubregion - 80000) * 200000 - 1
             
+            outlet_mask = AllCatinfo['nDowSubId'] == iReg_Outlet_nSubid
             
+            Dow_Sub_Region_id = Sub_Region_info['Dow_Sub_Reg_Id'].values[i] 
+            
+            #### find downetream id 
+            Down_Sub_info = DownCatinfo[DownCatinfo['value'] == isubregion]
+            
+            if len(Down_Sub_info) > 0:
+                DownSubid   = Down_Sub_info['nSubId'].values[0]
+                AllCatinfo.loc[outlet_mask,'nDowSubId'] = DownSubid
+            else:
+                ### find all subregion drainage to this down sub region
+                All_up_regions_ids = Sub_Region_info[Sub_Region_info['Dow_Sub_Reg_Id'] == Dow_Sub_Region_id]['Sub_Reg_ID'].values
+                Down_Sub_info = DownCatinfo.loc[DownCatinfo['value'].isin(All_up_regions_ids)]
+                ####
+                if len(Down_Sub_info) == 1:
+                    DownSubid   = Down_Sub_info['nSubId'].values[0]
+                    AllCatinfo.loc[outlet_mask,'nDowSubId'] = DownSubid                    
+                else:
+                    print(isubregion,iReg_Outlet_nSubid)
+                
+            
+        AllCatinfo['SubId'] = AllCatinfo['nSubId']
+        AllCatinfo['DowSubId'] = AllCatinfo['nDowSubId']   
+        Copy_Pddataframe_to_shpfile(os.path.join(self.tempfolder,'finalcat_info.shp'),AllCatinfo)
             # layer_cat=QgsVectorLayer(Path_Finalcat_info,"")
             # layer_cat.dataProvider().addAttributes([QgsField('HRU_ID', QVariant.Int),QgsField('HRU_Area', QVariant.Double)])
             # layer_cat.dataProvider().deleteAttributes([35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54])
