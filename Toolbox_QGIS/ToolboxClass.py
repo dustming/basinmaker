@@ -1928,7 +1928,7 @@ class LRRT:
         grass.run_command('r.out.gdal', input = 'str_grass_r',output = os.path.join(self.tempfolder,'str_grass_r.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
         # grass.run_command('r.out.gdal', input = 'dir_Arcgis',output = os.path.join(self.tempfolder,'dir_Arcgis.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture') 
         # grass.run_command('r.out.gdal', input = 'acc_grass',output = os.path.join(self.tempfolder,'acc_grass.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
-        # grass.run_command('r.out.gdal', input = 'acc_grass2',output = os.path.join(self.tempfolder,'acc_grass2.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')    
+        grass.run_command('r.out.gdal', input = 'acc_grass2',output = os.path.join(self.tempfolder,'acc_grass2.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')    
 
         PERMANENT.close()
 ###########################################################################################3
