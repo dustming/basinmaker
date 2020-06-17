@@ -2225,7 +2225,7 @@ class LRRT:
         PERMANENT.close()
                 
 ############################################################################3
-    def RoutingNetworkTopologyUpdateToolset_riv(self,projection = 'default', Min_DA_for_func_Q_DA = 100000000, max_manning_n = 0.15,min_manning_n = 0.01,Outlet_Obs_ID = -1):
+    def RoutingNetworkTopologyUpdateToolset_riv(self,projection = 'default', Min_DA_for_func_Q_DA = 100000000, max_manning_n = 0.15,min_manning_n = 0.01,Outlet_Obs_ID = -1,Obtain_High_Acc_Cat= -1):
         import grass.script as grass
         from grass.script import array as garray
         import grass.script.setup as gsetup
@@ -2490,7 +2490,8 @@ class LRRT:
             HydroBasins  = Defcat(routing_info_ext,outletid)
 
 
-        
+        if Obtain_High_Acc_Cat == -1:
+            HydroBasins = hyshdinfo2['SubId'].values
         ### extract region of interest
         Selectfeatureattributes(processing,Input = os.path.join(self.tempfolder,'finalriv_catinfo_dis.shp'),Output=os.path.join(self.tempfolder,'finalriv_catinfo_dis_sel.shp'),Attri_NM = 'SubId',Values = HydroBasins)
         Selectfeatureattributes(processing,Input = os.path.join(self.tempfolder,'finalriv_info_dis.shp'),Output=os.path.join(self.tempfolder,'finalriv_info_dis_sel.shp'),Attri_NM = 'SubId',Values = HydroBasins)
