@@ -2727,7 +2727,7 @@ class LRRT:
                 Outputfilename_cat = os.path.join(OutputFolder_isub,os.path.basename(Path_final_cat))
                 Outputfilename_cat_riv = os.path.join(OutputFolder_isub,os.path.basename(Path_final_cat_riv))
                 Selectfeatureattributes(processing,Input = Path_final_cat,Output=Outputfilename_cat,Attri_NM = 'SubId',Values = HydroBasins)
-                if Path_final_cat_riv != '#'
+                if Path_final_cat_riv != '#':
                     Selectfeatureattributes(processing,Input = Path_final_cat_riv,Output=Outputfilename_cat_riv,Attri_NM = 'SubId',Values = HydroBasins)
                 finalcat_csv     = Outputfilename_cat[:-3] + "dbf"
                 finalcat_info    = Dbf5(finalcat_csv)
