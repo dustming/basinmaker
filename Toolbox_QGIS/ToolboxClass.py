@@ -2727,7 +2727,8 @@ class LRRT:
                 Outputfilename_cat = os.path.join(OutputFolder_isub,os.path.basename(Path_final_cat))
                 Outputfilename_cat_riv = os.path.join(OutputFolder_isub,os.path.basename(Path_final_cat_riv))
                 Selectfeatureattributes(processing,Input = Path_final_cat,Output=Outputfilename_cat,Attri_NM = 'SubId',Values = HydroBasins)
-                Selectfeatureattributes(processing,Input = Path_final_cat_riv,Output=Outputfilename_cat_riv,Attri_NM = 'SubId',Values = HydroBasins)
+                if Path_final_cat_riv != '#'
+                    Selectfeatureattributes(processing,Input = Path_final_cat_riv,Output=Outputfilename_cat_riv,Attri_NM = 'SubId',Values = HydroBasins)
                 finalcat_csv     = Outputfilename_cat[:-3] + "dbf"
                 finalcat_info    = Dbf5(finalcat_csv)
                 finalcat_info    = finalcat_info.to_dataframe().drop_duplicates('SubId', keep='first')                
@@ -2742,9 +2743,9 @@ class LRRT:
             NonCL_Lakeids  = np.unique(NConnect_Lake_info['HyLakeId'].values)
             NonCL_Lakeids  = NonCL_Lakeids[NonCL_Lakeids > 0]        
         
-            if len(Connect_Lakeids) > 0:
+            if len(Connect_Lakeids) > 0 and Path_Con_Lake_ply != '#':
                 Selectfeatureattributes(processing,Input = Path_Con_Lake_ply,Output=os.path.join(OutputFolder_isub,os.path.basename(Path_Con_Lake_ply)),Attri_NM = 'Hylak_id',Values = Connect_Lakeids)
-            if len(NonCL_Lakeids) > 0:
+            if len(NonCL_Lakeids) > 0 and Path_NonCon_Lake_ply != '#':
                 Selectfeatureattributes(processing,Input = Path_NonCon_Lake_ply,Output=os.path.join(OutputFolder_isub,os.path.basename(Path_NonCon_Lake_ply)),Attri_NM = 'Hylak_id',Values = NonCL_Lakeids)
                 
         Qgs.exit()
