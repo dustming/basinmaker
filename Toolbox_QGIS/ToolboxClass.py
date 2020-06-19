@@ -2813,7 +2813,8 @@ class LRRT:
         
         Old_Non_Connect_SubIds     = finalriv_info.loc[finalriv_info['IsLake'] == 2]['SubId'].values
         Old_Non_Connect_SubIds     = np.unique(Old_Non_Connect_SubIds[Old_Non_Connect_SubIds>0])
-                
+        Old_Non_Connect_LakeIds    = finalriv_info.loc[finalriv_info['IsLake'] == 2]['HyLakeId'].values
+        Old_Non_Connect_LakeIds     = np.unique(Old_Non_Connect_LakeIds[Old_Non_Connect_LakeIds>0])        
         
 #        Select_SubId_Link= Select_SubId_Lakes(ConLakeId,finalriv_info,Subid_main)
         ### obtain rivsegments that covered by remaining lakes  
@@ -2830,7 +2831,7 @@ class LRRT:
         Conn_To_NonConlake_info_outlet = Conn_To_NonConlake_info[idx]
 
         Conn_To_NonConlake_info_outlet = Conn_To_NonConlake_info_outlet.sort_values(['Strahler', 'DA'], ascending=[True, True])
-        print(Conn_To_NonConlake_info_outlet[['Strahler', 'DA'])
+        ### process fron upstream lake to down stream lake
         for i in range(0,len(Conn_To_NonConlake_info_outlet)):
             processed_subid = np.unique(mapoldnew_info.loc[mapoldnew_info['nsubid'] > 0][sub_colnm].values)
 
@@ -2838,7 +2839,7 @@ class LRRT:
             Lake_Cat       = finalriv_info[finalriv_info['HyLakeId'] == C_T_N_Lakeid]
             Lake_Cat       = Lake_Cat.sort_values(["DA"], ascending = (False))
             tsubid         = Lake_Cat['SubId'].values[0]
-            print(tsubid,Conn_To_NonConlake_info_outlet['SubId'].values[i])
+
             All_up_subids  = Defcat(routing_info,tsubid)
             All_up_subids  = All_up_subids[All_up_subids > 0]
                     
@@ -2943,11 +2944,11 @@ class LRRT:
         #### export lake polygons 
         
         Selectfeatureattributes(processing,Input =Path_Conl_ply ,Output=os.path.join(outputfolder_subid,ConnL_ply_NM),Attri_NM = 'Hylak_id',Values = Connected_Lake_Mainriv)        
-#        Selectfeatureattributes(processing,Input =Path_Non_ConL_ply ,Output=os.path.join(outputfolder_subid,Non_ConnL_ply_NM),Attri_NM = 'Hylak_id',Values = New_NonConn_Lakes['value'].values)
+        Selectfeatureattributes(processing,Input =Path_Non_ConL_ply ,Output=os.path.join(outputfolder_subid,Non_ConnL_ply_NM),Attri_NM = 'Hylak_id',Values = Old_Non_Connect_LakeIds)
         
         ###
         
-#        Copyfeature_to_another_shp_by_attribute(Source_shp = Path_Conl_ply,Target_shp =os.path.join(outputfolder_subid,Non_ConnL_ply_NM),Col_NM='Hylak_id',Values=Conn_To_NonConlakeids,Attributes = Conn_Lakes_ply)
+        Copyfeature_to_another_shp_by_attribute(Source_shp = Path_Conl_ply,Target_shp =os.path.join(outputfolder_subid,Non_ConnL_ply_NM),Col_NM='Hylak_id',Values=Conn_To_NonConlakeids,Attributes = Conn_Lakes_ply)
         
         
         Path_out_final_rviply = os.path.join(outputfolder_subid,finalrvi_ply_NM)
