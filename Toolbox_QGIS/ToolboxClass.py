@@ -2836,16 +2836,33 @@ class LRRT:
             processed_subid = np.unique(mapoldnew_info.loc[mapoldnew_info['nsubid'] > 0][sub_colnm].values)
 
             C_T_N_Lakeid   = Conn_To_NonConlake_info_outlet['HyLakeId'].values[i]
-            Lake_Cat       = finalriv_info[finalriv_info['HyLakeId'] == C_T_N_Lakeid]
-            Lake_Cat       = Lake_Cat.sort_values(["DA"], ascending = (False))
-            tsubid         = Lake_Cat['SubId'].values[0]
-
-            All_up_subids  = Defcat(routing_info,tsubid)
-            All_up_subids  = All_up_subids[All_up_subids > 0]
+            Lake_Cat_info  = finalriv_info[finalriv_info['HyLakeId'] == C_T_N_Lakeid]
+            Riv_Seg_IDS    = np.unique(Lake_Cat_info['Seg_ID'].values)
+            print("#######################################################")
+            modifysubids = []
+            for j in range(0,len(Riv_Seg_IDS)):
+                
+                iriv_seg = Riv_Seg_IDS[j]
+                Lake_Cat_seg_info = Lake_Cat_info.loc[Lake_Cat_info['Seg_ID'] == iriv_seg]
+                Lake_Cat_seg_info = Lake_Cat_seg_info.sort_values(["DA"], ascending = (False))
+                tsubid            = Lake_Cat_seg_info['SubId'].values[0]
+                
+                All_up_subids  = Defcat(routing_info,tsubid)
+                All_up_subids  = All_up_subids[All_up_subids > 0]
+                
                     
-            mask           = np.in1d(All_up_subids, processed_subid)
-            seg_sub_ids    = All_up_subids[np.logical_not(mask)]            
-            mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalriv_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,mainriv = Selected_riv,modifiidin = seg_sub_ids,Islake = 2) 
+                mask           = np.in1d(All_up_subids, processed_subid)
+                seg_sub_ids    = All_up_subids[np.logical_not(mask)]   
+                
+                modifysubids   = [*modifysubids,*seg_sub_ids.tolist()] ### combine two list not sum 
+                print(C_T_N_Lakeid,seg_sub_ids,j,Riv_Seg_IDS)
+                print(modifysubids)
+            print(modifysubids)    
+            modifysubids   = np.asarray(modifysubids)
+            
+            print(C_T_N_Lakeid)
+            print(modifysubids)
+            mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalriv_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,mainriv = Selected_riv,modifiidin = modifysubids,Islake = 2) 
             
         ####################3 for rest of the polygons dissolve to main river 
         for iseg in range(0,len(Seg_IDS)):
