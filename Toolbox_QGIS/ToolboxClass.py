@@ -2838,7 +2838,6 @@ class LRRT:
             C_T_N_Lakeid   = Conn_To_NonConlake_info_outlet['HyLakeId'].values[i]
             Lake_Cat_info  = finalriv_info[finalriv_info['HyLakeId'] == C_T_N_Lakeid]
             Riv_Seg_IDS    = np.unique(Lake_Cat_info['Seg_ID'].values)
-            print("#######################################################")
             modifysubids = []
             for j in range(0,len(Riv_Seg_IDS)):
                 
@@ -2855,13 +2854,9 @@ class LRRT:
                 seg_sub_ids    = All_up_subids[np.logical_not(mask)]   
                 
                 modifysubids   = [*modifysubids,*seg_sub_ids.tolist()] ### combine two list not sum 
-                print(C_T_N_Lakeid,seg_sub_ids,j,Riv_Seg_IDS)
-                print(modifysubids)
-            print(modifysubids)    
+
             modifysubids   = np.asarray(modifysubids)
             
-            print(C_T_N_Lakeid)
-            print(modifysubids)
             mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalriv_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,mainriv = Selected_riv,modifiidin = modifysubids,Islake = 2) 
             
         ####################3 for rest of the polygons dissolve to main river 
