@@ -1371,7 +1371,7 @@ class LRRT:
                 grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
                 
                                                 
-                grass.run_command('r.watershed',elevation = 'dem', drainage = 'dir_grass',accumulation = 'acc_grass2',flags = 's', overwrite = True)
+                grass.run_command('r.watershed',elevation = 'dem', drainage = 'dir_grass',accumulation = 'acc_grass2',flags = 'sa', overwrite = True)
                 grass.run_command('r.mapcalc',expression = "acc_grass = abs(acc_grass2@PERMANENT)",overwrite = True)
                 grass.run_command('r.water.outlet',input = 'dir_grass', output = 'wat_mask', coordinates  = OutletPoint,overwrite = True)
                 grass.run_command('r.mask'  , raster='wat_mask', maskcats = '*',overwrite = True)
@@ -1480,7 +1480,7 @@ class LRRT:
         Acc     = Initaial_Acc
         print("##############################Loop for suitable ACC ")
         while N_Basin < Min_Num_Domain or N_Basin > Max_Num_Domain:
-            grass.run_command('r.watershed',elevation = 'dem',flags = 's', basin = 'testbasin',drainage = 'dir_grass_reg',accumulation = 'acc_grass_reg2',threshold = Acc,overwrite = True)
+            grass.run_command('r.watershed',elevation = 'dem',flags = 'sa', basin = 'testbasin',drainage = 'dir_grass_reg',accumulation = 'acc_grass_reg2',threshold = Acc,overwrite = True)
             strtemp_array = garray.array(mapname="testbasin")
             N_Basin = np.unique(strtemp_array)
             N_Basin = len(N_Basin[N_Basin > 0])
@@ -1762,7 +1762,7 @@ class LRRT:
                 grass.run_command('r.mapcalc',expression = "acc_grass   = grass_acc1",overwrite = True)
                 
             else:
-                grass.run_command('r.watershed',elevation = 'dem', accumulation = 'acc_grass2',flags = 's', overwrite = True)
+                grass.run_command('r.watershed',elevation = 'dem', accumulation = 'acc_grass2',flags = 'sa', overwrite = True)
                 grass.run_command('r.mapcalc',expression = "acc_grass = abs(acc_grass2@PERMANENT)",overwrite = True)
 #                grass.run_command('r.reclass', input='dir_grass',output = 'dir_Arcgis',rules = os.path.join(self.RoutingToolPath,'Grass2ArcgisDIR.txt'), overwrite = True)
             
