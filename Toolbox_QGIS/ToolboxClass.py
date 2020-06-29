@@ -2685,13 +2685,13 @@ class LRRT:
             hyinfocsv = Path_final_cat[:-3] + "dbf"
             tempinfo = Dbf5(hyinfocsv)
             hyshdinfo2 = tempinfo.to_dataframe().drop_duplicates(sub_colnm, keep='first')
-            hyshdinfo =  hyshdinfo2[[sub_colnm,down_colnm]].astype('float').values
+            hyshdinfo =  hyshdinfo2[[sub_colnm,down_colnm]].astype('int32').values
         else:
-            hyinfocsv = Path_final_riv[:-3] + "dbf"
+            hyinfocsv = Path_final_riv_ply[:-3] + "dbf"
             tempinfo = Dbf5(hyinfocsv)
             hyshdinfo2 = tempinfo.to_dataframe().drop_duplicates(sub_colnm, keep='first')
-            hyshdinfo =  hyshdinfo2[[sub_colnm,down_colnm]].astype('float').values            
-                        
+            hyshdinfo =  hyshdinfo2[[sub_colnm,down_colnm]].astype('int32').values            
+        
         #### incase  mostupstreamid did not procvided, automatically assgin -1 
         if mostupstreamid[0] == -1:
             mostupstreamid = np.full(len(mostdownid),-1) 
