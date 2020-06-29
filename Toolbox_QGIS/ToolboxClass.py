@@ -1860,7 +1860,7 @@ class LRRT:
                     grass.run_command('r.unpack', input = self.Path_Sub_reg_grass_str_r, output = 'str_grass_r1',overwrite = True)
                     grass.run_command('r.mapcalc',expression = "str_grass_r = str_grass_r1",overwrite = True)    
                 else:    
-                    grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =accthresold,stream_raster = 'str_grass_r',
+                    grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold = int(accthresold),stream_raster = 'str_grass_r',
                                     stream_vector = 'str_grass_v',direction = 'dir_grass',overwrite = True,memory = max_memroy)
                     grass.run_command('r.reclass', input='dir_grass',output = 'dir_Arcgis',rules = os.path.join(self.RoutingToolPath,'Grass2ArcgisDIR.txt'), overwrite = True)
         else:
@@ -1945,7 +1945,7 @@ class LRRT:
 ###########################################################################################3
 
 ############################################################################################
-    def AutomatedWatershedsandLakesFilterToolset(self,Thre_Lake_Area_Connect = 0,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 3000,Pec_Grid_outlier = 0.99,Is_divid_region = -1,
+    def AutomatedWatershedsandLakesFilterToolset(self,Thre_Lake_Area_Connect = 0,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 10000,Pec_Grid_outlier = 0.99,Is_divid_region = -1,
     max_memroy = 1024):
 
         tempinfo = Dbf5(self.Path_allLakeply[:-3] + "dbf")

@@ -184,10 +184,7 @@ def check_lakecatchment(cat3,lake,fac,fdir,bsid,nrows,ncols,LakeBD_array,nlakegr
 #        print(lakeid,arclakeid,len(nlake),len(lrowcol),float(len(nlake)/len(lrowcol))) 
         if outlakeids[i,1] > Pec_Grid_outlier:
             continue 
-            
-        if len(lrowcol) - len(nlake)  > MaximumLakegrids:   ### smaller than nlakegrids or smaller than 0.9
-            continue
-            
+                        
 #        if outlakeids[i,1] > Pec_Grid_outlier: ### smaller than 0.97
 #            continue
         
@@ -205,6 +202,10 @@ def check_lakecatchment(cat3,lake,fac,fdir,bsid,nrows,ncols,LakeBD_array,nlakegr
         
         BD_Out_Lakecat_Nriv_mask = np.logical_and(BD_Out_Lakecat_mask,np.logical_not(stream_mask))
         BD_problem[BD_Out_Lakecat_Nriv_mask] = 1
+        
+        if np.sum(BD_Out_Lakecat_mask)  > MaximumLakegrids:   ### smaller than nlakegrids or smaller than 0.9
+            continue
+            
         print("Total # of lakes: ", len(arlakeid), " Processing    ",i,"th lake" )
         print("Lake ID : ",lakeid,"Lake Cat ID   ",arclakeid, "Total numer of Lake grids   ",len(lrowcol), "Numer of Lake grids in Lake Cat:  ",nlake2,len(nlake))
         print("# of Lake boundary grids:   ", np.sum(BD_mask),"# of grids do not flow to lake catchments",np.sum(Lakeoutcat_mask) ,"# of lake boundary grids not flow to lake catchment   ", np.sum(BD_Out_Lakecat_mask),"  # of lake boundary grids not flow to lake catchment not a river gird  ", np.sum(BD_Out_Lakecat_Nriv_mask))
