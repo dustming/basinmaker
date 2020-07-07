@@ -2227,8 +2227,8 @@ class LRRT:
         
         
         grass.run_command('r.null', map='Non_con_lake_cat',setnull=[-9999,0]) 
-        grass.run_command('r.mapcalc',expression = 'Non_con_lake_cat = int(Non_con_lake_cat) + ' + str(int(nstrid +10)),overwrite = True) 
-        grass.run_command('r.mapcalc',expression = 'Net_cat = if(isnull(Non_con_lake_cat),Net_cat_connect_lake,Non_con_lake_cat)',overwrite = True)
+        grass.run_command('r.mapcalc',expression = 'Non_con_lake_cat_t2 = int(Non_con_lake_cat) + ' + str(int(nstrid +10)),overwrite = True) 
+        grass.run_command('r.mapcalc',expression = 'Net_cat = if(isnull(Non_con_lake_cat_t2),Net_cat_connect_lake,Non_con_lake_cat_t2)',overwrite = True)
         grass.run_command('r.out.gdal', input = 'Net_cat',output =os.path.join(self.tempfolder,'Net_cat_test.tif'),format= 'GTiff',overwrite = True)      
     
         
