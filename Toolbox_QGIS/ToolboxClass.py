@@ -1117,7 +1117,7 @@ class LRRT:
     def __init__(self, dem_in = '#',dir_in = '#',hyshdply = '#',WidDep = '#',Lakefile = '#'
                                      ,Landuse = '#',Landuseinfo = '#',obspoint = '#',OutHyID = -1 ,OutHyID2 = -1, 
                                      OutputFolder = '#',ProjectNM = '#',Path_Sub_Reg_Out_Folder = '#',Is_Sub_Region = -1
-                                     ,Base_SubId = 200000):
+                                     ,Base_SubId = 200000,TempOutFolder = '#'):
         self.Path_dem_in = dem_in
         self.Path_dir_in = dir_in
         self.Path_hyshdply_in = hyshdply
@@ -1148,16 +1148,23 @@ class LRRT:
         self.OutputFolder = os.path.join(self.Path_OutputFolder,self.ProjectNM)
         
         if not os.path.exists(self.OutputFolder):
-	           os.makedirs(self.OutputFolder)         
+            os.makedirs(self.OutputFolder)         
         
         self.Raveinputsfolder = self.OutputFolder + '/'+'RavenInput/'
                 
         self.qgisPP = os.environ['QGISPrefixPath']
         self.RoutingToolPath = os.environ['RoutingToolFolder']
-                
-        self.grassdb =os.path.join(tempfile.gettempdir(), 'grassdata_toolbox',self.ProjectNM)
+        
+        if TempOutFolder == '#':
+            self.tempFolder =tempfile.gettempdir()
+        else:
+            self.tempFolder =TempOutFolder
+            if not os.path.exists(self.tempFolder):
+                os.makedirs(self.tempFolder)            
+               
+        self.grassdb =os.path.join(self.tempFolder, 'grassdata_toolbox',self.ProjectNM)
         if not os.path.exists(self.grassdb):
-	           os.makedirs(self.grassdb) 
+            os.makedirs(self.grassdb) 
         os.environ['GISDBASE'] = self.grassdb 
 		
         self.grass_location_geo = 'Geographic'
@@ -1165,10 +1172,10 @@ class LRRT:
         self.grass_location_geo_temp1 = 'Geographic_temp1'
         self.grass_location_pro = 'Projected'
         
-        self.tempfolder = os.path.join(tempfile.gettempdir(), 'grassdata_toolbox_temp',self.ProjectNM)
+        self.tempfolder = os.path.join(self.tempFolder, 'grassdata_toolbox_temp',self.ProjectNM)
 
         if not os.path.exists(self.tempfolder):
-	            os.makedirs(self.tempfolder)
+            os.makedirs(self.tempfolder)
         # 
         # if not os.path.exists(os.path.join(self.grassdb,self.grass_location_geo_temp)):
 	    #        os.makedirs(os.path.join(self.grassdb,self.grass_location_geo_temp))
