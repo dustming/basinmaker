@@ -181,7 +181,7 @@ def check_lakecatchment(cat3,lake,fac,fdir,bsid,nrows,ncols,LakeBD_array,nlakegr
         outlakeids[i,0] = lakeid
         outlakeids[i,1] = float(len(nlake)/len(lrowcol)) 
 #        print("########################################################################3")
-#        print(lakeid,arclakeid,len(nlake),len(lrowcol),float(len(nlake)/len(lrowcol))) 
+#        print(lakeid,arclakeid,len(nlake),len(lrowcol),float(len(nlake)/len(lrowcol)),Pec_Grid_outlier) 
         if outlakeids[i,1] > Pec_Grid_outlier:
             continue 
                         

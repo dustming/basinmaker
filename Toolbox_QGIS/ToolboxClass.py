@@ -1952,7 +1952,7 @@ class LRRT:
 ###########################################################################################3
 
 ############################################################################################
-    def AutomatedWatershedsandLakesFilterToolset(self,Thre_Lake_Area_Connect = 0,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 10000,Pec_Grid_outlier = 0.99,Is_divid_region = -1,
+    def AutomatedWatershedsandLakesFilterToolset(self,Thre_Lake_Area_Connect = 0,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 10000,Pec_Grid_outlier = 1.0,Is_divid_region = -1,
     max_memroy = 1024):
 
         tempinfo = Dbf5(self.Path_allLakeply[:-3] + "dbf")
