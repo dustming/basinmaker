@@ -27,6 +27,9 @@ def UpdateNonConnectedcatchmentinfo(catinfo):
         
         if len(d_sub_info) < 1:
             continue
+        
+        ## add nonconnected lake catchment area to downsubbasin drinage area 
+        catinfo.loc[catinfo['SubId'] == d_subid,'DA'] = d_sub_info['DA'].values[0] + catinfo_non_connected['BasArea'].values[i]
             
         while d_sub_info['IsLake'].values[0]  == 2:
              
