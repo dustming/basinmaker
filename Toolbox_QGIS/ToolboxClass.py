@@ -1219,7 +1219,7 @@ class LRRT:
 #####         For using non hydroshed product, the output is a mask based on either dem or 
 #####              a rough watershed delineaiton resut. depend on OutletPoint value
 #####              at the same time flow directio and accumulation is caculated for this region 
-    def Generatmaskregion(self,OutletPoint = '#',Path_Sub_Polygon = '#',Buffer_Distance = 0.3):
+    def Generatmaskregion(self,OutletPoint = '#',Path_Sub_Polygon = '#',Buffer_Distance = 0.0):
         #### g
         ### Set up QGIS enviroment 
         QgsApplication.setPrefixPath(self.qgisPP, True)
