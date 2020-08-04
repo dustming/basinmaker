@@ -24,12 +24,23 @@ def UpdateNonConnectedcatchmentinfo(catinfo):
         d_sub_info = catinfo.loc[catinfo['SubId'] == d_subid]
          
         lc_subid = d_subid
+
+        Upstreamcats      = Defcat(routing_info,c_subid)     ### alll subuds 
+        
+        Up_cat_info       = catinfo.loc[catinfo['SubId'].isin(Upstreamcats)]
+        
+        DA                =sum(Up_cat_info['BasArea'].values)
+        
+        catinfo.loc[catinfo['SubId'] == c_subid,'DA']  = DA  
+        
         
         if len(d_sub_info) < 1:
             continue
-        
+
+
         ## add nonconnected lake catchment area to downsubbasin drinage area 
-        catinfo.loc[catinfo['SubId'] == d_subid,'DA'] = d_sub_info['DA'].values[0] + catinfo_non_connected['BasArea'].values[i]
+#        if d_sub_info['IsLake'].values[0]  != 2:
+#            catinfo.loc[catinfo['SubId'] == d_subid,'DA'] = d_sub_info['DA'].values[0] + DA
             
         while d_sub_info['IsLake'].values[0]  == 2:
              
@@ -55,12 +66,6 @@ def UpdateNonConnectedcatchmentinfo(catinfo):
         catinfo.loc[catinfo['SubId'] == c_subid,'Max_DEM']  = d_sub_info['Max_DEM'].values[0]  
         catinfo.loc[catinfo['SubId'] == c_subid,'Min_DEM']  = d_sub_info['Min_DEM'].values[0]  
         
-        Upstreamcats      = Defcat(routing_info,c_subid)     ### alll subuds 
-        
-        Up_cat_info       = catinfo.loc[catinfo['SubId'].isin(Upstreamcats)]
-        
-        DA                =sum(Up_cat_info['BasArea'].values)
-        catinfo.loc[catinfo['SubId'] == c_subid,'DA']  = DA  
         
         
         
@@ -319,7 +324,10 @@ def UpdateChannelinfo(catinfo,allcatid,Netcat_array,SubId_WidDep_array,WidDep_in
         
 
 def Streamorderanddrainagearea(catinfoall):
-    catinfo = catinfoall.loc[catinfoall['IsLake'] != 2]  ### remove none connected lake catchments, which do not connected to the river system 
+    catinfo                 = catinfoall.loc[catinfoall['IsLake'] != 2]  ### remove none connected lake catchments, which do not connected to the river system
+    catinfo_ncl             = catinfoall.loc[catinfoall['IsLake'] == 2]
+    routing_ncl             = catinfo_ncl[['SubId','DowSubId']].astype('float').values 
+    
     catlist = np.full((len(catinfo)), -9)
     icat = 0
     iseg = 1
@@ -331,7 +339,18 @@ def Streamorderanddrainagearea(catinfoall):
         catid = catinfo['SubId'].values[i]
         if len(catinfo[catinfo['DowSubId'] == catid]) == 0: ### the river seg has no upstream segment 
             catlist[icat] = int(catinfo['DowSubId'].values[i])   #### store next reach segment 
-            catinfo.loc[idx,'DA'] = catinfo['BasArea'].values[i]
+            
+            #### calculate DA of head watershed include None connected lakes 
+            Upstreamcats      = Defcat(routing_ncl,catid)     ### alll subuds 
+            Up_cat_info       = catinfo_ncl.loc[catinfo_ncl['SubId'].isin(Upstreamcats)]            
+
+            if len(Up_cat_info) > 0:
+                DA_ncl            = sum(Up_cat_info['BasArea'].values)
+            else:
+                DA_ncl            = 0.0 
+                
+                            
+            catinfo.loc[idx,'DA'] = DA_ncl + catinfo['BasArea'].values[i]
             catinfo.loc[idx,'Strahler'] = 1
             catinfo.loc[idx,'Seg_order'] = 1
             catinfo.loc[idx,'Seg_ID'] = iseg
@@ -353,12 +372,21 @@ def Streamorderanddrainagearea(catinfoall):
             Up_Reaches_info = catinfo[catinfo['DowSubId'] == catid]
             cur_Reach_info = catinfo[catinfo['SubId'] == catid]
             curcat_idx = catinfo['SubId'] == catid
+    
+            #### calculate DA of None connected lakes 
+            Upstreamcats      = Defcat(routing_ncl,catid)     ### alll subuds 
+            Up_cat_info       = catinfo_ncl.loc[catinfo_ncl['SubId'].isin(Upstreamcats)]
+            if len(Up_cat_info) > 0:
+                DA_ncl            = sum(Up_cat_info['BasArea'].values)
+            else:
+                DA_ncl            = 0.0 
+        
             
             if(len(cur_Reach_info) <= 0):  ### reach the most downstream of the watersheds
                 break
             
             if len(Up_Reaches_info) == 1:   ### only have one upstream 
-                catinfo.loc[curcat_idx,'DA'] = cur_Reach_info['BasArea'].values[0] + Up_Reaches_info['DA'].values[0]
+                catinfo.loc[curcat_idx,'DA'] = cur_Reach_info['BasArea'].values[0] + Up_Reaches_info['DA'].values[0] + DA_ncl
                 catinfo.loc[curcat_idx,'Strahler'] = Up_Reaches_info['Strahler'].values[0]
                 catinfo.loc[curcat_idx,'Seg_order'] = Up_Reaches_info['Seg_order'].values[0] + 1
                 catinfo.loc[curcat_idx,'Seg_ID'] = Up_Reaches_info['Seg_ID'].values[0]
@@ -366,7 +394,7 @@ def Streamorderanddrainagearea(catinfoall):
                 catid =  int(cur_Reach_info['DowSubId'].values[0])
             else:  ### has mutiple upstram 
                 if np.min(Up_Reaches_info['Strahler'].values) > 0: ### all upstream has been processed 
-                    catinfo.loc[catinfo['SubId'] == catid,'DA'] = cur_Reach_info['BasArea'].values[0] + np.sum(Up_Reaches_info['DA'].values)
+                    catinfo.loc[catinfo['SubId'] == catid,'DA'] = cur_Reach_info['BasArea'].values[0] + np.sum(Up_Reaches_info['DA'].values) + DA_ncl
                     if np.min(Up_Reaches_info['Strahler'].values) == np.max(Up_Reaches_info['Strahler'].values): ### two reach has the same order
                         catinfo.loc[curcat_idx,'Strahler'] = Up_Reaches_info['Strahler'].values[0] + 1
                         catinfo.loc[curcat_idx,'Seg_order'] = 1
