@@ -386,10 +386,6 @@ def Streamorderanddrainagearea(catinfoall):
                 else:
                     DA_ncl            = 0.0
 
-            print("###################################2")
-            print(catid,DA_ncl)
-            print(Up_cat_info['SubId'].values)
-
 
             if(len(cur_Reach_info) <= 0):  ### reach the most downstream of the watersheds
                 break
