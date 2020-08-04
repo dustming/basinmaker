@@ -340,14 +340,17 @@ def Streamorderanddrainagearea(catinfoall):
         if len(catinfo[catinfo['DowSubId'] == catid]) == 0: ### the river seg has no upstream segment 
             catlist[icat] = int(catinfo['DowSubId'].values[i])   #### store next reach segment 
             
-            #### calculate DA of head watershed include None connected lakes 
-            Upstreamcats      = Defcat(routing_ncl,catid)     ### alll subuds 
-            Up_cat_info       = catinfo_ncl.loc[catinfo_ncl['SubId'].isin(Upstreamcats)]            
-
-            if len(Up_cat_info) > 0:
-                DA_ncl            = sum(Up_cat_info['BasArea'].values)
+            #### calculate DA of head watershed include None connected lakes
+            if len(routing_ncl) == 0:
+                 DA_ncl = 0.0
             else:
-                DA_ncl            = 0.0 
+                Upstreamcats      = Defcat(routing_ncl,catid)     ### alll subuds 
+                Up_cat_info       = catinfo_ncl.loc[catinfo_ncl['SubId'].isin(Upstreamcats)]            
+
+                if len(Up_cat_info) > 0:
+                    DA_ncl            = sum(Up_cat_info['BasArea'].values)
+                else:
+                    DA_ncl            = 0.0 
                 
                             
             catinfo.loc[idx,'DA'] = DA_ncl + catinfo['BasArea'].values[i]
@@ -374,12 +377,15 @@ def Streamorderanddrainagearea(catinfoall):
             curcat_idx = catinfo['SubId'] == catid
     
             #### calculate DA of None connected lakes 
-            Upstreamcats      = Defcat(routing_ncl,catid)     ### alll subuds 
-            Up_cat_info       = catinfo_ncl.loc[catinfo_ncl['SubId'].isin(Upstreamcats)]
-            if len(Up_cat_info) > 0:
-                DA_ncl            = sum(Up_cat_info['BasArea'].values)
+            if len(routing_ncl) == 0:
+                DA_ncl = 0.0
             else:
-                DA_ncl            = 0.0 
+                Upstreamcats      = Defcat(routing_ncl,catid)     ### alll subuds 
+                Up_cat_info       = catinfo_ncl.loc[catinfo_ncl['SubId'].isin(Upstreamcats)]
+                if len(Up_cat_info) > 0:
+                    DA_ncl            = sum(Up_cat_info['BasArea'].values)
+                else:
+                    DA_ncl            = 0.0 
         
             
             if(len(cur_Reach_info) <= 0):  ### reach the most downstream of the watersheds
