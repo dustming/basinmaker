@@ -439,15 +439,18 @@ def CE_mcat4lake2(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints,noncnlake,str_a
                 if arclakeid < 0:
                     nonlrowcol = np.argwhere(cat==pp).astype(int)
                     strids = np.unique(str_array[nonlrowcol[:,0],nonlrowcol[:,1]])
-
                     if len(strids) <= 1: ## if none connected lake catchment overlay with stream, remove this lake
                         Non_con_lake_cat[nonlrowcol[:,0],nonlrowcol[:,1]] = lakeid
+                    else:
+                        cat[lrowcol[:,0],lrowcol[:,1]] = -99
                 else:
                     nonlrowcol = np.argwhere(cat==arclakeid).astype(int)
                     strids = np.unique(str_array[nonlrowcol[:,0],nonlrowcol[:,1]])
 
                     if len(strids) <= 1: ## if none connected lake catchment overlay with stream, remove this lake
                         Non_con_lake_cat[nonlrowcol[:,0],nonlrowcol[:,1]] = lakeid
+                    else:
+                        cat[lrowcol[:,0],lrowcol[:,1]] = -99
 #### For some reason pour point was missing in non-contribute catchment
     Pours = np.unique(Pourpoints)
     Pours = Pours[Pours>0]
@@ -2186,17 +2189,21 @@ class LRRT:
             strmask = str_grass_r_array == strid  ### mask array, true at location of str == strid
             catsinstr = finalcat_arr[strmask]  ### get all cat id overlay with this stream
             catsinstrids = np.unique(catsinstr)  ### get unique cat id overlay with this stream
-            catsinstrids = catsinstrids[catsinstrids>0]
+            catsinstrids = catsinstrids[catsinstrids>-100]
             for j in range(0,len(catsinstrids)):   ### loop for each cat id, and assgin for a new stream id
                 finalcatmask = finalcat_arr == catsinstrids[j]
                 mask = np.logical_and(finalcatmask, strmask)   ### build mask for grids belong to current stream and current cat
-                nstrarray[mask] = nstrid   ## assgin new stream id to mask region
                 stracc          = acc_array[mask]
                 nstrinfodf.loc[idx,'No_Lake_SubId']   = strid
                 nstrinfodf.loc[idx,'Finalcat_SubId']  = catsinstrids[j]
-                nstrinfodf.loc[idx,'With_Lake_SubId'] = nstrid
                 nstrinfodf.loc[idx,'MinAcc']          = np.amin(stracc)
                 nstrinfodf.loc[idx,'MaxAcc']          = np.amax(stracc)
+                if catsinstrids[j] == -99:
+                    nstrinfodf.loc[idx,'With_Lake_SubId'] = -nstrid
+                    nstrarray[mask] =  -nstrid   ## assgin new stream id to mask region
+                else:
+                    nstrinfodf.loc[idx,'With_Lake_SubId'] = nstrid
+                    nstrarray[mask] = nstrid   ## assgin new stream id to mask region
                 nstrid = nstrid + 1
                 idx    = idx    + 1
 
@@ -2205,6 +2212,25 @@ class LRRT:
 #            print("#####################################################################3")
 #            print(len(catsinstrids))
 #            print(i_nstrinfodf)
+
+            for j in range(0,len(i_nstrinfodf) - 1):
+                newsubid =  i_nstrinfodf['With_Lake_SubId'].values[j]
+                if newsubid < 0:
+                    if j > 0:
+                        mask = nstrarray == i_nstrinfodf['With_Lake_SubId'].values[j]
+                        nstrarray[mask]   = i_nstrinfodf['With_Lake_SubId'].values[j-1]
+                        dropindx = int(nstrinfodf[nstrinfodf['With_Lake_SubId']==newsubid].index[0])
+                        nstrinfodf = nstrinfodf.drop(nstrinfodf.index[dropindx])
+                    else:
+                        mask = nstrarray == i_nstrinfodf['With_Lake_SubId'].values[j]
+                        nstrarray[mask]   = i_nstrinfodf['With_Lake_SubId'].values[j+1]
+                        dropindx = int(nstrinfodf[nstrinfodf['With_Lake_SubId']==newsubid].index[0])
+                        nstrinfodf = nstrinfodf.drop(nstrinfodf.index[dropindx])
+
+
+            i_nstrinfodf = nstrinfodf.loc[nstrinfodf['No_Lake_SubId'] == strid]
+            i_nstrinfodf = i_nstrinfodf.sort_values(["MinAcc"], ascending = (True))
+
             for j in range(0,len(i_nstrinfodf) - 1):
                 if i_nstrinfodf['MaxAcc'].values[j] > i_nstrinfodf['MaxAcc'].values[j +1]:
                     print('###########################################################################3')
