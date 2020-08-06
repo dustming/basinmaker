@@ -1442,7 +1442,6 @@ class LRRT:
             PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo_temp,create_opts='EPSG:4326')
             grass.run_command("v.in.ogr", input = Path_Sub_Polygon,output = 'Sub_Region_Mask_ply', overwrite = True,location =self.grass_location_geo)
             PERMANENT.close()
-
             PERMANENT = Session()
             PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
 
@@ -1776,6 +1775,7 @@ class LRRT:
                 grass.run_command('r.mapcalc',expression = "dir_Arcgis  = dir_Arcgis1",overwrite = True)
                 grass.run_command('r.reclass', input='dir_Arcgis',output = 'dir_grass',rules =os.path.join(self.RoutingToolPath,'Arcgis2GrassDIR.txt'),overwrite = True)
                 grass.run_command('r.mapcalc',expression = "acc_grass   = grass_acc1",overwrite = True)
+                grass.run_command('r.mapcalc',expression = "acc_grass2   = acc_grass",overwrite = True)
 
             else:
                 grass.run_command('r.watershed',elevation = 'dem', accumulation = 'acc_grass2',flags = 'sa', overwrite = True)
@@ -1961,12 +1961,11 @@ class LRRT:
 
         #####
 
-        if self.Is_Sub_Region < 0:
-            grass.run_command('r.stream.snap', input = 'obspoint',output = 'obspoint_snap',stream_rast = 'str_grass_r', accumulation = 'acc_grass', radius = Search_Radius, overwrite = True,quiet = 'Ture', memory = max_memroy)
-            grass.run_command('v.to.rast',input = 'obspoint_snap',output = 'obspoint_snap',use = 'cat', overwrite = True)
-            grass.run_command('r.to.vect',  input = 'obspoint_snap',output = 'obspoint_snap_r2v', type ='point', flags = 'v', overwrite = True)
-            grass.run_command('v.db.join', map= 'obspoint_snap_r2v',column = 'cat', other_table = 'obspoint',other_column ='cat', overwrite = True)
-            grass.run_command('v.to.rast',input = 'obspoint_snap_r2v',output = 'obs',use = 'attr',attribute_column = 'Obs_ID',overwrite = True)
+        grass.run_command('r.stream.snap', input = 'obspoint',output = 'obspoint_snap',stream_rast = 'str_grass_r', accumulation = 'acc_grass', radius = Search_Radius, overwrite = True,quiet = 'Ture', memory = max_memroy)
+        grass.run_command('v.to.rast',input = 'obspoint_snap',output = 'obspoint_snap',use = 'cat', overwrite = True)
+        grass.run_command('r.to.vect',  input = 'obspoint_snap',output = 'obspoint_snap_r2v', type ='point', flags = 'v', overwrite = True)
+        grass.run_command('v.db.join', map= 'obspoint_snap_r2v',column = 'cat', other_table = 'obspoint',other_column ='cat', overwrite = True)
+        grass.run_command('v.to.rast',input = 'obspoint_snap_r2v',output = 'obs',use = 'attr',attribute_column = 'Obs_ID',overwrite = True)
 
         PERMANENT.close()
 ###########################################################################################3
