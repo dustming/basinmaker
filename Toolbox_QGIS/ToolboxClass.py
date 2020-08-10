@@ -3482,7 +3482,7 @@ class LRRT:
         features = layer_cat.getFeatures()
         with edit(layer_cat):
             for sf in features:
-                print("########################################################################")
+#                print("########################################################################")
                 subid_sf   = sf['SubId']
                 try:
                     subid_sf = float(subid_sf)
@@ -3499,7 +3499,7 @@ class LRRT:
                 except TypeError:
                     lakelakeid_sf = -1
                     pass
-                print(subid_sf,lakelakeid_sf)
+#                print(subid_sf,lakelakeid_sf)
 
                 if lakelakeid_sf < 0:
                     mask1           = mapoldnew_info['SubId'].values    == subid_sf
@@ -3509,13 +3509,16 @@ class LRRT:
                     mask1           = mapoldnew_info['SubId'].values    == subid_sf
                     mask2           = mapoldnew_info['Hylak_id'].values == lakelakeid_sf
                     maskand         = np.logical_and(mask1,mask2)
-                srcinfo             = mapoldnew_info.loc[maskand,['HRU_ID','HRU_Area','Hylak_id']]
+                srcinfo             = mapoldnew_info.loc[maskand,['HyLakeId','HRU_ID','HRU_Area','Hylak_id']]
 
 #                centroidxy = sf.geometry().centroid().asPoint()
                 print(srcinfo)
                 sf['HRU_ID']   = float(srcinfo['HRU_ID'].values[0])
                 sf['HRU_Area'] = float(srcinfo['HRU_Area'].values[0])
-                sf['Hylak_id'] = float(srcinfo['Hylak_id'].values[0])
+                if srcinfo['HyLakeId'].values[0] == srcinfo['Hylak_id'].values[0]:
+                    sf['Hylak_id'] = float(srcinfo['Hylak_id'].values[0])
+                else:
+                    sf['Hylak_id'] = float(0)
                 layer_cat.updateFeature(sf)
         del layer_cat
 
