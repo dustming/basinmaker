@@ -3376,7 +3376,7 @@ class LRRT:
             plotGuagelineobs(Scenario_NM,Readed_Data,os.path.join(self.OutputFolder,obs_nm + '.pdf'))
 
 
-    def GeneratelandandlakeHRUS(self,Datafolder,Finalcat_NM = "finalcat_info.shp",Connect_Lake_ply = 'Con_Lake_Ply.shp'):
+    def GeneratelandandlakeHRUS(self,Datafolder,Finalcat_NM = "finalcat_info.shp",Connect_Lake_ply = 'Con_Lake_Ply.shp',Non_Connect_Lake_ply = 'Non_Con_Lake_Ply.shp',Has_Non_Connect_Lake = 1):
 
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
@@ -3393,16 +3393,26 @@ class LRRT:
 
         Path_finalcat_info    = os.path.join(Datafolder,Finalcat_NM)
         Path_Connect_Lake_ply = os.path.join(Datafolder,Connect_Lake_ply)
+        Path_Non_Connect_Lake_ply = os.path.join(Datafolder,Non_Connect_Lake_ply)
         Path_temp_finalcat_info    = os.path.join(self.tempfolder,Finalcat_NM)
         Path_temp_Connect_Lake_ply = os.path.join(self.tempfolder,Connect_Lake_ply)
+        Path_temp_Non_Connect_Lake_ply = os.path.join(self.tempfolder,Non_Connect_Lake_ply)
+        Path_temp_All_Lake_ply = os.path.join(self.tempfolder,'Allakes.shp')
+        Path_temp_All_Lake_ply_fix = os.path.join(self.tempfolder,'Allakes_fix.shp')
 
-        Path_finalcat_hru     = os.path.join(Datafolder,"finalcat_hru_info.shp")
-        Path_finalcat_hru2    = os.path.join(Datafolder,"finalcat_hru_info2.shp")
+        Path_finalcat_hru     = os.path.join(self.tempfolder,"finalcat_hru_info.shp")
+        Path_finalcat_hru2    = os.path.join(Datafolder,"finalcat_hru_info.shp")
 
         processing.run("native:fixgeometries", {'INPUT':Path_finalcat_info,'OUTPUT':Path_temp_finalcat_info})
         processing.run("native:fixgeometries", {'INPUT':Path_Connect_Lake_ply,'OUTPUT':Path_temp_Connect_Lake_ply})
+        processing.run("native:fixgeometries", {'INPUT':Path_Non_Connect_Lake_ply,'OUTPUT':Path_temp_Non_Connect_Lake_ply})
 
-        processing.run("native:union", {'INPUT':Path_temp_finalcat_info,'OVERLAY':Path_temp_Connect_Lake_ply,'OVERLAY_FIELDS_PREFIX':'','OUTPUT':Path_finalcat_hru},context = context)
+        if Has_Non_Connect_Lake < 0:
+            processing.run("native:union", {'INPUT':Path_temp_finalcat_info,'OVERLAY':Path_temp_Connect_Lake_ply,'OVERLAY_FIELDS_PREFIX':'','OUTPUT':Path_finalcat_hru},context = context)
+        else:
+            processing.run("native:mergevectorlayers", {'LAYERS':[Path_temp_Connect_Lake_ply,Path_temp_Non_Connect_Lake_ply],'OUTPUT':Path_temp_All_Lake_ply})
+            processing.run("native:fixgeometries", {'INPUT':Path_temp_All_Lake_ply,'OUTPUT':Path_temp_All_Lake_ply_fix})
+            processing.run("native:union", {'INPUT':Path_temp_finalcat_info,'OVERLAY':Path_temp_All_Lake_ply_fix,'OVERLAY_FIELDS_PREFIX':'','OUTPUT':Path_finalcat_hru},context = context)
 #        processing.run("native:dissolve", {'INPUT':Path_Temp_final_rviply,'FIELD':['SubId'],'OUTPUT':Path_final_rviply},context = context)
 #        processing.run("qgis:fieldcalculator", {'INPUT':,'FIELD_NAME':'HRU_ID','FIELD_TYPE':0,'FIELD_LENGTH':7,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1.2345','OUTPUT':Path_finalcat_hru2})
 
@@ -3454,7 +3464,16 @@ class LRRT:
 
         layer_cat=QgsVectorLayer(Path_finalcat_hru,"")
         layer_cat.dataProvider().addAttributes([QgsField('HRU_ID', QVariant.Int),QgsField('HRU_Area', QVariant.Double)])
-        layer_cat.dataProvider().deleteAttributes([35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54])
+        field_ids = []
+        # Fieldnames to delete
+        fieldnames = set(['Lake_name','Country','Continent','Poly_src','Lake_type','Grand_id','Lake_area','Shore_len','Shore_dev','Vol_total','Vol_res'
+        ,'Vol_src','Depth_avg','Dis_avg','Res_avg','Res_time','Elevation','Slope_100','Wshd_area','Pour_long','Pour_lat','layer_2','path_2'])
+
+        for field in layer_cat.fields():
+            if field.name() in fieldnames:
+                field_ids.append(layer_cat.dataProvider().fieldNameIndex(field.name()))
+#        print(field_ids)
+        layer_cat.dataProvider().deleteAttributes(field_ids)
         layer_cat.updateFields()
         layer_cat.commitChanges()
 
