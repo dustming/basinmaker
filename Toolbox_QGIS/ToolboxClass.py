@@ -759,14 +759,17 @@ def New_SubId_To_Dissolve(subid,catchmentinfo,mapoldnew_info,upsubid = -1,ismodi
 
     else:
         Modify_subids =  modifiidin
-
+#    print("##########################################")
+#    print(subid)
+#    print(Modify_subids)
     cbranch                  = catchmentinfo[catchmentinfo[sub_colnm].isin(Modify_subids)]
     tarinfo                  = catchmentinfo[catchmentinfo[sub_colnm] == subid]   ### define these subs attributes
     ### average river slope info
-
+    
     mainriv_merg_info = mainriv.loc[mainriv['SubId'].isin(Modify_subids)]
     mainriv_merg_info = mainriv_merg_info.loc[mainriv_merg_info['RivLength'] > 0]
     idx = tarinfo.index[0]
+#    print(tarinfo.loc[idx,'BasArea'],"1")
     if len(mainriv_merg_info) > 0:
         tarinfo.loc[idx,'RivLength'] = np.sum(mainriv_merg_info['RivLength'].values)
         tarinfo.loc[idx,'RivSlope']  = np.average(mainriv_merg_info['RivSlope'].values ,weights = mainriv_merg_info['RivLength'].values)
@@ -784,7 +787,7 @@ def New_SubId_To_Dissolve(subid,catchmentinfo,mapoldnew_info,upsubid = -1,ismodi
 
     tarinfo.loc[idx,'Max_DEM']       = np.max(cbranch['Max_DEM'].values)
     tarinfo.loc[idx,'Min_DEM']       = np.min(cbranch['Min_DEM'].values)
-
+#    print(tarinfo.loc[idx,'BasArea'],"2")
     if Islake == 1:   ## Meger subbasin covered by lakes, Keep lake outlet catchment  DA, stream order info
         tarinfo.loc[idx,'RivLength'] = 0.0
     elif Islake == 2:
@@ -808,13 +811,23 @@ def New_SubId_To_Dissolve(subid,catchmentinfo,mapoldnew_info,upsubid = -1,ismodi
     if seg_order >0 :
         tarinfo.loc[idx,'Seg_order']      = seg_order
 
-    mask = mapoldnew_info['SubId'].isin(Modify_subids)
+    mask1 = mapoldnew_info['SubId'].isin(Modify_subids) ## catchment newly determined to be merged to target catchment
+    mask2 = mapoldnew_info['nsubid'] == subid ###for subbasin already processed to drainage into this target catchment 
+    mask  = np.logical_or(mask1,mask2) 
+    
+    
     ### the old downsub id of the dissolved polygon is stored in DowSubId
     for col in tarinfo.columns:
         if col == 'SubId':
+#            print(tarinfo[col].values[0])
             mapoldnew_info.loc[mask,'nsubid']     = tarinfo[col].values[0]
+#            print(mapoldnew_info.loc[mask,'nsubid'])
+        elif col == 'nsubid' or col == 'ndownsubid' or col == 'Old_SubId' or col == 'Old_DowSubId':
+            continue  
         else:
             mapoldnew_info.loc[mask, col]         = tarinfo[col].values[0]
+#    print(mapoldnew_info.loc[mask1,['BasArea','nsubid','SubId']])
+#    print(mapoldnew_info.loc[mapoldnew_info['nsubid'] == subid,['BasArea','nsubid','SubId']])
     return mapoldnew_info
 
 def Modify_Feature_info(Path_feagure,mapoldnew_info):
@@ -831,7 +844,7 @@ def Modify_Feature_info(Path_feagure,mapoldnew_info):
             for icolnm in range(0,len(Attri_Name)):     ### copy infomaiton
                 if  Attri_Name[icolnm] == 'Obs_NM' or Attri_Name[icolnm] == 'SRC_obs':
                     sf[Attri_Name[icolnm]] = str(tarinfo[Attri_Name[icolnm]].values[0])
-                elif Attri_Name[icolnm] == 'cat':
+                elif Attri_Name[icolnm] == 'cat' or Attri_Name[icolnm] == 'path' or Attri_Name[icolnm] == 'layer':
                     continue
                 else:
                     sf[Attri_Name[icolnm]] = float(tarinfo[Attri_Name[icolnm]].values[0])
@@ -3036,7 +3049,7 @@ class LRRT:
 ###########################################################################3
     def SelectLakes(self,Datafolder,finalrvi_ply_NM = 'finalriv_info_ply.shp',Non_ConnL_ply_NM='Non_Con_Lake_Ply.shp',
                     ConnL_ply_NM='Con_Lake_Ply.shp',finalriv_NM = 'finalriv_info.shp',Thres_Area_Conn_Lakes = -1,Thres_Area_Non_Conn_Lakes = -1,
-                    Selection_Method = 'ByArea',sub_colnm = 'SubId',SelectionName = 'All'):
+                    Selection_Method = 'ByArea',sub_colnm = 'SubId',SelectionName = 'All',Selected_Lake_List_in=[]):
 
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
@@ -3061,6 +3074,7 @@ class LRRT:
         finalcat_info['Seg_ID']  = finalcat_info['Seg_ID'].astype(int)
 
         Non_ConnL_info           = finalcat_info.loc[finalcat_info['IsLake'] == 2]
+        ConnL_info               = finalcat_info.loc[finalcat_info['IsLake'] == 1]
 
         if Selection_Method == 'ByArea':
             ### process connected lakes first
@@ -3077,6 +3091,24 @@ class LRRT:
                 Selected_Non_ConnLakes = Non_ConnL_info[Non_ConnL_info['LakeArea'] >= 10000000]['HyLakeId'].values
                 Selected_Non_ConnLakes = np.unique(Selected_Non_ConnLakes)
                 Selected_Non_ConnL_info = Non_ConnL_info[Non_ConnL_info['LakeArea'] >= 10000000]
+                
+        elif Selection_Method == 'ByLakelist':
+            All_ConnL     = ConnL_info['HyLakeId'].values
+            All_Non_ConnL = Non_ConnL_info['HyLakeId'].values
+            Selected_Lake_List_in_array = np.array(Selected_Lake_List_in)
+            
+            mask_CL  = np.in1d(All_ConnL, Selected_Lake_List_in_array)
+            mask_NCL = np.in1d(All_Non_ConnL, Selected_Lake_List_in_array)
+            
+            Selected_ConnLakes     = All_ConnL[mask_CL]
+            Selected_ConnLakes     = np.unique(Selected_ConnLakes)
+            Selected_Non_ConnLakes = All_Non_ConnL[mask_NCL]
+            Selected_Non_ConnLakes = np.unique(Selected_Non_ConnLakes)
+            
+            Un_Selected_ConnLakes_info  =finalcat_info.loc[(finalcat_info['IsLake'] == 1) & (np.logical_not(finalcat_info['HyLakeId'].isin(Selected_ConnLakes)))]
+            Un_Selected_Non_ConnL_info  =finalcat_info.loc[(finalcat_info['IsLake'] == 2) & (np.logical_not(finalcat_info['HyLakeId'].isin(Selected_Non_ConnLakes)))]
+            
+            
         else:
             print(todo)
 
@@ -3084,10 +3116,10 @@ class LRRT:
         if not os.path.exists(OutFolderSelectedLakes):
             os.makedirs(OutFolderSelectedLakes)
 
-
-        Selectfeatureattributes(processing,Input = os.path.join(Datafolder,Non_ConnL_ply_NM),Output=os.path.join(OutFolderSelectedLakes,Non_ConnL_ply_NM),Attri_NM = 'Hylak_id',Values = Selected_Non_ConnLakes)
-
-        Selectfeatureattributes(processing,Input = os.path.join(Datafolder,ConnL_ply_NM),Output=os.path.join(OutFolderSelectedLakes,ConnL_ply_NM),Attri_NM = 'Hylak_id',Values = Selected_ConnLakes)
+        if len(Selected_Non_ConnLakes) > 0:
+            Selectfeatureattributes(processing,Input = os.path.join(Datafolder,Non_ConnL_ply_NM),Output=os.path.join(OutFolderSelectedLakes,Non_ConnL_ply_NM),Attri_NM = 'Hylak_id',Values = Selected_Non_ConnLakes)
+        if len(Selected_ConnLakes) > 0:
+            Selectfeatureattributes(processing,Input = os.path.join(Datafolder,ConnL_ply_NM),Output=os.path.join(OutFolderSelectedLakes,ConnL_ply_NM),Attri_NM = 'Hylak_id',Values = Selected_ConnLakes)
 
         print("####################################### Obtain selected Lake IDs done")
 
@@ -3170,28 +3202,28 @@ class LRRT:
 
         Un_Selected_Non_ConnL_info = Un_Selected_Non_ConnL_info.sort_values(['DA'], ascending=[False])
         for i in range(0,len(Un_Selected_Non_ConnL_info)):
-            Remove_Non_ConnL_Lakeid        = Un_Selected_Non_ConnL_info['HyLakeId'].values[i]
-            Remove_Non_ConnL_Lake_Sub_info = finalcat_info_temp.loc[finalcat_info_temp['HyLakeId'] == Remove_Non_ConnL_Lakeid]
+            Remove_Non_ConnL_Lakeid        = Un_Selected_Non_ConnL_info['HyLakeId'].values[i] ##select one non connected lake
+            Remove_Non_ConnL_Lake_Sub_info = finalcat_info_temp.loc[finalcat_info_temp['HyLakeId'] == Remove_Non_ConnL_Lakeid] ## obtain cat info of this non connected lake catchment
             if len(Remove_Non_ConnL_Lake_Sub_info) != 1:
                 print("It is not a non connected lake catchment")
                 print(Remove_Non_ConnL_Lake_Sub_info)
                 continue
-            modifysubids = []
-            csubid  = Remove_Non_ConnL_Lake_Sub_info['SubId'].values[0]
-            downsubid = Remove_Non_ConnL_Lake_Sub_info['DowSubId'].values[0]
-            modifysubids.append(csubid)
+            modifysubids = [] ##array store all catchment id needs to be merged 
+            csubid  = Remove_Non_ConnL_Lake_Sub_info['SubId'].values[0]  ### intial subid 
+            downsubid = Remove_Non_ConnL_Lake_Sub_info['DowSubId'].values[0] ### downstream subid
+            modifysubids.append(csubid)  ### add inital subid into the list 
             tsubid = -1
             is_pre_modified = 0
 
-            Down_Sub_info = finalcat_info_temp.loc[finalcat_info_temp['SubId'] == downsubid]
+            Down_Sub_info = finalcat_info_temp.loc[finalcat_info_temp['SubId'] == downsubid] ###obtain downstream infomation
             if Down_Sub_info['IsLake'].values[0] != 2:
                 ### check if this downsubid has a new subid
-                nsubid = mapoldnew_info.loc[mapoldnew_info['SubId'] == downsubid]['nsubid'].values[0]
+                nsubid = mapoldnew_info.loc[mapoldnew_info['SubId'] == downsubid]['nsubid'].values[0] ## check if this catchment has modified: either merged to other catchment
 
-                if nsubid > 0:
-                    tsubid = nsubid
-                    is_pre_modified = 1
-                    modifysubids.append(tsubid)
+                if nsubid > 0:  ### if it been already processed 
+                    tsubid = nsubid  ### the target catchment id will be the newsunid 
+                    is_pre_modified = 1 ### set is modifed to 1
+                    modifysubids.append(tsubid) ### add this subid to the list
                 else:
                     tsubid = downsubid
                     is_pre_modified = -1
@@ -3215,7 +3247,7 @@ class LRRT:
             if is_pre_modified > 0:
                 mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = mapoldnew_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = modifysubids,mainriv = finalcat_info_temp,Islake = Tar_Lake_Id)
             else:
-                mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalcat_info_temp,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = modifysubids,mainriv = finalcat_info_temp,Islake = Tar_Lake_Id)
+                mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = mapoldnew_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = modifysubids,mainriv = finalcat_info_temp,Islake = Tar_Lake_Id)
 
         unprocessedmask = mapoldnew_info['nsubid'] <= 0
 
@@ -3405,11 +3437,11 @@ class LRRT:
 
         processing.run("native:fixgeometries", {'INPUT':Path_finalcat_info,'OUTPUT':Path_temp_finalcat_info})
         processing.run("native:fixgeometries", {'INPUT':Path_Connect_Lake_ply,'OUTPUT':Path_temp_Connect_Lake_ply})
-        processing.run("native:fixgeometries", {'INPUT':Path_Non_Connect_Lake_ply,'OUTPUT':Path_temp_Non_Connect_Lake_ply})
 
         if Has_Non_Connect_Lake < 0:
             processing.run("native:union", {'INPUT':Path_temp_finalcat_info,'OVERLAY':Path_temp_Connect_Lake_ply,'OVERLAY_FIELDS_PREFIX':'','OUTPUT':Path_finalcat_hru},context = context)
         else:
+            processing.run("native:fixgeometries", {'INPUT':Path_Non_Connect_Lake_ply,'OUTPUT':Path_temp_Non_Connect_Lake_ply})
             processing.run("native:mergevectorlayers", {'LAYERS':[Path_temp_Connect_Lake_ply,Path_temp_Non_Connect_Lake_ply],'OUTPUT':Path_temp_All_Lake_ply})
             processing.run("native:fixgeometries", {'INPUT':Path_temp_All_Lake_ply,'OUTPUT':Path_temp_All_Lake_ply_fix})
             processing.run("native:union", {'INPUT':Path_temp_finalcat_info,'OVERLAY':Path_temp_All_Lake_ply_fix,'OVERLAY_FIELDS_PREFIX':'','OUTPUT':Path_finalcat_hru},context = context)
