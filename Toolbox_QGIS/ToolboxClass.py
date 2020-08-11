@@ -3617,6 +3617,50 @@ class LRRT:
         Qgs.exit()
         return
 
+    def Lake_Statistics(self,Path_Finalcat_info = '#',Output_Folder = '#'):
+        
+        hyinfocsv         = Path_Finalcat_info[:-3] + "dbf"
+        tempinfo          = Dbf5(hyinfocsv)
+        finalcat_info     = tempinfo.to_dataframe().drop_duplicates('SubId', keep='first')
+        AllLake_info      = finalcat_info.loc[finalcat_info['IsLake'] > 0]
+        CL_info           = finalcat_info.loc[finalcat_info['IsLake'] == 1]
+        NCL_info          = finalcat_info.loc[finalcat_info['IsLake'] == 2]
+        
+        Lake_area_All     = np.sum(AllLake_info['LakeArea'].values)
+        Lake_area_CL      = np.sum(CL_info['LakeArea'].values)
+        Lake_area_NCL     = np.sum(NCL_info['LakeArea'].values)
+        
+        Lake_DA_All       = np.sum(AllLake_info['DA'].values)/1000/1000
+        Lake_DA_CL        = np.sum(CL_info['DA'].values)/1000/1000
+        Lake_DA_NCL       = np.sum(NCL_info['DA'].values)/1000/1000        
+        
+        Lake_Vol_All      = np.sum(AllLake_info['LakeVol'].values)
+        Lake_Vol_CL       = np.sum(CL_info['LakeVol'].values)
+        Lake_Vol_NCL      = np.sum(NCL_info['LakeVol'].values) 
+        
+        data = np.full((3,4),np.nan)
+        
+        Lake_stats = pd.DataFrame(data = data, index = ['LakeArea','DA','LakeVol'],columns = ['AllLakes','CL','NCL','NCL_PCT'])  
+        
+        Lake_stats.loc['LakeArea','AllLakes'] = Lake_area_All
+        Lake_stats.loc['LakeArea','CL'] = Lake_area_CL
+        Lake_stats.loc['LakeArea','NCL'] = Lake_area_NCL
+        Lake_stats.loc['LakeArea','NCL_PCT'] = Lake_area_NCL/Lake_area_All
+        
+        Lake_stats.loc['DA','AllLakes'] = Lake_DA_All
+        Lake_stats.loc['DA','CL'] = Lake_DA_CL
+        Lake_stats.loc['DA','NCL'] = Lake_DA_NCL
+        Lake_stats.loc['DA','NCL_PCT'] = Lake_DA_NCL/Lake_DA_All                
+        
+        Lake_stats.loc['LakeVol','AllLakes'] = Lake_Vol_All
+        Lake_stats.loc['LakeVol','CL'] = Lake_Vol_CL
+        Lake_stats.loc['LakeVol','NCL'] = Lake_Vol_NCL
+        Lake_stats.loc['LakeVol','NCL_PCT'] = Lake_Vol_NCL/Lake_Vol_All 
+        
+        Lake_stats.to_csv(os.path.join(Output_Folder,'Lake_stats.csv'))    
+        
+
+
     def Combine_Sub_Region_Results(self,Sub_Region_info = '#',Sub_Region_OutputFolder = '#', OutputFolder = '#',Is_Only_Final_Result = 1,Path_Down_Stream_Points= '#'):
 
         QgsApplication.setPrefixPath(self.qgisPP, True)
