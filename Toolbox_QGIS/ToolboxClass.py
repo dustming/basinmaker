@@ -3890,9 +3890,149 @@ class LRRT:
             processing.run("native:dissolve", {'INPUT':os.path.join(self.tempfolder,'finalriv_info_ply.shp'),'FIELD':['SubId'],'OUTPUT':os.path.join(OutputFolder,'finalriv_info_ply.shp')},context = context)
             processing.run("native:dissolve", {'INPUT':os.path.join(self.tempfolder,'finalriv_info.shp'),'FIELD':['SubId'],'OUTPUT':os.path.join(OutputFolder,'finalriv_info.shp')},context = context)
 
+    def Generate_Grid_Poly_From_NetCDF(self,NetCDF_Path = '#',Output_Folder = '#',Coor_x_NM = 'lon',Coor_y_NM = 'lat',Is_Rotated_Grid = 1,R_Coor_x_NM = 'rlon',R_Coor_y_NM = 'rlat',SpatialRef = 'EPSG:4326',x_add = -360,y_add = 0):
 
-            # layer_cat=QgsVectorLayer(Path_Finalcat_info,"")
-            # layer_cat.dataProvider().addAttributes([QgsField('HRU_ID', QVariant.Int),QgsField('HRU_Area', QVariant.Double)])
-            # layer_cat.dataProvider().deleteAttributes([35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54])
-            # layer_cat.updateFields()
-            # layer_cat.commitChanges()
+        QgsApplication.setPrefixPath(self.qgisPP, True)
+        Qgs = QgsApplication([],False)
+        Qgs.initQgis()
+        from qgis import processing
+        from processing.core.Processing import Processing
+        from processing.tools import dataobjects
+        feedback = QgsProcessingFeedback()
+        Processing.initialize()
+        QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
+        context = dataobjects.createContext()
+        context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
+        from netCDF4 import Dataset
+        
+        ncfile =  NetCDF_Path       
+        dsin2 =  Dataset(ncfile,'r') # sample structure of in nc file converted from fst 
+            
+        if Is_Rotated_Grid > 0:
+            ncols = len(dsin2.variables[R_Coor_x_NM][:])  ### from 0 to (ncols-1).
+            nrows = len(dsin2.variables[R_Coor_y_NM][:])
+        else:
+            ncols = len(dsin2.variables[Coor_x_NM][:])  ### from 0 to (ncols-1).
+            nrows = len(dsin2.variables[Coor_y_NM][:])
+                               
+        latlonrow = np.full((nrows*ncols,5),-9999.99999)
+        latlonrow = np.full((nrows*ncols,5),-9999.99999)
+        
+        ### Create a point layer, each point will be the nc grids 
+        Point_Nc_Grid = QgsVectorLayer("Point?crs=epsg:4326&field=FGID:integer&field=Row:integer&field=Col:integer&field=Gridlon:double&field=Gridlat:double&index=yes", "NC Grid Points",  "memory")
+        DP_Nc_Point = Point_Nc_Grid.dataProvider()
+        Point_Nc_Grid.startEditing()
+
+        ### create polygon layter
+        Polygon_Nc_Grid = QgsVectorLayer("Polygon?crs=epsg:4326&field=FGID:integer&field=Row:integer&field=Col:integer&field=Gridlon:double&field=Gridlat:double&index=yes", "NC Grid polygons",  "memory")
+        DP_Nc_ply = Polygon_Nc_Grid.dataProvider()
+        Polygon_Nc_Grid.startEditing()
+        
+                
+        for i in range(0,nrows):
+            for j in range(0,ncols):  
+                k = i*ncols + j          
+                
+                Point_Fea = QgsFeature()
+                
+                if Is_Rotated_Grid < 0:
+                    latlonrow[k,0] = k 
+                    latlonrow[k,1] = i   ### irow
+                    latlonrow[k,2] = j  ###col
+                    latlonrow[k,3] = dsin2.variables[Coor_x_NM][j] + x_add## lon
+                    latlonrow[k,4] = dsin2.variables[Coor_y_NM][i]  ## lat
+
+                else:
+                    latlonrow[k,0] = k 
+                    latlonrow[k,1] = i   ### irow
+                    latlonrow[k,2] = j  ###col
+                    latlonrow[k,3] = dsin2.variables[Coor_x_NM][i,j] + x_add ## lon
+                    latlonrow[k,4] = dsin2.variables[Coor_y_NM][i,j]   ## lat
+                
+                #### create point for each grid in Net CDF 
+                NC_Grid_Point  = QgsGeometry.fromPointXY(QgsPointXY(latlonrow[k,3],latlonrow[k,4]))
+                Point_Fea.setGeometry(NC_Grid_Point)
+                Point_Fea.setAttributes(latlonrow[k,:].tolist())
+                DP_Nc_Point.addFeature(Point_Fea)
+                
+                ### Create a polygon that the current grid is in the center of the polygon
+                
+                
+                ### find mid point in row direction
+                Polygon_Fea = QgsFeature()
+                 
+                if j != 0 : 
+                    if Is_Rotated_Grid < 0:  ## left x
+                        x1 = latlonrow[k,3] - 0.5*( latlonrow[k,3] - (dsin2.variables[Coor_x_NM][j-1]   + x_add) )
+                    else:
+                        x1 = latlonrow[k,3] - 0.5*( latlonrow[k,3] - (dsin2.variables[Coor_x_NM][i,j-1] + x_add) )
+                else: 
+                    if Is_Rotated_Grid < 0:
+                        x1 = latlonrow[k,3] - 0.5*(-latlonrow[k,3] + (dsin2.variables[Coor_x_NM][j+1]   + x_add) )
+                    else:
+                        x1 = latlonrow[k,3] - 0.5*(-latlonrow[k,3] + (dsin2.variables[Coor_x_NM][i,j+1] + x_add) )
+                
+                if j != ncols -1 :   ###  right x
+                    if Is_Rotated_Grid < 0:
+                        x2 = latlonrow[k,3] + 0.5*(-latlonrow[k,3] + (dsin2.variables[Coor_x_NM][j+1]   + x_add) )
+                    else:
+                        x2 = latlonrow[k,3] + 0.5*(-latlonrow[k,3] + (dsin2.variables[Coor_x_NM][i,j+1] + x_add) )
+                else: 
+                    if Is_Rotated_Grid < 0:
+                        x2 = latlonrow[k,3] + 0.5*( latlonrow[k,3] - (dsin2.variables[Coor_x_NM][j-1]   + x_add) )
+                    else:
+                        x2 = latlonrow[k,3] + 0.5*( latlonrow[k,3] - (dsin2.variables[Coor_x_NM][i,j-1] + x_add) )
+                        
+                if i != nrows - 1: ## lower y 
+                    if Is_Rotated_Grid < 0:
+                        y1 = latlonrow[k,4] + 0.5*(-latlonrow[k,4] + dsin2.variables[Coor_y_NM][i+1] )
+                    else:
+                        y1 = latlonrow[k,4] + 0.5*(-latlonrow[k,4] + dsin2.variables[Coor_y_NM][i+1,j] )
+                else:
+                    if Is_Rotated_Grid < 0:
+                        y1 = latlonrow[k,4] + 0.5*( latlonrow[k,4] - dsin2.variables[Coor_y_NM][i-1] )
+                    else:
+                        y1 = latlonrow[k,4] + 0.5*( latlonrow[k,4] - dsin2.variables[Coor_y_NM][i-1,j] )
+                        
+                        
+                if i != 0: ## upper y 
+                    if Is_Rotated_Grid < 0:
+                        y2 = latlonrow[k,4] - 0.5*( latlonrow[k,4] - dsin2.variables[Coor_y_NM][i-1] )
+                    else:
+                        y2 = latlonrow[k,4] - 0.5*( latlonrow[k,4] - dsin2.variables[Coor_y_NM][i-1,j] )
+                else:
+                    if Is_Rotated_Grid < 0:
+                        y2 = latlonrow[k,4] - 0.5*(-latlonrow[k,4] + dsin2.variables[Coor_y_NM][i+1] )
+                    else:
+                        y2 = latlonrow[k,4] - 0.5*(-latlonrow[k,4] + dsin2.variables[Coor_y_NM][i+1,j] )
+                        
+                Point_1  = QgsPointXY(x1,y1)  ## lower left 
+                Point_2  = QgsPointXY(x1,y2) 
+                Point_3  = QgsPointXY(x2,y2) 
+                Point_4  = QgsPointXY(x2,y1)        
+                    
+                print(i,j,latlonrow[k,3],latlonrow[k,4])
+                gPolygon = QgsGeometry.fromPolygonXY([[Point_1,Point_2,Point_3,Point_4]])
+                print(gPolygon)
+                Polygon_Fea.setGeometry(gPolygon)
+                Polygon_Fea.setAttributes(latlonrow[k,:].tolist())
+                print(Polygon_Fea)
+                DP_Nc_ply.addFeature(Polygon_Fea)   
+                    
+                            
+
+        Point_Nc_Grid.commitChanges()
+        Point_Nc_Grid.updateExtents()            
+
+        Polygon_Nc_Grid.commitChanges()
+        Polygon_Nc_Grid.updateExtents()
+        
+                        
+        pdlatlonrow = pd.DataFrame(latlonrow,columns=['FGID','Row','Col','Gridlon','Gridlat'])
+        pdlatlonrow.to_csv(os.path.join(Output_Folder ,"Gridcorr.csv"), sep = ',',index = False)
+        
+        
+        QgsVectorFileWriter.writeAsVectorFormat(layer = Point_Nc_Grid,fileName = os.path.join(Output_Folder,"Nc_Grids.shp"),fileEncoding = "UTF-8",destCRS = QgsCoordinateReferenceSystem(SpatialRef),driverName="ESRI Shapefile")
+        QgsVectorFileWriter.writeAsVectorFormat(layer = Polygon_Nc_Grid,fileName = os.path.join(Output_Folder,"Gridncply.shp"),fileEncoding = "UTF-8",destCRS = QgsCoordinateReferenceSystem(SpatialRef),driverName="ESRI Shapefile")
+
+
