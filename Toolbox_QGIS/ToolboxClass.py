@@ -2642,11 +2642,11 @@ class LRRT:
             shutil.rmtree(self.tempfolder,ignore_errors=True)
 
 
-    def GenerateRavenInput(self,Finalcat_NM = 'finalcat_info',lenThres = 1,iscalmanningn = -1,Nonconnectlake = -1,NonconLakeinfo = 'Non_con_lake',Startyear = 1980,EndYear = 2010
-                          ,CA_HYDAT = '#',WarmUp = 0,Template_Folder = '#'):
+    def GenerateRavenInput(self,DataFolder = '#', Finalcat_NM = 'finalcat_hru_info',lenThres = 1,iscalmanningn = -1,Nonconnectlake = -1,Startyear = 1980,EndYear = 2010
+                          ,CA_HYDAT = '#',WarmUp = 0,Template_Folder = '#',HRU_ID_NM = 'HRU_ID',HRU_Area_NM = 'HRU_Area',Sub_ID_NM = 'SubId'):
 
 
-        Model_Folder     = os.path.join(self.OutputFolder,'Model')
+        Model_Folder     = os.path.join(DataFolder,'Model')
         Raveinputsfolder = os.path.join(Model_Folder,'RavenInput')
         Obs_Folder       = os.path.join(Raveinputsfolder,'obs')
 
@@ -2666,28 +2666,15 @@ class LRRT:
 
 
 
-        finalcatchpath = os.path.join(self.OutputFolder,Finalcat_NM)
+        finalcatchpath = os.path.join(DataFolder,Finalcat_NM)
 
         tempinfo = Dbf5(finalcatchpath + ".dbf")#np.genfromtxt(hyinfocsv,delimiter=',')
         ncatinfo = tempinfo.to_dataframe()
-        ncatinfo2 = ncatinfo.drop_duplicates('SubId', keep='first')
-        ncatinfo2 = ncatinfo2[ncatinfo2['SubId'] > 0]
+        ncatinfo2 = ncatinfo.drop_duplicates(HRU_ID_NM, keep='first')
+        ncatinfo2 = ncatinfo2[ncatinfo2[HRU_ID_NM] > 0]
 
-        if Nonconnectlake > 0:
-            NonconLakeinfopath = os.path.join(self.OutputFolder,NonconLakeinfo)
-            tempinfo = Dbf5( NonconLakeinfopath + ".dbf")#np.genfromtxt(hyinfocsv,delimiter=',')
-            nclakeinfo = tempinfo.to_dataframe()
-            nclakeinfo['Gridcode'] = nclakeinfo['Gridcode'].astype(float)
-            nclakeinfo['SubId_cat'] = nclakeinfo['SubId_cat'].astype(float)
-            nclakeinfo['Area_m'] = nclakeinfo['Area_m'].astype(float)
-            nclakeinfo = nclakeinfo.drop_duplicates('Gridcode', keep='first')
-        else:
-            nclakeinfo = pd.DataFrame(np.full((1,4),-9999), columns = ['Gridcode', "SubId_riv","SubId_cat","Area_m"])
-#            print(nclakeinfo)
-
-        nclakeinfo = Writervhchanl(ncatinfo2,Raveinputsfolder,lenThres,iscalmanningn,nclakeinfo)
-        writelake(ncatinfo2,Raveinputsfolder,nclakeinfo)
-        nclakeinfo.to_csv(os.path.join(self.OutputFolder,'Non_connect_Lake_routing_info.csv'),index = None, header=True)
+        Writervhchanl(ncatinfo2,Raveinputsfolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM)
+        writelake(ncatinfo2,Raveinputsfolder,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM)
         WriteObsfiles(ncatinfo2,Raveinputsfolder,Obs_Folder,Startyear + WarmUp,EndYear,CA_HYDAT,Template_Folder)
 
 
@@ -3433,7 +3420,8 @@ class LRRT:
         Path_temp_All_Lake_ply_fix = os.path.join(self.tempfolder,'Allakes_fix.shp')
 
         Path_finalcat_hru     = os.path.join(self.tempfolder,"finalcat_hru_info.shp")
-        Path_finalcat_hru2    = os.path.join(Datafolder,"finalcat_hru_info.shp")
+        Path_finalcat_hru2    = os.path.join(self.tempfolder,"finalcat_hru_info_noarea.shp")
+        Path_finalcat_hru_out    = os.path.join(Datafolder,"finalcat_hru_info.shp")
 
         processing.run("native:fixgeometries", {'INPUT':Path_finalcat_info,'OUTPUT':Path_temp_finalcat_info})
         processing.run("native:fixgeometries", {'INPUT':Path_Connect_Lake_ply,'OUTPUT':Path_temp_Connect_Lake_ply})
@@ -3467,7 +3455,6 @@ class LRRT:
 
 #        print(mapoldnew_info['SubId'].values)
         maxsubid              = np.nanmax(mapoldnew_info['SubId'].values)
-
         for i in range(0,len(mapoldnew_info)):
             subid        = mapoldnew_info['SubId'].values[i]
             sub_lakeid   = mapoldnew_info['HyLakeId'].values[i]
@@ -3476,26 +3463,25 @@ class LRRT:
 
 
             if sub_lakeid < 0:  ### non lake catchment
-                print("1",subid,sub_lakeid,Lake_lakeid)
                 mapoldnew_info.loc[i,'HRU_ID']   = int(subid)    ### each hru id is determined by subid and maxsubid
-                mapoldnew_info.loc[i,'HRU_Area'] = mapoldnew_info['BasArea'].values[i]
+#                mapoldnew_info.loc[i,'HRU_Area'] = mapoldnew_info['BasArea'].values[i]
 #                mapoldnew_info.loc[i,'Hylak_id'] = np.nan
 
             if sub_lakeid > 0: ### lake catchmen
-                print("2",subid,sub_lakeid,Lake_lakeid)
+#                print("2",subid,sub_lakeid,Lake_lakeid)
                 if sub_lakeid == Lake_lakeid:  ### lake hru
-                    print("3",subid,sub_lakeid,Lake_lakeid)
+#                    print("3",subid,sub_lakeid,Lake_lakeid)
                     mapoldnew_info.loc[i,'HRU_ID']   = int(maxsubid) + int(subid)
-                    mapoldnew_info.loc[i,'HRU_Area'] = mapoldnew_info['LakeArea'].values[i]*1000*1000
+#                    mapoldnew_info.loc[i,'HRU_Area'] = mapoldnew_info['LakeArea'].values[i]*1000*1000
                 else:
                     mapoldnew_info.loc[i,'HRU_ID']   = int(subid)
-                    landarea = mapoldnew_info['BasArea'].values[i] - mapoldnew_info['LakeArea'].values[i]*1000*1000
-                    landarea = max(landarea,mapoldnew_info['BasArea'].values[i]*0.05)
-                    mapoldnew_info.loc[i,'HRU_Area'] = landarea
+#                    landarea = mapoldnew_info['BasArea'].values[i] - mapoldnew_info['LakeArea'].values[i]*1000*1000
+#                    landarea = max(landarea,mapoldnew_info['BasArea'].values[i]*0.05)
+#                    mapoldnew_info.loc[i,'HRU_Area'] = landarea
 #                    mapoldnew_info.loc[i,'Hylak_id'] = np.nan
 
         layer_cat=QgsVectorLayer(Path_finalcat_hru,"")
-        layer_cat.dataProvider().addAttributes([QgsField('HRU_ID', QVariant.Int),QgsField('HRU_Area', QVariant.Double)])
+        layer_cat.dataProvider().addAttributes([QgsField('HRU_ID', QVariant.Int),QgsField('HRU_Type', QVariant.Int)])
         field_ids = []
         # Fieldnames to delete
         fieldnames = set(['Lake_name','Country','Continent','Poly_src','Lake_type','Grand_id','Lake_area','Shore_len','Shore_dev','Vol_total','Vol_res'
@@ -3544,18 +3530,20 @@ class LRRT:
                 srcinfo             = mapoldnew_info.loc[maskand,['HyLakeId','HRU_ID','HRU_Area','Hylak_id']]
 
 #                centroidxy = sf.geometry().centroid().asPoint()
-                print(srcinfo)
+#                print(srcinfo)
                 sf['HRU_ID']   = float(srcinfo['HRU_ID'].values[0])
-                sf['HRU_Area'] = float(srcinfo['HRU_Area'].values[0])
+#                sf['HRU_Area'] = float(srcinfo['HRU_Area'].values[0])
                 if srcinfo['HyLakeId'].values[0] == srcinfo['Hylak_id'].values[0]:
                     sf['Hylak_id'] = float(srcinfo['Hylak_id'].values[0])
+                    sf['HRU_Type'] = float(1)
                 else:
                     sf['Hylak_id'] = float(0)
+                    sf['HRU_Type'] = float(0)
                 layer_cat.updateFeature(sf)
         del layer_cat
 
         processing.run("native:dissolve", {'INPUT':Path_finalcat_hru,'FIELD':['HRU_ID'],'OUTPUT':Path_finalcat_hru2},context = context)
-
+        processing.run("qgis:fieldcalculator", {'INPUT':Path_finalcat_hru2,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'area(transform($geometry, \'EPSG:4326\',\'EPSG:3573\'))','OUTPUT':Path_finalcat_hru_out})
 
 
 
@@ -3821,7 +3809,7 @@ class LRRT:
                         DownSubid   = Down_Sub_info['nSubId'].values[0]
                         AllCatinfo.loc[outlet_mask,'nDowSubId'] = DownSubid
                     else:
-                        print(isubregion,iReg_Outlet_nSubid)
+#                        print(isubregion,iReg_Outlet_nSubid)
                         AllCatinfo.loc[outlet_mask,'nDowSubId'] = -1
 
 
@@ -4011,12 +3999,9 @@ class LRRT:
                 Point_3  = QgsPointXY(x2,y2) 
                 Point_4  = QgsPointXY(x2,y1)        
                     
-                print(i,j,latlonrow[k,3],latlonrow[k,4])
                 gPolygon = QgsGeometry.fromPolygonXY([[Point_1,Point_2,Point_3,Point_4]])
-                print(gPolygon)
                 Polygon_Fea.setGeometry(gPolygon)
                 Polygon_Fea.setAttributes(latlonrow[k,:].tolist())
-                print(Polygon_Fea)
                 DP_Nc_ply.addFeature(Polygon_Fea)   
                     
                             
@@ -4035,4 +4020,104 @@ class LRRT:
         QgsVectorFileWriter.writeAsVectorFormat(layer = Point_Nc_Grid,fileName = os.path.join(Output_Folder,"Nc_Grids.shp"),fileEncoding = "UTF-8",destCRS = QgsCoordinateReferenceSystem(SpatialRef),driverName="ESRI Shapefile")
         QgsVectorFileWriter.writeAsVectorFormat(layer = Polygon_Nc_Grid,fileName = os.path.join(Output_Folder,"Gridncply.shp"),fileEncoding = "UTF-8",destCRS = QgsCoordinateReferenceSystem(SpatialRef),driverName="ESRI Shapefile")
 
+    def Area_Weighted_Mapping_Between_Two_Polygons(self,Target_Ply_Path ='#',Mapping_Ply_Path = '#',Col_NM = 'HRU_ID',Output_Folder = '#'):
+        
+        QgsApplication.setPrefixPath(self.qgisPP, True)
+        Qgs = QgsApplication([],False)
+        Qgs.initQgis()
+        from qgis import processing
+        from processing.core.Processing import Processing
+        from processing.tools import dataobjects
+        feedback = QgsProcessingFeedback()
+        Processing.initialize()
+        QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
+        context = dataobjects.createContext()
+        context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
+        from netCDF4 import Dataset
+        
+        Path_finalcat_hru_temp          = os.path.join(self.tempfolder,"finalcat_freferen.shp")
+        Path_finalcat_hru_temp2          = os.path.join(self.tempfolder,"finalcat_freferen2.shp")
+        Path_finalcat_hru_temp_dissolve = os.path.join(self.tempfolder,"finalcat_freferen_dissolve.shp")
+        Path_finalcat_hru_temp_dissolve_area = os.path.join(Output_Folder,"Overlay_Polygons.shp")
+        
+        
+        ### create overlay betweeo two polygon and calcuate area of each new polygon in the overlay 
+        processing.run("native:union", {'INPUT':Target_Ply_Path,'OVERLAY':Mapping_Ply_Path,'OVERLAY_FIELDS_PREFIX':'Map_','OUTPUT':Path_finalcat_hru_temp},context = context)
+        processing.run("native:extractbyattribute", {'INPUT':Path_finalcat_hru_temp,'FIELD':'HRU_ID','OPERATOR':2,'VALUE':'0','OUTPUT':Path_finalcat_hru_temp2})
+        processing.run("native:dissolve", {'INPUT':Path_finalcat_hru_temp2,'FIELD':['HRU_ID','Map_FGID'],'OUTPUT':Path_finalcat_hru_temp_dissolve},context = context)            
+        processing.run("qgis:fieldcalculator", {'INPUT':Path_finalcat_hru_temp_dissolve,'FIELD_NAME':'s_area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'area(transform($geometry, \'EPSG:4326\',\'EPSG:3573\'))','OUTPUT':Path_finalcat_hru_temp_dissolve_area})
+    
+        ### calculate the area weight of the mapping polygon to target polygon
+        
+        dbf1 = Dbf5(Mapping_Ply_Path[:-3]+'dbf')
+        Forcinfo = dbf1.to_dataframe()
+        Avafgid = Forcinfo['FGID'].values
+            
+        
+        dbf2 = Dbf5(Path_finalcat_hru_temp_dissolve_area[:-3] + "dbf")
+        Mapforcing = dbf2.to_dataframe()
+        Mapforcing = Mapforcing.loc[Mapforcing[Col_NM] > 0] ### remove 
 
+####
+        hruids  = Mapforcing['HRU_ID'].values
+        hruids  = np.unique(hruids)
+#    Lakeids = np.unique(Lakeids)
+        ogridforc = open(os.path.join(Output_Folder,"GriddedForcings2.txt"),"w")
+        ogridforc.write(":GridWeights" +"\n")
+        ogridforc.write("   #      " +"\n")
+        ogridforc.write("   # [# HRUs]"+"\n")
+        sNhru = len(hruids)
+        
+        ogridforc.write("   :NumberHRUs       "+ str(sNhru) + "\n")
+        sNcell = (max(Forcinfo['Row'].values)+1) * (max(Forcinfo['Col'].values)+1)
+        ogridforc.write("   :NumberGridCells  "+str(sNcell)+"\n")
+        ogridforc.write("   #            "+"\n")
+        ogridforc.write("   # [HRU ID] [Cell #] [w_kl]"+"\n")   
+             
+        for i in range(len(hruids)):
+            hruid = hruids[i]
+            cats = Mapforcing.loc[Mapforcing['HRU_ID'] == hruid]
+            cats = cats[cats['Map_FGID'].isin(Avafgid)]
+        
+            if len(cats) <= 0:
+                cats = Mapforcing.loc[Mapforcing['HRU_ID'] == hruid]
+                print("Following Grid has to be inluded:.......")
+                print(cats['Map_FGID'])
+            tarea = sum(cats['s_area'].values)
+            fids = cats['Map_FGID'].values
+            fids = np.unique(fids)
+            sumwt = 0.0
+            for j in range(0,len(fids)):
+                scat = cats[cats['Map_FGID'] == fids[j]]
+                if j < len(fids) - 1:
+                    sarea = sum(scat['s_area'].values)
+                    wt = float(sarea)/float(tarea)
+                    sumwt = sumwt + wt
+                else:
+                    wt = 1- sumwt
+                    
+                if(len(scat['Map_Row'].values) > 1):  ## should be 1
+                    print(str(catid)+"error: 1 hru, 1 grid, produce muti polygon need to be merged ")
+                    Strcellid = str(int(scat['Map_Row'].values[0] * (max(Forcinfo['Col'].values) + 1 +misscol) + scat['Map_Col'].values[0])) + "      "
+                else:
+                    Strcellid = str(int(scat['Map_Row'].values * (max(Forcinfo['Col'].values) + 1) + scat['Map_Col'].values)) + "      "                    
+
+                ogridforc.write("    "+str(int(hruid)) + "     "+Strcellid+'      '+str(wt) +"\n")
+#        arcpy.AddMessage(cats)
+        ogridforc.write(":EndGridWeights")
+        ogridforc.close()
+        ########
+        #/* example of calcuate grid index
+        #       	0	1	2	3	4
+        #       0	0	1	2	3	4
+        #       1	5	6	7	8	9
+        #       2	10	11	12	13	14
+        #       3	15	16	17	18	19
+        ##  we have 4 rows (0-3) and 5 cols (0-4), the index of each cell
+        #   should be calaulated by row*(max(colnums)+1) + colnum.
+        #   for example row =2, col=0, index = 2*(4+1)+0 = 10
+        #   for example row 3, col 3, index = 3*(4+1)+3 = 18
+        ##################################333
+        ######################################################
+        ###################################################################################33
+    ####################################################################################################################################3    
