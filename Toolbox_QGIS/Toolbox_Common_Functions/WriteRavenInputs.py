@@ -222,14 +222,14 @@ def writelake(catinfo,outFolderraven,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM):
     f2 = open(os.path.join(outFolderraven,"TestLake.rvh"),"w")
     tab = '       '
     for i in range(0,len(catinfo.index)):
-        if catinfo.iloc[i]['HyLakeId'] > 0 and catinfo.iloc[i]['HRU_Type'] > 0:
+        if catinfo.iloc[i]['HyLakeId'] > 0 and catinfo.iloc[i]['HRU_Type'] == 1: ## lake hru
             lakeid = int(catinfo.iloc[i]['HyLakeId'])
             catid = catinfo.iloc[i][Sub_ID_NM]
-            A     = catinfo.iloc[i][HRU_Area_NM]
-            h0 = catinfo.iloc[i]['LakeDepth']
-            WeirCoe = 0.6
+            A     = catinfo.iloc[i][HRU_Area_NM] ### in meters
+            h0 = catinfo.iloc[i]['LakeDepth'] ## m
+            WeirCoe = 0.6   
             hruid = int(catinfo.iloc[i][HRU_ID_NM])
-            Crewd = catinfo.iloc[i]['BkfWidth']
+            Crewd = catinfo.iloc[i]['BkfWidth']  ##3 m 
 #            if slakeinfo.iloc[0]['Wshd_area'] < 6000 and slakeinfo.iloc[0]['Wshd_area'] > 0:
         ######write lake information to file
             f2.write(":Reservoir"+ "   Lake_"+ str(int(lakeid))+ "   ######## " +"\n")
@@ -305,7 +305,7 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_N
         writechanel(pronam,max(catinfo_sub['BkfWidth'].values[i],1),max(catinfo_sub['BkfDepth'].values[i],1),
         chslope,ochn,catinfo_sub['MeanElev'].values[i],floodn,nchn,iscalmanningn)
         
-        if catinfo_sub['IsObs'].values[i] > 0 :
+        if catinfo_sub['IsObs'].values[i] > 0 or catinfo_sub['IsLake'].values[i] >= 0 :
             Guage = '1'
         else:
             Guage = '0'
@@ -324,7 +324,7 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_N
         catslope = catinfo_hru['BasSlope'].values[i]
         cataspect= catinfo_hru['BasAspect'].values[i]
         
-        catarea2 = catinfo_hru[HRU_Area_NM].values[i]
+        catarea2 = catinfo_hru[HRU_Area_NM].values[i]/1000/1000  ### in km2
         
         StrGid =  str(hruid) #str( catinfo_hru.iloc[i][HRU_Area_NM])+tab
         
@@ -354,6 +354,8 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_N
             
         
     orvh.write(":EndHRUs"+"\n")
+    orvh.write(":PopulateHRUGroup Lake_HRUs With LANDUSE EQUALS Lake_HRU" + "\n")
+    orvh.write(":PopulateHRUGroup Land_HRUs With LANDUSE EQUALS FOREST" + "\n")
     orvh.write(":RedirectToFile TestLake.rvh")
     orvh.close()
     ochn.close()
