@@ -190,3 +190,6 @@ def PlotHydrography_Raven_alone(Path_rvt_Folder = '#',Path_Hydrographs_output_fi
         print(Metric_OUT)
         
 #        plotGuagelineobs(Scenario_NM,Readed_Data,os.path.join(OutputFolder,obs_nm + '.pdf'))        
+#    def Caluculate_Lake_Active_Depth_and_Lake_Evap(Path_Finalcat_info = '#',Path_ReservoirStages = '#', Path_ReservoirMassBalance = '#'):
+        
+        
