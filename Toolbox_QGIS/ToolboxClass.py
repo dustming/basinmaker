@@ -18,7 +18,7 @@ from GetBasinoutlet import Getbasinoutlet,Nextcell,Defcat
 from Generatecatinfo import Generatecatinfo,Generatecatinfo_riv,calculateChannaln,Writecatinfotodbf,Streamorderanddrainagearea,UpdateChannelinfo,UpdateNonConnectedcatchmentinfo
 from WriteRavenInputs import writelake,Writervhchanl
 from WriteRavenInputs import WriteObsfiles
-from RavenOutputFuctions import plotGuagelineobs
+from RavenOutputFuctions import plotGuagelineobs,Caluculate_Lake_Active_Depth_and_Lake_Evap
 from AddlakesintoRoutingNetWork import Dirpoints_v3,check_lakecatchment
 
 

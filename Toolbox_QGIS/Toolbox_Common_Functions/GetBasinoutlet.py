@@ -4,21 +4,22 @@ import copy
 
 def Defcat(out,outletid):
     otsheds = np.full((1,1),outletid)
-    Shedid = np.full((len(out),1),-99999999999)
+    Shedid = np.full((len(out)+1,1),-99999999999)
     psid = 0
     rout = copy.copy(out)
     while len(otsheds) > 0:
-        noutshd = np.full((len(out),1),-99999999999)
+        noutshd = np.full((len(out)+1,1),-99999999999)
         poshdid = 0
-#        print("################################################33")
+#        print("################################################a")
         for i in range(0,len(otsheds)):
 #            print(otsheds)
-#            print(psid)
+#            print(psid,outletid)
             Shedid[psid] = otsheds[i]
 #            print(Shedid[psid],otsheds[i])
-#            print("##################################################33")
+#            print("##################################################b")
             psid = psid + 1
             irow = np.argwhere(rout[:,1]==otsheds[i]).astype(int)
+#            print(len(irow))
             for j in range(0,len(irow)):
                 noutshd[poshdid] = rout[irow[j],0]
                 poshdid = poshdid + 1

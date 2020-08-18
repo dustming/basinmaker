@@ -379,6 +379,9 @@ def Streamorderanddrainagearea(catinfoall):
             if len(routing_ncl) == 0:
                 DA_ncl = 0.0
             else:
+#                print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+#                print(catid)
+#                print(routing_ncl)
                 Upstreamcats      = Defcat(routing_ncl,catid)     ### alll subuds
                 Up_cat_info       = catinfo_ncl.loc[catinfo_ncl['SubId'].isin(Upstreamcats)]
                 if len(Up_cat_info) > 0:

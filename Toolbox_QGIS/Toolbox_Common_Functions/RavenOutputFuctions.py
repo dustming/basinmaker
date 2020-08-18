@@ -190,6 +190,43 @@ def PlotHydrography_Raven_alone(Path_rvt_Folder = '#',Path_Hydrographs_output_fi
         print(Metric_OUT)
         
 #        plotGuagelineobs(Scenario_NM,Readed_Data,os.path.join(OutputFolder,obs_nm + '.pdf'))        
-#    def Caluculate_Lake_Active_Depth_and_Lake_Evap(Path_Finalcat_info = '#',Path_ReservoirStages = '#', Path_ReservoirMassBalance = '#'):
+def Caluculate_Lake_Active_Depth_and_Lake_Evap(Path_Finalcat_info = '#',Path_ReservoirStages = '#', Path_ReservoirMassBalance = '#'):
+    import pandas as pd 
+    import numpy as np 
+    from simpledbf import Dbf5 
         
+    hyinfocsv         = Path_Finalcat_info[:-3] + "dbf"
+    tempinfo          = Dbf5(hyinfocsv)
+    finalcat_info     = tempinfo.to_dataframe()
         
+    Res_Stage_info    = pd.read_csv(Path_ReservoirStages,sep=',',header = 0)
+    Res_MB_info       = pd.read_csv(Path_ReservoirMassBalance,sep=',',header = 0)
+    
+    Col_NMS_Stage  = list(Res_Stage_info.columns)  
+    Col_NMS_MB     = list(Res_MB_info.columns)   
+    
+    finalcat_info_lake_hru     = finalcat_info.loc[(finalcat_info['IsLake'] > 0) & (finalcat_info['HRU_Type'] == 1)]
+    
+    for i in range(0,len(finalcat_info_lake_hru)):
+        LakeId     = finalcat_info_lake_hru['HyLakeId'].values[i]
+        Lake_Area  = finalcat_info_lake_hru['HRU_Area'].values[i] 
+        Lake_Subid = finalcat_info_lake_hru['SubId'].values[i] 
+        
+        Mb_Col_NM       = 'sub'+str(int(Lake_Subid))+' losses [m3]'  
+        Stage_Col_NM    = 'sub'+str(int(Lake_Subid)) + ' '
+        
+        if Mb_Col_NM not in Col_NMS_MB or Stage_Col_NM not in Col_NMS_Stage:
+            print(Mb_Col_NM in Col_NMS_MB,Mb_Col_NM[0] == Col_NMS_MB[7][0],len(Mb_Col_NM),len(Mb_Col_NM[7]),Mb_Col_NM,Col_NMS_MB[7])
+            print(Stage_Col_NM in Col_NMS_Stage,Stage_Col_NM[0] == Col_NMS_Stage[7][0],len(Stage_Col_NM),len(Col_NMS_Stage[7]),Stage_Col_NM,Col_NMS_Stage[7])
+        
+        if Mb_Col_NM in Col_NMS_MB and Stage_Col_NM in Col_NMS_Stage:
+            Mb_info_lake     = Res_MB_info[Mb_Col_NM]
+            Stage_info_lake  = Res_Stage_info[Stage_Col_NM]
+            
+            
+            print(LakeId)
+            print(Mb_info_lake)
+            print(Stage_info_lake)
+            
+        
+#        'sub800883 losses [m3]'  'sub800883 losses [m3]'
