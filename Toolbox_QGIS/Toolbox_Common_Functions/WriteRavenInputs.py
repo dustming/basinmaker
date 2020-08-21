@@ -247,7 +247,7 @@ def writelake(catinfo,outFolderraven,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM):
     f2.close()
     #### write lake input files for different lake zone
 
-def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM):
+def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM,Lake_As_Gauge = 1):
     catinfo_hru = copy.copy(ocatinfo)
     catinfo     = copy.copy(ocatinfo)
 #    print int(catinfo.iloc[0]['SUBID']),len(catinfo.index)
@@ -276,7 +276,7 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_N
         else:
             catlen = -9999
             strRlen = 'ZERO-'
-        if catinfo_sub['IsLake'].values[i] >= 0 :
+        if catinfo_sub['IsLake'].values[i] >= 0:# and catinfo_sub['HRU_Type'].values[i] == 1:
             strRlen = 'ZERO-'
         #####################################################3
         Strcat = str(catid)
@@ -305,7 +305,9 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_N
         writechanel(pronam,max(catinfo_sub['BkfWidth'].values[i],1),max(catinfo_sub['BkfDepth'].values[i],1),
         chslope,ochn,catinfo_sub['MeanElev'].values[i],floodn,nchn,iscalmanningn)
         
-        if catinfo_sub['IsObs'].values[i] > 0 or catinfo_sub['IsLake'].values[i] >= 0 :
+        if catinfo_sub['IsObs'].values[i] > 0:
+            Guage = '1'
+        elif catinfo_sub['IsLake'].values[i] >= 0 and Lake_As_Gauge == 1:# and catinfo_sub['HRU_Type'].values[i] == 1: 
             Guage = '1'
         else:
             Guage = '0'
@@ -334,7 +336,7 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_N
         StrGidelev = str(catinfo_hru['MeanElev'].values[i])+tab
         lat = str(catinfo_hru['centroid_y'].values[i])+tab
         lon = str(catinfo_hru['centroid_x'].values[i])+tab
-        if catinfo_hru['IsLake'].values[i] > 0:
+        if catinfo_hru['IsLake'].values[i] > 0 and catinfo_hru['HRU_Type'].values[i] == 1:
             LAND_USE_CLASS = 'Lake_HRU'+tab
             VEG_CLASS = 'Lake_HRU'+tab
             SOIL_PROFILE ='SOILPROF_Lake'+tab

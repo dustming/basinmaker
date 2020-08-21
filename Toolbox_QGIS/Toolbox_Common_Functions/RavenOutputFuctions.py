@@ -151,9 +151,6 @@ def PlotHydrography_Raven_alone(Path_rvt_Folder = '#',Path_Hydrographs_output_fi
 #            print(Path_Hydrographs_output_file_j)#
             i_simresult = pd.read_csv(Path_Hydrographs_output_file[j],sep=',')
             colnames = i_simresult.columns
-            print(colnames)
-            print(colnm_obs)
-            print(colnm_obs in colnames)
             ## check if obs name exist in the hydrograpy csv output files
             if colnm_obs in colnames:
                     
@@ -217,8 +214,8 @@ def Caluculate_Lake_Active_Depth_and_Lake_Evap(Path_Finalcat_info = '#',Path_Res
     
     
     ####
-    stage_out_NM  = ['Lake_Id','Lake_Area','Lake_SubId','#_Day_Active_stage','Min_Active_stage','Max_Active_stage','Ave_Active_stage']
-    data_stage = np.full((len(Col_NMS_Stage),7),np.nan)
+    stage_out_NM  = ['Lake_Id','Lake_Area','Lake_DA','Lake_SubId','#_Day_Active_stage','Min_stage','Max_stage','Ave_stage']
+    data_stage = np.full((len(Col_NMS_Stage),8),np.nan)
     Stage_Statis = pd.DataFrame(data = data_stage,columns = stage_out_NM)
     istage = 0
     
@@ -239,12 +236,14 @@ def Caluculate_Lake_Active_Depth_and_Lake_Evap(Path_Finalcat_info = '#',Path_Res
         LakeId     = finalcat_info_lake_hru['HyLakeId'].values[i]
         Lake_Area  = finalcat_info_lake_hru['HRU_Area'].values[i] 
         Lake_Subid = finalcat_info_lake_hru['SubId'].values[i] 
+        Lake_DA    = finalcat_info_lake_hru['DA'].values[i] 
         
         ####
         stage_idx =  Stage_Statis.index[istage]
         Stage_Statis.loc[stage_idx,'Lake_Id']  = LakeId
         Stage_Statis.loc[stage_idx,'Lake_Area']  = Lake_Area
         Stage_Statis.loc[stage_idx,'Lake_SubId'] = Lake_Subid
+        Stage_Statis.loc[stage_idx,'Lake_DA'] = Lake_DA
         istage = istage + 1 
     
         ###            
@@ -278,9 +277,9 @@ def Calulate_Yearly_Reservior_stage_statistics(Stage_info_lake,Stage_Statis,stag
     
     
     Num_Day_Active_stage_sum = 0 
-    Min_Active_stage_sum = 0
-    Max_Active_stage_sum = 0
-    Ave_Active_stage_sum = 0
+    Min_stage_sum = 0
+    Max_stage_sum = 0
+    Ave_stage_sum = 0
     
     nyear = 0
     for iyr in range(Year_Begin,Year_end+1):
@@ -289,16 +288,16 @@ def Calulate_Yearly_Reservior_stage_statistics(Stage_info_lake,Stage_Statis,stag
         Active_Stage_info_lake_iyr = Stage_info_lake_iyr[Stage_info_lake_iyr < 0]        
         if(len(Active_Stage_info_lake_iyr) > 0):
             Num_Day_Active_stage_sum = Num_Day_Active_stage_sum + len(Active_Stage_info_lake_iyr)
-            Min_Active_stage_sum      = Min_Active_stage_sum + max(Active_Stage_info_lake_iyr)
-            Max_Active_stage_sum      = Max_Active_stage_sum + min(Active_Stage_info_lake_iyr)
-            Ave_Active_stage_sum      = Ave_Active_stage_sum + np.average(Active_Stage_info_lake_iyr)
+            Min_stage_sum      = Min_stage_sum + min(Stage_info_lake_iyr)
+            Max_stage_sum      = Max_stage_sum + max(Stage_info_lake_iyr)
+            Ave_stage_sum      = Ave_stage_sum + np.average(Stage_info_lake_iyr)
         
       
         
     Stage_Statis.loc[stage_idx,'#_Day_Active_stage'] = Num_Day_Active_stage_sum/nyear
-    Stage_Statis.loc[stage_idx,'Min_Active_stage'] = Min_Active_stage_sum/nyear
-    Stage_Statis.loc[stage_idx,'Max_Active_stage'] = Max_Active_stage_sum/nyear
-    Stage_Statis.loc[stage_idx,'Ave_Active_stage'] = Ave_Active_stage_sum/nyear
+    Stage_Statis.loc[stage_idx,'Min_stage'] = Min_stage_sum/nyear
+    Stage_Statis.loc[stage_idx,'Max_stage'] = Max_stage_sum/nyear
+    Stage_Statis.loc[stage_idx,'Ave_stage'] = Ave_stage_sum/nyear
     
     return Stage_Statis    
         
