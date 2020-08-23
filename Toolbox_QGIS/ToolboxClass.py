@@ -3395,7 +3395,7 @@ class LRRT:
             plotGuagelineobs(Scenario_NM,Readed_Data,os.path.join(self.OutputFolder,obs_nm + '.pdf'))
 
 
-    def GeneratelandandlakeHRUS(self,Datafolder,Finalcat_NM = "finalcat_info.shp",Connect_Lake_ply = 'Con_Lake_Ply.shp',Non_Connect_Lake_ply = 'Non_Con_Lake_Ply.shp',Has_Non_Connect_Lake = 1):
+    def GeneratelandandlakeHRUS(self,Datafolder,Finalcat_NM = "finalcat_info.shp",Connect_Lake_ply = 'Con_Lake_Ply.shp',Non_Connect_Lake_ply = 'Non_Con_Lake_Ply.shp',Has_Non_Connect_Lake = 1,Has_Connect_Lake = 1):
 
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
@@ -3422,8 +3422,16 @@ class LRRT:
         Path_finalcat_hru     = os.path.join(self.tempfolder,"finalcat_hru_info.shp")
         Path_finalcat_hru2    = os.path.join(self.tempfolder,"finalcat_hru_info_noarea.shp")
         Path_finalcat_hru_out    = os.path.join(Datafolder,"finalcat_hru_info.shp")
-
+        
         processing.run("native:fixgeometries", {'INPUT':Path_finalcat_info,'OUTPUT':Path_temp_finalcat_info})
+        
+        if Has_Non_Connect_Lake < 0 and Has_Connect_Lake<0:
+            print(Path_finalcat_info)
+            processing.run("qgis:fieldcalculator", {'INPUT':Path_temp_finalcat_info,'FIELD_NAME':'Hylak_id','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT':Path_finalcat_hru})
+            processing.run("qgis:fieldcalculator", {'INPUT':Path_finalcat_hru,'FIELD_NAME':'HRU_ID','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':' \"SubId\" ','OUTPUT':Path_finalcat_hru2})
+            processing.run("qgis:fieldcalculator", {'INPUT':Path_finalcat_hru2,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':' \"BasArea\" ','OUTPUT':Path_finalcat_hru_out})
+            return
+        
         processing.run("native:fixgeometries", {'INPUT':Path_Connect_Lake_ply,'OUTPUT':Path_temp_Connect_Lake_ply})
 
         if Has_Non_Connect_Lake < 0:

@@ -268,6 +268,7 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_N
     for i in range(0,len(catinfo_sub)):
         ### Get catchment width and dpeth
         catid = int(catinfo_sub[Sub_ID_NM].values[i])
+        downcatid= int(catinfo_sub['DowSubId'].values[i])
         temp = catinfo_sub['RivLength'].values[i]
         
         if (float(temp) > lenThres):
@@ -280,7 +281,9 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_N
             strRlen = 'ZERO-'
         #####################################################3
         Strcat = str(catid)
-        if catid == catinfo_sub['DowSubId'].values[i]:
+        if catid == downcatid:
+            StrDid = str(-1)
+        elif len(catinfo_sub.loc[catinfo_sub[Sub_ID_NM] == downcatid]) == 0:
             StrDid = str(-1)
         else:
             StrDid = str(int(catinfo_sub['DowSubId'].values[i]))
