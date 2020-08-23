@@ -2643,7 +2643,7 @@ class LRRT:
 
 
     def GenerateRavenInput(self,DataFolder = '#', Finalcat_NM = 'finalcat_hru_info',lenThres = 1,iscalmanningn = -1,Nonconnectlake = -1,Startyear = 1980,EndYear = 2010
-                          ,CA_HYDAT = '#',WarmUp = 0,Template_Folder = '#',HRU_ID_NM = 'HRU_ID',HRU_Area_NM = 'HRU_Area',Sub_ID_NM = 'SubId'):
+                          ,CA_HYDAT = '#',WarmUp = 0,Template_Folder = '#',HRU_ID_NM = 'HRU_ID',HRU_Area_NM = 'HRU_Area',Sub_ID_NM = 'SubId',Lake_As_Gauge = 1):
 
 
         Model_Folder     = os.path.join(DataFolder,'Model')
@@ -2673,7 +2673,7 @@ class LRRT:
         ncatinfo2 = ncatinfo.drop_duplicates(HRU_ID_NM, keep='first')
         ncatinfo2 = ncatinfo2[ncatinfo2[HRU_ID_NM] > 0]
 
-        Writervhchanl(ncatinfo2,Raveinputsfolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM)
+        Writervhchanl(ncatinfo2,Raveinputsfolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM,Lake_As_Gauge)
         writelake(ncatinfo2,Raveinputsfolder,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM)
         WriteObsfiles(ncatinfo2,Raveinputsfolder,Obs_Folder,Startyear + WarmUp,EndYear,CA_HYDAT,Template_Folder)
 
