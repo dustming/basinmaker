@@ -207,6 +207,16 @@ def Caluculate_Lake_Active_Depth_and_Lake_Evap(Path_Finalcat_info = '#',Path_Res
     Res_MB_info['Date_2'] = pd.to_datetime(Res_MB_info['date'] + ' ' + Res_MB_info['hour'])
     Res_MB_info = Res_MB_info.set_index('Date_2')    
     
+    
+    Res_Wat_Ave_Dep_Vol  = Res_Stage_info.copy(deep=True)
+    Res_Wat_Ave_Dep_Vol['Lake_Area'] = np.nan
+    Res_Wat_Ave_Dep_Vol['Lake_Stage_Ave'] = np.nan
+    Res_Wat_Ave_Dep_Vol['Lake_Vol'] = np.nan
+    
+    Res_Wat_Ave_Dep_Vol['Lake_Stage_Below_Crest'] = np.nan
+    Res_Wat_Ave_Dep_Vol['Lake_Vol_Below_Crest'] = np.nan
+    Res_Wat_Ave_Dep_Vol['Lake_Area_Below_Crest'] = np.nan
+    
     Col_NMS_Stage  = list(Res_Stage_info.columns)  
     Col_NMS_MB     = list(Res_MB_info.columns)   
     
@@ -230,8 +240,60 @@ def Caluculate_Lake_Active_Depth_and_Lake_Evap(Path_Finalcat_info = '#',Path_Res
     for iyr in range(Year_Begin,Year_end + 1):
         MB_Statis.loc[imb,'Year'] = iyr
         imb = imb + 1
-         
+
+
+    for i in range(0,len(Res_Wat_Ave_Dep_Vol)):
+        idate = Res_Wat_Ave_Dep_Vol.index[i]
+        
+        Res_Wat_Ave_Vol_iday = 0.0
+        Res_Wat_Ave_Dep_Vol_iday = 0.0
+        Res_Wat_Lake_Area = 0.0
+        
+        Res_Wat_Lake_Area_Below = 0.0 
+        Res_Wat_Ave_Vol_Below_iday = 0.0
+        Res_Wat_Ave_Dep_Vol_Below_iday = 0.0
+        
+        for j in range(0,len(finalcat_info_lake_hru)):
+            LakeId     = finalcat_info_lake_hru['HyLakeId'].values[j]
+            Lake_Area  = finalcat_info_lake_hru['HRU_Area'].values[j] 
+            Lake_Subid = finalcat_info_lake_hru['SubId'].values[j] 
+            Lake_DA    = finalcat_info_lake_hru['DA'].values[j]             
+            Mb_Col_NM       = 'sub'+str(int(Lake_Subid))+' losses [m3]'  
+            Stage_Col_NM    = 'sub'+str(int(Lake_Subid)) + ' '  
+            if Mb_Col_NM in Col_NMS_MB and Stage_Col_NM in Col_NMS_Stage:
+                Res_Wat_Ave_Dep_Vol_iday  = Res_Wat_Ave_Dep_Vol[Stage_Col_NM].values[i] * Lake_Area + Res_Wat_Ave_Dep_Vol_iday
+                Res_Wat_Ave_Dep_Lake_Area = Lake_Area 
+                
+                if Res_Wat_Ave_Dep_Vol[Stage_Col_NM].values[i] < 0:
+                    Res_Wat_Ave_Vol_Below_iday = Res_Wat_Ave_Dep_Vol[Stage_Col_NM].values[i] * Lake_Area + Res_Wat_Ave_Vol_Below_iday
+                    Res_Wat_Lake_Area_Below =  Lake_Area
+#                    print(Res_Wat_Ave_Vol_Below_iday,Res_Wat_Lake_Area_Below,Res_Wat_Ave_Dep_Vol[Stage_Col_NM].values[i])
+                
+        if Res_Wat_Ave_Dep_Lake_Area > 0:
+            Res_Wat_Ave_Dep_iday =  Res_Wat_Ave_Dep_Vol_iday/Res_Wat_Ave_Dep_Lake_Area
+        else:
+            Res_Wat_Ave_Dep_iday = np.nan 
+
+        if Res_Wat_Lake_Area_Below > 0:
+            Res_Wat_Ave_Dep_Vol_Below_iday =  Res_Wat_Ave_Vol_Below_iday/Res_Wat_Lake_Area_Below
+        else:
+            Res_Wat_Ave_Dep_Vol_Below_iday = np.nan
+            
+                    
+        Res_Wat_Ave_Dep_Vol.loc[idate,'Lake_Area'] = Res_Wat_Ave_Dep_Lake_Area
+        Res_Wat_Ave_Dep_Vol.loc[idate,'Lake_Stage_Ave'] = Res_Wat_Ave_Dep_iday
+        Res_Wat_Ave_Dep_Vol.loc[idate,'Lake_Vol'] = Res_Wat_Ave_Dep_Vol_iday 
     
+        Res_Wat_Ave_Dep_Vol.loc[idate,'Lake_Area_Below_Crest'] = Res_Wat_Lake_Area_Below
+        Res_Wat_Ave_Dep_Vol.loc[idate,'Lake_Stage_Below_Crest'] = Res_Wat_Ave_Dep_Vol_Below_iday
+        Res_Wat_Ave_Dep_Vol.loc[idate,'Lake_Vol_Below_Crest'] = Res_Wat_Ave_Vol_Below_iday 
+        
+                     
+    
+    Res_Wat_Ave_Dep_Vol = Res_Wat_Ave_Dep_Vol[['date','hour','Lake_Area','Lake_Stage_Ave','Lake_Vol','Lake_Area_Below_Crest','Lake_Stage_Below_Crest','Lake_Vol_Below_Crest']]
+    
+    Res_Wat_Ave_Dep_Vol.to_csv(os.path.join(Output_Folder,'Lake_Wat_Ave_Depth_Vol.csv'),sep = ',')
+                
     for i in range(0,len(finalcat_info_lake_hru)):
         LakeId     = finalcat_info_lake_hru['HyLakeId'].values[i]
         Lake_Area  = finalcat_info_lake_hru['HRU_Area'].values[i] 
