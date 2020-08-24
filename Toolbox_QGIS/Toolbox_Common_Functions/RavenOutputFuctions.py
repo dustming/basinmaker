@@ -247,12 +247,12 @@ def Caluculate_Lake_Active_Depth_and_Lake_Evap(Path_Finalcat_info = '#',Path_Res
         
         Res_Wat_Ave_Vol_iday = 0.0
         Res_Wat_Ave_Dep_Vol_iday = 0.0
-        Res_Wat_Lake_Area = 0.0
+        Res_Wat_Ave_Dep_Lake_Area = 0.0
         
         Res_Wat_Lake_Area_Below = 0.0 
         Res_Wat_Ave_Vol_Below_iday = 0.0
         Res_Wat_Ave_Dep_Vol_Below_iday = 0.0
-        
+#        print("#######################################"+str(i)+"###################################33")
         for j in range(0,len(finalcat_info_lake_hru)):
             LakeId     = finalcat_info_lake_hru['HyLakeId'].values[j]
             Lake_Area  = finalcat_info_lake_hru['HRU_Area'].values[j] 
@@ -262,13 +262,13 @@ def Caluculate_Lake_Active_Depth_and_Lake_Evap(Path_Finalcat_info = '#',Path_Res
             Stage_Col_NM    = 'sub'+str(int(Lake_Subid)) + ' '  
             if Mb_Col_NM in Col_NMS_MB and Stage_Col_NM in Col_NMS_Stage:
                 Res_Wat_Ave_Dep_Vol_iday  = Res_Wat_Ave_Dep_Vol[Stage_Col_NM].values[i] * Lake_Area + Res_Wat_Ave_Dep_Vol_iday
-                Res_Wat_Ave_Dep_Lake_Area = Lake_Area 
+                Res_Wat_Ave_Dep_Lake_Area = Lake_Area + Res_Wat_Ave_Dep_Lake_Area
                 
                 if Res_Wat_Ave_Dep_Vol[Stage_Col_NM].values[i] < 0:
                     Res_Wat_Ave_Vol_Below_iday = Res_Wat_Ave_Dep_Vol[Stage_Col_NM].values[i] * Lake_Area + Res_Wat_Ave_Vol_Below_iday
-                    Res_Wat_Lake_Area_Below =  Lake_Area
+                    Res_Wat_Lake_Area_Below =  Lake_Area + Res_Wat_Lake_Area_Below
 #                    print(Res_Wat_Ave_Vol_Below_iday,Res_Wat_Lake_Area_Below,Res_Wat_Ave_Dep_Vol[Stage_Col_NM].values[i])
-                
+#                print(j,Res_Wat_Ave_Dep_Vol[Stage_Col_NM].values[i],Lake_Area,Res_Wat_Ave_Dep_Vol_iday)
         if Res_Wat_Ave_Dep_Lake_Area > 0:
             Res_Wat_Ave_Dep_iday =  Res_Wat_Ave_Dep_Vol_iday/Res_Wat_Ave_Dep_Lake_Area
         else:
@@ -278,8 +278,10 @@ def Caluculate_Lake_Active_Depth_and_Lake_Evap(Path_Finalcat_info = '#',Path_Res
             Res_Wat_Ave_Dep_Vol_Below_iday =  Res_Wat_Ave_Vol_Below_iday/Res_Wat_Lake_Area_Below
         else:
             Res_Wat_Ave_Dep_Vol_Below_iday = np.nan
+        
+#        print(Res_Wat_Ave_Dep_iday,Res_Wat_Ave_Dep_Lake_Area,Res_Wat_Ave_Dep_Vol_iday)    
+#        print("####################################################")    
             
-                    
         Res_Wat_Ave_Dep_Vol.loc[idate,'Lake_Area'] = Res_Wat_Ave_Dep_Lake_Area
         Res_Wat_Ave_Dep_Vol.loc[idate,'Lake_Stage_Ave'] = Res_Wat_Ave_Dep_iday
         Res_Wat_Ave_Dep_Vol.loc[idate,'Lake_Vol'] = Res_Wat_Ave_Dep_Vol_iday 
