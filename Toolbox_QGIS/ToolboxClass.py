@@ -781,12 +781,13 @@ def New_SubId_To_Dissolve(subid,catchmentinfo,mapoldnew_info,upsubid = -1,ismodi
 
     tarinfo.loc[idx,'BasArea']       = np.sum(cbranch['BasArea'].values)
 #    tarinfo.loc[idx,'NonLDArea']     = np.sum(cbranch['NonLDArea'].values)
-    tarinfo.loc[idx,'BasSlope']      = np.average(cbranch['BasSlope'].values,  weights = cbranch['BasArea'].values)
-    tarinfo.loc[idx,'MeanElev']      = np.average(cbranch['MeanElev'].values,  weights = cbranch['BasArea'].values)
-    tarinfo.loc[idx,'BasAspect']     = np.average(cbranch['BasAspect'].values, weights = cbranch['BasArea'].values)
+    if len(cbranch) > 0:
+        tarinfo.loc[idx,'BasSlope']      = np.average(cbranch['BasSlope'].values,  weights = cbranch['BasArea'].values)
+        tarinfo.loc[idx,'MeanElev']      = np.average(cbranch['MeanElev'].values,  weights = cbranch['BasArea'].values)
+        tarinfo.loc[idx,'BasAspect']     = np.average(cbranch['BasAspect'].values, weights = cbranch['BasArea'].values)
 
-    tarinfo.loc[idx,'Max_DEM']       = np.max(cbranch['Max_DEM'].values)
-    tarinfo.loc[idx,'Min_DEM']       = np.min(cbranch['Min_DEM'].values)
+        tarinfo.loc[idx,'Max_DEM']       = np.max(cbranch['Max_DEM'].values)
+        tarinfo.loc[idx,'Min_DEM']       = np.min(cbranch['Min_DEM'].values)
 #    print(tarinfo.loc[idx,'BasArea'],"2")
     if Islake == 1:   ## Meger subbasin covered by lakes, Keep lake outlet catchment  DA, stream order info
         tarinfo.loc[idx,'RivLength'] = 0.0
@@ -3225,7 +3226,7 @@ class LRRT:
                     modifysubids.append(tsubid)
                 else:
                     tsubid = downsubid
-                    print("This value should always be zero:    ", np.sum(Un_Selected_Non_ConnL_info['SubId'] == downsubid))
+#                    print("This value should always be zero:    ", np.sum(Un_Selected_Non_ConnL_info['SubId'] == downsubid))
                     is_pre_modified = -1
                     modifysubids.append(tsubid)
 
