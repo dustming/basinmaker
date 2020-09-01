@@ -6,6 +6,35 @@ import sqlite3
 import urllib
 
 def DownloadStreamflowdata_CA(Station_NM,CA_HYDAT,StartYear,EndYear):
+    """
+    Function that used to obtain streamflow data of certain gauge from HYDAT database
+
+    Inputs: 
+    
+        Station_NM     (string):     The name of the guage, "05PB019"
+        CA_HYDAT       (string):     Path and filename of previously downloaded 
+                                     external database containing streamflow observations, 
+                                     e.g. HYDAT for Canada ("Hydat.sqlite3").
+                                    
+        Startyear      (integer):    Start year of simulation. Used to 
+                                     read streamflow observations from external databases.
+        EndYear        (integer):    End year of simulation. Used to 
+                                     read streamflow observations from external databases.  
+                                          
+    Outputs: 
+            
+        None 
+
+    Return:
+    
+        flowdata:      (Dataframe):  obtained streamflow observation dataframe between 
+                                     Startyear and EndYear.
+        obtaindata:    (integer):    1 indicate sucessfully obtain data, -1 indicate no data are founded
+                                     for this gauge
+        obs_DA:        (float):      The drainage area of this gauge readed from HYDAT database
+           
+    """
+    
     obtaindata   = 1
     con          = sqlite3.connect(CA_HYDAT)
     ### obtain station info
@@ -62,6 +91,32 @@ def DownloadStreamflowdata_CA(Station_NM,CA_HYDAT,StartYear,EndYear):
             
     
 def DownloadStreamflowdata_US(Station_NM,StartYear,EndYear):
+    """
+    Function that used to obtain streamflow data of certain gauge from USGS website
+
+    Inputs: 
+    
+        Station_NM     (string):     The name of the guage, "050012032"
+                                    
+        Startyear      (integer):    Start year of simulation. Used to 
+                                     read streamflow observations from external databases.
+        EndYear        (integer):    End year of simulation. Used to 
+                                     read streamflow observations from external databases.  
+                                          
+    Outputs: 
+            
+        None 
+
+    Return:
+    
+        flowdata:      (Dataframe):  obtained streamflow observation dataframe between 
+                                     Startyear and EndYear.
+        obtaindata:    (integer):    1 indicate sucessfully obtain data, -1 indicate no data are founded
+                                     for this gauge
+        obs_DA:        (float):      The drainage area of this gauge readed from HYDAT database
+           
+    """
+    
     obtaindata   = 1
     #### Obtain station info 
     urlstlist    = 'https://waterdata.usgs.gov/nwis/inventory/?format=rdb&site_no='+str(int(Station_NM)).zfill(8)
@@ -111,6 +166,32 @@ def DownloadStreamflowdata_US(Station_NM,StartYear,EndYear):
     
 
 def Writeobsrvtfile(flowdata,obsnm,outObsfileFolder):
+    
+    """
+    Function that used to write xxx.rvt file for each gauge
+
+    Inputs: 
+    
+        obsnm             (Dataframe):  Dataframe of observation gauge inculding all subbasin/HRUs
+                                        information for this gauge as the station name of this gauge
+        flowdata:         (Dataframe):  Obtained streamflow observation dataframe between 
+                                        Startyear and EndYear.
+                                    
+        outObsfileFolder  (String):     Path and name of the output folder to save obervation rvt file
+                                        of each gauge 
+                                         
+                                          
+    Outputs: 
+            
+        xxx.rvt                     -   streamflow observation for each gauge xxx in shpfile 
+                                        database will be automatically generagted in 
+                                        folder outObsfileFolder. 
+
+    Return:
+    
+       None
+           
+    """    
     toobsrvtfile = os.path.join(outObsfileFolder,obsnm['Obs_NM']+'_'+str(obsnm['SubId'])+'.rvt')
     f2 = open(toobsrvtfile, "w")
     f2.write(":ObservationData HYDROGRAPH "+str(obsnm['SubId'])+"   m3/s" + " \n")
@@ -121,6 +202,34 @@ def Writeobsrvtfile(flowdata,obsnm,outObsfileFolder):
     f2.close()
         
 def Modify_template_rvt(outFolderraven,outObsfileFolder,obsnm):
+    
+    """
+    Function that used to modify raven model rvt file (test.rvt)
+    Add  ":RedirectToFile    ./obs/xxx_obs.rvt"  for each gauge in the end of 
+    model rvt file (test.rvt)
+    
+    Inputs: 
+    
+        obsnm             (Dataframe):  Dataframe of observation gauge inculding all subbasin/HRUs
+                                        information for this gauge as the station name of this gauge
+        outFolderraven    (String):     Path and name of the output folder of Raven input files
+        outObsfileFolder  (String):     Path and name of the output folder to save obervation rvt file
+                                        of each gauge 
+                                         
+                                          
+    Outputs: 
+            
+        test.rvt                      - streamflow observation for each gauge xxx in shpfile 
+                                        database will be automatically generagted in 
+                                        folder outObsfileFolder. 
+    Return:
+    
+       None
+    
+    todo:
+       
+       add name of the raven model base name as a paramter
+    """ 
     toobsrvtfile = os.path.join(outFolderraven,'test.rvt')
     obsflodername = './' + os.path.split(outObsfileFolder)[1]+'/' 
     f2 = open(toobsrvtfile, "a")
@@ -129,6 +238,7 @@ def Modify_template_rvt(outFolderraven,outObsfileFolder,obsnm):
 #    asdfadsfadsfadsf
         
 def WriteObsfiles(catinfo,outFolderraven,outObsfileFolder,startyear,endyear,CA_HYDAT='#',Template_Folder='#'):
+    
     """
     Function that used to generate Raven streamflow observation input files. All output will be stored in outFolderraven/obs/
 
@@ -158,19 +268,19 @@ def WriteObsfiles(catinfo,outFolderraven,outObsfileFolder,startyear,endyear,CA_H
                                           ":RedirectToFile    ./obs/xxx_obs.rvt"    
                                           If Template_Folder is '#', nothing happened. 
                                           
-        Outputs: 
+    Outputs: 
             
-            model.rvt         - (Optional) model rvt files indicate the forcings and observation gauges.
-            xxx.rvt           - streamflow observation for each gauge xxx in shpfile 
-                                database will be automatically generagted in 
-                                folder "<DataFolder>/Model/RavenInput/obs/". 
-            obsinfo.csv       - information file generated reporting drainage area difference 
-                                between observed in shpfile and standard database as well as 
-                                number of missing values for each gauge
-        Return:
-           None
+        model.rvt         - (Optional) model rvt files indicate the forcings and observation gauges.
+        xxx.rvt           - streamflow observation for each gauge xxx in shpfile 
+                            database will be automatically generagted in 
+                            folder "<DataFolder>/Model/RavenInput/obs/". 
+        obsinfo.csv       - information file generated reporting drainage area difference 
+                            between observed in shpfile and standard database as well as 
+                            number of missing values for each gauge
+    Return:
+        None
            
-        """
+    """
         
     obsnms    = catinfo[['Obs_NM','SRC_obs','SubId','DA']]
     obsnms    = obsnms.drop_duplicates('Obs_NM', keep='first')
@@ -219,6 +329,34 @@ def WriteObsfiles(catinfo,outFolderraven,outObsfileFolder,startyear,endyear,CA_H
 
 
 def writechanel(chname,chwd,chdep,chslope,orchnl,elev,floodn,channeln,iscalmanningn):
+    """
+    Function that used to write channel paramter file channel rvt. 
+        
+    Inputs: 
+    
+        chname             (String):  the name of the channel for each SubBasins
+                                      information for this gauge as the station name of this gauge
+        chwd               (String):  channel width
+        chdep              (String):  channel depth 
+        chslope            (String):  channel slope 
+        orchnl             (Object):  python file write object 
+        elev               (String):  channel elevation 
+        floodn             (String):  channel flood plain manning's coefficient 
+        channeln           (String):  main channnel manning's coefficient 
+        iscalmanningn      (Bool):    Ture use channeln or False use 0.035 as main channel
+                                      manning's coefficient 
+                                         
+                                          
+    Outputs: 
+            
+        modelchannel.rvp      - contains definition and parameters for channels 
+        
+    Return:
+    
+       None
+    
+    """ 
+    
     ### Following SWAT instructions, assume a trapezoidal shape channel, with channel sides has depth and width ratio of 2. zch = 2
     zch = 2
     sidwd = zch * chdep ###river side width
@@ -281,16 +419,7 @@ def writelake(catinfo,outFolderraven,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM):
                                           as gauge subbasin.
   
     Outputs: 
-        .rvh              - contains subbasins and HRUs
-        lake.rvh          - contains definition and parameters of lakes
-        modelchannel.rvp  - contains definition and parameters for channels
-        xxx.rvt           - (optional) streamflow observation for each gauge xxx in shpfile 
-                            database will be automatically generagted in 
-                            folder "<DataFolder>/Model/RavenInput/obs/". 
-        obsinfo.csv       - information file generated reporting drainage area difference 
-                            between observed in shpfile and standard database as well as 
-                            number of missing values for each gauge
-
+        TestLake.rvh          - contains definition and parameters of lakes
     Return:
        None
            
@@ -351,11 +480,15 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_N
                                        as gauge subbasin.     
                
     Outputs: 
-        .rvh              - contains subbasins and HRUs
-        modelchannel.rvp  - contains definition and parameters for channels
+        test.rvh              - contains subbasins and HRUs
+        modelchannel.rvp      - contains definition and parameters for channels
         
     Return:
         None
+    
+    todo:
+       
+       Only two HRU type (lake and land) are defined here. need includes more hru types 
            
     """
             
