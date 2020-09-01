@@ -11,11 +11,10 @@ def DownloadStreamflowdata_CA(Station_NM,CA_HYDAT,StartYear,EndYear):
 
     Inputs: 
     
-        Station_NM     (string):     The name of the guage, "05PB019"
+        Station_NM     (string):     The name of the gauge, "05PB019"
         CA_HYDAT       (string):     Path and filename of previously downloaded 
                                      external database containing streamflow observations, 
-                                     e.g. HYDAT for Canada ("Hydat.sqlite3").
-                                    
+                                     e.g. HYDAT for Canada ("Hydat.sqlite3").                                
         Startyear      (integer):    Start year of simulation. Used to 
                                      read streamflow observations from external databases.
         EndYear        (integer):    End year of simulation. Used to 
@@ -29,9 +28,9 @@ def DownloadStreamflowdata_CA(Station_NM,CA_HYDAT,StartYear,EndYear):
     
         flowdata:      (Dataframe):  obtained streamflow observation dataframe between 
                                      Startyear and EndYear.
-        obtaindata:    (integer):    1 indicate sucessfully obtain data, -1 indicate no data are founded
+        obtaindata:    (integer):    1 indicate successfully obtain data, -1 indicate no data are founded
                                      for this gauge
-        obs_DA:        (float):      The drainage area of this gauge readed from HYDAT database
+        obs_DA:        (float):      The drainage area of this gauge read from HYDAT database
            
     """
     
@@ -96,8 +95,7 @@ def DownloadStreamflowdata_US(Station_NM,StartYear,EndYear):
 
     Inputs: 
     
-        Station_NM     (string):     The name of the guage, "050012032"
-                                    
+        Station_NM     (string):     The name of the gauge, "050012032"                        
         Startyear      (integer):    Start year of simulation. Used to 
                                      read streamflow observations from external databases.
         EndYear        (integer):    End year of simulation. Used to 
@@ -113,7 +111,7 @@ def DownloadStreamflowdata_US(Station_NM,StartYear,EndYear):
                                      Startyear and EndYear.
         obtaindata:    (integer):    1 indicate sucessfully obtain data, -1 indicate no data are founded
                                      for this gauge
-        obs_DA:        (float):      The drainage area of this gauge readed from HYDAT database
+        obs_DA:        (float):      The drainage area of this gauge read from HYDAT database
            
     """
     
@@ -172,11 +170,10 @@ def Writeobsrvtfile(flowdata,obsnm,outObsfileFolder):
 
     Inputs: 
     
-        obsnm             (Dataframe):  Dataframe of observation gauge inculding all subbasin/HRUs
+        obsnm             (Dataframe):  Dataframe of observation gauge including all subbasin/HRUs
                                         information for this gauge as the station name of this gauge
         flowdata:         (Dataframe):  Obtained streamflow observation dataframe between 
-                                        Startyear and EndYear.
-                                    
+                                        Startyear and EndYear.                        
         outObsfileFolder  (String):     Path and name of the output folder to save obervation rvt file
                                         of each gauge 
                                          
@@ -184,7 +181,7 @@ def Writeobsrvtfile(flowdata,obsnm,outObsfileFolder):
     Outputs: 
             
         xxx.rvt                     -   streamflow observation for each gauge xxx in shpfile 
-                                        database will be automatically generagted in 
+                                        database will be automatically generated in 
                                         folder outObsfileFolder. 
 
     Return:
@@ -210,7 +207,7 @@ def Modify_template_rvt(outFolderraven,outObsfileFolder,obsnm):
     
     Inputs: 
     
-        obsnm             (Dataframe):  Dataframe of observation gauge inculding all subbasin/HRUs
+        obsnm             (Dataframe):  Dataframe of observation gauge including all subbasin/HRUs
                                         information for this gauge as the station name of this gauge
         outFolderraven    (String):     Path and name of the output folder of Raven input files
         outObsfileFolder  (String):     Path and name of the output folder to save obervation rvt file
@@ -220,7 +217,7 @@ def Modify_template_rvt(outFolderraven,outObsfileFolder,obsnm):
     Outputs: 
             
         test.rvt                      - streamflow observation for each gauge xxx in shpfile 
-                                        database will be automatically generagted in 
+                                        database will be automatically generated in 
                                         folder outObsfileFolder. 
     Return:
     
@@ -246,7 +243,7 @@ def WriteObsfiles(catinfo,outFolderraven,outObsfileFolder,startyear,endyear,CA_H
         General
            outFolderraven   (string):     Folder path and name that save outputs
            catinfo       (DataFrame):     A dataframe includes all attribute for each HRU
-                                          read from polygon shpefile generated by the toolbox   
+                                          read from polygon shpfile generated by the toolbox   
            
         Parameters needed to define obs.rvt file:
            CA_HYDAT  (string):            (optional) path and filename of previously downloaded 
@@ -273,7 +270,7 @@ def WriteObsfiles(catinfo,outFolderraven,outObsfileFolder,startyear,endyear,CA_H
         model.rvt         - (Optional) modified model rvt files which indicate the forcings 
                             and observation gauges.
         xxx.rvt           - streamflow observation for each gauge xxx in shpfile 
-                            database will be automatically generagted in 
+                            database will be automatically generated in 
                             folder "<DataFolder>/Model/RavenInput/obs/". 
         obsinfo.csv       - information file generated reporting drainage area difference 
                             between observed in shpfile and standard database as well as 
@@ -337,13 +334,13 @@ def writechanel(chname,chwd,chdep,chslope,orchnl,elev,floodn,channeln,iscalmanni
     
         chname             (String):  the name of the channel for each SubBasins
                                       information for this gauge as the station name of this gauge
-        chwd               (String):  channel width
-        chdep              (String):  channel depth 
-        chslope            (String):  channel slope 
+        chwd               (Float):   channel width
+        chdep              (Float):   channel depth 
+        chslope            (Float):   channel slope 
         orchnl             (Object):  python file write object 
-        elev               (String):  channel elevation 
-        floodn             (String):  channel flood plain manning's coefficient 
-        channeln           (String):  main channnel manning's coefficient 
+        elev               (Float):   channel elevation 
+        floodn             (Float):   channel flood plain manning's coefficient 
+        channeln           (Float):   main channnel manning's coefficient 
         iscalmanningn      (Bool):    Ture use channeln or False use 0.035 as main channel
                                       manning's coefficient 
                                          
@@ -408,7 +405,7 @@ def writelake(catinfo,outFolderraven,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM):
         General
            outFolderraven   (string):     Folder path and name that save outputs
            catinfo       (DataFrame):     A dataframe includes all attribute for each HRU
-                                          read from polygon shpefile generated by the toolbox   
+                                          read from polygon shpfile generated by the toolbox   
            
         Parameters needed to define lake definition rvh file:
            HRU_ID_NM     (string):        Column name in Finalcat_NM that defines HRU ID
@@ -454,17 +451,17 @@ def writelake(catinfo,outFolderraven,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM):
     f2.close()
     #### write lake input files for different lake zone
 
-def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM,Lake_As_Gauge = 1):
+def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM,Lake_As_Gauge = False):
     
     """
     Function that used to generate raven rvh file and channel rvp file. 
-    Output will saved to outFolder 
+    Output will be saved to outFolder 
 
     Inputs: 
         General
            outFolder     (string):     Folder path and name that save outputs
            ocatinfo      (DataFrame):  A dataframe includes all attribute for each HRU
-                                       read from polygon shpefile generated by the toolbox       
+                                       read from polygon shpfile generated by the toolbox       
 
         Parameters needed to define rvh file:
            lenThres      (float):      River length threshold; river length smaller than 
@@ -475,9 +472,9 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_N
            HRU_ID_NM     (string):     Column name in Finalcat_NM that defines HRU ID
            HRU_Area_NM   (string)      Column name in Finalcat_NM that defines HRU area 
            Sub_ID_NM     (string):     Column name in Finalcat_NM that defines subbasin ID
-           Lake_As_Gauge (integer):    If "1", all lake subbasins will labeled as gauged 
+           Lake_As_Gauge (Bool):       If "Ture", all lake subbasins will labeled as gauged 
                                        subbasin such that Raven will export lake balance for 
-                                       this lake. If "-1", lake subbasin will not be labeled 
+                                       this lake. If "False", lake subbasin will not be labeled 
                                        as gauge subbasin.     
                
     Outputs: 
