@@ -6,6 +6,13 @@ import numpy as np
     
     
 def test_DownloadStreamflowdata_CA(HYDAT_Path):
+    
+    '''
+    CA_HYDAT       (string):     Path and filename of previously downloaded 
+                                 external database containing streamflow observations, 
+                                 e.g. HYDAT for Canada ("Hydat.sqlite3"). 
+                                 Read from command line
+    '''
     ###Define
     Station_NM = '05PC019'
     StartYear  = 2010
