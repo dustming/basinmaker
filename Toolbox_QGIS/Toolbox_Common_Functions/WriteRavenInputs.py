@@ -343,8 +343,7 @@ def writechanel(chname,chwd,chdep,chslope,orchnl,elev,floodn,channeln,iscalmanni
         channeln           (Float):   main channnel manning's coefficient 
         iscalmanningn      (Bool):    Ture use channeln or False use 0.035 as main channel
                                       manning's coefficient 
-                                         
-                                          
+                                               
     Outputs: 
             
         modelchannel.rvp      - contains definition and parameters for channels 
