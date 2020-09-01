@@ -270,7 +270,8 @@ def WriteObsfiles(catinfo,outFolderraven,outObsfileFolder,startyear,endyear,CA_H
                                           
     Outputs: 
             
-        model.rvt         - (Optional) model rvt files indicate the forcings and observation gauges.
+        model.rvt         - (Optional) modified model rvt files which indicate the forcings 
+                            and observation gauges.
         xxx.rvt           - streamflow observation for each gauge xxx in shpfile 
                             database will be automatically generagted in 
                             folder "<DataFolder>/Model/RavenInput/obs/". 
@@ -456,7 +457,7 @@ def writelake(catinfo,outFolderraven,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM):
 def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM,Lake_As_Gauge = 1):
     
     """
-    Function that used to generate raven rvh files and channel rvp files. 
+    Function that used to generate raven rvh file and channel rvp file. 
     Output will saved to outFolder 
 
     Inputs: 
