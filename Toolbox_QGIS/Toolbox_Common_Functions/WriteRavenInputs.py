@@ -410,9 +410,9 @@ def writelake(catinfo,outFolderraven,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM):
            HRU_ID_NM     (string):        Column name in Finalcat_NM that defines HRU ID
            HRU_Area_NM   (string):        Column name in Finalcat_NM that defines HRU area 
            Sub_ID_NM     (string):        Column name in Finalcat_NM that defines subbasin ID
-           Lake_As_Gauge (integer):       If "1", all lake subbasins will labeled as gauged 
+           Lake_As_Gauge (bool):          If "True", all lake subbasins will labeled as gauged 
                                           subbasin such that Raven will export lake balance for 
-                                          this lake. If "-1", lake subbasin will not be labeled 
+                                          this lake. If "false", lake subbasin will not be labeled 
                                           as gauge subbasin.
   
     Outputs: 
@@ -471,7 +471,7 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_N
            HRU_ID_NM     (string):     Column name in Finalcat_NM that defines HRU ID
            HRU_Area_NM   (string)      Column name in Finalcat_NM that defines HRU area 
            Sub_ID_NM     (string):     Column name in Finalcat_NM that defines subbasin ID
-           Lake_As_Gauge (Bool):       If "Ture", all lake subbasins will labeled as gauged 
+           Lake_As_Gauge (Bool):       If "True", all lake subbasins will labeled as gauged 
                                        subbasin such that Raven will export lake balance for 
                                        this lake. If "False", lake subbasin will not be labeled 
                                        as gauge subbasin.     
