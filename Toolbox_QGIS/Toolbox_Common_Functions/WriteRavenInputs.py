@@ -186,7 +186,7 @@ def Writeobsrvtfile(flowdata,obsnm,outObsfileFolder):
 
     Return:
     
-       None
+        None
            
     """    
     toobsrvtfile = os.path.join(outObsfileFolder,obsnm['Obs_NM']+'_'+str(obsnm['SubId'])+'.rvt')
@@ -220,7 +220,7 @@ def Modify_template_rvt(outFolderraven,outObsfileFolder,obsnm):
                                         folder outObsfileFolder. 
     Return:
     
-       None
+        None
     
     todo:
        
@@ -339,7 +339,7 @@ def writechanel(chname,chwd,chdep,chslope,orchnl,elev,floodn,channeln,iscalmanni
         elev               (Float):   channel elevation 
         floodn             (Float):   channel flood plain manning's coefficient 
         channeln           (Float):   main channnel manning's coefficient 
-        iscalmanningn      (Bool):    Ture use channeln or False use 0.035 as main channel
+        iscalmanningn      (Bool):    True use channeln or False use 0.035 as main channel
                                       manning's coefficient 
                                                
     Outputs: 
@@ -348,7 +348,7 @@ def writechanel(chname,chwd,chdep,chslope,orchnl,elev,floodn,channeln,iscalmanni
         
     Return:
     
-       None
+        None
     
     """ 
     
@@ -412,7 +412,7 @@ def writelake(catinfo,outFolderraven,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM):
         TestLake.rvh          - contains definition and parameters of lakes
         
     Return:
-       None
+        None
            
     """
         
