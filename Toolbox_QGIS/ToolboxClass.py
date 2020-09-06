@@ -1208,7 +1208,7 @@ class LRRT:
 
         self.Base_SubId = Base_SubId
         self.maximum_obs_id = 80000
-        self.sqlpath = os.path.join(self.grassdb,'Geographic\\PERMANENT\\sqlite\\sqlite.db')
+        self.sqlpath = os.path.join(self.grassdb,'Geographic','PERMANENT','sqlite','sqlite.db')
         self.cellSize = -9.9999
         self.SpRef_in = '#'
         self.ncols = -9999
