@@ -732,14 +732,72 @@ def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir,Is_divid_re
 
 ##################################################################3
 
+def Calculate_Longest_flowpath(mainriv_merg_info):
+    mainriv_merg_info_sort = mainriv_merg_info.sort_values(["DA"], ascending = (False))
+#    print(mainriv_merg_info_sort[['SubId','DowSubId','DA','Strahler','RivLength']])
+    longest_flow_pathes = np.full(100,0)
+#    print(longest_flow_pathes)
+    npath = 1
+
+    #### loop upstream to find longest flow path 
+    Pathid  = np.full(1000,-1)
+    subid = mainriv_merg_info_sort['SubId'].values[0]
+    npath_current = 1
+    Pathid[npath - 1] = subid
+#    print('####################################################################################')
+    while len(Pathid[Pathid > 0]) > 0:
+        nPathid  =  np.full(1000,-1)
+        npath    = npath_current
+        
+#        print('###################################')
+#        print(npath,Pathid[0:npath])
+#        print('###################################')
+        for ipath in range(0,npath_current):
+            c_subid_ipath = Pathid[ipath]
+            
+            if c_subid_ipath < 0:  ### means this path has been closed due to no more subbasin within the lake domain 
+                continue 
+                
+            longest_flow_pathes[ipath] = mainriv_merg_info_sort.loc[mainriv_merg_info_sort['SubId'] == c_subid_ipath,'RivLength'] +longest_flow_pathes[ipath] ## add river length to current path 
+            Strahler_order_ipath = mainriv_merg_info_sort.loc[mainriv_merg_info_sort['SubId'] == c_subid_ipath,'Strahler'].values[0]
+            
+            upstream_sub_infos = mainriv_merg_info_sort.loc[mainriv_merg_info_sort['DowSubId'] == c_subid_ipath] ## get upstream info 
+                    
+            if len(upstream_sub_infos) <= 0: ## no more upstream catchment within the domain of the lake 
+#                print("path        closed        ",ipath)
+                continue
+                
+            ## look for upstream catchment has the same upstream_sub_infos_eq_Strahler first     
+#            print(Strahler_order_ipath)            
+#            print(upstream_sub_infos['Strahler'])
+            upstream_sub_infos_eq_Strahler = upstream_sub_infos.loc[upstream_sub_infos['Strahler'] == Strahler_order_ipath] 
+            
+            if len(upstream_sub_infos_eq_Strahler) > 0: ### has a upstream river has the saem strahler id, no new path will be added 
+                nPathid[ipath] = upstream_sub_infos_eq_Strahler['SubId'].values[0] ### add this upstream id to nPathid                 
+                continue 
+            else:  
+                upstream_sub_infos_eq_Strahler_1 = upstream_sub_infos.loc[upstream_sub_infos['Strahler'] == Strahler_order_ipath - 1]
+                
+                for inpath in range(0,len(upstream_sub_infos_eq_Strahler_1)):
+                    ### this brance sperate into two or several reaches, the starting river length for all of them are the same 
+                    if inpath == 0: 
+                        nPathid[ipath] = upstream_sub_infos_eq_Strahler_1['SubId'].values[inpath]
+#                        print(nPathid[ipath],ipath,upstream_sub_infos_eq_Strahler_1['SubId'].values[inpath],'aaaaa',range(0,len(upstream_sub_infos_eq_Strahler_1)))
+                    else:
+                        nPathid[npath + 1 - 1] = upstream_sub_infos_eq_Strahler_1['SubId'].values[inpath]
+                        longest_flow_pathes[npath + 1 - 1] = longest_flow_pathes[ipath]
+#                        print(npath + 1 - 1,longest_flow_pathes[npath + 1 - 1],nPathid[npath + 1 - 1],'bbbbb',range(0,len(upstream_sub_infos_eq_Strahler_1)))
+                        npath = npath + 1
+            
+            
+        
+        Pathid = nPathid    
+        npath_current = npath 
+    Longestpath = max(longest_flow_pathes)
+    
+    return Longestpath
 
 ###################################################################3
-
-##### out has two column the first column has sub id , the second has down sub id
-
-
-
-##### out has two column the first column has sub id , the second has down sub id
 
 ###########
 
@@ -790,7 +848,9 @@ def New_SubId_To_Dissolve(subid,catchmentinfo,mapoldnew_info,upsubid = -1,ismodi
         tarinfo.loc[idx,'Min_DEM']       = np.min(cbranch['Min_DEM'].values)
 #    print(tarinfo.loc[idx,'BasArea'],"2")
     if Islake == 1:   ## Meger subbasin covered by lakes, Keep lake outlet catchment  DA, stream order info
-        tarinfo.loc[idx,'RivLength'] = 0.0
+        Longestpath = Calculate_Longest_flowpath(mainriv_merg_info)
+        tarinfo.loc[idx,'RivLength'] = Longestpath
+        
     elif Islake == 2:
         tarinfo.loc[idx,'RivLength'] = 0.0
         tarinfo.loc[idx,'IsLake']    = 2
@@ -3363,7 +3423,7 @@ class LRRT:
             lakeid       = AllConnectLakeIDS[i]
             Lakesub_info = finalrivply_info.loc[finalrivply_info['HyLakeId'] == lakeid]
             Lakesub_info = Lakesub_info.sort_values(["DA"], ascending = (False))
-            tsubid       = Lakesub_info[sub_colnm].values[0]
+            tsubid       = Lakesub_info[sub_colnm].values[0]  ### outlet subbasin id with highest acc 
             lakesubids   = Lakesub_info[sub_colnm].values
             if len(lakesubids) > 1:  ## only for connected lakes
                 mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalrivply_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = lakesubids,mainriv = finalrivply_info,Islake = 1)
