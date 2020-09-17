@@ -3549,7 +3549,6 @@ class LRRT:
         processing.run("native:fixgeometries", {'INPUT':Path_finalcat_info,'OUTPUT':Path_temp_finalcat_info})
         
         if Has_Non_Connect_Lake < 0 and Has_Connect_Lake<0:
-            print(Path_finalcat_info)
             processing.run("qgis:fieldcalculator", {'INPUT':Path_temp_finalcat_info,'FIELD_NAME':'Hylak_id','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT':Path_finalcat_hru})
             processing.run("qgis:fieldcalculator", {'INPUT':Path_finalcat_hru,'FIELD_NAME':'HRU_ID','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':' \"SubId\" ','OUTPUT':Path_finalcat_hru2})
             processing.run("qgis:fieldcalculator", {'INPUT':Path_finalcat_hru2,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':' \"BasArea\" ','OUTPUT':Path_finalcat_hru_out})
@@ -3612,6 +3611,7 @@ class LRRT:
 #                    mapoldnew_info.loc[i,'Hylak_id'] = np.nan
 
         layer_cat=QgsVectorLayer(Path_finalcat_hru,"")
+        SpRef_in = layer_cat.crs().authid()   ### get Raster spatialReference id
         layer_cat.dataProvider().addAttributes([QgsField('HRU_ID', QVariant.Int),QgsField('HRU_Type', QVariant.Int)])
         field_ids = []
         # Fieldnames to delete
@@ -3674,9 +3674,12 @@ class LRRT:
         del layer_cat
 
         processing.run("native:dissolve", {'INPUT':Path_finalcat_hru,'FIELD':['HRU_ID'],'OUTPUT':Path_finalcat_hru2},context = context)
-        processing.run("qgis:fieldcalculator", {'INPUT':Path_finalcat_hru2,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'area(transform($geometry, \'EPSG:4326\',\'EPSG:3573\'))','OUTPUT':Path_finalcat_hru_out})
-
-
+        
+        if SpRef_in == 'EPSG:4326':
+            processing.run("qgis:fieldcalculator", {'INPUT':Path_finalcat_hru2,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'area(transform($geometry, \'EPSG:4326\',\'EPSG:3573\'))','OUTPUT':Path_finalcat_hru_out})
+        else: 
+            processing.run("qgis:fieldcalculator", {'INPUT':Path_finalcat_hru2,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'$area','OUTPUT':Path_finalcat_hru_out})
+            
 
 
 ###########################################################################################33
