@@ -3600,7 +3600,9 @@ class LRRT:
             plotGuagelineobs(Scenario_NM,Readed_Data,os.path.join(self.OutputFolder,obs_nm + '.pdf'))
 
 
-    def GeneratelandandlakeHRUS(self,Datafolder,Finalcat_NM = "finalcat_info.shp",Connect_Lake_ply = 'Con_Lake_Ply.shp',Non_Connect_Lake_ply = 'Non_Con_Lake_Ply.shp',Has_Non_Connect_Lake = 1,Has_Connect_Lake = 1):
+    def GeneratelandandlakeHRUS(self,Datafolder,Finalcat_NM = "finalcat_info.shp",Connect_Lake_ply = 'Con_Lake_Ply.shp',
+                                Non_Connect_Lake_ply = 'Non_Con_Lake_Ply.shp',Has_Non_Connect_Lake = 1,
+                                Has_Connect_Lake = 1):
 
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
