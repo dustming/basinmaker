@@ -233,7 +233,7 @@ def Modify_template_rvt(outFolderraven,outObsfileFolder,obsnm):
     f2.close()
 #    asdfadsfadsfadsf
         
-def WriteObsfiles(catinfo,outFolderraven,outObsfileFolder,startyear,endyear,CA_HYDAT='#',Template_Folder='#'):
+def WriteObsfiles(catinfo,outFolderraven,outObsfileFolder,startyear,endyear,CA_HYDAT='#',Template_Folder='#',DownLoadObsData=True):
     
     """
     Function that used to generate Raven streamflow observation input files. All 
@@ -293,14 +293,17 @@ def WriteObsfiles(catinfo,outFolderraven,outObsfileFolder,startyear,endyear,CA_H
         if iobs_src[0] == '-':
             continue 
         elif iobs_src  == 'US':
-            flowdata_read, DA_obs_data,Finddata    = DownloadStreamflowdata_US(Station_NM = iobs_nm,StartYear = startyear,EndYear = endyear)
-        elif iobs_src  == 'CA':
-            if CA_HYDAT == '#':
-                Finddata = -1
-                continue
+            if DownLoadObsData == True:
+                flowdata_read, DA_obs_data,Finddata    = DownloadStreamflowdata_US(Station_NM = iobs_nm,StartYear = startyear,EndYear = endyear)
             else:
-                
+                Finddata = -1
+                continue                
+        elif iobs_src  == 'CA':
+            if CA_HYDAT != '#' and DownLoadObsData == True
                 flowdata_read, DA_obs_data,Finddata = DownloadStreamflowdata_CA(Station_NM = iobs_nm,CA_HYDAT = CA_HYDAT,StartYear = startyear,EndYear = endyear)
+            else:
+                Finddata = -1
+                continue                
         else:
             print("Country not included yet ")
             continue

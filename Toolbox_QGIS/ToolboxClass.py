@@ -1227,11 +1227,12 @@ class LRRT:
         self.OutHyID2 = OutHyID2
 
         self.ProjectNM = ProjectNM
+        
+        if self.OutputFolder != '#':
+            self.OutputFolder = os.path.join(self.Path_OutputFolder,self.ProjectNM)
 
-        self.OutputFolder = os.path.join(self.Path_OutputFolder,self.ProjectNM)
-
-        if not os.path.exists(self.OutputFolder):
-            os.makedirs(self.OutputFolder)
+            if not os.path.exists(self.OutputFolder):
+                os.makedirs(self.OutputFolder)
 
         self.Raveinputsfolder = self.OutputFolder + '/'+'RavenInput/'
 
@@ -1244,10 +1245,11 @@ class LRRT:
             self.tempFolder =TempOutFolder
             if not os.path.exists(self.tempFolder):
                 os.makedirs(self.tempFolder)
-
-        self.grassdb =os.path.join(self.tempFolder, 'grassdata_toolbox',self.ProjectNM)
-        if not os.path.exists(self.grassdb):
-            os.makedirs(self.grassdb)
+        if self.ProjectNM != '#':
+            self.grassdb =os.path.join(self.tempFolder, 'grassdata_toolbox',self.ProjectNM)
+            if not os.path.exists(self.grassdb):
+                os.makedirs(self.grassdb)
+            
         os.environ['GISDBASE'] = self.grassdb
 
         self.grass_location_geo = 'Geographic'
@@ -2703,66 +2705,94 @@ class LRRT:
             shutil.rmtree(self.tempfolder,ignore_errors=True)
 
 
-    def GenerateRavenInput(self,DataFolder = '#', Finalcat_NM = 'finalcat_hru_info',lenThres = 1,iscalmanningn = -1,Startyear = -1,EndYear = -1
-                          ,CA_HYDAT = '#',WarmUp = 0,Template_Folder = '#',HRU_ID_NM = 'HRU_ID',HRU_Area_NM = 'HRU_Area',Sub_ID_NM = 'SubId',Lake_As_Gauge = 1):
+    def GenerateRavenInput(self,DataFolder = '#', Finalcat_NM = 'finalcat_hru_info.shp',lenThres = 1,iscalmanningn = -1,Startyear = -1,EndYear = -1
+                          ,CA_HYDAT = '#',WarmUp = 0,Template_Folder = '#',HRU_ID_NM = 'HRU_ID',HRU_Area_NM = 'HRU_Area',Sub_ID_NM = 'SubId'
+                          ,Lake_As_Gauge = True, WriteObsrvt = True, DownLoadObsData = True):
 
-        """
+        """Generate Raven input files.
+        
         Function that used to generate Raven input files. All output will be stored in folder 
         "<DataFolder>/Model/RavenInput".
 
-        Inputs: 
-            General
-               DataFolder    (string):     Folder name that stores a shapefile and shpfile dbf 
-                                           table that includes all required parameters 
-               Finalcat_NM   (string):     Name of the output shpfile which includes all required 
-                                           parameters; basically the polygon file generated 
-                                           by the toolbox 
-           
-            Parameters needed to define rvh file:
-               lenThres      (float):      River length threshold; river length smaller than 
-                                           this will write as zero in Raven rvh file
-               iscalmanningn (integer):    If "1", use manning's coefficient in the shpfile table 
-                                           and set to default value (0.035).
-                                           If "-1", do not use manning's coefficients.
-               HRU_ID_NM     (string):     Column name in Finalcat_NM that defines HRU ID
-               HRU_Area_NM   (string)      Column name in Finalcat_NM that defines HRU area 
-               Sub_ID_NM     (string):     Column name in Finalcat_NM that defines subbasin ID
-               Lake_As_Gauge (Bool):       If "True", all lake subbasins will labeled as gauged 
-                                           subbasin such that Raven will export lake balance for 
-                                           this lake. If "False", lake subbasin will not be labeled 
-                                           as gauge subbasin.
-               
-            Parameters needed to define obs.rvt file (Optional):
-               CA_HYDAT  (string):         (optional) path and filename of previously downloaded 
-                                           external database containing streamflow observations, 
-                                           e.g. HYDAT for Canada ("Hydat.sqlite3").
-               Startyear (integer):        (optional) Start year of simulation. Used to 
-                                           read streamflow observations from external databases.
-               EndYear   (integer):        (optional) End year of simulation. Used to 
-                                           read streamflow observations from external databases.  
-               WarmUp    (integer):        (optional) The warmup time (in years) used after 
-                                           startyear. Values in output file "obs/xxx.rvt" containing 
-                                           observations will be set to NoData value "-1.2345".
-               
-            Input needed to copy raven template files (Optional):
-               Template_Folder (string):   Folder name containing raven template files. All 
-                                           files from that folder will be copied (unchanged) 
-                                           to the "DataFolder".    
-               
-        Outputs: 
-            .rvh              - contains subbasins and HRUs
-            lake.rvh          - contains definition and parameters of lakes
-            modelchannel.rvp  - contains definition and parameters for channels
-            xxx.rvt           - (optional) streamflow observation for each gauge xxx in shpfile 
-                                database will be automatically generagted in 
-                                folder "<DataFolder>/Model/RavenInput/obs/". 
-            obsinfo.csv       - information file generated reporting drainage area difference 
-                                between observed in shpfile and standard database as well as 
-                                number of missing values for each gauge
-
+        Parameters
+        ----------
+        DataFolder      : string 
+            Folder name that stores a shapefile and shpfile dbf 
+            table that includes all required parameters             
+        Finalcat_NM     : string     
+            Name of the output shpfile which includes all required 
+            parameters; basically the polygon file generated 
+            by the toolbox        
+        lenThres        : float      
+            River length threshold; river length smaller than 
+            this will write as zero in Raven rvh file
+        iscalmanningn   : integer
+            If "1", use manning's coefficient in the shpfile table 
+            and set to default value (0.035).
+            If "-1", do not use manning's coefficients.
+        HRU_ID_NM       : string
+            Column name in Finalcat_NM that defines HRU ID
+        HRU_Area_NM     : string
+            Column name in Finalcat_NM that defines HRU area 
+        Sub_ID_NM       : string
+            Column name in Finalcat_NM that defines subbasin ID
+        Lake_As_Gauge   : Bool
+            If "True", all lake subbasins will labeled as gauged 
+            subbasin such that Raven will export lake balance for 
+            this lake. If "False", lake subbasin will not be labeled 
+            as gauge subbasin.
+        CA_HYDAT        : string,  optional
+            path and filename of previously downloaded 
+            external database containing streamflow observations, 
+            e.g. HYDAT for Canada ("Hydat.sqlite3").
+        Startyear       : integer, optional
+            Start year of simulation. Used to 
+            read streamflow observations from external databases.
+        EndYear         : integer, optional
+            End year of simulation. Used to 
+            read streamflow observations from external databases.  
+        WarmUp          : integer, optional
+            The warmup time (in years) used after 
+            startyear. Values in output file "obs/xxx.rvt" containing 
+            observations will be set to NoData value "-1.2345".               
+        Template_Folder : string, optional 
+            Input that is used to copy raven template files. It is a 
+            folder name containing raven template files. All 
+            files from that folder will be copied (unchanged) 
+            to the "DataFolder".   
+        WriteObsrvt : Bool, optional 
+            Input that used to indicate if the observation data file needs
+            to be generated.  
+        DownLoadObsData : Bool, optional 
+            Input that used to indicate if the observation data will be Download
+            from usgs website or read from hydat database for streamflow Gauge 
+            in US or Canada,respectively. If this parameter is False, 
+            while WriteObsrvt is True. The program will write the observation data
+            file with "-1.2345" for each observation gauges. 
+        Notes:
+        ------- 
+        Following ouput files will be generated in "<DataFolder>/Model/RavenInput"
+        .rvh              - contains subbasins and HRUs
+        lake.rvh          - contains definition and parameters of lakes
+        modelchannel.rvp  - contains definition and parameters for channels
+        xxx.rvt           - (optional) streamflow observation for each gauge xxx in shpfile 
+                            database will be automatically generagted in 
+                            folder "<DataFolder>/Model/RavenInput/obs/". 
+        obsinfo.csv       - information file generated reporting drainage area difference 
+                            between observed in shpfile and standard database as well as 
+                            number of missing values for each gauge
+                            
         Return:
+        -------
            None
            
+        Examples
+        -------
+        >>> from ToolboxClass import LRRT
+        >>> DataFolder = "C:/Path_to_foldr_of_example_dataset_provided_in_Github_wiki/"
+        >>> RTtool=LRRT()
+        >>> RTtool.GenerateRavenInput(DataFolder = DataFolder,Finalcat_NM = 'finalcat_hru_info.shp')
+        
         """
     
     
@@ -2797,8 +2827,8 @@ class LRRT:
         Writervhchanl(ncatinfo2,Raveinputsfolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM,Lake_As_Gauge)
         writelake(ncatinfo2,Raveinputsfolder,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM)
         
-        if Startyear > 0:
-            WriteObsfiles(ncatinfo2,Raveinputsfolder,Obs_Folder,Startyear + WarmUp,EndYear,CA_HYDAT,Template_Folder)
+        if WriteObsrvt > 0:
+            WriteObsfiles(ncatinfo2,Raveinputsfolder,Obs_Folder,Startyear + WarmUp,EndYear,CA_HYDAT,Template_Folder,DownLoadObsData)
 
 
 
