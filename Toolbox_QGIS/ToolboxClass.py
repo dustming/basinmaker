@@ -2707,7 +2707,7 @@ class LRRT:
 
     def GenerateRavenInput(self,DataFolder = '#', Finalcat_NM = 'finalcat_hru_info.shp',lenThres = 1,iscalmanningn = -1,Startyear = -1,EndYear = -1
                           ,CA_HYDAT = '#',WarmUp = 0,Template_Folder = '#',HRU_ID_NM = 'HRU_ID',HRU_Area_NM = 'HRU_Area',Sub_ID_NM = 'SubId'
-                          ,Lake_As_Gauge = True, WriteObsrvt = True, DownLoadObsData = True):
+                          ,Lake_As_Gauge = True, WriteObsrvt = True, DownLoadObsData = True,Model_Name = 'test'):
 
         """Generate Raven input files.
         
@@ -2768,7 +2768,10 @@ class LRRT:
             from usgs website or read from hydat database for streamflow Gauge 
             in US or Canada,respectively. If this parameter is False, 
             while WriteObsrvt is True. The program will write the observation data
-            file with "-1.2345" for each observation gauges. 
+            file with "-1.2345" for each observation gauges.
+        Model_Name      : string
+           The Raven model base name. File name of the raven input will be 
+           Model_Name.xxx. 
             
         Notes
         ------- 
@@ -2829,7 +2832,7 @@ class LRRT:
         writelake(ncatinfo2,Raveinputsfolder,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM)
         
         if WriteObsrvt > 0:
-            WriteObsfiles(ncatinfo2,Raveinputsfolder,Obs_Folder,Startyear + WarmUp,EndYear,CA_HYDAT,Template_Folder,DownLoadObsData)
+            WriteObsfiles(ncatinfo2,Raveinputsfolder,Obs_Folder,Startyear + WarmUp,EndYear,CA_HYDAT,Template_Folder,DownLoadObsData,Model_Name)
 
 
 

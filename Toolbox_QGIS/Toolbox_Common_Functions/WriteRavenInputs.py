@@ -262,8 +262,7 @@ def Generate_Raven_Obsrvt_String(flowdata,obsnm,outObsfileFolder):   #Writeobsrv
             
         outObsfileFolder   : string     
             Path and name of the output folder to save obervation rvt file
-            of each gauge 
-                                         
+            of each gauge                                          
                                           
     Notes
     ------    
@@ -285,7 +284,7 @@ def Generate_Raven_Obsrvt_String(flowdata,obsnm,outObsfileFolder):   #Writeobsrv
 
     Examples
     --------
-    >>> from WriteRavenInputs import DownloadStreamflowdata_US
+    >>> from WriteRavenInputs import DownloadStreamflowdata_US,Generate_Raven_Obsrvt_String
     >>> import pandas as pd 
     >>> Station_NM  = '05127000'
     >>> StartYear   = 2010
@@ -297,7 +296,7 @@ def Generate_Raven_Obsrvt_String(flowdata,obsnm,outObsfileFolder):   #Writeobsrv
     >>> flowdata.loc[flowdata.index.isin(flowdata_read.index), ['Flow', 'QC']] = flowdata_read[['Flow', 'QC']]
     >>> obsnms = pd.DataFrame(data=[Subbasin_ID,Station_NM],columns=['SubId','Obs_NM'])
     >>> Outputfolderrvt = 'c:/some_folder_to_store_raven_rvt_file'
-    >>> Generate_Raven_Obsrvt_String(flowdata = flowdata,obsnm = obsnms,outObsfileFolder = Outputfolderrvt)
+    >>> obs_rvt_file_path, output_string = Generate_Raven_Obsrvt_String(flowdata = flowdata,obsnm = obsnms,outObsfileFolder = Outputfolderrvt)
     
     """
     
@@ -312,42 +311,59 @@ def Generate_Raven_Obsrvt_String(flowdata,obsnm,outObsfileFolder):   #Writeobsrv
     
     return obs_rvt_file_path, output_string
     
-def Modify_template_rvt(outFolderraven,outObsfileFolder,obsnm):
+def Generate_Raven_Timeseries_rvt_String(outFolderraven,outObsfileFolder,obsnm,Model_Name):  #Modify_template_rvt(outFolderraven,outObsfileFolder,obsnm):
     
-    """
-    Function that used to modify raven model rvt file (test.rvt)
-    Add  ":RedirectToFile    ./obs/xxx_obs.rvt"  for each gauge in the end of 
-    model rvt file (test.rvt)
+    """Generate a string in Raven time series rvt input file format 
     
-    Inputs: 
+    Function that used to modify raven model timeseries rvt file (Model_Name.rvt)
+    Add  ":RedirectToFile    ./obs/guagename_subbasinid.rvt" 
+    for each gauge in the end of model rvt file (Model_Name.rvt)
     
-        outFolderraven    (String):     Path and name of the output folder of Raven input files
-        outObsfileFolder  (String):     Path and name of the output folder to save obervation rvt file
-                                        of each gauge 
-        obsnm             (Dataframe):  Dataframe of observation gauge including all subbasin/HRUs
-                                        information for this gauge as the station name of this gauge                                         
+    Parameters 
+    ----------
+        outFolderraven            : String
+            Path and name of the output folder of Raven input files
+        outObsfileFolder          : String
+            Path and name of the output folder to save obervation rvt file
+            of each gauge 
+        obsnm                     : data-type 
+            Dataframe of observation gauge information for this gauge including
+            at least following two columns
+            'Obs_NM': the name of the stream flow obsrvation gauge 
+            'SubId' : the subbasin Id of this stremflow gauge located at. 
+        Model_Name                : string
+           The Raven model base name. File name of the raven input will be 
+           Model_Name.xxx.                                                 
                                           
-    Outputs: 
-            
-        test.rvt                      - streamflow observation for each gauge xxx in shpfile 
-                                        database will be automatically generated in 
-                                        folder outObsfileFolder. 
-    Return:
+    Notes
+    ------    
+        None 
+
+    Returns
+    -------
+        output_string     : string
+             It is the string that contains the content that will be used to 
+             modify the raven time series rvt input file of this gauge   
+    Examples
+    --------
+    >>> from WriteRavenInputs import Generate_Raven_Timeseries_rvt_String
+    >>> outFolderraven    = 'c:/path_to_the_raven_input_folder/'
+    >>> outObsfileFolder  = 'c:/path_to_the_raven_streamflow_observation gauge_folder/'
+    >>> Subbasin_ID = 1
+    >>> Station_NM  = '05127000'
+    >>> obsnms = pd.DataFrame(data=[Subbasin_ID,Station_NM],columns=['SubId','Obs_NM'])
+    >>> Model_Name = 'test'
+    >>> output_string = Generate_Raven_Timeseries_rvt_String(outFolderraven,outObsfileFolder,obsnm,Model_Name)
     
-        None
-    
-    todo:
-       
-       add name of the raven model base name as a paramter
     """ 
-    toobsrvtfile = os.path.join(outFolderraven,'test.rvt')
+    
+    toobsrvtfile = os.path.join(outFolderraven,Model_Name + '.rvt')
     obsflodername = './' + os.path.split(outObsfileFolder)[1]+'/' 
-    f2 = open(toobsrvtfile, "a")
-    f2.write(":RedirectToFile    "+obsflodername+ obsnm['Obs_NM']+'_'+str(obsnm['SubId'])+'.rvt'+" \n")
-    f2.close()
+    output_string = "  \n"+":RedirectToFile    "+obsflodername+ obsnm['Obs_NM']+'_'+str(obsnm['SubId'])+'.rvt' +  "  \n"
+    return output_string
 
         
-def WriteObsfiles(catinfo,outFolderraven,outObsfileFolder,startyear,endyear,CA_HYDAT='#',Template_Folder='#',DownLoadObsData=True):
+def WriteObsfiles(catinfo,outFolderraven,outObsfileFolder,startyear,endyear,CA_HYDAT='#',Template_Folder='#',DownLoadObsData=True,Model_Name = 'test'):
     
     """
     Function that used to generate Raven streamflow observation input files. All 
@@ -367,7 +383,9 @@ def WriteObsfiles(catinfo,outFolderraven,outObsfileFolder,startyear,endyear,CA_H
            CA_HYDAT         (string):        (optional) path and filename of previously downloaded 
                                              external database containing streamflow observations, 
                                              e.g. HYDAT for Canada ("Hydat.sqlite3").
-               
+          Model_Name      : string
+             The Raven model base name. File name of the raven input will be 
+             Model_Name.xxx.                
         Input needed to copy raven template files:
            Template_Folder (string):      Folder name containing raven template files.If it is not 
                                           '#', the rvt file in the model folder will be modified.
@@ -434,8 +452,8 @@ def WriteObsfiles(catinfo,outFolderraven,outObsfileFolder,startyear,endyear,CA_H
         obs_rvt_file_path, output_string = Generate_Raven_Obsrvt_String(flowdata,obsnm,outObsfileFolder)
         WriteStringToFile(Out_String = output_string,File_Path = obs_rvt_file_path, WriteMethod = "w")
         
-        if Template_Folder != '#':
-            Modify_template_rvt(outFolderraven,outObsfileFolder,obsnm)
+        output_string = Generate_Raven_Timeseries_rvt_String(outFolderraven,outObsfileFolder,obsnm,Model_Name)
+        WriteStringToFile(Out_String = output_string,File_Path = os.path.join(outFolderraven,Model_Name+'.rvt'), WriteMethod = "a")        
         ### Modify rvt file
         obsnms.to_csv(os.path.join(outObsfileFolder,'obsinfo.csv'),sep=',',index=False)
      
