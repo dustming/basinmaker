@@ -2705,9 +2705,11 @@ class LRRT:
             shutil.rmtree(self.tempfolder,ignore_errors=True)
 
 
-    def GenerateRavenInput(self,DataFolder = '#', Finalcat_NM = 'finalcat_hru_info.shp',lenThres = 1,iscalmanningn = -1,Startyear = -1,EndYear = -1
-                          ,CA_HYDAT = '#',WarmUp = 0,Template_Folder = '#',HRU_ID_NM = 'HRU_ID',HRU_Area_NM = 'HRU_Area',Sub_ID_NM = 'SubId'
-                          ,Lake_As_Gauge = True, WriteObsrvt = True, DownLoadObsData = True,Model_Name = 'test'):
+    def GenerateRavenInput(self,DataFolder,HRU_Type_info,Finalcat_NM = 'finalcat_hru_info.shp'
+                          ,lenThres = 1,iscalmanningn = -1,Startyear = -1,EndYear = -1
+                          ,CA_HYDAT = '#',WarmUp = 0,Template_Folder = '#'
+                          ,Lake_As_Gauge = True, WriteObsrvt = True 
+                          ,DownLoadObsData = True,Model_Name = 'test'):
 
         """Generate Raven input files.
         
@@ -2718,11 +2720,48 @@ class LRRT:
         ----------
         DataFolder      : string 
             Folder name that stores a shapefile and shpfile dbf 
-            table that includes all required parameters             
+            table that includes all required parameters    
+                                                                            
+        HRU_Type_info   : DataFrame 
+            A dataframe define HRU informations for each HRU type.
+            The detailed definititon of each columns for each HRU
+            type is in Raven model paramter file Model_Name.rvp.
+            The dataframe include following columns:
+            HRU_Type_ID     - integer, Id of each HRU type 
+            LAND_USE_CLASS  - string,  Landuse class of each HRU type
+            VEG_CLASS       - string,  Vegetation class of each HRU type
+            SOIL_PROFIL     - string,  Soil Profile of each HRU type 
+            IsLake          - integer, 1 it is a lake HRU
+                                       -1 it is not a lake HRU                     
         Finalcat_NM     : string     
             Name of the output shpfile which includes all required 
             parameters; basically the polygon file generated 
-            by the toolbox        
+            by the toolbox.
+            The shapefile should contains following columns
+            SubID           - integer, The subbasin Id 
+            DowSubId        - integer, The downstream subbasin ID of this 
+                                       subbasin 
+            IsLake          - integer, If the subbasin is a lake / reservior 
+                                       subbasin. 1 yes, <0, no
+            IsObs           - integer, If the subbasin contains a observation
+                                       gauge. 1 yes, < 0 no. 
+            RivLength       - float,   The length of the river in current 
+                                       subbasin in m
+            RivSlope        - float,   The slope of the river path in 
+                                       current subbasin, in m/m 
+            FloodP_n        - float,   Flood plain manning's coefficient, in - 
+            Ch_n            - float,   main channel manning's coefficient, in -
+            BasSlope        - float,   the slope of the subbasin in - 
+            BasAspect       - float,   the aspect of the subbasin in degree 
+            HRUSlope        - float,   the slope of the HRU in - 
+            HRUAspect       - float,   the aspect of the HRU in degree 
+            BasMeanElev     - float,   the mean elevation of the subbasin in 
+                                       m    
+            HRUMeanElev     - float,   the mean elevation of the HRU in 
+                                       m  
+            HRU_ID          - integer, the id of the HRU 
+            HRU_Area        - integer, the area of the HRU in m2 
+            HRU_Type        - integer, the type of the HRU.                                
         lenThres        : float      
             River length threshold; river length smaller than 
             this will write as zero in Raven rvh file
@@ -2730,12 +2769,6 @@ class LRRT:
             If "1", use manning's coefficient in the shpfile table 
             and set to default value (0.035).
             If "-1", do not use manning's coefficients.
-        HRU_ID_NM       : string
-            Column name in Finalcat_NM that defines HRU ID
-        HRU_Area_NM     : string
-            Column name in Finalcat_NM that defines HRU area 
-        Sub_ID_NM       : string
-            Column name in Finalcat_NM that defines subbasin ID
         Lake_As_Gauge   : Bool
             If "True", all lake subbasins will labeled as gauged 
             subbasin such that Raven will export lake balance for 
@@ -2793,9 +2826,11 @@ class LRRT:
         Examples
         -------
         >>> from ToolboxClass import LRRT
+        >>> import pandas as pd
         >>> DataFolder = "C:/Path_to_foldr_of_example_dataset_provided_in_Github_wiki/"
+        >>> HRU_Type_info = pd.read_csv("c:/path_to_hru_type_info.csv_in_example_folder")
         >>> RTtool=LRRT()
-        >>> RTtool.GenerateRavenInput(DataFolder = DataFolder,Finalcat_NM = 'finalcat_hru_info.shp')
+        >>> RTtool.GenerateRavenInput(DataFolder = DataFolder,HRU_Type_info = HRU_Type_info, Finalcat_NM = 'finalcat_hru_info.shp')
         
         """
     
@@ -2825,17 +2860,17 @@ class LRRT:
 
         tempinfo = Dbf5(finalcatchpath[:-3] + "dbf")#np.genfromtxt(hyinfocsv,delimiter=',')
         ncatinfo = tempinfo.to_dataframe()
-        ncatinfo2 = ncatinfo.drop_duplicates(HRU_ID_NM, keep='first')
-        ncatinfo2 = ncatinfo2[ncatinfo2[HRU_ID_NM] > 0]
+        ncatinfo2 = ncatinfo.drop_duplicates('HRU_ID', keep='first')
+        ncatinfo2 = ncatinfo2[ncatinfo2['HRU_ID'] > 0]
 
         Channel_rvp_file_path,Channel_rvp_string,Model_rvh_file_path,Model_rvh_string,Model_rvp_file_path,Model_rvp_string_modify = Generate_Raven_Channel_rvp_rvh_String(ncatinfo2,Raveinputsfolder,lenThres,
-                                                                                                                                                                     iscalmanningn,HRU_ID_NM,HRU_Area_NM,
-                                                                                                                                                                     Sub_ID_NM,Lake_As_Gauge,Model_Name)                                                        
+                                                                                                                                                                     iscalmanningn,Lake_As_Gauge,Model_Name,
+                                                                                                                                                                     HRU_Type_info)                                                        
         WriteStringToFile(Channel_rvp_string,Channel_rvp_file_path,"w")
         WriteStringToFile(Model_rvh_string,Model_rvh_file_path,"w")
         WriteStringToFile(Model_rvp_string_modify,Model_rvp_file_path,"a")
         
-        Lake_rvh_string,Lake_rvh_file_path = Generate_Raven_Lake_rvh_String(ncatinfo2,Raveinputsfolder,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM,Model_Name)
+        Lake_rvh_string,Lake_rvh_file_path = Generate_Raven_Lake_rvh_String(ncatinfo2,Raveinputsfolder,Model_Name)
         WriteStringToFile(Lake_rvh_string,Lake_rvh_file_path,"w")
         
         if WriteObsrvt > 0:
