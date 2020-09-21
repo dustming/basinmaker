@@ -5,36 +5,95 @@ import os
 import sqlite3
 import urllib
 
-def DownloadStreamflowdata_CA(Station_NM,CA_HYDAT,StartYear,EndYear):
+
+def WriteStringToFile(Out_String,File_Path,WriteMethod = "w"):
+    """Write String to a file
+    
+    Function that used to write Out_String to a file located at the File_Path.
+
+    Parameters 
+    ----------
+    Out_String            : string
+        The string that will be writed to the file located at File_Path
+    File_Path             : string
+        Path and filename of file that will be modified or created                            
+    WriteMethod           : {'a','w'}
+        If WriteMethod = "w", a new file will be created at the File_Path
+        If WriteMethod = "a", the Out_String will be added to exist file  
+                                          
+    Notes
+    ------    
+        The file located at the File_Path will be modified or created  
+
+    Returns
+    -------
+        None 
+   
+    Examples
+    --------
+    >>> from WriteRavenInputs import WriteStringToFile
+    >>> Out_String = 'sometest at line 1\n some test at line 2\n some test at line 3\n'
+    >>> File_Path  = 'C:/Path_to_the_Flie_with_file_name'
+    >>> WriteStringToFile(Out_String = Out_String,File_Path = File_Path,WriteMethod = 'w')
+    
     """
+    
+    if os.path.exists(File_Path): ### if file exist, we can either modify or overwrite it 
+        with open(File_Path,WriteMethod) as f:
+            f.write(Out_String)
+    else: ## create a new file anyway, since file did not exist 
+        with open(File_Path,'w') as f:
+            f.write(Out_String)    
+        
+    
+        
+def DownloadStreamflowdata_CA(Station_NM,CA_HYDAT,StartYear,EndYear):
+    """Return streamflow data from HYDAT
+    
     Function that used to obtain streamflow data of certain gauge from HYDAT database
 
-    Inputs: 
-    
-        Station_NM     (string):     The name of the gauge, "05PB019"
-        CA_HYDAT       (string):     Path and filename of previously downloaded 
-                                     external database containing streamflow observations, 
-                                     e.g. HYDAT for Canada ("Hydat.sqlite3").                                
-        Startyear      (integer):    Start year of simulation. Used to 
-                                     read streamflow observations from external databases.
-        EndYear        (integer):    End year of simulation. Used to 
-                                     read streamflow observations from external databases.  
+    Parameters 
+    ----------
+    Station_NM            : string
+        The name of the gauge, "05PB019"
+    CA_HYDAT              : string
+        Path and filename of previously downloaded 
+        external database containing streamflow observations, 
+        e.g. HYDAT for Canada ("Hydat.sqlite3").                                
+    Startyear             : integer
+        Start year of simulation. Used to 
+        read streamflow observations from external databases.
+    EndYear               : integer  
+        End year of simulation. Used to 
+        read streamflow observations from external databases.  
                                           
-    Outputs: 
-            
+    Notes
+    ------    
         None 
 
-    Return:
+    Returns
+    -------
+    flowdata              : data-type   
+        obtained streamflow observation dataframe between 
+        Startyear and EndYear.
+    obtaindata            : bool
+        True indicate successfully obtain data, False indicate no data are founded
+        for this gauge
+    obs_DA                : float
+        The drainage area of this gauge read from HYDAT database
+   
+    Examples
+    --------
+    >>> from WriteRavenInputs import DownloadStreamflowdata_CA
+    >>> Station_NM = '05PC019'
+    >>> StartYear  = 2010
+    >>> EndYear    = 2011
+    >>> CA_HYDAT   = HYDAT_Path
+    >>> flowdata,obs_DA,obtaindata = DownloadStreamflowdata_CA(Station_NM,CA_HYDAT,StartYear,EndYear)
     
-        flowdata:      (Dataframe):  obtained streamflow observation dataframe between 
-                                     Startyear and EndYear.
-        obtaindata:    (integer):    1 indicate successfully obtain data, -1 indicate no data are founded
-                                     for this gauge
-        obs_DA:        (float):      The drainage area of this gauge read from HYDAT database
-           
     """
     
-    obtaindata   = 1
+    obtaindata   = True
     con          = sqlite3.connect(CA_HYDAT)
     ### obtain station info
     sqlstat      = "SELECT STATION_NUMBER, DRAINAGE_AREA_GROSS, DRAINAGE_AREA_EFFECT from STATIONS WHERE STATION_NUMBER=?"
@@ -42,7 +101,7 @@ def DownloadStreamflowdata_CA(Station_NM,CA_HYDAT,StartYear,EndYear):
     if len(Station_info) == 0:
         flowdata = -1
         obs_DA   = -9999
-        obtaindata = -1 
+        obtaindata = False 
         return flowdata,obs_DA,obtaindata
     
     DAS          = np.array([-1.2345,Station_info['DRAINAGE_AREA_GROSS'].values[0],Station_info['DRAINAGE_AREA_EFFECT'].values[0]]) 
@@ -63,7 +122,7 @@ def DownloadStreamflowdata_CA(Station_NM,CA_HYDAT,StartYear,EndYear):
     if len(Readed_Streamflow) == 0:
         flowdata = -1
         obs_DA   = -9999
-        obtaindata = -1 
+        obtaindata = False 
         return flowdata,obs_DA,obtaindata
         
     year_ini  = Readed_Streamflow['YEAR'].values[0]
@@ -90,32 +149,48 @@ def DownloadStreamflowdata_CA(Station_NM,CA_HYDAT,StartYear,EndYear):
             
     
 def DownloadStreamflowdata_US(Station_NM,StartYear,EndYear):
-    """
+    """Return streamflow data from USGS website 
+    
     Function that used to obtain streamflow data of certain gauge from USGS website
 
-    Inputs: 
-    
-        Station_NM     (string):     The name of the gauge, "050012032"                        
-        Startyear      (integer):    Start year of simulation. Used to 
-                                     read streamflow observations from external databases.
-        EndYear        (integer):    End year of simulation. Used to 
-                                     read streamflow observations from external databases.  
+    Parameters 
+    ----------
+    Station_NM            : string
+        The name of the gauge, "05127000"                                
+    Startyear             : integer
+        Start year of simulation. Used to 
+        read streamflow observations from external databases.
+    EndYear               : integer  
+        End year of simulation. Used to 
+        read streamflow observations from external databases.  
                                           
-    Outputs: 
-            
+    Notes
+    ------    
         None 
 
-    Return:
+    Returns
+    -------
+    flowdata              : data-type   
+        obtained streamflow observation dataframe between 
+        Startyear and EndYear.
+    obtaindata            : bool
+        True indicate successfully obtain data, False indicate no data are founded
+        for this gauge
+    obs_DA                : float
+        The drainage area of this gauge read from HYDAT database
+   
+    Examples
+    --------
+    >>> from WriteRavenInputs import DownloadStreamflowdata_US
+    >>> Station_NM = '05127000'
+    >>> StartYear  = 2010
+    >>> EndYear    = 2011
+    >>> flowdata,obs_DA,obtaindata = DownloadStreamflowdata_CA(Station_NM,StartYear,EndYear)
     
-        flowdata:      (Dataframe):  obtained streamflow observation dataframe between 
-                                     Startyear and EndYear.
-        obtaindata:    (integer):    1 indicate sucessfully obtain data, -1 indicate no data are founded
-                                     for this gauge
-        obs_DA:        (float):      The drainage area of this gauge read from HYDAT database
-           
     """
     
-    obtaindata   = 1
+    
+    obtaindata   = True
     #### Obtain station info 
     urlstlist    = 'https://waterdata.usgs.gov/nwis/inventory/?format=rdb&site_no='+str(int(Station_NM)).zfill(8)
     Reslist      =  urllib.request.urlopen(urlstlist)
@@ -163,41 +238,80 @@ def DownloadStreamflowdata_US(Station_NM,StartYear,EndYear):
     return flowdata,obs_DA,obtaindata
     
 
-def Writeobsrvtfile(flowdata,obsnm,outObsfileFolder):
+def Generate_Raven_Obsrvt_String(flowdata,obsnm,outObsfileFolder):   #Writeobsrvtfile(flowdata,obsnm,outObsfileFolder):
     
-    """
-    Function that used to write xxx.rvt file for each gauge
+    """Generate a string in Raven observation rvt input file format 
+    
+    Function that is used to subbasin id and observation guage name from obsnm
+    and reformat the streamflow observation data in flowdata 
+    generate a string that follows the raven observation rvt input file format
 
-    Inputs: 
+    Parameters 
+    ----------
 
-        flowdata:         (Dataframe):  Obtained streamflow observation dataframe between 
-                                        Startyear and EndYear.     
-        obsnm             (Dataframe):  Dataframe of observation gauge including all subbasin/HRUs
-                                        information for this gauge as the station name of this gauge                       
-        outObsfileFolder  (String):     Path and name of the output folder to save obervation rvt file
-                                        of each gauge 
+        flowdata           : data-type 
+            Obtained streamflow observation dataframe between 
+            Startyear and EndYear. The index of the dataframe should be Date in 
+            '%Y-%m-%d' format, and the streamflow observation data in m3/s should 
+            in 'Flow' column      
+        obsnm              : data-type 
+            Dataframe of observation gauge information for this gauge including
+            at least following two columns
+            'Obs_NM': the name of the stream flow obsrvation gauge 
+            'SubId' : the subbasin Id of this stremflow gauge located at. 
+            
+        outObsfileFolder   : string     
+            Path and name of the output folder to save obervation rvt file
+            of each gauge 
                                          
                                           
-    Outputs: 
-            
-        xxx.rvt                     -   streamflow observation for each gauge xxx in shpfile 
-                                        database will be automatically generated in 
-                                        folder outObsfileFolder. 
+    Notes
+    ------    
+        None 
 
-    Return:
+    Returns
+    -------
+        obs_rvt_file_path : string
+            It is the file path inclding file names of the raven rvt input file
+            for this gauge 
+        output_string     : string
+             It is the string that contains the content of the raven rvt input 
+             file of this gauge   
+
+    See Also
+    --------
+    DownloadStreamflowdata_US : Generate flowdata inputs needed by this function
+    DownloadStreamflowdata_CA : Generate flowdata inputs needed by this function 
+
+    Examples
+    --------
+    >>> from WriteRavenInputs import DownloadStreamflowdata_US
+    >>> import pandas as pd 
+    >>> Station_NM  = '05127000'
+    >>> StartYear   = 2010
+    >>> EndYear     = 2011
+    >>> Subbasin_ID = 1
+    >>> flowdata_read, DA_obs_data,Finddata    = DownloadStreamflowdata_US(Station_NM = iobs_nm,StartYear = startyear,EndYear = endyear)
+    >>> Date                                   = pd.date_range(start=str(startyear)+'-'+'01'+'-'+'01', end=str(endyear)+'-'+'12'+'-'+'31', freq='D')
+    >>> flowdata    = pd.DataFrame(np.full((len(Date),2),-1.2345),columns = ['Flow','QC'],index = Date)
+    >>> flowdata.loc[flowdata.index.isin(flowdata_read.index), ['Flow', 'QC']] = flowdata_read[['Flow', 'QC']]
+    >>> obsnms = pd.DataFrame(data=[Subbasin_ID,Station_NM],columns=['SubId','Obs_NM'])
+    >>> Outputfolderrvt = 'c:/some_folder_to_store_raven_rvt_file'
+    >>> Generate_Raven_Obsrvt_String(flowdata = flowdata,obsnm = obsnms,outObsfileFolder = Outputfolderrvt)
     
-        None
-           
-    """    
-    toobsrvtfile = os.path.join(outObsfileFolder,obsnm['Obs_NM']+'_'+str(obsnm['SubId'])+'.rvt')
-    f2 = open(toobsrvtfile, "w")
-    f2.write(":ObservationData HYDROGRAPH "+str(obsnm['SubId'])+"   m3/s" + " \n")
-    f2.write(flowdata.index[0].strftime('%Y-%m-%d') + "  " + '00:00:00  ' + '1     ' + str(len(flowdata))+ '\n')
+    """
+    
+    output_string_list = []    
+    obs_rvt_file_path = os.path.join(outObsfileFolder,obsnm['Obs_NM']+'_'+str(obsnm['SubId'])+'.rvt')
+    output_string_list.append(":ObservationData HYDROGRAPH "+str(obsnm['SubId'])+"   m3/s")
+    output_string_list.append(flowdata.index[0].strftime('%Y-%m-%d') + "  " + '00:00:00  ' + '1     ' + str(len(flowdata)))
     for id in range(0,len(flowdata)):
-        f2.write('         ' + str(flowdata['Flow'].values[id])+ '\n')
-    f2.write(':EndObservationData'+ '\n')
-    f2.close()
-        
+        output_string_list.append('         ' + str(flowdata['Flow'].values[id]))
+    output_string_list.append('         ' + str(flowdata['Flow'].values[id])+ '\n')
+    output_string = "\n".join(output_string_list)
+    
+    return obs_rvt_file_path, output_string
+    
 def Modify_template_rvt(outFolderraven,outObsfileFolder,obsnm):
     
     """
@@ -231,7 +345,7 @@ def Modify_template_rvt(outFolderraven,outObsfileFolder,obsnm):
     f2 = open(toobsrvtfile, "a")
     f2.write(":RedirectToFile    "+obsflodername+ obsnm['Obs_NM']+'_'+str(obsnm['SubId'])+'.rvt'+" \n")
     f2.close()
-#    asdfadsfadsfadsf
+
         
 def WriteObsfiles(catinfo,outFolderraven,outObsfileFolder,startyear,endyear,CA_HYDAT='#',Template_Folder='#',DownLoadObsData=True):
     
@@ -296,29 +410,30 @@ def WriteObsfiles(catinfo,outFolderraven,outObsfileFolder,startyear,endyear,CA_H
             if DownLoadObsData == True:
                 flowdata_read, DA_obs_data,Finddata    = DownloadStreamflowdata_US(Station_NM = iobs_nm,StartYear = startyear,EndYear = endyear)
             else:
-                Finddata = -1
+                Finddata = False
                 continue                
         elif iobs_src  == 'CA':
-            if CA_HYDAT != '#' and DownLoadObsData == True
+            if CA_HYDAT != '#' and DownLoadObsData == True:
                 flowdata_read, DA_obs_data,Finddata = DownloadStreamflowdata_CA(Station_NM = iobs_nm,CA_HYDAT = CA_HYDAT,StartYear = startyear,EndYear = endyear)
             else:
-                Finddata = -1
+                Finddata = False
                 continue                
         else:
             print("Country not included yet ")
             continue
         
         ####check if data are founded, and assign it to the output dataframes 
-        if Finddata < 0:
+        if Finddata == False:
             print("not find data")
         else:    
             flowdata.loc[flowdata.index.isin(flowdata_read.index), ['Flow', 'QC']] = flowdata_read[['Flow', 'QC']]
             obsnms.loc[idx,'Obs_DA_data']                                          = DA_obs_data
             obsnms.loc[idx,'Missing_V']                                            = len(flowdata[flowdata['Flow'] == -1.2345])
-#        flowdata.loc[flowdata_read.index,'Flow'] = flowdata_read['Flow'].values
-#        flowdata.loc[flowdata_read.index,'QC']   = flowdata_read['QC'].values
-#        print(flowdata)
-        Writeobsrvtfile(flowdata,obsnm,outObsfileFolder)
+
+
+        obs_rvt_file_path, output_string = Generate_Raven_Obsrvt_String(flowdata,obsnm,outObsfileFolder)
+        WriteStringToFile(Out_String = output_string,File_Path = obs_rvt_file_path, WriteMethod = "w")
+        
         if Template_Folder != '#':
             Modify_template_rvt(outFolderraven,outObsfileFolder,obsnm)
         ### Modify rvt file

@@ -1228,7 +1228,7 @@ class LRRT:
 
         self.ProjectNM = ProjectNM
         
-        if self.OutputFolder != '#':
+        if self.ProjectNM != '#':
             self.OutputFolder = os.path.join(self.Path_OutputFolder,self.ProjectNM)
 
             if not os.path.exists(self.OutputFolder):
@@ -2769,7 +2769,8 @@ class LRRT:
             in US or Canada,respectively. If this parameter is False, 
             while WriteObsrvt is True. The program will write the observation data
             file with "-1.2345" for each observation gauges. 
-        Notes:
+            
+        Notes
         ------- 
         Following ouput files will be generated in "<DataFolder>/Model/RavenInput"
         .rvh              - contains subbasins and HRUs
@@ -2782,7 +2783,7 @@ class LRRT:
                             between observed in shpfile and standard database as well as 
                             number of missing values for each gauge
                             
-        Return:
+        Returns:
         -------
            None
            
@@ -2819,7 +2820,7 @@ class LRRT:
 
         finalcatchpath = os.path.join(DataFolder,Finalcat_NM)
 
-        tempinfo = Dbf5(finalcatchpath + ".dbf")#np.genfromtxt(hyinfocsv,delimiter=',')
+        tempinfo = Dbf5(finalcatchpath[:-3] + "dbf")#np.genfromtxt(hyinfocsv,delimiter=',')
         ncatinfo = tempinfo.to_dataframe()
         ncatinfo2 = ncatinfo.drop_duplicates(HRU_ID_NM, keep='first')
         ncatinfo2 = ncatinfo2[ncatinfo2[HRU_ID_NM] > 0]
