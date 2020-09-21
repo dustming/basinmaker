@@ -249,20 +249,19 @@ def Generate_Raven_Obsrvt_String(flowdata,obsnm,outObsfileFolder):   #Writeobsrv
     Parameters 
     ----------
 
-        flowdata           : data-type 
-            Obtained streamflow observation dataframe between 
-            Startyear and EndYear. The index of the dataframe should be Date in 
-            '%Y-%m-%d' format, and the streamflow observation data in m3/s should 
-            in 'Flow' column      
-        obsnm              : data-type 
-            Dataframe of observation gauge information for this gauge including
-            at least following two columns
-            'Obs_NM': the name of the stream flow obsrvation gauge 
-            'SubId' : the subbasin Id of this stremflow gauge located at. 
-            
-        outObsfileFolder   : string     
-            Path and name of the output folder to save obervation rvt file
-            of each gauge                                          
+    flowdata           : data-type 
+        Obtained streamflow observation dataframe between 
+        Startyear and EndYear. The index of the dataframe should be Date in 
+        '%Y-%m-%d' format, and the streamflow observation data in m3/s should 
+        in 'Flow' column      
+    obsnm              : data-type 
+        Dataframe of observation gauge information for this gauge including
+        at least following two columns
+        'Obs_NM': the name of the stream flow obsrvation gauge 
+        'SubId' : the subbasin Id of this stremflow gauge located at.         
+    outObsfileFolder   : string     
+        Path and name of the output folder to save obervation rvt file
+        of each gauge                                          
                                           
     Notes
     ------    
@@ -270,12 +269,12 @@ def Generate_Raven_Obsrvt_String(flowdata,obsnm,outObsfileFolder):   #Writeobsrv
 
     Returns
     -------
-        obs_rvt_file_path : string
-            It is the file path inclding file names of the raven rvt input file
-            for this gauge 
-        output_string     : string
-             It is the string that contains the content of the raven rvt input 
-             file of this gauge   
+    obs_rvt_file_path : string
+        It is the file path inclding file names of the raven rvt input file
+        for this gauge 
+    output_string     : string
+        It is the string that contains the content of the raven rvt input 
+        file of this gauge   
 
     See Also
     --------
@@ -321,29 +320,36 @@ def Generate_Raven_Timeseries_rvt_String(outFolderraven,outObsfileFolder,obsnm,M
     
     Parameters 
     ----------
-        outFolderraven            : String
-            Path and name of the output folder of Raven input files
-        outObsfileFolder          : String
-            Path and name of the output folder to save obervation rvt file
-            of each gauge 
-        obsnm                     : data-type 
-            Dataframe of observation gauge information for this gauge including
-            at least following two columns
-            'Obs_NM': the name of the stream flow obsrvation gauge 
-            'SubId' : the subbasin Id of this stremflow gauge located at. 
-        Model_Name                : string
-           The Raven model base name. File name of the raven input will be 
-           Model_Name.xxx.                                                 
+    outFolderraven            : String
+        Path and name of the output folder of Raven input files
+    outObsfileFolder          : String
+        Path and name of the output folder to save obervation rvt file
+        of each gauge 
+    obsnm                     : data-type 
+        Dataframe of observation gauge information for this gauge including
+        at least following two columns
+        'Obs_NM': the name of the stream flow obsrvation gauge 
+        'SubId' : the subbasin Id of this stremflow gauge located at. 
+    Model_Name                : string
+        The Raven model base name. File name of the raven input will be 
+        Model_Name.xxx.                                                 
                                           
     Notes
     ------    
-        None 
+    None 
 
+    See Also
+    --------
+    DownloadStreamflowdata_US            : Generate flowdata inputs 
+                                           needed by this function
+    DownloadStreamflowdata_CA            : Generate flowdata inputs 
+                                           needed by this function 
+    
     Returns
     -------
-        output_string     : string
-             It is the string that contains the content that will be used to 
-             modify the raven time series rvt input file of this gauge   
+    output_string     : string
+        It is the string that contains the content that will be used to 
+        modify the raven time series rvt input file of this gauge   
     Examples
     --------
     >>> from WriteRavenInputs import Generate_Raven_Timeseries_rvt_String
@@ -365,47 +371,81 @@ def Generate_Raven_Timeseries_rvt_String(outFolderraven,outObsfileFolder,obsnm,M
         
 def WriteObsfiles(catinfo,outFolderraven,outObsfileFolder,startyear,endyear,CA_HYDAT='#',Template_Folder='#',DownLoadObsData=True,Model_Name = 'test'):
     
-    """
+    """ Generate Raven streamflow observation file
+     
     Function that used to generate Raven streamflow observation input files. All 
     output will be stored in outObsfileFolder
 
-    Inputs: 
-        General
-           catinfo          (DataFrame):     A dataframe includes all attribute for each HRU
-                                             read from polygon shpfile generated by the toolbox   
-           outFolderraven   (string):        Folder path and name that save outputs
-           outObsfileFolder (string):        Path and name of the output folder to save obervation rvt file
-                                             of each gauge 
-           Startyear        (integer):       Start year of simulation. Used to 
-                                             read streamflow observations from external databases.
-           EndYear          (integer):       End year of simulation. Used to 
-                                             read streamflow observations from external databases.  
-           CA_HYDAT         (string):        (optional) path and filename of previously downloaded 
-                                             external database containing streamflow observations, 
-                                             e.g. HYDAT for Canada ("Hydat.sqlite3").
-          Model_Name      : string
-             The Raven model base name. File name of the raven input will be 
-             Model_Name.xxx.                
-        Input needed to copy raven template files:
-           Template_Folder (string):      Folder name containing raven template files.If it is not 
-                                          '#', the rvt file in the model folder will be modified.
-                                          folowwling line will be added to the end of rvt file 
-                                          for each gauge 
-                                          ":RedirectToFile    ./obs/xxx_obs.rvt"    
-                                          If Template_Folder is '#', nothing happened. 
+    Parameters 
+    ----------
+    catinfo                   : data-type
+        Dataframe of a routing structure that needes to define a Raven model. 
+        Can be directly read from the database of the hru shpfile generated by
+        the toolbox. At least include following columns: 
+        'Obs_NM'  - the name of the stream flow obsrvation gauge 
+        'SubId'   - the subbasin Id of this stremflow gauge located at. 
+        'SRC_obs' - the country of the gauge located at 
+        'DA'      - the drainage area controlled by the gauge obtained from 
+                    the routing structure 
+    outFolderraven            : String
+        Path and name of the output folder of Raven input files
+    outObsfileFolder          : String
+        Path and name of the output folder to save obervation rvt file
+        of each gauge 
+    startyear                 : integer
+        Start year of simulation. Used to 
+        read streamflow observations from external databases.
+    endyear                   : integer  
+        End year of simulation. Used to 
+        read streamflow observations from external databases.
+    CA_HYDAT                  : string,  optional
+        path and filename of previously downloaded 
+        external database containing streamflow observations, 
+        e.g. HYDAT for Canada ("Hydat.sqlite3").  
+    Template_Folder           : string, optional 
+        Input that is used to copy raven template files. It is a 
+        folder name containing raven template files. All 
+        files from that folder will be copied (unchanged) 
+    DownLoadObsData           : Bool, optional 
+        Input that used to indicate if the observation data will be Download
+        from usgs website or read from hydat database for streamflow Gauge 
+        in US or Canada,respectively. If this parameter is False, 
+        while WriteObsrvt is True. The program will write the observation data
+        file with "-1.2345" for each observation gauges.
+    Model_Name                : string
+        The Raven model base name. File name of the raven input will be 
+        Model_Name.xxx.                                     
                                           
-    Outputs: 
+    Notes
+    ------  
             
-        model.rvt         - (Optional) modified model rvt files which indicate the forcings 
-                            and observation gauges.
-        xxx.rvt           - streamflow observation for each gauge xxx in shpfile 
+    Model_Name.rvt       -  Add path of the raven streamflow observation xxx.rvt 
+                            to Model_Name.rvt, which will be located at 
+                            "outFolderraven/Model_Name.rvt"
+    xxx.rvt              -  streamflow observation for each gauge xxx in shpfile 
                             database will be automatically generated in 
-                            folder "<DataFolder>/Model/RavenInput/obs/". 
-        obsinfo.csv       - information file generated reporting drainage area difference 
+                            folder "outFolderraven/obs/" or "outObsfileFolder". 
+    obsinfo.csv           - information file generated reporting drainage area difference 
                             between observed in shpfile and standard database as well as 
                             number of missing values for each gauge
-    Return:
-        None
+                            
+    See Also
+    --------
+    DownloadStreamflowdata_US            : Generate flowdata inputs 
+                                           needed by this function
+    DownloadStreamflowdata_CA            : Generate flowdata inputs 
+                                           needed by this function 
+    Generate_Raven_Obsrvt_String         : Generate a string in Raven 
+                                           observation rvt input file format
+    Generate_Raven_Timeseries_rvt_String : Generate a string in Raven 
+                                           time series rvt input file format 
+    
+    
+    Returns
+    -------
+    None
+    
+    
            
     """
         
