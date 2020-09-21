@@ -16,7 +16,7 @@ import pandas as pd
 import sqlite3
 from GetBasinoutlet import Getbasinoutlet,Nextcell,Defcat
 from Generatecatinfo import Generatecatinfo,Generatecatinfo_riv,calculateChannaln,Writecatinfotodbf,Streamorderanddrainagearea,UpdateChannelinfo,UpdateNonConnectedcatchmentinfo
-from WriteRavenInputs import writelake,Generate_Raven_Channel_rvp_rvh_String
+from WriteRavenInputs import Generate_Raven_Lake_rvh_String,Generate_Raven_Channel_rvp_rvh_String
 from WriteRavenInputs import WriteObsfiles,WriteStringToFile
 from RavenOutputFuctions import plotGuagelineobs,Caluculate_Lake_Active_Depth_and_Lake_Evap
 from AddlakesintoRoutingNetWork import Dirpoints_v3,check_lakecatchment
@@ -2835,7 +2835,8 @@ class LRRT:
         WriteStringToFile(Model_rvh_string,Model_rvh_file_path,"w")
         WriteStringToFile(Model_rvp_string_modify,Model_rvp_file_path,"a")
         
-        writelake(ncatinfo2,Raveinputsfolder,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM)
+        Lake_rvh_string,Lake_rvh_file_path = Generate_Raven_Lake_rvh_String(ncatinfo2,Raveinputsfolder,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM,Model_Name)
+        WriteStringToFile(Lake_rvh_string,Lake_rvh_file_path,"w")
         
         if WriteObsrvt > 0:
             WriteObsfiles(ncatinfo2,Raveinputsfolder,Obs_Folder,Startyear + WarmUp,EndYear,CA_HYDAT,Template_Folder,DownLoadObsData,Model_Name)
