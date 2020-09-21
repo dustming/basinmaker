@@ -248,7 +248,6 @@ def Generate_Raven_Obsrvt_String(flowdata,obsnm,outObsfileFolder):   #Writeobsrv
 
     Parameters 
     ----------
-
     flowdata           : data-type 
         Obtained streamflow observation dataframe between 
         Startyear and EndYear. The index of the dataframe should be Date in 
