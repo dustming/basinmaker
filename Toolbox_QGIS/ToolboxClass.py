@@ -17,7 +17,7 @@ import sqlite3
 from GetBasinoutlet import Getbasinoutlet,Nextcell,Defcat
 from Generatecatinfo import Generatecatinfo,Generatecatinfo_riv,calculateChannaln,Writecatinfotodbf,Streamorderanddrainagearea,UpdateChannelinfo,UpdateNonConnectedcatchmentinfo
 from WriteRavenInputs import Generate_Raven_Lake_rvh_String,Generate_Raven_Channel_rvp_rvh_String
-from WriteRavenInputs import WriteObsfiles,WriteStringToFile
+from WriteRavenInputs import Generate_Raven_Obs_rvt_String,WriteStringToFile
 from RavenOutputFuctions import plotGuagelineobs,Caluculate_Lake_Active_Depth_and_Lake_Evap
 from AddlakesintoRoutingNetWork import Dirpoints_v3,check_lakecatchment
 
@@ -2839,8 +2839,14 @@ class LRRT:
         WriteStringToFile(Lake_rvh_string,Lake_rvh_file_path,"w")
         
         if WriteObsrvt > 0:
-            WriteObsfiles(ncatinfo2,Raveinputsfolder,Obs_Folder,Startyear + WarmUp,EndYear,CA_HYDAT,Template_Folder,DownLoadObsData,Model_Name)
-
+            obs_rvt_file_path_gauge_list,obs_rvt_file_string_gauge_list,Model_rvt_file_path,Model_rvt_file_string_modify_gauge_list,obsnms = Generate_Raven_Obs_rvt_String(ncatinfo2,Raveinputsfolder,Obs_Folder,
+                                                                                                                                                                           Startyear + WarmUp,EndYear,CA_HYDAT,
+                                                                                                                                                                           DownLoadObsData,
+                                                                                                                                                                           Model_Name)
+            for i in range(0,len(obs_rvt_file_path_gauge_list)):
+                WriteStringToFile(obs_rvt_file_string_gauge_list[i],obs_rvt_file_path_gauge_list[i],"w")
+                WriteStringToFile(Model_rvt_file_string_modify_gauge_list[i],Model_rvt_file_path,"a")
+            obsnms.to_csv(os.path.join(Obs_Folder,'obsinfo.csv'))
 
 
     def Locate_subid_needsbyuser(self,Path_Points = '#',Guage_Col_Name = 'Obs_NM',Guage_NMS = '#',subid_col_Name='SubId',Path_products='#'):

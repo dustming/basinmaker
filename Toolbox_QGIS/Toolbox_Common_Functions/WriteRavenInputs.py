@@ -369,12 +369,11 @@ def Generate_Raven_Timeseries_rvt_String(outFolderraven,outObsfileFolder,obsnm,M
     return output_string
 
         
-def WriteObsfiles(catinfo,outFolderraven,outObsfileFolder,startyear,endyear,CA_HYDAT='#',Template_Folder='#',DownLoadObsData=True,Model_Name = 'test'):
+def Generate_Raven_Obs_rvt_String(catinfo,outFolderraven,outObsfileFolder,startyear,endyear,CA_HYDAT='#',DownLoadObsData=True,Model_Name = 'test'):
     
-    """ Generate Raven streamflow observation file
+    """ Generate Raven streamflow observation conent
      
-    Function that used to generate Raven streamflow observation input files. All 
-    output will be stored in outObsfileFolder
+    Function that used to generate content of Raven streamflow observation input file. 
 
     Parameters 
     ----------
@@ -402,10 +401,6 @@ def WriteObsfiles(catinfo,outFolderraven,outObsfileFolder,startyear,endyear,CA_H
         path and filename of previously downloaded 
         external database containing streamflow observations, 
         e.g. HYDAT for Canada ("Hydat.sqlite3").  
-    Template_Folder           : string, optional 
-        Input that is used to copy raven template files. It is a 
-        folder name containing raven template files. All 
-        files from that folder will be copied (unchanged) 
     DownLoadObsData           : Bool, optional 
         Input that used to indicate if the observation data will be Download
         from usgs website or read from hydat database for streamflow Gauge 
@@ -418,16 +413,7 @@ def WriteObsfiles(catinfo,outFolderraven,outObsfileFolder,startyear,endyear,CA_H
                                           
     Notes
     ------  
-            
-    Model_Name.rvt       -  Add path of the raven streamflow observation xxx.rvt 
-                            to Model_Name.rvt, which will be located at 
-                            "outFolderraven/Model_Name.rvt"
-    xxx.rvt              -  streamflow observation for each gauge xxx in shpfile 
-                            database will be automatically generated in 
-                            folder "outFolderraven/obs/" or "outObsfileFolder". 
-    obsinfo.csv          -  information file generated reporting drainage area difference 
-                            between observed in shpfile and standard database as well as 
-                            number of missing values for each gauge
+    None 
                             
     See Also
     --------
@@ -440,13 +426,50 @@ def WriteObsfiles(catinfo,outFolderraven,outObsfileFolder,startyear,endyear,CA_H
     Generate_Raven_Timeseries_rvt_String : Generate a string in Raven 
                                            time series rvt input file format 
     
-    
     Returns
     -------
-    None
-    
-    
-           
+    obs_rvt_file_path_gauge_list                : string
+        It is the list of string, each of them contains the content 
+        that will be used to define the path of raven observation
+        input file for one streamflow gauge 
+    obs_rvt_file_string_gauge_list              : string
+        It is the list of string, each of them define the content of 
+        raven obaervation input file(xxx_obs.rvt) for one gauge
+    Model_rvt_file_path                         : string
+        It is the string that define the path of
+        the raven model time series input file 
+    Model_rvt_file_string_modify_gauge_list     : string
+        It is the list of string, each of them define the content
+        that needs to be added into the Raven model time series 
+        file the path of
+    obsnm                                       : DataFrame
+        Dataframe of observation gauge information for all streamflow gauges  
+        
+    Examples
+    --------
+    >>> from WriteRavenInputs import Generate_Raven_Obs_rvt_String
+    >>> outFolderraven    = 'c:/path_to_the_raven_input_folder/'
+    >>> DataFolder = "C:/Path_to_foldr_of_example_dataset_provided_in_Github_wiki/"
+    >>> Model_Folder     = os.path.join(DataFolder,'Model')
+    >>> Raveinputsfolder = os.path.join(Model_Folder,'RavenInput')
+    >>> Obs_Folder       = os.path.join(Raveinputsfolder,'obs')
+    >>> finalcatchpath = os.path.join(DataFolder,'finalcat_hru_info.shp')
+    >>> tempinfo = Dbf5(finalcatchpath[:-3] + "dbf")
+    >>> ncatinfo = tempinfo.to_dataframe()
+    >>> Model_Name = 'test'
+    >>> Startyear = 2010
+    >>> EndYear = 2017
+    >>> CA_HYDAT = 'c/path_to_your_HYDAT_database/'
+    >>> WarmUp = 1
+    >>> DownLoadObsData = True
+    >>> ncatinfo2 = ncatinfo.drop_duplicates(HRU_ID_NM, keep='first')
+    >>> obs_rvt_file_path_gauge_list,obs_rvt_file_string_gauge_list,Model_rvt_file_path,Model_rvt_file_string_modify_gauge_list,obsnms = Generate_Raven_Obs_rvt_String(ncatinfo2,Raveinputsfolder,Obs_Folder,
+    ...                                                                                                                                                                Startyear + WarmUp,EndYear,CA_HYDAT,
+    ...                                                                                                                                                                DownLoadObsData,
+    ...                                                                                                                                                                Model_Name)                                                                                                                                                                   Sub_ID_NM,Lake_As_Gauge,Model_Name)
+    >>>
+
+            
     """
         
     obsnms    = catinfo[['Obs_NM','SRC_obs','SubId','DA']]
@@ -456,6 +479,10 @@ def WriteObsfiles(catinfo,outFolderraven,outObsfileFolder,startyear,endyear,CA_H
     Date      = pd.date_range(start=str(startyear)+'-'+'01'+'-'+'01', end=str(endyear)+'-'+'12'+'-'+'31', freq='D')
     obsnms['Obs_DA_data']  = -1.2345
     obsnms['Missing_V']    = -1.2345
+    obs_rvt_file_path_gauge_list            = [] 
+    obs_rvt_file_string_gauge_list          = []
+    Model_rvt_file_path                     = os.path.join(outFolderraven,Model_Name+'.rvt')
+    Model_rvt_file_string_modify_gauge_list = []    
     
     for idx in index:
         obsnm    = obsnms.loc[idx,:]
@@ -490,12 +517,16 @@ def WriteObsfiles(catinfo,outFolderraven,outObsfileFolder,startyear,endyear,CA_H
 
 
         obs_rvt_file_path, output_string = Generate_Raven_Obsrvt_String(flowdata,obsnm,outObsfileFolder)
-        WriteStringToFile(Out_String = output_string,File_Path = obs_rvt_file_path, WriteMethod = "w")
-        
+#        WriteStringToFile(Out_String = output_string,File_Path = obs_rvt_file_path, WriteMethod = "w")
+
+        obs_rvt_file_path_gauge_list.append(obs_rvt_file_path)
+        obs_rvt_file_string_gauge_list.append(output_string)
+                
         output_string = Generate_Raven_Timeseries_rvt_String(outFolderraven,outObsfileFolder,obsnm,Model_Name)
-        WriteStringToFile(Out_String = output_string,File_Path = os.path.join(outFolderraven,Model_Name+'.rvt'), WriteMethod = "a")        
-        ### Modify rvt file
-        obsnms.to_csv(os.path.join(outObsfileFolder,'obsinfo.csv'),sep=',',index=False)
+#        WriteStringToFile(Out_String = output_string,File_Path = os.path.join(outFolderraven,Model_Name+'.rvt'), WriteMethod = "a") 
+        Model_rvt_file_string_modify_gauge_list.append(output_string)         
+    
+    return obs_rvt_file_path_gauge_list,obs_rvt_file_string_gauge_list,Model_rvt_file_path,Model_rvt_file_string_modify_gauge_list,obsnms
      
 
 
