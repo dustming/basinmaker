@@ -16,8 +16,8 @@ import pandas as pd
 import sqlite3
 from GetBasinoutlet import Getbasinoutlet,Nextcell,Defcat
 from Generatecatinfo import Generatecatinfo,Generatecatinfo_riv,calculateChannaln,Writecatinfotodbf,Streamorderanddrainagearea,UpdateChannelinfo,UpdateNonConnectedcatchmentinfo
-from WriteRavenInputs import writelake,Writervhchanl
-from WriteRavenInputs import WriteObsfiles
+from WriteRavenInputs import writelake,Generate_Raven_Channel_rvp_rvh_String
+from WriteRavenInputs import WriteObsfiles,WriteStringToFile
 from RavenOutputFuctions import plotGuagelineobs,Caluculate_Lake_Active_Depth_and_Lake_Evap
 from AddlakesintoRoutingNetWork import Dirpoints_v3,check_lakecatchment
 
@@ -2828,7 +2828,13 @@ class LRRT:
         ncatinfo2 = ncatinfo.drop_duplicates(HRU_ID_NM, keep='first')
         ncatinfo2 = ncatinfo2[ncatinfo2[HRU_ID_NM] > 0]
 
-        Writervhchanl(ncatinfo2,Raveinputsfolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM,Lake_As_Gauge)
+        Channel_rvp_file_path,Channel_rvp_string,Model_rvh_file_path,Model_rvh_string,Model_rvp_file_path,Model_rvp_string_modify = Generate_Raven_Channel_rvp_rvh_String(ncatinfo2,Raveinputsfolder,lenThres,
+                                                                                                                                                                     iscalmanningn,HRU_ID_NM,HRU_Area_NM,
+                                                                                                                                                                     Sub_ID_NM,Lake_As_Gauge,Model_Name)                                                        
+        WriteStringToFile(Channel_rvp_string,Channel_rvp_file_path,"w")
+        WriteStringToFile(Model_rvh_string,Model_rvh_file_path,"w")
+        WriteStringToFile(Model_rvp_string_modify,Model_rvp_file_path,"a")
+        
         writelake(ncatinfo2,Raveinputsfolder,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM)
         
         if WriteObsrvt > 0:

@@ -6,7 +6,7 @@ import sqlite3
 import urllib
 
 
-def WriteStringToFile(Out_String,File_Path,WriteMethod = "w"):
+def WriteStringToFile(Out_String,File_Path,WriteMethod):
     """Write String to a file
     
     Function that used to write Out_String to a file located at the File_Path.
@@ -425,7 +425,7 @@ def WriteObsfiles(catinfo,outFolderraven,outObsfileFolder,startyear,endyear,CA_H
     xxx.rvt              -  streamflow observation for each gauge xxx in shpfile 
                             database will be automatically generated in 
                             folder "outFolderraven/obs/" or "outObsfileFolder". 
-    obsinfo.csv           - information file generated reporting drainage area difference 
+    obsinfo.csv          -  information file generated reporting drainage area difference 
                             between observed in shpfile and standard database as well as 
                             number of missing values for each gauge
                             
@@ -499,35 +499,47 @@ def WriteObsfiles(catinfo,outFolderraven,outObsfileFolder,startyear,endyear,CA_H
      
 
 
-def writechanel(chname,chwd,chdep,chslope,orchnl,elev,floodn,channeln,iscalmanningn):
-    """
-    Function that used to write channel paramter file channel rvt. 
-        
-    Inputs: 
-    
-        chname             (String):  the name of the channel for each SubBasins
-                                      information for this gauge as the station 
-                                      name of this gauge
-        chwd               (Float):   channel width
-        chdep              (Float):   channel depth 
-        chslope            (Float):   channel slope 
-        orchnl             (Object):  python file writer object 
-        elev               (Float):   channel elevation 
-        floodn             (Float):   channel flood plain manning's coefficient 
-        channeln           (Float):   main channnel manning's coefficient 
-        iscalmanningn      (Bool):    True use channeln or False use 0.035 as main channel
-                                      manning's coefficient 
+def Generate_Raven_Channel_rvp_string_sub(chname,chwd,chdep,chslope,elev,floodn,channeln,iscalmanningn): #writechanel(chname,chwd,chdep,chslope,orchnl,elev,floodn,channeln,iscalmanningn):
+    """ Generate string of each subbasin for raven chennel rvp inputs
+     
+    Function that used to generate a string to define a channel profile 
+    for each subbasin in Raven channel rvp input file format.
+
+    Parameters 
+    ----------
+    chname             :String
+        the name of the channel for each SubBasins
+        information for this gauge as the station 
+        name of this gauge
+    chwd              :Float
+        channel width
+    chdep             :Float
+        channel depth 
+    chslope           :Float
+        channel slope 
+    elev              :Float
+        channel elevation 
+    floodn            :Float
+        channel flood plain manning's coefficient 
+    channeln          :Float
+        main channnel manning's coefficient 
+    iscalmanningn     :Bool
+        True use channeln or False use 0.035 as main channel
+        manning's coefficient 
                                                
-    Outputs: 
-            
-        modelchannel.rvp      - contains definition and parameters for channels 
-        
-    Return:
+    Notes
+    ------    
+    None 
     
-        None
+    Returns
+    -------
+    output_string     : string
+        It is the string that contains the content that will be used to 
+        to define a channel profile for given subbasin in 
+        Raven channel rvp input file format.  
     
     """ 
-    
+    output_string_list = []      
     ### Following SWAT instructions, assume a trapezoidal shape channel, with channel sides has depth and width ratio of 2. zch = 2
     zch = 2
     sidwd = zch * chdep ###river side width
@@ -545,33 +557,36 @@ def writechanel(chname,chwd,chdep,chslope,orchnl,elev,floodn,channeln,iscalmanni
     zbot = elev - chdep
     sidwdfp = 4/0.25
     Channame = ":ChannelProfile"+tab+chname+tab
-    orchnl.write(Channame+"\n")
+    output_string_list.append(Channame) #orchnl.write(Channame+"\n")
     Chanslop = "  :Bedslope"+tab+str(chslope)
-    orchnl.write(Chanslop+"\n")
-    orchnl.write("  :SurveyPoints"+"\n")
-    orchnl.write("    0"+tab+str(zfld)+"\n")
-    orchnl.write("    "+str(sidwdfp)+tab+str(elev)+"\n")
-    orchnl.write("    "+str(sidwdfp + 2*chwd)+tab+str(elev)+"\n")
-    orchnl.write("    "+str(sidwdfp + 2*chwd + sidwd)+tab+str(zbot)+"\n")
-    orchnl.write("    "+str(sidwdfp + 2*chwd + sidwd + botwd)+tab+str(zbot)+"\n")
-    orchnl.write("    "+str(sidwdfp + 2*chwd + 2*sidwd + botwd)+tab+str(elev)+"\n")
-    orchnl.write("    "+str(sidwdfp + 4*chwd + 2*sidwd + botwd)+tab+str(elev)+"\n")
-    orchnl.write("    "+str(2*sidwdfp + 4*chwd + 2*sidwd + botwd)+tab+str(zfld)+"\n")
-    orchnl.write("  :EndSurveyPoints"+"\n")
-    orchnl.write("  :RoughnessZones"+"\n")
-    orchnl.write("    0" + tab + str(floodn) +"\n")
-    orchnl.write("    " + str(sidwdfp + 2*chwd)+ tab + mann +"\n")
-    orchnl.write("    " + str(sidwdfp + 2*chwd + 2*sidwd + botwd)+ tab + str(floodn) +"\n")
-    orchnl.write("  :EndRoughnessZones"+"\n")
-    orchnl.write(":EndChannelProfile"+"\n")
-    orchnl.write("\n")
-    orchnl.write("##############new channel ##############################\n")
+    output_string_list.append(Chanslop) #orchnl.write(Chanslop+"\n")
+    output_string_list.append("  :SurveyPoints") #orchnl.write("  :SurveyPoints"+"\n")
+    output_string_list.append("    0"+tab+str(zfld)) #orchnl.write("    0"+tab+str(zfld)+"\n")
+    output_string_list.append("    "+str(sidwdfp)+tab+str(elev)) #orchnl.write("    "+str(sidwdfp)+tab+str(elev)+"\n")
+    output_string_list.append("    "+str(sidwdfp + 2*chwd)+tab+str(elev)) #orchnl.write("    "+str(sidwdfp + 2*chwd)+tab+str(elev)+"\n")
+    output_string_list.append("    "+str(sidwdfp + 2*chwd + sidwd)+tab+str(zbot)) #orchnl.write("    "+str(sidwdfp + 2*chwd + sidwd)+tab+str(zbot)+"\n")
+    output_string_list.append("    "+str(sidwdfp + 2*chwd + sidwd + botwd)+tab+str(zbot)) #orchnl.write("    "+str(sidwdfp + 2*chwd + sidwd + botwd)+tab+str(zbot)+"\n")
+    output_string_list.append("    "+str(sidwdfp + 2*chwd + 2*sidwd + botwd)+tab+str(elev)) #orchnl.write("    "+str(sidwdfp + 2*chwd + 2*sidwd + botwd)+tab+str(elev)+"\n")
+    output_string_list.append("    "+str(sidwdfp + 4*chwd + 2*sidwd + botwd)+tab+str(elev)) #orchnl.write("    "+str(sidwdfp + 4*chwd + 2*sidwd + botwd)+tab+str(elev)+"\n")
+    output_string_list.append("    "+str(2*sidwdfp + 4*chwd + 2*sidwd + botwd)+tab+str(zfld)) #orchnl.write("    "+str(2*sidwdfp + 4*chwd + 2*sidwd + botwd)+tab+str(zfld)+"\n")
+    output_string_list.append("  :EndSurveyPoints") #orchnl.write("  :EndSurveyPoints"+"\n")
+    output_string_list.append("  :RoughnessZones") #orchnl.write("  :RoughnessZones"+"\n")
+    output_string_list.append("    0" + tab + str(floodn)) #orchnl.write("    0" + tab + str(floodn) +"\n")
+    output_string_list.append("    " + str(sidwdfp + 2*chwd)+ tab + mann) #orchnl.write("    " + str(sidwdfp + 2*chwd)+ tab + mann +"\n")
+    output_string_list.append("    " + str(sidwdfp + 2*chwd + 2*sidwd + botwd)+ tab + str(floodn)) #orchnl.write("    " + str(sidwdfp + 2*chwd + 2*sidwd + botwd)+ tab + str(floodn) +"\n")
+    output_string_list.append("  :EndRoughnessZones") #orchnl.write("  :EndRoughnessZones"+"\n")
+    output_string_list.append(":EndChannelProfile") #orchnl.write(":EndChannelProfile"+"\n")
+    output_string_list.append("\n") #orchnl.write("\n")
+    output_string_list.append("##############new channel ##############################") #orchnl.write("##############new channel ##############################\n")
+    output_string = "\n".join(output_string_list)
+    
+    return output_string
 #########################################################################################################33
 
 
 
 def writelake(catinfo,outFolderraven,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM):
-    """
+    """Generate string of raven chennel rvp input and rvh input 
     Function that used to generate Raven lake definition TestLake.rvh input files. 
     All output will be stored in outFolderraven
 
@@ -620,60 +635,93 @@ def writelake(catinfo,outFolderraven,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM):
     f2.close()
     #### write lake input files for different lake zone
 
-def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM,Lake_As_Gauge = False):
+def Generate_Raven_Channel_rvp_rvh_String(ocatinfo,Raveinputsfolder,lenThres,iscalmanningn,
+                                         HRU_ID_NM,HRU_Area_NM,Sub_ID_NM,
+                                         Lake_As_Gauge = False,Model_Name = 'test'):#Writervhchanl(ocatinfo,Raveinputsfolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM,Lake_As_Gauge = False,Model_Name = 'test'):
+    """Generate string of raven chennel rvp input and rvh input
     
-    """
-    Function that used to generate raven rvh file and channel rvp file. 
-    Output will be saved to outFolder 
-
-    Inputs: 
-        General
-           ocatinfo      (DataFrame):  A dataframe includes all attribute for each HRU
-                                       read from polygon shpfile generated by the toolbox 
-           outFolder     (string):     Folder path and name that save outputs
-      
-
-        Parameters needed to define rvh file:
-           lenThres      (float):      River length threshold; river length smaller than 
-                                       this will write as zero in Raven rvh file
-           iscalmanningn (integer):    If "1", use manning's coefficient in the shpfile table 
-                                       and set to default value (0.035).
-                                       If "-1", do not use manning's coefficients.
-           HRU_ID_NM     (string):     Column name in Finalcat_NM that defines HRU ID
-           HRU_Area_NM   (string)      Column name in Finalcat_NM that defines HRU area 
-           Sub_ID_NM     (string):     Column name in Finalcat_NM that defines subbasin ID
-           Lake_As_Gauge (Bool):       If "True", all lake subbasins will labeled as gauged 
-                                       subbasin such that Raven will export lake balance for 
-                                       this lake. If "False", lake subbasin will not be labeled 
-                                       as gauge subbasin.     
-               
-    Outputs: 
-        test.rvh              - contains subbasins and HRUs
-        modelchannel.rvp      - contains definition and parameters for channels
+    Function that used to generate the content of raven rvh file and 
+    channel rvp file. 
+    
+    Parameters 
+    ----------    
+    ocatinfo             : DataFrame
+        A dataframe includes all attribute for each HRU
+        read from polygon shpfile generated by the toolbox 
+    Raveinputsfolder     : string
+        Folder path and name that save outputs
+    lenThres             : float      
+        River length threshold; river length smaller than 
+        this will write as zero in Raven rvh file
+    iscalmanningn        : integer
+        If "1", use manning's coefficient in the shpfile table 
+        and set to default value (0.035).
+        If "-1", do not use manning's coefficients.
+    HRU_ID_NM           : string
+        Column name in Finalcat_NM that defines HRU ID
+    HRU_Area_NM         : string
+        Column name in Finalcat_NM that defines HRU area 
+    Sub_ID_NM           : string
+        Column name in Finalcat_NM that defines subbasin ID
+    Lake_As_Gauge       : Bool
+        If "True", all lake subbasins will labeled as gauged 
+        subbasin such that Raven will export lake balance for 
+        this lake. If "False", lake subbasin will not be labeled 
+        as gauge subbasin.   
+    Model_Name          : string
+        The Raven model base name. File name of the raven input will be 
+        Model_Name.xxx.                
         
-    Return:
-        None
+    Notes
+    ------    
+    None 
     
-    todo:
-       
-       Only two HRU type (lake and land) are defined here. need includes more hru types 
-           
+    Returns
+    -------
+    Channel_rvp_string       : string
+        It is the string that contains the content that will be used to 
+        to define channel profiles for all subbasin in 
+        Raven channel rvp input file format.
+    Channel_rvp_file_path    : string
+        It is the string that define the path of
+        the raven channel rvp input file.
+    Model_rvh_string         : string
+        It is the string that contains the content that will be used to 
+        to define routing and hru inputs for all subbasin in 
+        Raven channel rvh input file format.
+    Model_rvh_file_path      : string
+        It is the string that define the path of
+        the raven channel rvh input file. 
+    Model_rvp_string_modify  : string
+        It is the string that contains the content that will be used to 
+        to modify model rvp file. 
+    Model_rvp_file_path      : string
+        It is the string that define the path of
+        the raven channel rvp input file. 
+                
     """
+    Channel_rvp_file_path   = os.path.join(Raveinputsfolder,Model_Name + "_channel.rvp")
+    Channel_rvp_string_list = []
+    Model_rvh_file_path     = os.path.join(Raveinputsfolder,Model_Name + ".rvh")
+    Model_rvh_string_list   = []   
+    Model_rvp_file_path     = os.path.join(Raveinputsfolder,Model_Name + ".rvp")
+    Model_rvp_string_modify = ":RedirectToFile " + Model_Name+"_channel.rvp"
             
+    tab = "     "
+                
     catinfo_hru = copy.copy(ocatinfo)
     catinfo     = copy.copy(ocatinfo)
 #    print int(catinfo.iloc[0]['SUBID']),len(catinfo.index)
-    ochn = open(os.path.join(outFolder,"modelchannel.rvp"),"w")
+
 ##################3
-    orvh = open(os.path.join(outFolder,"test.rvh"),"w")
-    orvh.write("# --------------------------------------------"+"\n")
-    orvh.write("# Raven HRU Input file"+"\n")
-    orvh.write("#  lake catchment emulation"+"\n")
-    orvh.write("# --------------------------------------------"+"\n")
-    orvh.write(":SubBasins"+"\n")
-    orvh.write("  :Attributes   NAME  DOWNSTREAM_ID       PROFILE REACH_LENGTH  GAUGED"+"\n")
-    orvh.write("  :Units        none           none          none           km    none"+"\n")
-    tab = "     "
+    Model_rvh_string_list.append("# --------------------------------------------")#orvh.write("# --------------------------------------------"+"\n")
+    Model_rvh_string_list.append("# Raven HRU Input file")#orvh.write("# Raven HRU Input file"+"\n")
+    Model_rvh_string_list.append("#  lake catchment emulation")#orvh.write("#  lake catchment emulation"+"\n")
+    Model_rvh_string_list.append("# --------------------------------------------")#orvh.write("# --------------------------------------------"+"\n")
+    Model_rvh_string_list.append(":SubBasins")#orvh.write(":SubBasins"+"\n")
+    Model_rvh_string_list.append("  :Attributes   NAME  DOWNSTREAM_ID       PROFILE REACH_LENGTH  GAUGED")#orvh.write("  :Attributes   NAME  DOWNSTREAM_ID       PROFILE REACH_LENGTH  GAUGED"+"\n")
+    Model_rvh_string_list.append("  :Units        none           none          none           km    none")#orvh.write("  :Units        none           none          none           km    none"+"\n")
+    
     
     catinfo_sub = catinfo.drop_duplicates(Sub_ID_NM, keep='first')### remove duplicated subids, beacuse of including hrus in the dataframe 
     print('Total number of Subbasins are     ' +  str(int((len(catinfo_sub))))+'   '+Sub_ID_NM)
@@ -717,8 +765,12 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_N
         else:
             floodn = 0.035
             
-        writechanel(pronam,max(catinfo_sub['BkfWidth'].values[i],1),max(catinfo_sub['BkfDepth'].values[i],1),
-        chslope,ochn,catinfo_sub['MeanElev'].values[i],floodn,nchn,iscalmanningn)
+        output_string_chn_rvp_sub = Generate_Raven_Channel_rvp_string_sub(pronam,max(catinfo_sub['BkfWidth'].values[i],1),
+                                                max(catinfo_sub['BkfDepth'].values[i],1),
+                                                chslope,catinfo_sub['MeanElev'].values[i],
+                                                floodn,nchn,iscalmanningn)
+                                                
+        Channel_rvp_string_list.append(output_string_chn_rvp_sub)
         
         if catinfo_sub['IsObs'].values[i] > 0:
             Guage = '1'
@@ -726,14 +778,14 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_N
             Guage = '1'
         else:
             Guage = '0'
-        orvh.write("  "+Strcat+tab+'sub'+Strcat+tab+StrDid+tab+pronam+tab+strRlen+tab+Guage+"\n")
+        Model_rvh_string_list.append("  "+Strcat+tab+'sub'+Strcat+tab+StrDid+tab+pronam+tab+strRlen+tab+Guage) #orvh.write("  "+Strcat+tab+'sub'+Strcat+tab+StrDid+tab+pronam+tab+strRlen+tab+Guage+"\n")
         
-    orvh.write(":EndSubBasins"+"\n")
-    orvh.write("\n")
+    Model_rvh_string_list.append(":EndSubBasins")#orvh.write(":EndSubBasins"+"\n")
+    Model_rvh_string_list.append("\n")#orvh.write("\n")
 ##########################################
-    orvh.write(":HRUs"+"\n")
-    orvh.write("  :Attributes AREA ELEVATION  LATITUDE  LONGITUDE   BASIN_ID  LAND_USE_CLASS  VEG_CLASS   SOIL_PROFILE  AQUIFER_PROFILE   TERRAIN_CLASS   SLOPE   ASPECT"+"\n")
-    orvh.write("  :Units       km2         m       deg        deg       none            none       none           none             none            none     deg      deg"+"\n")
+    Model_rvh_string_list.append(":HRUs")#orvh.write(":HRUs"+"\n")
+    Model_rvh_string_list.append("  :Attributes AREA ELEVATION  LATITUDE  LONGITUDE   BASIN_ID  LAND_USE_CLASS  VEG_CLASS   SOIL_PROFILE  AQUIFER_PROFILE   TERRAIN_CLASS   SLOPE   ASPECT")#orvh.write("  :Attributes AREA ELEVATION  LATITUDE  LONGITUDE   BASIN_ID  LAND_USE_CLASS  VEG_CLASS   SOIL_PROFILE  AQUIFER_PROFILE   TERRAIN_CLASS   SLOPE   ASPECT"+"\n")
+    Model_rvh_string_list.append("  :Units       km2         m       deg        deg       none            none       none           none             none            none     deg      deg")#orvh.write("  :Units       km2         m       deg        deg       none            none       none           none             none            none     deg      deg"+"\n")
     
     for i in range(0,len(catinfo_hru.index)):
         
@@ -766,15 +818,18 @@ def Writervhchanl(ocatinfo,outFolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_N
             
         SLOPE = str(catslope)+tab
         ASPECT = str(cataspect)+tab
-        orvh.write("  "+StrGid+tab+StrGidarea+StrGidelev+lat+lon+catid+LAND_USE_CLASS+VEG_CLASS+SOIL_PROFILE+AQUIFER_PROFILE+TERRAIN_CLASS+SLOPE+ASPECT+"\n")
+        Model_rvh_string_list.append("  "+StrGid+tab+StrGidarea+StrGidelev+lat+lon+catid+LAND_USE_CLASS+VEG_CLASS+SOIL_PROFILE+AQUIFER_PROFILE+TERRAIN_CLASS+SLOPE+ASPECT) #orvh.write("  "+StrGid+tab+StrGidarea+StrGidelev+lat+lon+catid+LAND_USE_CLASS+VEG_CLASS+SOIL_PROFILE+AQUIFER_PROFILE+TERRAIN_CLASS+SLOPE+ASPECT+"\n")
         
             
         
-    orvh.write(":EndHRUs"+"\n")
-    orvh.write(":PopulateHRUGroup Lake_HRUs With LANDUSE EQUALS Lake_HRU" + "\n")
-    orvh.write(":PopulateHRUGroup Land_HRUs With LANDUSE EQUALS FOREST" + "\n")
-    orvh.write(":RedirectToFile TestLake.rvh")
-    orvh.close()
-    ochn.close()
-    return 
+    Model_rvh_string_list.append(":EndHRUs")#orvh.write(":EndHRUs"+"\n")
+    Model_rvh_string_list.append(":PopulateHRUGroup Lake_HRUs With LANDUSE EQUALS Lake_HRU")#orvh.write(":PopulateHRUGroup Lake_HRUs With LANDUSE EQUALS Lake_HRU" + "\n")
+    Model_rvh_string_list.append(":PopulateHRUGroup Land_HRUs With LANDUSE EQUALS FOREST")#orvh.write(":PopulateHRUGroup Land_HRUs With LANDUSE EQUALS FOREST" + "\n")
+    Model_rvh_string_list.append(":RedirectToFile " + Model_Name+"_Lake.rvh")#orvh.write(":RedirectToFile TestLake.rvh")
+    
+    Channel_rvp_string = "\n".join(Channel_rvp_string_list)
+    Model_rvh_string   = "\n".join(Model_rvh_string_list)
+
+
+    return Channel_rvp_file_path,Channel_rvp_string,Model_rvh_file_path,Model_rvh_string,Model_rvp_file_path,Model_rvp_string_modify
 
