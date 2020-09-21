@@ -676,6 +676,11 @@ def Generate_Raven_Channel_rvp_rvh_String(ocatinfo,Raveinputsfolder,lenThres,isc
     ------    
     None 
     
+    See Also
+    --------
+    Generate_Raven_Channel_rvp_string_sub  : Generate a string to define channel 
+                                             for given subbasin in Raven channel
+                                             rvp  input format.                                
     Returns
     -------
     Channel_rvp_string       : string
@@ -698,7 +703,30 @@ def Generate_Raven_Channel_rvp_rvh_String(ocatinfo,Raveinputsfolder,lenThres,isc
     Model_rvp_file_path      : string
         It is the string that define the path of
         the raven channel rvp input file. 
-                
+          
+    Examples
+    --------
+    >>> from WriteRavenInputs import Generate_Raven_Channel_rvp_rvh_String
+    >>> outFolderraven    = 'c:/path_to_the_raven_input_folder/'
+    >>> DataFolder = "C:/Path_to_foldr_of_example_dataset_provided_in_Github_wiki/"
+    >>> Model_Folder     = os.path.join(DataFolder,'Model')
+    >>> Raveinputsfolder = os.path.join(Model_Folder,'RavenInput')
+    >>> finalcatchpath = os.path.join(DataFolder,'finalcat_hru_info.shp')
+    >>> tempinfo = Dbf5(finalcatchpath[:-3] + "dbf")
+    >>> ncatinfo = tempinfo.to_dataframe()
+    >>> Model_Name = 'test'
+    >>> lenThres = 1
+    >>> iscalmanningn = -1
+    >>> HRU_ID_NM = 'HRU_ID'
+    >>> HRU_Area_NM = 'HRU_Area'
+    >>> Sub_ID_NM = 'SubId'
+    >>> Lake_As_Gauge = -1
+    >>> ncatinfo2 = ncatinfo.drop_duplicates(HRU_ID_NM, keep='first')
+    >>> Channel_rvp_file_path,Channel_rvp_string,Model_rvh_file_path,Model_rvh_string,Model_rvp_file_path,Model_rvp_string_modify = Generate_Raven_Channel_rvp_rvh_String(ncatinfo2,Raveinputsfolder,lenThres,
+    ...                                                                                                                                                                   iscalmanningn,HRU_ID_NM,HRU_Area_NM,
+    ...                                                                                                                                                                   Sub_ID_NM,Lake_As_Gauge,Model_Name)
+    >>>
+        
     """
     Channel_rvp_file_path   = os.path.join(Raveinputsfolder,Model_Name + "_channel.rvp")
     Channel_rvp_string_list = []
