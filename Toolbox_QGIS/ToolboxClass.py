@@ -3636,11 +3636,20 @@ class LRRT:
         Path_finalcat_hru_out    = os.path.join(OutputFolder,"finalcat_hru_lake_info.shp")
         
         Subfixgeo = processing.run("native:fixgeometries", {'INPUT':Path_Subbasin_ply,'OUTPUT':'memory:'})
+        fieldnames = set(['HRULake_ID','HRU_IsLake',Sub_ID,Sub_Lake_ID,Lake_Id])
         
         if Path_Connect_Lake_ply == '#' and Path_Non_Connect_Lake_ply == '#':
             memresult_addlakeid   = processing.run("qgis:fieldcalculator", {'INPUT':Subfixgeo['OUTPUT'],'FIELD_NAME':'Hylak_id','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT':'memory:'})
-            memresult_addhruid    = processing.run("qgis:fieldcalculator", {'INPUT':memresult_addlakeid['OUTPUT'],'FIELD_NAME':'HRU_Lake_ID','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':' \"SubId\" ','OUTPUT':'memory:'})
-            processing.run("qgis:fieldcalculator", {'INPUT':memresult_addhruid['OUTPUT'],'FIELD_NAME':'HRU_IsLake','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT':Path_finalcat_hru_out})
+            memresult_addhruid    = processing.run("qgis:fieldcalculator", {'INPUT':memresult_addlakeid['OUTPUT'],'FIELD_NAME':'HRULake_ID','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':' \"SubId\" ','OUTPUT':'memory:'})
+            layer_cat=memresult_addhruid['OUTPUT']
+            field_ids = []                    
+            for field in layer_cat.fields():
+                if field.name() not in fieldnames:
+                    field_ids.append(layer_cat.dataProvider().fieldNameIndex(field.name()))
+            layer_cat.dataProvider().deleteAttributes(field_ids)
+            layer_cat.updateFields()
+            layer_cat.commitChanges()    
+            processing.run("qgis:fieldcalculator", {'INPUT':layer_cat,'FIELD_NAME':'HRU_IsLake','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT':Path_finalcat_hru_out})
             return
 
 
@@ -3666,7 +3675,6 @@ class LRRT:
         field_ids = []
         
         # Fieldnames to save 
-        fieldnames = set(['HRULake_ID','HRU_IsLake',Sub_ID,Sub_Lake_ID,Lake_Id])
         
         ## delete unused lake ids 
         for field in layer_cat.fields():
