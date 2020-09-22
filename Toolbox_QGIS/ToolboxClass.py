@@ -3748,46 +3748,6 @@ class LRRT:
         # else: 
         #     processing.run("qgis:fieldcalculator", {'INPUT':Path_finalcat_hru2,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'$area','OUTPUT':Path_finalcat_hru_out})
 
-        
-
-
-#         print(mem_sub_lake_union)
-#         finalcat_info_csv     = Path_finalcat_hru[:-3] + "dbf"
-#         finalcat_info         = Dbf5(finalcat_info_csv)
-#         finalcat_info         = finalcat_info.to_dataframe()
-# 
-#         finalcat_info['HyLakeId']  = finalcat_info['HyLakeId'].astype(float)
-#         finalcat_info['Hylak_id']  = finalcat_info['Hylak_id'].astype(float)
-#         finalcat_info['SubId']     = finalcat_info['SubId'].astype(float)
-# 
-#         mapoldnew_info        = finalcat_info.copy(deep = True)
-#         mapoldnew_info['HRU_ID'] = np.nan
-#         mapoldnew_info['HRU_Area'] = np.nan
-# 
-# 
-#         Connect_Lakeids       = finalcat_info['HyLakeId'].values
-#         Connect_Lakeids       = Connect_Lakeids[Connect_Lakeids > 0]
-#         Connect_Lakeids       = np.unique(Connect_Lakeids)
-# 
-# #        print(mapoldnew_info['SubId'].values)
-#         maxsubid              = np.nanmax(mapoldnew_info['SubId'].values)
-#         for i in range(0,len(mapoldnew_info)):
-#             subid        = mapoldnew_info['SubId'].values[i]
-#             sub_lakeid   = mapoldnew_info['HyLakeId'].values[i]
-#             Lake_lakeid  = mapoldnew_info['Hylak_id'].values[i]
-# 
-# 
-# 
-#             if sub_lakeid < 0:  ### non lake catchment
-#                 mapoldnew_info.loc[i,'HRU_ID']   = int(subid)    ### each hru id is determined by subid and maxsubid
-# 
-#             if sub_lakeid > 0: ### lake catchmen
-#                 if sub_lakeid == Lake_lakeid:  ### lake hru
-#                     mapoldnew_info.loc[i,'HRU_ID']   = int(maxsubid) + int(subid)
-#                 else:
-#                     mapoldnew_info.loc[i,'HRU_ID']   = int(subid)
-
-#        print(field_ids)
 
 
 
