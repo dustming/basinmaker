@@ -3599,10 +3599,27 @@ class LRRT:
             Readed_Data['ModelTime'] = Readed_Data.index.strftime('%m-%d-%Y')
             plotGuagelineobs(Scenario_NM,Readed_Data,os.path.join(self.OutputFolder,obs_nm + '.pdf'))
 
-
-    def GeneratelandandlakeHRUS(self,Datafolder,Finalcat_NM = "finalcat_info.shp",Connect_Lake_ply = 'Con_Lake_Ply.shp',
-                                Non_Connect_Lake_ply = 'Non_Con_Lake_Ply.shp',Has_Non_Connect_Lake = 1,
-                                Has_Connect_Lake = 1):
+    def GenerateHRUS(self,Path_Subbasin_Ply,Sub_ID = 'SubId',Path_Connect_Lake_ply = '#',Path_Non_Connect_Lake_ply = '#',
+                     Lake_Id = 'Hylak_id',Path_Landuse_Ply = '#',Landuse_ID = '#', Landuse_info = '#',
+                     Path_Soil_Ply = '#',Soil_ID = '#', Soil_info = '#',Path_Other_Ply_List=[],Other_Ply_ID=[],
+                     OutputFolder = '#'):
+        QgsApplication.setPrefixPath(self.qgisPP, True)
+        Qgs = QgsApplication([],False)
+        Qgs.initQgis()
+        from qgis import processing
+        from processing.core.Processing import Processing
+        from processing.tools import dataobjects
+        feedback = QgsProcessingFeedback()
+        Processing.initialize()
+        QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
+        context = dataobjects.createContext()
+        context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
+        
+                
+                     
+    def GeneratelandandlakeHRUS(self,OutputFolder,Path_Subbasin_ply,Path_Connect_Lake_ply = '#',
+                                Path_Non_Connect_Lake_ply = '#',Sub_ID='SubId',
+                                Sub_Lake_ID = 'HyLakeId',Lake_Id = 'Hylak_id'):
 
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
@@ -3616,107 +3633,63 @@ class LRRT:
         context = dataobjects.createContext()
         context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
 
-
-        Path_finalcat_info    = os.path.join(Datafolder,Finalcat_NM)
-        Path_Connect_Lake_ply = os.path.join(Datafolder,Connect_Lake_ply)
-        Path_Non_Connect_Lake_ply = os.path.join(Datafolder,Non_Connect_Lake_ply)
-        Path_temp_finalcat_info    = os.path.join(self.tempfolder,Finalcat_NM)
-        Path_temp_Connect_Lake_ply = os.path.join(self.tempfolder,Connect_Lake_ply)
-        Path_temp_Non_Connect_Lake_ply = os.path.join(self.tempfolder,Non_Connect_Lake_ply)
-        Path_temp_All_Lake_ply = os.path.join(self.tempfolder,'Allakes.shp')
-        Path_temp_All_Lake_ply_fix = os.path.join(self.tempfolder,'Allakes_fix.shp')
-
-        Path_finalcat_hru     = os.path.join(self.tempfolder,"finalcat_hru_info.shp")
-        Path_finalcat_hru2    = os.path.join(self.tempfolder,"finalcat_hru_info_noarea.shp")
-        Path_finalcat_hru_out    = os.path.join(Datafolder,"finalcat_hru_info.shp")
+        Path_finalcat_hru_out    = os.path.join(OutputFolder,"finalcat_hru_lake_info.shp")
         
-        processing.run("native:fixgeometries", {'INPUT':Path_finalcat_info,'OUTPUT':Path_temp_finalcat_info})
+        Subfixgeo = processing.run("native:fixgeometries", {'INPUT':Path_Subbasin_ply,'OUTPUT':'memory:'})
         
-        if Has_Non_Connect_Lake < 0 and Has_Connect_Lake<0:
-            processing.run("qgis:fieldcalculator", {'INPUT':Path_temp_finalcat_info,'FIELD_NAME':'Hylak_id','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT':Path_finalcat_hru})
-            processing.run("qgis:fieldcalculator", {'INPUT':Path_finalcat_hru,'FIELD_NAME':'HRU_ID','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':' \"SubId\" ','OUTPUT':Path_finalcat_hru2})
-            processing.run("qgis:fieldcalculator", {'INPUT':Path_finalcat_hru2,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':' \"BasArea\" ','OUTPUT':Path_finalcat_hru_out})
+        if Path_Connect_Lake_ply == '#' and Path_Non_Connect_Lake_ply == '#':
+            memresult_addlakeid   = processing.run("qgis:fieldcalculator", {'INPUT':Subfixgeo['OUTPUT'],'FIELD_NAME':'Hylak_id','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT':'memory:'})
+            memresult_addhruid    = processing.run("qgis:fieldcalculator", {'INPUT':memresult_addlakeid['OUTPUT'],'FIELD_NAME':'HRU_Lake_ID','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':' \"SubId\" ','OUTPUT':'memory:'})
+            processing.run("qgis:fieldcalculator", {'INPUT':memresult_addhruid['OUTPUT'],'FIELD_NAME':'HRU_IsLake','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT':Path_finalcat_hru_out})
             return
+
+
+        if  Path_Connect_Lake_ply != '#':
+            ConLakefixgeo = processing.run("native:fixgeometries", {'INPUT':Path_Connect_Lake_ply,'OUTPUT':'memory:'})
+        if  Path_Non_Connect_Lake_ply !='#':
+            NonConLakefixgeo = processing.run("native:fixgeometries", {'INPUT':Path_Non_Connect_Lake_ply,'OUTPUT':'memory:'})
         
-        processing.run("native:fixgeometries", {'INPUT':Path_Connect_Lake_ply,'OUTPUT':Path_temp_Connect_Lake_ply})
-
-        if Has_Non_Connect_Lake < 0:
-            processing.run("native:union", {'INPUT':Path_temp_finalcat_info,'OVERLAY':Path_temp_Connect_Lake_ply,'OVERLAY_FIELDS_PREFIX':'','OUTPUT':Path_finalcat_hru},context = context)
+        if Path_Connect_Lake_ply != '#' and Path_Non_Connect_Lake_ply != '#':
+            meme_Alllakeply = processing.run("native:mergevectorlayers", {'LAYERS':[ConLakefixgeo['OUTPUT'],NonConLakefixgeo['OUTPUT']],'OUTPUT':'memory:'})
+        elif Path_Connect_Lake_ply !='#' and Path_Non_Connect_Lake_ply == '#':
+            meme_Alllakeply = ConLakefixgeo
+        elif Path_Connect_Lake_ply =='#' and Path_Non_Connect_Lake_ply != '#':
+            meme_Alllakeply = NonConLakefixgeo
         else:
-            processing.run("native:fixgeometries", {'INPUT':Path_Non_Connect_Lake_ply,'OUTPUT':Path_temp_Non_Connect_Lake_ply})
-            processing.run("native:mergevectorlayers", {'LAYERS':[Path_temp_Connect_Lake_ply,Path_temp_Non_Connect_Lake_ply],'OUTPUT':Path_temp_All_Lake_ply})
-            processing.run("native:fixgeometries", {'INPUT':Path_temp_All_Lake_ply,'OUTPUT':Path_temp_All_Lake_ply_fix})
-            processing.run("native:union", {'INPUT':Path_temp_finalcat_info,'OVERLAY':Path_temp_All_Lake_ply_fix,'OVERLAY_FIELDS_PREFIX':'','OUTPUT':Path_finalcat_hru},context = context)
-#        processing.run("native:dissolve", {'INPUT':Path_Temp_final_rviply,'FIELD':['SubId'],'OUTPUT':Path_final_rviply},context = context)
-#        processing.run("qgis:fieldcalculator", {'INPUT':,'FIELD_NAME':'HRU_ID','FIELD_TYPE':0,'FIELD_LENGTH':7,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1.2345','OUTPUT':Path_finalcat_hru2})
+            print("should never happened......")
+            
+        mem_sub_lake_union = processing.run("native:union", {'INPUT':Subfixgeo['OUTPUT'],'OVERLAY':meme_Alllakeply['OUTPUT'],'OVERLAY_FIELDS_PREFIX':'','OUTPUT':'memory:'},context = context)
 
-        finalcat_info_csv     = Path_finalcat_hru[:-3] + "dbf"
-        finalcat_info         = Dbf5(finalcat_info_csv)
-        finalcat_info         = finalcat_info.to_dataframe()
-
-        finalcat_info['HyLakeId']  = finalcat_info['HyLakeId'].astype(float)
-        finalcat_info['Hylak_id']  = finalcat_info['Hylak_id'].astype(float)
-        finalcat_info['SubId']     = finalcat_info['SubId'].astype(float)
-
-        mapoldnew_info        = finalcat_info.copy(deep = True)
-        mapoldnew_info['HRU_ID'] = np.nan
-        mapoldnew_info['HRU_Area'] = np.nan
-
-
-        Connect_Lakeids       = finalcat_info['HyLakeId'].values
-        Connect_Lakeids       = Connect_Lakeids[Connect_Lakeids > 0]
-        Connect_Lakeids       = np.unique(Connect_Lakeids)
-
-#        print(mapoldnew_info['SubId'].values)
-        maxsubid              = np.nanmax(mapoldnew_info['SubId'].values)
-        for i in range(0,len(mapoldnew_info)):
-            subid        = mapoldnew_info['SubId'].values[i]
-            sub_lakeid   = mapoldnew_info['HyLakeId'].values[i]
-            Lake_lakeid  = mapoldnew_info['Hylak_id'].values[i]
-
-
-
-            if sub_lakeid < 0:  ### non lake catchment
-                mapoldnew_info.loc[i,'HRU_ID']   = int(subid)    ### each hru id is determined by subid and maxsubid
-#                mapoldnew_info.loc[i,'HRU_Area'] = mapoldnew_info['BasArea'].values[i]
-#                mapoldnew_info.loc[i,'Hylak_id'] = np.nan
-
-            if sub_lakeid > 0: ### lake catchmen
-#                print("2",subid,sub_lakeid,Lake_lakeid)
-                if sub_lakeid == Lake_lakeid:  ### lake hru
-#                    print("3",subid,sub_lakeid,Lake_lakeid)
-                    mapoldnew_info.loc[i,'HRU_ID']   = int(maxsubid) + int(subid)
-#                    mapoldnew_info.loc[i,'HRU_Area'] = mapoldnew_info['LakeArea'].values[i]*1000*1000
-                else:
-                    mapoldnew_info.loc[i,'HRU_ID']   = int(subid)
-#                    landarea = mapoldnew_info['BasArea'].values[i] - mapoldnew_info['LakeArea'].values[i]*1000*1000
-#                    landarea = max(landarea,mapoldnew_info['BasArea'].values[i]*0.05)
-#                    mapoldnew_info.loc[i,'HRU_Area'] = landarea
-#                    mapoldnew_info.loc[i,'Hylak_id'] = np.nan
-
-        layer_cat=QgsVectorLayer(Path_finalcat_hru,"")
+        layer_cat=mem_sub_lake_union['OUTPUT']
         SpRef_in = layer_cat.crs().authid()   ### get Raster spatialReference id
-        layer_cat.dataProvider().addAttributes([QgsField('HRU_ID', QVariant.Int),QgsField('HRU_Type', QVariant.Int)])
+        layer_cat.dataProvider().addAttributes([QgsField('HRULake_ID', QVariant.Int),QgsField('HRU_IsLake', QVariant.Int)])
         field_ids = []
-        # Fieldnames to delete
-        fieldnames = set(['Lake_name','Country','Continent','Poly_src','Lake_type','Grand_id','Lake_area','Shore_len','Shore_dev','Vol_total','Vol_res'
-        ,'Vol_src','Depth_avg','Dis_avg','Res_avg','Res_time','Elevation','Slope_100','Wshd_area','Pour_long','Pour_lat','layer_2','path_2'])
-
+        
+        # Fieldnames to save 
+        fieldnames = set(['HRULake_ID','HRU_IsLake',Sub_ID,Sub_Lake_ID,Lake_Id])
+        
+        ## delete unused lake ids 
         for field in layer_cat.fields():
-            if field.name() in fieldnames:
+            if field.name() not in fieldnames:
                 field_ids.append(layer_cat.dataProvider().fieldNameIndex(field.name()))
-#        print(field_ids)
+            if field.name() == Sub_ID:
+                max_subbasin_id = layer_cat.maximumValue(layer_cat.dataProvider().fieldNameIndex(field.name()))
+        N_new_features = layer_cat.featureCount()
+        print("maximum subbasin Id is    ",max_subbasin_id, "N potential HRUS generated with lake polygon    ",N_new_features)        
         layer_cat.dataProvider().deleteAttributes(field_ids)
         layer_cat.updateFields()
         layer_cat.commitChanges()
-
-
+    
+        ## create HRU_lAKE_ID 
         Attri_Name = layer_cat.fields().names()
         features = layer_cat.getFeatures()
+        new_hruid = 1
+        new_hruid_list = np.full(N_new_features + 100,np.nan)
+        old_newhruid_list = np.full(N_new_features + 100,np.nan)
         with edit(layer_cat):
             for sf in features:
 #                print("########################################################################")
-                subid_sf   = sf['SubId']
+                subid_sf   = sf[Sub_ID]
                 try:
                     subid_sf = float(subid_sf)
                 except TypeError:
@@ -3726,43 +3699,90 @@ class LRRT:
                 if subid_sf < 0:
                     continue
 
-                lakelakeid_sf   = sf['Hylak_id']
+                lakelakeid_sf   = sf[Lake_Id]
                 try:
                     lakelakeid_sf = float(lakelakeid_sf)
                 except TypeError:
                     lakelakeid_sf = -1
                     pass
-#                print(subid_sf,lakelakeid_sf)
-
-                if lakelakeid_sf < 0:
-                    mask1           = mapoldnew_info['SubId'].values    == subid_sf
-                    mask2           = np.isnan(mapoldnew_info['Hylak_id'].values)
-                    maskand         = np.logical_and(mask1,mask2)
+                
+                Sub_Lakeid_sf   = sf[Sub_Lake_ID]
+                try:
+                    Sub_Lakeid_sf = float(Sub_Lakeid_sf)
+                except TypeError:
+                    Sub_Lakeid_sf = -1
+                    pass
+                
+                if Sub_Lakeid_sf < 0:
+                    old_new_hruid     = float(subid_sf)
+                    sf['HRU_IsLake']  = float(-1)
+                
+                if Sub_Lakeid_sf > 0:
+                    if lakelakeid_sf == Sub_Lakeid_sf: ### the lakeid from lake polygon = lake id in subbasin polygon 
+                        old_new_hruid     = float(subid_sf) + max_subbasin_id + 10
+                        sf['HRU_IsLake']  = float(1)
+                    else: ### the lakeid from lake polygon != lake id in subbasin polygon, this lake do not belong to this subbasin, this part of subbasin treat as non lake hru                         
+                        old_new_hruid     = float(subid_sf)
+                        sf['HRU_IsLake']  = float(-1)
+                if old_new_hruid not in old_newhruid_list:
+                    sf['HRULake_ID'] = new_hruid
+                    new_hruid        = new_hruid + 1
+                    old_newhruid_list[new_hruid] = old_new_hruid
                 else:
-                    mask1           = mapoldnew_info['SubId'].values    == subid_sf
-                    mask2           = mapoldnew_info['Hylak_id'].values == lakelakeid_sf
-                    maskand         = np.logical_and(mask1,mask2)
-                srcinfo             = mapoldnew_info.loc[maskand,['HyLakeId','HRU_ID','HRU_Area','Hylak_id']]
-
-#                centroidxy = sf.geometry().centroid().asPoint()
-#                print(srcinfo)
-                sf['HRU_ID']   = float(srcinfo['HRU_ID'].values[0])
-#                sf['HRU_Area'] = float(srcinfo['HRU_Area'].values[0])
-                if srcinfo['HyLakeId'].values[0] == srcinfo['Hylak_id'].values[0]:
-                    sf['Hylak_id'] = float(srcinfo['Hylak_id'].values[0])
-                    sf['HRU_Type'] = float(1)
-                else:
-                    sf['Hylak_id'] = float(0)
-                    sf['HRU_Type'] = float(0)
+                    sf['HRULake_ID'] = old_newhruid_list[old_newhruid_list == old_new_hruid]
+                    
                 layer_cat.updateFeature(sf)
-        del layer_cat
-
-        processing.run("native:dissolve", {'INPUT':Path_finalcat_hru,'FIELD':['HRU_ID'],'OUTPUT':Path_finalcat_hru2},context = context)
+                
+        processing.run("native:dissolve", {'INPUT':layer_cat,'FIELD':['HRULake_ID'],'OUTPUT':Path_finalcat_hru_out},context = context)
         
-        if SpRef_in == 'EPSG:4326':
-            processing.run("qgis:fieldcalculator", {'INPUT':Path_finalcat_hru2,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'area(transform($geometry, \'EPSG:4326\',\'EPSG:3573\'))','OUTPUT':Path_finalcat_hru_out})
-        else: 
-            processing.run("qgis:fieldcalculator", {'INPUT':Path_finalcat_hru2,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'$area','OUTPUT':Path_finalcat_hru_out})
+        # if SpRef_in == 'EPSG:4326':
+        #     processing.run("qgis:fieldcalculator", {'INPUT':Path_finalcat_hru2,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'area(transform($geometry, \'EPSG:4326\',\'EPSG:3573\'))','OUTPUT':Path_finalcat_hru_out})
+        # else: 
+        #     processing.run("qgis:fieldcalculator", {'INPUT':Path_finalcat_hru2,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'$area','OUTPUT':Path_finalcat_hru_out})
+
+        
+
+
+#         print(mem_sub_lake_union)
+#         finalcat_info_csv     = Path_finalcat_hru[:-3] + "dbf"
+#         finalcat_info         = Dbf5(finalcat_info_csv)
+#         finalcat_info         = finalcat_info.to_dataframe()
+# 
+#         finalcat_info['HyLakeId']  = finalcat_info['HyLakeId'].astype(float)
+#         finalcat_info['Hylak_id']  = finalcat_info['Hylak_id'].astype(float)
+#         finalcat_info['SubId']     = finalcat_info['SubId'].astype(float)
+# 
+#         mapoldnew_info        = finalcat_info.copy(deep = True)
+#         mapoldnew_info['HRU_ID'] = np.nan
+#         mapoldnew_info['HRU_Area'] = np.nan
+# 
+# 
+#         Connect_Lakeids       = finalcat_info['HyLakeId'].values
+#         Connect_Lakeids       = Connect_Lakeids[Connect_Lakeids > 0]
+#         Connect_Lakeids       = np.unique(Connect_Lakeids)
+# 
+# #        print(mapoldnew_info['SubId'].values)
+#         maxsubid              = np.nanmax(mapoldnew_info['SubId'].values)
+#         for i in range(0,len(mapoldnew_info)):
+#             subid        = mapoldnew_info['SubId'].values[i]
+#             sub_lakeid   = mapoldnew_info['HyLakeId'].values[i]
+#             Lake_lakeid  = mapoldnew_info['Hylak_id'].values[i]
+# 
+# 
+# 
+#             if sub_lakeid < 0:  ### non lake catchment
+#                 mapoldnew_info.loc[i,'HRU_ID']   = int(subid)    ### each hru id is determined by subid and maxsubid
+# 
+#             if sub_lakeid > 0: ### lake catchmen
+#                 if sub_lakeid == Lake_lakeid:  ### lake hru
+#                     mapoldnew_info.loc[i,'HRU_ID']   = int(maxsubid) + int(subid)
+#                 else:
+#                     mapoldnew_info.loc[i,'HRU_ID']   = int(subid)
+
+#        print(field_ids)
+
+
+
             
 
 
