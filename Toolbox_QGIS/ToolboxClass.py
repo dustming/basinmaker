@@ -1203,8 +1203,14 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
     Path_finalcat_hru_out    = os.path.join(OutputFolder,"finalcat_hru_lake_info.shp")
         
     Subfixgeo = processing.run("native:fixgeometries", {'INPUT':Path_Subbasin_ply,'OUTPUT':'memory:'})
-    fieldnames = set(['HRULake_ID','HRU_IsLake',Sub_ID,Sub_Lake_ID,Lake_Id])
+    
+    fieldnames_list =['HRULake_ID','HRU_IsLake',Lake_Id,Sub_ID,Sub_Lake_ID] ### attribubte name in the need to be saved 
+    
+#    for field in Subfixgeo['OUTPUT'].fields():
+#        fieldnames_list.append(field.name())
         
+    fieldnames = set(fieldnames_list)
+            
     if Path_Connect_Lake_ply == '#' and Path_Non_Connect_Lake_ply == '#':
         memresult_addlakeid   = processing.run("qgis:fieldcalculator", {'INPUT':Subfixgeo['OUTPUT'],'FIELD_NAME':'Hylak_id','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT':'memory:'})
         memresult_addhruid    = processing.run("qgis:fieldcalculator", {'INPUT':memresult_addlakeid['OUTPUT'],'FIELD_NAME':'HRULake_ID','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':' \"SubId\" ','OUTPUT':'memory:'})
@@ -1251,7 +1257,7 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
         if field.name() == Sub_ID:
             max_subbasin_id = layer_cat.maximumValue(layer_cat.dataProvider().fieldNameIndex(field.name()))
     N_new_features = layer_cat.featureCount()
-    print("maximum subbasin Id is    ",max_subbasin_id, "N potential HRUS generated with lake polygon    ",N_new_features)        
+#    print("maximum subbasin Id is    ",max_subbasin_id, "N potential HRUS generated with lake polygon    ",N_new_features)        
     layer_cat.dataProvider().deleteAttributes(field_ids)
     layer_cat.updateFields()
     layer_cat.commitChanges()
@@ -1306,14 +1312,106 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
             else:
                 sf['HRULake_ID'] = int(np.argwhere(old_newhruid_list == old_new_hruid)[0])
             
-            if subid_sf == 1000061:
-                print(sf['HRULake_ID'],old_new_hruid,new_hruid)       
+#            if subid_sf == 1000061:
+#                print(sf['HRULake_ID'],old_new_hruid,new_hruid)       
             layer_cat.updateFeature(sf)
                 
-        processing.run("native:dissolve", {'INPUT':layer_cat,'FIELD':['HRULake_ID'],'OUTPUT':Path_finalcat_hru_out},context = context)
-        del layer_cat
-
+    Sub_Lake_HRU = processing.run("native:dissolve", {'INPUT':layer_cat,'FIELD':['HRULake_ID'],'OUTPUT':'memory:'},context = context)
+    Sub_Lake_HRU2 = processing.run("native:dissolve", {'INPUT':layer_cat,'FIELD':['HRULake_ID'],'OUTPUT':Path_finalcat_hru_out},context = context)
+    del layer_cat
+    return Sub_Lake_HRU['OUTPUT'],Sub_Lake_HRU['OUTPUT'].crs().authid(),['HRULake_ID','HRU_IsLake',Sub_ID] 
 ############
+
+def Reproj_Clip_Dissolve_Simplify_Polygon(processing,context,layer_path,Project_crs,trg_crs,
+                                      Class_Col,Layer_clip):
+    
+    layer_proj = processing.run("native:reprojectlayer", {'INPUT':layer_path,'TARGET_CRS':QgsCoordinateReferenceSystem(trg_crs),'OUTPUT':'memory:'})['OUTPUT']
+    layer_fix  = processing.run("native:fixgeometries", {'INPUT':layer_proj,'OUTPUT':'memory:'})['OUTPUT']
+    layer_clip = processing.run("native:clip", {'INPUT':layer_fix,'OVERLAY':Layer_clip,'OUTPUT':'memory:'})['OUTPUT']
+    layer_dis  = processing.run("native:dissolve", {'INPUT':layer_clip,'FIELD':[Class_Col],'OUTPUT':'memory:'},context = context)['OUTPUT']
+
+
+
+#    formular = 'area(transform($geometry, \'%s\',\'%s\'))' % (trg_crs,Project_crs)
+#    layer_area         = processing.run("qgis:fieldcalculator", {'INPUT':layer_landuse_fix,'FIELD_NAME':'Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formular,'OUTPUT':'memory:'})['OUTPUT']
+#    processing.run("qgis:fieldcalculator", {'INPUT':layer_landuse_fix,'FIELD_NAME':'Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formular,'OUTPUT':os.path.join(OutputFolder,'part3.shp')})
+#    formula = "\"Area\"< %s " % str(Eliminate_ply_size)
+#    layer_area.selectByExpression(formula)
+#    layer_eli_feature = processing.run("qgis:eliminateselectedpolygons", {'INPUT':layer_area,'MODE':0,'OUTPUT':'memory:'})['OUTPUT']
+#    processing.run("qgis:eliminateselectedpolygons", {'INPUT':layer_area,'MODE':0,'OUTPUT':os.path.join(OutputFolder,'part6.shp')})
+    return layer_dis
+    
+    
+def Obtain_Attribute_Table(processing,context,vec_layer):
+    N_new_features = vec_layer.featureCount()
+    field_names = []
+    for field in vec_layer.fields():
+        field_names.append(field.name())
+    Attri_Tbl = pd.DataFrame(data = np.full((N_new_features,len(field_names)),np.nan),columns = field_names)
+    
+    src_features = vec_layer.getFeatures()
+    i_sf = 0
+    for sf in src_features:
+        for field in vec_layer.fields():
+            filednm = field.name()
+            Attri_Tbl.loc[Attri_Tbl.index[i_sf],filednm] = sf[filednm]
+        i_sf = i_sf + 1
+    return Attri_Tbl
+    
+    
+def Union_Ply_Layers_And_Simplify(processing,context,Merge_layer_list,dissolve_filedname_list,fieldnames,OutputFolder):
+    
+    ##union polygons
+    if len(Merge_layer_list) == 1:
+        mem_union = processing.run("native:union", {'INPUT':Merge_layer_list[0],'OVERLAY':Merge_layer_list[i],'OVERLAY_FIELDS_PREFIX':'','OUTPUT':'memory:'},context = context)['OUTPUT'] 
+        mem_union_fix_ext  = processing.run("native:fixgeometries", {'INPUT':mem_union,'OUTPUT':'memory:'})['OUTPUT']
+    elif len(Merge_layer_list) > 1:
+        for i in range(0,len(Merge_layer_list)):
+            if i == 0:
+                mem_union          = Merge_layer_list[i]
+                mem_union_fix_ext  = processing.run("native:fixgeometries", {'INPUT':mem_union,'OUTPUT':'memory:'})['OUTPUT']
+            else:
+                mem_union_fix_temp = mem_union_fix_ext
+                del mem_union_fix_ext
+                mem_union      = processing.run("native:union", {'INPUT':mem_union_fix_temp,'OVERLAY':Merge_layer_list[i],'OVERLAY_FIELDS_PREFIX':'','OUTPUT':'memory:'},context = context)['OUTPUT'] 
+                mem_union_fix  = processing.run("native:fixgeometries", {'INPUT':mem_union,'OUTPUT':'memory:'})['OUTPUT']
+                ### remove unexpect polygon with area is 0 and some column value is null
+                if i == 1:
+                    formular = ' \"%s\" > 0  AND  \"%s\" > 0 ' % (dissolve_filedname_list[0],dissolve_filedname_list[1])
+                if i == 2:
+                    formular = ' \"%s\" > 0  AND  \"%s\" > 0 AND  \"%s\" > 0 ' % (dissolve_filedname_list[0],dissolve_filedname_list[1],dissolve_filedname_list[2])
+                if i == 3:
+                    formular = ' \"%s\" > 0  AND  \"%s\" > 0 AND  \"%s\" > 0 AND  \"%s\" > 0 ' % (dissolve_filedname_list[0],dissolve_filedname_list[1],dissolve_filedname_list[2],dissolve_filedname_list[3])
+                if i == 4:
+                    formular = ' \"%s\" > 0  AND  \"%s\" > 0 AND  \"%s\" > 0 AND  \"%s\" > 0 AND  \"%s\" > 0 ' % (dissolve_filedname_list[0],dissolve_filedname_list[1],dissolve_filedname_list[2],dissolve_filedname_list[3],dissolve_filedname_list[4])
+                if i == 5:
+                    formular = ' \"%s\" > 0  AND  \"%s\" > 0 AND  \"%s\" > 0 AND  \"%s\" > 0 AND  \"%s\" > 0  AND  \"%s\" > 0' % (dissolve_filedname_list[0],dissolve_filedname_list[1],dissolve_filedname_list[2],dissolve_filedname_list[3],dissolve_filedname_list[4],dissolve_filedname_list[5])
+                if i > 5 :    
+                    print("error maximum number of polygons are 5")
+#                print(formular)
+                mem_union_fix_ext = processing.run("native:extractbyexpression", {'INPUT':mem_union_fix,'EXPRESSION':formular,'OUTPUT':'memory:'})['OUTPUT']
+#            processing.run("native:union", {'INPUT':mem_union_temp,'OVERLAY':Merge_layer_list[i],'OVERLAY_FIELDS_PREFIX':'','OUTPUT':os.path.join(OutputFolder,'union.shp')},context = context)
+    else:
+        print("No polygon needs to be overlaied.........should not happen ")
+    
+    ## remove non interested filed 
+    field_ids = []
+    for field in mem_union_fix_ext.fields():
+        if field.name() not in fieldnames:
+            field_ids.append(mem_union_fix_ext.dataProvider().fieldNameIndex(field.name()))
+            
+    mem_union_fix_ext.dataProvider().deleteAttributes(field_ids)
+    mem_union_fix_ext.updateFields()
+    mem_union_fix_ext.commitChanges()    
+    
+    
+    mem_union_dis = processing.run("native:dissolve", {'INPUT':mem_union_fix_ext,'FIELD':dissolve_filedname_list,'OUTPUT':'memory:'},context = context)['OUTPUT']
+    processing.run("native:dissolve", {'INPUT':mem_union_fix_ext,'FIELD':dissolve_filedname_list,'OUTPUT':os.path.join(OutputFolder,'union_diso.shp')},context = context)
+    
+    return mem_union_dis
+
+
+    
 class LRRT:
     def __init__(self, dem_in = '#',dir_in = '#',hyshdply = '#',WidDep = '#',Lakefile = '#'
                                      ,Landuse = '#',Landuseinfo = '#',obspoint = '#',OutHyID = -1 ,OutHyID2 = -1,
@@ -3717,10 +3815,17 @@ class LRRT:
             Readed_Data['ModelTime'] = Readed_Data.index.strftime('%m-%d-%Y')
             plotGuagelineobs(Scenario_NM,Readed_Data,os.path.join(self.OutputFolder,obs_nm + '.pdf'))
 
-    def GenerateHRUS(self,Path_Subbasin_Ply,Sub_ID = 'SubId',Sub_Lake_ID = 'HyLakeId',Path_Connect_Lake_ply = '#',Path_Non_Connect_Lake_ply = '#',
-                     Lake_Id = 'Hylak_id',Path_Landuse_Ply = '#',Landuse_ID = '#', Landuse_info = '#',
-                     Path_Soil_Ply = '#',Soil_ID = '#', Soil_info = '#',Path_Other_Ply_List=[],Other_Ply_ID=[],
+    def GenerateHRUS(self,Path_Subbasin_Ply,Landuse_info='#',Soil_info='#',Veg_info='#',
+                     Sub_Lake_ID = 'HyLakeId',Sub_ID='SubId',
+                     Path_Connect_Lake_ply = '#',Path_Non_Connect_Lake_ply = '#', Lake_Id = 'Hylak_id',
+                     Path_Landuse_Ply = '#',Landuse_ID = 'Landuse_ID', 
+                     Path_Soil_Ply = '#',Soil_ID = 'Soil_ID', 
+                     Path_Veg_Ply = '#',Veg_ID = 'Veg_ID', 
+                     Path_Other_Ply_1='#', Other_Ply_ID_1='#',
+                     Path_Other_Ply_2='#', Other_Ply_ID_2='#',
+                     DEM = '#',Project_crs = 'EPSG:3573',
                      OutputFolder = '#'):
+                     
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
         Qgs.initQgis()
@@ -3732,136 +3837,71 @@ class LRRT:
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
         context = dataobjects.createContext()
         context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
-        GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply = Path_Subbasin_Ply,Path_Connect_Lake_ply = Path_Connect_Lake_ply,
-                                Path_Non_Connect_Lake_ply = Path_Non_Connect_Lake_ply,Sub_ID=Sub_ID,Sub_Lake_ID = Sub_Lake_ID,Lake_Id = Lake_Id)
         
-                
+        
+        Merge_layer_list = []
+        output_hru_shp = os.path.join(OutputFolder,'finalcat_hru_info.shp')        
+        ### First overlay the subbasin layer with lake polygon, the new unique id will be 'HRULake_ID'
+        
+        
+        Sub_Lake_HRU_Layer,trg_crs,fieldnames_list = GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply = Path_Subbasin_Ply,Path_Connect_Lake_ply = Path_Connect_Lake_ply,
+                                                                             Path_Non_Connect_Lake_ply = Path_Non_Connect_Lake_ply,Sub_ID=Sub_ID,Sub_Lake_ID = Sub_Lake_ID,Lake_Id = Lake_Id)
+                                                                                          
+        fieldnames_list.extend([Landuse_ID,Soil_ID,Veg_ID,'LAND_USE_CLASS','VEG_CLASS','SOIL_PROFILE','HRU_Slope','HRU_Area','HRU_Aspect'])
+        dissolve_filedname_list = ['HRULake_ID']
+        Merge_layer_list.append(Sub_Lake_HRU_Layer) 
+        
+        #### check which data will be inlucded to determine HRU 
+        if Path_Landuse_Ply != '#':
+            layer_landuse_dis = Reproj_Clip_Dissolve_Simplify_Polygon(processing,context,Path_Landuse_Ply,Project_crs,trg_crs,Landuse_ID,Sub_Lake_HRU_Layer)
+            Merge_layer_list.append(layer_landuse_dis)
+            dissolve_filedname_list.append(Landuse_ID)
+
+        if Path_Soil_Ply != '#':
+            layer_soil_dis = Reproj_Clip_Dissolve_Simplify_Polygon(processing,context,Path_Soil_Ply,Project_crs,trg_crs,Soil_ID,Sub_Lake_HRU_Layer)
+            Merge_layer_list.append(layer_soil_dis)
+            dissolve_filedname_list.append(Soil_ID)
+
+        if Path_Veg_Ply != '#':
+            layer_veg_dis = Reproj_Clip_Dissolve_Simplify_Polygon(processing,context,Path_Veg_Ply,Project_crs,trg_crs,Veg_ID,Sub_Lake_HRU_Layer)
+            Merge_layer_list.append(layer_veg_dis)
+            dissolve_filedname_list.append(Veg_ID)
+                    
+        if Path_Other_Ply_1 != '#':
+            layer_other_1_dis = Reproj_Clip_Dissolve_Simplify_Polygon(processing,context,Path_Other_Ply_1,Project_crs,trg_crs,Other_Ply_ID_1,Sub_Lake_HRU_Layer)
+            Merge_layer_list.append(layer_other_1_fix)
+            fieldnames_list.append(Other_Ply_ID_1)
+            dissolve_filedname_list.append(Other_Ply_ID_1)
+            
+        if Path_Other_Ply_2 != '#':
+            layer_other_1_dis = Reproj_Clip_Dissolve_Simplify_Polygon(processing,context,Path_Other_Ply_2,Project_crs,trg_crs,Other_Ply_ID_2,Sub_Lake_HRU_Layer)
+            Merge_layer_list.append(layer_other_2_dis) 
+            fieldnames_list.append(Other_Ply_ID_2)
+            dissolve_filedname_list.append(Other_Ply_ID_2)                     
+        
+        
+        fieldnames = set(fieldnames_list) 
+        
+        #### uniion polygons in the Merge_layer_list                           
+        mem_union = Union_Ply_Layers_And_Simplify(processing,context,Merge_layer_list,dissolve_filedname_list,fieldnames,OutputFolder)
+            
+        print(mem_union.featureCount())           
+        mem_union.dataProvider().addAttributes([QgsField('LAND_USE_CLASS', QVariant.String),
+                                                    QgsField('VEG_CLASS', QVariant.String),
+                                                    QgsField('SOIL_PROFILE', QVariant.String),
+                                                    QgsField('HRU_Slope', QVariant.float),
+                                                    QgsField('HRU_Area', QVariant.float),
+                                                    QgsField('HRU_Aspect', QVariant.float)])
+
+        del Sub_Lake_HRU_Layer         
         Qgs.exit()             
-#     def GeneratelandandlakeHRUS(self,OutputFolder,Path_Subbasin_ply,Path_Connect_Lake_ply = '#',
-#                                 Path_Non_Connect_Lake_ply = '#',Sub_ID='SubId',
-#                                 Sub_Lake_ID = 'HyLakeId',Lake_Id = 'Hylak_id'):
-# 
-#         QgsApplication.setPrefixPath(self.qgisPP, True)
-#         Qgs = QgsApplication([],False)
-#         Qgs.initQgis()
-#         from qgis import processing
-#         from processing.core.Processing import Processing
-#         from processing.tools import dataobjects
-#         feedback = QgsProcessingFeedback()
-#         Processing.initialize()
-#         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
-#         context = dataobjects.createContext()
-#         context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
-# 
-#         Path_finalcat_hru_out    = os.path.join(OutputFolder,"finalcat_hru_lake_info.shp")
-# 
-#         Subfixgeo = processing.run("native:fixgeometries", {'INPUT':Path_Subbasin_ply,'OUTPUT':'memory:'})
-#         fieldnames = set(['HRULake_ID','HRU_IsLake',Sub_ID,Sub_Lake_ID,Lake_Id])
-# 
-#         if Path_Connect_Lake_ply == '#' and Path_Non_Connect_Lake_ply == '#':
-#             memresult_addlakeid   = processing.run("qgis:fieldcalculator", {'INPUT':Subfixgeo['OUTPUT'],'FIELD_NAME':'Hylak_id','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT':'memory:'})
-#             memresult_addhruid    = processing.run("qgis:fieldcalculator", {'INPUT':memresult_addlakeid['OUTPUT'],'FIELD_NAME':'HRULake_ID','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':' \"SubId\" ','OUTPUT':'memory:'})
-#             layer_cat=memresult_addhruid['OUTPUT']
-#             field_ids = []                    
-#             for field in layer_cat.fields():
-#                 if field.name() not in fieldnames:
-#                     field_ids.append(layer_cat.dataProvider().fieldNameIndex(field.name()))
-#             layer_cat.dataProvider().deleteAttributes(field_ids)
-#             layer_cat.updateFields()
-#             layer_cat.commitChanges()    
-#             processing.run("qgis:fieldcalculator", {'INPUT':layer_cat,'FIELD_NAME':'HRU_IsLake','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT':Path_finalcat_hru_out})
-#             return
-# 
-# 
-#         if  Path_Connect_Lake_ply != '#':
-#             ConLakefixgeo = processing.run("native:fixgeometries", {'INPUT':Path_Connect_Lake_ply,'OUTPUT':'memory:'})
-#         if  Path_Non_Connect_Lake_ply !='#':
-#             NonConLakefixgeo = processing.run("native:fixgeometries", {'INPUT':Path_Non_Connect_Lake_ply,'OUTPUT':'memory:'})
-# 
-#         if Path_Connect_Lake_ply != '#' and Path_Non_Connect_Lake_ply != '#':
-#             meme_Alllakeply = processing.run("native:mergevectorlayers", {'LAYERS':[ConLakefixgeo['OUTPUT'],NonConLakefixgeo['OUTPUT']],'OUTPUT':'memory:'})
-#         elif Path_Connect_Lake_ply !='#' and Path_Non_Connect_Lake_ply == '#':
-#             meme_Alllakeply = ConLakefixgeo
-#         elif Path_Connect_Lake_ply =='#' and Path_Non_Connect_Lake_ply != '#':
-#             meme_Alllakeply = NonConLakefixgeo
-#         else:
-#             print("should never happened......")
-# 
-#         mem_sub_lake_union = processing.run("native:union", {'INPUT':Subfixgeo['OUTPUT'],'OVERLAY':meme_Alllakeply['OUTPUT'],'OVERLAY_FIELDS_PREFIX':'','OUTPUT':'memory:'},context = context)
-# 
-#         layer_cat=mem_sub_lake_union['OUTPUT']
-#         SpRef_in = layer_cat.crs().authid()   ### get Raster spatialReference id
-#         layer_cat.dataProvider().addAttributes([QgsField('HRULake_ID', QVariant.Int),QgsField('HRU_IsLake', QVariant.Int)])
-#         field_ids = []
-# 
-#         # Fieldnames to save 
-# 
-#         ## delete unused lake ids 
-#         for field in layer_cat.fields():
-#             if field.name() not in fieldnames:
-#                 field_ids.append(layer_cat.dataProvider().fieldNameIndex(field.name()))
-#             if field.name() == Sub_ID:
-#                 max_subbasin_id = layer_cat.maximumValue(layer_cat.dataProvider().fieldNameIndex(field.name()))
-#         N_new_features = layer_cat.featureCount()
-#         print("maximum subbasin Id is    ",max_subbasin_id, "N potential HRUS generated with lake polygon    ",N_new_features)        
-#         layer_cat.dataProvider().deleteAttributes(field_ids)
-#         layer_cat.updateFields()
-#         layer_cat.commitChanges()
-# 
-#         ## create HRU_lAKE_ID 
-#         Attri_Name = layer_cat.fields().names()
-#         features = layer_cat.getFeatures()
-#         new_hruid = 1
-#         new_hruid_list = np.full(N_new_features + 100,np.nan)
-#         old_newhruid_list = np.full(N_new_features + 100,np.nan)
-#         with edit(layer_cat):
-#             for sf in features:
-# #                print("########################################################################")
-#                 subid_sf   = sf[Sub_ID]
-#                 try:
-#                     subid_sf = float(subid_sf)
-#                 except TypeError:
-#                     subid_sf = -1
-#                     pass
-# 
-#                 if subid_sf < 0:
-#                     continue
-# 
-#                 lakelakeid_sf   = sf[Lake_Id]
-#                 try:
-#                     lakelakeid_sf = float(lakelakeid_sf)
-#                 except TypeError:
-#                     lakelakeid_sf = -1
-#                     pass
-# 
-#                 Sub_Lakeid_sf   = sf[Sub_Lake_ID]
-#                 try:
-#                     Sub_Lakeid_sf = float(Sub_Lakeid_sf)
-#                 except TypeError:
-#                     Sub_Lakeid_sf = -1
-#                     pass
-# 
-#                 if Sub_Lakeid_sf < 0:
-#                     old_new_hruid     = float(subid_sf)
-#                     sf['HRU_IsLake']  = float(-1)
-# 
-#                 if Sub_Lakeid_sf > 0:
-#                     if lakelakeid_sf == Sub_Lakeid_sf: ### the lakeid from lake polygon = lake id in subbasin polygon 
-#                         old_new_hruid     = float(subid_sf) + max_subbasin_id + 10
-#                         sf['HRU_IsLake']  = float(1)
-#                     else: ### the lakeid from lake polygon != lake id in subbasin polygon, this lake do not belong to this subbasin, this part of subbasin treat as non lake hru                         
-#                         old_new_hruid     = float(subid_sf)
-#                         sf['HRU_IsLake']  = float(-1)
-#                 if old_new_hruid not in old_newhruid_list:
-#                     sf['HRULake_ID'] = new_hruid
-#                     new_hruid        = new_hruid + 1
-#                     old_newhruid_list[new_hruid] = old_new_hruid
-#                 else:
-#                     sf['HRULake_ID'] = old_newhruid_list[old_newhruid_list == old_new_hruid]
-# 
-#                 layer_cat.updateFeature(sf)
-# 
-#         processing.run("native:dissolve", {'INPUT':layer_cat,'FIELD':['HRULake_ID'],'OUTPUT':Path_finalcat_hru_out},context = context)
+
+
+#        else: ## if no land use layer provided, the value of land use id will be equal with HRU_IsLake, -1 or 1 indicate if it is a lake or not 
+#            formular = r' \"%s\" ' % Landuse_ID
+#            mem_addveg   = processing.run("qgis:fieldcalculator", {'INPUT':Sub_Lake_HRU_Layer,'FIELD_NAME':Veg_ID,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formular,'OUTPUT':os.path.join(OutputFolder,'veglake.shp')})#'memory:'})['OUTPUT']
+
+
         
         # if SpRef_in == 'EPSG:4326':
         #     processing.run("qgis:fieldcalculator", {'INPUT':Path_finalcat_hru2,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'area(transform($geometry, \'EPSG:4326\',\'EPSG:3573\'))','OUTPUT':Path_finalcat_hru_out})
