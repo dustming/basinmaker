@@ -1222,9 +1222,10 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
         layer_cat.dataProvider().deleteAttributes(field_ids)
         layer_cat.updateFields()
         layer_cat.commitChanges()    
-        processing.run("qgis:fieldcalculator", {'INPUT':layer_cat,'FIELD_NAME':'HRU_IsLake','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT':Path_finalcat_hru_out})
+#        processing.run("qgis:fieldcalculator", {'INPUT':layer_cat,'FIELD_NAME':'HRU_IsLake','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT':Path_finalcat_hru_out}) 
+        Sub_Lake_HRU = processing.run("qgis:fieldcalculator", {'INPUT':layer_cat,'FIELD_NAME':'HRU_IsLake','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT'::'memory:'})
         del layer_cat
-        return
+        return Sub_Lake_HRU['OUTPUT'],Sub_Lake_HRU['OUTPUT'].crs().authid(),['HRULake_ID','HRU_IsLake',Sub_ID]
 
 
     if  Path_Connect_Lake_ply != '#':
@@ -1317,7 +1318,7 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
             layer_cat.updateFeature(sf)
                 
     Sub_Lake_HRU = processing.run("native:dissolve", {'INPUT':layer_cat,'FIELD':['HRULake_ID'],'OUTPUT':'memory:'},context = context)
-    Sub_Lake_HRU2 = processing.run("native:dissolve", {'INPUT':layer_cat,'FIELD':['HRULake_ID'],'OUTPUT':Path_finalcat_hru_out},context = context)
+#    Sub_Lake_HRU2 = processing.run("native:dissolve", {'INPUT':layer_cat,'FIELD':['HRULake_ID'],'OUTPUT':Path_finalcat_hru_out},context = context)
     del layer_cat
     return Sub_Lake_HRU['OUTPUT'],Sub_Lake_HRU['OUTPUT'].crs().authid(),['HRULake_ID','HRU_IsLake',Sub_ID] 
 ############
@@ -3884,16 +3885,28 @@ class LRRT:
         
         #### uniion polygons in the Merge_layer_list                           
         mem_union = Union_Ply_Layers_And_Simplify(processing,context,Merge_layer_list,dissolve_filedname_list,fieldnames,OutputFolder)
-            
-        print(mem_union.featureCount())           
+        
+        ###### add attributes into the polygon table     
         mem_union.dataProvider().addAttributes([QgsField('LAND_USE_CLASS', QVariant.String),
                                                     QgsField('VEG_CLASS', QVariant.String),
                                                     QgsField('SOIL_PROFILE', QVariant.String),
-                                                    QgsField('HRU_Slope', QVariant.float),
-                                                    QgsField('HRU_Area', QVariant.float),
-                                                    QgsField('HRU_Aspect', QVariant.float)])
+                                                    QgsField('HRU_Slope', QVariant.Double),
+                                                    QgsField('HRU_Area', QVariant.Double),
+                                                    QgsField('HRU_Aspect', QVariant.Double)])
 
-        del Sub_Lake_HRU_Layer         
+        if Path_Landuse_Ply == '#': ### landuse polygon is not provided  add landuse
+            mem_union.dataProvider().addAttributes([QgsField(Landuse_ID, QVariant.Int)])
+        if Path_Soil_Ply == '#':
+            mem_union.dataProvider().addAttributes([QgsField(Soil_ID, QVariant.Int)])
+        if Path_Veg_Ply == '#':
+           mem_union.dataProvider().addAttributes([QgsField(Veg_ID, QVariant.Int)])
+         
+        ###### done overlay and add all needed attribute 
+        ###### needs to update the attribute in the attribute table. 
+        
+          
+        
+        del Sub_Lake_HRU_Layer,mem_union       
         Qgs.exit()             
 
 
