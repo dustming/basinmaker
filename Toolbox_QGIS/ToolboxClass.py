@@ -1223,7 +1223,7 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
         layer_cat.updateFields()
         layer_cat.commitChanges()    
 #        processing.run("qgis:fieldcalculator", {'INPUT':layer_cat,'FIELD_NAME':'HRU_IsLake','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT':Path_finalcat_hru_out}) 
-        Sub_Lake_HRU = processing.run("qgis:fieldcalculator", {'INPUT':layer_cat,'FIELD_NAME':'HRU_IsLake','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT'::'memory:'})
+        Sub_Lake_HRU = processing.run("qgis:fieldcalculator", {'INPUT':layer_cat,'FIELD_NAME':'HRU_IsLake','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT':'memory:'})
         del layer_cat
         return Sub_Lake_HRU['OUTPUT'],Sub_Lake_HRU['OUTPUT'].crs().authid(),['HRULake_ID','HRU_IsLake',Sub_ID]
 
@@ -1364,7 +1364,7 @@ def Union_Ply_Layers_And_Simplify(processing,context,Merge_layer_list,dissolve_f
     
     ##union polygons
     if len(Merge_layer_list) == 1:
-        mem_union = processing.run("native:union", {'INPUT':Merge_layer_list[0],'OVERLAY':Merge_layer_list[i],'OVERLAY_FIELDS_PREFIX':'','OUTPUT':'memory:'},context = context)['OUTPUT'] 
+        mem_union = Merge_layer_list[0]
         mem_union_fix_ext  = processing.run("native:fixgeometries", {'INPUT':mem_union,'OUTPUT':'memory:'})['OUTPUT']
     elif len(Merge_layer_list) > 1:
         for i in range(0,len(Merge_layer_list)):
@@ -3816,7 +3816,7 @@ class LRRT:
             Readed_Data['ModelTime'] = Readed_Data.index.strftime('%m-%d-%Y')
             plotGuagelineobs(Scenario_NM,Readed_Data,os.path.join(self.OutputFolder,obs_nm + '.pdf'))
 
-    def GenerateHRUS(self,Path_Subbasin_Ply,Landuse_info='#',Soil_info='#',Veg_info='#',
+    def GenerateHRUS(self,Path_Subbasin_Ply,Landuse_info,Soil_info,Veg_info,
                      Sub_Lake_ID = 'HyLakeId',Sub_ID='SubId',
                      Path_Connect_Lake_ply = '#',Path_Non_Connect_Lake_ply = '#', Lake_Id = 'Hylak_id',
                      Path_Landuse_Ply = '#',Landuse_ID = 'Landuse_ID', 
@@ -3903,27 +3903,13 @@ class LRRT:
          
         ###### done overlay and add all needed attribute 
         ###### needs to update the attribute in the attribute table. 
-        
-          
-        
+        Landuse_info_data = pd.read_csv(Landuse_info)
+        Soil_infoo_data = pd.read_csv(Soil_info)
+        Veg_info_data = pd.read_csv(Veg_info)
+                  
         del Sub_Lake_HRU_Layer,mem_union       
         Qgs.exit()             
-
-
-#        else: ## if no land use layer provided, the value of land use id will be equal with HRU_IsLake, -1 or 1 indicate if it is a lake or not 
-#            formular = r' \"%s\" ' % Landuse_ID
-#            mem_addveg   = processing.run("qgis:fieldcalculator", {'INPUT':Sub_Lake_HRU_Layer,'FIELD_NAME':Veg_ID,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formular,'OUTPUT':os.path.join(OutputFolder,'veglake.shp')})#'memory:'})['OUTPUT']
-
-
         
-        # if SpRef_in == 'EPSG:4326':
-        #     processing.run("qgis:fieldcalculator", {'INPUT':Path_finalcat_hru2,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'area(transform($geometry, \'EPSG:4326\',\'EPSG:3573\'))','OUTPUT':Path_finalcat_hru_out})
-        # else: 
-        #     processing.run("qgis:fieldcalculator", {'INPUT':Path_finalcat_hru2,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'$area','OUTPUT':Path_finalcat_hru_out})
-
-
-
-
             
 
 
