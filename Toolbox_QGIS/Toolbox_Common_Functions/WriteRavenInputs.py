@@ -649,7 +649,7 @@ def Generate_Raven_Lake_rvh_String(catinfo,Raveinputsfolder,Model_Name):
           
     Examples
     --------
-    >>> from WriteRavenInputs import Generate_Raven_Channel_rvp_rvh_String
+    >>> from WriteRavenInputs import Generate_Raven_Lake_rvh_String
     >>> outFolderraven    = 'c:/path_to_the_raven_input_folder/'
     >>> DataFolder = "C:/Path_to_foldr_of_example_dataset_provided_in_Github_wiki/"
     >>> Model_Folder     = os.path.join(DataFolder,'Model')
@@ -667,7 +667,7 @@ def Generate_Raven_Lake_rvh_String(catinfo,Raveinputsfolder,Model_Name):
     tab = '       '
     
     for i in range(0,len(catinfo.index)):
-        if catinfo.iloc[i]['HyLakeId'] > 0 and catinfo.iloc[i]['HRU_Type'] == 1: ## lake hru
+        if catinfo.iloc[i]['HRU_IsLake'] > 0: ## lake hru
             lakeid = int(catinfo.iloc[i]['HyLakeId'])
             catid = catinfo.iloc[i]['SubId']
             A     = catinfo.iloc[i]['HRU_Area'] ### in meters
@@ -694,7 +694,7 @@ def Generate_Raven_Lake_rvh_String(catinfo,Raveinputsfolder,Model_Name):
     #### write lake input files for different lake zone
 
 def Generate_Raven_Channel_rvp_rvh_String(ocatinfo,Raveinputsfolder,lenThres,iscalmanningn,
-                                          Lake_As_Gauge,Model_Name,HRU_Type_info):#Writervhchanl(ocatinfo,Raveinputsfolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM,Lake_As_Gauge = False,Model_Name = 'test'):
+                                          Lake_As_Gauge,Model_Name):#Writervhchanl(ocatinfo,Raveinputsfolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM,Lake_As_Gauge = False,Model_Name = 'test'):
     """Generate string of raven chennel rvp input and rvh input
     
     Function that used to generate the content of raven rvh file and 
@@ -721,18 +721,7 @@ def Generate_Raven_Channel_rvp_rvh_String(ocatinfo,Raveinputsfolder,lenThres,isc
         as gauge subbasin.   
     Model_Name          : string
         The Raven model base name. File name of the raven input will be 
-        Model_Name.xxx.   
-    HRU_Type_info   : DataFrame 
-        A dataframe define HRU informations for each HRU type.
-        The detailed definititon of each columns for each HRU
-        type is in Raven model paramter file Model_Name.rvp.
-        The dataframe include following columns:
-        HRU_Type_ID     - integer, Id of each HRU type 
-        LAND_USE_CLASS  - string,  Landuse class of each HRU type
-        VEG_CLASS       - string,  Vegetation class of each HRU type
-        SOIL_PROFIL     - string,  Soil Profile of each HRU type 
-        IsLake          - integer, 1 it is a lake HRU
-                                   -1 it is not a lake HRU              
+        Model_Name.xxx.              
         
     Notes
     ------    
@@ -782,8 +771,8 @@ def Generate_Raven_Channel_rvp_rvh_String(ocatinfo,Raveinputsfolder,lenThres,isc
     >>> Lake_As_Gauge = -1
     >>> ncatinfo2 = ncatinfo.drop_duplicates('HRU_ID', keep='first')
     >>> Channel_rvp_file_path,Channel_rvp_string,Model_rvh_file_path,Model_rvh_string,Model_rvp_file_path,Model_rvp_string_modify = Generate_Raven_Channel_rvp_rvh_String(ncatinfo2,Raveinputsfolder,lenThres,
-    ...                                                                                                                                                                   iscalmanningn,Lake_As_Gauge,Model_Name,
-    ...                                                                                                                                                                   HRU_Type_info)
+    ...                                                                                                                                                                   iscalmanningn,Lake_As_Gauge,Model_Name
+    ...                                                                                                                                                                   )
     >>>
         
     """
@@ -877,8 +866,8 @@ def Generate_Raven_Channel_rvp_rvh_String(ocatinfo,Raveinputsfolder,lenThres,isc
     for i in range(0,len(catinfo_hru.index)):
         
         hruid = int(catinfo_hru['HRU_ID'].values[i])
-        catslope = catinfo_hru['BasSlope'].values[i]
-        cataspect= catinfo_hru['BasAspect'].values[i]
+        catslope = catinfo_hru['HRU_S_mean'].values[i]
+        cataspect= catinfo_hru['HRU_A_mean'].values[i]
         
         catarea2 = catinfo_hru['HRU_Area'].values[i]/1000/1000  ### in km2
         
@@ -887,21 +876,15 @@ def Generate_Raven_Channel_rvp_rvh_String(ocatinfo,Raveinputsfolder,lenThres,isc
         catid = str(int(catinfo_hru['SubId'].values[i]))+tab
         
         StrGidarea = str(catarea2)+tab
-        StrGidelev = str(catinfo_hru['MeanElev'].values[i])+tab
-        lat = str(catinfo_hru['centroid_y'].values[i])+tab
-        lon = str(catinfo_hru['centroid_x'].values[i])+tab
-        if catinfo_hru['IsLake'].values[i] > 0 and catinfo_hru['HRU_Type'].values[i] == 1:
-            LAND_USE_CLASS = 'Lake_HRU'+tab
-            VEG_CLASS = 'Lake_HRU'+tab
-            SOIL_PROFILE ='SOILPROF_Lake'+tab
-            AQUIFER_PROFILE ='[NONE]'+tab
-            TERRAIN_CLASS ='[NONE]'+tab        
-        else:    
-            LAND_USE_CLASS = 'FOREST'+tab
-            VEG_CLASS = 'FOREST'+tab
-            SOIL_PROFILE ='SOILPROF'+tab
-            AQUIFER_PROFILE ='[NONE]'+tab
-            TERRAIN_CLASS ='[NONE]'+tab
+        StrGidelev = str(catinfo_hru['HRU_E_mean'].values[i])+tab
+        lat = str(catinfo_hru['HRU_CenX'].values[i])+tab
+        lon = str(catinfo_hru['HRU_CenY'].values[i])+tab
+        LAND_USE_CLASS = catinfo_hru['LAND_USE_C'].values[i]+tab
+        VEG_CLASS = catinfo_hru['VEG_C'].values[i]+tab
+        SOIL_PROFILE =catinfo_hru['SOIL_PROF'].values[i]+tab
+        AQUIFER_PROFILE ='[NONE]'+tab
+        TERRAIN_CLASS ='[NONE]'+tab        
+
             
         SLOPE = str(catslope)+tab
         ASPECT = str(cataspect)+tab
