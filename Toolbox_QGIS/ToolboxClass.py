@@ -1407,7 +1407,7 @@ def Union_Ply_Layers_And_Simplify(processing,context,Merge_layer_list,dissolve_f
     
     
     mem_union_dis = processing.run("native:dissolve", {'INPUT':mem_union_fix_ext,'FIELD':dissolve_filedname_list,'OUTPUT':'memory:'},context = context)['OUTPUT']
-    processing.run("native:dissolve", {'INPUT':mem_union_fix_ext,'FIELD':dissolve_filedname_list,'OUTPUT':os.path.join(OutputFolder,'union_diso.shp')},context = context)
+#    processing.run("native:dissolve", {'INPUT':mem_union_fix_ext,'FIELD':dissolve_filedname_list,'OUTPUT':os.path.join(OutputFolder,'union_diso.shp')},context = context)
     
     return mem_union_dis
 
@@ -1437,7 +1437,9 @@ def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,disso
     ### add attributes columns 
     hru_layer.dataProvider().addAttributes([QgsField('LAND_USE_C', QVariant.String),
                                             QgsField('VEG_C', QVariant.String),
-                                            QgsField('SOIL_PROF', QVariant.String)])
+                                            QgsField('SOIL_PROF', QVariant.String),
+                                            QgsField('HRU_CenX', QVariant.Double),
+                                            QgsField('HRU_CenY', QVariant.Double)])
     hru_layer.updateFields()
     hru_layer.commitChanges()
     ### modify feature attributes 
@@ -1446,6 +1448,7 @@ def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,disso
         for sf in src_features:
             Is_lake_hru = sf['HRU_IsLake']
             lake_hru_ID = sf['HRULake_ID']
+            centroidxy  = sf.geometry().centroid().asPoint()
             if Is_lake_hru == 1:
                 sf[Landuse_ID] = int(9999)
                 sf[Veg_ID]     = int(9999)
@@ -1458,7 +1461,8 @@ def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,disso
                 sf['LAND_USE_C'] = Landuse_info_data.loc[Landuse_info_data[Landuse_ID] == int(sf[Landuse_ID]),'LAND_USE_C'].values[0]
                 sf['SOIL_PROF'] = Soil_info_data.loc[Soil_info_data[Soil_ID] == int(sf[Soil_ID]),'SOIL_PROF'].values[0]
                 sf['VEG_C'] = Veg_info_data.loc[Veg_info_data[Veg_ID] == int(sf[Veg_ID]),'VEG_C'].values[0]                
-
+            sf['HRU_CenX'] = centroidxy[0]
+            sf['HRU_CenY'] = centroidxy[1]
             hru_layer.updateFeature(sf) 
     
     ### merge lake hru.
@@ -1515,6 +1519,8 @@ def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,disso
     ### update HRU area
     formular        = 'area(transform($geometry, \'%s\',\'%s\'))' % (trg_crs,Project_crs)
     HRU_draf_final  = processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_reproj,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':False,'FORMULA':formular,'OUTPUT':'memory:'})['OUTPUT']
+
+    
 #    processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_reproj,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':False,'FORMULA':formular,'OUTPUT':os.path.join(OutputFolder,'hru_draft_final.shp')})
        
         
@@ -4024,14 +4030,10 @@ class LRRT:
         HRU_draf_final = Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer_draft,dissolve_filedname_list,
                                                Sub_ID,Landuse_ID,Soil_ID,Veg_ID,Landuse_info_data,Soil_info_data,
                                                Veg_info_data,DEM,Path_Subbasin_Ply,OutputFolder)
-                       
-#        processing.run("native:dissolve", {'INPUT':mem_union_veg,'FIELD':dissolve_filedname_list,'OUTPUT':os.path.join(OutputFolder,'union_diso223.shp')},context = context)
-
-         
-        ###### done overlay and add all needed attribute 
-        ###### needs to update the attribute in the attribute table. 
 
         
+        processing.run("qgis:fieldcalculator", {'INPUT':HRU_draf_final,'FIELD_NAME':'HRU_ID','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':0,'NEW_FIELD':True,'FORMULA':' @row_number','OUTPUT':output_hru_shp})
+                       
                   
         del Sub_Lake_HRU_Layer,mem_union       
         Qgs.exit()             
