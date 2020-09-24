@@ -1411,7 +1411,114 @@ def Union_Ply_Layers_And_Simplify(processing,context,Merge_layer_list,dissolve_f
     
     return mem_union_dis
 
+def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,dissolve_filedname_list,
+                         Sub_ID,Landuse_ID,Soil_ID,Veg_ID,Landuse_info_data,Soil_info_data,
+                         Veg_info_data,DEM,Path_Subbasin_Ply,OutputFolder): 
+                         
+    
+    ### calcuate area of each feature 
+    formular    = 'area(transform($geometry, \'%s\',\'%s\'))' % (trg_crs,Project_crs)
+    layer_area  = processing.run("qgis:fieldcalculator", {'INPUT':hru_layer,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formular,'OUTPUT':'memory:'})['OUTPUT']
+#    
+    
+    ### determine each lake hru's soil type 
+    Attri_table = Obtain_Attribute_Table(processing,context,layer_area)
+    
+    Attri_table_Lake_HRUS = Attri_table.loc[Attri_table['HRU_IsLake'] == 1]
+    Lake_HRU_IDS = np.unique(Attri_table_Lake_HRUS['HRULake_ID'].values)
+    Lake_Soil = Attri_table_Lake_HRUS[['HRULake_ID',Soil_ID]]
+    
+    for i in range(0,len(Lake_HRU_IDS)):
+        ilake_hru_id = Lake_HRU_IDS[i]
+        Attri_table_Lake_HRU_i = Attri_table.loc[Attri_table['HRULake_ID'] == ilake_hru_id]
+        Attri_table_Lake_HRU_i = Attri_table_Lake_HRU_i.sort_values(by='HRU_Area', ascending=False)
+        Lake_Soil.loc[Lake_Soil['HRULake_ID'] == ilake_hru_id,Soil_ID] == Attri_table_Lake_HRU_i[Soil_ID].values[0] ### soil id with maximum area 
+    
+    ### add attributes columns 
+    hru_layer.dataProvider().addAttributes([QgsField('LAND_USE_C', QVariant.String),
+                                            QgsField('VEG_C', QVariant.String),
+                                            QgsField('SOIL_PROF', QVariant.String)])
+    hru_layer.updateFields()
+    hru_layer.commitChanges()
+    ### modify feature attributes 
+    src_features = hru_layer.getFeatures()
+    with edit(hru_layer):
+        for sf in src_features:
+            Is_lake_hru = sf['HRU_IsLake']
+            lake_hru_ID = sf['HRULake_ID']
+            if Is_lake_hru == 1:
+                sf[Landuse_ID] = int(9999)
+                sf[Veg_ID]     = int(9999)
+#                print(Lake_Soil.loc[Lake_Soil['HRULake_ID'] == lake_hru_ID,Soil_ID].values)
+                sf[Soil_ID]    = int(Lake_Soil.loc[Lake_Soil['HRULake_ID'] == lake_hru_ID,Soil_ID].values[0])
+                sf['LAND_USE_C'] = Landuse_info_data.loc[Landuse_info_data[Landuse_ID] == int(sf[Landuse_ID]),'LAND_USE_C'].values[0]
+                sf['SOIL_PROF'] = 'Lake_' + Soil_info_data.loc[Soil_info_data[Soil_ID] == int(sf[Soil_ID]),'SOIL_PROF'].values[0]
+                sf['VEG_C'] = Veg_info_data.loc[Veg_info_data[Veg_ID] == int(sf[Veg_ID]),'VEG_C'].values[0]
+            else:
+                sf['LAND_USE_C'] = Landuse_info_data.loc[Landuse_info_data[Landuse_ID] == int(sf[Landuse_ID]),'LAND_USE_C'].values[0]
+                sf['SOIL_PROF'] = Soil_info_data.loc[Soil_info_data[Soil_ID] == int(sf[Soil_ID]),'SOIL_PROF'].values[0]
+                sf['VEG_C'] = Veg_info_data.loc[Veg_info_data[Veg_ID] == int(sf[Veg_ID]),'VEG_C'].values[0]                
 
+            hru_layer.updateFeature(sf) 
+
+    HRU_draft = processing.run("native:dissolve", {'INPUT':hru_layer,'FIELD':dissolve_filedname_list,'OUTPUT':'memory:'},context = context)['OUTPUT']
+
+#    processing.run("native:dissolve", {'INPUT':hru_layer,'FIELD':dissolve_filedname_list,'OUTPUT':os.path.join(OutputFolder,'hrudraft.shp')},context = context)
+    ### add subbasin attribute back to hru polygons 
+    HRU_draft_sub_info = processing.run("native:joinattributestable", {'INPUT':HRU_draft,'FIELD':Sub_ID,'INPUT_2':Path_Subbasin_Ply,'FIELD_2':Sub_ID,
+                    'FIELDS_TO_COPY':[],'METHOD':1,'DISCARD_NONMATCHING':False,'PREFIX':'',
+                    'OUTPUT':'memory:'},context = context)['OUTPUT']
+    
+    if DEM != '#':
+        
+        HRU_draft_proj = processing.run("native:reprojectlayer", {'INPUT':HRU_draft_sub_info,'TARGET_CRS':QgsCoordinateReferenceSystem(Project_crs),'OUTPUT':'memory:'})['OUTPUT']
+#        processing.run("native:reprojectlayer", {'INPUT':HRU_draft,'TARGET_CRS':QgsCoordinateReferenceSystem(Project_crs),'OUTPUT':os.path.join(OutputFolder,'hru_draft_proj.shp')})
+        DEM_proj = processing.run("gdal:warpreproject", {'INPUT':DEM,'SOURCE_CRS':None,'TARGET_CRS':QgsCoordinateReferenceSystem(Project_crs),
+                                                        'RESAMPLING':0,'NODATA':None,'TARGET_RESOLUTION':None,'OPTIONS':'','DATA_TYPE':0,
+                                                        'TARGET_EXTENT':None,'TARGET_EXTENT_CRS':None,'MULTITHREADING':False,
+                                                         'EXTRA':'','OUTPUT':'TEMPORARY_OUTPUT'})['OUTPUT']
+        DEM_clip = processing.run("gdal:cliprasterbymasklayer", {'INPUT':DEM_proj,'MASK':HRU_draft_proj,'SOURCE_CRS':None,
+                                                      'TARGET_CRS':QgsCoordinateReferenceSystem(Project_crs),'NODATA':None,'ALPHA_BAND':False,
+                                                      'CROP_TO_CUTLINE':True,'KEEP_RESOLUTION':False,
+                                                      'SET_RESOLUTION':False,'X_RESOLUTION':None,
+                                                      'Y_RESOLUTION':None,'MULTITHREADING':False,'OPTIONS':'',
+                                                      'DATA_TYPE':0,'EXTRA':'',
+                                                      'OUTPUT':'TEMPORARY_OUTPUT'})['OUTPUT'] 
+                                                      
+        DEM_slope  = processing.run("qgis:slope", {'INPUT':DEM_clip,'Z_FACTOR':1,'OUTPUT':'TEMPORARY_OUTPUT'})['OUTPUT'] 
+#        processing.run("qgis:slope", {'INPUT':DEM_clip,'Z_FACTOR':1,'OUTPUT':os.path.join(OutputFolder,'slope.tif')})
+        DEM_aspect = processing.run("qgis:aspect", {'INPUT':DEM_clip,'Z_FACTOR':1,'OUTPUT':'TEMPORARY_OUTPUT'})['OUTPUT']
+#        processing.run("qgis:aspect", {'INPUT':DEM_clip,'Z_FACTOR':1,'OUTPUT':os.path.join(OutputFolder,'aspect.tif')})
+        
+        
+        processing.run("qgis:zonalstatistics", {'INPUT_RASTER':DEM_slope,'RASTER_BAND':1,'INPUT_VECTOR':HRU_draft_proj,'COLUMN_PREFIX':'HRU_S_','STATS':[2]})
+        processing.run("qgis:zonalstatistics", {'INPUT_RASTER':DEM_aspect,'RASTER_BAND':1,'INPUT_VECTOR':HRU_draft_proj,'COLUMN_PREFIX':'HRU_A_','STATS':[2]})
+        processing.run("qgis:zonalstatistics", {'INPUT_RASTER':DEM_clip,'RASTER_BAND':1,'INPUT_VECTOR':HRU_draft_proj,'COLUMN_PREFIX':'HRU_E_','STATS':[2]})
+
+        HRU_draft_reproj = processing.run("native:reprojectlayer", {'INPUT':HRU_draft_proj,'TARGET_CRS':QgsCoordinateReferenceSystem(trg_crs),'OUTPUT':'memory:'})['OUTPUT']
+#        processing.run("native:reprojectlayer", {'INPUT':HRU_draft_proj,'TARGET_CRS':QgsCoordinateReferenceSystem(trg_crs),'OUTPUT':os.path.join(OutputFolder,'hru_draft_reproj.shp')})
+        
+    else: 
+        ## if no dem provided hru slope will use subbasin slope aspect and elevation 
+        formula = ' \"%s\" ' % 'BasSlope'
+        HRU_draft_sub_info_S = processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_sub_info,'FIELD_NAME':'HRU_S_mean','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
+
+        formula = ' \"%s\" ' % 'BasAspect'
+        HRU_draft_sub_info_A = processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_sub_info_S,'FIELD_NAME':'HRU_A_mean','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
+
+        formula = ' \"%s\" ' % 'MeanElev'
+        HRU_draft_sub_info_S = processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_sub_info_A,'FIELD_NAME':'HRU_E_mean','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
+        
+        HRU_draft_reproj = HRU_draft_sub_info_S
+    
+    ### update HRU area
+    formular        = 'area(transform($geometry, \'%s\',\'%s\'))' % (trg_crs,Project_crs)
+    HRU_draf_final  = processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_reproj,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':False,'FORMULA':formular,'OUTPUT':'memory:'})['OUTPUT']
+    processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_reproj,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':False,'FORMULA':formular,'OUTPUT':os.path.join(OutputFolder,'hru_draft_final.shp')})
+       
+        
+    return 
+            
     
 class LRRT:
     def __init__(self, dem_in = '#',dir_in = '#',hyshdply = '#',WidDep = '#',Lakefile = '#'
@@ -3848,7 +3955,7 @@ class LRRT:
         Sub_Lake_HRU_Layer,trg_crs,fieldnames_list = GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply = Path_Subbasin_Ply,Path_Connect_Lake_ply = Path_Connect_Lake_ply,
                                                                              Path_Non_Connect_Lake_ply = Path_Non_Connect_Lake_ply,Sub_ID=Sub_ID,Sub_Lake_ID = Sub_Lake_ID,Lake_Id = Lake_Id)
                                                                                           
-        fieldnames_list.extend([Landuse_ID,Soil_ID,Veg_ID,'LAND_USE_CLASS','VEG_CLASS','SOIL_PROFILE','HRU_Slope','HRU_Area','HRU_Aspect'])
+        fieldnames_list.extend([Landuse_ID,Soil_ID,Veg_ID,'LAND_USE_C','VEG_C','SOIL_PROF','HRU_Slope','HRU_Area','HRU_Aspect'])
         dissolve_filedname_list = ['HRULake_ID']
         Merge_layer_list.append(Sub_Lake_HRU_Layer) 
         
@@ -3886,26 +3993,44 @@ class LRRT:
         #### uniion polygons in the Merge_layer_list                           
         mem_union = Union_Ply_Layers_And_Simplify(processing,context,Merge_layer_list,dissolve_filedname_list,fieldnames,OutputFolder)
         
-        ###### add attributes into the polygon table     
-        mem_union.dataProvider().addAttributes([QgsField('LAND_USE_CLASS', QVariant.String),
-                                                    QgsField('VEG_CLASS', QVariant.String),
-                                                    QgsField('SOIL_PROFILE', QVariant.String),
-                                                    QgsField('HRU_Slope', QVariant.Double),
-                                                    QgsField('HRU_Area', QVariant.Double),
-                                                    QgsField('HRU_Aspect', QVariant.Double)])
+        #####
+        
+        Landuse_info_data = pd.read_csv(Landuse_info)
+        Soil_info_data = pd.read_csv(Soil_info)
+        Veg_info_data = pd.read_csv(Veg_info)
+        
+        
+                
+        if Path_Landuse_Ply == '#': ### landuse polygon is not provided, landused id the same is IS lake 1 is lake -1 non land 
+            formula = ' \"%s\" ' % 'HRU_IsLake'
+            mem_union_landuse = processing.run("qgis:fieldcalculator", {'INPUT':mem_union,'FIELD_NAME':Landuse_ID,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
+        else:
+            mem_union_landuse = mem_union
+            
+        if Path_Soil_Ply == '#': #if soil is not provied, it the value will be the same as land use 
+            formula = ' \"%s\" ' % Landuse_ID
+            mem_union_soil = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_landuse,'FIELD_NAME':Soil_ID,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
+        else:
+            mem_union_soil  = mem_union_landuse
+            
+        if Path_Veg_Ply == '#':  ### if no vegetation polygon is provide vegetation will be the same as landuse
+            formula = ' \"%s\" ' % Landuse_ID 
+            mem_union_veg = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_soil,'FIELD_NAME':Veg_ID,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
+        else:
+            mem_union_veg = mem_union_soil
+        
+        hru_layer_draft = mem_union_veg
+        Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer_draft,dissolve_filedname_list,
+                         Sub_ID,Landuse_ID,Soil_ID,Veg_ID,Landuse_info_data,Soil_info_data,
+                         Veg_info_data,DEM,Path_Subbasin_Ply,OutputFolder)
+                       
+#        processing.run("native:dissolve", {'INPUT':mem_union_veg,'FIELD':dissolve_filedname_list,'OUTPUT':os.path.join(OutputFolder,'union_diso223.shp')},context = context)
 
-        if Path_Landuse_Ply == '#': ### landuse polygon is not provided  add landuse
-            mem_union.dataProvider().addAttributes([QgsField(Landuse_ID, QVariant.Int)])
-        if Path_Soil_Ply == '#':
-            mem_union.dataProvider().addAttributes([QgsField(Soil_ID, QVariant.Int)])
-        if Path_Veg_Ply == '#':
-           mem_union.dataProvider().addAttributes([QgsField(Veg_ID, QVariant.Int)])
          
         ###### done overlay and add all needed attribute 
         ###### needs to update the attribute in the attribute table. 
-        Landuse_info_data = pd.read_csv(Landuse_info)
-        Soil_infoo_data = pd.read_csv(Soil_info)
-        Veg_info_data = pd.read_csv(Veg_info)
+
+        
                   
         del Sub_Lake_HRU_Layer,mem_union       
         Qgs.exit()             
