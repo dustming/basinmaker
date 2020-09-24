@@ -1460,7 +1460,8 @@ def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,disso
                 sf['VEG_C'] = Veg_info_data.loc[Veg_info_data[Veg_ID] == int(sf[Veg_ID]),'VEG_C'].values[0]                
 
             hru_layer.updateFeature(sf) 
-
+    
+    ### merge lake hru.
     HRU_draft = processing.run("native:dissolve", {'INPUT':hru_layer,'FIELD':dissolve_filedname_list,'OUTPUT':'memory:'},context = context)['OUTPUT']
 
 #    processing.run("native:dissolve", {'INPUT':hru_layer,'FIELD':dissolve_filedname_list,'OUTPUT':os.path.join(OutputFolder,'hrudraft.shp')},context = context)
