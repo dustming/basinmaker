@@ -1514,10 +1514,10 @@ def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,disso
     ### update HRU area
     formular        = 'area(transform($geometry, \'%s\',\'%s\'))' % (trg_crs,Project_crs)
     HRU_draf_final  = processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_reproj,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':False,'FORMULA':formular,'OUTPUT':'memory:'})['OUTPUT']
-    processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_reproj,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':False,'FORMULA':formular,'OUTPUT':os.path.join(OutputFolder,'hru_draft_final.shp')})
+#    processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_reproj,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':False,'FORMULA':formular,'OUTPUT':os.path.join(OutputFolder,'hru_draft_final.shp')})
        
         
-    return 
+    return HRU_draf_final
             
     
 class LRRT:
@@ -4020,9 +4020,9 @@ class LRRT:
             mem_union_veg = mem_union_soil
         
         hru_layer_draft = mem_union_veg
-        Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer_draft,dissolve_filedname_list,
-                         Sub_ID,Landuse_ID,Soil_ID,Veg_ID,Landuse_info_data,Soil_info_data,
-                         Veg_info_data,DEM,Path_Subbasin_Ply,OutputFolder)
+        HRU_draf_final = Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer_draft,dissolve_filedname_list,
+                                               Sub_ID,Landuse_ID,Soil_ID,Veg_ID,Landuse_info_data,Soil_info_data,
+                                               Veg_info_data,DEM,Path_Subbasin_Ply,OutputFolder)
                        
 #        processing.run("native:dissolve", {'INPUT':mem_union_veg,'FIELD':dissolve_filedname_list,'OUTPUT':os.path.join(OutputFolder,'union_diso223.shp')},context = context)
 
