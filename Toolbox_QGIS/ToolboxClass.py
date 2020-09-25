@@ -1381,7 +1381,7 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
             layer_cat.updateFeature(sf)
                 
     Sub_Lake_HRU = processing.run("native:dissolve", {'INPUT':layer_cat,'FIELD':['HRULake_ID'],'OUTPUT':'memory:'},context = context)
-#    Sub_Lake_HRU2 = processing.run("native:dissolve", {'INPUT':layer_cat,'FIELD':['HRULake_ID'],'OUTPUT':Path_finalcat_hru_out},context = context)
+    Sub_Lake_HRU2 = processing.run("native:dissolve", {'INPUT':layer_cat,'FIELD':['HRULake_ID'],'OUTPUT':Path_finalcat_hru_out},context = context)
     del layer_cat
     return Sub_Lake_HRU['OUTPUT'],Sub_Lake_HRU['OUTPUT'].crs().authid(),['HRULake_ID','HRU_IsLake',Sub_ID] 
 ############
@@ -1428,7 +1428,7 @@ def Reproj_Clip_Dissolve_Simplify_Polygon(processing,context,layer_path,Project_
     layer_fix  = processing.run("native:fixgeometries", {'INPUT':layer_proj,'OUTPUT':'memory:'})['OUTPUT']
     layer_clip = processing.run("native:clip", {'INPUT':layer_fix,'OVERLAY':Layer_clip,'OUTPUT':'memory:'})['OUTPUT']
     layer_dis  = processing.run("native:dissolve", {'INPUT':layer_clip,'FIELD':[Class_Col],'OUTPUT':'memory:'},context = context)['OUTPUT']
-
+    processing.run("qgis:createspatialindex", {'INPUT':layer_dis})
 
 
 #    formular = 'area(transform($geometry, \'%s\',\'%s\'))' % (trg_crs,Project_crs)
@@ -1509,6 +1509,7 @@ def Union_Ply_Layers_And_Simplify(processing,context,Merge_layer_list,dissolve_f
             if i == 0:
                 mem_union          = Merge_layer_list[i]
                 mem_union_fix_ext  = processing.run("native:fixgeometries", {'INPUT':mem_union,'OUTPUT':'memory:'})['OUTPUT']
+                processing.run("qgis:createspatialindex", {'INPUT':mem_union_fix_ext})
             else:
                 mem_union_fix_temp = mem_union_fix_ext
                 del mem_union_fix_ext
@@ -1527,8 +1528,10 @@ def Union_Ply_Layers_And_Simplify(processing,context,Merge_layer_list,dissolve_f
                     formular = ' \"%s\" > 0  AND  \"%s\" > 0 AND  \"%s\" > 0 AND  \"%s\" > 0 AND  \"%s\" > 0  AND  \"%s\" > 0' % (dissolve_filedname_list[0],dissolve_filedname_list[1],dissolve_filedname_list[2],dissolve_filedname_list[3],dissolve_filedname_list[4],dissolve_filedname_list[5])
                 if i > 5 :    
                     print("error maximum number of polygons are 5")
-#                print(formular)
+                
                 mem_union_fix_ext = processing.run("native:extractbyexpression", {'INPUT':mem_union_fix,'EXPRESSION':formular,'OUTPUT':'memory:'})['OUTPUT']
+                processing.run("qgis:createspatialindex", {'INPUT':mem_union_fix_ext})
+                print(formular)
 #            processing.run("native:union", {'INPUT':mem_union_temp,'OVERLAY':Merge_layer_list[i],'OVERLAY_FIELDS_PREFIX':'','OUTPUT':os.path.join(OutputFolder,'union.shp')},context = context)
     else:
         print("No polygon needs to be overlaied.........should not happen ")
@@ -1550,7 +1553,8 @@ def Union_Ply_Layers_And_Simplify(processing,context,Merge_layer_list,dissolve_f
     return mem_union_dis
 
 def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,dissolve_filedname_list,
-                         Sub_ID,Landuse_ID,Soil_ID,Veg_ID,Landuse_info_data,Soil_info_data,
+                         Sub_ID,Landuse_ID,Soil_ID,Veg_ID,Other_Ply_ID_1,Other_Ply_ID_2,
+                         Landuse_info_data,Soil_info_data,
                          Veg_info_data,DEM,Path_Subbasin_Ply,OutputFolder): 
 
     """ Generate attributes of each HRU
@@ -1663,13 +1667,15 @@ def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,disso
     
     Attri_table_Lake_HRUS = Attri_table.loc[Attri_table['HRU_IsLake'] == 1]
     Lake_HRU_IDS = np.unique(Attri_table_Lake_HRUS['HRULake_ID'].values)
-    Lake_Soil = Attri_table_Lake_HRUS[['HRULake_ID',Soil_ID]]
-    
+    Lake_Soil = Attri_table_Lake_HRUS[['HRULake_ID',Soil_ID,Other_Ply_ID_1,Other_Ply_ID_2]] 
+        
     for i in range(0,len(Lake_HRU_IDS)):
         ilake_hru_id = Lake_HRU_IDS[i]
         Attri_table_Lake_HRU_i = Attri_table.loc[Attri_table['HRULake_ID'] == ilake_hru_id]
         Attri_table_Lake_HRU_i = Attri_table_Lake_HRU_i.sort_values(by='HRU_Area', ascending=False)
         Lake_Soil.loc[Lake_Soil['HRULake_ID'] == ilake_hru_id,Soil_ID] == Attri_table_Lake_HRU_i[Soil_ID].values[0] ### soil id with maximum area 
+        Lake_Soil.loc[Lake_Soil['HRULake_ID'] == ilake_hru_id,Other_Ply_ID_1] == Attri_table_Lake_HRU_i[Other_Ply_ID_1].values[0] ### soil id with maximum area 
+        Lake_Soil.loc[Lake_Soil['HRULake_ID'] == ilake_hru_id,Other_Ply_ID_2] == Attri_table_Lake_HRU_i[Other_Ply_ID_2].values[0] ### soil id with maximum area 
     
     ### add attributes columns 
     hru_layer.dataProvider().addAttributes([QgsField('LAND_USE_C', QVariant.String),
@@ -1691,6 +1697,8 @@ def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,disso
                 sf[Veg_ID]     = int(9999)
 #                print(Lake_Soil.loc[Lake_Soil['HRULake_ID'] == lake_hru_ID,Soil_ID].values)
                 sf[Soil_ID]    = int(Lake_Soil.loc[Lake_Soil['HRULake_ID'] == lake_hru_ID,Soil_ID].values[0])
+                sf[Other_Ply_ID_1]    = int(Lake_Soil.loc[Lake_Soil['HRULake_ID'] == lake_hru_ID,Other_Ply_ID_1].values[0])
+                sf[Other_Ply_ID_2]    = int(Lake_Soil.loc[Lake_Soil['HRULake_ID'] == lake_hru_ID,Other_Ply_ID_2].values[0])
                 sf['LAND_USE_C'] = Landuse_info_data.loc[Landuse_info_data[Landuse_ID] == int(sf[Landuse_ID]),'LAND_USE_C'].values[0]
                 sf['SOIL_PROF'] = 'Lake_' + Soil_info_data.loc[Soil_info_data[Soil_ID] == int(sf[Soil_ID]),'SOIL_PROF'].values[0]
                 sf['VEG_C'] = Veg_info_data.loc[Veg_info_data[Veg_ID] == int(sf[Veg_ID]),'VEG_C'].values[0]
@@ -4182,8 +4190,8 @@ class LRRT:
                      Path_Landuse_Ply = '#',Landuse_ID = 'Landuse_ID', 
                      Path_Soil_Ply = '#',Soil_ID = 'Soil_ID', 
                      Path_Veg_Ply = '#',Veg_ID = 'Veg_ID', 
-                     Path_Other_Ply_1='#', Other_Ply_ID_1='#',
-                     Path_Other_Ply_2='#', Other_Ply_ID_2='#',
+                     Path_Other_Ply_1='#', Other_Ply_ID_1='O_ID_1',
+                     Path_Other_Ply_2='#', Other_Ply_ID_2='O_ID_2',
                      DEM = '#',Project_crs = 'EPSG:3573',
                      OutputFolder = '#'):
                      
@@ -4386,7 +4394,7 @@ class LRRT:
                     
         if Path_Other_Ply_1 != '#':
             layer_other_1_dis = Reproj_Clip_Dissolve_Simplify_Polygon(processing,context,Path_Other_Ply_1,Project_crs,trg_crs,Other_Ply_ID_1,Sub_Lake_HRU_Layer)
-            Merge_layer_list.append(layer_other_1_fix)
+            Merge_layer_list.append(layer_other_1_dis)
             fieldnames_list.append(Other_Ply_ID_1)
             dissolve_filedname_list.append(Other_Ply_ID_1)
             
@@ -4399,6 +4407,7 @@ class LRRT:
         
         fieldnames = set(fieldnames_list) 
         
+        print("begin union")
         #### uniion polygons in the Merge_layer_list                           
         mem_union = Union_Ply_Layers_And_Simplify(processing,context,Merge_layer_list,dissolve_filedname_list,fieldnames,OutputFolder)
         
@@ -4427,10 +4436,23 @@ class LRRT:
             mem_union_veg = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_soil,'FIELD_NAME':Veg_ID,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
         else:
             mem_union_veg = mem_union_soil
-        
-        hru_layer_draft = mem_union_veg
+
+        if Path_Other_Ply_1 == '#':  ### if no vegetation polygon is provide vegetation will be the same as landuse
+            formula = ' \"%s\" ' % 'HRU_IsLake' 
+            mem_union_o1 = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_veg,'FIELD_NAME':Other_Ply_ID_1,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
+        else:
+            mem_union_o1 = mem_union_veg
+
+        if Path_Other_Ply_2 == '#':  ### if no vegetation polygon is provide vegetation will be the same as landuse
+            formula = ' \"%s\" ' % 'HRU_IsLake' 
+            mem_union_o2 = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_o1,'FIELD_NAME':Other_Ply_ID_2,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
+        else:
+            mem_union_o2 = mem_union_o1
+                    
+        hru_layer_draft = mem_union_o2
         HRU_draf_final = Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer_draft,dissolve_filedname_list,
-                                               Sub_ID,Landuse_ID,Soil_ID,Veg_ID,Landuse_info_data,Soil_info_data,
+                                               Sub_ID,Landuse_ID,Soil_ID,Veg_ID,Other_Ply_ID_1,Other_Ply_ID_2,
+                                               Landuse_info_data,Soil_info_data,
                                                Veg_info_data,DEM,Path_Subbasin_Ply,OutputFolder)
 
         
