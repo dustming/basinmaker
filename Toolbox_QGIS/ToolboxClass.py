@@ -1513,7 +1513,10 @@ def Union_Ply_Layers_And_Simplify(processing,context,Merge_layer_list,dissolve_f
             else:
                 mem_union_fix_temp = mem_union_fix_ext
                 del mem_union_fix_ext
-                mem_union      = processing.run("native:union", {'INPUT':mem_union_fix_temp,'OVERLAY':Merge_layer_list[i],'OVERLAY_FIELDS_PREFIX':'','OUTPUT':'memory:'},context = context)['OUTPUT'] 
+#                mem_union      = processing.run("native:union", {'INPUT':mem_union_fix_temp,'OVERLAY':Merge_layer_list[i],'OVERLAY_FIELDS_PREFIX':'','OUTPUT':'memory:'},context = context)['OUTPUT'] 
+                mem_union      = processing.run("saga:polygonunion", {'A':mem_union_fix_temp,'B':Merge_layer_list[i],'SPLIT':True,'RESULT':'TEMPORARY_OUTPUT'},context = context)['RESULT'] 
+#                print(mem_union)
+
                 mem_union_fix  = processing.run("native:fixgeometries", {'INPUT':mem_union,'OUTPUT':'memory:'})['OUTPUT']
                 ### remove unexpect polygon with area is 0 and some column value is null
                 if i == 1:
@@ -1530,6 +1533,7 @@ def Union_Ply_Layers_And_Simplify(processing,context,Merge_layer_list,dissolve_f
                     print("error maximum number of polygons are 5")
                 
                 mem_union_fix_ext = processing.run("native:extractbyexpression", {'INPUT':mem_union_fix,'EXPRESSION':formular,'OUTPUT':'memory:'})['OUTPUT']
+#                mem_union_fix_ext = mem_union_fix
                 processing.run("qgis:createspatialindex", {'INPUT':mem_union_fix_ext})
                 print(formular)
 #            processing.run("native:union", {'INPUT':mem_union_temp,'OVERLAY':Merge_layer_list[i],'OVERLAY_FIELDS_PREFIX':'','OUTPUT':os.path.join(OutputFolder,'union.shp')},context = context)

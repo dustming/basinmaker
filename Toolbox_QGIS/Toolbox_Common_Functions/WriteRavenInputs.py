@@ -489,22 +489,19 @@ def Generate_Raven_Obs_rvt_String(catinfo,outFolderraven,outObsfileFolder,starty
         iobs_src = obsnms.loc[idx,'SRC_obs']
         flowdata = pd.DataFrame(np.full((len(Date),2),-1.2345),columns = ['Flow','QC'],index = Date)
         if iobs_src[0] == '-':
-            continue 
+            Finddata = False
         elif iobs_src  == 'US':
             if DownLoadObsData == True:
                 flowdata_read, DA_obs_data,Finddata    = DownloadStreamflowdata_US(Station_NM = iobs_nm,StartYear = startyear,EndYear = endyear)
             else:
-                Finddata = False
-                continue                
+                Finddata = False                
         elif iobs_src  == 'CA':
             if CA_HYDAT != '#' and DownLoadObsData == True:
                 flowdata_read, DA_obs_data,Finddata = DownloadStreamflowdata_CA(Station_NM = iobs_nm,CA_HYDAT = CA_HYDAT,StartYear = startyear,EndYear = endyear)
             else:
-                Finddata = False
-                continue                
+                Finddata = False              
         else:
-            print("Country not included yet ")
-            continue
+            Finddata = False
         
         ####check if data are founded, and assign it to the output dataframes 
         if Finddata == False:
