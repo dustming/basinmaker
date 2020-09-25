@@ -1662,7 +1662,7 @@ def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,disso
                              
     
     ### calcuate area of each feature 
-    formular    = 'area(transform($geometry, \'%s\',\'%s\'))' % (trg_crs,Project_crs)
+    formular    = 'area(transform($geometry, \'%s\',\'%s\'))' % (hru_layer.crs().authid(),Project_crs)
     layer_area  = processing.run("qgis:fieldcalculator", {'INPUT':hru_layer,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formular,'OUTPUT':'memory:'})['OUTPUT']
 #    
     
@@ -4452,8 +4452,11 @@ class LRRT:
             mem_union_o2 = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_o1,'FIELD_NAME':Other_Ply_ID_2,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
         else:
             mem_union_o2 = mem_union_o1
-                    
-        hru_layer_draft = mem_union_o2
+            
+            
+        hru_layer_draft  = mem_union_o2          
+#        hru_layer_draft = processing.run("native:reprojectlayer", {'INPUT':mem_union_o2,'TARGET_CRS':QgsCoordinateReferenceSystem('EPSG:4326'),'OUTPUT':'memory:'})['OUTPUT']
+
         HRU_draf_final = Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer_draft,dissolve_filedname_list,
                                                Sub_ID,Landuse_ID,Soil_ID,Veg_ID,Other_Ply_ID_1,Other_Ply_ID_2,
                                                Landuse_info_data,Soil_info_data,
