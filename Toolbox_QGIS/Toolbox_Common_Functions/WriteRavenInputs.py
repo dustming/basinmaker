@@ -797,13 +797,14 @@ def Generate_Raven_Channel_rvp_rvh_String(ocatinfo,Raveinputsfolder,lenThres,isc
     
     
     catinfo_sub = catinfo.drop_duplicates('SubId', keep='first')### remove duplicated subids, beacuse of including hrus in the dataframe 
+    print(catinfo_sub[['SubId','DowSubId']])
     print('Total number of Subbasins are     ' +  str(int((len(catinfo_sub))))+'   '+'SubId')
     for i in range(0,len(catinfo_sub)):
         ### Get catchment width and dpeth
         catid = int(catinfo_sub['SubId'].values[i])
         downcatid= int(catinfo_sub['DowSubId'].values[i])
         temp = catinfo_sub['RivLength'].values[i]
-        
+
         if (float(temp) > lenThres):
             catlen = float(temp)/1000 #### in km
             strRlen = str(catlen)
@@ -814,6 +815,7 @@ def Generate_Raven_Channel_rvp_rvh_String(ocatinfo,Raveinputsfolder,lenThres,isc
             strRlen = 'ZERO-'
         #####################################################3
         Strcat = str(catid)
+#        print(catid,downcatid,len(catinfo_sub.loc[catinfo_sub['SubId'] == downcatid]))
         if catid == downcatid:
             StrDid = str(-1)
         elif len(catinfo_sub.loc[catinfo_sub['SubId'] == downcatid]) == 0:
@@ -821,6 +823,8 @@ def Generate_Raven_Channel_rvp_rvh_String(ocatinfo,Raveinputsfolder,lenThres,isc
         else:
             StrDid = str(int(catinfo_sub['DowSubId'].values[i]))
             
+#        print(StrDid)    
+        
         pronam = 'Chn_'+ Strcat
 
         chslope = max(catinfo_sub['RivSlope'].values[i],0.00001)
@@ -866,7 +870,7 @@ def Generate_Raven_Channel_rvp_rvh_String(ocatinfo,Raveinputsfolder,lenThres,isc
         catslope = catinfo_hru['HRU_S_mean'].values[i]
         cataspect= catinfo_hru['HRU_A_mean'].values[i]
         
-        catarea2 = catinfo_hru['HRU_Area'].values[i]/1000/1000  ### in km2
+        catarea2 = max(0.0001, catinfo_hru['HRU_Area'].values[i]/1000/1000)  ### in km2
         
         StrGid =  str(hruid) #str( catinfo_hru.iloc[i][HRU_Area_NM])+tab
         
