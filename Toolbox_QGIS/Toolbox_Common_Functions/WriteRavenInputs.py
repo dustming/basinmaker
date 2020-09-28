@@ -797,7 +797,7 @@ def Generate_Raven_Channel_rvp_rvh_String(ocatinfo,Raveinputsfolder,lenThres,isc
     
     
     catinfo_sub = catinfo.drop_duplicates('SubId', keep='first')### remove duplicated subids, beacuse of including hrus in the dataframe 
-    print(catinfo_sub[['SubId','DowSubId']])
+#    print(catinfo_sub[['SubId','DowSubId']])
     print('Total number of Subbasins are     ' +  str(int((len(catinfo_sub))))+'   '+'SubId')
     for i in range(0,len(catinfo_sub)):
         ### Get catchment width and dpeth

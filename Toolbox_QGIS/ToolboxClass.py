@@ -3513,7 +3513,7 @@ class LRRT:
         tempinfo = Dbf5(finalcatchpath[:-3] + "dbf")#np.genfromtxt(hyinfocsv,delimiter=',')
         ncatinfo = tempinfo.to_dataframe()
         ncatinfo2 = ncatinfo.drop_duplicates('HRU_ID', keep='first')
-        ncatinfo2 = ncatinfo2[ncatinfo2['HRU_ID'] > 0]
+        ncatinfo2 = ncatinfo2.loc[(ncatinfo2['HRU_ID'] > 0) & (ncatinfo2['SubId'] > 0)]
 
         Channel_rvp_file_path,Channel_rvp_string,Model_rvh_file_path,Model_rvh_string,Model_rvp_file_path,Model_rvp_string_modify = Generate_Raven_Channel_rvp_rvh_String(ncatinfo2,Raveinputsfolder,lenThres,
                                                                                                                                                                      iscalmanningn,Lake_As_Gauge,Model_Name
