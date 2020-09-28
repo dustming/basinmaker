@@ -1663,6 +1663,7 @@ def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,disso
     
     ### calcuate area of each feature 
     formular    = 'area(transform($geometry, \'%s\',\'%s\'))' % (hru_layer.crs().authid(),Project_crs)
+#    print(formular)
     layer_area  = processing.run("qgis:fieldcalculator", {'INPUT':hru_layer,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formular,'OUTPUT':'memory:'})['OUTPUT']
 #    
     
