@@ -530,11 +530,37 @@ def GenerateFinalPourpoints(fac,fdir,lake,cat3,bsid,blid,boid,nrows,ncols,cat,ob
 #######
 ####
 # ####################################################33
+def Check_If_Str_Is_Head_Stream(prow,pcol,nrows,ncols,str,strid):
 
-
+    noout=True
+    ### the point prow and pcol is not surrounded by oter strems, except
+    ### stream with stream id = strid 
+    if prow != 0 and prow != nrows -1 and pcol != 0 and pcol != ncols-1:
+        
+        if str[prow-1,pcol+1] > 0 and str[prow-1,pcol+1] != strid:
+            noout=False
+        if str[prow-1,pcol-1] > 0 and str[prow-1,pcol-1] != strid:
+            noout=False
+        if str[prow-1,pcol  ] > 0 and   str[prow-1,pcol] != strid:
+            noout=False
+        if str[prow,pcol+1  ] > 0 and str[prow,pcol+1] != strid:
+            noout=False
+        if str[prow,pcol-1  ] > 0 and str[prow,pcol-1] != strid:
+            noout=False
+        if str[prow+1,pcol-1] > 0 and str[prow+1,pcol-1] != strid:
+            noout=False
+        if str[prow+1,pcol+1] > 0 and str[prow+1,pcol+1] != strid:
+            noout=False
+        if str[prow+1,pcol  ] > 0 and str[prow+1,pcol]  != strid:
+            noout=False
+    return noout
+        
+    
+###
 def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir,Is_divid_region):
     GP_cat = copy.copy(cat)
     sblid = copy.copy(blid)
+    Str_new = copy.copy(Str)
     ############### Part 1 Get all pourpoints of hydroshed catchment
     arcatid = np.unique(cat)#### cat all catchment idd
     arcatid = arcatid[arcatid>=0]
@@ -550,7 +576,29 @@ def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir,Is_divid_re
         catoutloc[i,1] = trow  #### catchment pourpont row
         catoutloc[i,2] = tcol  #### catchment pourpont col
 #    writeraster(outFolder+subid+"_Pourpoints_1.asc",GP_cat)
-
+    
+    #### make the end point of stream in the head water shed to be a pourpoints 
+    
+    Strids = np.unique(Str)
+    Strids = Strids [Strids > 0]
+    newstr_id = max(Strids) + 10
+    for i in range(0,len(Strids)):
+        strid = Strids[i]
+        strrowcol = np.argwhere(Str == strid).astype(int)
+        nstrrow = strrowcol.shape[0]
+        iStr = np.full((nstrrow,4),-9999)##### 0 row, 1 col, 2 fac,
+        iStr[:,0] = strrowcol[:,0]
+        iStr[:,1] = strrowcol[:,1]
+        iStr[:,2] = fac[strrowcol[:,0],strrowcol[:,1]]
+        iStr = iStr[iStr[:,2].argsort()].astype(int)
+        
+        Start_Pt_row = iStr[0,0]
+        Start_Pt_col = iStr[0,1]
+        Is_Head_Stream = Check_If_Str_Is_Head_Stream(Start_Pt_row,Start_Pt_col,nrows,ncols,Str,strid)
+        if Is_Head_Stream == True:
+            Str_new[Start_Pt_row,Start_Pt_col]=newstr_id #### change the outlet of catchment into wid
+            newstr_id = newstr_id + 1            
+    ######
     ##################Part 2 Get pourpoints of Lake inflow streams
     arlakeid = np.unique(lake)
     arlakeid = arlakeid[arlakeid>=0]
@@ -725,7 +773,7 @@ def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir,Is_divid_re
         #### add lake outlet
         GP_cat[lakeacc[len(lakeacc)-1,0],lakeacc[len(lakeacc)-1,1]]= sblid
         sblid = sblid + 1
-    return GP_cat,Lakemorestream
+    return GP_cat,Lakemorestream,Str_new
 ###################################################################3
 
 
@@ -2769,7 +2817,7 @@ class LRRT:
 
 
 ####
-        Pourpoints,Lakemorestream = GenerPourpoint(cat1_arr,Lake1,str_array,self.nrows,self.ncols,blid,bsid,bcid,acc_array,dir_array,Is_divid_region)
+        Pourpoints,Lakemorestream,Str_new = GenerPourpoint(cat1_arr,Lake1,str_array,self.nrows,self.ncols,blid,bsid,bcid,acc_array,dir_array,Is_divid_region)
         temparray[:,:] = Pourpoints[:,:]
         temparray.write(mapname="Pourpoints_1", overwrite=True)
         grass.run_command('r.null', map='Pourpoints_1',setnull=-9999)
@@ -2854,23 +2902,23 @@ class LRRT:
         temparray.write(mapname="finalcat", overwrite=True)
         grass.run_command('r.null', map='finalcat',setnull=-9999)
         grass.run_command('r.to.vect', input='finalcat',output='finalcat_F1',type='area', overwrite = True)
-        grass.run_command('r.out.gdal', input = 'finalcat',output = os.path.join(self.tempfolder,'cat_finaltddd.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
+#        grass.run_command('r.out.gdal', input = 'finalcat',output = os.path.join(self.tempfolder,'cat_finaltddd.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
         temparray[:,:] = Non_con_lake_cat[:,:]
         temparray.write(mapname="Non_con_lake_cat", overwrite=True)
         grass.run_command('r.null', map='Non_con_lake_cat',setnull=-9999)
 
 ####   dissolve final catchment polygons
-        grass.run_command('v.db.addcolumn', map= 'finalcat_F1', columns = "Gridcode VARCHAR(40)")
-        grass.run_command('v.db.update', map= 'finalcat_F1', column = "Gridcode",qcol = 'value')
+#        grass.run_command('v.db.addcolumn', map= 'finalcat_F1', columns = "Gridcode VARCHAR(40)")
+#        grass.run_command('v.db.update', map= 'finalcat_F1', column = "Gridcode",qcol = 'value')
 #    grass.run_command('v.reclass', input= 'finalcat_F1', column = "Gridcode",output = 'finalcat_F',overwrite = True)
-        grass.run_command('v.dissolve', input= 'finalcat_F1', column = "Gridcode",output = 'finalcat_F',overwrite = True)
+#        grass.run_command('v.dissolve', input= 'finalcat_F1', column = "Gridcode",output = 'finalcat_F',overwrite = True)
 #    grass.run_command('v.select',ainput = 'str',binput = 'finalcat_F',output = 'str_finalcat',overwrite = True)
-        grass.run_command('v.overlay',ainput = 'str',binput = 'finalcat_F1',operator = 'and',output = 'str_finalcat',overwrite = True)
-        grass.run_command('v.out.ogr', input = 'str_finalcat',output = os.path.join(self.tempfolder,'str_finalcat.shp'),format= 'ESRI_Shapefile',overwrite = True)
-        grass.run_command('v.out.ogr', input = 'finalcat_F1',output = os.path.join(self.tempfolder,'finalcat_F1.shp'),format= 'ESRI_Shapefile',overwrite = True)
-        grass.run_command('v.out.ogr', input = 'str',output = os.path.join(self.tempfolder,'str.shp'),format= 'ESRI_Shapefile',overwrite = True)
-        grass.run_command('r.to.vect', input='SelectedLakes',output='SelectedLakes_F',type='area', overwrite = True)
-        grass.run_command('v.out.ogr', input = 'str_finalcat',output = os.path.join(self.tempfolder,'str_finalcat.shp'),format= 'ESRI_Shapefile',overwrite = True)
+#        grass.run_command('v.overlay',ainput = 'str',binput = 'finalcat_F1',operator = 'and',output = 'str_finalcat',overwrite = True)
+#        grass.run_command('v.out.ogr', input = 'str_finalcat',output = os.path.join(self.tempfolder,'str_finalcat.shp'),format= 'ESRI_Shapefile',overwrite = True)
+#        grass.run_command('v.out.ogr', input = 'finalcat_F1',output = os.path.join(self.tempfolder,'finalcat_F1.shp'),format= 'ESRI_Shapefile',overwrite = True)
+#        grass.run_command('v.out.ogr', input = 'str',output = os.path.join(self.tempfolder,'str.shp'),format= 'ESRI_Shapefile',overwrite = True)
+#        grass.run_command('r.to.vect', input='SelectedLakes',output='SelectedLakes_F',type='area', overwrite = True)
+#        grass.run_command('v.out.ogr', input = 'str_finalcat',output = os.path.join(self.tempfolder,'str_finalcat.shp'),format= 'ESRI_Shapefile',overwrite = True)
 #    grass.run_command('v.db.join', map= 'SelectedLakes_F',column = 'value', other_table = 'result',other_column ='SubId', overwrite = True)
 
 
@@ -2878,7 +2926,7 @@ class LRRT:
 #        Define routing network with lakes before merge connected lakes, and define nonconnecte lake catchments
 ############################################################################################################################################3
         finalcat_arr      = garray.array(mapname="finalcat")          # final catchment raster generated by lake filter tool set
-        str_grass_r_array = garray.array(mapname="str_grass_r")  # river networkt raster, each river has unique id
+        str_grass_r_array = Str_new #garray.array(mapname="str_grass_r")  # river networkt raster, each river has unique id
         acc_array         = np.absolute(garray.array(mapname="acc_grass"))
         NonCL_array       = garray.array(mapname="Non_con_lake_cat")
         conlake_arr       = garray.array(mapname="Select_Connected_lakes")
@@ -2907,7 +2955,7 @@ class LRRT:
             strmask = str_grass_r_array == strid  ### mask array, true at location of str == strid
             catsinstr = finalcat_arr[strmask]  ### get all cat id overlay with this stream
             catsinstrids = np.unique(catsinstr)  ### get unique cat id overlay with this stream
-            catsinstrids = catsinstrids[catsinstrids>-100]
+            catsinstrids = catsinstrids[catsinstrids > -100]
             for j in range(0,len(catsinstrids)):   ### loop for each cat id, and assgin for a new stream id
                 finalcatmask = finalcat_arr == catsinstrids[j]
                 mask = np.logical_and(finalcatmask, strmask)   ### build mask for grids belong to current stream and current cat
@@ -2951,8 +2999,8 @@ class LRRT:
 
             for j in range(0,len(i_nstrinfodf) - 1):
                 if i_nstrinfodf['MaxAcc'].values[j] > i_nstrinfodf['MaxAcc'].values[j +1]:
-                    print('###########################################################################3')
-                    print(i_nstrinfodf)
+#                    print('###########################################################################3')
+#                    print(i_nstrinfodf)
                     mask = nstrarray == i_nstrinfodf['With_Lake_SubId'].values[j+1]   ### build mask for grids belong to current stream and current cat
                     nstrarray[mask]   = i_nstrinfodf['With_Lake_SubId'].values[j]   ## assgin new stream id to mask region
                     # connected_Lakeids = conlake_arr[mask]
@@ -2973,7 +3021,7 @@ class LRRT:
         grass.run_command('v.db.addcolumn', map= 'Non_con_lake_cat_t', columns = "Gridcodes VARCHAR(40)")
         grass.run_command('v.db.update', map= 'Non_con_lake_cat_t', column = "Gridcodes",qcol = 'value')
         grass.run_command('v.dissolve', input= 'Non_con_lake_cat_t', column = "Gridcodes",output = 'Non_con_lake_cat_1',overwrite = True)
-        grass.run_command('v.out.ogr', input = 'Non_con_lake_cat_1',output = os.path.join(self.tempfolder,'Non_con_lake_cat_1.shp'),format= 'ESRI_Shapefile',overwrite = True)
+#        grass.run_command('v.out.ogr', input = 'Non_con_lake_cat_1',output = os.path.join(self.tempfolder,'Non_con_lake_cat_1.shp'),format= 'ESRI_Shapefile',overwrite = True)
 
 
 
