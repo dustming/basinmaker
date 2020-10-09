@@ -4928,10 +4928,8 @@ class LRRT:
         ----------        
         NetCDF_Path                       : string 
             It is the path of the NetCDF file    
-
         Output_Folder                     : string  
             It is the path to a folder to save output polygon shpfiles
-
         Coor_x_NM                         : string  
             It is the variable name for the x coordinates of grids in 
             the NetCDF file
@@ -4939,24 +4937,21 @@ class LRRT:
             It is the variable name for the y coordinates of grids in 
             the NetCDF file
         Is_Rotated_Grid                   : Integer  
-            1: indicate the grid in NetCDF file is rotated 
+            1 : indicate the grid in NetCDF file is rotated 
             -1: indicate the grid in NetCDF file is not rotated 
-            
         R_Coor_x_NM                       : string  
             It is the variable name for the y coordinates of rotated
             grids in the NetCDF file
         R_Coor_y_NM                       : string  
             It is the variable name for the y coordinates of rotated
-            grids in the NetCDF file            
-                        
+            grids in the NetCDF file                        
         SpatialRef                        : string  
             It is the coordinates system used in the NetCDF file 
-            
         x_add                             : float  
             It is offset value for x coodinate 
         y_add                             : float  
-            It is offset value for y coodinate                         
-
+            It is offset value for y coodinate    
+                                 
         Notes 
         ------- 
         Nc_Grids.shp                      : Point shpfile (output)
@@ -5117,6 +5112,54 @@ class LRRT:
 
     def Area_Weighted_Mapping_Between_Two_Polygons(self,Target_Ply_Path ='#',Mapping_Ply_Path = '#',Col_NM = 'HRU_ID',Output_Folder = '#'):
         
+        """Generate Grid polygon from NetCDF file 
+        
+        Function that used to generate grid polygon from a NetCDF file
+    
+        Parameters 
+        ----------        
+        NetCDF_Path                       : string 
+            It is the path of the NetCDF file    
+        Output_Folder                     : string  
+            It is the path to a folder to save output polygon shpfiles
+        Coor_x_NM                         : string  
+            It is the variable name for the x coordinates of grids in 
+            the NetCDF file
+        Coor_y_NM                         : string  
+            It is the variable name for the y coordinates of grids in 
+            the NetCDF file
+        Is_Rotated_Grid                   : Integer  
+            1 : indicate the grid in NetCDF file is rotated 
+            -1: indicate the grid in NetCDF file is not rotated 
+        R_Coor_x_NM                       : string  
+            It is the variable name for the y coordinates of rotated
+            grids in the NetCDF file
+        R_Coor_y_NM                       : string  
+            It is the variable name for the y coordinates of rotated
+            grids in the NetCDF file                        
+        SpatialRef                        : string  
+            It is the coordinates system used in the NetCDF file 
+        x_add                             : float  
+            It is offset value for x coodinate 
+        y_add                             : float  
+            It is offset value for y coodinate    
+                                 
+        Notes 
+        ------- 
+        Nc_Grids.shp                      : Point shpfile (output)
+           It is point in the center of each netCDF Grids
+        Gridncply.shp                     : Polygon shpfile (output)
+           It is the polygon for each grid in the NetCDF       
+        
+        Returns:
+        -------
+           None
+           
+        Examples
+        -------
+                                                                                    
+        """    
+                
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
         Qgs.initQgis()
