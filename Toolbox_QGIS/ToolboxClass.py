@@ -4913,7 +4913,65 @@ class LRRT:
             processing.run("native:dissolve", {'INPUT':os.path.join(self.tempfolder,'finalriv_info_ply.shp'),'FIELD':['SubId'],'OUTPUT':os.path.join(OutputFolder,'finalriv_info_ply.shp')},context = context)
             processing.run("native:dissolve", {'INPUT':os.path.join(self.tempfolder,'finalriv_info.shp'),'FIELD':['SubId'],'OUTPUT':os.path.join(OutputFolder,'finalriv_info.shp')},context = context)
 
-    def Generate_Grid_Poly_From_NetCDF(self,NetCDF_Path = '#',Output_Folder = '#',Coor_x_NM = 'lon',Coor_y_NM = 'lat',Is_Rotated_Grid = 1,R_Coor_x_NM = 'rlon',R_Coor_y_NM = 'rlat',SpatialRef = 'EPSG:4326',x_add = -360,y_add = 0):
+    def Generate_Grid_Poly_From_NetCDF(self,NetCDF_Path = '#',Output_Folder = '#',
+                                       Coor_x_NM = 'lon',Coor_y_NM = 'lat',
+                                       Is_Rotated_Grid = 1,R_Coor_x_NM = 'rlon',
+                                       R_Coor_y_NM = 'rlat',SpatialRef = 'EPSG:4326',
+                                       x_add = -360,
+                                       y_add = 0):
+
+        """Generate Grid polygon from NetCDF file 
+        
+        Function that used to generate grid polygon from a NetCDF file
+    
+        Parameters 
+        ----------        
+        NetCDF_Path                       : string 
+            It is the path of the NetCDF file    
+
+        Output_Folder                     : string  
+            It is the path to a folder to save output polygon shpfiles
+
+        Coor_x_NM                         : string  
+            It is the variable name for the x coordinates of grids in 
+            the NetCDF file
+        Coor_y_NM                         : string  
+            It is the variable name for the y coordinates of grids in 
+            the NetCDF file
+        Is_Rotated_Grid                   : Integer  
+            1: indicate the grid in NetCDF file is rotated 
+            -1: indicate the grid in NetCDF file is not rotated 
+            
+        R_Coor_x_NM                       : string  
+            It is the variable name for the y coordinates of rotated
+            grids in the NetCDF file
+        R_Coor_y_NM                       : string  
+            It is the variable name for the y coordinates of rotated
+            grids in the NetCDF file            
+                        
+        SpatialRef                        : string  
+            It is the coordinates system used in the NetCDF file 
+            
+        x_add                             : float  
+            It is offset value for x coodinate 
+        y_add                             : float  
+            It is offset value for y coodinate                         
+
+        Notes 
+        ------- 
+        Nc_Grids.shp                      : Point shpfile (output)
+           It is point in the center of each netCDF Grids
+        Gridncply.shp                     : Polygon shpfile (output)
+           It is the polygon for each grid in the NetCDF       
+        
+        Returns:
+        -------
+           None
+           
+        Examples
+        -------
+                                                                                    
+        """    
 
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
@@ -4941,13 +4999,15 @@ class LRRT:
         latlonrow = np.full((nrows*ncols,5),-9999.99999)
         latlonrow = np.full((nrows*ncols,5),-9999.99999)
         
-        ### Create a point layer, each point will be the nc grids 
-        Point_Nc_Grid = QgsVectorLayer("Point?crs=epsg:4326&field=FGID:integer&field=Row:integer&field=Col:integer&field=Gridlon:double&field=Gridlat:double&index=yes", "NC Grid Points",  "memory")
+        ### Create a point layer, each point will be the nc grids
+        cmds ="Point?crs=%s&field=FGID:integer&field=Row:integer&field=Col:integer&field=Gridlon:double&field=Gridlat:double&index=yes" % SpatialRef 
+        Point_Nc_Grid = QgsVectorLayer(cmds, "NC Grid Points",  "memory")
         DP_Nc_Point = Point_Nc_Grid.dataProvider()
         Point_Nc_Grid.startEditing()
 
         ### create polygon layter
-        Polygon_Nc_Grid = QgsVectorLayer("Polygon?crs=epsg:4326&field=FGID:integer&field=Row:integer&field=Col:integer&field=Gridlon:double&field=Gridlat:double&index=yes", "NC Grid polygons",  "memory")
+        cmds ="Polygon?crs=epsg:4326&field=FGID:integer&field=Row:integer&field=Col:integer&field=Gridlon:double&field=Gridlat:double&index=yes" % SpatialRef
+        Polygon_Nc_Grid = QgsVectorLayer(cmds, "NC Grid polygons",  "memory")
         DP_Nc_ply = Polygon_Nc_Grid.dataProvider()
         Polygon_Nc_Grid.startEditing()
         
