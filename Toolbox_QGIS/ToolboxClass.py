@@ -1353,9 +1353,12 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
     else:
         print("should never happened......")
             
-    mem_sub_lake_union = processing.run("native:union", {'INPUT':Subfixgeo['OUTPUT'],'OVERLAY':meme_Alllakeply['OUTPUT'],'OVERLAY_FIELDS_PREFIX':'','OUTPUT':'memory:'},context = context)
-
-    layer_cat=mem_sub_lake_union['OUTPUT']
+    mem_sub_lake_union_temp = processing.run("native:union", {'INPUT':Subfixgeo['OUTPUT'],'OVERLAY':meme_Alllakeply['OUTPUT'],'OVERLAY_FIELDS_PREFIX':'','OUTPUT':'memory:'},context = context)['OUTPUT']
+    
+#    mem_sub_lake_union_temp  = processing.run("saga:polygonunion", {'A':Subfixgeo['OUTPUT'],'B':meme_Alllakeply['OUTPUT'],'SPLIT':True,'RESULT':'TEMPORARY_OUTPUT'},context = context)['RESULT']
+    mem_sub_lake_union  = processing.run("native:fixgeometries", {'INPUT':mem_sub_lake_union_temp,'OUTPUT':'memory:'})['OUTPUT']
+    
+    layer_cat=mem_sub_lake_union
     SpRef_in = layer_cat.crs().authid()   ### get Raster spatialReference id
     layer_cat.dataProvider().addAttributes([QgsField('HRULake_ID', QVariant.Int),QgsField('HRU_IsLake', QVariant.Int)])
     field_ids = []
@@ -1461,9 +1464,13 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
                 
             layer_cat.updateFeature(sf)
 
-                         
-    Sub_Lake_HRU = processing.run("native:dissolve", {'INPUT':layer_cat,'FIELD':['HRULake_ID'],'OUTPUT':'memory:'},context = context)
-    Sub_Lake_HRU2 = processing.run("native:dissolve", {'INPUT':layer_cat,'FIELD':['HRULake_ID'],'OUTPUT':Path_finalcat_hru_out},context = context)
+    mem_union_fix  = processing.run("native:fixgeometries", {'INPUT':layer_cat,'OUTPUT':'memory:'})['OUTPUT'] 
+    
+    Sub_Lake_HRU1 = processing.run("native:dissolve", {'INPUT':mem_union_fix,'FIELD':['HRULake_ID'],'OUTPUT':os.path.join(tempfile.gettempdir(),'tempfile.shp')},context = context)['OUTPUT']
+                            
+    Sub_Lake_HRU2 = processing.run("native:dissolve", {'INPUT':Sub_Lake_HRU1,'FIELD':['HRULake_ID'],'OUTPUT':Path_finalcat_hru_out},context = context)
+    Sub_Lake_HRU = processing.run("native:dissolve", {'INPUT':Sub_Lake_HRU1,'FIELD':['HRULake_ID'],'OUTPUT':'memory:'},context = context)    
+    
     del layer_cat
     return Sub_Lake_HRU['OUTPUT'],Sub_Lake_HRU['OUTPUT'].crs().authid(),['HRULake_ID','HRU_IsLake',Sub_ID] 
 ############
