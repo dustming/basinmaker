@@ -1607,19 +1607,19 @@ def Union_Ply_Layers_And_Simplify(processing,context,Merge_layer_list,dissolve_f
 #                print(mem_union)
 
                 mem_union_fix  = processing.run("native:fixgeometries", {'INPUT':mem_union,'OUTPUT':'memory:'})['OUTPUT']
-                ### remove unexpect polygon with area is 0 and some column value is null
-                if i == 1:
-                    formular = ' \"%s\" > 0  AND  \"%s\" > 0 ' % (dissolve_filedname_list[0],dissolve_filedname_list[1])
-                if i == 2:
-                    formular = ' \"%s\" > 0  AND  \"%s\" > 0 AND  \"%s\" > 0 ' % (dissolve_filedname_list[0],dissolve_filedname_list[1],dissolve_filedname_list[2])
-                if i == 3:
-                    formular = ' \"%s\" > 0  AND  \"%s\" > 0 AND  \"%s\" > 0 AND  \"%s\" > 0 ' % (dissolve_filedname_list[0],dissolve_filedname_list[1],dissolve_filedname_list[2],dissolve_filedname_list[3])
-                if i == 4:
-                    formular = ' \"%s\" > 0  AND  \"%s\" > 0 AND  \"%s\" > 0 AND  \"%s\" > 0 AND  \"%s\" > 0 ' % (dissolve_filedname_list[0],dissolve_filedname_list[1],dissolve_filedname_list[2],dissolve_filedname_list[3],dissolve_filedname_list[4])
-                if i == 5:
-                    formular = ' \"%s\" > 0  AND  \"%s\" > 0 AND  \"%s\" > 0 AND  \"%s\" > 0 AND  \"%s\" > 0  AND  \"%s\" > 0' % (dissolve_filedname_list[0],dissolve_filedname_list[1],dissolve_filedname_list[2],dissolve_filedname_list[3],dissolve_filedname_list[4],dissolve_filedname_list[5])
-                if i > 5 :    
-                    print("error maximum number of polygons are 5")
+#                ### remove unexpect polygon with area is 0 and some column value is null
+#                if i == 1:
+#                    formular = ' \"%s\" > 0  AND  \"%s\" > 0 ' % (dissolve_filedname_list[0],dissolve_filedname_list[1])
+#                if i == 2:
+#                    formular = ' \"%s\" > 0  AND  \"%s\" > 0 AND  \"%s\" > 0 ' % (dissolve_filedname_list[0],dissolve_filedname_list[1],dissolve_filedname_list[2])
+#                if i == 3:
+#                    formular = ' \"%s\" > 0  AND  \"%s\" > 0 AND  \"%s\" > 0 AND  \"%s\" > 0 ' % (dissolve_filedname_list[0],dissolve_filedname_list[1],dissolve_filedname_list[2],dissolve_filedname_list[3])
+#                if i == 4:
+#                    formular = ' \"%s\" > 0  AND  \"%s\" > 0 AND  \"%s\" > 0 AND  \"%s\" > 0 AND  \"%s\" > 0 ' % (dissolve_filedname_list[0],dissolve_filedname_list[1],dissolve_filedname_list[2],dissolve_filedname_list[3],dissolve_filedname_list[4])
+#                if i == 5:
+#                    formular = ' \"%s\" > 0  AND  \"%s\" > 0 AND  \"%s\" > 0 AND  \"%s\" > 0 AND  \"%s\" > 0  AND  \"%s\" > 0' % (dissolve_filedname_list[0],dissolve_filedname_list[1],dissolve_filedname_list[2],dissolve_filedname_list[3],dissolve_filedname_list[4],dissolve_filedname_list[5])
+#                if i > 5 :    
+#                    print("error maximum number of polygons are 5")
                 
 #                mem_union_fix_ext = processing.run("native:extractbyexpression", {'INPUT':mem_union_fix,'EXPRESSION':formular,'OUTPUT':'memory:'})['OUTPUT']
                 mem_union_fix_ext = mem_union_fix
