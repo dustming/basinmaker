@@ -3439,7 +3439,7 @@ class LRRT:
                           ,lenThres = 1,iscalmanningn = -1,Startyear = -1,EndYear = -1
                           ,CA_HYDAT = '#',WarmUp = 0,Template_Folder = '#'
                           ,Lake_As_Gauge = True, WriteObsrvt = True 
-                          ,DownLoadObsData = True,Model_Name = 'test'):
+                          ,DownLoadObsData = True,Model_Name = 'test',Old_Product = False):
 
         """Generate Raven input files.
         
@@ -3601,7 +3601,12 @@ class LRRT:
         ncatinfo = tempinfo.to_dataframe()
         ncatinfo2 = ncatinfo.drop_duplicates('HRU_ID', keep='first')
         ncatinfo2 = ncatinfo2.loc[(ncatinfo2['HRU_ID'] > 0) & (ncatinfo2['SubId'] > 0)]
-
+        if Old_Product == True: 
+            ncatinfo2['RivLength'] = ncatinfo2['Rivlen'].values
+#            ncatinfo2['RivSlope'] = ncatinfo2['Rivlen'].values
+#            ncatinfo2['RivLength'] = ncatinfo2['Rivlen'].values
+#            ncatinfo2['RivLength'] = ncatinfo2['Rivlen'].values
+#            ncatinfo2['RivLength'] = ncatinfo2['Rivlen'].values
         Channel_rvp_file_path,Channel_rvp_string,Model_rvh_file_path,Model_rvh_string,Model_rvp_file_path,Model_rvp_string_modify = Generate_Raven_Channel_rvp_rvh_String(ncatinfo2,Raveinputsfolder,lenThres,
                                                                                                                                                                      iscalmanningn,Lake_As_Gauge,Model_Name
                                                                                                                                                                      )                                                        
