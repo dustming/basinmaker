@@ -1423,11 +1423,44 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
                 new_hruid        = new_hruid + 1
             else:
                 sf['HRULake_ID'] = int(np.argwhere(old_newhruid_list == old_new_hruid)[0])
-            
+                
 #            if subid_sf == 1000061:
 #                print(sf['HRULake_ID'],old_new_hruid,new_hruid)       
             layer_cat.updateFeature(sf)
+            
+    Attri_table = Obtain_Attribute_Table(processing,context,layer_cat)
+    features = layer_cat.getFeatures()
+    with edit(layer_cat):
+        for sf in features:
+            
+            subid_sf   = sf[Sub_ID]
+            try:
+                subid_sf = float(subid_sf)
+            except TypeError:
+                subid_sf = -1
+                pass 
                 
+            lakelakeid_sf   = sf[Lake_Id]
+            try:
+                lakelakeid_sf = float(lakelakeid_sf)
+            except TypeError:
+                lakelakeid_sf = -1
+                pass                     
+            if subid_sf > 0 and lakelakeid_sf >0 : 
+                continue 
+            elif subid_sf < 0 and lakelakeid_sf > 0:  
+                tar_info = Attri_table.loc[(Attri_table[Lake_Id]==lakelakeid_sf) & (Attri_table['HRU_IsLake'] > 0)]
+                sf[Sub_ID] = float(tar_info[Sub_ID].values[0])
+                sf['HRU_IsLake'] = float(tar_info['HRU_IsLake'].values[0])
+                sf['HRULake_ID'] = float(tar_info['HRULake_ID'].values[0])
+            elif subid_sf > 0 and lakelakeid_sf < 0: 
+                continue 
+            else:
+                print("Lake HRU have unexpected holes")
+                
+            layer_cat.updateFeature(sf)
+
+                         
     Sub_Lake_HRU = processing.run("native:dissolve", {'INPUT':layer_cat,'FIELD':['HRULake_ID'],'OUTPUT':'memory:'},context = context)
     Sub_Lake_HRU2 = processing.run("native:dissolve", {'INPUT':layer_cat,'FIELD':['HRULake_ID'],'OUTPUT':Path_finalcat_hru_out},context = context)
     del layer_cat
@@ -1771,9 +1804,6 @@ def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,disso
                 Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Landuse_ID]     = int(9999)
                 Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Veg_ID]         = int(9999)
 
-#                print(Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Soil_ID].values,Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Other_Ply_ID_1].values,
-#                Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Landuse_ID].values,Subid,ilake_hru_id)
-
             else: 
                 if Attri_table_Lake_HRU_i[Soil_ID].values[j] == 0:  ###  the current hru has invalidate soil id 
                      Vali_Value = Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Soil_ID,Soil_info_data)
@@ -1790,6 +1820,7 @@ def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,disso
                 if Attri_table_Lake_HRU_i[Other_Ply_ID_2].values[j] == 0:  ###  the current hru has invalidate soil id 
                      Vali_Value = Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Other_Ply_ID_2,Attri_table)
                      Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Other_Ply_ID_2]        = Vali_Value
+                     
     ### add attributes columns 
     layer_area_id.dataProvider().addAttributes([QgsField('LAND_USE_C', QVariant.String),
                                             QgsField('VEG_C', QVariant.String),
@@ -4565,7 +4596,7 @@ class LRRT:
             mem_union_o2 = mem_union_o1
             
             
-        hru_layer_draft  = mem_union_o2          
+        hru_layer_draft  = mem_union_o2 
 #        hru_layer_draft = processing.run("native:reprojectlayer", {'INPUT':mem_union_o2,'TARGET_CRS':QgsCoordinateReferenceSystem('EPSG:4326'),'OUTPUT':'memory:'})['OUTPUT']
 
         HRU_draf_final = Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer_draft,dissolve_filedname_list,
