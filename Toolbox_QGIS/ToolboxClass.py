@@ -5157,38 +5157,20 @@ class LRRT:
     
         Parameters 
         ----------        
-        NetCDF_Path                       : string 
-            It is the path of the NetCDF file    
+        Target_Ply_Path                       : string 
+            It is the path of one inputs HRU polygon file
+        Mapping_Ply_Path                      : string 
+            It is the path of one inputs grid polygon file    
         Output_Folder                     : string  
             It is the path to a folder to save output polygon shpfiles
-        Coor_x_NM                         : string  
-            It is the variable name for the x coordinates of grids in 
-            the NetCDF file
-        Coor_y_NM                         : string  
-            It is the variable name for the y coordinates of grids in 
-            the NetCDF file
-        Is_Rotated_Grid                   : Integer  
-            1 : indicate the grid in NetCDF file is rotated 
-            -1: indicate the grid in NetCDF file is not rotated 
-        R_Coor_x_NM                       : string  
-            It is the variable name for the y coordinates of rotated
-            grids in the NetCDF file
-        R_Coor_y_NM                       : string  
-            It is the variable name for the y coordinates of rotated
-            grids in the NetCDF file                        
-        SpatialRef                        : string  
-            It is the coordinates system used in the NetCDF file 
-        x_add                             : float  
-            It is offset value for x coodinate 
-        y_add                             : float  
-            It is offset value for y coodinate    
                                  
         Notes 
         ------- 
-        Nc_Grids.shp                      : Point shpfile (output)
-           It is point in the center of each netCDF Grids
-        Gridncply.shp                     : Polygon shpfile (output)
-           It is the polygon for each grid in the NetCDF       
+        Overlay_Polygons.shp                 : Polygon shpfile (output)
+           It is overlay of two input polygons shpfiles 
+        GriddedForcings2.txt                 : Text file (output)
+           It is the polygon area weighted of each polygon in Mapping_Ply_Path
+           to each polygon in Target_Ply_Path
         
         Returns:
         -------
@@ -5210,8 +5192,7 @@ class LRRT:
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
         context = dataobjects.createContext()
         context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
-        from netCDF4 import Dataset
-        
+                
         Path_finalcat_hru_temp          = os.path.join(self.tempfolder,"finalcat_freferen.shp")
         Path_finalcat_hru_temp2          = os.path.join(self.tempfolder,"finalcat_freferen2.shp")
         Path_finalcat_hru_temp_dissolve = os.path.join(self.tempfolder,"finalcat_freferen_dissolve.shp")
