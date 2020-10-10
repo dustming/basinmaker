@@ -1451,8 +1451,9 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
             elif subid_sf < 0 and lakelakeid_sf > 0:  
                 tar_info = Attri_table.loc[(Attri_table[Lake_Id]==lakelakeid_sf) & (Attri_table['HRU_IsLake'] > 0)]
                 sf[Sub_ID] = float(tar_info[Sub_ID].values[0])
-                sf['HRU_IsLake'] = float(tar_info['HRU_IsLake'].values[0])
-                sf['HRULake_ID'] = float(tar_info['HRULake_ID'].values[0])
+                sf['HRU_IsLake']  = float(tar_info['HRU_IsLake'].values[0])
+                sf['HRULake_ID']  = float(tar_info['HRULake_ID'].values[0])
+                sf[Sub_Lake_ID] = float(tar_info[Sub_Lake_ID].values[0])
             elif subid_sf > 0 and lakelakeid_sf < 0: 
                 continue 
             else:
@@ -1801,8 +1802,8 @@ def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,disso
                 else: 
                      Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Other_Ply_ID_2] = Attri_table_Lake_HRU_i[Other_Ply_ID_2].values[0]
                                                           
-                Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Landuse_ID]     = int(9999)
-                Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Veg_ID]         = int(9999)
+                Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Landuse_ID]     = int(-1)
+                Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Veg_ID]         = int(-1)
 
             else: 
                 if Attri_table_Lake_HRU_i[Soil_ID].values[j] == 0:  ###  the current hru has invalidate soil id 
@@ -4566,7 +4567,7 @@ class LRRT:
         
                 
         if Path_Landuse_Ply == '#': ### landuse polygon is not provided, landused id the same is IS lake 1 is lake -1 non land 
-            formula = ' \"%s\" ' % 'HRU_IsLake'
+            formula = '- \"%s\" ' % 'HRU_IsLake'
             mem_union_landuse = processing.run("qgis:fieldcalculator", {'INPUT':mem_union,'FIELD_NAME':Landuse_ID,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
         else:
             mem_union_landuse = mem_union
@@ -4584,13 +4585,13 @@ class LRRT:
             mem_union_veg = mem_union_soil
 
         if Path_Other_Ply_1 == '#':  ### if no vegetation polygon is provide vegetation will be the same as landuse
-            formula = ' \"%s\" ' % 'HRU_IsLake' 
+            formula = '- \"%s\" ' % 'HRU_IsLake' 
             mem_union_o1 = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_veg,'FIELD_NAME':Other_Ply_ID_1,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
         else:
             mem_union_o1 = mem_union_veg
 
         if Path_Other_Ply_2 == '#':  ### if no vegetation polygon is provide vegetation will be the same as landuse
-            formula = ' \"%s\" ' % 'HRU_IsLake' 
+            formula = '- \"%s\" ' % 'HRU_IsLake' 
             mem_union_o2 = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_o1,'FIELD_NAME':Other_Ply_ID_2,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
         else:
             mem_union_o2 = mem_union_o1
