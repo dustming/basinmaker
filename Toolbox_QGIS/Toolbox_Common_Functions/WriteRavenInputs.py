@@ -888,7 +888,7 @@ def Generate_Raven_Channel_rvp_rvh_String(ocatinfo,Raveinputsfolder,lenThres,isc
 
             
         SLOPE = str(catslope)+tab
-        ASPECT = str(cataspect)+tab
+        ASPECT = str(360 - cataspect)+tab
         Model_rvh_string_list.append("  "+StrGid+tab+StrGidarea+StrGidelev+lat+lon+catid+LAND_USE_CLASS+VEG_CLASS+SOIL_PROFILE+AQUIFER_PROFILE+TERRAIN_CLASS+SLOPE+ASPECT) #orvh.write("  "+StrGid+tab+StrGidarea+StrGidelev+lat+lon+catid+LAND_USE_CLASS+VEG_CLASS+SOIL_PROFILE+AQUIFER_PROFILE+TERRAIN_CLASS+SLOPE+ASPECT+"\n")
         
             
