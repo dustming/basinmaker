@@ -5045,7 +5045,7 @@ class LRRT:
         Point_Nc_Grid.startEditing()
 
         ### create polygon layter
-        cmds ="Polygon?crs=epsg:4326&field=FGID:integer&field=Row:integer&field=Col:integer&field=Gridlon:double&field=Gridlat:double&index=yes" % SpatialRef
+        cmds ="Polygon?crs=%s&field=FGID:integer&field=Row:integer&field=Col:integer&field=Gridlon:double&field=Gridlat:double&index=yes" % SpatialRef
         Polygon_Nc_Grid = QgsVectorLayer(cmds, "NC Grid polygons",  "memory")
         DP_Nc_ply = Polygon_Nc_Grid.dataProvider()
         Polygon_Nc_Grid.startEditing()
