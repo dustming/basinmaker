@@ -304,7 +304,7 @@ def Generate_Raven_Obsrvt_String(flowdata,obsnm,outObsfileFolder):   #Writeobsrv
     output_string_list.append(flowdata.index[0].strftime('%Y-%m-%d') + "  " + '00:00:00  ' + '1     ' + str(len(flowdata)))
     for id in range(0,len(flowdata)):
         output_string_list.append('         ' + str(flowdata['Flow'].values[id]))
-    output_string_list.append('         ' + str(flowdata['Flow'].values[id])+ '\n')
+    output_string_list.append(':EndObservationData'+ '\n')
     output_string = "\n".join(output_string_list)
     
     return obs_rvt_file_path, output_string
@@ -473,6 +473,8 @@ def Generate_Raven_Obs_rvt_String(catinfo,outFolderraven,outObsfileFolder,starty
         
     obsnms    = catinfo[['Obs_NM','SRC_obs','SubId','DA']]
     obsnms    = obsnms.drop_duplicates('Obs_NM', keep='first')
+    obsnms    = obsnms.loc[obsnms['Obs_NM'] != '-9999.0']
+    
     obsnms.loc[:,'DA']  = obsnms['DA'].values/1000/1000  # m2 to km2    
     index     = obsnms.index
     Date      = pd.date_range(start=str(startyear)+'-'+'01'+'-'+'01', end=str(endyear)+'-'+'12'+'-'+'31', freq='D')
@@ -778,7 +780,7 @@ def Generate_Raven_Channel_rvp_rvh_String(ocatinfo,Raveinputsfolder,lenThres,isc
     Model_rvh_file_path     = os.path.join(Raveinputsfolder,Model_Name + ".rvh")
     Model_rvh_string_list   = []   
     Model_rvp_file_path     = os.path.join(Raveinputsfolder,Model_Name + ".rvp")
-    Model_rvp_string_modify = ":RedirectToFile " + Model_Name+"_channel.rvp"
+    Model_rvp_string_modify ="\n" +":RedirectToFile " + Model_Name+"_channel.rvp" + "\n"
             
     tab = "     "
                 
@@ -878,8 +880,8 @@ def Generate_Raven_Channel_rvp_rvh_String(ocatinfo,Raveinputsfolder,lenThres,isc
         
         StrGidarea = str(catarea2)+tab
         StrGidelev = str(catinfo_hru['HRU_E_mean'].values[i])+tab
-        lat = str(catinfo_hru['HRU_CenX'].values[i])+tab
-        lon = str(catinfo_hru['HRU_CenY'].values[i])+tab
+        lat = str(catinfo_hru['HRU_CenY'].values[i])+tab
+        lon = str(catinfo_hru['HRU_CenX'].values[i])+tab
         LAND_USE_CLASS = catinfo_hru['LAND_USE_C'].values[i]+tab
         VEG_CLASS = catinfo_hru['VEG_C'].values[i]+tab
         SOIL_PROFILE =catinfo_hru['SOIL_PROF'].values[i]+tab
