@@ -941,7 +941,7 @@ def Generate_Raven_Channel_rvp_rvh_String(ocatinfo,Raveinputsfolder,lenThres,isc
     Model_rvh_string_list.append(":HRUs")#orvh.write(":HRUs"+"\n")
     Model_rvh_string_list.append("  :Attributes AREA ELEVATION  LATITUDE  LONGITUDE   BASIN_ID  LAND_USE_CLASS  VEG_CLASS   SOIL_PROFILE  AQUIFER_PROFILE   TERRAIN_CLASS   SLOPE   ASPECT")#orvh.write("  :Attributes AREA ELEVATION  LATITUDE  LONGITUDE   BASIN_ID  LAND_USE_CLASS  VEG_CLASS   SOIL_PROFILE  AQUIFER_PROFILE   TERRAIN_CLASS   SLOPE   ASPECT"+"\n")
     Model_rvh_string_list.append("  :Units       km2         m       deg        deg       none            none       none           none             none            none     deg      deg")#orvh.write("  :Units       km2         m       deg        deg       none            none       none           none             none            none     deg      deg"+"\n")
-    
+    Lake_HRU_Name = None
     for i in range(0,len(catinfo_hru.index)):
         
         hruid = int(catinfo_hru['HRU_ID'].values[i])
@@ -968,48 +968,48 @@ def Generate_Raven_Channel_rvp_rvh_String(ocatinfo,Raveinputsfolder,lenThres,isc
         SLOPE = str(catslope)+tab
         ASPECT = str(360 - cataspect)+tab
         Model_rvh_string_list.append("  "+StrGid+tab+StrGidarea+StrGidelev+lat+lon+catid+LAND_USE_CLASS+VEG_CLASS+SOIL_PROFILE+AQUIFER_PROFILE+TERRAIN_CLASS+SLOPE+ASPECT) #orvh.write("  "+StrGid+tab+StrGidarea+StrGidelev+lat+lon+catid+LAND_USE_CLASS+VEG_CLASS+SOIL_PROFILE+AQUIFER_PROFILE+TERRAIN_CLASS+SLOPE+ASPECT+"\n")
-       
+        
+        
         if catinfo_hru['HRU_IsLake'].values[i] == 1:        
             GroupName = Return_Group_Name_Based_On_Value(catinfo_hru['HRU_Area'].values[i],
                                                          SubBasinGroup_NM_Lake,
                                                          SubBasinGroup_Area_Lake)
             SubBasin_Group_Lake.loc[i,'SubId'] = catinfo_hru['SubId'].values[i] 
             SubBasin_Group_Lake.loc[i,'SubBasin_Group_NM'] = GroupName     
-        
+            Lake_HRU_Name  = LAND_USE_CLASS
     Model_rvh_string_list.append(":EndHRUs")#orvh.write(":EndHRUs"+"\n")
-    Model_rvh_string_list.append(":PopulateHRUGroup Lake_HRUs With LANDUSE EQUALS Lake_HRU")#orvh.write(":PopulateHRUGroup Lake_HRUs With LANDUSE EQUALS Lake_HRU" + "\n")
-    Model_rvh_string_list.append(":PopulateHRUGroup Land_HRUs With LANDUSE EQUALS FOREST")#orvh.write(":PopulateHRUGroup Land_HRUs With LANDUSE EQUALS FOREST" + "\n")
+    Model_rvh_string_list.append("#:PopulateHRUGroup Lake_HRUs With LANDUSE EQUALS " + Lake_HRU_Name)#orvh.write(":PopulateHRUGroup Lake_HRUs With LANDUSE EQUALS Lake_HRU" + "\n")
     Model_rvh_string_list.append(":RedirectToFile " + Model_Name+"_Lake.rvh")#orvh.write(":RedirectToFile TestLake.rvh")
 
     for i in range(0,len(SubBasinGroup_NM_Channel)):
-        Model_rvh_string_list.append(":SubBasinGroup   " + SubBasinGroup_NM_Channel[i])
+        Model_rvh_string_list.append("#:SubBasinGroup   " + SubBasinGroup_NM_Channel[i])
         SubBasin_Group_Channel_i = SubBasin_Group_Channel.loc[SubBasin_Group_Channel['SubBasin_Group_NM'] == SubBasinGroup_NM_Channel[i]]
         SubIDs_In_Group = SubBasin_Group_Channel_i['SubId'].values
-        SubIDs_In_Group_Str_list = ['    ']
+        SubIDs_In_Group_Str_list = ['#    ']
         for j in range(0,len(SubIDs_In_Group)):
-            SubIDs_In_Group_Str_list.append(str(int(SubIDs_In_Group[i])))
+            SubIDs_In_Group_Str_list.append(str(int(SubIDs_In_Group[j])))
         SubIDs_In_Group_Str = "   ".join(SubIDs_In_Group_Str_list)
          
         Model_rvh_string_list.append(SubIDs_In_Group_Str)
-        Model_rvh_string_list.append(":EndSubBasinGroup   ")
+        Model_rvh_string_list.append("#:EndSubBasinGroup   ")
         
-        Model_rvh_string_list.append("# :SBGroupPropertyOverride " + SubBasinGroup_NM_Channel[i] + "MANNINGS_N 0.001")
-        Model_rvh_string_list.append("# :SBGroupPropertyMultiplier "+ SubBasinGroup_NM_Channel[i] + "MANNINGS_N 3")
+        Model_rvh_string_list.append("# :SBGroupPropertyOverride " + SubBasinGroup_NM_Channel[i] + "   MANNINGS_N 0.001")
+        Model_rvh_string_list.append("# :SBGroupPropertyMultiplier "+ SubBasinGroup_NM_Channel[i] + "  MANNINGS_N 3")
 
     for i in range(0,len(SubBasinGroup_NM_Lake)):
-        Model_rvh_string_list.append(":SubBasinGroup   " + SubBasinGroup_NM_Lake[i])
+        Model_rvh_string_list.append("#:SubBasinGroup   " + SubBasinGroup_NM_Lake[i])
         SubBasin_Group_Lake_i = SubBasin_Group_Lake.loc[SubBasin_Group_Lake['SubBasin_Group_NM'] == SubBasinGroup_NM_Lake[i]]
         SubIDs_In_Group = SubBasin_Group_Lake_i['SubId'].values
-        SubIDs_In_Group_Str_list = ['    ']
+        SubIDs_In_Group_Str_list = ['#    ']
         for j in range(0,len(SubIDs_In_Group)):
-            SubIDs_In_Group_Str_list.append(str(int(SubIDs_In_Group[i])))
+            SubIDs_In_Group_Str_list.append(str(int(SubIDs_In_Group[j])))
         SubIDs_In_Group_Str = "   ".join(SubIDs_In_Group_Str_list)
          
         Model_rvh_string_list.append(SubIDs_In_Group_Str)
-        Model_rvh_string_list.append(":EndSubBasinGroup   ")
+        Model_rvh_string_list.append("#:EndSubBasinGroup   ")
         
-        Model_rvh_string_list.append("# :SBGroupPropertyOverride " + SubBasinGroup_NM_Lake[i] + "RESERVOIR_CREST_WIDTH 12.0")
-        Model_rvh_string_list.append("# :SBGroupPropertyMultiplier "+ SubBasinGroup_NM_Lake[i] + "RESERVOIR_CREST_WIDTH 1.0")
+        Model_rvh_string_list.append("# :SBGroupPropertyOverride   " + SubBasinGroup_NM_Lake[i] + "   RESERVOIR_CREST_WIDTH 12.0")
+        Model_rvh_string_list.append("# :SBGroupPropertyMultiplier  "+ SubBasinGroup_NM_Lake[i] + "   RESERVOIR_CREST_WIDTH 1.0")
         
         
     Channel_rvp_string = "\n".join(Channel_rvp_string_list)
