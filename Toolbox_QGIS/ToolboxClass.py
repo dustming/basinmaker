@@ -557,7 +557,7 @@ def Check_If_Str_Is_Head_Stream(prow,pcol,nrows,ncols,str,strid):
         
     
 ###
-def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir,Is_divid_region):
+def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir,Is_divid_region,Min_Grid_Number = 50):
     GP_cat = copy.copy(cat)
     sblid = copy.copy(blid)
     Str_new = copy.copy(Str)
@@ -586,17 +586,27 @@ def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir,Is_divid_re
         strid = Strids[i]
         strrowcol = np.argwhere(Str == strid).astype(int)
         nstrrow = strrowcol.shape[0]
+        
+        ### if number of the stream grid smaller than 50
+        
+        if nstrrow < Min_Grid_Number: 
+            continue 
         iStr = np.full((nstrrow,4),-9999)##### 0 row, 1 col, 2 fac,
         iStr[:,0] = strrowcol[:,0]
         iStr[:,1] = strrowcol[:,1]
         iStr[:,2] = fac[strrowcol[:,0],strrowcol[:,1]]
         iStr = iStr[iStr[:,2].argsort()].astype(int)
-        
+        ### starting point of the stream
         Start_Pt_row = iStr[0,0]
         Start_Pt_col = iStr[0,1]
+        
         Is_Head_Stream = Check_If_Str_Is_Head_Stream(Start_Pt_row,Start_Pt_col,nrows,ncols,Str,strid)
         if Is_Head_Stream == True:
-            Str_new[Start_Pt_row,Start_Pt_col]=newstr_id #### change the outlet of catchment into wid
+            Str_new[iStr[0,0],iStr[0,1]]=newstr_id #### change the outlet of catchment into wid
+            Str_new[iStr[1,0],iStr[1,1]]=newstr_id
+            Str_new[iStr[2,0],iStr[2,1]]=newstr_id
+            Str_new[iStr[3,0],iStr[3,1]]=newstr_id
+            Str_new[iStr[4,0],iStr[4,1]]=newstr_id
             newstr_id = newstr_id + 1            
     ######
     ##################Part 2 Get pourpoints of Lake inflow streams
@@ -2023,7 +2033,6 @@ class LRRT:
         self.Path_finalcatinfo_type = os.path.join(self.tempfolder,'catinfo.csvt')
         self.Path_alllakeinfoinfo = os.path.join(self.tempfolder,'hylake.csv')
         self.Path_Maskply = os.path.join(self.tempfolder, 'HyMask2.shp')
-
 
 ########################################################################################
 ### Remove tempfolders
