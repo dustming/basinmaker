@@ -3439,7 +3439,9 @@ class LRRT:
                           ,lenThres = 1,iscalmanningn = -1,Startyear = -1,EndYear = -1
                           ,CA_HYDAT = '#',WarmUp = 0,Template_Folder = '#'
                           ,Lake_As_Gauge = True, WriteObsrvt = True 
-                          ,DownLoadObsData = True,Model_Name = 'test',Old_Product = False):
+                          ,DownLoadObsData = True,Model_Name = 'test',Old_Product = False
+                          ,SubBasinGroup_NM_Channel=['#'],SubBasinGroup_Length_Channel = [-1]
+                          ,SubBasinGroup_NM_Lake=['#'],SubBasinGroup_Area_Lake = [-1]):
 
         """Generate Raven input files.
         
@@ -3533,7 +3535,7 @@ class LRRT:
             folder name containing raven template files. All 
             files from that folder will be copied (unchanged) 
             to the "DataFolder".   
-        WriteObsrvt : Bool, optional 
+        WriteObsrvt     : Bool, optional 
             Input that used to indicate if the observation data file needs
             to be generated.  
         DownLoadObsData : Bool, optional 
@@ -3545,6 +3547,28 @@ class LRRT:
         Model_Name      : string
            The Raven model base name. File name of the raven input will be 
            Model_Name.xxx. 
+        Old_Product     : bool
+            True, the input polygon is coming from the first version of routing product 
+        SubBasinGroup_NM_Channel       : List 
+            It is a list of names for subbasin groups, which are grouped based
+            on channel length of each subbsin. Should at least has one name
+        SubBasinGroup_Length_Channel   : List
+            It is a list of float channel length thresthold in meter, to divide
+            subbasin into different groups. for example, [1,10,20] will divide
+            subbasins into four groups, group 1 with channel length (0,1];
+            group 2 with channel length (1,10],
+            group 3 with channel length (10,20],
+            group 4 with channel length (20,Max channel length].
+        SubBasinGroup_NM_Lake          : List 
+            It is a list of names for subbasin groups, which are grouped based
+            on Lake area of each subbsin. Should at least has one name
+        SubBasinGroup_Area_Lake        : List
+            It is a list of float lake area thresthold in m2, to divide
+            subbasin into different groups. for example, [1,10,20] will divide
+            subbasins into four groups, group 1 with lake area (0,1];
+            group 2 with lake are (1,10],
+            group 3 with lake are (10,20],
+            group 4 with lake are (20,Max channel length].
             
         Notes
         ------- 
@@ -3608,8 +3632,9 @@ class LRRT:
 #            ncatinfo2['RivLength'] = ncatinfo2['Rivlen'].values
 #            ncatinfo2['RivLength'] = ncatinfo2['Rivlen'].values
         Channel_rvp_file_path,Channel_rvp_string,Model_rvh_file_path,Model_rvh_string,Model_rvp_file_path,Model_rvp_string_modify = Generate_Raven_Channel_rvp_rvh_String(ncatinfo2,Raveinputsfolder,lenThres,
-                                                                                                                                                                     iscalmanningn,Lake_As_Gauge,Model_Name
-                                                                                                                                                                     )                                                        
+                                                                                                                                                                     iscalmanningn,Lake_As_Gauge,Model_Name,
+                                                                                                                                                                     SubBasinGroup_NM_Lake,SubBasinGroup_Area_Lake,
+                                                                                                                                                                     SubBasinGroup_NM_Channel,SubBasinGroup_Length_Channel)                                                        
         WriteStringToFile(Channel_rvp_string,Channel_rvp_file_path,"w")
         WriteStringToFile(Model_rvh_string,Model_rvh_file_path,"w")
         WriteStringToFile(Model_rvp_string_modify,Model_rvp_file_path,"a")

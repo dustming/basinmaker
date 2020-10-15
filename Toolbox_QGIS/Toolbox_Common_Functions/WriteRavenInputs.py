@@ -692,8 +692,56 @@ def Generate_Raven_Lake_rvh_String(catinfo,Raveinputsfolder,Model_Name):
     return Lake_rvh_string,Lake_rvh_file_path
     #### write lake input files for different lake zone
 
+
+def Return_Group_Name_Based_On_Value(value,GroupNames,Group_Thresthold_Values):
+    """Return group name 
+    It is a function to return group name in GroupNames, based on value and
+    Group_Thresthold_Values
+    
+    Parameters 
+    ----------
+    value                   : float 
+        it is a value that used to identify which group this value belong to
+    GroupNames              : list 
+        it is a list contain group names 
+    Group_Thresthold_Values : list 
+        it is a list contains thresthold to define different groups, the value
+        of Group_Thresthold_Values should increase from 0 to end.
+    Notes
+    ------    
+    The dimension of the GroupNames should equal to 1 or 
+    len(Group_Thresthold_Values) + 1 
+    
+    See Also
+    --------
+    None 
+    
+    Returns
+    -------
+    GroupName  : String
+        the group name determined by value 
+    """
+    
+    ### only one group 
+    if len(GroupNames) == 1: 
+        GroupName = GroupNames[0]
+    elif len(GroupNames) > 1:
+        for i in range(0,len(Group_Thresthold_Values)):
+            
+            ### 
+            if value < Group_Thresthold_Values[i]:
+                GroupName = GroupNames[i]
+                break    
+            ## value larger than all thresthold value
+            elif i == len(Group_Thresthold_Values) - 1:
+                GroupName = GroupNames[i + 1]
+    return GroupName
+                      
+     
 def Generate_Raven_Channel_rvp_rvh_String(ocatinfo,Raveinputsfolder,lenThres,iscalmanningn,
-                                          Lake_As_Gauge,Model_Name):#Writervhchanl(ocatinfo,Raveinputsfolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM,Lake_As_Gauge = False,Model_Name = 'test'):
+                                          Lake_As_Gauge,Model_Name,
+                                          SubBasinGroup_NM_Lake,SubBasinGroup_Area_Lake,
+                                          SubBasinGroup_NM_Channel,SubBasinGroup_Length_Channel):                                       #Writervhchanl(ocatinfo,Raveinputsfolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM,Lake_As_Gauge = False,Model_Name = 'test'):
     """Generate string of raven chennel rvp input and rvh input
     
     Function that used to generate the content of raven rvh file and 
@@ -721,7 +769,27 @@ def Generate_Raven_Channel_rvp_rvh_String(ocatinfo,Raveinputsfolder,lenThres,isc
     Model_Name          : string
         The Raven model base name. File name of the raven input will be 
         Model_Name.xxx.              
-        
+    SubBasinGroup_NM_Channel       : List 
+        It is a list of names for subbasin groups, which are grouped based
+        on channel length of each subbsin. Should at least has one name
+    SubBasinGroup_Length_Channel   : List
+        It is a list of float channel length thresthold in meter, to divide
+        subbasin into different groups. for example, [1,10,20] will divide
+        subbasins into four groups, group 1 with channel length (0,1];
+        group 2 with channel length (1,10],
+        group 3 with channel length (10,20],
+        group 4 with channel length (20,Max channel length].
+    SubBasinGroup_NM_Lake          : List 
+        It is a list of names for subbasin groups, which are grouped based
+        on Lake area of each subbsin. Should at least has one name
+    SubBasinGroup_Area_Lake        : List
+        It is a list of float lake area thresthold in m2, to divide
+        subbasin into different groups. for example, [1,10,20] will divide
+        subbasins into four groups, group 1 with lake area (0,1];
+        group 2 with lake are (1,10],
+        group 3 with lake are (10,20],
+        group 4 with lake are (20,Max channel length].
+                    
     Notes
     ------    
     None 
@@ -799,6 +867,10 @@ def Generate_Raven_Channel_rvp_rvh_String(ocatinfo,Raveinputsfolder,lenThres,isc
     
     
     catinfo_sub = catinfo.drop_duplicates('SubId', keep='first')### remove duplicated subids, beacuse of including hrus in the dataframe 
+    
+    SubBasin_Group_Channel = pd.DataFrame(data=np.full((len(catinfo_sub),2),np.nan),columns = ['SubId','SubBasin_Group_NM'])
+    SubBasin_Group_Lake    = pd.DataFrame(data=np.full((len(catinfo_sub),2),np.nan),columns = ['SubId','SubBasin_Group_NM'])
+    
 #    print(catinfo_sub[['SubId','DowSubId']])
     print('Total number of Subbasins are     ' +  str(int((len(catinfo_sub))))+'   '+'SubId')
     for i in range(0,len(catinfo_sub)):
@@ -825,7 +897,11 @@ def Generate_Raven_Channel_rvp_rvh_String(ocatinfo,Raveinputsfolder,lenThres,isc
         else:
             StrDid = str(int(catinfo_sub['DowSubId'].values[i]))
             
-#        print(StrDid)    
+        GroupName = Return_Group_Name_Based_On_Value(catinfo_sub['RivLength'].values[i],
+                                                     SubBasinGroup_NM_Channel,
+                                                     SubBasinGroup_Length_Channel)
+        SubBasin_Group_Channel.loc[i,'SubId'] = catid 
+        SubBasin_Group_Channel.loc[i,'SubBasin_Group_NM'] = GroupName  
         
         pronam = 'Chn_'+ Strcat
 
@@ -892,14 +968,50 @@ def Generate_Raven_Channel_rvp_rvh_String(ocatinfo,Raveinputsfolder,lenThres,isc
         SLOPE = str(catslope)+tab
         ASPECT = str(360 - cataspect)+tab
         Model_rvh_string_list.append("  "+StrGid+tab+StrGidarea+StrGidelev+lat+lon+catid+LAND_USE_CLASS+VEG_CLASS+SOIL_PROFILE+AQUIFER_PROFILE+TERRAIN_CLASS+SLOPE+ASPECT) #orvh.write("  "+StrGid+tab+StrGidarea+StrGidelev+lat+lon+catid+LAND_USE_CLASS+VEG_CLASS+SOIL_PROFILE+AQUIFER_PROFILE+TERRAIN_CLASS+SLOPE+ASPECT+"\n")
-        
-            
+       
+        if catinfo_hru['HRU_IsLake'].values[i] == 1:        
+            GroupName = Return_Group_Name_Based_On_Value(catinfo_hru['HRU_Area'].values[i],
+                                                         SubBasinGroup_NM_Lake,
+                                                         SubBasinGroup_Area_Lake)
+            SubBasin_Group_Lake.loc[i,'SubId'] = catinfo_hru['SubId'].values[i] 
+            SubBasin_Group_Lake.loc[i,'SubBasin_Group_NM'] = GroupName     
         
     Model_rvh_string_list.append(":EndHRUs")#orvh.write(":EndHRUs"+"\n")
     Model_rvh_string_list.append(":PopulateHRUGroup Lake_HRUs With LANDUSE EQUALS Lake_HRU")#orvh.write(":PopulateHRUGroup Lake_HRUs With LANDUSE EQUALS Lake_HRU" + "\n")
     Model_rvh_string_list.append(":PopulateHRUGroup Land_HRUs With LANDUSE EQUALS FOREST")#orvh.write(":PopulateHRUGroup Land_HRUs With LANDUSE EQUALS FOREST" + "\n")
     Model_rvh_string_list.append(":RedirectToFile " + Model_Name+"_Lake.rvh")#orvh.write(":RedirectToFile TestLake.rvh")
-    
+
+    for i in range(0,len(SubBasinGroup_NM_Channel)):
+        Model_rvh_string_list.append(":SubBasinGroup   " + SubBasinGroup_NM_Channel[i])
+        SubBasin_Group_Channel_i = SubBasin_Group_Channel.loc[SubBasin_Group_Channel['SubBasin_Group_NM'] == SubBasinGroup_NM_Channel[i]]
+        SubIDs_In_Group = SubBasin_Group_Channel_i['SubId'].values
+        SubIDs_In_Group_Str_list = ['    ']
+        for j in range(0,len(SubIDs_In_Group)):
+            SubIDs_In_Group_Str_list.append(str(int(SubIDs_In_Group[i])))
+        SubIDs_In_Group_Str = "   ".join(SubIDs_In_Group_Str_list)
+         
+        Model_rvh_string_list.append(SubIDs_In_Group_Str)
+        Model_rvh_string_list.append(":EndSubBasinGroup   ")
+        
+        Model_rvh_string_list.append("# :SBGroupPropertyOverride " + SubBasinGroup_NM_Channel[i] + "MANNINGS_N 0.001")
+        Model_rvh_string_list.append("# :SBGroupPropertyMultiplier "+ SubBasinGroup_NM_Channel[i] + "MANNINGS_N 3")
+
+    for i in range(0,len(SubBasinGroup_NM_Lake)):
+        Model_rvh_string_list.append(":SubBasinGroup   " + SubBasinGroup_NM_Lake[i])
+        SubBasin_Group_Lake_i = SubBasin_Group_Lake.loc[SubBasin_Group_Lake['SubBasin_Group_NM'] == SubBasinGroup_NM_Lake[i]]
+        SubIDs_In_Group = SubBasin_Group_Lake_i['SubId'].values
+        SubIDs_In_Group_Str_list = ['    ']
+        for j in range(0,len(SubIDs_In_Group)):
+            SubIDs_In_Group_Str_list.append(str(int(SubIDs_In_Group[i])))
+        SubIDs_In_Group_Str = "   ".join(SubIDs_In_Group_Str_list)
+         
+        Model_rvh_string_list.append(SubIDs_In_Group_Str)
+        Model_rvh_string_list.append(":EndSubBasinGroup   ")
+        
+        Model_rvh_string_list.append("# :SBGroupPropertyOverride " + SubBasinGroup_NM_Lake[i] + "RESERVOIR_CREST_WIDTH 12.0")
+        Model_rvh_string_list.append("# :SBGroupPropertyMultiplier "+ SubBasinGroup_NM_Lake[i] + "RESERVOIR_CREST_WIDTH 1.0")
+        
+        
     Channel_rvp_string = "\n".join(Channel_rvp_string_list)
     Model_rvh_string   = "\n".join(Model_rvh_string_list)
 
