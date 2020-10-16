@@ -1476,7 +1476,7 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
 
     mem_union_fix  = processing.run("native:fixgeometries", {'INPUT':layer_cat,'OUTPUT':'memory:'})['OUTPUT'] 
     
-    Sub_Lake_HRU1 = processing.run("native:dissolve", {'INPUT':mem_union_fix,'FIELD':['HRULake_ID'],'OUTPUT':os.path.join(tempfile.gettempdir(),'tempfile.shp')},context = context)['OUTPUT']
+    Sub_Lake_HRU1 = processing.run("native:dissolve", {'INPUT':mem_union_fix,'FIELD':['HRULake_ID'],'OUTPUT':os.path.join(tempfile.gettempdir(),str(np.random.random_integers(10000000))+'tempfile.shp')},context = context)['OUTPUT']
                             
     Sub_Lake_HRU2 = processing.run("native:dissolve", {'INPUT':Sub_Lake_HRU1,'FIELD':['HRULake_ID'],'OUTPUT':Path_finalcat_hru_out},context = context)
     Sub_Lake_HRU = processing.run("native:dissolve", {'INPUT':Sub_Lake_HRU1,'FIELD':['HRULake_ID'],'OUTPUT':'memory:'},context = context)    
@@ -1947,7 +1947,6 @@ class LRRT:
         self.Path_Landuse_in = Landuse
         self.Path_Landuseinfo_in = Landuseinfo
         self.Path_obspoint_in = obspoint
-        self.Path_OutputFolder = OutputFolder
         self.Path_Sub_Reg_Out_Folder = '#'
         self.Is_Sub_Region          = Is_Sub_Region
         if Path_Sub_Reg_Out_Folder != '#':
@@ -1959,9 +1958,13 @@ class LRRT:
             self.Path_Sub_reg_grass_str_r  = os.path.join(Path_Sub_Reg_Out_Folder,'Sub_Reg_str_grass_r.pack')
             self.Path_Sub_reg_grass_str_v  = os.path.join(Path_Sub_Reg_Out_Folder,'Sub_Reg_str_grass_v.pack')
             self.Path_Sub_reg_dem          = os.path.join(Path_Sub_Reg_Out_Folder,'Sub_Reg_dem.pack')
-
-
-
+        
+        if OutputFolder != '#':
+            self.Path_OutputFolder = OutputFolder
+        else:
+            self.Path_OutputFolder = os.path.join(tempfile.gettempdir(),str(np.random.random_integers(10000)))
+    
+        
         self.ProjectNM = ProjectNM
         
         if self.ProjectNM != '#':
@@ -1969,7 +1972,10 @@ class LRRT:
 
             if not os.path.exists(self.OutputFolder):
                 os.makedirs(self.OutputFolder)
-
+        else:
+            self.ProjectNM = str(np.random.random_integers(1000))
+            self.OutputFolder = os.path.join(self.Path_OutputFolder,self.ProjectNM)
+        
         self.Raveinputsfolder = self.OutputFolder + '/'+'RavenInput/'
 
         self.qgisPP = os.environ['QGISPrefixPath']
@@ -3694,8 +3700,9 @@ class LRRT:
 #        self.selectfeaturebasedonID(Path_shpfile = Path_products,sub_colnm = 'SubId',down_colnm = 'DowSubId',mostdownid = SubId_Selected,mostupstreamid = np.full(len(SubId_Selected),-1),OutBaseName='finalcat_info')
         return SubId_Selected
 
-    def Select_Routing_product_based_SubId(self,Path_final_riv = '#',Path_final_riv_ply = '#',Path_Con_Lake_ply = '#',Path_NonCon_Lake_ply='#',Path_final_cat = '#',
-                                           Path_final_cat_riv = '#', sub_colnm = 'SubId',down_colnm = 'DowSubId',mostdownid = [-1],mostupstreamid = [-1]):
+    def Select_Routing_product_based_SubId(self,OutputFolder,Path_final_riv = '#',Path_final_riv_ply = '#',Path_Con_Lake_ply = '#',Path_NonCon_Lake_ply='#',Path_final_cat = '#',
+                                           Path_final_cat_riv = '#', sub_colnm = 'SubId',down_colnm = 'DowSubId',mostdownid = [-1],mostupstreamid = [-1],
+                                           ):
 
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
@@ -3727,7 +3734,7 @@ class LRRT:
             OutHyID  = mostdownid[isub]
             OutHyID2 = mostupstreamid[isub]
 
-            OutputFolder_isub = os.path.join(self.OutputFolder,'SubId_'+str(OutHyID))
+            OutputFolder_isub = OutputFolder
             if not os.path.exists(OutputFolder_isub):
                 os.makedirs(OutputFolder_isub)
 
@@ -4253,8 +4260,8 @@ class LRRT:
         Path_final_riv    = os.path.join(Datafolder,finalriv_NM)
 
 
-        Path_Temp_final_rviply = os.path.join(self.tempfolder,'temp_finalriv_ply.shp')
-        Path_Temp_final_rvi    = os.path.join(self.tempfolder,'temp_finalriv.shp')
+        Path_Temp_final_rviply = os.path.join(self.tempfolder,'temp_finalriv_ply'+ str(np.random.random_integers(1000)) +'.shp')
+        Path_Temp_final_rvi    = os.path.join(self.tempfolder,'temp_finalriv'+  str(np.random.random_integers(1000)) +'.shp')
 
         processing.run("native:dissolve", {'INPUT':Path_final_rviply,'FIELD':['SubId'],'OUTPUT':Path_Temp_final_rviply},context = context)
         processing.run("native:dissolve", {'INPUT':Path_final_riv,'FIELD':['SubId'],'OUTPUT':Path_Temp_final_rvi},context = context)
@@ -5225,9 +5232,9 @@ class LRRT:
         context = dataobjects.createContext()
         context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
                 
-        Path_finalcat_hru_temp          = os.path.join(self.tempfolder,"finalcat_freferen.shp")
-        Path_finalcat_hru_temp2          = os.path.join(self.tempfolder,"finalcat_freferen2.shp")
-        Path_finalcat_hru_temp_dissolve = os.path.join(self.tempfolder,"finalcat_freferen_dissolve.shp")
+        Path_finalcat_hru_temp          = os.path.join(self.tempfolder,str(np.random.random_integers(1000000)) + "finalcat_freferen.shp")
+        Path_finalcat_hru_temp2          = os.path.join(self.tempfolder,str(np.random.random_integers(1000000))+ "finalcat_freferen2.shp")
+        Path_finalcat_hru_temp_dissolve = os.path.join(self.tempfolder,str(np.random.random_integers(1000000)) + "finalcat_freferen_dissolve.shp")
         Path_finalcat_hru_temp_dissolve_area = os.path.join(Output_Folder,"Overlay_Polygons.shp")
         
         
