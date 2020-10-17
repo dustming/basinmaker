@@ -2624,15 +2624,15 @@ class LRRT:
             processing.run("native:reprojectlayer", {'INPUT':self.Path_WiDep_in,'TARGET_CRS':QgsCoordinateReferenceSystem(self.SpRef_in),'OUTPUT':os.path.join(self.tempfolder,'WiDep_project.shp')})
             processing.run("native:extractbylocation", {'INPUT':os.path.join(self.tempfolder,'WiDep_project.shp'),'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_WidDepLine},context = context)
             grass.run_command("v.import", input = self.Path_WidDepLine, output = 'WidDep', overwrite = True)
-
-        processing.run("native:reprojectlayer", {'INPUT':self.Path_obspoint_in,'TARGET_CRS':QgsCoordinateReferenceSystem(self.SpRef_in),'OUTPUT':os.path.join(self.tempfolder,'Obspoint_project.shp')})
-        processing.run("native:extractbylocation", {'INPUT':os.path.join(self.tempfolder,'Obspoint_project.shp'),'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_ObsPoint},context = context)
+        
+        if Path_ObsPoint != '#'
+            processing.run("native:reprojectlayer", {'INPUT':self.Path_obspoint_in,'TARGET_CRS':QgsCoordinateReferenceSystem(self.SpRef_in),'OUTPUT':os.path.join(self.tempfolder,'Obspoint_project.shp')})
+            processing.run("native:extractbylocation", {'INPUT':os.path.join(self.tempfolder,'Obspoint_project.shp'),'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_ObsPoint},context = context)
 
         # processing.run("native:clip", {'INPUT':self.Path_Lakefile_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_allLakeply},context = context)
         # processing.run("native:clip", {'INPUT':self.Path_WiDep_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_WidDepLine},context = context)
         # processing.run("native:clip", {'INPUT':self.Path_obspoint_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_ObsPoint},context = context)
 
-        grass.run_command("v.import", input = self.Path_ObsPoint, output = 'obspoint', overwrite = True)
         grass.run_command("v.import", input = self.Path_allLakeply, output = 'Hylake', overwrite = True)
         grass.run_command("v.import", input = os.path.join(self.tempfolder,'Hylake_boundary.shp'), output = 'Hylake_boundary', overwrite = True)
 
@@ -2694,21 +2694,10 @@ class LRRT:
             temparray.write(mapname="qmean", overwrite=True)
             temparray.write(mapname="up_area", overwrite=True)
             temparray.write(mapname="SubId_WidDep", overwrite=True)
-
-
-        if self.Is_Sub_Region > 0:
-            ### load subregion outlet id
-            grass.run_command('v.unpack', input = self.Path_Sub_reg_outlets_v, output = 'Sub_reg_outlets_pt',overwrite = True)
-            grass.run_command('v.to.rast',input = 'Sub_reg_outlets_pt',output = 'Sub_reg_outlets',use = 'attr',attribute_column = 'value',overwrite = True)
-            ## load observation points
-            grass.run_command('v.to.rast',input = 'obspoint',output = 'obs1',use = 'attr',attribute_column = 'Obs_ID',overwrite = True)
-            ### combine both as observation datasets
-            grass.run_command('r.mapcalc',expression = "obs = if(isnull(Sub_reg_outlets),obs1,Sub_reg_outlets)",overwrite = True)
-            grass.run_command("r.null", map = 'obs', setnull = [-9999,0])
-
-        else:
-            grass.run_command('v.to.rast',input = 'obspoint',output = 'obs',use = 'attr',attribute_column = 'Obs_ID',overwrite = True)
-
+        
+        if self.Path_ObsPoint != '#':
+            grass.run_command("v.import", input = self.Path_ObsPoint, output = 'obspoint', overwrite = True)
+            
         PERMANENT.close()
         del r_dem_layer
         Qgs.exit()
@@ -2783,12 +2772,28 @@ class LRRT:
         ####adjust observation points to the highest flow accumulation point within a search distance
 
         #####
+        if self.Path_ObsPoint != '#':
+            grass.run_command('r.stream.snap', input = 'obspoint',output = 'obspoint_snap',stream_rast = 'str_grass_r', accumulation = 'acc_grass', radius = Search_Radius, overwrite = True,quiet = 'Ture', memory = max_memroy)
+            grass.run_command('v.to.rast',input = 'obspoint_snap',output = 'obspoint_snap',use = 'cat', overwrite = True)
+            grass.run_command('r.to.vect',  input = 'obspoint_snap',output = 'obspoint_snap_r2v', type ='point', flags = 'v', overwrite = True)
+            grass.run_command('v.db.join', map= 'obspoint_snap_r2v',column = 'cat', other_table = 'obspoint',other_column ='cat', overwrite = True)
+            grass.run_command('v.to.rast',input = 'obspoint_snap_r2v',output = 'obs1',use = 'attr',attribute_column = 'Obs_ID',overwrite = True)
+            if self.Is_Sub_Region
+        else:
+            temparray = garray.array()
+            temparray[:,:] = -9999
+            temparray.write(mapname="obs1", overwrite=True)   
+                 
+        if self.Is_Sub_Region > 0:
+            ### load subregion outlet id
+            grass.run_command('v.unpack', input = self.Path_Sub_reg_outlets_v, output = 'Sub_reg_outlets_pt',overwrite = True)
+            grass.run_command('v.to.rast',input = 'Sub_reg_outlets_pt',output = 'Sub_reg_outlets',use = 'attr',attribute_column = 'value',overwrite = True)
+            ### combine both as observation datasets
+            grass.run_command('r.mapcalc',expression = "obs = if(isnull(Sub_reg_outlets),obs1,Sub_reg_outlets)",overwrite = True)
+            grass.run_command("r.null", map = 'obs', setnull = [-9999,0])
+        else:
+            grass.run_command('r.mapcalc',expression = "obs = obs1",overwrite = True)
 
-        grass.run_command('r.stream.snap', input = 'obspoint',output = 'obspoint_snap',stream_rast = 'str_grass_r', accumulation = 'acc_grass', radius = Search_Radius, overwrite = True,quiet = 'Ture', memory = max_memroy)
-        grass.run_command('v.to.rast',input = 'obspoint_snap',output = 'obspoint_snap',use = 'cat', overwrite = True)
-        grass.run_command('r.to.vect',  input = 'obspoint_snap',output = 'obspoint_snap_r2v', type ='point', flags = 'v', overwrite = True)
-        grass.run_command('v.db.join', map= 'obspoint_snap_r2v',column = 'cat', other_table = 'obspoint',other_column ='cat', overwrite = True)
-        grass.run_command('v.to.rast',input = 'obspoint_snap_r2v',output = 'obs',use = 'attr',attribute_column = 'Obs_ID',overwrite = True)
 
         PERMANENT.close()
 ###########################################################################################3
@@ -2958,6 +2963,8 @@ class LRRT:
         temparray.write(mapname="finalcat", overwrite=True)
         grass.run_command('r.null', map='finalcat',setnull=-9999)
         grass.run_command('r.to.vect', input='finalcat',output='finalcat_F1',type='area', overwrite = True)
+        if Is_divid_region > 0:
+            return
 #        grass.run_command('r.out.gdal', input = 'finalcat',output = os.path.join(self.tempfolder,'cat_finaltddd.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
         temparray[:,:] = Non_con_lake_cat[:,:]
         temparray.write(mapname="Non_con_lake_cat", overwrite=True)
@@ -3249,11 +3256,14 @@ class LRRT:
             temparray = np.full((3,6),-9999.00000)
             WidDep_info = pd.DataFrame(temparray, columns = ['HYBAS_ID', 'NEXT_DOWN', 'UP_AREA', 'Q_Mean', 'WIDTH', 'DEPTH'])
 
-
-        sqlstat="SELECT Obs_ID, DA_obs, STATION_NU, SRC_obs FROM obspoint"
-        obsinfo = pd.read_sql_query(sqlstat, con)
-        obsinfo['Obs_ID'] = obsinfo['Obs_ID'].astype(float)
-
+        if self.Path_ObsPoint != '#':
+            sqlstat="SELECT Obs_ID, DA_obs, STATION_NU, SRC_obs FROM obspoint"
+            obsinfo = pd.read_sql_query(sqlstat, con)
+            obsinfo['Obs_ID'] = obsinfo['Obs_ID'].astype(float)
+        else:
+            temparray = np.full((3,4),-9999.00000)
+            WidDep_info = pd.DataFrame(temparray, columns = ['Obs_ID', 'DA_obs', 'STATION_NU', 'SRC_obs'])
+                        
         ######  All catchment with a river segments
         Riv_Cat_IDS = np.unique(nstr_seg_array)
         Riv_Cat_IDS = Riv_Cat_IDS > 0
@@ -3416,8 +3426,9 @@ class LRRT:
             exp = exp + ')'
             processing.run("native:extractbyexpression", {'INPUT':self.Path_allLakeply,'EXPRESSION':exp,'OUTPUT':os.path.join(self.OutputFolder, 'Con_Lake_Ply.shp')})
     
-        grass.run_command('v.out.ogr', input = 'obspoint',output = os.path.join(self.OutputFolder,'obspoint_inputs.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
-        grass.run_command('v.out.ogr', input = 'obspoint_snap_r2v',output = os.path.join(self.OutputFolder,'obspoint_snap.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
+        if self.Path_ObsPoint != '#':
+            grass.run_command('v.out.ogr', input = 'obspoint',output = os.path.join(self.OutputFolder,'obspoint_inputs.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
+            grass.run_command('v.out.ogr', input = 'obspoint_snap_r2v',output = os.path.join(self.OutputFolder,'obspoint_snap.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
 
         PERMANENT.close()
         Qgs.exit()
