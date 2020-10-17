@@ -3276,7 +3276,7 @@ class LRRT:
             obsinfo['Obs_ID'] = obsinfo['Obs_ID'].astype(float)
         else:
             temparray = np.full((3,4),-9999.00000)
-            WidDep_info = pd.DataFrame(temparray, columns = ['Obs_ID', 'DA_obs', 'STATION_NU', 'SRC_obs'])
+            obsinfo = pd.DataFrame(temparray, columns = ['Obs_ID', 'DA_obs', 'STATION_NU', 'SRC_obs'])
 
         ######  All catchment with a river segments
         Riv_Cat_IDS = np.unique(nstr_seg_array)
