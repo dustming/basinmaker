@@ -534,9 +534,9 @@ def Check_If_Str_Is_Head_Stream(prow,pcol,nrows,ncols,str,strid):
 
     noout=True
     ### the point prow and pcol is not surrounded by oter strems, except
-    ### stream with stream id = strid 
+    ### stream with stream id = strid
     if prow != 0 and prow != nrows -1 and pcol != 0 and pcol != ncols-1:
-        
+
         if str[prow-1,pcol+1] > 0 and str[prow-1,pcol+1] != strid:
             noout=False
         if str[prow-1,pcol-1] > 0 and str[prow-1,pcol-1] != strid:
@@ -554,8 +554,8 @@ def Check_If_Str_Is_Head_Stream(prow,pcol,nrows,ncols,str,strid):
         if str[prow+1,pcol  ] > 0 and str[prow+1,pcol]  != strid:
             noout=False
     return noout
-        
-    
+
+
 ###
 def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir,Is_divid_region,Min_Grid_Number = 50):
     GP_cat = copy.copy(cat)
@@ -576,9 +576,9 @@ def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir,Is_divid_re
         catoutloc[i,1] = trow  #### catchment pourpont row
         catoutloc[i,2] = tcol  #### catchment pourpont col
 #    writeraster(outFolder+subid+"_Pourpoints_1.asc",GP_cat)
-    
-    #### make the end point of stream in the head water shed to be a pourpoints 
-    
+
+    #### make the end point of stream in the head water shed to be a pourpoints
+
     Strids = np.unique(Str)
     Strids = Strids [Strids > 0]
     newstr_id = max(Strids) + 10
@@ -586,11 +586,11 @@ def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir,Is_divid_re
         strid = Strids[i]
         strrowcol = np.argwhere(Str == strid).astype(int)
         nstrrow = strrowcol.shape[0]
-        
+
         ### if number of the stream grid smaller than 50
-        
-        if nstrrow < Min_Grid_Number: 
-            continue 
+
+        if nstrrow < Min_Grid_Number:
+            continue
         iStr = np.full((nstrrow,4),-9999)##### 0 row, 1 col, 2 fac,
         iStr[:,0] = strrowcol[:,0]
         iStr[:,1] = strrowcol[:,1]
@@ -599,7 +599,7 @@ def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir,Is_divid_re
         ### starting point of the stream
         Start_Pt_row = iStr[0,0]
         Start_Pt_col = iStr[0,1]
-        
+
         Is_Head_Stream = Check_If_Str_Is_Head_Stream(Start_Pt_row,Start_Pt_col,nrows,ncols,Str,strid)
         if Is_Head_Stream == True:
             Str_new[iStr[0,0],iStr[0,1]]=newstr_id #### change the outlet of catchment into wid
@@ -607,7 +607,7 @@ def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir,Is_divid_re
             Str_new[iStr[2,0],iStr[2,1]]=newstr_id
             Str_new[iStr[3,0],iStr[3,1]]=newstr_id
             Str_new[iStr[4,0],iStr[4,1]]=newstr_id
-            newstr_id = newstr_id + 1            
+            newstr_id = newstr_id + 1
     ######
     ##################Part 2 Get pourpoints of Lake inflow streams
     arlakeid = np.unique(lake)
@@ -797,7 +797,7 @@ def Calculate_Longest_flowpath(mainriv_merg_info):
 #    print(longest_flow_pathes)
     npath = 1
 
-    #### loop upstream to find longest flow path 
+    #### loop upstream to find longest flow path
     Pathid  = np.full(1000,-1)
     subid = mainriv_merg_info_sort['SubId'].values[0]
     npath_current = 1
@@ -806,39 +806,39 @@ def Calculate_Longest_flowpath(mainriv_merg_info):
     while len(Pathid[Pathid > 0]) > 0:
         nPathid  =  np.full(1000,-1)
         npath    = npath_current
-        
+
 #        print('###################################')
 #        print(npath,Pathid[0:npath])
 #        print('###################################')
         for ipath in range(0,npath_current):
             c_subid_ipath = Pathid[ipath]
-            
-            if c_subid_ipath < 0:  ### means this path has been closed due to no more subbasin within the lake domain 
-                continue 
-                
-            longest_flow_pathes[ipath] = mainriv_merg_info_sort.loc[mainriv_merg_info_sort['SubId'] == c_subid_ipath,'RivLength'] +longest_flow_pathes[ipath] ## add river length to current path 
+
+            if c_subid_ipath < 0:  ### means this path has been closed due to no more subbasin within the lake domain
+                continue
+
+            longest_flow_pathes[ipath] = mainriv_merg_info_sort.loc[mainriv_merg_info_sort['SubId'] == c_subid_ipath,'RivLength'] +longest_flow_pathes[ipath] ## add river length to current path
             Strahler_order_ipath = mainriv_merg_info_sort.loc[mainriv_merg_info_sort['SubId'] == c_subid_ipath,'Strahler'].values[0]
-            
-            upstream_sub_infos = mainriv_merg_info_sort.loc[mainriv_merg_info_sort['DowSubId'] == c_subid_ipath] ## get upstream info 
-                    
-            if len(upstream_sub_infos) <= 0: ## no more upstream catchment within the domain of the lake 
+
+            upstream_sub_infos = mainriv_merg_info_sort.loc[mainriv_merg_info_sort['DowSubId'] == c_subid_ipath] ## get upstream info
+
+            if len(upstream_sub_infos) <= 0: ## no more upstream catchment within the domain of the lake
 #                print("path        closed        ",ipath)
                 continue
-                
-            ## look for upstream catchment has the same upstream_sub_infos_eq_Strahler first     
-#            print(Strahler_order_ipath)            
+
+            ## look for upstream catchment has the same upstream_sub_infos_eq_Strahler first
+#            print(Strahler_order_ipath)
 #            print(upstream_sub_infos['Strahler'])
-            upstream_sub_infos_eq_Strahler = upstream_sub_infos.loc[upstream_sub_infos['Strahler'] == Strahler_order_ipath] 
-            
-            if len(upstream_sub_infos_eq_Strahler) > 0: ### has a upstream river has the saem strahler id, no new path will be added 
-                nPathid[ipath] = upstream_sub_infos_eq_Strahler['SubId'].values[0] ### add this upstream id to nPathid                 
-                continue 
-            else:  
+            upstream_sub_infos_eq_Strahler = upstream_sub_infos.loc[upstream_sub_infos['Strahler'] == Strahler_order_ipath]
+
+            if len(upstream_sub_infos_eq_Strahler) > 0: ### has a upstream river has the saem strahler id, no new path will be added
+                nPathid[ipath] = upstream_sub_infos_eq_Strahler['SubId'].values[0] ### add this upstream id to nPathid
+                continue
+            else:
                 upstream_sub_infos_eq_Strahler_1 = upstream_sub_infos.loc[upstream_sub_infos['Strahler'] == Strahler_order_ipath - 1]
-                
+
                 for inpath in range(0,len(upstream_sub_infos_eq_Strahler_1)):
-                    ### this brance sperate into two or several reaches, the starting river length for all of them are the same 
-                    if inpath == 0: 
+                    ### this brance sperate into two or several reaches, the starting river length for all of them are the same
+                    if inpath == 0:
                         nPathid[ipath] = upstream_sub_infos_eq_Strahler_1['SubId'].values[inpath]
 #                        print(nPathid[ipath],ipath,upstream_sub_infos_eq_Strahler_1['SubId'].values[inpath],'aaaaa',range(0,len(upstream_sub_infos_eq_Strahler_1)))
                     else:
@@ -846,13 +846,13 @@ def Calculate_Longest_flowpath(mainriv_merg_info):
                         longest_flow_pathes[npath + 1 - 1] = longest_flow_pathes[ipath]
 #                        print(npath + 1 - 1,longest_flow_pathes[npath + 1 - 1],nPathid[npath + 1 - 1],'bbbbb',range(0,len(upstream_sub_infos_eq_Strahler_1)))
                         npath = npath + 1
-            
-            
-        
-        Pathid = nPathid    
-        npath_current = npath 
+
+
+
+        Pathid = nPathid
+        npath_current = npath
     Longestpath = max(longest_flow_pathes)
-    
+
     return Longestpath
 
 ###################################################################3
@@ -881,7 +881,7 @@ def New_SubId_To_Dissolve(subid,catchmentinfo,mapoldnew_info,upsubid = -1,ismodi
     cbranch                  = catchmentinfo[catchmentinfo[sub_colnm].isin(Modify_subids)]
     tarinfo                  = catchmentinfo[catchmentinfo[sub_colnm] == subid]   ### define these subs attributes
     ### average river slope info
-    
+
     mainriv_merg_info = mainriv.loc[mainriv['SubId'].isin(Modify_subids)]
     mainriv_merg_info = mainriv_merg_info.loc[mainriv_merg_info['RivLength'] > 0]
     idx = tarinfo.index[0]
@@ -908,7 +908,7 @@ def New_SubId_To_Dissolve(subid,catchmentinfo,mapoldnew_info,upsubid = -1,ismodi
     if Islake == 1:   ## Meger subbasin covered by lakes, Keep lake outlet catchment  DA, stream order info
         Longestpath = Calculate_Longest_flowpath(mainriv_merg_info)
         tarinfo.loc[idx,'RivLength'] = Longestpath
-        
+
     elif Islake == 2:
         tarinfo.loc[idx,'RivLength'] = 0.0
         tarinfo.loc[idx,'IsLake']    = 2
@@ -931,10 +931,10 @@ def New_SubId_To_Dissolve(subid,catchmentinfo,mapoldnew_info,upsubid = -1,ismodi
         tarinfo.loc[idx,'Seg_order']      = seg_order
 
     mask1 = mapoldnew_info['SubId'].isin(Modify_subids) ## catchment newly determined to be merged to target catchment
-    mask2 = mapoldnew_info['nsubid'] == subid ###for subbasin already processed to drainage into this target catchment 
-    mask  = np.logical_or(mask1,mask2) 
-    
-    
+    mask2 = mapoldnew_info['nsubid'] == subid ###for subbasin already processed to drainage into this target catchment
+    mask  = np.logical_or(mask1,mask2)
+
+
     ### the old downsub id of the dissolved polygon is stored in DowSubId
     for col in tarinfo.columns:
         if col == 'SubId':
@@ -942,7 +942,7 @@ def New_SubId_To_Dissolve(subid,catchmentinfo,mapoldnew_info,upsubid = -1,ismodi
             mapoldnew_info.loc[mask,'nsubid']     = tarinfo[col].values[0]
 #            print(mapoldnew_info.loc[mask,'nsubid'])
         elif col == 'nsubid' or col == 'ndownsubid' or col == 'Old_SubId' or col == 'Old_DowSubId':
-            continue  
+            continue
         else:
             mapoldnew_info.loc[mask, col]         = tarinfo[col].values[0]
 #    print(mapoldnew_info.loc[mask1,['BasArea','nsubid','SubId']])
@@ -1257,93 +1257,93 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
                             Path_Non_Connect_Lake_ply = '#',Sub_ID='SubId',
                             Sub_Lake_ID = 'HyLakeId',Lake_Id = 'Hylak_id'):
 
-    """ Overlay subbasin polygon and lake polygons  
-        
-    Function that will overlay subbasin polygon and lake polygon 
-            
-    Parameters 
+    """ Overlay subbasin polygon and lake polygons
+
+    Function that will overlay subbasin polygon and lake polygon
+
+    Parameters
     ----------
-    processing                        : qgis object 
-    context                           : qgis object 
-    OutputFolder                     : string 
-        The path to the folder that will save output HRU polygon. 
-               
-    Path_Subbasin_Ply                 : string 
-        It is the path of the subbasin polygon, which is generated by 
-        toolbox. if not generated by toolbox, the attribute table should 
-        including following attribute.     
-        ##############Subbasin related attributes########################### 
-        SubID           - integer, The subbasin Id 
-        DowSubId        - integer, The downstream subbasin ID of this 
-                                   subbasin 
-        IsLake          - integer, If the subbasin is a lake / reservior 
+    processing                        : qgis object
+    context                           : qgis object
+    OutputFolder                     : string
+        The path to the folder that will save output HRU polygon.
+
+    Path_Subbasin_Ply                 : string
+        It is the path of the subbasin polygon, which is generated by
+        toolbox. if not generated by toolbox, the attribute table should
+        including following attribute.
+        ##############Subbasin related attributes###########################
+        SubID           - integer, The subbasin Id
+        DowSubId        - integer, The downstream subbasin ID of this
+                                   subbasin
+        IsLake          - integer, If the subbasin is a lake / reservior
                                    subbasin. 1 yes, <0, no
         IsObs           - integer, If the subbasin contains a observation
-                                   gauge. 1 yes, < 0 no. 
-        RivLength       - float,   The length of the river in current 
+                                   gauge. 1 yes, < 0 no.
+        RivLength       - float,   The length of the river in current
                                    subbasin in m
-        RivSlope        - float,   The slope of the river path in 
-                                   current subbasin, in m/m 
-        FloodP_n        - float,   Flood plain manning's coefficient, in - 
+        RivSlope        - float,   The slope of the river path in
+                                   current subbasin, in m/m
+        FloodP_n        - float,   Flood plain manning's coefficient, in -
         Ch_n            - float,   main channel manning's coefficient, in -
         BkfWidth        - float,   the bankfull width of the main channel
                                    in m
-        BkfDepth        - float,   the bankfull depth of the main channel 
-                                   in m 
-        HyLakeId        - integer, the lake id                            
-        LakeVol         - float,   the Volume of the lake in km3 
-        LakeDepth       - float,   the average depth of the lake m   
-        LakeArea        - float,   the area of the lake in m2             
-    Path_Connect_Lake_ply            : string (Optional) 
-        Path to the connected lake's polygon 
-    Path_Non_Connect_Lake_ply        : string (Optional) 
+        BkfDepth        - float,   the bankfull depth of the main channel
+                                   in m
+        HyLakeId        - integer, the lake id
+        LakeVol         - float,   the Volume of the lake in km3
+        LakeDepth       - float,   the average depth of the lake m
+        LakeArea        - float,   the area of the lake in m2
+    Path_Connect_Lake_ply            : string (Optional)
+        Path to the connected lake's polygon
+    Path_Non_Connect_Lake_ply        : string (Optional)
         Path to the non connected lake's polygon
     Sub_ID                           : string (optional)
-        The column name of the subbasin id in the subbasin polygon  
-    Sub_Lake_ID                      : string (optional) 
-        The column name of the lake id in the subbasin polygon 
-    Lake_Id                          : string (Optional) 
-        The the column name in lake polygon indicate the lake ID. 
+        The column name of the subbasin id in the subbasin polygon
+    Sub_Lake_ID                      : string (optional)
+        The column name of the lake id in the subbasin polygon
+    Lake_Id                          : string (Optional)
+        The the column name in lake polygon indicate the lake ID.
 
 
     Notes
-    ------- 
+    -------
         None
-        
+
     Returns:
     -------
-        Sub_Lake_HRU['OUTPUT']                   : qgis object 
-            it is a polygon after overlay between subbasin polygon and 
-            lake polygon 
-        Sub_Lake_HRU['OUTPUT'].crs().authid()    : string 
+        Sub_Lake_HRU['OUTPUT']                   : qgis object
+            it is a polygon after overlay between subbasin polygon and
+            lake polygon
+        Sub_Lake_HRU['OUTPUT'].crs().authid()    : string
             it is a string indicate the geospatial reference used by SubBasin
-            polygon 
-        ['HRULake_ID','HRU_IsLake',Sub_ID]       : list 
+            polygon
+        ['HRULake_ID','HRU_IsLake',Sub_ID]       : list
             it is a string list
     """
     Path_finalcat_hru_out    = os.path.join(OutputFolder,"finalcat_hru_lake_info.shp")
-        
+
     Subfixgeo = processing.run("native:fixgeometries", {'INPUT':Path_Subbasin_ply,'OUTPUT':'memory:'})
-    
-    fieldnames_list =['HRULake_ID','HRU_IsLake',Lake_Id,Sub_ID,Sub_Lake_ID] ### attribubte name in the need to be saved 
-    
+
+    fieldnames_list =['HRULake_ID','HRU_IsLake',Lake_Id,Sub_ID,Sub_Lake_ID] ### attribubte name in the need to be saved
+
 #    for field in Subfixgeo['OUTPUT'].fields():
 #        fieldnames_list.append(field.name())
-        
+
     fieldnames = set(fieldnames_list)
-            
+
     if Path_Connect_Lake_ply == '#' and Path_Non_Connect_Lake_ply == '#':
         memresult_addlakeid   = processing.run("qgis:fieldcalculator", {'INPUT':Subfixgeo['OUTPUT'],'FIELD_NAME':'Hylak_id','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT':'memory:'})
         memresult_addhruid    = processing.run("qgis:fieldcalculator", {'INPUT':memresult_addlakeid['OUTPUT'],'FIELD_NAME':'HRULake_ID','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':' \"SubId\" ','OUTPUT':'memory:'})
         layer_cat=memresult_addhruid['OUTPUT']
-        field_ids = []                    
+        field_ids = []
         for field in layer_cat.fields():
             if field.name() not in fieldnames:
                 field_ids.append(layer_cat.dataProvider().fieldNameIndex(field.name()))
         layer_cat.dataProvider().deleteAttributes(field_ids)
         layer_cat.updateFields()
-        layer_cat.commitChanges()    
-#        processing.run("qgis:fieldcalculator", {'INPUT':layer_cat,'FIELD_NAME':'HRU_IsLake','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT':Path_finalcat_hru_out}) 
+        layer_cat.commitChanges()
+#        processing.run("qgis:fieldcalculator", {'INPUT':layer_cat,'FIELD_NAME':'HRU_IsLake','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT':Path_finalcat_hru_out})
         Sub_Lake_HRU = processing.run("qgis:fieldcalculator", {'INPUT':layer_cat,'FIELD_NAME':'HRU_IsLake','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT':'memory:'})
         del layer_cat
         return Sub_Lake_HRU['OUTPUT'],Sub_Lake_HRU['OUTPUT'].crs().authid(),['HRULake_ID','HRU_IsLake',Sub_ID]
@@ -1353,7 +1353,7 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
         ConLakefixgeo = processing.run("native:fixgeometries", {'INPUT':Path_Connect_Lake_ply,'OUTPUT':'memory:'})
     if  Path_Non_Connect_Lake_ply !='#':
         NonConLakefixgeo = processing.run("native:fixgeometries", {'INPUT':Path_Non_Connect_Lake_ply,'OUTPUT':'memory:'})
-    
+
     if Path_Connect_Lake_ply != '#' and Path_Non_Connect_Lake_ply != '#':
         meme_Alllakeply = processing.run("native:mergevectorlayers", {'LAYERS':[ConLakefixgeo['OUTPUT'],NonConLakefixgeo['OUTPUT']],'OUTPUT':'memory:'})
     elif Path_Connect_Lake_ply !='#' and Path_Non_Connect_Lake_ply == '#':
@@ -1362,32 +1362,32 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
         meme_Alllakeply = NonConLakefixgeo
     else:
         print("should never happened......")
-            
+
     mem_sub_lake_union_temp = processing.run("native:union", {'INPUT':Subfixgeo['OUTPUT'],'OVERLAY':meme_Alllakeply['OUTPUT'],'OVERLAY_FIELDS_PREFIX':'','OUTPUT':'memory:'},context = context)['OUTPUT']
-    
+
 #    mem_sub_lake_union_temp  = processing.run("saga:polygonunion", {'A':Subfixgeo['OUTPUT'],'B':meme_Alllakeply['OUTPUT'],'SPLIT':True,'RESULT':'TEMPORARY_OUTPUT'},context = context)['RESULT']
     mem_sub_lake_union  = processing.run("native:fixgeometries", {'INPUT':mem_sub_lake_union_temp,'OUTPUT':'memory:'})['OUTPUT']
-    
+
     layer_cat=mem_sub_lake_union
     SpRef_in = layer_cat.crs().authid()   ### get Raster spatialReference id
     layer_cat.dataProvider().addAttributes([QgsField('HRULake_ID', QVariant.Int),QgsField('HRU_IsLake', QVariant.Int)])
     field_ids = []
-        
-        # Fieldnames to save 
-        
-        ## delete unused lake ids 
+
+        # Fieldnames to save
+
+        ## delete unused lake ids
     for field in layer_cat.fields():
         if field.name() not in fieldnames:
             field_ids.append(layer_cat.dataProvider().fieldNameIndex(field.name()))
         if field.name() == Sub_ID:
             max_subbasin_id = layer_cat.maximumValue(layer_cat.dataProvider().fieldNameIndex(field.name()))
     N_new_features = layer_cat.featureCount()
-#    print("maximum subbasin Id is    ",max_subbasin_id, "N potential HRUS generated with lake polygon    ",N_new_features)        
+#    print("maximum subbasin Id is    ",max_subbasin_id, "N potential HRUS generated with lake polygon    ",N_new_features)
     layer_cat.dataProvider().deleteAttributes(field_ids)
     layer_cat.updateFields()
     layer_cat.commitChanges()
 
-    ## create HRU_lAKE_ID 
+    ## create HRU_lAKE_ID
     Attri_Name = layer_cat.fields().names()
     features = layer_cat.getFeatures()
     new_hruid = 1
@@ -1411,23 +1411,23 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
             except TypeError:
                 lakelakeid_sf = -1
                 pass
-                
+
             Sub_Lakeid_sf   = sf[Sub_Lake_ID]
             try:
                 Sub_Lakeid_sf = float(Sub_Lakeid_sf)
             except TypeError:
                 Sub_Lakeid_sf = -1
                 pass
-                
+
             if Sub_Lakeid_sf < 0:
                 old_new_hruid     = float(subid_sf)
                 sf['HRU_IsLake']  = float(-1)
-                
+
             if Sub_Lakeid_sf > 0:
-                if lakelakeid_sf == Sub_Lakeid_sf: ### the lakeid from lake polygon = lake id in subbasin polygon 
+                if lakelakeid_sf == Sub_Lakeid_sf: ### the lakeid from lake polygon = lake id in subbasin polygon
                     old_new_hruid     = float(subid_sf) + max_subbasin_id + 10
                     sf['HRU_IsLake']  = float(1)
-                else: ### the lakeid from lake polygon != lake id in subbasin polygon, this lake do not belong to this subbasin, this part of subbasin treat as non lake hru                         
+                else: ### the lakeid from lake polygon != lake id in subbasin polygon, this lake do not belong to this subbasin, this part of subbasin treat as non lake hru
                     old_new_hruid     = float(subid_sf)
                     sf['HRU_IsLake']  = float(-1)
             if old_new_hruid not in old_newhruid_list:
@@ -1436,93 +1436,93 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
                 new_hruid        = new_hruid + 1
             else:
                 sf['HRULake_ID'] = int(np.argwhere(old_newhruid_list == old_new_hruid)[0])
-                
+
 #            if subid_sf == 1000061:
-#                print(sf['HRULake_ID'],old_new_hruid,new_hruid)       
+#                print(sf['HRULake_ID'],old_new_hruid,new_hruid)
             layer_cat.updateFeature(sf)
-            
+
     Attri_table = Obtain_Attribute_Table(processing,context,layer_cat)
     features = layer_cat.getFeatures()
     with edit(layer_cat):
         for sf in features:
-            
+
             subid_sf   = sf[Sub_ID]
             try:
                 subid_sf = float(subid_sf)
             except TypeError:
                 subid_sf = -1
-                pass 
-                
+                pass
+
             lakelakeid_sf   = sf[Lake_Id]
             try:
                 lakelakeid_sf = float(lakelakeid_sf)
             except TypeError:
                 lakelakeid_sf = -1
-                pass                     
-            if subid_sf > 0 and lakelakeid_sf >0 : 
-                continue 
-            elif subid_sf < 0 and lakelakeid_sf > 0:  
+                pass
+            if subid_sf > 0 and lakelakeid_sf >0 :
+                continue
+            elif subid_sf < 0 and lakelakeid_sf > 0:
                 tar_info = Attri_table.loc[(Attri_table[Lake_Id]==lakelakeid_sf) & (Attri_table['HRU_IsLake'] > 0)]
                 sf[Sub_ID] = float(tar_info[Sub_ID].values[0])
                 sf['HRU_IsLake']  = float(tar_info['HRU_IsLake'].values[0])
                 sf['HRULake_ID']  = float(tar_info['HRULake_ID'].values[0])
                 sf[Sub_Lake_ID] = float(tar_info[Sub_Lake_ID].values[0])
-            elif subid_sf > 0 and lakelakeid_sf < 0: 
-                continue 
+            elif subid_sf > 0 and lakelakeid_sf < 0:
+                continue
             else:
                 print("Lake HRU have unexpected holes")
-                
+
             layer_cat.updateFeature(sf)
 
-    mem_union_fix  = processing.run("native:fixgeometries", {'INPUT':layer_cat,'OUTPUT':'memory:'})['OUTPUT'] 
-    
+    mem_union_fix  = processing.run("native:fixgeometries", {'INPUT':layer_cat,'OUTPUT':'memory:'})['OUTPUT']
+
     Sub_Lake_HRU1 = processing.run("native:dissolve", {'INPUT':mem_union_fix,'FIELD':['HRULake_ID'],'OUTPUT':os.path.join(tempfile.gettempdir(),str(np.random.random_integers(10000000))+'tempfile.shp')},context = context)['OUTPUT']
-                            
+
     Sub_Lake_HRU2 = processing.run("native:dissolve", {'INPUT':Sub_Lake_HRU1,'FIELD':['HRULake_ID'],'OUTPUT':Path_finalcat_hru_out},context = context)
-    Sub_Lake_HRU = processing.run("native:dissolve", {'INPUT':Sub_Lake_HRU1,'FIELD':['HRULake_ID'],'OUTPUT':'memory:'},context = context)    
-    
+    Sub_Lake_HRU = processing.run("native:dissolve", {'INPUT':Sub_Lake_HRU1,'FIELD':['HRULake_ID'],'OUTPUT':'memory:'},context = context)
+
     del layer_cat
-    return Sub_Lake_HRU['OUTPUT'],Sub_Lake_HRU['OUTPUT'].crs().authid(),['HRULake_ID','HRU_IsLake',Sub_ID] 
+    return Sub_Lake_HRU['OUTPUT'],Sub_Lake_HRU['OUTPUT'].crs().authid(),['HRULake_ID','HRU_IsLake',Sub_ID]
 ############
 
 def Reproj_Clip_Dissolve_Simplify_Polygon(processing,context,layer_path,Project_crs,trg_crs,
                                       Class_Col,Layer_clip):
-    """ Preprocess user provided polygons  
-        
+    """ Preprocess user provided polygons
+
     Function that will reproject clip input polygon with subbasin polygon
     and will dissolve the input polygon based on their ID, such as landuse id
-    or soil id. 
-         
-    Parameters 
+    or soil id.
+
+    Parameters
     ----------
-    processing                        : qgis object 
-    context                           : qgis object 
-    layer_path                        : string 
-        The path to a specific polygon, for example path to landuse layer  
+    processing                        : qgis object
+    context                           : qgis object
+    layer_path                        : string
+        The path to a specific polygon, for example path to landuse layer
     Project_crs                       : string
-        the EPSG code of a projected coodinate system that will be used to 
-        calcuate HRU area and slope.          
+        the EPSG code of a projected coodinate system that will be used to
+        calcuate HRU area and slope.
     trg_crs                           : string
-        the EPSG code of a  coodinate system that will be used to 
-        calcuate reproject input polygon 
-    Class_Col                         : string 
-        the column name in the input polygon (layer_path) that contains 
-        their ID, for example land use ID or soil ID. 
-    Layer_clip                        : qgis object 
-        A shpfile with extent of the watershed, will be used to clip input 
-        input polygon         
+        the EPSG code of a  coodinate system that will be used to
+        calcuate reproject input polygon
+    Class_Col                         : string
+        the column name in the input polygon (layer_path) that contains
+        their ID, for example land use ID or soil ID.
+    Layer_clip                        : qgis object
+        A shpfile with extent of the watershed, will be used to clip input
+        input polygon
     Notes
-    ------- 
+    -------
         # TODO: May be add some function to simplify the input polygons
                 for example, remove the landuse type with small areas
                 or merge small landuse polygon into the surrounding polygon
-        
+
     Returns:
     -------
-        layer_dis                  : qgis object 
-            it is a polygon after preprocess 
-    """   
-    
+        layer_dis                  : qgis object
+            it is a polygon after preprocess
+    """
+
     layer_proj = processing.run("native:reprojectlayer", {'INPUT':layer_path,'TARGET_CRS':QgsCoordinateReferenceSystem(trg_crs),'OUTPUT':'memory:'})['OUTPUT']
     layer_fix  = processing.run("native:fixgeometries", {'INPUT':layer_proj,'OUTPUT':'memory:'})['OUTPUT']
     layer_clip = processing.run("native:clip", {'INPUT':layer_fix,'OVERLAY':Layer_clip,'OUTPUT':'memory:'})['OUTPUT']
@@ -1538,28 +1538,28 @@ def Reproj_Clip_Dissolve_Simplify_Polygon(processing,context,layer_path,Project_
 #    layer_eli_feature = processing.run("qgis:eliminateselectedpolygons", {'INPUT':layer_area,'MODE':0,'OUTPUT':'memory:'})['OUTPUT']
 #    processing.run("qgis:eliminateselectedpolygons", {'INPUT':layer_area,'MODE':0,'OUTPUT':os.path.join(OutputFolder,'part6.shp')})
     return layer_dis
-    
-    
+
+
 def Obtain_Attribute_Table(processing,context,vec_layer):
-    """ Read QGIS vector layer attribute table   
-        
-    Parameters 
+    """ Read QGIS vector layer attribute table
+
+    Parameters
     ----------
-    processing                        : qgis object 
-    context                           : qgis object 
-    vec_layer                         : qgis object 
+    processing                        : qgis object
+    context                           : qgis object
+    vec_layer                         : qgis object
         a vector layer readed or generated by QGIS
     Returns:
     -------
     Attri_Tbl                  : Dataframe
-       The attribute table in the input vector layer             
+       The attribute table in the input vector layer
     """
     N_new_features = vec_layer.featureCount()
     field_names = []
     for field in vec_layer.fields():
         field_names.append(field.name())
     Attri_Tbl = pd.DataFrame(data = np.full((N_new_features,len(field_names)),np.nan),columns = field_names)
-    
+
     src_features = vec_layer.getFeatures()
     i_sf = 0
     for sf in src_features:
@@ -1568,37 +1568,37 @@ def Obtain_Attribute_Table(processing,context,vec_layer):
             Attri_Tbl.loc[Attri_Tbl.index[i_sf],filednm] = sf[filednm]
         i_sf = i_sf + 1
     return Attri_Tbl
-    
-    
+
+
 def Union_Ply_Layers_And_Simplify(processing,context,Merge_layer_list,dissolve_filedname_list,fieldnames,OutputFolder):
-    """ Union input QGIS polygon layers 
-      
+    """ Union input QGIS polygon layers
+
     Function will union polygon layers in Merge_layer_list
-    dissove the union result based on field name in 
-    dissolve_filedname_list  
+    dissove the union result based on field name in
+    dissolve_filedname_list
     and remove all field names not in fieldnames
-    
-    Parameters 
+
+    Parameters
     ----------
-    processing                        : qgis object 
-    context                           : qgis object 
+    processing                        : qgis object
+    context                           : qgis object
     Merge_layer_list                  : list
         a list contain polygons layers needs to be unioned
-    dissolve_filedname_list           : list 
+    dissolve_filedname_list           : list
         a list contain column name of ID in each polygon layer
         in Merge_layer_list
-    fieldnames                        : list 
-        a list contain column names that are needed in the return 
+    fieldnames                        : list
+        a list contain column names that are needed in the return
         QGIS polygon layers
     OutputFolder                      : String
         The path to a folder to save result during the processing
-         
+
     Returns:
     -------
-    mem_union_dis                  : qgis object 
-        it is a polygon object that generated by overlay all input 
-        layers 
-    """    
+    mem_union_dis                  : qgis object
+        it is a polygon object that generated by overlay all input
+        layers
+    """
     ##union polygons
     if len(Merge_layer_list) == 1:
         mem_union = Merge_layer_list[0]
@@ -1612,8 +1612,8 @@ def Union_Ply_Layers_And_Simplify(processing,context,Merge_layer_list,dissolve_f
             else:
                 mem_union_fix_temp = mem_union_fix_ext
                 del mem_union_fix_ext
-#                mem_union      = processing.run("native:union", {'INPUT':mem_union_fix_temp,'OVERLAY':Merge_layer_list[i],'OVERLAY_FIELDS_PREFIX':'','OUTPUT':'memory:'},context = context)['OUTPUT'] 
-                mem_union      = processing.run("saga:polygonunion", {'A':mem_union_fix_temp,'B':Merge_layer_list[i],'SPLIT':True,'RESULT':'TEMPORARY_OUTPUT'},context = context)['RESULT'] 
+#                mem_union      = processing.run("native:union", {'INPUT':mem_union_fix_temp,'OVERLAY':Merge_layer_list[i],'OVERLAY_FIELDS_PREFIX':'','OUTPUT':'memory:'},context = context)['OUTPUT']
+                mem_union      = processing.run("saga:polygonunion", {'A':mem_union_fix_temp,'B':Merge_layer_list[i],'SPLIT':True,'RESULT':'TEMPORARY_OUTPUT'},context = context)['RESULT']
 #                print(mem_union)
 
                 mem_union_fix  = processing.run("native:fixgeometries", {'INPUT':mem_union,'OUTPUT':'memory:'})['OUTPUT']
@@ -1628,9 +1628,9 @@ def Union_Ply_Layers_And_Simplify(processing,context,Merge_layer_list,dissolve_f
 #                    formular = ' \"%s\" > 0  AND  \"%s\" > 0 AND  \"%s\" > 0 AND  \"%s\" > 0 AND  \"%s\" > 0 ' % (dissolve_filedname_list[0],dissolve_filedname_list[1],dissolve_filedname_list[2],dissolve_filedname_list[3],dissolve_filedname_list[4])
 #                if i == 5:
 #                    formular = ' \"%s\" > 0  AND  \"%s\" > 0 AND  \"%s\" > 0 AND  \"%s\" > 0 AND  \"%s\" > 0  AND  \"%s\" > 0' % (dissolve_filedname_list[0],dissolve_filedname_list[1],dissolve_filedname_list[2],dissolve_filedname_list[3],dissolve_filedname_list[4],dissolve_filedname_list[5])
-#                if i > 5 :    
+#                if i > 5 :
 #                    print("error maximum number of polygons are 5")
-                
+
 #                mem_union_fix_ext = processing.run("native:extractbyexpression", {'INPUT':mem_union_fix,'EXPRESSION':formular,'OUTPUT':'memory:'})['OUTPUT']
                 mem_union_fix_ext = mem_union_fix
                 processing.run("qgis:createspatialindex", {'INPUT':mem_union_fix_ext})
@@ -1638,29 +1638,29 @@ def Union_Ply_Layers_And_Simplify(processing,context,Merge_layer_list,dissolve_f
 #            processing.run("native:union", {'INPUT':mem_union_temp,'OVERLAY':Merge_layer_list[i],'OVERLAY_FIELDS_PREFIX':'','OUTPUT':os.path.join(OutputFolder,'union.shp')},context = context)
     else:
         print("No polygon needs to be overlaied.........should not happen ")
-    
-    ## remove non interested filed 
+
+    ## remove non interested filed
     field_ids = []
     for field in mem_union_fix_ext.fields():
         if field.name() not in fieldnames:
             field_ids.append(mem_union_fix_ext.dataProvider().fieldNameIndex(field.name()))
-            
+
     mem_union_fix_ext.dataProvider().deleteAttributes(field_ids)
     mem_union_fix_ext.updateFields()
-    mem_union_fix_ext.commitChanges()    
-    
-    
+    mem_union_fix_ext.commitChanges()
+
+
     mem_union_dis = processing.run("native:dissolve", {'INPUT':mem_union_fix_ext,'FIELD':dissolve_filedname_list,'OUTPUT':'memory:'},context = context)['OUTPUT']
 #    processing.run("native:dissolve", {'INPUT':mem_union_fix_ext,'FIELD':dissolve_filedname_list,'OUTPUT':os.path.join(OutputFolder,'union_diso.shp')},context = context)
-    
+
     return mem_union_dis
-    
+
 def Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Col_NM,info_data):
-                 
+
     info_lake_hru = Attri_table_Lake_HRU_i.loc[Attri_table_Lake_HRU_i[Col_NM] != 0]
     if len(info_lake_hru) > 0: #other part of this lake hru has validate soilid use the one with maximum area
         Updatevalue = info_lake_hru[Col_NM].values[0]
-    else:### check if the subbasin has a valid soil id 
+    else:### check if the subbasin has a valid soil id
         SubInfo = SubInfo.loc[Col_NM != 0]
         SubInfo = SubInfo.sort_values(by='HRU_Area', ascending=False)
         if len(SubInfo) > 0:
@@ -1670,124 +1670,124 @@ def Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Col_NM,info_d
 #            print("asdfasdfsadf2",Updatevalue)
 #    print("asdfasdfsadf1",Updatevalue)
     return Updatevalue
-    
+
 def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,dissolve_filedname_list,
                          Sub_ID,Landuse_ID,Soil_ID,Veg_ID,Other_Ply_ID_1,Other_Ply_ID_2,
                          Landuse_info_data,Soil_info_data,
-                         Veg_info_data,DEM,Path_Subbasin_Ply,OutputFolder): 
+                         Veg_info_data,DEM,Path_Subbasin_Ply,OutputFolder):
 
     """ Generate attributes of each HRU
-      
-    Function will generate attributes that are needed by Raven and 
+
+    Function will generate attributes that are needed by Raven and
     other hydrological models for each HRU
-    
-    Parameters 
+
+    Parameters
     ----------
-    processing                        : qgis object 
+    processing                        : qgis object
     context                           : qgis object
     Project_crs                       : string
-        the EPSG code of a projected coodinate system that will be used to 
-        calcuate HRU area and slope.         
-    hru_layer                         : qgis object 
-        a polygon layer generated by overlay all input polygons  
-    dissolve_filedname_list           : list 
+        the EPSG code of a projected coodinate system that will be used to
+        calcuate HRU area and slope.
+    hru_layer                         : qgis object
+        a polygon layer generated by overlay all input polygons
+    dissolve_filedname_list           : list
         a list contain column name of ID in each polygon layer
         in Merge_layer_list
-    Sub_ID                            : string 
-        The column name of the subbasin id in the subbasin polygon      
+    Sub_ID                            : string
+        The column name of the subbasin id in the subbasin polygon
     Landuse_ID                        : string
         the the column name in landuse polygon and Landuse_info csv
-        indicate the landuse ID. when Path_Landuse_Ply is not 
-        provided. The Landuse ID should be 
-        1: land, -1: lake.                    
+        indicate the landuse ID. when Path_Landuse_Ply is not
+        provided. The Landuse ID should be
+        1: land, -1: lake.
     Soil_ID                           : string
         the the column name in soil polygon and soil_info csv
-        indicate the soil ID. when soil polygon is not 
-        provided. The Soil ID in Soil_info should be the same 
-        as Landuse ID. 
-    Veg_ID                            : string 
+        indicate the soil ID. when soil polygon is not
+        provided. The Soil ID in Soil_info should be the same
+        as Landuse ID.
+    Veg_ID                            : string
         the the column name in vegetation polygon and veg_info csv
-        indicate the vegetation ID. when Veg polygon is not 
-        provided. The Veg ID in Veg_info should be the same 
-        as Landuse ID.  
+        indicate the vegetation ID. when Veg polygon is not
+        provided. The Veg ID in Veg_info should be the same
+        as Landuse ID.
 
-    Landuse_info                      : Dataframe 
+    Landuse_info                      : Dataframe
         a dataframe that contains landuse information, including
-        following attributes: 
+        following attributes:
         Landuse_ID (can be any string)  - integer, the landuse ID in the
                                                    landuse polygon
         LAND_USE_C                      - string,  the landuse class name
                                                    for each landuse Type
-    Soil_info                         : Dataframe 
+    Soil_info                         : Dataframe
         a dataframe that contains soil information, including
-        following attributes: 
+        following attributes:
         Soil_ID (can be any string)     - integer, the Soil ID in the
                                                    soil polygon
         SOIL_PROF                       - string,  the Soil profile name
-                                                   for each soil type                                                       
-    Veg_info                          : Dataframe 
+                                                   for each soil type
+    Veg_info                          : Dataframe
         a dataframe file that contains vegetation information, including
-        following attributes: 
+        following attributes:
         Veg_ID (can be any string)      - integer, the vegetation ID in the
                                                    vegetation polygon
         VEG_C                           - string,  the vegetation class name
-                                                   for each vegetation Type 
-    DEM                               : string (optional) 
-        the path to a raster elevation dataset, that will be used to 
-        calcuate average apspect, elevation and slope within each HRU. 
-        if no data is provided, basin average value will be used for 
-        each HRU.                                                        
-    Path_Subbasin_Ply                 : string 
-        It is the path of the subbasin polygon, which is generated by 
-        toolbox. if not generated by toolbox, the attribute table should 
-        including following attribute.     
-        ##############Subbasin related attributes########################### 
-        SubID           - integer, The subbasin Id 
-        DowSubId        - integer, The downstream subbasin ID of this 
-                                   subbasin 
-        IsLake          - integer, If the subbasin is a lake / reservior 
+                                                   for each vegetation Type
+    DEM                               : string (optional)
+        the path to a raster elevation dataset, that will be used to
+        calcuate average apspect, elevation and slope within each HRU.
+        if no data is provided, basin average value will be used for
+        each HRU.
+    Path_Subbasin_Ply                 : string
+        It is the path of the subbasin polygon, which is generated by
+        toolbox. if not generated by toolbox, the attribute table should
+        including following attribute.
+        ##############Subbasin related attributes###########################
+        SubID           - integer, The subbasin Id
+        DowSubId        - integer, The downstream subbasin ID of this
+                                   subbasin
+        IsLake          - integer, If the subbasin is a lake / reservior
                                    subbasin. 1 yes, <0, no
         IsObs           - integer, If the subbasin contains a observation
-                                   gauge. 1 yes, < 0 no. 
-        RivLength       - float,   The length of the river in current 
+                                   gauge. 1 yes, < 0 no.
+        RivLength       - float,   The length of the river in current
                                    subbasin in m
-        RivSlope        - float,   The slope of the river path in 
-                                   current subbasin, in m/m 
-        FloodP_n        - float,   Flood plain manning's coefficient, in - 
+        RivSlope        - float,   The slope of the river path in
+                                   current subbasin, in m/m
+        FloodP_n        - float,   Flood plain manning's coefficient, in -
         Ch_n            - float,   main channel manning's coefficient, in -
         BkfWidth        - float,   the bankfull width of the main channel
                                    in m
-        BkfDepth        - float,   the bankfull depth of the main channel 
-                                   in m 
-        HyLakeId        - integer, the lake id                            
-        LakeVol         - float,   the Volume of the lake in km3 
-        LakeDepth       - float,   the average depth of the lake m   
-        LakeArea        - float,   the area of the lake in m2             
+        BkfDepth        - float,   the bankfull depth of the main channel
+                                   in m
+        HyLakeId        - integer, the lake id
+        LakeVol         - float,   the Volume of the lake in km3
+        LakeDepth       - float,   the average depth of the lake m
+        LakeArea        - float,   the area of the lake in m2
     OutputFolder                      : String
         The path to a folder to save result during the processing
-                                                                         
+
     Returns:
     -------
-    HRU_draf_final                  : qgis object 
-        it is a polygon object that generated by overlay all input 
+    HRU_draf_final                  : qgis object
+        it is a polygon object that generated by overlay all input
         layers and inlcude all needed attribue for hydrological model
-        like RAVEN 
-    """    
-    
-                             
-    
-    ### calcuate area of each feature 
+        like RAVEN
+    """
+
+
+
+    ### calcuate area of each feature
     formular    = 'area(transform($geometry, \'%s\',\'%s\'))' % (hru_layer.crs().authid(),Project_crs)
 #    print(formular)
     layer_area  = processing.run("qgis:fieldcalculator", {'INPUT':hru_layer,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formular,'OUTPUT':'memory:'})['OUTPUT']
-#    
+#
     layer_area_id = processing.run("qgis:fieldcalculator", {'INPUT':layer_area,'FIELD_NAME':'HRU_ID','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':0,'NEW_FIELD':True,'FORMULA':' @row_number','OUTPUT':'memory:'})['OUTPUT']
-    ### determine each lake hru's soil type 
+    ### determine each lake hru's soil type
     Attri_table = Obtain_Attribute_Table(processing,context,layer_area_id)
-    
-                                            
+
+
     Lake_HRU_IDS = np.unique(Attri_table['HRULake_ID'].values)
-        
+
     for i in range(0,len(Lake_HRU_IDS)):
         ilake_hru_id = Lake_HRU_IDS[i]
         if ilake_hru_id == 0:
@@ -1800,46 +1800,46 @@ def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,disso
             ihru_id      = Attri_table_Lake_HRU_i['HRU_ID'].values[j]
             is_Lake      = Attri_table_Lake_HRU_i['HRU_IsLake'].values[j]
             if is_Lake > 0:
-                
-                if Attri_table_Lake_HRU_i[Soil_ID].values[0] == 0:  ###  the current hru has invalidate soil id 
+
+                if Attri_table_Lake_HRU_i[Soil_ID].values[0] == 0:  ###  the current hru has invalidate soil id
                      Vali_Value = Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Soil_ID,Soil_info_data)
                      Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Soil_ID]        = Vali_Value
-                else: 
+                else:
                      Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Soil_ID] = Attri_table_Lake_HRU_i[Soil_ID].values[0]
-                     
-                if Attri_table_Lake_HRU_i[Other_Ply_ID_1].values[0] == 0:  ###  the current hru has invalidate soil id 
+
+                if Attri_table_Lake_HRU_i[Other_Ply_ID_1].values[0] == 0:  ###  the current hru has invalidate soil id
                      Vali_Value = Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Other_Ply_ID_1,Attri_table)
                      Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Other_Ply_ID_1]        = Vali_Value
-                else: 
+                else:
                      Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Other_Ply_ID_1] = Attri_table_Lake_HRU_i[Other_Ply_ID_1].values[0]
-                    
-                if Attri_table_Lake_HRU_i[Other_Ply_ID_2].values[0] == 0:  ###  the current hru has invalidate soil id 
+
+                if Attri_table_Lake_HRU_i[Other_Ply_ID_2].values[0] == 0:  ###  the current hru has invalidate soil id
                      Vali_Value = Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Other_Ply_ID_2,Attri_table)
                      Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Other_Ply_ID_2]        = Vali_Value
-                else: 
+                else:
                      Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Other_Ply_ID_2] = Attri_table_Lake_HRU_i[Other_Ply_ID_2].values[0]
-                                                          
+
                 Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Landuse_ID]     = int(-1)
                 Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Veg_ID]         = int(-1)
 
-            else: 
-                if Attri_table_Lake_HRU_i[Soil_ID].values[j] == 0:  ###  the current hru has invalidate soil id 
+            else:
+                if Attri_table_Lake_HRU_i[Soil_ID].values[j] == 0:  ###  the current hru has invalidate soil id
                      Vali_Value = Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Soil_ID,Soil_info_data)
                      Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Soil_ID]        = Vali_Value
-                if Attri_table_Lake_HRU_i[Landuse_ID].values[j] == 0:  ###  the current hru has invalidate soil id 
+                if Attri_table_Lake_HRU_i[Landuse_ID].values[j] == 0:  ###  the current hru has invalidate soil id
                      Vali_Value = Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Landuse_ID,Landuse_info_data)
                      Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Landuse_ID]        = Vali_Value
-                if Attri_table_Lake_HRU_i[Veg_ID].values[j] == 0:  ###  the current hru has invalidate soil id 
+                if Attri_table_Lake_HRU_i[Veg_ID].values[j] == 0:  ###  the current hru has invalidate soil id
                      Vali_Value = Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Veg_ID,Veg_info_data)
                      Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Veg_ID]        = Vali_Value
-                if Attri_table_Lake_HRU_i[Other_Ply_ID_1].values[j] == 0:  ###  the current hru has invalidate soil id 
+                if Attri_table_Lake_HRU_i[Other_Ply_ID_1].values[j] == 0:  ###  the current hru has invalidate soil id
                      Vali_Value = Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Other_Ply_ID_1,Attri_table)
                      Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Other_Ply_ID_1]        = Vali_Value
-                if Attri_table_Lake_HRU_i[Other_Ply_ID_2].values[j] == 0:  ###  the current hru has invalidate soil id 
+                if Attri_table_Lake_HRU_i[Other_Ply_ID_2].values[j] == 0:  ###  the current hru has invalidate soil id
                      Vali_Value = Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Other_Ply_ID_2,Attri_table)
                      Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Other_Ply_ID_2]        = Vali_Value
-                     
-    ### add attributes columns 
+
+    ### add attributes columns
     layer_area_id.dataProvider().addAttributes([QgsField('LAND_USE_C', QVariant.String),
                                             QgsField('VEG_C', QVariant.String),
                                             QgsField('SOIL_PROF', QVariant.String),
@@ -1847,13 +1847,13 @@ def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,disso
                                             QgsField('HRU_CenY', QVariant.Double)])
     layer_area_id.updateFields()
     layer_area_id.commitChanges()
-    ### modify feature attributes 
+    ### modify feature attributes
     src_features = layer_area_id.getFeatures()
     with edit(layer_area_id):
         for sf in src_features:
             if sf['HRULake_ID'] == 0:
 #               print('2324')
-               continue 
+               continue
             Is_lake_hru = sf['HRU_IsLake']
             lake_hru_ID = sf['HRULake_ID']
             hruid       = sf['HRU_ID']
@@ -1867,24 +1867,24 @@ def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,disso
             sf['VEG_C'] = Veg_info_data.loc[Veg_info_data[Veg_ID] == int(sf[Veg_ID]),'VEG_C'].values[0]
             sf['HRU_CenX'] = centroidxy[0]
             sf['HRU_CenY'] = centroidxy[1]
-            if Is_lake_hru > 0:    
+            if Is_lake_hru > 0:
                 sf['SOIL_PROF'] = 'Lake_' + Soil_info_data.loc[Soil_info_data[Soil_ID] == int(sf[Soil_ID]),'SOIL_PROF'].values[0]
 #                print(hruid,Attri_table.loc[Attri_table['HRU_ID'] == hruid][[Landuse_ID,Veg_ID,Soil_ID]])
             else:
                 sf['SOIL_PROF'] =  Soil_info_data.loc[Soil_info_data[Soil_ID] == int(sf[Soil_ID]),'SOIL_PROF'].values[0]
-            layer_area_id.updateFeature(sf) 
-    
+            layer_area_id.updateFeature(sf)
+
     ### merge lake hru.
     HRU_draft = processing.run("native:dissolve", {'INPUT':layer_area_id,'FIELD':dissolve_filedname_list,'OUTPUT':'memory:'},context = context)['OUTPUT']
 
 #    processing.run("native:dissolve", {'INPUT':hru_layer,'FIELD':dissolve_filedname_list,'OUTPUT':os.path.join(OutputFolder,'hrudraft.shp')},context = context)
-    ### add subbasin attribute back to hru polygons 
+    ### add subbasin attribute back to hru polygons
     HRU_draft_sub_info = processing.run("native:joinattributestable", {'INPUT':HRU_draft,'FIELD':Sub_ID,'INPUT_2':Path_Subbasin_Ply,'FIELD_2':Sub_ID,
                     'FIELDS_TO_COPY':[],'METHOD':1,'DISCARD_NONMATCHING':False,'PREFIX':'',
                     'OUTPUT':'memory:'},context = context)['OUTPUT']
-    
+
     if DEM != '#':
-        
+
         HRU_draft_proj = processing.run("native:reprojectlayer", {'INPUT':HRU_draft_sub_info,'TARGET_CRS':QgsCoordinateReferenceSystem(Project_crs),'OUTPUT':'memory:'})['OUTPUT']
 #        processing.run("native:reprojectlayer", {'INPUT':HRU_draft,'TARGET_CRS':QgsCoordinateReferenceSystem(Project_crs),'OUTPUT':os.path.join(OutputFolder,'hru_draft_proj.shp')})
         DEM_proj = processing.run("gdal:warpreproject", {'INPUT':DEM,'SOURCE_CRS':None,'TARGET_CRS':QgsCoordinateReferenceSystem(Project_crs),
@@ -1897,23 +1897,23 @@ def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,disso
                                                       'SET_RESOLUTION':False,'X_RESOLUTION':None,
                                                       'Y_RESOLUTION':None,'MULTITHREADING':False,'OPTIONS':'',
                                                       'DATA_TYPE':0,'EXTRA':'',
-                                                      'OUTPUT':'TEMPORARY_OUTPUT'})['OUTPUT'] 
-                                                      
-        DEM_slope  = processing.run("qgis:slope", {'INPUT':DEM_clip,'Z_FACTOR':1,'OUTPUT':'TEMPORARY_OUTPUT'})['OUTPUT'] 
+                                                      'OUTPUT':'TEMPORARY_OUTPUT'})['OUTPUT']
+
+        DEM_slope  = processing.run("qgis:slope", {'INPUT':DEM_clip,'Z_FACTOR':1,'OUTPUT':'TEMPORARY_OUTPUT'})['OUTPUT']
 #        processing.run("qgis:slope", {'INPUT':DEM_clip,'Z_FACTOR':1,'OUTPUT':os.path.join(OutputFolder,'slope.tif')})
         DEM_aspect = processing.run("qgis:aspect", {'INPUT':DEM_clip,'Z_FACTOR':1,'OUTPUT':'TEMPORARY_OUTPUT'})['OUTPUT']
 #        processing.run("qgis:aspect", {'INPUT':DEM_clip,'Z_FACTOR':1,'OUTPUT':os.path.join(OutputFolder,'aspect.tif')})
-        
-        
+
+
         processing.run("qgis:zonalstatistics", {'INPUT_RASTER':DEM_slope,'RASTER_BAND':1,'INPUT_VECTOR':HRU_draft_proj,'COLUMN_PREFIX':'HRU_S_','STATS':[2]})
         processing.run("qgis:zonalstatistics", {'INPUT_RASTER':DEM_aspect,'RASTER_BAND':1,'INPUT_VECTOR':HRU_draft_proj,'COLUMN_PREFIX':'HRU_A_','STATS':[2]})
         processing.run("qgis:zonalstatistics", {'INPUT_RASTER':DEM_clip,'RASTER_BAND':1,'INPUT_VECTOR':HRU_draft_proj,'COLUMN_PREFIX':'HRU_E_','STATS':[2]})
 
         HRU_draft_reproj = processing.run("native:reprojectlayer", {'INPUT':HRU_draft_proj,'TARGET_CRS':QgsCoordinateReferenceSystem(trg_crs),'OUTPUT':'memory:'})['OUTPUT']
 #        processing.run("native:reprojectlayer", {'INPUT':HRU_draft_proj,'TARGET_CRS':QgsCoordinateReferenceSystem(trg_crs),'OUTPUT':os.path.join(OutputFolder,'hru_draft_reproj.shp')})
-        
-    else: 
-        ## if no dem provided hru slope will use subbasin slope aspect and elevation 
+
+    else:
+        ## if no dem provided hru slope will use subbasin slope aspect and elevation
         formula = ' \"%s\" ' % 'BasSlope'
         HRU_draft_sub_info_S = processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_sub_info,'FIELD_NAME':'HRU_S_mean','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
 
@@ -1922,20 +1922,20 @@ def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,disso
 
         formula = ' \"%s\" ' % 'MeanElev'
         HRU_draft_sub_info_S = processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_sub_info_A,'FIELD_NAME':'HRU_E_mean','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
-        
+
         HRU_draft_reproj = HRU_draft_sub_info_S
-    
+
     ### update HRU area
     formular        = 'area(transform($geometry, \'%s\',\'%s\'))' % (trg_crs,Project_crs)
     HRU_draf_final  = processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_reproj,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':False,'FORMULA':formular,'OUTPUT':'memory:'})['OUTPUT']
 
-    
+
 #    processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_reproj,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':False,'FORMULA':formular,'OUTPUT':os.path.join(OutputFolder,'hru_draft_final.shp')})
-       
-        
+
+
     return HRU_draf_final
-            
-    
+
+
 class LRRT:
     def __init__(self, dem_in = '#',WidDep = '#',Lakefile = '#'
                                      ,Landuse = '#',Landuseinfo = '#',obspoint = '#',
@@ -1958,15 +1958,15 @@ class LRRT:
             self.Path_Sub_reg_grass_str_r  = os.path.join(Path_Sub_Reg_Out_Folder,'Sub_Reg_str_grass_r.pack')
             self.Path_Sub_reg_grass_str_v  = os.path.join(Path_Sub_Reg_Out_Folder,'Sub_Reg_str_grass_v.pack')
             self.Path_Sub_reg_dem          = os.path.join(Path_Sub_Reg_Out_Folder,'Sub_Reg_dem.pack')
-        
+
         if OutputFolder != '#':
             self.Path_OutputFolder = OutputFolder
         else:
             self.Path_OutputFolder = os.path.join(tempfile.gettempdir(),str(np.random.random_integers(10000)))
-    
-        
+
+
         self.ProjectNM = ProjectNM
-        
+
         if self.ProjectNM != '#':
             self.OutputFolder = os.path.join(self.Path_OutputFolder,self.ProjectNM)
 
@@ -1975,7 +1975,7 @@ class LRRT:
         else:
             self.ProjectNM = str(np.random.random_integers(1000))
             self.OutputFolder = os.path.join(self.Path_OutputFolder,self.ProjectNM)
-        
+
         self.Raveinputsfolder = self.OutputFolder + '/'+'RavenInput/'
 
         self.qgisPP = os.environ['QGISPrefixPath']
@@ -1991,7 +1991,7 @@ class LRRT:
             self.grassdb =os.path.join(self.tempFolder, 'grassdata_toolbox',self.ProjectNM)
             if not os.path.exists(self.grassdb):
                 os.makedirs(self.grassdb)
-            
+
         os.environ['GISDBASE'] = self.grassdb
 
         self.grass_location_geo = 'Geographic'
@@ -2023,7 +2023,10 @@ class LRRT:
         self.Path_allLakeply = os.path.join(self.tempfolder,'Hylake.shp')
         self.Path_allLakeply_Temp = os.path.join(self.tempfolder,'Hylake_fix_geom.shp')
         self.Path_WidDepLine = os.path.join(self.tempfolder,'WidDep.shp')
-        self.Path_ObsPoint = os.path.join(self.tempfolder,'obspoint.shp')
+        if self.Path_obspoint_in != '#':
+            self.Path_ObsPoint = os.path.join(self.tempfolder,'obspoint.shp')
+        else:
+            self.Path_ObsPoint  = '#'
         self.Path_Landuseinfo = os.path.join(self.tempfolder,'landuseinfo.csv')
         self.Path_allLakeRas = os.path.join(self.tempfolder,'hylakegdal.tif')
         self.Path_finalcatinfo_riv = os.path.join(self.tempfolder,'catinfo_riv.csv')
@@ -2039,62 +2042,62 @@ class LRRT:
 ########################################################################################
     def Generatmaskregion(self,OutletPoint = '#',Path_Sub_Polygon = '#',Buffer_Distance = 0.0,
                           hyshdply = '#', OutHyID = -1 ,OutHyID2 = -1):
-        """Define processing boundary polygon 
-        
+        """Define processing boundary polygon
+
         Function that used to generate define processing boundary polygon, several
-        options is available here. 1) The boundary polygon can be defined the 
-        same as the extent of input DEM. 2)The boundary polygon can be defined 
+        options is available here. 1) The boundary polygon can be defined the
+        same as the extent of input DEM. 2)The boundary polygon can be defined
         using Hybasin product and a hydrobasin ID. All subbasin drainage to that
         hydrobasin ID will be extract. And the extent of the extracted polygon will
-        be used as boundary polygon. 3)The boundary polygon can be defined using 
-        DEM and an point shpfile. the drainage area contribute to that point will 
-        be used as boundary polygon. 
-    
-        Parameters 
-        ----------        
-        OutletPoint                       : string (optional) 
-            It is the path of the point file taht indicate the outlet of the 
+        be used as boundary polygon. 3)The boundary polygon can be defined using
+        DEM and an point shpfile. the drainage area contribute to that point will
+        be used as boundary polygon.
+
+        Parameters
+        ----------
+        OutletPoint                       : string (optional)
+            It is the path of the point file taht indicate the outlet of the
             region of interest. If it is provided, the processing boundary polygon
             will be defined as the drainage area controlled by this point.
-        Path_Sub_Polygon                  : string (optional) 
+        Path_Sub_Polygon                  : string (optional)
             It is the path of a subregion polygon. It is only used when the Region
             of interest is very large and the resolution of the dem is very high.
             toolbox will first divide the whole region into several small subregions
-        Buffer_Distance                   : float (optional)  
-            It is a float number to increase the extent of the boundary polygon 
+        Buffer_Distance                   : float (optional)
+            It is a float number to increase the extent of the boundary polygon
             obtained from Hydrobasins. It is needed when other DEM data is used
-            the extent of the watershed will be different with boundary defined 
+            the extent of the watershed will be different with boundary defined
             by hydrobasins.
-        hyshdply                         : string (optional) 
-            It is a path to hydrobasin routing product, If it is provided, the 
-            processing of boundary will be based on the OutHyID and OutHyID2 and 
+        hyshdply                         : string (optional)
+            It is a path to hydrobasin routing product, If it is provided, the
+            processing of boundary will be based on the OutHyID and OutHyID2 and
             this HydroBASIN routing product.
         OutHyID                          : int (optional)
-            It is a hydrobasin subbasin ID, which should be the ID of the most 
-            downstream subbasin in the region of interest. 
+            It is a hydrobasin subbasin ID, which should be the ID of the most
+            downstream subbasin in the region of interest.
         OutHyID2                         : int (optional)
-            It is a hydrobasin subbasin ID, which should be the ID of the most 
+            It is a hydrobasin subbasin ID, which should be the ID of the most
             upstream subbasin in the region of interest, normally do not needed.
-                                 
-        Notes 
-        ------- 
-        If no inputs is provided, the extent of Input DEM will be used to define 
-        processing boundary polygon 
-        
+
+        Notes
+        -------
+        If no inputs is provided, the extent of Input DEM will be used to define
+        processing boundary polygon
+
         The polygon processing region will be saved at:
         self.Path_Maskply
-        While the raster processing region will be saved as a mask raster in 
+        While the raster processing region will be saved as a mask raster in
         os.path.join(self.tempFolder, 'grassdata_toolbox',self.ProjectNM)
-        
+
         Returns:
         -------
            None
-           
+
         Examples
         -------
-                                                                                    
-        """ 
-        
+
+        """
+
         ### Set up QGIS enviroment
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
@@ -2120,7 +2123,7 @@ class LRRT:
             self.cellSize = float(r_dem_layer.rasterUnitsPerPixelX())  ### Get Raster cell size
             self.SpRef_in = r_dem_layer.crs().authid()   ### get Raster spatialReference id
 
-            hyinfocsv = self.hyshdply[:-3] + "dbf"
+            hyinfocsv = hyshdply[:-3] + "dbf"
             tempinfo = Dbf5(hyinfocsv)
             hyshdinfo = tempinfo.to_dataframe()
             routing_info = hyshdinfo[['HYBAS_ID','NEXT_DOWN']].astype('float').values
@@ -2140,7 +2143,7 @@ class LRRT:
                 HydroBasins = HydroBasins1
 
     ### Load HydroSHED Layers
-            hyshedl12 = QgsVectorLayer(self.hyshdply, "")
+            hyshedl12 = QgsVectorLayer(hyshdply, "")
 
     ### Build qgis selection expression
             where_clause = '"HYBAS_ID" IN'+ " ("
@@ -2369,8 +2372,10 @@ class LRRT:
         PERMANENT.close()
 
         ##### Determine subregion with lake
-        self.Generateinputdata()
+        self.Generateinputdata(Is_divid_region = 1)
+        print(" end generate inputs ")
         self.WatershedDiscretizationToolset(accthresold = Acc,Is_divid_region = 1,max_memroy = max_memory)
+        print(" end generate first cat1 ")
         self.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = CheckLakeArea,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 9000,Pec_Grid_outlier = 0.99,Is_divid_region=1,max_memroy = max_memory)
 
         ####Determin river network for whole watersheds
@@ -2544,29 +2549,29 @@ class LRRT:
 #### functions to preprocess data, Output:
 ##  self.Path_dem,self.cellSize,self.SpRef_in
 ##
-    def Generateinputdata(self):
-        """Prepare input dataset 
-        
-        Function that used to clip input dataset such as DEM, Land use, Lake 
-        polygon etc with defined processing boundary polygon.  
-    
-        Parameters 
-        ----------        
-        
-                                 
-        Notes 
-        ------- 
-        The preppared input dataset will be stored in 
+    def Generateinputdata(self, Is_divid_region = -1):
+        """Prepare input dataset
+
+        Function that used to clip input dataset such as DEM, Land use, Lake
+        polygon etc with defined processing boundary polygon.
+
+        Parameters
+        ----------
+
+
+        Notes
+        -------
+        The preppared input dataset will be stored in
         os.path.join(self.tempFolder, 'grassdata_toolbox',self.ProjectNM)
-        
+
         Returns:
         -------
            None
-           
+
         Examples
         -------
-                                                                                    
-        """ 
+
+        """
 
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
@@ -2618,24 +2623,16 @@ class LRRT:
             processing.run("native:fixgeometries", {'INPUT':os.path.join(self.tempfolder,'Lake_project.shp'),'OUTPUT':self.Path_allLakeply_Temp})
             processing.run("native:extractbylocation", {'INPUT':self.Path_allLakeply_Temp,'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_allLakeply},context = context)
         processing.run("native:polygonstolines", {'INPUT':self.Path_allLakeply,'OUTPUT':os.path.join(self.tempfolder,'Hylake_boundary.shp')},context = context)
-
-#        print(self.Path_WiDep_in)
-        if self.Path_WiDep_in != '#':
-            processing.run("native:reprojectlayer", {'INPUT':self.Path_WiDep_in,'TARGET_CRS':QgsCoordinateReferenceSystem(self.SpRef_in),'OUTPUT':os.path.join(self.tempfolder,'WiDep_project.shp')})
-            processing.run("native:extractbylocation", {'INPUT':os.path.join(self.tempfolder,'WiDep_project.shp'),'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_WidDepLine},context = context)
-            grass.run_command("v.import", input = self.Path_WidDepLine, output = 'WidDep', overwrite = True)
-        
-        if Path_ObsPoint != '#':
-            processing.run("native:reprojectlayer", {'INPUT':self.Path_obspoint_in,'TARGET_CRS':QgsCoordinateReferenceSystem(self.SpRef_in),'OUTPUT':os.path.join(self.tempfolder,'Obspoint_project.shp')})
-            processing.run("native:extractbylocation", {'INPUT':os.path.join(self.tempfolder,'Obspoint_project.shp'),'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_ObsPoint},context = context)
-
-        # processing.run("native:clip", {'INPUT':self.Path_Lakefile_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_allLakeply},context = context)
-        # processing.run("native:clip", {'INPUT':self.Path_WiDep_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_WidDepLine},context = context)
-        # processing.run("native:clip", {'INPUT':self.Path_obspoint_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_ObsPoint},context = context)
-
         grass.run_command("v.import", input = self.Path_allLakeply, output = 'Hylake', overwrite = True)
         grass.run_command("v.import", input = os.path.join(self.tempfolder,'Hylake_boundary.shp'), output = 'Hylake_boundary', overwrite = True)
-
+        os.system('gdal_rasterize -at -of GTiff -a_nodata -9999 -a Hylak_id -tr  '+ str(self.cellSize) + "  " +str(self.cellSize)+'  -te   '+ str(grsregion['w'])+"   " +str(grsregion['s'])+"   " +str(grsregion['e'])+"   " +str(grsregion['n'])+"   " + "\"" +  self.Path_allLakeply +"\""+ "    "+ "\""+self.Path_allLakeRas+"\"")
+        os.system('gdal_rasterize -at -of GTiff -a_nodata -9999 -a Hylak_id -tr  '+ str(self.cellSize) + "  " +str(self.cellSize)+'  -te   '+ str(grsregion['w'])+"   " +str(grsregion['s'])+"   " +str(grsregion['e'])+"   " +str(grsregion['n'])+"   " + "\"" +  os.path.join(self.tempfolder,'Hylake_boundary.shp') +"\""+ "    "+ "\""+os.path.join(self.tempfolder,'Hylake_boundary.tif')+"\"")
+        grass.run_command("r.in.gdal", input = self.Path_allLakeRas, output = 'alllakeraster_in', overwrite = True)
+        grass.run_command('r.mapcalc',expression = 'alllake = int(alllakeraster_in)',overwrite = True)
+        grass.run_command("r.null", map = 'alllake', setnull = -9999)
+        grass.run_command("r.in.gdal", input = os.path.join(self.tempfolder,'Hylake_boundary.tif'), output = 'Lake_Bound', overwrite = True)
+        grass.run_command('r.mapcalc',expression = 'Lake_Bound = int(Lake_Bound)',overwrite = True)
+        grass.run_command("r.null", map = 'Lake_Bound', setnull = -9999)
 
         if self.Is_Sub_Region >0: #### use inputs from whole watershed and
             ### import data for the whole watershed
@@ -2651,6 +2648,24 @@ class LRRT:
             grass.run_command('r.watershed',elevation = 'dem', accumulation = 'acc_grass2',flags = 'sa', overwrite = True)
             grass.run_command('r.mapcalc',expression = "acc_grass = abs(acc_grass2@PERMANENT)",overwrite = True)
 #                grass.run_command('r.reclass', input='dir_grass',output = 'dir_Arcgis',rules = os.path.join(self.RoutingToolPath,'Grass2ArcgisDIR.txt'), overwrite = True)
+
+
+        if Is_divid_region > 0:
+            return
+
+
+#        print(self.Path_WiDep_in)
+        if self.Path_WiDep_in != '#':
+            processing.run("native:reprojectlayer", {'INPUT':self.Path_WiDep_in,'TARGET_CRS':QgsCoordinateReferenceSystem(self.SpRef_in),'OUTPUT':os.path.join(self.tempfolder,'WiDep_project.shp')})
+            processing.run("native:extractbylocation", {'INPUT':os.path.join(self.tempfolder,'WiDep_project.shp'),'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_WidDepLine},context = context)
+            grass.run_command("v.import", input = self.Path_WidDepLine, output = 'WidDep', overwrite = True)
+
+        if self.Path_obspoint_in != '#':
+            processing.run("native:reprojectlayer", {'INPUT':self.Path_obspoint_in,'TARGET_CRS':QgsCoordinateReferenceSystem(self.SpRef_in),'OUTPUT':os.path.join(self.tempfolder,'Obspoint_project.shp')})
+            processing.run("native:extractbylocation", {'INPUT':os.path.join(self.tempfolder,'Obspoint_project.shp'),'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_ObsPoint},context = context)
+        # processing.run("native:clip", {'INPUT':self.Path_Lakefile_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_allLakeply},context = context)
+        # processing.run("native:clip", {'INPUT':self.Path_WiDep_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_WidDepLine},context = context)
+        # processing.run("native:clip", {'INPUT':self.Path_obspoint_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_ObsPoint},context = context)
 
 
         if self.Path_Landuseinfo_in != '#':
@@ -2670,14 +2685,6 @@ class LRRT:
 
 
         ### change lake vector to lake raster.... with -at option
-        os.system('gdal_rasterize -at -of GTiff -a_nodata -9999 -a Hylak_id -tr  '+ str(self.cellSize) + "  " +str(self.cellSize)+'  -te   '+ str(grsregion['w'])+"   " +str(grsregion['s'])+"   " +str(grsregion['e'])+"   " +str(grsregion['n'])+"   " + "\"" +  self.Path_allLakeply +"\""+ "    "+ "\""+self.Path_allLakeRas+"\"")
-        os.system('gdal_rasterize -at -of GTiff -a_nodata -9999 -a Hylak_id -tr  '+ str(self.cellSize) + "  " +str(self.cellSize)+'  -te   '+ str(grsregion['w'])+"   " +str(grsregion['s'])+"   " +str(grsregion['e'])+"   " +str(grsregion['n'])+"   " + "\"" +  os.path.join(self.tempfolder,'Hylake_boundary.shp') +"\""+ "    "+ "\""+os.path.join(self.tempfolder,'Hylake_boundary.tif')+"\"")
-        grass.run_command("r.in.gdal", input = self.Path_allLakeRas, output = 'alllakeraster_in', overwrite = True)
-        grass.run_command('r.mapcalc',expression = 'alllake = int(alllakeraster_in)',overwrite = True)
-        grass.run_command("r.null", map = 'alllake', setnull = -9999)
-        grass.run_command("r.in.gdal", input = os.path.join(self.tempfolder,'Hylake_boundary.tif'), output = 'Lake_Bound', overwrite = True)
-        grass.run_command('r.mapcalc',expression = 'Lake_Bound = int(Lake_Bound)',overwrite = True)
-        grass.run_command("r.null", map = 'Lake_Bound', setnull = -9999)
         ### rasterize other vectors UP_AREA
 
         if self.Path_WiDep_in != '#':
@@ -2694,10 +2701,10 @@ class LRRT:
             temparray.write(mapname="qmean", overwrite=True)
             temparray.write(mapname="up_area", overwrite=True)
             temparray.write(mapname="SubId_WidDep", overwrite=True)
-        
-        if self.Path_ObsPoint != '#':
+
+        if self.Path_obspoint_in != '#':
             grass.run_command("v.import", input = self.Path_ObsPoint, output = 'obspoint', overwrite = True)
-            
+
         PERMANENT.close()
         del r_dem_layer
         Qgs.exit()
@@ -2726,7 +2733,7 @@ class LRRT:
 
         if Is_divid_region > 0:
             grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =accthresold,stream_raster = 'str_grass_r',
-                              direction = 'dir_grass',overwrite = True, memory = max_memroy)
+                              direction = 'dir_grass',stream_length = 1000,overwrite = True, memory = max_memroy)
             grass.run_command('r.reclass', input='dir_grass',output = 'dir_Arcgis',rules = os.path.join(self.RoutingToolPath,'Grass2ArcgisDIR.txt'), overwrite = True)
         else:
             if self.Is_Sub_Region > 0:
@@ -2760,6 +2767,9 @@ class LRRT:
         grass.run_command('r.mapcalc',expression = 'Connect_Lake = int(cnlakeraster_in)',overwrite = True)
         grass.run_command('r.mapcalc',expression = 'Nonconnect_Lake = if(isnull(Connect_Lake),alllake,null())',overwrite = True)
 
+        if Is_divid_region > 0:
+            return
+
 #        grass.run_command('v.out.ogr', input = 'finalcat_F',output = os.path.join(self.tempfolder,'finalcat_info1.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
 #        grass.run_command('r.out.gdal', input = 'cat1',output = os.path.join(self.tempfolder,'cat1.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
 #        grass.run_command('r.out.gdal', input = 'Connect_Lake',output = os.path.join(self.tempfolder,'Connect_Lake.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
@@ -2772,7 +2782,7 @@ class LRRT:
         ####adjust observation points to the highest flow accumulation point within a search distance
 
         #####
-        if self.Path_ObsPoint != '#':
+        if self.Path_obspoint_in != '#':
             grass.run_command('r.stream.snap', input = 'obspoint',output = 'obspoint_snap',stream_rast = 'str_grass_r', accumulation = 'acc_grass', radius = Search_Radius, overwrite = True,quiet = 'Ture', memory = max_memroy)
             grass.run_command('v.to.rast',input = 'obspoint_snap',output = 'obspoint_snap',use = 'cat', overwrite = True)
             grass.run_command('r.to.vect',  input = 'obspoint_snap',output = 'obspoint_snap_r2v', type ='point', flags = 'v', overwrite = True)
@@ -2781,8 +2791,8 @@ class LRRT:
         else:
             temparray = garray.array()
             temparray[:,:] = -9999
-            temparray.write(mapname="obs1", overwrite=True)   
-                 
+            temparray.write(mapname="obs1", overwrite=True)
+
         if self.Is_Sub_Region > 0:
             ### load subregion outlet id
             grass.run_command('v.unpack', input = self.Path_Sub_reg_outlets_v, output = 'Sub_reg_outlets_pt',overwrite = True)
@@ -2824,7 +2834,7 @@ class LRRT:
 
         temparray = garray.array()
         temparray[:,:] = -9999
-        temparray.write(mapname="tempraster", overwrite=True)
+#        temparray.write(mapname="tempraster", overwrite=True)
         self.ncols = int(temparray.shape[1])
         self.nrows = int(temparray.shape[0])
 ##### begin processing
@@ -2841,8 +2851,12 @@ class LRRT:
         str_array     = garray.array(mapname="str_grass_r")
         acc_array     = np.absolute(garray.array(mapname="acc_grass"))
         dir_array     = garray.array(mapname="dir_Arcgis")
-        obs_array     = garray.array(mapname="obs")
         LakeBD_array  = garray.array(mapname="Lake_Bound")
+
+        if self.Path_obspoint_in == '#':
+            obs_array     = temparray[:,:]
+        else:
+            obs_array     = garray.array(mapname="obs")
 
 ###### generate selected lakes
         hylake1,Selected_Con_Lakes = selectlake2(conlake_arr,VolThreshold,allLakinfo) ### remove lakes with lake area smaller than the VolThreshold from connected lake raster
@@ -2895,22 +2909,22 @@ class LRRT:
 #        grass.run_command('r.out.gdal', input = 'cat1',output = os.path.join(self.tempfolder,'cat1.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
 # cat3
         cat2_array =  garray.array(mapname="cat2")
-        temcat2    = copy.copy(cat2_array)
+#        temcat2    = copy.copy(cat2_array)
         # temcat,outlakeids =CE_mcat4lake(cat2_array,Lake1,acc_array,dir_array,bsid,self.nrows,self.ncols,Pourpoints)
         # temcat2 = CE_Lakeerror(acc_array,dir_array,Lake1,temcat,bsid,blid,boid,self.nrows,self.ncols,cat1_arr)
-        temparray[:,:] = temcat2[:,:]
-        temparray.write(mapname="cat3", overwrite=True)
-        grass.run_command('r.null', map='cat3',setnull=-9999)
+#        temparray[:,:] = temcat2[:,:]
+#        temparray.write(mapname="cat3", overwrite=True)
+#        grass.run_command('r.null', map='cat3',setnull=-9999)
 
 #        grass.run_command('r.out.gdal', input = 'cat3',output = os.path.join(self.tempfolder,'cat3.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
 #        grass.run_command('r.out.gdal', input = 'cat3',output = os.path.join(self.tempfolder,'cat3.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
 
-        nPourpoints = GenerateFinalPourpoints(acc_array,dir_array,Lake1,temcat2,bsid,blid,boid,self.nrows,self.ncols,cat1_arr,obs_array,Is_divid_region)
+        nPourpoints = GenerateFinalPourpoints(acc_array,dir_array,Lake1,cat2_array,bsid,blid,boid,self.nrows,self.ncols,cat1_arr,obs_array,Is_divid_region)
         temparray[:,:] = nPourpoints[:,:]
         temparray.write(mapname="Pourpoints_2", overwrite=True)
         grass.run_command('r.null', map='Pourpoints_2',setnull=-9999)
         grass.run_command('r.to.vect', input='Pourpoints_2',output='Pourpoints_2_F',type='point', overwrite = True)
-        grass.run_command('v.out.ogr', input = 'Pourpoints_2_F',output = os.path.join(self.tempfolder, "Pourpoints_2_F.shp"),format= 'ESRI_Shapefile',overwrite = True)
+#        grass.run_command('v.out.ogr', input = 'Pourpoints_2_F',output = os.path.join(self.tempfolder, "Pourpoints_2_F.shp"),format= 'ESRI_Shapefile',overwrite = True)
 
         ## with new pour points
 # cat 4
@@ -2962,6 +2976,7 @@ class LRRT:
         temparray.write(mapname="finalcat", overwrite=True)
         grass.run_command('r.null', map='finalcat',setnull=-9999)
         grass.run_command('r.to.vect', input='finalcat',output='finalcat_F1',type='area', overwrite = True)
+
         if Is_divid_region > 0:
             return
 #        grass.run_command('r.out.gdal', input = 'finalcat',output = os.path.join(self.tempfolder,'cat_finaltddd.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
@@ -3255,14 +3270,14 @@ class LRRT:
             temparray = np.full((3,6),-9999.00000)
             WidDep_info = pd.DataFrame(temparray, columns = ['HYBAS_ID', 'NEXT_DOWN', 'UP_AREA', 'Q_Mean', 'WIDTH', 'DEPTH'])
 
-        if self.Path_ObsPoint != '#':
+        if self.Path_obspoint_in != '#':
             sqlstat="SELECT Obs_ID, DA_obs, STATION_NU, SRC_obs FROM obspoint"
             obsinfo = pd.read_sql_query(sqlstat, con)
             obsinfo['Obs_ID'] = obsinfo['Obs_ID'].astype(float)
         else:
             temparray = np.full((3,4),-9999.00000)
             WidDep_info = pd.DataFrame(temparray, columns = ['Obs_ID', 'DA_obs', 'STATION_NU', 'SRC_obs'])
-                        
+
         ######  All catchment with a river segments
         Riv_Cat_IDS = np.unique(nstr_seg_array)
         Riv_Cat_IDS = Riv_Cat_IDS > 0
@@ -3424,8 +3439,8 @@ class LRRT:
                 exp = exp + " , "+str(int(CL_Lakeids[i]))
             exp = exp + ')'
             processing.run("native:extractbyexpression", {'INPUT':self.Path_allLakeply,'EXPRESSION':exp,'OUTPUT':os.path.join(self.OutputFolder, 'Con_Lake_Ply.shp')})
-    
-        if self.Path_ObsPoint != '#':
+
+        if self.Path_obspoint_in != '#':
             grass.run_command('v.out.ogr', input = 'obspoint',output = os.path.join(self.OutputFolder,'obspoint_inputs.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
             grass.run_command('v.out.ogr', input = 'obspoint_snap_r2v',output = os.path.join(self.OutputFolder,'obspoint_snap.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
 
@@ -3456,118 +3471,118 @@ class LRRT:
     def GenerateRavenInput(self,DataFolder,Finalcat_NM = 'finalcat_hru_info.shp'
                           ,lenThres = 1,iscalmanningn = -1,Startyear = -1,EndYear = -1
                           ,CA_HYDAT = '#',WarmUp = 0,Template_Folder = '#'
-                          ,Lake_As_Gauge = True, WriteObsrvt = True 
+                          ,Lake_As_Gauge = True, WriteObsrvt = True
                           ,DownLoadObsData = True,Model_Name = 'test',Old_Product = False
                           ,SubBasinGroup_NM_Channel=['Allsubbasin'],SubBasinGroup_Length_Channel = [-1]
                           ,SubBasinGroup_NM_Lake=['AllLakesubbasin'],SubBasinGroup_Area_Lake = [-1]):
 
         """Generate Raven input files.
-        
-        Function that used to generate Raven input files. All output will be stored in folder 
+
+        Function that used to generate Raven input files. All output will be stored in folder
         "<DataFolder>/Model/RavenInput".
 
         Parameters
         ----------
-        DataFolder      : string 
-            Folder name that stores a shapefile and shpfile dbf 
-            table that includes all required parameters    
-                            
-        Finalcat_NM     : string     
-            Name of the output shpfile which includes all required 
-            parameters; basically the polygon file generated 
+        DataFolder      : string
+            Folder name that stores a shapefile and shpfile dbf
+            table that includes all required parameters
+
+        Finalcat_NM     : string
+            Name of the output shpfile which includes all required
+            parameters; basically the polygon file generated
             by the toolbox. Each row in the attribute table of this shpfile
-            represent a HRU. Different HRU in the same subbasin has the same 
+            represent a HRU. Different HRU in the same subbasin has the same
             subbasin related attribute values.
-            
+
             The shapefile should at least contains following columns
-            ##############Subbasin related attributes########################### 
-            SubID           - integer, The subbasin Id 
-            DowSubId        - integer, The downstream subbasin ID of this 
-                                       subbasin 
-            IsLake          - integer, If the subbasin is a lake / reservior 
+            ##############Subbasin related attributes###########################
+            SubID           - integer, The subbasin Id
+            DowSubId        - integer, The downstream subbasin ID of this
+                                       subbasin
+            IsLake          - integer, If the subbasin is a lake / reservior
                                        subbasin. 1 yes, <0, no
             IsObs           - integer, If the subbasin contains a observation
-                                       gauge. 1 yes, < 0 no. 
-            RivLength       - float,   The length of the river in current 
+                                       gauge. 1 yes, < 0 no.
+            RivLength       - float,   The length of the river in current
                                        subbasin in m
-            RivSlope        - float,   The slope of the river path in 
-                                       current subbasin, in m/m 
-            FloodP_n        - float,   Flood plain manning's coefficient, in - 
+            RivSlope        - float,   The slope of the river path in
+                                       current subbasin, in m/m
+            FloodP_n        - float,   Flood plain manning's coefficient, in -
             Ch_n            - float,   main channel manning's coefficient, in -
             BkfWidth        - float,   the bankfull width of the main channel
                                        in m
-            BkfDepth        - float,   the bankfull depth of the main channel 
-                                       in m 
-            HyLakeId        - integer, the lake id                            
-            LakeVol         - float,   the Volume of the lake in km3 
-            LakeDepth       - float,   the average depth of the lake m   
+            BkfDepth        - float,   the bankfull depth of the main channel
+                                       in m
+            HyLakeId        - integer, the lake id
+            LakeVol         - float,   the Volume of the lake in km3
+            LakeDepth       - float,   the average depth of the lake m
             LakeArea        - float,   the area of the lake in m2
             ############## HRU related attributes    ###########################
-            HRU_S_mean      - float,   the slope of the HRU in degree 
-            HRU_A_mean      - float,   the aspect of the HRU in degree   
+            HRU_S_mean      - float,   the slope of the HRU in degree
+            HRU_A_mean      - float,   the aspect of the HRU in degree
             HRU_E_mean      - float,   the mean elevation of the HRU in m
-            HRU_ID          - integer, the id of the HRU 
-            HRU_Area        - integer, the area of the HRU in m2 
-            HRU_IsLake      - integer, the 1 the HRU is a lake hru, -1 not    
+            HRU_ID          - integer, the id of the HRU
+            HRU_Area        - integer, the area of the HRU in m2
+            HRU_IsLake      - integer, the 1 the HRU is a lake hru, -1 not
             LAND_USE_C      - string,  the landuse class name for this HRU, the
                                        name will be used in Raven rvh, and rvp
-                                       file 
+                                       file
             VEG_C           - string,  the Vegetation class name for this HRU, the
                                        name will be used in Raven rvh, and rvp
                                        file
             SOIL_PROF       - string,  the soil profile name for this HRU, the
                                        name will be used in Raven rvh, and rvp
-                                       file  
-            HRU_CenX        - float,  the centroid coordinates for HRU in x 
-                                       dimension 
-            HRU_CenY        - float,  the centroid coordinates for HRU in y 
-                                       dimension               
-        lenThres        : float      
-            River length threshold; river length smaller than 
+                                       file
+            HRU_CenX        - float,  the centroid coordinates for HRU in x
+                                       dimension
+            HRU_CenY        - float,  the centroid coordinates for HRU in y
+                                       dimension
+        lenThres        : float
+            River length threshold; river length smaller than
             this will write as zero in Raven rvh file
         iscalmanningn   : integer
-            If "1", use manning's coefficient in the shpfile table 
+            If "1", use manning's coefficient in the shpfile table
             and set to default value (0.035).
             If "-1", do not use manning's coefficients.
         Lake_As_Gauge   : Bool
-            If "True", all lake subbasins will labeled as gauged 
-            subbasin such that Raven will export lake balance for 
-            this lake. If "False", lake subbasin will not be labeled 
+            If "True", all lake subbasins will labeled as gauged
+            subbasin such that Raven will export lake balance for
+            this lake. If "False", lake subbasin will not be labeled
             as gauge subbasin.
         CA_HYDAT        : string,  optional
-            path and filename of previously downloaded 
-            external database containing streamflow observations, 
+            path and filename of previously downloaded
+            external database containing streamflow observations,
             e.g. HYDAT for Canada ("Hydat.sqlite3").
         Startyear       : integer, optional
-            Start year of simulation. Used to 
+            Start year of simulation. Used to
             read streamflow observations from external databases.
         EndYear         : integer, optional
-            End year of simulation. Used to 
-            read streamflow observations from external databases.  
+            End year of simulation. Used to
+            read streamflow observations from external databases.
         WarmUp          : integer, optional
-            The warmup time (in years) used after 
-            startyear. Values in output file "obs/xxx.rvt" containing 
-            observations will be set to NoData value "-1.2345".               
-        Template_Folder : string, optional 
-            Input that is used to copy raven template files. It is a 
-            folder name containing raven template files. All 
-            files from that folder will be copied (unchanged) 
-            to the "DataFolder".   
-        WriteObsrvt     : Bool, optional 
+            The warmup time (in years) used after
+            startyear. Values in output file "obs/xxx.rvt" containing
+            observations will be set to NoData value "-1.2345".
+        Template_Folder : string, optional
+            Input that is used to copy raven template files. It is a
+            folder name containing raven template files. All
+            files from that folder will be copied (unchanged)
+            to the "DataFolder".
+        WriteObsrvt     : Bool, optional
             Input that used to indicate if the observation data file needs
-            to be generated.  
-        DownLoadObsData : Bool, optional 
+            to be generated.
+        DownLoadObsData : Bool, optional
             Input that used to indicate if the observation data will be Download
-            from usgs website or read from hydat database for streamflow Gauge 
-            in US or Canada,respectively. If this parameter is False, 
+            from usgs website or read from hydat database for streamflow Gauge
+            in US or Canada,respectively. If this parameter is False,
             while WriteObsrvt is True. The program will write the observation data
             file with "-1.2345" for each observation gauges.
         Model_Name      : string
-           The Raven model base name. File name of the raven input will be 
-           Model_Name.xxx. 
+           The Raven model base name. File name of the raven input will be
+           Model_Name.xxx.
         Old_Product     : bool
-            True, the input polygon is coming from the first version of routing product 
-        SubBasinGroup_NM_Channel       : List 
+            True, the input polygon is coming from the first version of routing product
+        SubBasinGroup_NM_Channel       : List
             It is a list of names for subbasin groups, which are grouped based
             on channel length of each subbsin. Should at least has one name
         SubBasinGroup_Length_Channel   : List
@@ -3577,7 +3592,7 @@ class LRRT:
             group 2 with channel length (1,10],
             group 3 with channel length (10,20],
             group 4 with channel length (20,Max channel length].
-        SubBasinGroup_NM_Lake          : List 
+        SubBasinGroup_NM_Lake          : List
             It is a list of names for subbasin groups, which are grouped based
             on Lake area of each subbsin. Should at least has one name
         SubBasinGroup_Area_Lake        : List
@@ -3587,24 +3602,24 @@ class LRRT:
             group 2 with lake are (1,10],
             group 3 with lake are (10,20],
             group 4 with lake are (20,Max channel length].
-            
+
         Notes
-        ------- 
+        -------
         Following ouput files will be generated in "<DataFolder>/Model/RavenInput"
         .rvh              - contains subbasins and HRUs
         lake.rvh          - contains definition and parameters of lakes
         modelchannel.rvp  - contains definition and parameters for channels
-        xxx.rvt           - (optional) streamflow observation for each gauge xxx in shpfile 
-                            database will be automatically generagted in 
-                            folder "<DataFolder>/Model/RavenInput/obs/". 
-        obsinfo.csv       - information file generated reporting drainage area difference 
-                            between observed in shpfile and standard database as well as 
+        xxx.rvt           - (optional) streamflow observation for each gauge xxx in shpfile
+                            database will be automatically generagted in
+                            folder "<DataFolder>/Model/RavenInput/obs/".
+        obsinfo.csv       - information file generated reporting drainage area difference
+                            between observed in shpfile and standard database as well as
                             number of missing values for each gauge
-                            
+
         Returns:
         -------
            None
-           
+
         Examples
         -------
         >>> from ToolboxClass import LRRT
@@ -3612,10 +3627,10 @@ class LRRT:
         >>> DataFolder = "C:/Path_to_foldr_of_example_dataset_provided_in_Github_wiki/"
         >>> RTtool=LRRT()
         >>> RTtool.GenerateRavenInput(DataFolder = DataFolder, Finalcat_NM = 'finalcat_hru_info.shp')
-        
+
         """
-    
-    
+
+
 
         Model_Folder     = os.path.join(DataFolder,'Model')
         Raveinputsfolder = os.path.join(Model_Folder,'RavenInput')
@@ -3643,7 +3658,7 @@ class LRRT:
         ncatinfo = tempinfo.to_dataframe()
         ncatinfo2 = ncatinfo.drop_duplicates('HRU_ID', keep='first')
         ncatinfo2 = ncatinfo2.loc[(ncatinfo2['HRU_ID'] > 0) & (ncatinfo2['SubId'] > 0)]
-        if Old_Product == True: 
+        if Old_Product == True:
             ncatinfo2['RivLength'] = ncatinfo2['Rivlen'].values
 #            ncatinfo2['RivSlope'] = ncatinfo2['Rivlen'].values
 #            ncatinfo2['RivLength'] = ncatinfo2['Rivlen'].values
@@ -3652,14 +3667,14 @@ class LRRT:
         Channel_rvp_file_path,Channel_rvp_string,Model_rvh_file_path,Model_rvh_string,Model_rvp_file_path,Model_rvp_string_modify = Generate_Raven_Channel_rvp_rvh_String(ncatinfo2,Raveinputsfolder,lenThres,
                                                                                                                                                                      iscalmanningn,Lake_As_Gauge,Model_Name,
                                                                                                                                                                      SubBasinGroup_NM_Lake,SubBasinGroup_Area_Lake,
-                                                                                                                                                                     SubBasinGroup_NM_Channel,SubBasinGroup_Length_Channel)                                                        
+                                                                                                                                                                     SubBasinGroup_NM_Channel,SubBasinGroup_Length_Channel)
         WriteStringToFile(Channel_rvp_string,Channel_rvp_file_path,"w")
         WriteStringToFile(Model_rvh_string,Model_rvh_file_path,"w")
         WriteStringToFile(Model_rvp_string_modify,Model_rvp_file_path,"a")
-        
+
         Lake_rvh_string,Lake_rvh_file_path = Generate_Raven_Lake_rvh_String(ncatinfo2,Raveinputsfolder,Model_Name)
         WriteStringToFile(Lake_rvh_string,Lake_rvh_file_path,"w")
-        
+
         if WriteObsrvt > 0:
             obs_rvt_file_path_gauge_list,obs_rvt_file_string_gauge_list,Model_rvt_file_path,Model_rvt_file_string_modify_gauge_list,obsnms = Generate_Raven_Obs_rvt_String(ncatinfo2,Raveinputsfolder,Obs_Folder,
                                                                                                                                                                            Startyear + WarmUp,EndYear,CA_HYDAT,
@@ -4071,24 +4086,24 @@ class LRRT:
                 Selected_Non_ConnLakes = Non_ConnL_info[Non_ConnL_info['LakeArea'] >= 10000000]['HyLakeId'].values
                 Selected_Non_ConnLakes = np.unique(Selected_Non_ConnLakes)
                 Selected_Non_ConnL_info = Non_ConnL_info[Non_ConnL_info['LakeArea'] >= 10000000]
-                
+
         elif Selection_Method == 'ByLakelist':
             All_ConnL     = ConnL_info['HyLakeId'].values
             All_Non_ConnL = Non_ConnL_info['HyLakeId'].values
             Selected_Lake_List_in_array = np.array(Selected_Lake_List_in)
-            
+
             mask_CL  = np.in1d(All_ConnL, Selected_Lake_List_in_array)
             mask_NCL = np.in1d(All_Non_ConnL, Selected_Lake_List_in_array)
-            
+
             Selected_ConnLakes     = All_ConnL[mask_CL]
             Selected_ConnLakes     = np.unique(Selected_ConnLakes)
             Selected_Non_ConnLakes = All_Non_ConnL[mask_NCL]
             Selected_Non_ConnLakes = np.unique(Selected_Non_ConnLakes)
-            
+
             Un_Selected_ConnLakes_info  =finalcat_info.loc[(finalcat_info['IsLake'] == 1) & (np.logical_not(finalcat_info['HyLakeId'].isin(Selected_ConnLakes)))]
             Un_Selected_Non_ConnL_info  =finalcat_info.loc[(finalcat_info['IsLake'] == 2) & (np.logical_not(finalcat_info['HyLakeId'].isin(Selected_Non_ConnLakes)))]
-            
-            
+
+
         else:
             print(todo)
 
@@ -4113,7 +4128,7 @@ class LRRT:
 
         ####disolve catchment that are covered by non selected connected lakes
 
-        UpdateConnectedLakeArea_In_Finalcatinfo(Path_Temp_final_rviply,Selected_ConnLakes) ### remove lake attributes 
+        UpdateConnectedLakeArea_In_Finalcatinfo(Path_Temp_final_rviply,Selected_ConnLakes) ### remove lake attributes
         UpdateConnectedLakeArea_In_Finalcatinfo(Path_Temp_final_rvi,Selected_ConnLakes)
 
 
@@ -4188,10 +4203,10 @@ class LRRT:
                 print("It is not a non connected lake catchment")
                 print(Remove_Non_ConnL_Lake_Sub_info)
                 continue
-            modifysubids = [] ##array store all catchment id needs to be merged 
-            csubid  = Remove_Non_ConnL_Lake_Sub_info['SubId'].values[0]  ### intial subid 
+            modifysubids = [] ##array store all catchment id needs to be merged
+            csubid  = Remove_Non_ConnL_Lake_Sub_info['SubId'].values[0]  ### intial subid
             downsubid = Remove_Non_ConnL_Lake_Sub_info['DowSubId'].values[0] ### downstream subid
-            modifysubids.append(csubid)  ### add inital subid into the list 
+            modifysubids.append(csubid)  ### add inital subid into the list
             tsubid = -1
             is_pre_modified = 0
 
@@ -4200,8 +4215,8 @@ class LRRT:
                 ### check if this downsubid has a new subid
                 nsubid = mapoldnew_info.loc[mapoldnew_info['SubId'] == downsubid]['nsubid'].values[0] ## check if this catchment has modified: either merged to other catchment
 
-                if nsubid > 0:  ### if it been already processed 
-                    tsubid = nsubid  ### the target catchment id will be the newsunid 
+                if nsubid > 0:  ### if it been already processed
+                    tsubid = nsubid  ### the target catchment id will be the newsunid
                     is_pre_modified = 1 ### set is modifed to 1
                     modifysubids.append(tsubid) ### add this subid to the list
                 else:
@@ -4293,7 +4308,7 @@ class LRRT:
             lakeid       = AllConnectLakeIDS[i]
             Lakesub_info = finalrivply_info.loc[finalrivply_info['HyLakeId'] == lakeid]
             Lakesub_info = Lakesub_info.sort_values(["DA"], ascending = (False))
-            tsubid       = Lakesub_info[sub_colnm].values[0]  ### outlet subbasin id with highest acc 
+            tsubid       = Lakesub_info[sub_colnm].values[0]  ### outlet subbasin id with highest acc
             lakesubids   = Lakesub_info[sub_colnm].values
             if len(lakesubids) > 1:  ## only for connected lakes
                 mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalrivply_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = lakesubids,mainriv = finalrivply_info,Islake = 1)
@@ -4390,149 +4405,149 @@ class LRRT:
     def GenerateHRUS(self,Path_Subbasin_Ply,Landuse_info,Soil_info,Veg_info,
                      Sub_Lake_ID = 'HyLakeId',Sub_ID='SubId',
                      Path_Connect_Lake_ply = '#',Path_Non_Connect_Lake_ply = '#', Lake_Id = 'Hylak_id',
-                     Path_Landuse_Ply = '#',Landuse_ID = 'Landuse_ID', 
-                     Path_Soil_Ply = '#',Soil_ID = 'Soil_ID', 
-                     Path_Veg_Ply = '#',Veg_ID = 'Veg_ID', 
+                     Path_Landuse_Ply = '#',Landuse_ID = 'Landuse_ID',
+                     Path_Soil_Ply = '#',Soil_ID = 'Soil_ID',
+                     Path_Veg_Ply = '#',Veg_ID = 'Veg_ID',
                      Path_Other_Ply_1='#', Other_Ply_ID_1='O_ID_1',
                      Path_Other_Ply_2='#', Other_Ply_ID_2='O_ID_2',
                      DEM = '#',Project_crs = 'EPSG:3573',
                      OutputFolder = '#'):
-                     
-        """Generate HRU polygons and their attributes needed by hydrological model 
-        
+
+        """Generate HRU polygons and their attributes needed by hydrological model
+
         Function that used to overlay: subbasin polygon, lake polygon (optional)
-        , Land use polygon (optional), soil type polygon(optional), 
+        , Land use polygon (optional), soil type polygon(optional),
         vegetation polygon (optional), and two other user defined polygons
-        (optional). 
-        
-        A non lake HRU polygon is defined as an unique combination of 
-        all user provided datasets. 
-        
+        (optional).
+
+        A non lake HRU polygon is defined as an unique combination of
+        all user provided datasets.
+
         A lake HRU polygon is defined the same as the provided lake polygon.
-        All value of landuse and Veg polygon covered by lake will 
-        be changed to 1, indicating it is a covered by lake.   
-        All value of the soil polygon covered by the lake will be change to 
-        the soil id of the polygon covered by the lake with largest area. 
-    
-        Parameters 
-        ----------        
-        Path_Subbasin_Ply                 : string 
-            It is the path of the subbasin polygon, which is generated by 
-            toolbox. if not generated by toolbox, the attribute table should 
-            including following attribute.     
-            ##############Subbasin related attributes########################### 
-            SubID           - integer, The subbasin Id 
-            DowSubId        - integer, The downstream subbasin ID of this 
-                                       subbasin 
-            IsLake          - integer, If the subbasin is a lake / reservior 
+        All value of landuse and Veg polygon covered by lake will
+        be changed to 1, indicating it is a covered by lake.
+        All value of the soil polygon covered by the lake will be change to
+        the soil id of the polygon covered by the lake with largest area.
+
+        Parameters
+        ----------
+        Path_Subbasin_Ply                 : string
+            It is the path of the subbasin polygon, which is generated by
+            toolbox. if not generated by toolbox, the attribute table should
+            including following attribute.
+            ##############Subbasin related attributes###########################
+            SubID           - integer, The subbasin Id
+            DowSubId        - integer, The downstream subbasin ID of this
+                                       subbasin
+            IsLake          - integer, If the subbasin is a lake / reservior
                                        subbasin. 1 yes, <0, no
             IsObs           - integer, If the subbasin contains a observation
-                                       gauge. 1 yes, < 0 no. 
-            RivLength       - float,   The length of the river in current 
+                                       gauge. 1 yes, < 0 no.
+            RivLength       - float,   The length of the river in current
                                        subbasin in m
-            RivSlope        - float,   The slope of the river path in 
-                                       current subbasin, in m/m 
-            FloodP_n        - float,   Flood plain manning's coefficient, in - 
+            RivSlope        - float,   The slope of the river path in
+                                       current subbasin, in m/m
+            FloodP_n        - float,   Flood plain manning's coefficient, in -
             Ch_n            - float,   main channel manning's coefficient, in -
             BkfWidth        - float,   the bankfull width of the main channel
                                        in m
-            BkfDepth        - float,   the bankfull depth of the main channel 
-                                       in m 
-            HyLakeId        - integer, the lake id                            
-            LakeVol         - float,   the Volume of the lake in km3 
-            LakeDepth       - float,   the average depth of the lake m   
-            LakeArea        - float,   the area of the lake in m2             
-        Landuse_info                      : string 
+            BkfDepth        - float,   the bankfull depth of the main channel
+                                       in m
+            HyLakeId        - integer, the lake id
+            LakeVol         - float,   the Volume of the lake in km3
+            LakeDepth       - float,   the average depth of the lake m
+            LakeArea        - float,   the area of the lake in m2
+        Landuse_info                      : string
             Path to a csv file that contains landuse information, including
-            following attributes: 
+            following attributes:
             Landuse_ID (can be any string)  - integer, the landuse ID in the
                                                        landuse polygon
             LAND_USE_C                      - string,  the landuse class name
                                                        for each landuse Type
-        Soil_info                        : string 
+        Soil_info                        : string
             Path to a csv file that contains soil information, including
-            following attributes: 
+            following attributes:
             Soil_ID (can be any string)     - integer, the Soil ID in the
                                                        soil polygon
             SOIL_PROF                       - string,  the Soil profile name
-                                                       for each soil type                                                       
-        Veg_info                         : string 
+                                                       for each soil type
+        Veg_info                         : string
             Path to a csv file that contains vegetation information, including
-            following attributes: 
+            following attributes:
             Veg_ID (can be any string)      - integer, the vegetation ID in the
                                                        vegetation polygon
             VEG_C                           - string,  the vegetation class name
-                                                       for each vegetation Type 
-        Sub_Lake_ID                      : string (optional) 
-            The column name of the lake id in the subbasin polygon 
+                                                       for each vegetation Type
+        Sub_Lake_ID                      : string (optional)
+            The column name of the lake id in the subbasin polygon
         Sub_ID                           : string (optional)
-            The column name of the subbasin id in the subbasin polygon      
-        Path_Connect_Lake_ply            : string (Optional) 
-            Path to the connected lake's polygon 
-        Path_Non_Connect_Lake_ply        : string (Optional) 
+            The column name of the subbasin id in the subbasin polygon
+        Path_Connect_Lake_ply            : string (Optional)
+            Path to the connected lake's polygon
+        Path_Non_Connect_Lake_ply        : string (Optional)
             Path to the non connected lake's polygon
-        Lake_Id                          : string (Optional) 
-            The the column name in lake polygon indicate the lake ID. 
+        Lake_Id                          : string (Optional)
+            The the column name in lake polygon indicate the lake ID.
         Path_Landuse_Ply                 : string (Optional)
-            Path to the landuse polygon. when Path_Landuse_Ply is not 
-            provided. The Landuse ID in Landuse_info should be 
+            Path to the landuse polygon. when Path_Landuse_Ply is not
+            provided. The Landuse ID in Landuse_info should be
             1: land, -1: lake
         Landuse_ID                       : string (Optional)
             the the column name in landuse polygon and Landuse_info csv
-            indicate the landuse ID. when Path_Landuse_Ply is not 
-            provided. The Landuse ID should be 
-            1: land, -1: lake.                       
+            indicate the landuse ID. when Path_Landuse_Ply is not
+            provided. The Landuse ID should be
+            1: land, -1: lake.
         Path_Soil_Ply                    : string (Optional)
-            Path to the soil polygon. when soil polygon is not 
-            provided. The Soil ID in Soil_info should be the same 
-            as Landuse ID. 
+            Path to the soil polygon. when soil polygon is not
+            provided. The Soil ID in Soil_info should be the same
+            as Landuse ID.
         Soil_ID                          : string (Optional)
             the the column name in soil polygon and soil_info csv
-            indicate the soil ID. when soil polygon is not 
-            provided. The Soil ID in Soil_info should be the same 
-            as Landuse ID.  
+            indicate the soil ID. when soil polygon is not
+            provided. The Soil ID in Soil_info should be the same
+            as Landuse ID.
         Path_Veg_Ply                     : string (Optional)
-            Path to the vegetation polygon. when Veg polygon is not 
-            provided. The Veg ID in Veg_info should be the same 
-            as Landuse ID. 
+            Path to the vegetation polygon. when Veg polygon is not
+            provided. The Veg ID in Veg_info should be the same
+            as Landuse ID.
         Veg_ID                           : string (Optional)
             the the column name in vegetation polygon and veg_info csv
-            indicate the vegetation ID. when Veg polygon is not 
-            provided. The Veg ID in Veg_info should be the same 
-            as Landuse ID.  
+            indicate the vegetation ID. when Veg polygon is not
+            provided. The Veg ID in Veg_info should be the same
+            as Landuse ID.
         Path_Other_Ply_1                 : string (Optional)
             Path to the other polygon that will be used to define HRU,
-            such as elevation band, or aspect. 
+            such as elevation band, or aspect.
         Other_Ply_ID_1                   : string (Optional)
-            the the column name in Other_Ply_1 polygon 
-            indicate the landuse ID. 
+            the the column name in Other_Ply_1 polygon
+            indicate the landuse ID.
         Path_Other_Ply_2                 : string (Optional)
             Path to the other polygon that will be used to define HRU,
-            such as elevation band, or aspect. 
+            such as elevation band, or aspect.
         Other_Ply_ID_2                   : string (Optional)
-            the the column name in Other_Ply_2 polygon 
-            indicate the landuse ID.      
-        DEM                              : string (optional) 
-            the path to a raster elevation dataset, that will be used to 
-            calcuate average apspect, elevation and slope within each HRU. 
-            if no data is provided, basin average value will be used for 
-            each HRU. 
+            the the column name in Other_Ply_2 polygon
+            indicate the landuse ID.
+        DEM                              : string (optional)
+            the path to a raster elevation dataset, that will be used to
+            calcuate average apspect, elevation and slope within each HRU.
+            if no data is provided, basin average value will be used for
+            each HRU.
         Project_crs                      : string
-            the EPSG code of a projected coodinate system that will be used to 
-            calcuate HRU area and slope. 
-        OutputFolder                     : string 
-            The path to the folder that will save output HRU polygon. 
+            the EPSG code of a projected coodinate system that will be used to
+            calcuate HRU area and slope.
+        OutputFolder                     : string
+            The path to the folder that will save output HRU polygon.
 
         Notes
-        ------- 
+        -------
         Following ouput files will be generated in "<OutputFolder>/"
         'finalcat_hru_info.shp'              - HRU polygon and it's attributes
 
-        
+
         Returns:
         -------
            None
-           
+
         Examples
         -------
         >>> from ToolboxClass import LRRT
@@ -4551,9 +4566,9 @@ class LRRT:
 							   Soil_info=os.path.join(DataFolder,'soil_info.csv'),
 							   Veg_info=os.path.join(DataFolder,'veg_info.csv'),
 							   DEM = os.path.join(DataFolder,'na_dem_15s_1.tif')
-							   )                                
-                                                           
-        """             
+							   )
+
+        """
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
         Qgs.initQgis()
@@ -4565,21 +4580,21 @@ class LRRT:
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
         context = dataobjects.createContext()
         context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
-        
-        
+
+
         Merge_layer_list = []
-        output_hru_shp = os.path.join(OutputFolder,'finalcat_hru_info.shp')        
+        output_hru_shp = os.path.join(OutputFolder,'finalcat_hru_info.shp')
         ### First overlay the subbasin layer with lake polygon, the new unique id will be 'HRULake_ID'
-        
-        
+
+
         Sub_Lake_HRU_Layer,trg_crs,fieldnames_list = GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply = Path_Subbasin_Ply,Path_Connect_Lake_ply = Path_Connect_Lake_ply,
                                                                              Path_Non_Connect_Lake_ply = Path_Non_Connect_Lake_ply,Sub_ID=Sub_ID,Sub_Lake_ID = Sub_Lake_ID,Lake_Id = Lake_Id)
-                                                                                          
+
         fieldnames_list.extend([Landuse_ID,Soil_ID,Veg_ID,'LAND_USE_C','VEG_C','SOIL_PROF','HRU_Slope','HRU_Area','HRU_Aspect'])
         dissolve_filedname_list = ['HRULake_ID']
-        Merge_layer_list.append(Sub_Lake_HRU_Layer) 
-        
-        #### check which data will be inlucded to determine HRU 
+        Merge_layer_list.append(Sub_Lake_HRU_Layer)
+
+        #### check which data will be inlucded to determine HRU
         if Path_Landuse_Ply != '#':
             layer_landuse_dis = Reproj_Clip_Dissolve_Simplify_Polygon(processing,context,Path_Landuse_Ply,Project_crs,trg_crs,Landuse_ID,Sub_Lake_HRU_Layer)
             Merge_layer_list.append(layer_landuse_dis)
@@ -4594,66 +4609,66 @@ class LRRT:
             layer_veg_dis = Reproj_Clip_Dissolve_Simplify_Polygon(processing,context,Path_Veg_Ply,Project_crs,trg_crs,Veg_ID,Sub_Lake_HRU_Layer)
             Merge_layer_list.append(layer_veg_dis)
             dissolve_filedname_list.append(Veg_ID)
-                    
+
         if Path_Other_Ply_1 != '#':
             layer_other_1_dis = Reproj_Clip_Dissolve_Simplify_Polygon(processing,context,Path_Other_Ply_1,Project_crs,trg_crs,Other_Ply_ID_1,Sub_Lake_HRU_Layer)
             Merge_layer_list.append(layer_other_1_dis)
             fieldnames_list.append(Other_Ply_ID_1)
             dissolve_filedname_list.append(Other_Ply_ID_1)
-            
+
         if Path_Other_Ply_2 != '#':
             layer_other_1_dis = Reproj_Clip_Dissolve_Simplify_Polygon(processing,context,Path_Other_Ply_2,Project_crs,trg_crs,Other_Ply_ID_2,Sub_Lake_HRU_Layer)
-            Merge_layer_list.append(layer_other_2_dis) 
+            Merge_layer_list.append(layer_other_2_dis)
             fieldnames_list.append(Other_Ply_ID_2)
-            dissolve_filedname_list.append(Other_Ply_ID_2)                     
-        
-        
-        fieldnames = set(fieldnames_list) 
-        
+            dissolve_filedname_list.append(Other_Ply_ID_2)
+
+
+        fieldnames = set(fieldnames_list)
+
         print("begin union")
-        #### uniion polygons in the Merge_layer_list                           
+        #### uniion polygons in the Merge_layer_list
         mem_union = Union_Ply_Layers_And_Simplify(processing,context,Merge_layer_list,dissolve_filedname_list,fieldnames,OutputFolder)
-        
+
         #####
-        
+
         Landuse_info_data = pd.read_csv(Landuse_info)
         Soil_info_data = pd.read_csv(Soil_info)
         Veg_info_data = pd.read_csv(Veg_info)
-        
-        
-                
-        if Path_Landuse_Ply == '#': ### landuse polygon is not provided, landused id the same is IS lake 1 is lake -1 non land 
+
+
+
+        if Path_Landuse_Ply == '#': ### landuse polygon is not provided, landused id the same is IS lake 1 is lake -1 non land
             formula = '- \"%s\" ' % 'HRU_IsLake'
             mem_union_landuse = processing.run("qgis:fieldcalculator", {'INPUT':mem_union,'FIELD_NAME':Landuse_ID,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
         else:
             mem_union_landuse = mem_union
-            
-        if Path_Soil_Ply == '#': #if soil is not provied, it the value will be the same as land use 
+
+        if Path_Soil_Ply == '#': #if soil is not provied, it the value will be the same as land use
             formula = ' \"%s\" ' % Landuse_ID
             mem_union_soil = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_landuse,'FIELD_NAME':Soil_ID,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
         else:
             mem_union_soil  = mem_union_landuse
-            
+
         if Path_Veg_Ply == '#':  ### if no vegetation polygon is provide vegetation will be the same as landuse
-            formula = ' \"%s\" ' % Landuse_ID 
+            formula = ' \"%s\" ' % Landuse_ID
             mem_union_veg = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_soil,'FIELD_NAME':Veg_ID,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
         else:
             mem_union_veg = mem_union_soil
 
         if Path_Other_Ply_1 == '#':  ### if no vegetation polygon is provide vegetation will be the same as landuse
-            formula = '- \"%s\" ' % 'HRU_IsLake' 
+            formula = '- \"%s\" ' % 'HRU_IsLake'
             mem_union_o1 = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_veg,'FIELD_NAME':Other_Ply_ID_1,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
         else:
             mem_union_o1 = mem_union_veg
 
         if Path_Other_Ply_2 == '#':  ### if no vegetation polygon is provide vegetation will be the same as landuse
-            formula = '- \"%s\" ' % 'HRU_IsLake' 
+            formula = '- \"%s\" ' % 'HRU_IsLake'
             mem_union_o2 = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_o1,'FIELD_NAME':Other_Ply_ID_2,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
         else:
             mem_union_o2 = mem_union_o1
-            
-            
-        hru_layer_draft  = mem_union_o2 
+
+
+        hru_layer_draft  = mem_union_o2
 #        hru_layer_draft = processing.run("native:reprojectlayer", {'INPUT':mem_union_o2,'TARGET_CRS':QgsCoordinateReferenceSystem('EPSG:4326'),'OUTPUT':'memory:'})['OUTPUT']
 
         HRU_draf_final = Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer_draft,dissolve_filedname_list,
@@ -4661,14 +4676,14 @@ class LRRT:
                                                Landuse_info_data,Soil_info_data,
                                                Veg_info_data,DEM,Path_Subbasin_Ply,OutputFolder)
 
-        
+
         processing.run("qgis:fieldcalculator", {'INPUT':HRU_draf_final,'FIELD_NAME':'HRU_ID','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':0,'NEW_FIELD':False,'FORMULA':' @row_number','OUTPUT':output_hru_shp})
-                       
-                  
-        del Sub_Lake_HRU_Layer,mem_union       
-        Qgs.exit()             
-        
-            
+
+
+        del Sub_Lake_HRU_Layer,mem_union
+        Qgs.exit()
+
+
 
 
 ###########################################################################################33
@@ -4761,47 +4776,47 @@ class LRRT:
         return
 
     def Lake_Statistics(self,Path_Finalcat_info = '#',Output_Folder = '#'):
-        
+
         hyinfocsv         = Path_Finalcat_info[:-3] + "dbf"
         tempinfo          = Dbf5(hyinfocsv)
         finalcat_info     = tempinfo.to_dataframe().drop_duplicates('SubId', keep='first')
         AllLake_info      = finalcat_info.loc[finalcat_info['IsLake'] > 0]
         CL_info           = finalcat_info.loc[finalcat_info['IsLake'] == 1]
         NCL_info          = finalcat_info.loc[finalcat_info['IsLake'] == 2]
-        
+
         Lake_area_All     = np.sum(AllLake_info['LakeArea'].values)
         Lake_area_CL      = np.sum(CL_info['LakeArea'].values)
         Lake_area_NCL     = np.sum(NCL_info['LakeArea'].values)
-        
+
         Lake_DA_All       = np.sum(AllLake_info['DA'].values)/1000/1000
         Lake_DA_CL        = np.sum(CL_info['DA'].values)/1000/1000
-        Lake_DA_NCL       = np.sum(NCL_info['DA'].values)/1000/1000        
-        
+        Lake_DA_NCL       = np.sum(NCL_info['DA'].values)/1000/1000
+
         Lake_Vol_All      = np.sum(AllLake_info['LakeVol'].values)
         Lake_Vol_CL       = np.sum(CL_info['LakeVol'].values)
-        Lake_Vol_NCL      = np.sum(NCL_info['LakeVol'].values) 
-        
+        Lake_Vol_NCL      = np.sum(NCL_info['LakeVol'].values)
+
         data = np.full((3,4),np.nan)
-        
-        Lake_stats = pd.DataFrame(data = data, index = ['LakeArea','DA','LakeVol'],columns = ['AllLakes','CL','NCL','NCL_PCT'])  
-        
+
+        Lake_stats = pd.DataFrame(data = data, index = ['LakeArea','DA','LakeVol'],columns = ['AllLakes','CL','NCL','NCL_PCT'])
+
         Lake_stats.loc['LakeArea','AllLakes'] = Lake_area_All
         Lake_stats.loc['LakeArea','CL'] = Lake_area_CL
         Lake_stats.loc['LakeArea','NCL'] = Lake_area_NCL
         Lake_stats.loc['LakeArea','NCL_PCT'] = Lake_area_NCL/Lake_area_All
-        
+
         Lake_stats.loc['DA','AllLakes'] = Lake_DA_All
         Lake_stats.loc['DA','CL'] = Lake_DA_CL
         Lake_stats.loc['DA','NCL'] = Lake_DA_NCL
-        Lake_stats.loc['DA','NCL_PCT'] = Lake_DA_NCL/Lake_DA_All                
-        
+        Lake_stats.loc['DA','NCL_PCT'] = Lake_DA_NCL/Lake_DA_All
+
         Lake_stats.loc['LakeVol','AllLakes'] = Lake_Vol_All
         Lake_stats.loc['LakeVol','CL'] = Lake_Vol_CL
         Lake_stats.loc['LakeVol','NCL'] = Lake_Vol_NCL
-        Lake_stats.loc['LakeVol','NCL_PCT'] = Lake_Vol_NCL/Lake_Vol_All 
-        
-        Lake_stats.to_csv(os.path.join(Output_Folder,'Lake_stats.csv'))    
-        
+        Lake_stats.loc['LakeVol','NCL_PCT'] = Lake_Vol_NCL/Lake_Vol_All
+
+        Lake_stats.to_csv(os.path.join(Output_Folder,'Lake_stats.csv'))
+
 
 
     def Combine_Sub_Region_Results(self,Sub_Region_info = '#',Sub_Region_OutputFolder = '#', OutputFolder = '#',Is_Only_Final_Result = 1,Path_Down_Stream_Points= '#'):
@@ -5008,53 +5023,53 @@ class LRRT:
                                        x_add = -360,
                                        y_add = 0):
 
-        """Generate Grid polygon from NetCDF file 
-        
+        """Generate Grid polygon from NetCDF file
+
         Function that used to generate grid polygon from a NetCDF file
-    
-        Parameters 
-        ----------        
-        NetCDF_Path                       : string 
-            It is the path of the NetCDF file    
-        Output_Folder                     : string  
+
+        Parameters
+        ----------
+        NetCDF_Path                       : string
+            It is the path of the NetCDF file
+        Output_Folder                     : string
             It is the path to a folder to save output polygon shpfiles
-        Coor_x_NM                         : string  
-            It is the variable name for the x coordinates of grids in 
+        Coor_x_NM                         : string
+            It is the variable name for the x coordinates of grids in
             the NetCDF file
-        Coor_y_NM                         : string  
-            It is the variable name for the y coordinates of grids in 
+        Coor_y_NM                         : string
+            It is the variable name for the y coordinates of grids in
             the NetCDF file
-        Is_Rotated_Grid                   : Integer  
-            1 : indicate the grid in NetCDF file is rotated 
-            -1: indicate the grid in NetCDF file is not rotated 
-        R_Coor_x_NM                       : string  
+        Is_Rotated_Grid                   : Integer
+            1 : indicate the grid in NetCDF file is rotated
+            -1: indicate the grid in NetCDF file is not rotated
+        R_Coor_x_NM                       : string
             It is the variable name for the y coordinates of rotated
             grids in the NetCDF file
-        R_Coor_y_NM                       : string  
+        R_Coor_y_NM                       : string
             It is the variable name for the y coordinates of rotated
-            grids in the NetCDF file                        
-        SpatialRef                        : string  
-            It is the coordinates system used in the NetCDF file 
-        x_add                             : float  
-            It is offset value for x coodinate 
-        y_add                             : float  
-            It is offset value for y coodinate    
-                                 
-        Notes 
-        ------- 
+            grids in the NetCDF file
+        SpatialRef                        : string
+            It is the coordinates system used in the NetCDF file
+        x_add                             : float
+            It is offset value for x coodinate
+        y_add                             : float
+            It is offset value for y coodinate
+
+        Notes
+        -------
         Nc_Grids.shp                      : Point shpfile (output)
            It is point in the center of each netCDF Grids
         Gridncply.shp                     : Polygon shpfile (output)
-           It is the polygon for each grid in the NetCDF       
-        
+           It is the polygon for each grid in the NetCDF
+
         Returns:
         -------
            None
-           
+
         Examples
         -------
-                                                                                    
-        """    
+
+        """
 
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
@@ -5068,22 +5083,22 @@ class LRRT:
         context = dataobjects.createContext()
         context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
         from netCDF4 import Dataset
-        
-        ncfile =  NetCDF_Path       
-        dsin2 =  Dataset(ncfile,'r') # sample structure of in nc file converted from fst 
-            
+
+        ncfile =  NetCDF_Path
+        dsin2 =  Dataset(ncfile,'r') # sample structure of in nc file converted from fst
+
         if Is_Rotated_Grid > 0:
             ncols = len(dsin2.variables[R_Coor_x_NM][:])  ### from 0 to (ncols-1).
             nrows = len(dsin2.variables[R_Coor_y_NM][:])
         else:
             ncols = len(dsin2.variables[Coor_x_NM][:])  ### from 0 to (ncols-1).
             nrows = len(dsin2.variables[Coor_y_NM][:])
-                               
+
         latlonrow = np.full((nrows*ncols,5),-9999.99999)
         latlonrow = np.full((nrows*ncols,5),-9999.99999)
-        
+
         ### Create a point layer, each point will be the nc grids
-        cmds ="Point?crs=%s&field=FGID:integer&field=Row:integer&field=Col:integer&field=Gridlon:double&field=Gridlat:double&index=yes" % SpatialRef 
+        cmds ="Point?crs=%s&field=FGID:integer&field=Row:integer&field=Col:integer&field=Gridlon:double&field=Gridlat:double&index=yes" % SpatialRef
         Point_Nc_Grid = QgsVectorLayer(cmds, "NC Grid Points",  "memory")
         DP_Nc_Point = Point_Nc_Grid.dataProvider()
         Point_Nc_Grid.startEditing()
@@ -5093,63 +5108,63 @@ class LRRT:
         Polygon_Nc_Grid = QgsVectorLayer(cmds, "NC Grid polygons",  "memory")
         DP_Nc_ply = Polygon_Nc_Grid.dataProvider()
         Polygon_Nc_Grid.startEditing()
-        
-                
+
+
         for i in range(0,nrows):
-            for j in range(0,ncols):  
-                k = i*ncols + j          
-                
+            for j in range(0,ncols):
+                k = i*ncols + j
+
                 Point_Fea = QgsFeature()
-                
+
                 if Is_Rotated_Grid < 0:
-                    latlonrow[k,0] = k 
+                    latlonrow[k,0] = k
                     latlonrow[k,1] = i   ### irow
                     latlonrow[k,2] = j  ###col
                     latlonrow[k,3] = dsin2.variables[Coor_x_NM][j] + x_add## lon
                     latlonrow[k,4] = dsin2.variables[Coor_y_NM][i]  ## lat
 
                 else:
-                    latlonrow[k,0] = k 
+                    latlonrow[k,0] = k
                     latlonrow[k,1] = i   ### irow
                     latlonrow[k,2] = j  ###col
                     latlonrow[k,3] = dsin2.variables[Coor_x_NM][i,j] + x_add ## lon
                     latlonrow[k,4] = dsin2.variables[Coor_y_NM][i,j]   ## lat
-                
-                #### create point for each grid in Net CDF 
+
+                #### create point for each grid in Net CDF
                 NC_Grid_Point  = QgsGeometry.fromPointXY(QgsPointXY(latlonrow[k,3],latlonrow[k,4]))
                 Point_Fea.setGeometry(NC_Grid_Point)
                 Point_Fea.setAttributes(latlonrow[k,:].tolist())
                 DP_Nc_Point.addFeature(Point_Fea)
-                
+
                 ### Create a polygon that the current grid is in the center of the polygon
-                
-                
+
+
                 ### find mid point in row direction
                 Polygon_Fea = QgsFeature()
-                 
-                if j != 0 : 
+
+                if j != 0 :
                     if Is_Rotated_Grid < 0:  ## left x
                         x1 = latlonrow[k,3] - 0.5*( latlonrow[k,3] - (dsin2.variables[Coor_x_NM][j-1]   + x_add) )
                     else:
                         x1 = latlonrow[k,3] - 0.5*( latlonrow[k,3] - (dsin2.variables[Coor_x_NM][i,j-1] + x_add) )
-                else: 
+                else:
                     if Is_Rotated_Grid < 0:
                         x1 = latlonrow[k,3] - 0.5*(-latlonrow[k,3] + (dsin2.variables[Coor_x_NM][j+1]   + x_add) )
                     else:
                         x1 = latlonrow[k,3] - 0.5*(-latlonrow[k,3] + (dsin2.variables[Coor_x_NM][i,j+1] + x_add) )
-                
+
                 if j != ncols -1 :   ###  right x
                     if Is_Rotated_Grid < 0:
                         x2 = latlonrow[k,3] + 0.5*(-latlonrow[k,3] + (dsin2.variables[Coor_x_NM][j+1]   + x_add) )
                     else:
                         x2 = latlonrow[k,3] + 0.5*(-latlonrow[k,3] + (dsin2.variables[Coor_x_NM][i,j+1] + x_add) )
-                else: 
+                else:
                     if Is_Rotated_Grid < 0:
                         x2 = latlonrow[k,3] + 0.5*( latlonrow[k,3] - (dsin2.variables[Coor_x_NM][j-1]   + x_add) )
                     else:
                         x2 = latlonrow[k,3] + 0.5*( latlonrow[k,3] - (dsin2.variables[Coor_x_NM][i,j-1] + x_add) )
-                        
-                if i != nrows - 1: ## lower y 
+
+                if i != nrows - 1: ## lower y
                     if Is_Rotated_Grid < 0:
                         y1 = latlonrow[k,4] + 0.5*(-latlonrow[k,4] + dsin2.variables[Coor_y_NM][i+1] )
                     else:
@@ -5159,9 +5174,9 @@ class LRRT:
                         y1 = latlonrow[k,4] + 0.5*( latlonrow[k,4] - dsin2.variables[Coor_y_NM][i-1] )
                     else:
                         y1 = latlonrow[k,4] + 0.5*( latlonrow[k,4] - dsin2.variables[Coor_y_NM][i-1,j] )
-                        
-                        
-                if i != 0: ## upper y 
+
+
+                if i != 0: ## upper y
                     if Is_Rotated_Grid < 0:
                         y2 = latlonrow[k,4] - 0.5*( latlonrow[k,4] - dsin2.variables[Coor_y_NM][i-1] )
                     else:
@@ -5171,65 +5186,65 @@ class LRRT:
                         y2 = latlonrow[k,4] - 0.5*(-latlonrow[k,4] + dsin2.variables[Coor_y_NM][i+1] )
                     else:
                         y2 = latlonrow[k,4] - 0.5*(-latlonrow[k,4] + dsin2.variables[Coor_y_NM][i+1,j] )
-                        
-                Point_1  = QgsPointXY(x1,y1)  ## lower left 
-                Point_2  = QgsPointXY(x1,y2) 
-                Point_3  = QgsPointXY(x2,y2) 
-                Point_4  = QgsPointXY(x2,y1)        
-                    
+
+                Point_1  = QgsPointXY(x1,y1)  ## lower left
+                Point_2  = QgsPointXY(x1,y2)
+                Point_3  = QgsPointXY(x2,y2)
+                Point_4  = QgsPointXY(x2,y1)
+
                 gPolygon = QgsGeometry.fromPolygonXY([[Point_1,Point_2,Point_3,Point_4]])
                 Polygon_Fea.setGeometry(gPolygon)
                 Polygon_Fea.setAttributes(latlonrow[k,:].tolist())
-                DP_Nc_ply.addFeature(Polygon_Fea)   
-                    
-                            
+                DP_Nc_ply.addFeature(Polygon_Fea)
+
+
 
         Point_Nc_Grid.commitChanges()
-        Point_Nc_Grid.updateExtents()            
+        Point_Nc_Grid.updateExtents()
 
         Polygon_Nc_Grid.commitChanges()
         Polygon_Nc_Grid.updateExtents()
-        
-                        
+
+
         pdlatlonrow = pd.DataFrame(latlonrow,columns=['FGID','Row','Col','Gridlon','Gridlat'])
         pdlatlonrow.to_csv(os.path.join(Output_Folder ,"Gridcorr.csv"), sep = ',',index = False)
-        
-        
+
+
         QgsVectorFileWriter.writeAsVectorFormat(layer = Point_Nc_Grid,fileName = os.path.join(Output_Folder,"Nc_Grids.shp"),fileEncoding = "UTF-8",destCRS = QgsCoordinateReferenceSystem(SpatialRef),driverName="ESRI Shapefile")
         QgsVectorFileWriter.writeAsVectorFormat(layer = Polygon_Nc_Grid,fileName = os.path.join(Output_Folder,"Gridncply.shp"),fileEncoding = "UTF-8",destCRS = QgsCoordinateReferenceSystem(SpatialRef),driverName="ESRI Shapefile")
 
     def Area_Weighted_Mapping_Between_Two_Polygons(self,Target_Ply_Path ='#',Mapping_Ply_Path = '#',Col_NM = 'HRU_ID',Output_Folder = '#'):
-        
-        """Generate Grid polygon from NetCDF file 
-        
+
+        """Generate Grid polygon from NetCDF file
+
         Function that used to generate grid polygon from a NetCDF file
-    
-        Parameters 
-        ----------        
-        Target_Ply_Path                       : string 
+
+        Parameters
+        ----------
+        Target_Ply_Path                       : string
             It is the path of one inputs HRU polygon file
-        Mapping_Ply_Path                      : string 
-            It is the path of one inputs grid polygon file    
-        Output_Folder                     : string  
+        Mapping_Ply_Path                      : string
+            It is the path of one inputs grid polygon file
+        Output_Folder                     : string
             It is the path to a folder to save output polygon shpfiles
-                                 
-        Notes 
-        ------- 
+
+        Notes
+        -------
         Overlay_Polygons.shp                 : Polygon shpfile (output)
-           It is overlay of two input polygons shpfiles 
+           It is overlay of two input polygons shpfiles
         GriddedForcings2.txt                 : Text file (output)
            It is the polygon area weighted of each polygon in Mapping_Ply_Path
            to each polygon in Target_Ply_Path
-        
+
         Returns:
         -------
            None
-           
+
         Examples
         -------
-                                                                                    
-        """    
-                
+
+        """
+
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
         Qgs.initQgis()
@@ -5241,29 +5256,29 @@ class LRRT:
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
         context = dataobjects.createContext()
         context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
-                
+
         Path_finalcat_hru_temp          = os.path.join(self.tempfolder,str(np.random.random_integers(1000000)) + "finalcat_freferen.shp")
         Path_finalcat_hru_temp2          = os.path.join(self.tempfolder,str(np.random.random_integers(1000000))+ "finalcat_freferen2.shp")
         Path_finalcat_hru_temp_dissolve = os.path.join(self.tempfolder,str(np.random.random_integers(1000000)) + "finalcat_freferen_dissolve.shp")
         Path_finalcat_hru_temp_dissolve_area = os.path.join(Output_Folder,"Overlay_Polygons.shp")
-        
-        
-        ### create overlay betweeo two polygon and calcuate area of each new polygon in the overlay 
+
+
+        ### create overlay betweeo two polygon and calcuate area of each new polygon in the overlay
         processing.run("native:union", {'INPUT':Target_Ply_Path,'OVERLAY':Mapping_Ply_Path,'OVERLAY_FIELDS_PREFIX':'Map_','OUTPUT':Path_finalcat_hru_temp},context = context)
         processing.run("native:extractbyattribute", {'INPUT':Path_finalcat_hru_temp,'FIELD':'HRU_ID','OPERATOR':2,'VALUE':'0','OUTPUT':Path_finalcat_hru_temp2})
-        processing.run("native:dissolve", {'INPUT':Path_finalcat_hru_temp2,'FIELD':['HRU_ID','Map_FGID'],'OUTPUT':Path_finalcat_hru_temp_dissolve},context = context)            
+        processing.run("native:dissolve", {'INPUT':Path_finalcat_hru_temp2,'FIELD':['HRU_ID','Map_FGID'],'OUTPUT':Path_finalcat_hru_temp_dissolve},context = context)
         processing.run("qgis:fieldcalculator", {'INPUT':Path_finalcat_hru_temp_dissolve,'FIELD_NAME':'s_area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'area(transform($geometry, \'EPSG:4326\',\'EPSG:3573\'))','OUTPUT':Path_finalcat_hru_temp_dissolve_area})
-    
+
         ### calculate the area weight of the mapping polygon to target polygon
-        
+
         dbf1 = Dbf5(Mapping_Ply_Path[:-3]+'dbf')
         Forcinfo = dbf1.to_dataframe()
         Avafgid = Forcinfo['FGID'].values
-            
-        
+
+
         dbf2 = Dbf5(Path_finalcat_hru_temp_dissolve_area[:-3] + "dbf")
         Mapforcing = dbf2.to_dataframe()
-        Mapforcing = Mapforcing.loc[Mapforcing[Col_NM] > 0] ### remove 
+        Mapforcing = Mapforcing.loc[Mapforcing[Col_NM] > 0] ### remove
 
 ####
         hruids  = Mapforcing['HRU_ID'].values
@@ -5274,18 +5289,18 @@ class LRRT:
         ogridforc.write("   #      " +"\n")
         ogridforc.write("   # [# HRUs]"+"\n")
         sNhru = len(hruids)
-        
+
         ogridforc.write("   :NumberHRUs       "+ str(sNhru) + "\n")
         sNcell = (max(Forcinfo['Row'].values)+1) * (max(Forcinfo['Col'].values)+1)
         ogridforc.write("   :NumberGridCells  "+str(sNcell)+"\n")
         ogridforc.write("   #            "+"\n")
-        ogridforc.write("   # [HRU ID] [Cell #] [w_kl]"+"\n")   
-             
+        ogridforc.write("   # [HRU ID] [Cell #] [w_kl]"+"\n")
+
         for i in range(len(hruids)):
             hruid = hruids[i]
             cats = Mapforcing.loc[Mapforcing['HRU_ID'] == hruid]
             cats = cats[cats['Map_FGID'].isin(Avafgid)]
-        
+
             if len(cats) <= 0:
                 cats = Mapforcing.loc[Mapforcing['HRU_ID'] == hruid]
                 print("Following Grid has to be inluded:.......")
@@ -5302,12 +5317,12 @@ class LRRT:
                     sumwt = sumwt + wt
                 else:
                     wt = 1- sumwt
-                    
+
                 if(len(scat['Map_Row'].values) > 1):  ## should be 1
                     print(str(catid)+"error: 1 hru, 1 grid, produce muti polygon need to be merged ")
                     Strcellid = str(int(scat['Map_Row'].values[0] * (max(Forcinfo['Col'].values) + 1 +misscol) + scat['Map_Col'].values[0])) + "      "
                 else:
-                    Strcellid = str(int(scat['Map_Row'].values * (max(Forcinfo['Col'].values) + 1) + scat['Map_Col'].values)) + "      "                    
+                    Strcellid = str(int(scat['Map_Row'].values * (max(Forcinfo['Col'].values) + 1) + scat['Map_Col'].values)) + "      "
 
                 ogridforc.write("    "+str(int(hruid)) + "     "+Strcellid+'      '+str(wt) +"\n")
 #        arcpy.AddMessage(cats)
@@ -5327,4 +5342,4 @@ class LRRT:
         ##################################333
         ######################################################
         ###################################################################################33
-    ####################################################################################################################################3    
+    ####################################################################################################################################3
