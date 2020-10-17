@@ -1950,6 +1950,8 @@ class LRRT:
         self.Path_Sub_Reg_Out_Folder = '#'
         self.Is_Sub_Region          = Is_Sub_Region
         if Path_Sub_Reg_Out_Folder != '#':
+            if not os.path.exists(Path_Sub_Reg_Out_Folder):
+                os.makedirs(Path_Sub_Reg_Out_Folder)
             self.Path_Sub_reg_outlets_r    = os.path.join(Path_Sub_Reg_Out_Folder,'Sub_Reg_Outlets_point_r.pack')
             self.Path_Sub_reg_outlets_v    = os.path.join(Path_Sub_Reg_Out_Folder,'Sub_Reg_Outlets_point_v.pack')
             self.Path_Sub_reg_grass_dir    = os.path.join(Path_Sub_Reg_Out_Folder,'dir_grass.pack')
