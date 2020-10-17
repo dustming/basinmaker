@@ -2374,12 +2374,24 @@ class LRRT:
         PERMANENT.close()
 
         ##### Determine subregion with lake
-        self.Generateinputdata(Is_divid_region = 1)
-        print(" end generate inputs ")
-        self.WatershedDiscretizationToolset(accthresold = Acc,Is_divid_region = 1,max_memroy = max_memory)
-        print(" end generate first cat1 ")
-        self.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = CheckLakeArea,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 9000,Pec_Grid_outlier = 0.99,Is_divid_region=1,max_memroy = max_memory)
-
+        try:
+            self.Generateinputdata(Is_divid_region = 1)
+        except:
+            print("Check print infomation, some unknown error occured, may have no influence on result")
+            pass
+        
+        try:
+            self.WatershedDiscretizationToolset(accthresold = Acc,Is_divid_region = 1,max_memroy = max_memory)
+        except:
+            print("Check print infomation, some unknown error occured, may have no influence on result")
+            pass
+            
+        try:
+            self.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = CheckLakeArea,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 9000,Pec_Grid_outlier = 0.99,Is_divid_region=1,max_memroy = max_memory)
+        except:
+            print("Check print infomation, some unknown error occured, may have no influence on result")
+            pass
+            
         ####Determin river network for whole watersheds
         PERMANENT = Session()
         PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
@@ -2395,7 +2407,7 @@ class LRRT:
         grass.run_command('v.pack',input = 'Sub_Reg_str_grass_v',output = self.Path_Sub_reg_grass_str_v,overwrite = True)
         grass.run_command('r.pack',input = 'Sub_Reg_str_grass_r',output = self.Path_Sub_reg_grass_str_r ,overwrite = True)
         PERMANENT.close()
-
+        return 
 
     def Generatesubdomainmaskandinfo(self,Out_Sub_Reg_Dem_Folder = '#',ProjectNM = 'Sub_Reg'):
         #### generate subbregion outlet points and subregion info table
@@ -2706,10 +2718,12 @@ class LRRT:
 
         if self.Path_obspoint_in != '#':
             grass.run_command("v.import", input = self.Path_ObsPoint, output = 'obspoint', overwrite = True)
-
+            
+        print("********************Geneerate inputs dataset Done********************")
         PERMANENT.close()
         del r_dem_layer
         Qgs.exit()
+        return
 #####################################################################################################
 
 ####################################################################################################3
@@ -2805,8 +2819,9 @@ class LRRT:
         else:
             grass.run_command('r.mapcalc',expression = "obs = obs1",overwrite = True)
 
-
+        print("********************Geneerate catchment without lake done********************")
         PERMANENT.close()
+        return
 ###########################################################################################3
 
 ############################################################################################
@@ -2980,6 +2995,7 @@ class LRRT:
         grass.run_command('r.to.vect', input='finalcat',output='finalcat_F1',type='area', overwrite = True)
 
         if Is_divid_region > 0:
+            print("********************Add lake into routing structure done ********************")
             return
 #        grass.run_command('r.out.gdal', input = 'finalcat',output = os.path.join(self.tempfolder,'cat_finaltddd.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
         temparray[:,:] = Non_con_lake_cat[:,:]
@@ -3126,9 +3142,10 @@ class LRRT:
         grass.run_command('r.mapcalc',expression = 'Net_cat = if(isnull(Non_con_lake_cat_t2),Net_cat_connect_lake,Non_con_lake_cat_t2)',overwrite = True)
 #        grass.run_command('r.out.gdal', input = 'Net_cat',output =os.path.join(self.tempfolder,'Net_cat_test.tif'),format= 'GTiff',overwrite = True)
 
-
+        print("********************Add lake into routing structure done ********************")
         con.close()
         PERMANENT.close()
+        return 
 
 ############################################################################3
     def RoutingNetworkTopologyUpdateToolset_riv(self,projection = 'default', Min_DA_for_func_Q_DA = 100000000, max_manning_n = 0.15,min_manning_n = 0.01,Outlet_Obs_ID = -1,Obtain_High_Acc_Cat= -1):
@@ -3445,10 +3462,11 @@ class LRRT:
         if self.Path_obspoint_in != '#':
             grass.run_command('v.out.ogr', input = 'obspoint',output = os.path.join(self.OutputFolder,'obspoint_inputs.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
             grass.run_command('v.out.ogr', input = 'obspoint_snap_r2v',output = os.path.join(self.OutputFolder,'obspoint_snap.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
-
+     
+        print("********************Add routing parameters done ********************")
         PERMANENT.close()
         Qgs.exit()
-
+        return 
 
 ###########################################################################3
     def Output_Clean(self,Out = 'Simple',clean = 'True'):
