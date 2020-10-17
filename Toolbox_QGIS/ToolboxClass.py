@@ -2778,7 +2778,6 @@ class LRRT:
             grass.run_command('r.to.vect',  input = 'obspoint_snap',output = 'obspoint_snap_r2v', type ='point', flags = 'v', overwrite = True)
             grass.run_command('v.db.join', map= 'obspoint_snap_r2v',column = 'cat', other_table = 'obspoint',other_column ='cat', overwrite = True)
             grass.run_command('v.to.rast',input = 'obspoint_snap_r2v',output = 'obs1',use = 'attr',attribute_column = 'Obs_ID',overwrite = True)
-            if self.Is_Sub_Region
         else:
             temparray = garray.array()
             temparray[:,:] = -9999
