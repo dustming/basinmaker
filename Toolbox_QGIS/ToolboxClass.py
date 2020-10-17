@@ -2379,19 +2379,19 @@ class LRRT:
         except:
             print("Check print infomation, some unknown error occured, may have no influence on result")
             pass
-        
+
         try:
             self.WatershedDiscretizationToolset(accthresold = Acc,Is_divid_region = 1,max_memroy = max_memory)
         except:
             print("Check print infomation, some unknown error occured, may have no influence on result")
             pass
-            
+
         try:
             self.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = CheckLakeArea,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 9000,Pec_Grid_outlier = 0.99,Is_divid_region=1,max_memroy = max_memory)
         except:
             print("Check print infomation, some unknown error occured, may have no influence on result")
             pass
-            
+
         ####Determin river network for whole watersheds
         PERMANENT = Session()
         PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
@@ -2407,7 +2407,7 @@ class LRRT:
         grass.run_command('v.pack',input = 'Sub_Reg_str_grass_v',output = self.Path_Sub_reg_grass_str_v,overwrite = True)
         grass.run_command('r.pack',input = 'Sub_Reg_str_grass_r',output = self.Path_Sub_reg_grass_str_r ,overwrite = True)
         PERMANENT.close()
-        return 
+        return
 
     def Generatesubdomainmaskandinfo(self,Out_Sub_Reg_Dem_Folder = '#',ProjectNM = 'Sub_Reg'):
         #### generate subbregion outlet points and subregion info table
@@ -2606,7 +2606,7 @@ class LRRT:
         print("Working with a  sptail reference  :   " , r_dem_layer.crs().description(), "      ", self.SpRef_in )
         print("The cell cize is   ",self.cellSize)
 
-
+        del r_dem_layer
         copyfile(os.path.join(self.RoutingToolPath,'catinfo_riv.csvt'),os.path.join(self.tempfolder,'catinfo_riv.csvt'))
         copyfile(os.path.join(self.RoutingToolPath,'catinfo_riv.csvt'),os.path.join(self.tempfolder,'catinfo_cat.csvt'))
 ###### set up GRASS environment for translate vector to rasters and clip rasters
@@ -2665,6 +2665,9 @@ class LRRT:
 
 
         if Is_divid_region > 0:
+            print("********************Generate inputs dataset Done********************")
+            Qgs.exit()
+            PERMANENT.close()
             return
 
 
@@ -2718,11 +2721,10 @@ class LRRT:
 
         if self.Path_obspoint_in != '#':
             grass.run_command("v.import", input = self.Path_ObsPoint, output = 'obspoint', overwrite = True)
-            
+
         print("********************Geneerate inputs dataset Done********************")
-        PERMANENT.close()
-        del r_dem_layer
         Qgs.exit()
+        PERMANENT.close()
         return
 #####################################################################################################
 
@@ -3145,7 +3147,7 @@ class LRRT:
         print("********************Add lake into routing structure done ********************")
         con.close()
         PERMANENT.close()
-        return 
+        return
 
 ############################################################################3
     def RoutingNetworkTopologyUpdateToolset_riv(self,projection = 'default', Min_DA_for_func_Q_DA = 100000000, max_manning_n = 0.15,min_manning_n = 0.01,Outlet_Obs_ID = -1,Obtain_High_Acc_Cat= -1):
@@ -3462,11 +3464,11 @@ class LRRT:
         if self.Path_obspoint_in != '#':
             grass.run_command('v.out.ogr', input = 'obspoint',output = os.path.join(self.OutputFolder,'obspoint_inputs.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
             grass.run_command('v.out.ogr', input = 'obspoint_snap_r2v',output = os.path.join(self.OutputFolder,'obspoint_snap.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
-     
+
         print("********************Add routing parameters done ********************")
         PERMANENT.close()
         Qgs.exit()
-        return 
+        return
 
 ###########################################################################3
     def Output_Clean(self,Out = 'Simple',clean = 'True'):
