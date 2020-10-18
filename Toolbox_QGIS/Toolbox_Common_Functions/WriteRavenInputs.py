@@ -661,7 +661,7 @@ def Generate_Raven_Lake_rvh_String(catinfo,Raveinputsfolder,Model_Name):
     >>> Lake_rvh_string, Lake_rvh_file_path= Generate_Raven_Lake_rvh_String(ncatinfo2,Raveinputsfolder,lenThres,Model_Name)             
            
     """
-    Lake_rvh_file_path   = os.path.join(Raveinputsfolder,Model_Name + "_Lake.rvh")
+    Lake_rvh_file_path   = os.path.join(Raveinputsfolder,"Lakes.rvh")
     Lake_rvh_string_list = []
     tab = '       '
     
@@ -843,12 +843,12 @@ def Generate_Raven_Channel_rvp_rvh_String(ocatinfo,Raveinputsfolder,lenThres,isc
     >>>
         
     """
-    Channel_rvp_file_path   = os.path.join(Raveinputsfolder,Model_Name + "_channel.rvp")
+    Channel_rvp_file_path   = os.path.join(Raveinputsfolder,"channel_properties.rvp")
     Channel_rvp_string_list = []
     Model_rvh_file_path     = os.path.join(Raveinputsfolder,Model_Name + ".rvh")
     Model_rvh_string_list   = []   
     Model_rvp_file_path     = os.path.join(Raveinputsfolder,Model_Name + ".rvp")
-    Model_rvp_string_modify ="\n" +":RedirectToFile " + Model_Name+"_channel.rvp" + "\n"
+    Model_rvp_string_modify ="\n" +":RedirectToFile " + "channel_properties.rvp" + "\n"
             
     tab = "     "
                 
@@ -979,7 +979,7 @@ def Generate_Raven_Channel_rvp_rvh_String(ocatinfo,Raveinputsfolder,lenThres,isc
             Lake_HRU_Name  = LAND_USE_CLASS
     Model_rvh_string_list.append(":EndHRUs")#orvh.write(":EndHRUs"+"\n")
     Model_rvh_string_list.append("#:PopulateHRUGroup Lake_HRUs With LANDUSE EQUALS " + Lake_HRU_Name)#orvh.write(":PopulateHRUGroup Lake_HRUs With LANDUSE EQUALS Lake_HRU" + "\n")
-    Model_rvh_string_list.append(":RedirectToFile " + Model_Name+"_Lake.rvh")#orvh.write(":RedirectToFile TestLake.rvh")
+    Model_rvh_string_list.append(":RedirectToFile " + "Lakes.rvh")#orvh.write(":RedirectToFile TestLake.rvh")
 
     for i in range(0,len(SubBasinGroup_NM_Channel)):
         Model_rvh_string_list.append("#:SubBasinGroup   " + SubBasinGroup_NM_Channel[i])
