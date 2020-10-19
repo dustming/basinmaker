@@ -978,7 +978,7 @@ def Generate_Raven_Channel_rvp_rvh_String(ocatinfo,Raveinputsfolder,lenThres,isc
             SubBasin_Group_Lake.loc[i,'SubBasin_Group_NM'] = GroupName     
             Lake_HRU_Name  = LAND_USE_CLASS
     Model_rvh_string_list.append(":EndHRUs")#orvh.write(":EndHRUs"+"\n")
-    Model_rvh_string_list.append("#:PopulateHRUGroup Lake_HRUs With LANDUSE EQUALS " + Lake_HRU_Name)#orvh.write(":PopulateHRUGroup Lake_HRUs With LANDUSE EQUALS Lake_HRU" + "\n")
+    Model_rvh_string_list.append(":PopulateHRUGroup Lake_HRUs With LANDUSE EQUALS " + Lake_HRU_Name)#orvh.write(":PopulateHRUGroup Lake_HRUs With LANDUSE EQUALS Lake_HRU" + "\n")
     Model_rvh_string_list.append(":RedirectToFile " + "Lakes.rvh")#orvh.write(":RedirectToFile TestLake.rvh")
 
     for i in range(0,len(SubBasinGroup_NM_Channel)):
