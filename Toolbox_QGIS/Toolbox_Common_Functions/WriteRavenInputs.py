@@ -982,31 +982,43 @@ def Generate_Raven_Channel_rvp_rvh_String(ocatinfo,Raveinputsfolder,lenThres,isc
     Model_rvh_string_list.append(":RedirectToFile " + "Lakes.rvh")#orvh.write(":RedirectToFile TestLake.rvh")
 
     for i in range(0,len(SubBasinGroup_NM_Channel)):
-        Model_rvh_string_list.append("#:SubBasinGroup   " + SubBasinGroup_NM_Channel[i])
+        Model_rvh_string_list.append(":SubBasinGroup   " + SubBasinGroup_NM_Channel[i])
         SubBasin_Group_Channel_i = SubBasin_Group_Channel.loc[SubBasin_Group_Channel['SubBasin_Group_NM'] == SubBasinGroup_NM_Channel[i]]
         SubIDs_In_Group = SubBasin_Group_Channel_i['SubId'].values
-        SubIDs_In_Group_Str_list = ['#    ']
+        nsubbasin = 0
         for j in range(0,len(SubIDs_In_Group)):
+            if nsubbasin == 0:
+                SubIDs_In_Group_Str_list = ['    ']
+            
             SubIDs_In_Group_Str_list.append(str(int(SubIDs_In_Group[j])))
-        SubIDs_In_Group_Str = "   ".join(SubIDs_In_Group_Str_list)
-         
-        Model_rvh_string_list.append(SubIDs_In_Group_Str)
-        Model_rvh_string_list.append("#:EndSubBasinGroup   ")
+            nsubbasin = nsubbasin + 1
+            if nsubbasin == 10:
+                SubIDs_In_Group_Str = "   ".join(SubIDs_In_Group_Str_list)
+                Model_rvh_string_list.append(SubIDs_In_Group_Str)
+                nsubbasin = 0 
+        Model_rvh_string_list.append(":EndSubBasinGroup   ")
         
         Model_rvh_string_list.append("# :SBGroupPropertyOverride " + SubBasinGroup_NM_Channel[i] + "   MANNINGS_N 0.001")
         Model_rvh_string_list.append("# :SBGroupPropertyMultiplier "+ SubBasinGroup_NM_Channel[i] + "  MANNINGS_N 1.0")
 
     for i in range(0,len(SubBasinGroup_NM_Lake)):
-        Model_rvh_string_list.append("#:SubBasinGroup   " + SubBasinGroup_NM_Lake[i])
+        Model_rvh_string_list.append(":SubBasinGroup   " + SubBasinGroup_NM_Lake[i])
         SubBasin_Group_Lake_i = SubBasin_Group_Lake.loc[SubBasin_Group_Lake['SubBasin_Group_NM'] == SubBasinGroup_NM_Lake[i]]
         SubIDs_In_Group = SubBasin_Group_Lake_i['SubId'].values
-        SubIDs_In_Group_Str_list = ['#    ']
+        
+        nsubbasin = 0
         for j in range(0,len(SubIDs_In_Group)):
+            if nsubbasin == 0:
+                SubIDs_In_Group_Str_list = ['    ']
+            
             SubIDs_In_Group_Str_list.append(str(int(SubIDs_In_Group[j])))
-        SubIDs_In_Group_Str = "   ".join(SubIDs_In_Group_Str_list)
-         
-        Model_rvh_string_list.append(SubIDs_In_Group_Str)
-        Model_rvh_string_list.append("#:EndSubBasinGroup   ")
+            nsubbasin = nsubbasin + 1
+            if nsubbasin == 10:
+                SubIDs_In_Group_Str = "   ".join(SubIDs_In_Group_Str_list)
+                Model_rvh_string_list.append(SubIDs_In_Group_Str)
+                nsubbasin = 0 
+
+        Model_rvh_string_list.append(":EndSubBasinGroup   ")
         
         Model_rvh_string_list.append("# :SBGroupPropertyOverride   " + SubBasinGroup_NM_Lake[i] + "   RESERVOIR_CREST_WIDTH 12.0")
         Model_rvh_string_list.append("# :SBGroupPropertyMultiplier  "+ SubBasinGroup_NM_Lake[i] + "   RESERVOIR_CREST_WIDTH 1.0")
