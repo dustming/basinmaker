@@ -3496,7 +3496,8 @@ class LRRT:
                           ,Lake_As_Gauge = True, WriteObsrvt = True
                           ,DownLoadObsData = True,Model_Name = 'test',Old_Product = False
                           ,SubBasinGroup_NM_Channel=['Allsubbasin'],SubBasinGroup_Length_Channel = [-1]
-                          ,SubBasinGroup_NM_Lake=['AllLakesubbasin'],SubBasinGroup_Area_Lake = [-1]):
+                          ,SubBasinGroup_NM_Lake=['AllLakesubbasin'],SubBasinGroup_Area_Lake = [-1],
+                          OutputFolder = '#',Forcing_Input_File = '#'):
 
         """Generate Raven input files.
 
@@ -3624,6 +3625,8 @@ class LRRT:
             group 2 with lake are (1,10],
             group 3 with lake are (10,20],
             group 4 with lake are (20,Max channel length].
+        OutputFolder                   : string 
+            Folder name that stores generated Raven input files
 
         Notes
         -------
@@ -3654,17 +3657,18 @@ class LRRT:
 
 
 
-        Model_Folder     = os.path.join(DataFolder,'Model')
-        Raveinputsfolder = os.path.join(Model_Folder,'RavenInput')
+        Raveinputsfolder = os.path.join(OutputFolder,'RavenInput')
         Obs_Folder       = os.path.join(Raveinputsfolder,'obs')
 
-        if not os.path.exists(Model_Folder):
-            os.makedirs(Model_Folder)
-
+        if not os.path.exists(OutputFolder):
+            os.makedirs(OutputFolder)
+        
+        shutil.rmtree(Raveinputsfolder,ignore_errors=True)
+        
         ### check if there is a model input template provided
         if Template_Folder != '#':
             fromDirectory = Template_Folder
-            toDirectory   = Model_Folder
+            toDirectory   = Raveinputsfolder
             copy_tree(fromDirectory, toDirectory)
 
         if not os.path.exists(Raveinputsfolder):
@@ -3672,7 +3676,10 @@ class LRRT:
         if not os.path.exists(Obs_Folder):
             os.makedirs(Obs_Folder)
 
-
+        if Forcing_Input_File != '#':
+            fromDirectory = Forcing_Input_File
+            toDirectory   = os.path.join(Raveinputsfolder,'GriddedForcings2.txt')
+            copyfile(fromDirectory, toDirectory)            
 
         finalcatchpath = os.path.join(DataFolder,Finalcat_NM)
 
