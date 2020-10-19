@@ -994,7 +994,7 @@ def Generate_Raven_Channel_rvp_rvh_String(ocatinfo,Raveinputsfolder,lenThres,isc
         Model_rvh_string_list.append("#:EndSubBasinGroup   ")
         
         Model_rvh_string_list.append("# :SBGroupPropertyOverride " + SubBasinGroup_NM_Channel[i] + "   MANNINGS_N 0.001")
-        Model_rvh_string_list.append("# :SBGroupPropertyMultiplier "+ SubBasinGroup_NM_Channel[i] + "  MANNINGS_N 3")
+        Model_rvh_string_list.append("# :SBGroupPropertyMultiplier "+ SubBasinGroup_NM_Channel[i] + "  MANNINGS_N 1.0")
 
     for i in range(0,len(SubBasinGroup_NM_Lake)):
         Model_rvh_string_list.append("#:SubBasinGroup   " + SubBasinGroup_NM_Lake[i])
