@@ -1671,6 +1671,20 @@ def Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Col_NM,info_d
 #    print("asdfasdfsadf1",Updatevalue)
     return Updatevalue
 
+def Clean_Attribute_Name(Path_to_Feature,FieldName_List):
+    
+    fieldnames = set(FieldName_List)
+    layer_cat  =QgsVectorLayer(Path_to_Feature, "")
+    field_ids  = []
+    for field in layer_cat.fields():
+        if field.name() not in fieldnames:
+            field_ids.append(layer_cat.dataProvider().fieldNameIndex(field.name()))
+    layer_cat.dataProvider().deleteAttributes(field_ids)
+    layer_cat.updateFields()
+    layer_cat.commitChanges()
+    del layer_cat
+    return
+        
 def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,dissolve_filedname_list,
                          Sub_ID,Landuse_ID,Soil_ID,Veg_ID,Other_Ply_ID_1,Other_Ply_ID_2,
                          Landuse_info_data,Soil_info_data,
@@ -2011,7 +2025,14 @@ class LRRT:
         #
         # if not os.path.exists(os.path.join(self.grassdb,self.grass_location_pro)):
 	    #        os.makedirs(os.path.join(self.grassdb,self.grass_location_pro))
-
+       
+        self.FieldName_List_Product = ['SubId','HRULake_ID','HRU_IsLake','Landuse_ID','Soil_ID','Veg_ID','O_ID_1','O_ID_2',
+        	                           'HRU_Area','HRU_ID','LAND_USE_C','VEG_C','SOIL_PROF','HRU_CenX','HRU_CenY','DowSubId',
+                                       	'RivSlope','RivLength','BasSlope','BasAspect','BasArea','BkfWidth','BkfDepth','IsLake',
+                                        'HyLakeId','LakeVol','LakeDepth','LakeArea','Laketype','IsObs','MeanElev','FloodP_n',
+                                        'Q_Mean','Ch_n','DA','Strahler','Seg_ID','Seg_order','Max_DEM','Min_DEM','DA_Obs','DA_error',
+                                        'Obs_NM','SRC_obs', 'HRU_S_mean','HRU_A_mean','HRU_E_mean','centroid_x','centroid_y']
+                                        
         self.Base_SubId = Base_SubId
         self.maximum_obs_id = 80000
         self.sqlpath = os.path.join(self.grassdb,'Geographic','PERMANENT','sqlite','sqlite.db')
@@ -3734,7 +3755,7 @@ class LRRT:
             hyshdinfo2 = hyshdinfo2.loc[hyshdinfo2[Guage_Col_Name] != '-9999.0']
             hyshdinfo2 = hyshdinfo2.loc[hyshdinfo2[Guage_Col_Name].isin(Guage_NMS)]
             hyshdinfo2 = hyshdinfo2[[Guage_Col_Name,subid_col_Name]]
-            hyshdinfo2.to_csv(os.path.join(self.OutputFolder,'SubIds_Selected.csv'),sep=',', index = None)
+#            hyshdinfo2.to_csv(os.path.join(self.OutputFolder,'SubIds_Selected.csv'),sep=',', index = None)
             SubId_Selected = hyshdinfo2[subid_col_Name].values
 
         if Path_Points != '#':
@@ -3745,7 +3766,7 @@ class LRRT:
             hyinfocsv  = os.path.join(self.tempfolder,'Sub_Selected_by_Points.shp')[:-3] + "dbf"
             tempinfo   = Dbf5(hyinfocsv)
             hyshdinfo2 = tempinfo.to_dataframe()
-            hyshdinfo2.to_csv(os.path.join(self.OutputFolder,'SubIds_Selected.csv'),sep=',', index = None)
+    #        hyshdinfo2.to_csv(os.path.join(self.OutputFolder,'SubIds_Selected.csv'),sep=',', index = None)
             SubId_Selected = hyshdinfo2[subid_col_Name].values
             SubId_Selected = SubId_Selected[SubId_Selected > 0]
 
@@ -4354,6 +4375,10 @@ class LRRT:
         Path_final_rvi    = os.path.join(Datafolder,'finalcat_info_riv.shp')
         processing.run("native:dissolve", {'INPUT':Path_Temp_final_rvi,'FIELD':['SubId'],'OUTPUT':Path_final_rvi},context = context)
         processing.run("native:dissolve", {'INPUT':Path_Temp_final_rviply,'FIELD':['SubId'],'OUTPUT':Path_final_rviply},context = context)
+        
+        Clean_Attribute_Name(Path_final_rvi,   self.FieldName_List_Product)
+        Clean_Attribute_Name(Path_final_rviply, self.FieldName_List_Product)
+        
         Add_centroid_to_feature(Path_final_rviply,'centroid_x','centroid_y')
 
 
@@ -4708,7 +4733,7 @@ class LRRT:
 
         processing.run("qgis:fieldcalculator", {'INPUT':HRU_draf_final,'FIELD_NAME':'HRU_ID','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':0,'NEW_FIELD':False,'FORMULA':' @row_number','OUTPUT':output_hru_shp})
 
-
+        Clean_Attribute_Name(output_hru_shp ,self.FieldName_List_Product)
         del Sub_Lake_HRU_Layer,mem_union
         Qgs.exit()
 
