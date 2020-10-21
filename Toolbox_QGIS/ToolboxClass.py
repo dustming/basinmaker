@@ -1476,7 +1476,7 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
 
     mem_union_fix  = processing.run("native:fixgeometries", {'INPUT':layer_cat,'OUTPUT':'memory:'})['OUTPUT']
 
-    Sub_Lake_HRU1 = processing.run("native:dissolve", {'INPUT':mem_union_fix,'FIELD':['HRULake_ID'],'OUTPUT':os.path.join(tempfile.gettempdir(),str(np.random.random_integers(10000000))+'tempfile.shp')},context = context)['OUTPUT']
+    Sub_Lake_HRU1 = processing.run("native:dissolve", {'INPUT':mem_union_fix,'FIELD':['HRULake_ID'],'OUTPUT':os.path.join(tempfile.gettempdir(),str(np.random.randint(1, 10000 + 1))+'tempfile.shp')},context = context)['OUTPUT']
 
     Sub_Lake_HRU2 = processing.run("native:dissolve", {'INPUT':Sub_Lake_HRU1,'FIELD':['HRULake_ID'],'OUTPUT':Path_finalcat_hru_out},context = context)
     Sub_Lake_HRU = processing.run("native:dissolve", {'INPUT':Sub_Lake_HRU1,'FIELD':['HRULake_ID'],'OUTPUT':'memory:'},context = context)
@@ -1978,7 +1978,7 @@ class LRRT:
         if OutputFolder != '#':
             self.Path_OutputFolder = OutputFolder
         else:
-            self.Path_OutputFolder = os.path.join(tempfile.gettempdir(),str(np.random.random_integers(10000)))
+            self.Path_OutputFolder = os.path.join(tempfile.gettempdir(),str(np.random.randint(1, 10000 + 1)))
 
 
         self.ProjectNM = ProjectNM
@@ -1989,7 +1989,7 @@ class LRRT:
             if not os.path.exists(self.OutputFolder):
                 os.makedirs(self.OutputFolder)
         else:
-            self.ProjectNM = str(np.random.random_integers(1000))
+            self.ProjectNM = str(np.random.randint(1, 10000 + 1))
             self.OutputFolder = os.path.join(self.Path_OutputFolder,self.ProjectNM)
 
         self.Raveinputsfolder = self.OutputFolder + '/'+'RavenInput/'
@@ -4335,8 +4335,8 @@ class LRRT:
         Path_final_riv    = os.path.join(Datafolder,finalriv_NM)
 
 
-        Path_Temp_final_rviply = os.path.join(self.tempfolder,'temp_finalriv_ply'+ str(np.random.random_integers(1000)) +'.shp')
-        Path_Temp_final_rvi    = os.path.join(self.tempfolder,'temp_finalriv'+  str(np.random.random_integers(1000)) +'.shp')
+        Path_Temp_final_rviply = os.path.join(self.tempfolder,'temp_finalriv_ply'+ str(np.random.randint(1, 10000 + 1)) +'.shp')
+        Path_Temp_final_rvi    = os.path.join(self.tempfolder,'temp_finalriv'+  str(np.random.randint(1, 10000 + 1)) +'.shp')
 
         processing.run("native:dissolve", {'INPUT':Path_final_rviply,'FIELD':['SubId'],'OUTPUT':Path_Temp_final_rviply},context = context)
         processing.run("native:dissolve", {'INPUT':Path_final_riv,'FIELD':['SubId'],'OUTPUT':Path_Temp_final_rvi},context = context)
@@ -5311,9 +5311,9 @@ class LRRT:
         context = dataobjects.createContext()
         context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
 
-        Path_finalcat_hru_temp          = os.path.join(self.tempfolder,str(np.random.random_integers(1000000)) + "finalcat_freferen.shp")
-        Path_finalcat_hru_temp2          = os.path.join(self.tempfolder,str(np.random.random_integers(1000000))+ "finalcat_freferen2.shp")
-        Path_finalcat_hru_temp_dissolve = os.path.join(self.tempfolder,str(np.random.random_integers(1000000)) + "finalcat_freferen_dissolve.shp")
+        Path_finalcat_hru_temp          = os.path.join(self.tempfolder,str(np.random.randint(1, 10000 + 1)) + "finalcat_freferen.shp")
+        Path_finalcat_hru_temp2          = os.path.join(self.tempfolder,str(np.random.randint(1, 10000 + 1))+ "finalcat_freferen2.shp")
+        Path_finalcat_hru_temp_dissolve = os.path.join(self.tempfolder,str(np.random.randint(1, 10000 + 1)) + "finalcat_freferen_dissolve.shp")
         Path_finalcat_hru_temp_dissolve_area = os.path.join(Output_Folder,"Overlay_Polygons.shp")
 
 
