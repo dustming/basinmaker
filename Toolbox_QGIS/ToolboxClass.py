@@ -3816,8 +3816,8 @@ class LRRT:
 
         return SubId_Selected
 
-    def Select_Routing_product_based_SubId(self,OutputFolder,Path_final_cat = '#',Path_final_cat_riv = '#',
-                                           Path_final_riv = '#',Path_final_riv_ply = '#',Path_Con_Lake_ply = '#',Path_NonCon_Lake_ply='#',
+    def Select_Routing_product_based_SubId(self,OutputFolder,Path_Catchment_Polygon = '#',Path_River_Polyline = '#',
+                                           Path_Con_Lake_ply = '#',Path_NonCon_Lake_ply='#',
                                            mostdownid = -1,mostupstreamid = -1,
                                            ):
         """Extract region of interest based on provided Subid
@@ -3827,34 +3827,40 @@ class LRRT:
 
         Parameters
         ----------
-        OutputFolder      : string 
-            It is the path of the point shpfile. If the point shpfile is 
-            provided. The function will return subids of those catchment 
-            polygons that includes these point 
+        OutputFolder                   : string 
+            Folder name that stores generated extracted routing product 
+        Path_Catchment_Polygon         : string 
+            Path to the catchment polygon
+        Path_River_Polyline            : string (optional)
+            Path to the polyline   
+        Path_Con_Lake_ply              : string (optional)
+            Path to a connected lake polygon. Connected lakes are lakes that
+            are connected by Path_final_cat_riv or Path_final_riv.
+        Path_NonCon_Lake_ply           : string (optional)
+            Path to a non connected lake polygon. Connected lakes are lakes
+            that are not connected by Path_final_cat_riv or Path_final_riv.
+        mostdownid                     : integer 
+            It is the most downstream subbasin ID in the region of interesst 
+        mostupstreamid                 : integer (optional)
+            It is the most upstream subbasin ID in the region of interesst.
+            Normally it is -1, indicating all subbasin drainage to mostdownid 
+            is needed. In some case, if not all subbasin drainage to mostdownid
+            is needed, then the most upstream subbsin ID need to be provided 
+            here.               
 
-        Guage_NMS        : list
-            Name of the streamflow gauges, such as ['09PC019'], if the gauge 
-            name is provided, the subbasin ID that contain this gauge will be 
-            returned
-        Path_products    : string
-            The path of the subbasin polygon shapefile.
-            The shapefile should at least contains following columns
-            ##############Subbasin related attributes###########################
-            SubID           - integer, The subbasin Id
-            DowSubId        - integer, The downstream subbasin ID of this
-                                       subbasin
-            Obs_NM          - The streamflow obervation gauge name.
 
         Notes
         -------
-        Path_Points or Guage_NMS should only provide one each time use this 
-        function 
-
+        This function has no return values, instead will generate following
+        files. 
+        os.path.join(OutputFolder,os.path.basename(Path_Catchment_Polygon))
+        os.path.join(OutputFolder,os.path.basename(Path_River_Polyline))
+        os.path.join(OutputFolder,os.path.basename(Path_Con_Lake_ply))
+        os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply))
+        
         Returns:
         -------
-        SubId_Selected  : list 
-            It is a list contains the selected subid based on provided 
-            streamflow gauge name or provided point shpfile    
+        None   
 
         Examples
         -------
@@ -3873,16 +3879,10 @@ class LRRT:
         sub_colnm  = 'SubId'
         down_colnm = 'DowSubId'
         ##3
-        if Path_final_cat != '#':
-            hyinfocsv = Path_final_cat[:-3] + "dbf"
-            tempinfo = Dbf5(hyinfocsv)
-            hyshdinfo2 = tempinfo.to_dataframe().drop_duplicates(sub_colnm, keep='first')
-            hyshdinfo =  hyshdinfo2[[sub_colnm,down_colnm]].astype('int32').values
-        else:
-            hyinfocsv = Path_final_riv_ply[:-3] + "dbf"
-            tempinfo = Dbf5(hyinfocsv)
-            hyshdinfo2 = tempinfo.to_dataframe().drop_duplicates(sub_colnm, keep='first')
-            hyshdinfo =  hyshdinfo2[[sub_colnm,down_colnm]].astype('int32').values
+        hyinfocsv = Path_Catchment_Polygon[:-3] + "dbf"
+        tempinfo = Dbf5(hyinfocsv)
+        hyshdinfo2 = tempinfo.to_dataframe().drop_duplicates(sub_colnm, keep='first')
+        hyshdinfo =  hyshdinfo2[[sub_colnm,down_colnm]].astype('int32').values
 
 
         ### Loop for each downstream id
@@ -3904,25 +3904,16 @@ class LRRT:
         else:
             HydroBasins = HydroBasins1
 
-        #### extract final_riv and final_riv_ply
-        if Path_final_cat == '#':
-            Outputfilename_riv = os.path.join(OutputFolder,os.path.basename(Path_final_riv))
-            Selectfeatureattributes(processing,Input = Path_final_riv,Output=Outputfilename_riv,Attri_NM = 'SubId',Values = HydroBasins)
-            Outputfilename_riv_ply = os.path.join(OutputFolder,os.path.basename(Path_final_riv_ply))
-            if Path_final_riv_ply !='#':
-                Selectfeatureattributes(processing,Input = Path_final_riv_ply,Output=Outputfilename_riv_ply,Attri_NM = 'SubId',Values = HydroBasins)
-            finalcat_csv     = Outputfilename_riv_ply[:-3] + "dbf"
-            finalcat_info    = Dbf5(finalcat_csv)
-            finalcat_info    = finalcat_info.to_dataframe().drop_duplicates('SubId', keep='first')
-        else:
-            Outputfilename_cat = os.path.join(OutputFolder,os.path.basename(Path_final_cat))
-            Outputfilename_cat_riv = os.path.join(OutputFolder,os.path.basename(Path_final_cat_riv))
-            Selectfeatureattributes(processing,Input = Path_final_cat,Output=Outputfilename_cat,Attri_NM = 'SubId',Values = HydroBasins)
-            if Path_final_cat_riv != '#':
-                Selectfeatureattributes(processing,Input = Path_final_cat_riv,Output=Outputfilename_cat_riv,Attri_NM = 'SubId',Values = HydroBasins)
-            finalcat_csv     = Outputfilename_cat[:-3] + "dbf"
-            finalcat_info    = Dbf5(finalcat_csv)
-            finalcat_info    = finalcat_info.to_dataframe().drop_duplicates('SubId', keep='first')
+
+        Outputfilename_cat = os.path.join(OutputFolder,os.path.basename(Path_Catchment_Polygon))
+        Selectfeatureattributes(processing,Input = Path_Catchment_Polygon,Output=Outputfilename_cat,Attri_NM = 'SubId',Values = HydroBasins)
+        if Path_River_Polyline != '#':
+            Outputfilename_cat_riv = os.path.join(OutputFolder,os.path.basename(Path_River_Polyline))
+            Selectfeatureattributes(processing,Input = Path_River_Polyline,Output=Outputfilename_cat_riv,Attri_NM = 'SubId',Values = HydroBasins)
+
+        finalcat_csv     = Outputfilename_cat[:-3] + "dbf"
+        finalcat_info    = Dbf5(finalcat_csv)
+        finalcat_info    = finalcat_info.to_dataframe().drop_duplicates('SubId', keep='first')
 
         #### extract lakes
 
