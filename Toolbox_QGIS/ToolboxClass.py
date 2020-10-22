@@ -3735,7 +3735,49 @@ class LRRT:
             obsnms.to_csv(os.path.join(Obs_Folder,'obsinfo.csv'))
 
 
-    def Locate_subid_needsbyuser(self,Path_Points = '#',Guage_Col_Name = 'Obs_NM',Guage_NMS = '#',subid_col_Name='SubId',Path_products='#'):
+    def Locate_subid_needsbyuser(self,Path_Points = '#', Guage_NMS = '#',Path_products='#'):
+        """Get Subbasin Ids 
+
+        Function that used to obtain subbasin ID of certain guage.
+        or subbasin ID of the polygon that includes the given point
+        shpfile. 
+
+        Parameters
+        ----------
+        Path_Points      : string (Optional)
+            It is the path of the point shpfile. If the point shpfile is 
+            provided. The function will return subids of those catchment 
+            polygons that includes these point 
+
+        Guage_NMS        : list
+            Name of the streamflow gauges, such as ['09PC019'], if the gauge 
+            name is provided, the subbasin ID that contain this gauge will be 
+            returned
+        Path_products    : string
+            The path of the subbasin polygon shapefile.
+            The shapefile should at least contains following columns
+            ##############Subbasin related attributes###########################
+            SubID           - integer, The subbasin Id
+            DowSubId        - integer, The downstream subbasin ID of this
+                                       subbasin
+            Obs_NM          - The streamflow obervation gauge name.
+
+        Notes
+        -------
+        Path_Points or Guage_NMS should only provide one each time use this 
+        function 
+
+        Returns:
+        -------
+        SubId_Selected  : list 
+            It is a list contains the selected subid based on provided 
+            streamflow gauge name or provided point shpfile    
+
+        Examples
+        -------
+
+        """
+
         # obtain subbasin ID based on either points or guage names
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
@@ -3750,28 +3792,27 @@ class LRRT:
         if Guage_NMS[0] != '#':
             hyinfocsv  = Path_products[:-3] + "dbf"
             tempinfo   = Dbf5(hyinfocsv)
-            hyshdinfo2 = tempinfo.to_dataframe().drop_duplicates(subid_col_Name, keep='first')
-            hyshdinfo2 = hyshdinfo2.loc[hyshdinfo2[Guage_Col_Name] != '-9999.0']
-            hyshdinfo2 = hyshdinfo2.loc[hyshdinfo2[Guage_Col_Name].isin(Guage_NMS)]
-            hyshdinfo2 = hyshdinfo2[[Guage_Col_Name,subid_col_Name]]
+            hyshdinfo2 = tempinfo.to_dataframe().drop_duplicates('SubId', keep='first')
+            hyshdinfo2 = hyshdinfo2.loc[hyshdinfo2['Obs_NM'] != '-9999.0']
+            hyshdinfo2 = hyshdinfo2.loc[hyshdinfo2['Obs_NM'].isin(Guage_NMS)]
+            hyshdinfo2 = hyshdinfo2[['Obs_NM','SubId']]
 #            hyshdinfo2.to_csv(os.path.join(self.OutputFolder,'SubIds_Selected.csv'),sep=',', index = None)
-            SubId_Selected = hyshdinfo2[subid_col_Name].values
+            SubId_Selected = hyshdinfo2['SubId'].values
 
         if Path_Points != '#':
-            r_dem_layer = QgsRasterLayer(self.Path_dem, "") ### load DEM raster as a  QGIS raster object to obtain attribute
-            SpRef_in = r_dem_layer.crs().authid()   ### get Raster spatialReference i
+            r_dem_layer = QgsVectorLayer(Path_products, "") 
+            SpRef_in = r_dem_layer.crs().authid()   
             processing.run("native:reprojectlayer", {'INPUT':Path_Points,'TARGET_CRS':QgsCoordinateReferenceSystem(SpRef_in),'OUTPUT':os.path.join(self.tempfolder,'Obspoint_project2.shp')})
             processing.run("saga:addpolygonattributestopoints", {'INPUT':os.path.join(self.tempfolder,'Obspoint_project2.shp'),'POLYGONS':Path_products,'FIELDS':subid_col_Name,'OUTPUT':os.path.join(self.tempfolder,'Sub_Selected_by_Points.shp')})
             hyinfocsv  = os.path.join(self.tempfolder,'Sub_Selected_by_Points.shp')[:-3] + "dbf"
             tempinfo   = Dbf5(hyinfocsv)
             hyshdinfo2 = tempinfo.to_dataframe()
     #        hyshdinfo2.to_csv(os.path.join(self.OutputFolder,'SubIds_Selected.csv'),sep=',', index = None)
-            SubId_Selected = hyshdinfo2[subid_col_Name].values
+            SubId_Selected = hyshdinfo2['SubID'].values
             SubId_Selected = SubId_Selected[SubId_Selected > 0]
 
         Qgs.exit()
 
-#        self.selectfeaturebasedonID(Path_shpfile = Path_products,sub_colnm = 'SubId',down_colnm = 'DowSubId',mostdownid = SubId_Selected,mostupstreamid = np.full(len(SubId_Selected),-1),OutBaseName='finalcat_info')
         return SubId_Selected
 
     def Select_Routing_product_based_SubId(self,OutputFolder,Path_final_riv = '#',Path_final_riv_ply = '#',Path_Con_Lake_ply = '#',Path_NonCon_Lake_ply='#',Path_final_cat = '#',
