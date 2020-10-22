@@ -4884,6 +4884,8 @@ class LRRT:
         context = dataobjects.createContext()
         context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
 
+        if not os.path.exists(OutputFolder):
+            os.makedirs(OutputFolder)
 
         Merge_layer_list = []
         output_hru_shp = os.path.join(OutputFolder,'finalcat_hru_info.shp')
