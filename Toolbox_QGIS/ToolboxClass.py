@@ -3932,9 +3932,61 @@ class LRRT:
 
         Qgs.exit()
 
-    def Customize_Routing_Topology(self,DataFolder = '#',finalrvi_ply_NM = 'finalriv_info_ply.shp',Non_ConnL_Cat_NM = 'Non_con_lake_cat_info.shp',Non_ConnL_ply_NM='Non_Con_Lake_Ply.shp',
-                                   ConnL_ply_NM='Con_Lake_Ply.shp',finalriv_NM = 'finalriv_info.shp', Area_Min = -1,
-                                   sub_colnm='SubId',down_colnm='DowSubId',DA_colnm = 'DA',SegID_colnm = 'Seg_ID'):
+    def Customize_Routing_Topology(self,Path_final_riv_ply = '#',
+                                   Path_final_riv = '#', 
+                                   Path_Con_Lake_ply='#',
+                                   Path_NonCon_Lake_ply='#',
+                                   Area_Min = -1,
+                                   OutputFolder = '#'):
+        """Simplify the routing product by drainage area 
+
+        Function that used to simplify the routing product by user 
+        provided minimum drainage area. 
+
+        Parameters
+        ----------
+
+        Path_final_riv_ply             : string 
+            Path to the catchment polygon which is the routing product 
+            before merging lakes catchments and need to be processed before 
+            used. It is the input for simplify the routing product based 
+            on lake area or drianage area.  
+            routing product and can be directly used. 
+        Path_final_riv                 : string 
+            Path to the river polyline which is the routing product 
+            before merging lakes catchments and need to be processed before 
+            used. It is the input for simplify the routing product based 
+            on lake area or drianage area.    
+        Path_Con_Lake_ply              : string 
+            Path to a connected lake polygon. Connected lakes are lakes that
+            are connected by Path_final_cat_riv or Path_final_riv.
+        Path_NonCon_Lake_ply           : string 
+            Path to a non connected lake polygon. Connected lakes are lakes
+            that are not connected by Path_final_cat_riv or Path_final_riv.
+        Area_Min                       : float 
+            The minimum drainage area of each catchment in km2
+        OutputFolder                   : string 
+            Folder name that stores generated extracted routing product 
+         
+
+
+        Notes
+        -------
+        This function has no return values, instead will generate following
+        files. 
+        os.path.join(OutputFolder,os.path.basename(Path_final_riv_ply))
+        os.path.join(OutputFolder,os.path.basename(Path_final_riv))
+        os.path.join(OutputFolder,os.path.basename(Path_Con_Lake_ply))
+        os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply))
+        
+        Returns:
+        -------
+        None   
+
+        Examples
+        -------
+
+        """
         #### generate river catchments based on minmum area.
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
@@ -3947,14 +3999,18 @@ class LRRT:
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
         context = dataobjects.createContext()
         context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
-
+        
+        sub_colnm='SubId'
+        down_colnm='DowSubId'
+        DA_colnm = 'DA'
+        SegID_colnm = 'Seg_ID'
 
         # obtain river segment ids based on area thresthold
 
-        Path_final_rviply = os.path.join(DataFolder,finalrvi_ply_NM)
-        Path_final_riv    = os.path.join(DataFolder,finalriv_NM)
-        Path_Conl_ply     = os.path.join(DataFolder,ConnL_ply_NM)
-        Path_Non_ConL_ply = os.path.join(DataFolder,Non_ConnL_ply_NM)
+        Path_final_rviply = Path_final_riv_ply
+        Path_final_riv    = Path_final_riv
+        Path_Conl_ply     = Path_Con_Lake_ply
+        Path_Non_ConL_ply = Path_NonCon_Lake_ply
 
 
         finalriv_csv     = Path_final_rviply[:-3] + "dbf"
@@ -4130,25 +4186,29 @@ class LRRT:
 
         ######################################################################################################3
         ## create output folder
-        outputfolder_subid = os.path.join(self.OutputFolder,'SubArea' +'_'+str(Area_Min))
+        outputfolder_subid = OutputFolder
         if not os.path.exists(outputfolder_subid):
             os.makedirs(outputfolder_subid)
 
         #### export lake polygons
 
-        Selectfeatureattributes(processing,Input =Path_Conl_ply ,Output=os.path.join(outputfolder_subid,ConnL_ply_NM),Attri_NM = 'Hylak_id',Values = Connected_Lake_Mainriv)
-        Selectfeatureattributes(processing,Input =Path_Non_ConL_ply ,Output=os.path.join(outputfolder_subid,Non_ConnL_ply_NM),Attri_NM = 'Hylak_id',Values = Old_Non_Connect_LakeIds)
+        Selectfeatureattributes(processing,Input =Path_Conl_ply ,Output=os.path.join(outputfolder_subid,os.path.basename(Path_Conl_ply)),Attri_NM = 'Hylak_id',Values = Connected_Lake_Mainriv)
+        Selectfeatureattributes(processing,Input =Path_Non_ConL_ply ,Output=os.path.join(outputfolder_subid,os.path.basename(Path_Non_ConL_ply)),Attri_NM = 'Hylak_id',Values = Old_Non_Connect_LakeIds)
 
         ###
 
-        Copyfeature_to_another_shp_by_attribute(Source_shp = Path_Conl_ply,Target_shp =os.path.join(outputfolder_subid,Non_ConnL_ply_NM),Col_NM='Hylak_id',Values=Conn_To_NonConlakeids,Attributes = Conn_Lakes_ply)
+        Copyfeature_to_another_shp_by_attribute(Source_shp = Path_Conl_ply,Target_shp =os.path.join(outputfolder_subid,os.path.basename(Path_Non_ConL_ply)),Col_NM='Hylak_id',Values=Conn_To_NonConlakeids,Attributes = Conn_Lakes_ply)
 
 
-        Path_out_final_rviply = os.path.join(outputfolder_subid,finalrvi_ply_NM)
-        Path_out_final_rvi    = os.path.join(outputfolder_subid,finalriv_NM)
+        Path_out_final_rviply = os.path.join(outputfolder_subid,os.path.basename(Path_final_riv_ply))
+        Path_out_final_rvi    = os.path.join(outputfolder_subid,os.path.basename(Path_final_riv))
         processing.run("native:dissolve", {'INPUT':Path_Temp_final_rviply,'FIELD':['SubId'],'OUTPUT':Path_out_final_rviply},context = context)
         processing.run("native:dissolve", {'INPUT':Path_Temp_final_rvi,'FIELD':['SubId'],'OUTPUT':Path_out_final_rvi},context = context)
 
+        Clean_Attribute_Name(Path_out_final_rviply,   self.FieldName_List_Product)
+        Clean_Attribute_Name(Path_out_final_rvi   , self.FieldName_List_Product)
+
+        
 #        Path_final_rviply = os.path.join(DataFolder,finalrvi_ply_NM)
 #        Path_final_riv    = os.path.join(DataFolder,finalriv_NM)
 #        Path_Non_ConL_cat = os.path.join(DataFolder,Non_ConnL_Cat_NM)
