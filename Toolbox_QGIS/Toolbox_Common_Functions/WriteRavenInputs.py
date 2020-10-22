@@ -507,7 +507,7 @@ def Generate_Raven_Obs_rvt_String(catinfo,outFolderraven,outObsfileFolder,starty
         
         ####check if data are founded, and assign it to the output dataframes 
         if Finddata == False:
-            print("not find data")
+            print(iobs_nm + "      not find data")
         else:    
             flowdata.loc[flowdata.index.isin(flowdata_read.index), ['Flow', 'QC']] = flowdata_read[['Flow', 'QC']]
             obsnms.loc[idx,'Obs_DA_data']                                          = DA_obs_data
@@ -664,6 +664,10 @@ def Generate_Raven_Lake_rvh_String(catinfo,Raveinputsfolder,Model_Name):
     Lake_rvh_file_path   = os.path.join(Raveinputsfolder,"Lakes.rvh")
     Lake_rvh_string_list = []
     tab = '       '
+    Lake_rvh_string_list.append('#----------------------------------------------')
+    Lake_rvh_string_list.append('# This is a Raven lake rvh file generated')
+    Lake_rvh_string_list.append('# by Routing toolbox')
+    Lake_rvh_string_list.append('#----------------------------------------------')  
     
     for i in range(0,len(catinfo.index)):
         if catinfo.iloc[i]['HRU_IsLake'] > 0: ## lake hru
@@ -851,16 +855,21 @@ def Generate_Raven_Channel_rvp_rvh_String(ocatinfo,Raveinputsfolder,lenThres,isc
     Model_rvp_string_modify ="\n" +":RedirectToFile " + "channel_properties.rvp" + "\n"
             
     tab = "     "
-                
+    Channel_rvp_string_list.append('#----------------------------------------------')
+    Channel_rvp_string_list.append('# This is a Raven channel properties file generated')
+    Channel_rvp_string_list.append('# by Routing toolbox')
+    Channel_rvp_string_list.append('#----------------------------------------------')  
+    
+    Model_rvh_string_list.append('#----------------------------------------------')
+    Model_rvh_string_list.append('# This is a Raven HRU rvh input file generated')
+    Model_rvh_string_list.append('# by Routing toolbox')
+    Model_rvh_string_list.append('#----------------------------------------------')  
+              
     catinfo_hru = copy.copy(ocatinfo)
     catinfo     = copy.copy(ocatinfo)
 #    print int(catinfo.iloc[0]['SUBID']),len(catinfo.index)
 
 ##################3
-    Model_rvh_string_list.append("# --------------------------------------------")#orvh.write("# --------------------------------------------"+"\n")
-    Model_rvh_string_list.append("# Raven HRU Input file")#orvh.write("# Raven HRU Input file"+"\n")
-    Model_rvh_string_list.append("#  lake catchment emulation")#orvh.write("#  lake catchment emulation"+"\n")
-    Model_rvh_string_list.append("# --------------------------------------------")#orvh.write("# --------------------------------------------"+"\n")
     Model_rvh_string_list.append(":SubBasins")#orvh.write(":SubBasins"+"\n")
     Model_rvh_string_list.append("  :Attributes   NAME  DOWNSTREAM_ID       PROFILE REACH_LENGTH  GAUGED")#orvh.write("  :Attributes   NAME  DOWNSTREAM_ID       PROFILE REACH_LENGTH  GAUGED"+"\n")
     Model_rvh_string_list.append("  :Units        none           none          none           km    none")#orvh.write("  :Units        none           none          none           km    none"+"\n")

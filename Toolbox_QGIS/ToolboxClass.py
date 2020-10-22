@@ -3510,13 +3510,13 @@ class LRRT:
         shutil.rmtree(self.tempfolder,ignore_errors=True)
 
 
-    def GenerateRavenInput(self,DataFolder,Finalcat_NM = 'finalcat_hru_info.shp'
+    def GenerateRavenInput(self,Path_final_hru_info = '#'
                           ,lenThres = 1,iscalmanningn = -1,Startyear = -1,EndYear = -1
                           ,CA_HYDAT = '#',WarmUp = 0,Template_Folder = '#'
-                          ,Lake_As_Gauge = True, WriteObsrvt = True
+                          ,Lake_As_Gauge = False, WriteObsrvt = False
                           ,DownLoadObsData = True,Model_Name = 'test',Old_Product = False
-                          ,SubBasinGroup_NM_Channel=['Allsubbasin'],SubBasinGroup_Length_Channel = [-1]
-                          ,SubBasinGroup_NM_Lake=['AllLakesubbasin'],SubBasinGroup_Area_Lake = [-1],
+                          ,SubBasinGroup_NM_Channel=['Allsubbasins'],SubBasinGroup_Length_Channel = [-1]
+                          ,SubBasinGroup_NM_Lake=['AllLakesubbasins'],SubBasinGroup_Area_Lake = [-1],
                           OutputFolder = '#',Forcing_Input_File = '#'):
 
         """Generate Raven input files.
@@ -3701,7 +3701,7 @@ class LRRT:
             toDirectory   = os.path.join(Raveinputsfolder,'GriddedForcings2.txt')
             copyfile(fromDirectory, toDirectory)            
 
-        finalcatchpath = os.path.join(DataFolder,Finalcat_NM)
+        finalcatchpath = Path_final_hru_info
 
         tempinfo = Dbf5(finalcatchpath[:-3] + "dbf")#np.genfromtxt(hyinfocsv,delimiter=',')
         ncatinfo = tempinfo.to_dataframe()

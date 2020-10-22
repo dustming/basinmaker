@@ -1,0 +1,4932 @@
+#----------------------------------------------
+# This is a Raven lake rvh file generated
+# by Routing toolbox
+#----------------------------------------------
+:Reservoir   Lake_1009447   ######## 
+  :SubBasinID  1010926
+  :HRUID   1
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.1
+  :LakeArea    118176.381
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1012563   ######## 
+  :SubBasinID  258
+  :HRUID   2
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.2
+  :LakeArea    97032.659
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1008350   ######## 
+  :SubBasinID  1009829
+  :HRUID   3
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.4
+  :LakeArea    107272.373
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1012899   ######## 
+  :SubBasinID  1014378
+  :HRUID   4
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.2
+  :LakeArea    106010.641
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1020759   ######## 
+  :SubBasinID  1022238
+  :HRUID   5
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.8
+  :LakeArea    163518.953
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1021769   ######## 
+  :SubBasinID  1023248
+  :HRUID   6
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.0
+  :LakeArea    160510.085
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_106588   ######## 
+  :SubBasinID  703
+  :HRUID   7
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 9.0
+  :LakeArea    1163445.792
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1010382   ######## 
+  :SubBasinID  166
+  :HRUID   8
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.9
+  :LakeArea    163461.763
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018356   ######## 
+  :SubBasinID  1019835
+  :HRUID   9
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.3
+  :LakeArea    124610.096
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_106192   ######## 
+  :SubBasinID  136
+  :HRUID   10
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 9.6
+  :LakeArea    7438850.003
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015666   ######## 
+  :SubBasinID  145
+  :HRUID   11
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.2
+  :LakeArea    468031.379
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018339   ######## 
+  :SubBasinID  1019818
+  :HRUID   12
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.8
+  :LakeArea    275199.514
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1012911   ######## 
+  :SubBasinID  1014390
+  :HRUID   13
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.8
+  :LakeArea    102165.345
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_105531   ######## 
+  :SubBasinID  107010
+  :HRUID   14
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 13.4
+  :LakeArea    5011788.742
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_105415   ######## 
+  :SubBasinID  142
+  :HRUID   15
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.8
+  :LakeArea    3029667.151
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015453   ######## 
+  :SubBasinID  1016932
+  :HRUID   16
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.6
+  :LakeArea    141420.291
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1017740   ######## 
+  :SubBasinID  1019219
+  :HRUID   17
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.4
+  :LakeArea    94809.516
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019883   ######## 
+  :SubBasinID  1021362
+  :HRUID   18
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.4
+  :LakeArea    144835.059
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1012805   ######## 
+  :SubBasinID  154
+  :HRUID   19
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.1
+  :LakeArea    238225.791
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1006975   ######## 
+  :SubBasinID  1008454
+  :HRUID   20
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.0
+  :LakeArea    149679.793
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019891   ######## 
+  :SubBasinID  1021370
+  :HRUID   21
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.2
+  :LakeArea    209024.807
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1021621   ######## 
+  :SubBasinID  658
+  :HRUID   23
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.3
+  :LakeArea    833523.361
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1020840   ######## 
+  :SubBasinID  1022319
+  :HRUID   24
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.8
+  :LakeArea    332450.718
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1021277   ######## 
+  :SubBasinID  1022756
+  :HRUID   25
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 7.5
+  :LakeArea    773066.163
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_105300   ######## 
+  :SubBasinID  151
+  :HRUID   26
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 12.5
+  :LakeArea    1403276.906
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1017759   ######## 
+  :SubBasinID  1019238
+  :HRUID   27
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.6
+  :LakeArea    119496.573
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1008885   ######## 
+  :SubBasinID  1010364
+  :HRUID   28
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.0
+  :LakeArea    199985.948
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009983   ######## 
+  :SubBasinID  1011462
+  :HRUID   29
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.5
+  :LakeArea    171662.79
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019874   ######## 
+  :SubBasinID  163
+  :HRUID   30
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.3
+  :LakeArea    689006.75
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1011519   ######## 
+  :SubBasinID  1012998
+  :HRUID   31
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.1
+  :LakeArea    474728.422
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1012940   ######## 
+  :SubBasinID  155
+  :HRUID   32
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.5
+  :LakeArea    377213.109
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1021248   ######## 
+  :SubBasinID  1022727
+  :HRUID   33
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.0
+  :LakeArea    367677.934
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1011846   ######## 
+  :SubBasinID  1013325
+  :HRUID   34
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.9
+  :LakeArea    123266.233
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1010470   ######## 
+  :SubBasinID  171
+  :HRUID   35
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.7
+  :LakeArea    124967.666
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013852   ######## 
+  :SubBasinID  1015331
+  :HRUID   36
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.0
+  :LakeArea    231846.273
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1010528   ######## 
+  :SubBasinID  173
+  :HRUID   37
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.5
+  :LakeArea    339274.052
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_105313   ######## 
+  :SubBasinID  176
+  :HRUID   38
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 10.3
+  :LakeArea    2906228.335
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1010165   ######## 
+  :SubBasinID  168
+  :HRUID   39
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.2
+  :LakeArea    656665.082
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1008383   ######## 
+  :SubBasinID  1009862
+  :HRUID   40
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.2
+  :LakeArea    114702.028
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1008382   ######## 
+  :SubBasinID  1009861
+  :HRUID   41
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.9
+  :LakeArea    209643.811
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1010507   ######## 
+  :SubBasinID  172
+  :HRUID   42
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.0
+  :LakeArea    98039.107
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1014950   ######## 
+  :SubBasinID  1016429
+  :HRUID   43
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.4
+  :LakeArea    106580.591
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015486   ######## 
+  :SubBasinID  1016965
+  :HRUID   44
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.5
+  :LakeArea    114901.442
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1020178   ######## 
+  :SubBasinID  182
+  :HRUID   45
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.6
+  :LakeArea    341104.597
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_106484   ######## 
+  :SubBasinID  181
+  :HRUID   46
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.3
+  :LakeArea    2805719.922
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_106018   ######## 
+  :SubBasinID  585
+  :HRUID   47
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.5
+  :LakeArea    1165459.247
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1012311   ######## 
+  :SubBasinID  1013790
+  :HRUID   48
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.0
+  :LakeArea    198657.521
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1010370   ######## 
+  :SubBasinID  1011849
+  :HRUID   49
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.9
+  :LakeArea    250663.567
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015487   ######## 
+  :SubBasinID  1016966
+  :HRUID   50
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.2
+  :LakeArea    118109.625
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016206   ######## 
+  :SubBasinID  1017685
+  :HRUID   51
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.1
+  :LakeArea    108586.826
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016711   ######## 
+  :SubBasinID  1018190
+  :HRUID   52
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.5
+  :LakeArea    320468.418
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019292   ######## 
+  :SubBasinID  1020771
+  :HRUID   53
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.4
+  :LakeArea    100843.68
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018349   ######## 
+  :SubBasinID  1019828
+  :HRUID   54
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.8
+  :LakeArea    149447.606
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1006877   ######## 
+  :SubBasinID  1008356
+  :HRUID   55
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.8
+  :LakeArea    321100.825
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018317   ######## 
+  :SubBasinID  186
+  :HRUID   56
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.5
+  :LakeArea    378713.501
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_106228   ######## 
+  :SubBasinID  185
+  :HRUID   57
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.3
+  :LakeArea    1504403.167
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1007382   ######## 
+  :SubBasinID  1008861
+  :HRUID   58
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.0
+  :LakeArea    186058.162
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009473   ######## 
+  :SubBasinID  191
+  :HRUID   59
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.0
+  :LakeArea    100876.135
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1014966   ######## 
+  :SubBasinID  1016445
+  :HRUID   60
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.3
+  :LakeArea    161131.091
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1010852   ######## 
+  :SubBasinID  196
+  :HRUID   61
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.4
+  :LakeArea    168447.535
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1011230   ######## 
+  :SubBasinID  197
+  :HRUID   62
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.9
+  :LakeArea    108608.318
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009381   ######## 
+  :SubBasinID  1010860
+  :HRUID   63
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.6
+  :LakeArea    411768.802
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016710   ######## 
+  :SubBasinID  1018189
+  :HRUID   64
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.8
+  :LakeArea    171220.022
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009667   ######## 
+  :SubBasinID  192
+  :HRUID   65
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.9
+  :LakeArea    426696.75
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1017252   ######## 
+  :SubBasinID  1018731
+  :HRUID   66
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.5
+  :LakeArea    111857.043
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_105662   ######## 
+  :SubBasinID  458
+  :HRUID   181
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.7
+  :LakeArea    3761689.92
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016621   ######## 
+  :SubBasinID  1018100
+  :HRUID   182
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.9
+  :LakeArea    105424.681
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1021107   ######## 
+  :SubBasinID  1022586
+  :HRUID   183
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.7
+  :LakeArea    416963.628
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1008140   ######## 
+  :SubBasinID  1009619
+  :HRUID   184
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.8
+  :LakeArea    517242.144
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1020563   ######## 
+  :SubBasinID  1022042
+  :HRUID   185
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.8
+  :LakeArea    166987.842
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015765   ######## 
+  :SubBasinID  1017244
+  :HRUID   186
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.6
+  :LakeArea    206077.487
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1006248   ######## 
+  :SubBasinID  1007727
+  :HRUID   187
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.3
+  :LakeArea    189923.284
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1008190   ######## 
+  :SubBasinID  1009669
+  :HRUID   188
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.7
+  :LakeArea    175886.794
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009705   ######## 
+  :SubBasinID  1011184
+  :HRUID   189
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.7
+  :LakeArea    186012.413
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018150   ######## 
+  :SubBasinID  1019629
+  :HRUID   190
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.8
+  :LakeArea    193126.651
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016003   ######## 
+  :SubBasinID  1017482
+  :HRUID   191
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.9
+  :LakeArea    409829.717
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1006678   ######## 
+  :SubBasinID  1
+  :HRUID   192
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.5
+  :LakeArea    171569.907
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016002   ######## 
+  :SubBasinID  1017481
+  :HRUID   193
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.3
+  :LakeArea    199316.725
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018681   ######## 
+  :SubBasinID  1020160
+  :HRUID   194
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.9
+  :LakeArea    365042.019
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1007180   ######## 
+  :SubBasinID  1008659
+  :HRUID   195
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.4
+  :LakeArea    112868.698
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015292   ######## 
+  :SubBasinID  1016771
+  :HRUID   196
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.2
+  :LakeArea    405577.638
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1010185   ######## 
+  :SubBasinID  1011664
+  :HRUID   197
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.5
+  :LakeArea    98243.82
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_105871   ######## 
+  :SubBasinID  493
+  :HRUID   198
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.5
+  :LakeArea    2125156.829
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018202   ######## 
+  :SubBasinID  925
+  :HRUID   199
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.1
+  :LakeArea    111983.435
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1008698   ######## 
+  :SubBasinID  1010177
+  :HRUID   200
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.5
+  :LakeArea    310744.296
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1014211   ######## 
+  :SubBasinID  488
+  :HRUID   201
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.5
+  :LakeArea    247871.618
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016050   ######## 
+  :SubBasinID  1017529
+  :HRUID   202
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.4
+  :LakeArea    334320.537
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1012214   ######## 
+  :SubBasinID  1013693
+  :HRUID   203
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.1
+  :LakeArea    365977.802
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018639   ######## 
+  :SubBasinID  1020118
+  :HRUID   204
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.4
+  :LakeArea    293018.581
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013229   ######## 
+  :SubBasinID  1014708
+  :HRUID   205
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.5
+  :LakeArea    111489.643
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009188   ######## 
+  :SubBasinID  1010667
+  :HRUID   206
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.0
+  :LakeArea    118175.723
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009719   ######## 
+  :SubBasinID  1011198
+  :HRUID   207
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.4
+  :LakeArea    141906.113
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1020035   ######## 
+  :SubBasinID  1021514
+  :HRUID   208
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.0
+  :LakeArea    251958.944
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013948   ######## 
+  :SubBasinID  463
+  :HRUID   209
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.0
+  :LakeArea    279632.597
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1014827   ######## 
+  :SubBasinID  1016306
+  :HRUID   210
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.5
+  :LakeArea    144698.677
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1014232   ######## 
+  :SubBasinID  1015711
+  :HRUID   211
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.9
+  :LakeArea    120476.742
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_105878   ######## 
+  :SubBasinID  504
+  :HRUID   212
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 16.7
+  :LakeArea    3237848.362
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1020544   ######## 
+  :SubBasinID  1022023
+  :HRUID   213
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.3
+  :LakeArea    166267.795
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013734   ######## 
+  :SubBasinID  1015213
+  :HRUID   214
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.2
+  :LakeArea    128616.801
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018675   ######## 
+  :SubBasinID  1020154
+  :HRUID   215
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.6
+  :LakeArea    239740.555
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016535   ######## 
+  :SubBasinID  1018014
+  :HRUID   216
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.7
+  :LakeArea    127664.643
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1010790   ######## 
+  :SubBasinID  1012269
+  :HRUID   217
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.6
+  :LakeArea    104916.896
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018674   ######## 
+  :SubBasinID  1020153
+  :HRUID   218
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.0
+  :LakeArea    199898.46
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009652   ######## 
+  :SubBasinID  1011131
+  :HRUID   219
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.9
+  :LakeArea    317879.586
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1022029   ######## 
+  :SubBasinID  1023508
+  :HRUID   220
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.9
+  :LakeArea    161232.034
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1020484   ######## 
+  :SubBasinID  1021963
+  :HRUID   221
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.7
+  :LakeArea    126642.048
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009937   ######## 
+  :SubBasinID  403
+  :HRUID   222
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.0
+  :LakeArea    235036.808
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1011161   ######## 
+  :SubBasinID  1012640
+  :HRUID   223
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.2
+  :LakeArea    158760.193
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_106406   ######## 
+  :SubBasinID  398
+  :HRUID   224
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 13.2
+  :LakeArea    4656865.656
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009653   ######## 
+  :SubBasinID  1011132
+  :HRUID   225
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.5
+  :LakeArea    120954.679
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_106320   ######## 
+  :SubBasinID  397
+  :HRUID   226
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.6
+  :LakeArea    1091916.734
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1012658   ######## 
+  :SubBasinID  1014137
+  :HRUID   227
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.3
+  :LakeArea    108864.485
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_105927   ######## 
+  :SubBasinID  442
+  :HRUID   228
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.1
+  :LakeArea    3472667.393
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018615   ######## 
+  :SubBasinID  1020094
+  :HRUID   229
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.7
+  :LakeArea    247522.516
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009131   ######## 
+  :SubBasinID  1010610
+  :HRUID   230
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.2
+  :LakeArea    296567.168
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1017478   ######## 
+  :SubBasinID  1018957
+  :HRUID   231
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.1
+  :LakeArea    109612.866
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018106   ######## 
+  :SubBasinID  1019585
+  :HRUID   232
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.8
+  :LakeArea    252660.87
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018584   ######## 
+  :SubBasinID  943
+  :HRUID   233
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.4
+  :LakeArea    137908.671
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015179   ######## 
+  :SubBasinID  1016658
+  :HRUID   234
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.1
+  :LakeArea    307425.602
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_106178   ######## 
+  :SubBasinID  497
+  :HRUID   235
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 7.8
+  :LakeArea    2215076.915
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1022085   ######## 
+  :SubBasinID  1023564
+  :HRUID   236
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.9
+  :LakeArea    802201.389
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009094   ######## 
+  :SubBasinID  1010573
+  :HRUID   237
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.4
+  :LakeArea    190631.399
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018076   ######## 
+  :SubBasinID  1019555
+  :HRUID   238
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.7
+  :LakeArea    353833.919
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018069   ######## 
+  :SubBasinID  1019548
+  :HRUID   239
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.9
+  :LakeArea    113562.137
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019078   ######## 
+  :SubBasinID  1020557
+  :HRUID   240
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.5
+  :LakeArea    100553.372
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_105446   ######## 
+  :SubBasinID  495
+  :HRUID   241
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.1
+  :LakeArea    1609504.795
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_106243   ######## 
+  :SubBasinID  498
+  :HRUID   242
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.8
+  :LakeArea    1003108.525
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015188   ######## 
+  :SubBasinID  1016667
+  :HRUID   243
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.7
+  :LakeArea    558672.709
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009611   ######## 
+  :SubBasinID  1011090
+  :HRUID   244
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.8
+  :LakeArea    462198.494
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013689   ######## 
+  :SubBasinID  1015168
+  :HRUID   245
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.0
+  :LakeArea    123718.505
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1010212   ######## 
+  :SubBasinID  1011691
+  :HRUID   246
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.9
+  :LakeArea    347427.58
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1014941   ######## 
+  :SubBasinID  412
+  :HRUID   247
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.2
+  :LakeArea    121157.743
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016986   ######## 
+  :SubBasinID  1018465
+  :HRUID   248
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.0
+  :LakeArea    107578.285
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019129   ######## 
+  :SubBasinID  1020608
+  :HRUID   249
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.7
+  :LakeArea    529786.699
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1020499   ######## 
+  :SubBasinID  1021978
+  :HRUID   250
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.6
+  :LakeArea    113810.501
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016128   ######## 
+  :SubBasinID  1017607
+  :HRUID   500
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.4
+  :LakeArea    106909.962
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1008806   ######## 
+  :SubBasinID  1010285
+  :HRUID   502
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.5
+  :LakeArea    100433.337
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009313   ######## 
+  :SubBasinID  1010792
+  :HRUID   504
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.4
+  :LakeArea    161692.264
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_105117   ######## 
+  :SubBasinID  121
+  :HRUID   506
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.4
+  :LakeArea    2782441.265
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015901   ######## 
+  :SubBasinID  1017380
+  :HRUID   508
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.2
+  :LakeArea    152627.791
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1010844   ######## 
+  :SubBasinID  1012323
+  :HRUID   510
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.8
+  :LakeArea    154872.24
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015014   ######## 
+  :SubBasinID  619
+  :HRUID   512
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.0
+  :LakeArea    131339.429
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015902   ######## 
+  :SubBasinID  1017381
+  :HRUID   514
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.3
+  :LakeArea    100361.127
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019728   ######## 
+  :SubBasinID  1021207
+  :HRUID   515
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.8
+  :LakeArea    156136.996
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015886   ######## 
+  :SubBasinID  1017365
+  :HRUID   516
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.1
+  :LakeArea    127439.458
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018795   ######## 
+  :SubBasinID  1020274
+  :HRUID   517
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.1
+  :LakeArea    102840.045
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1008317   ######## 
+  :SubBasinID  1009796
+  :HRUID   518
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.5
+  :LakeArea    156330.836
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013266   ######## 
+  :SubBasinID  1014745
+  :HRUID   519
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.1
+  :LakeArea    97137.556
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015750   ######## 
+  :SubBasinID  629
+  :HRUID   520
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.2
+  :LakeArea    442625.769
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009314   ######## 
+  :SubBasinID  1010793
+  :HRUID   521
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.3
+  :LakeArea    132147.734
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1007323   ######## 
+  :SubBasinID  1008802
+  :HRUID   522
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.1
+  :LakeArea    147686.446
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016238   ######## 
+  :SubBasinID  1017717
+  :HRUID   523
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.5
+  :LakeArea    272895.792
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1020775   ######## 
+  :SubBasinID  1022254
+  :HRUID   524
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.0
+  :LakeArea    101246.923
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1008934   ######## 
+  :SubBasinID  94
+  :HRUID   525
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 7.0
+  :LakeArea    893422.187
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009534   ######## 
+  :SubBasinID  96
+  :HRUID   526
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.7
+  :LakeArea    138399.07
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019859   ######## 
+  :SubBasinID  88
+  :HRUID   527
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.6
+  :LakeArea    494688.003
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1023352   ######## 
+  :SubBasinID  1024831
+  :HRUID   528
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.3
+  :LakeArea    492277.006
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1014958   ######## 
+  :SubBasinID  1016437
+  :HRUID   529
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.1
+  :LakeArea    113362.205
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016740   ######## 
+  :SubBasinID  1018219
+  :HRUID   530
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.9
+  :LakeArea    183460.768
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_106114   ######## 
+  :SubBasinID  643
+  :HRUID   531
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.8
+  :LakeArea    1479699.891
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016146   ######## 
+  :SubBasinID  1017625
+  :HRUID   532
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.5
+  :LakeArea    163643.059
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1011439   ######## 
+  :SubBasinID  1012918
+  :HRUID   533
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.6
+  :LakeArea    122093.901
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1010341   ######## 
+  :SubBasinID  77
+  :HRUID   534
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.9
+  :LakeArea    188699.655
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019833   ######## 
+  :SubBasinID  1021312
+  :HRUID   535
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.7
+  :LakeArea    496561.954
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019834   ######## 
+  :SubBasinID  1021313
+  :HRUID   536
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.2
+  :LakeArea    101379.237
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019305   ######## 
+  :SubBasinID  1020784
+  :HRUID   537
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.9
+  :LakeArea    329906.794
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015890   ######## 
+  :SubBasinID  1017369
+  :HRUID   538
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.1
+  :LakeArea    182966.02
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013298   ######## 
+  :SubBasinID  1014777
+  :HRUID   539
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.3
+  :LakeArea    157666.902
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1014903   ######## 
+  :SubBasinID  1016382
+  :HRUID   541
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.3
+  :LakeArea    117743.26
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015312   ######## 
+  :SubBasinID  1016791
+  :HRUID   542
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.3
+  :LakeArea    133384.654
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019248   ######## 
+  :SubBasinID  1020727
+  :HRUID   543
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.5
+  :LakeArea    952600.567
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1017108   ######## 
+  :SubBasinID  1018587
+  :HRUID   544
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.6
+  :LakeArea    164121.304
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1010862   ######## 
+  :SubBasinID  36
+  :HRUID   545
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.2
+  :LakeArea    258510.035
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009845   ######## 
+  :SubBasinID  1011324
+  :HRUID   546
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.3
+  :LakeArea    136286.216
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013811   ######## 
+  :SubBasinID  1015290
+  :HRUID   547
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.2
+  :LakeArea    176391.389
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1010754   ######## 
+  :SubBasinID  14
+  :HRUID   548
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.6
+  :LakeArea    220285.174
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1008731   ######## 
+  :SubBasinID  1010210
+  :HRUID   549
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.4
+  :LakeArea    505524.253
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013308   ######## 
+  :SubBasinID  1014787
+  :HRUID   550
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.2
+  :LakeArea    566156.407
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1020206   ######## 
+  :SubBasinID  1021685
+  :HRUID   551
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.4
+  :LakeArea    284140.369
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1010967   ######## 
+  :SubBasinID  37
+  :HRUID   552
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.9
+  :LakeArea    179328.566
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1006471   ######## 
+  :SubBasinID  8
+  :HRUID   553
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.7
+  :LakeArea    99907.909
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013775   ######## 
+  :SubBasinID  1015254
+  :HRUID   554
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.0
+  :LakeArea    272387.798
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1012240   ######## 
+  :SubBasinID  1013719
+  :HRUID   555
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.7
+  :LakeArea    169459.115
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1020223   ######## 
+  :SubBasinID  1021702
+  :HRUID   556
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.6
+  :LakeArea    611105.741
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_105355   ######## 
+  :SubBasinID  109
+  :HRUID   557
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 11.3
+  :LakeArea    1178820.04
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1017701   ######## 
+  :SubBasinID  1019180
+  :HRUID   558
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.5
+  :LakeArea    252939.202
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018796   ######## 
+  :SubBasinID  1020275
+  :HRUID   559
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.3
+  :LakeArea    194768.964
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1012836   ######## 
+  :SubBasinID  1014315
+  :HRUID   560
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.3
+  :LakeArea    317354.645
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009797   ######## 
+  :SubBasinID  1011276
+  :HRUID   561
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.2
+  :LakeArea    481549.388
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1011385   ######## 
+  :SubBasinID  1012864
+  :HRUID   563
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.2
+  :LakeArea    104399.104
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018706   ######## 
+  :SubBasinID  1020185
+  :HRUID   564
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.4
+  :LakeArea    112720.388
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013767   ######## 
+  :SubBasinID  1015246
+  :HRUID   565
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.7
+  :LakeArea    97395.529
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1014395   ######## 
+  :SubBasinID  1015874
+  :HRUID   566
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.5
+  :LakeArea    884822.512
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009802   ######## 
+  :SubBasinID  1011281
+  :HRUID   567
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.6
+  :LakeArea    97518.915
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_105307   ######## 
+  :SubBasinID  114
+  :HRUID   568
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 10.3
+  :LakeArea    1960731.666
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1008179   ######## 
+  :SubBasinID  27
+  :HRUID   569
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.0
+  :LakeArea    161116.769
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1017702   ######## 
+  :SubBasinID  1019181
+  :HRUID   570
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.1
+  :LakeArea    120847.71
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015279   ######## 
+  :SubBasinID  534
+  :HRUID   571
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.5
+  :LakeArea    104213.663
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1010342   ######## 
+  :SubBasinID  1011821
+  :HRUID   572
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.5
+  :LakeArea    112327.853
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1014299   ######## 
+  :SubBasinID  1015778
+  :HRUID   573
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.2
+  :LakeArea    100036.727
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1020106   ######## 
+  :SubBasinID  1021585
+  :HRUID   574
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.3
+  :LakeArea    154783.733
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1017717   ######## 
+  :SubBasinID  530
+  :HRUID   575
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.4
+  :LakeArea    325873.685
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1017655   ######## 
+  :SubBasinID  532
+  :HRUID   576
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.2
+  :LakeArea    183530.41
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015809   ######## 
+  :SubBasinID  1017288
+  :HRUID   578
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.0
+  :LakeArea    861439.172
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1007680   ######## 
+  :SubBasinID  42
+  :HRUID   579
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.2
+  :LakeArea    96223.315
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1008225   ######## 
+  :SubBasinID  1009704
+  :HRUID   580
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.3
+  :LakeArea    600061.512
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1012798   ######## 
+  :SubBasinID  1014277
+  :HRUID   581
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.0
+  :LakeArea    226732.835
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_106638   ######## 
+  :SubBasinID  989
+  :HRUID   582
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 8.4
+  :LakeArea    6603914.211
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1010488   ######## 
+  :SubBasinID  68
+  :HRUID   583
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.0
+  :LakeArea    510656.881
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1014300   ######## 
+  :SubBasinID  1015779
+  :HRUID   584
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.4
+  :LakeArea    121695.918
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1017145   ######## 
+  :SubBasinID  1018624
+  :HRUID   585
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.3
+  :LakeArea    334380.368
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_105811   ######## 
+  :SubBasinID  107290
+  :HRUID   586
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 7.1
+  :LakeArea    1156814.083
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019319   ######## 
+  :SubBasinID  522
+  :HRUID   587
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.7
+  :LakeArea    905527.224
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1010362   ######## 
+  :SubBasinID  1011841
+  :HRUID   588
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.4
+  :LakeArea    271134.39
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009779   ######## 
+  :SubBasinID  1011258
+  :HRUID   589
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.0
+  :LakeArea    96444.658
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019771   ######## 
+  :SubBasinID  1021250
+  :HRUID   590
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.3
+  :LakeArea    182264.3
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1022261   ######## 
+  :SubBasinID  1023740
+  :HRUID   591
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.6
+  :LakeArea    275935.268
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_8538   ######## 
+  :SubBasinID  519
+  :HRUID   592
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 8.6
+  :LakeArea    58393912.38
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1008732   ######## 
+  :SubBasinID  1010211
+  :HRUID   593
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.8
+  :LakeArea    115655.493
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009505   ######## 
+  :SubBasinID  18
+  :HRUID   594
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.2
+  :LakeArea    192872.483
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1017098   ######## 
+  :SubBasinID  1018577
+  :HRUID   595
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.5
+  :LakeArea    449962.988
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_105217   ######## 
+  :SubBasinID  58
+  :HRUID   596
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 9.4
+  :LakeArea    1603700.323
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009248   ######## 
+  :SubBasinID  1010727
+  :HRUID   597
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.7
+  :LakeArea    171229.001
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009778   ######## 
+  :SubBasinID  1011257
+  :HRUID   599
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.6
+  :LakeArea    411643.632
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018227   ######## 
+  :SubBasinID  1019706
+  :HRUID   600
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.8
+  :LakeArea    138459.501
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1017630   ######## 
+  :SubBasinID  1019109
+  :HRUID   601
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.1
+  :LakeArea    191440.957
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1017258   ######## 
+  :SubBasinID  55
+  :HRUID   602
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.5
+  :LakeArea    956848.153
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013701   ######## 
+  :SubBasinID  1015180
+  :HRUID   604
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.8
+  :LakeArea    126555.378
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016097   ######## 
+  :SubBasinID  1017576
+  :HRUID   605
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.0
+  :LakeArea    130882.22
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016633   ######## 
+  :SubBasinID  1018112
+  :HRUID   606
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.8
+  :LakeArea    230195.91
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015335   ######## 
+  :SubBasinID  1016814
+  :HRUID   607
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.4
+  :LakeArea    153983.155
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018192   ######## 
+  :SubBasinID  563
+  :HRUID   608
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.8
+  :LakeArea    661551.38
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013197   ######## 
+  :SubBasinID  1014676
+  :HRUID   609
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.2
+  :LakeArea    358494.019
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1011833   ######## 
+  :SubBasinID  1013312
+  :HRUID   610
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.3
+  :LakeArea    119163.973
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1021590   ######## 
+  :SubBasinID  1023069
+  :HRUID   611
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.4
+  :LakeArea    208264.793
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009668   ######## 
+  :SubBasinID  1011147
+  :HRUID   612
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.0
+  :LakeArea    500638.794
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1022156   ######## 
+  :SubBasinID  1023635
+  :HRUID   613
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.7
+  :LakeArea    207479.457
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1011311   ######## 
+  :SubBasinID  1012790
+  :HRUID   614
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.6
+  :LakeArea    146297.243
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1014062   ######## 
+  :SubBasinID  472
+  :HRUID   615
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.9
+  :LakeArea    457687.099
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009161   ######## 
+  :SubBasinID  1010640
+  :HRUID   616
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.4
+  :LakeArea    228989.618
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016632   ######## 
+  :SubBasinID  1018111
+  :HRUID   617
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.9
+  :LakeArea    245346.485
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1011839   ######## 
+  :SubBasinID  1013318
+  :HRUID   618
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.5
+  :LakeArea    164735.141
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016112   ######## 
+  :SubBasinID  1017591
+  :HRUID   619
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.9
+  :LakeArea    125839.257
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1017122   ######## 
+  :SubBasinID  1018601
+  :HRUID   620
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.9
+  :LakeArea    285027.924
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1010243   ######## 
+  :SubBasinID  1011722
+  :HRUID   621
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.8
+  :LakeArea    127221.359
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015705   ######## 
+  :SubBasinID  551
+  :HRUID   622
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.4
+  :LakeArea    135673.685
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1014884   ######## 
+  :SubBasinID  579
+  :HRUID   623
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.6
+  :LakeArea    238805.313
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013714   ######## 
+  :SubBasinID  1015193
+  :HRUID   624
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.4
+  :LakeArea    158941.256
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1017120   ######## 
+  :SubBasinID  1018599
+  :HRUID   625
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.5
+  :LakeArea    116525.463
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1007504   ######## 
+  :SubBasinID  48
+  :HRUID   626
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.4
+  :LakeArea    307968.233
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009058   ######## 
+  :SubBasinID  51
+  :HRUID   627
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.0
+  :LakeArea    422982.726
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1010780   ######## 
+  :SubBasinID  1012259
+  :HRUID   628
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.8
+  :LakeArea    226555.323
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019492   ######## 
+  :SubBasinID  558
+  :HRUID   629
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.5
+  :LakeArea    477320.241
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_106316   ######## 
+  :SubBasinID  562
+  :HRUID   630
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.4
+  :LakeArea    1368495.092
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1007807   ######## 
+  :SubBasinID  49
+  :HRUID   631
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.2
+  :LakeArea    375395.945
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1012774   ######## 
+  :SubBasinID  1014253
+  :HRUID   632
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.6
+  :LakeArea    144929.418
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015824   ######## 
+  :SubBasinID  553
+  :HRUID   633
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.3
+  :LakeArea    450095.5
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1008668   ######## 
+  :SubBasinID  1010147
+  :HRUID   651
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.8
+  :LakeArea    654692.27
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019702   ######## 
+  :SubBasinID  1021181
+  :HRUID   652
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.7
+  :LakeArea    251676.172
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_106319   ######## 
+  :SubBasinID  107798
+  :HRUID   655
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 10.2
+  :LakeArea    1209167.211
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009204   ######## 
+  :SubBasinID  1010683
+  :HRUID   656
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.2
+  :LakeArea    189308.906
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1021568   ######## 
+  :SubBasinID  1023047
+  :HRUID   657
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.7
+  :LakeArea    657229.767
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1008669   ######## 
+  :SubBasinID  1010148
+  :HRUID   658
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.5
+  :LakeArea    202549.712
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1014039   ######## 
+  :SubBasinID  437
+  :HRUID   763
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.4
+  :LakeArea    279057.538
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018517   ######## 
+  :SubBasinID  1019996
+  :HRUID   764
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.8
+  :LakeArea    539538.371
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016509   ######## 
+  :SubBasinID  1017988
+  :HRUID   765
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.7
+  :LakeArea    151504.327
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015287   ######## 
+  :SubBasinID  350
+  :HRUID   766
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.2
+  :LakeArea    248190.425
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019014   ######## 
+  :SubBasinID  1020493
+  :HRUID   767
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.3
+  :LakeArea    558636.913
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1017507   ######## 
+  :SubBasinID  1018986
+  :HRUID   768
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.5
+  :LakeArea    120780.078
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1008615   ######## 
+  :SubBasinID  1010094
+  :HRUID   769
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.3
+  :LakeArea    289679.664
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015208   ######## 
+  :SubBasinID  1016687
+  :HRUID   770
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.4
+  :LakeArea    154210.532
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1012060   ######## 
+  :SubBasinID  1013539
+  :HRUID   771
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.5
+  :LakeArea    349289.042
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1023049   ######## 
+  :SubBasinID  1024528
+  :HRUID   772
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.6
+  :LakeArea    168124.376
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1021446   ######## 
+  :SubBasinID  1022925
+  :HRUID   773
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.5
+  :LakeArea    108901.869
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1023048   ######## 
+  :SubBasinID  1024527
+  :HRUID   774
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 7.0
+  :LakeArea    180929.27
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1022538   ######## 
+  :SubBasinID  1024017
+  :HRUID   775
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.7
+  :LakeArea    176059.009
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_105920   ######## 
+  :SubBasinID  349
+  :HRUID   776
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.2
+  :LakeArea    1407457.879
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1017703   ######## 
+  :SubBasinID  1359
+  :HRUID   777
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.7
+  :LakeArea    286259.115
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1020433   ######## 
+  :SubBasinID  1021912
+  :HRUID   778
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.8
+  :LakeArea    144757.062
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1011151   ######## 
+  :SubBasinID  1012630
+  :HRUID   779
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.6
+  :LakeArea    102104.382
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1020973   ######## 
+  :SubBasinID  452
+  :HRUID   780
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.3
+  :LakeArea    195991.45
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018091   ######## 
+  :SubBasinID  1019570
+  :HRUID   781
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.6
+  :LakeArea    543468.493
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019037   ######## 
+  :SubBasinID  1020516
+  :HRUID   782
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.5
+  :LakeArea    100106.015
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019191   ######## 
+  :SubBasinID  448
+  :HRUID   783
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.0
+  :LakeArea    168100.281
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015944   ######## 
+  :SubBasinID  1017423
+  :HRUID   784
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.5
+  :LakeArea    142057.143
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019120   ######## 
+  :SubBasinID  447
+  :HRUID   785
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.0
+  :LakeArea    310640.993
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1017522   ######## 
+  :SubBasinID  1019001
+  :HRUID   786
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.3
+  :LakeArea    105067.585
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016954   ######## 
+  :SubBasinID  425
+  :HRUID   787
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.8
+  :LakeArea    906159.974
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1005611   ######## 
+  :SubBasinID  1007090
+  :HRUID   788
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.0
+  :LakeArea    534233.041
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013947   ######## 
+  :SubBasinID  430
+  :HRUID   789
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.3
+  :LakeArea    99618.925
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019015   ######## 
+  :SubBasinID  1020494
+  :HRUID   790
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.5
+  :LakeArea    269499.388
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016995   ######## 
+  :SubBasinID  1018474
+  :HRUID   791
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.1
+  :LakeArea    309886.688
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019542   ######## 
+  :SubBasinID  1021021
+  :HRUID   793
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.3
+  :LakeArea    235583.353
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015730   ######## 
+  :SubBasinID  1017209
+  :HRUID   794
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.7
+  :LakeArea    130884.678
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019475   ######## 
+  :SubBasinID  1020954
+  :HRUID   795
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.6
+  :LakeArea    227364.487
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1023515   ######## 
+  :SubBasinID  1024994
+  :HRUID   796
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.1
+  :LakeArea    348619.873
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013600   ######## 
+  :SubBasinID  1015079
+  :HRUID   797
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.2
+  :LakeArea    112901.078
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009571   ######## 
+  :SubBasinID  1011050
+  :HRUID   798
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.1
+  :LakeArea    253785.266
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1007569   ######## 
+  :SubBasinID  1009048
+  :HRUID   799
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.3
+  :LakeArea    96530.693
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1014815   ######## 
+  :SubBasinID  341
+  :HRUID   800
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.8
+  :LakeArea    115332.287
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1017931   ######## 
+  :SubBasinID  1019410
+  :HRUID   801
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.4
+  :LakeArea    134316.767
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1011076   ######## 
+  :SubBasinID  1012555
+  :HRUID   802
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.6
+  :LakeArea    144254.829
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1011611   ######## 
+  :SubBasinID  383
+  :HRUID   804
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.5
+  :LakeArea    134355.586
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1008568   ######## 
+  :SubBasinID  1010047
+  :HRUID   805
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.5
+  :LakeArea    151655.834
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1011592   ######## 
+  :SubBasinID  1013071
+  :HRUID   806
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.6
+  :LakeArea    100127.05
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_105534   ######## 
+  :SubBasinID  382
+  :HRUID   807
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.2
+  :LakeArea    1376472.972
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_105498   ######## 
+  :SubBasinID  381
+  :HRUID   808
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 8.0
+  :LakeArea    4812972.942
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1011083   ######## 
+  :SubBasinID  1012562
+  :HRUID   809
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.5
+  :LakeArea    130580.211
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1011619   ######## 
+  :SubBasinID  384
+  :HRUID   810
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.2
+  :LakeArea    413020.31
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015122   ######## 
+  :SubBasinID  1016601
+  :HRUID   811
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.5
+  :LakeArea    147772.552
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_105793   ######## 
+  :SubBasinID  332
+  :HRUID   812
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.7
+  :LakeArea    2271502.617
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1010685   ######## 
+  :SubBasinID  1012164
+  :HRUID   813
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.7
+  :LakeArea    106145.081
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1014693   ######## 
+  :SubBasinID  1016172
+  :HRUID   814
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.4
+  :LakeArea    239955.781
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1012034   ######## 
+  :SubBasinID  1013513
+  :HRUID   815
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.9
+  :LakeArea    339187.439
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1014185   ######## 
+  :SubBasinID  1015664
+  :HRUID   816
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.9
+  :LakeArea    647119.577
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013580   ######## 
+  :SubBasinID  1015059
+  :HRUID   817
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.6
+  :LakeArea    131660.75
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1011690   ######## 
+  :SubBasinID  1013169
+  :HRUID   818
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.9
+  :LakeArea    433238.845
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016412   ######## 
+  :SubBasinID  1017891
+  :HRUID   819
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.5
+  :LakeArea    667481.829
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1008048   ######## 
+  :SubBasinID  1009527
+  :HRUID   821
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.7
+  :LakeArea    151131.296
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015105   ######## 
+  :SubBasinID  1016584
+  :HRUID   822
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.3
+  :LakeArea    137251.619
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013887   ######## 
+  :SubBasinID  334
+  :HRUID   823
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.3
+  :LakeArea    110474.495
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018508   ######## 
+  :SubBasinID  1019987
+  :HRUID   824
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.9
+  :LakeArea    115142.167
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_105825   ######## 
+  :SubBasinID  340
+  :HRUID   826
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.9
+  :LakeArea    1328434.916
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1011968   ######## 
+  :SubBasinID  1013447
+  :HRUID   827
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.1
+  :LakeArea    110167.34
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1014143   ######## 
+  :SubBasinID  1015622
+  :HRUID   828
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.7
+  :LakeArea    108505.455
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019474   ######## 
+  :SubBasinID  823
+  :HRUID   829
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.3
+  :LakeArea    277685.681
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1017883   ######## 
+  :SubBasinID  1019362
+  :HRUID   830
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.9
+  :LakeArea    191941.738
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1014131   ######## 
+  :SubBasinID  1015610
+  :HRUID   831
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.9
+  :LakeArea    196195.36
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016421   ######## 
+  :SubBasinID  1017900
+  :HRUID   832
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.5
+  :LakeArea    187760.735
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013509   ######## 
+  :SubBasinID  1014988
+  :HRUID   833
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.9
+  :LakeArea    250904.416
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1010105   ######## 
+  :SubBasinID  1011584
+  :HRUID   834
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.3
+  :LakeArea    100910.086
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1017884   ######## 
+  :SubBasinID  1019363
+  :HRUID   835
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.0
+  :LakeArea    227818.073
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1021892   ######## 
+  :SubBasinID  1023371
+  :HRUID   836
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.1
+  :LakeArea    226417.833
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009011   ######## 
+  :SubBasinID  1010490
+  :HRUID   837
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.5
+  :LakeArea    257469.093
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1021288   ######## 
+  :SubBasinID  830
+  :HRUID   838
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.3
+  :LakeArea    141898.734
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018610   ######## 
+  :SubBasinID  288
+  :HRUID   839
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.8
+  :LakeArea    274888.706
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013518   ######## 
+  :SubBasinID  1014997
+  :HRUID   840
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.0
+  :LakeArea    146308.184
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_106301   ######## 
+  :SubBasinID  287
+  :HRUID   841
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.3
+  :LakeArea    1687901.303
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1020774   ######## 
+  :SubBasinID  828
+  :HRUID   842
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.8
+  :LakeArea    153881.901
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015665   ######## 
+  :SubBasinID  1017144
+  :HRUID   843
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.2
+  :LakeArea    224742.352
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_105809   ######## 
+  :SubBasinID  365
+  :HRUID   844
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.1
+  :LakeArea    3535240.44
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019463   ######## 
+  :SubBasinID  1020942
+  :HRUID   845
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.9
+  :LakeArea    196787.137
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1017451   ######## 
+  :SubBasinID  1018930
+  :HRUID   846
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.9
+  :LakeArea    99886.562
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_8509   ######## 
+  :SubBasinID  362
+  :HRUID   847
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 25.2
+  :LakeArea    11339153.94
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1021219   ######## 
+  :SubBasinID  796
+  :HRUID   848
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.7
+  :LakeArea    106717.679
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1007055   ######## 
+  :SubBasinID  1008534
+  :HRUID   849
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.6
+  :LakeArea    154633.838
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013021   ######## 
+  :SubBasinID  1014500
+  :HRUID   850
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.9
+  :LakeArea    194381.993
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015137   ######## 
+  :SubBasinID  1016616
+  :HRUID   851
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.8
+  :LakeArea    156919.847
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1014021   ######## 
+  :SubBasinID  374
+  :HRUID   852
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.8
+  :LakeArea    261054.951
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_106581   ######## 
+  :SubBasinID  776
+  :HRUID   853
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 12.4
+  :LakeArea    1456246.307
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013642   ######## 
+  :SubBasinID  373
+  :HRUID   854
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.1
+  :LakeArea    281441.773
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019464   ######## 
+  :SubBasinID  1020943
+  :HRUID   855
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.3
+  :LakeArea    451656.638
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1017452   ######## 
+  :SubBasinID  1018931
+  :HRUID   856
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.4
+  :LakeArea    456017.997
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1011135   ######## 
+  :SubBasinID  1012614
+  :HRUID   857
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.9
+  :LakeArea    585453.209
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_105643   ######## 
+  :SubBasinID  371
+  :HRUID   858
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.0
+  :LakeArea    3438997.686
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016771   ######## 
+  :SubBasinID  316
+  :HRUID   859
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.1
+  :LakeArea    325118.671
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1006575   ######## 
+  :SubBasinID  1008054
+  :HRUID   860
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.2
+  :LakeArea    276507.631
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015088   ######## 
+  :SubBasinID  1016567
+  :HRUID   861
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.4
+  :LakeArea    194005.817
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1017121   ######## 
+  :SubBasinID  317
+  :HRUID   862
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.3
+  :LakeArea    274248.108
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1012026   ######## 
+  :SubBasinID  1013505
+  :HRUID   863
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.9
+  :LakeArea    165320.26
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013072   ######## 
+  :SubBasinID  312
+  :HRUID   864
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.8
+  :LakeArea    259338.532
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018473   ######## 
+  :SubBasinID  1019952
+  :HRUID   865
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.4
+  :LakeArea    319715.535
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019013   ######## 
+  :SubBasinID  822
+  :HRUID   866
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.8
+  :LakeArea    693605.16
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1008507   ######## 
+  :SubBasinID  1009986
+  :HRUID   867
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.1
+  :LakeArea    318584.658
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_105664   ######## 
+  :SubBasinID  325
+  :HRUID   868
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.8
+  :LakeArea    2041362.29
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1010521   ######## 
+  :SubBasinID  1012000
+  :HRUID   869
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.9
+  :LakeArea    499311.346
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016806   ######## 
+  :SubBasinID  296
+  :HRUID   870
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.4
+  :LakeArea    127752.501
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1010515   ######## 
+  :SubBasinID  1011994
+  :HRUID   871
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.7
+  :LakeArea    135895.041
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015095   ######## 
+  :SubBasinID  1016574
+  :HRUID   872
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.8
+  :LakeArea    113705.274
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016845   ######## 
+  :SubBasinID  1018324
+  :HRUID   873
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.8
+  :LakeArea    201040.297
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1020917   ######## 
+  :SubBasinID  1022396
+  :HRUID   874
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 7.8
+  :LakeArea    741097.643
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013054   ######## 
+  :SubBasinID  1014533
+  :HRUID   875
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.7
+  :LakeArea    437416.14
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1011028   ######## 
+  :SubBasinID  1012507
+  :HRUID   876
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.0
+  :LakeArea    116768.021
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018489   ######## 
+  :SubBasinID  1019968
+  :HRUID   877
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.5
+  :LakeArea    118151.076
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1012851   ######## 
+  :SubBasinID  268
+  :HRUID   878
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.6
+  :LakeArea    101732.728
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1021015   ######## 
+  :SubBasinID  829
+  :HRUID   879
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.4
+  :LakeArea    633682.988
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016004   ######## 
+  :SubBasinID  294
+  :HRUID   880
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.0
+  :LakeArea    107979.015
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1007941   ######## 
+  :SubBasinID  1009420
+  :HRUID   881
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.1
+  :LakeArea    230261.296
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015879   ######## 
+  :SubBasinID  293
+  :HRUID   882
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.5
+  :LakeArea    160898.149
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1020869   ######## 
+  :SubBasinID  1022348
+  :HRUID   883
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.8
+  :LakeArea    137044.096
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013544   ######## 
+  :SubBasinID  275
+  :HRUID   884
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.6
+  :LakeArea    123877.626
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1006976   ######## 
+  :SubBasinID  1008455
+  :HRUID   885
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.1
+  :LakeArea    166829.344
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009533   ######## 
+  :SubBasinID  1011012
+  :HRUID   886
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.2
+  :LakeArea    266961.596
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1014631   ######## 
+  :SubBasinID  1016110
+  :HRUID   887
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.3
+  :LakeArea    146203.36
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013030   ######## 
+  :SubBasinID  1014509
+  :HRUID   888
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.0
+  :LakeArea    457384.354
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1012595   ######## 
+  :SubBasinID  272
+  :HRUID   889
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.9
+  :LakeArea    612509.574
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1011541   ######## 
+  :SubBasinID  1013020
+  :HRUID   890
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.0
+  :LakeArea    161595.293
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1012983   ######## 
+  :SubBasinID  1014462
+  :HRUID   891
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.0
+  :LakeArea    114421.699
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1008945   ######## 
+  :SubBasinID  1010424
+  :HRUID   892
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.0
+  :LakeArea    376064.804
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_106583   ######## 
+  :SubBasinID  764
+  :HRUID   893
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.2
+  :LakeArea    1043864.378
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1008944   ######## 
+  :SubBasinID  1010423
+  :HRUID   894
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.1
+  :LakeArea    110313.018
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1012440   ######## 
+  :SubBasinID  1013919
+  :HRUID   895
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.7
+  :LakeArea    123510.74
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019957   ######## 
+  :SubBasinID  1021436
+  :HRUID   896
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.5
+  :LakeArea    216848.263
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1020313   ######## 
+  :SubBasinID  1021792
+  :HRUID   897
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.0
+  :LakeArea    159978.903
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019956   ######## 
+  :SubBasinID  1021435
+  :HRUID   898
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.2
+  :LakeArea    172799.84
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016449   ######## 
+  :SubBasinID  201
+  :HRUID   899
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.5
+  :LakeArea    105069.946
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013499   ######## 
+  :SubBasinID  1014978
+  :HRUID   900
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.4
+  :LakeArea    176536.246
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1006526   ######## 
+  :SubBasinID  1008005
+  :HRUID   901
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.1
+  :LakeArea    126424.908
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013500   ######## 
+  :SubBasinID  1014979
+  :HRUID   902
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.9
+  :LakeArea    137176.696
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009697   ######## 
+  :SubBasinID  226
+  :HRUID   903
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.9
+  :LakeArea    610123.912
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_105114   ######## 
+  :SubBasinID  229
+  :HRUID   904
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 8.9
+  :LakeArea    2849275.718
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1014563   ######## 
+  :SubBasinID  1016042
+  :HRUID   905
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.9
+  :LakeArea    243922.264
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1014061   ######## 
+  :SubBasinID  1015540
+  :HRUID   906
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.1
+  :LakeArea    154269.389
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1007503   ######## 
+  :SubBasinID  1008982
+  :HRUID   907
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.2
+  :LakeArea    171961.023
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1014077   ######## 
+  :SubBasinID  300
+  :HRUID   908
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.3
+  :LakeArea    470104.386
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018899   ######## 
+  :SubBasinID  1020378
+  :HRUID   909
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.4
+  :LakeArea    186181.909
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1014804   ######## 
+  :SubBasinID  301
+  :HRUID   910
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.9
+  :LakeArea    468886.653
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009518   ######## 
+  :SubBasinID  1010997
+  :HRUID   911
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.9
+  :LakeArea    119870.381
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016431   ######## 
+  :SubBasinID  295
+  :HRUID   912
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.3
+  :LakeArea    254265.467
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016883   ######## 
+  :SubBasinID  1018362
+  :HRUID   913
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.1
+  :LakeArea    466509.591
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1007974   ######## 
+  :SubBasinID  1009453
+  :HRUID   914
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.9
+  :LakeArea    160412.963
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1014135   ######## 
+  :SubBasinID  310
+  :HRUID   915
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.7
+  :LakeArea    102329.947
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_105027   ######## 
+  :SubBasinID  106506
+  :HRUID   916
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.7
+  :LakeArea    1163748.041
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1010506   ######## 
+  :SubBasinID  1011985
+  :HRUID   917
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.2
+  :LakeArea    162033.26
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015087   ######## 
+  :SubBasinID  1016566
+  :HRUID   918
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.1
+  :LakeArea    165414.357
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_106060   ######## 
+  :SubBasinID  107539
+  :HRUID   919
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 7.8
+  :LakeArea    1998615.067
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1012524   ######## 
+  :SubBasinID  1014003
+  :HRUID   920
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.3
+  :LakeArea    103283.684
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1007543   ######## 
+  :SubBasinID  1009022
+  :HRUID   921
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.1
+  :LakeArea    97203.464
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1016985   ######## 
+  :SubBasinID  307
+  :HRUID   922
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.5
+  :LakeArea    105176.834
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018927   ######## 
+  :SubBasinID  1020406
+  :HRUID   923
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.8
+  :LakeArea    132571.487
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_105789   ######## 
+  :SubBasinID  234
+  :HRUID   924
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 9.3
+  :LakeArea    3832931.761
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1012457   ######## 
+  :SubBasinID  1013936
+  :HRUID   925
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.6
+  :LakeArea    575383.388
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019575   ######## 
+  :SubBasinID  677
+  :HRUID   926
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.5
+  :LakeArea    118727.463
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013396   ######## 
+  :SubBasinID  1014875
+  :HRUID   927
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.4
+  :LakeArea    122203.498
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1009281   ######## 
+  :SubBasinID  231
+  :HRUID   928
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.5
+  :LakeArea    344465.28
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018326   ######## 
+  :SubBasinID  1019805
+  :HRUID   929
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 2.6
+  :LakeArea    102726.752
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_106384   ######## 
+  :SubBasinID  676
+  :HRUID   930
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.8
+  :LakeArea    1361936.565
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1011514   ######## 
+  :SubBasinID  240
+  :HRUID   931
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.2
+  :LakeArea    452700.013
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_105505   ######## 
+  :SubBasinID  241
+  :HRUID   932
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 10.8
+  :LakeArea    3412664.888
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1011823   ######## 
+  :SubBasinID  243
+  :HRUID   933
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.5
+  :LakeArea    736010.375
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1022851   ######## 
+  :SubBasinID  1024330
+  :HRUID   934
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.3
+  :LakeArea    107330.657
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1018333   ######## 
+  :SubBasinID  1019812
+  :HRUID   935
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.6
+  :LakeArea    165004.923
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019701   ######## 
+  :SubBasinID  647
+  :HRUID   936
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.4
+  :LakeArea    397256.484
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1012458   ######## 
+  :SubBasinID  1013937
+  :HRUID   937
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.2
+  :LakeArea    428735.975
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1017834   ######## 
+  :SubBasinID  1019313
+  :HRUID   938
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.4
+  :LakeArea    243460.368
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013976   ######## 
+  :SubBasinID  1015455
+  :HRUID   939
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.7
+  :LakeArea    194623.23
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1019858   ######## 
+  :SubBasinID  1021337
+  :HRUID   941
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.3
+  :LakeArea    319393.572
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1012475   ######## 
+  :SubBasinID  1013954
+  :HRUID   942
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.8
+  :LakeArea    257357.504
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_105626   ######## 
+  :SubBasinID  208
+  :HRUID   943
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.8
+  :LakeArea    1500241.087
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1012701   ######## 
+  :SubBasinID  210
+  :HRUID   944
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.9
+  :LakeArea    187965.883
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1012507   ######## 
+  :SubBasinID  209
+  :HRUID   945
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.2
+  :LakeArea    106660.819
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1013977   ######## 
+  :SubBasinID  1015456
+  :HRUID   946
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.3
+  :LakeArea    234730.536
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015502   ######## 
+  :SubBasinID  1016981
+  :HRUID   947
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 3.2
+  :LakeArea    136014.589
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1015537   ######## 
+  :SubBasinID  1017016
+  :HRUID   948
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 5.8
+  :LakeArea    434669.819
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1008443   ######## 
+  :SubBasinID  1009922
+  :HRUID   949
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.8
+  :LakeArea    248568.685
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1007424   ######## 
+  :SubBasinID  1008903
+  :HRUID   950
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 4.6
+  :LakeArea    123157.05
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_1005905   ######## 
+  :SubBasinID  1007384
+  :HRUID   951
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 6.0
+  :LakeArea    202695.106
+:EndReservoir   
+#############################################
+###New Lake starts
+:Reservoir   Lake_8508   ######## 
+  :SubBasinID  256
+  :HRUID   952
+  :Type RESROUTE_STANDARD   
+  :WeirCoefficient  0.6
+  :CrestWidth 1.2345
+  :MaxDepth 20.1
+  :LakeArea    56661383.52
+:EndReservoir   
+#############################################
+###New Lake starts
