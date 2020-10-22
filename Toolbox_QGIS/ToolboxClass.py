@@ -4232,7 +4232,64 @@ class LRRT:
                          Selection_Method = 'ByArea',
                          Selected_Lake_List_in=[],
                          OutputFolder = '#'):
+        """Simplify the routing product by lake area 
 
+        Function that used to simplify the routing product by user 
+        provided lake area thresthold 
+
+        Parameters
+        ----------
+
+        Path_final_riv_ply             : string 
+            Path to the catchment polygon which is the routing product 
+            before merging lakes catchments and need to be processed before 
+            used. It is the input for simplify the routing product based 
+            on lake area or drianage area.  
+            routing product and can be directly used. 
+        Path_final_riv                 : string 
+            Path to the river polyline which is the routing product 
+            before merging lakes catchments and need to be processed before 
+            used. It is the input for simplify the routing product based 
+            on lake area or drianage area.    
+        Path_Con_Lake_ply              : string 
+            Path to a connected lake polygon. Connected lakes are lakes that
+            are connected by Path_final_cat_riv or Path_final_riv.
+        Path_NonCon_Lake_ply           : string 
+            Path to a non connected lake polygon. Connected lakes are lakes
+            that are not connected by Path_final_cat_riv or Path_final_riv.
+        Thres_Area_Conn_Lakes          : float (optional)
+            It is the lake area threshold for connated lakes, in km2
+        Thres_Area_Non_Conn_Lakes      : float (optional)
+            It is the lake area threshold for non connated lakes, in km2             
+        Selection_Method               : String 
+            It is a string indicate lake selection methods
+            "ByArea" means lake in the routing product will be selected based 
+            on two lake area thresthold Thres_Area_Conn_Lakes and 
+            Thres_Area_Non_Conn_Lakes
+            "ByLakelist" means lake in the routing product will be selected 
+            based on user provided hydrolake id, in Selected_Lake_List_in
+        OutputFolder                   : string 
+            Folder name that stores generated extracted routing product 
+         
+
+
+        Notes
+        -------
+        This function has no return values, instead will generate following
+        files. 
+        os.path.join(OutputFolder,os.path.basename(Path_final_riv_ply))
+        os.path.join(OutputFolder,os.path.basename(Path_final_riv))
+        os.path.join(OutputFolder,os.path.basename(Path_Con_Lake_ply))
+        os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply))
+        
+        Returns:
+        -------
+        None   
+
+        Examples
+        -------
+
+        """
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
         Qgs.initQgis()
