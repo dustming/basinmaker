@@ -3803,12 +3803,13 @@ class LRRT:
             r_dem_layer = QgsVectorLayer(Path_products, "") 
             SpRef_in = r_dem_layer.crs().authid()   
             processing.run("native:reprojectlayer", {'INPUT':Path_Points,'TARGET_CRS':QgsCoordinateReferenceSystem(SpRef_in),'OUTPUT':os.path.join(self.tempfolder,'Obspoint_project2.shp')})
-            processing.run("saga:addpolygonattributestopoints", {'INPUT':os.path.join(self.tempfolder,'Obspoint_project2.shp'),'POLYGONS':Path_products,'FIELDS':subid_col_Name,'OUTPUT':os.path.join(self.tempfolder,'Sub_Selected_by_Points.shp')})
+            processing.run("saga:addpolygonattributestopoints", {'INPUT':os.path.join(self.tempfolder,'Obspoint_project2.shp'),'POLYGONS':Path_products,'FIELDS':'SubId','OUTPUT':os.path.join(self.tempfolder,'Sub_Selected_by_Points.shp')})
+            print(self.tempfolder)
             hyinfocsv  = os.path.join(self.tempfolder,'Sub_Selected_by_Points.shp')[:-3] + "dbf"
             tempinfo   = Dbf5(hyinfocsv)
             hyshdinfo2 = tempinfo.to_dataframe()
     #        hyshdinfo2.to_csv(os.path.join(self.OutputFolder,'SubIds_Selected.csv'),sep=',', index = None)
-            SubId_Selected = hyshdinfo2['SubID'].values
+            SubId_Selected = hyshdinfo2['SubId'].values
             SubId_Selected = SubId_Selected[SubId_Selected > 0]
 
         Qgs.exit()
