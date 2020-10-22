@@ -863,7 +863,6 @@ def Calculate_Longest_flowpath(mainriv_merg_info):
 def New_SubId_To_Dissolve(subid,catchmentinfo,mapoldnew_info,upsubid = -1,ismodifids = -1,modifiidin = [-1],mainriv = [-1],Islake = -1,seg_order = -1):
     sub_colnm = 'SubId'
     routing_info      = catchmentinfo[['SubId','DowSubId']].astype('float').values
-
     if ismodifids < 0:
         Modify_subids1            = Defcat(routing_info,subid)   ### find all subids drainage to this subid
         if upsubid > 0:
@@ -878,12 +877,12 @@ def New_SubId_To_Dissolve(subid,catchmentinfo,mapoldnew_info,upsubid = -1,ismodi
 #    print("##########################################")
 #    print(subid)
 #    print(Modify_subids)
-    cbranch                  = catchmentinfo[catchmentinfo[sub_colnm].isin(Modify_subids)]
-    tarinfo                  = catchmentinfo[catchmentinfo[sub_colnm] == subid]   ### define these subs attributes
+    cbranch                  = catchmentinfo[catchmentinfo[sub_colnm].isin(Modify_subids)].copy()
+    tarinfo                  = catchmentinfo[catchmentinfo[sub_colnm] == subid].copy()   ### define these subs attributes
     ### average river slope info
-
-    mainriv_merg_info = mainriv.loc[mainriv['SubId'].isin(Modify_subids)]
-    mainriv_merg_info = mainriv_merg_info.loc[mainriv_merg_info['RivLength'] > 0]
+   
+    mainriv_merg_info = mainriv.loc[mainriv['SubId'].isin(Modify_subids)].copy()
+    mainriv_merg_info = mainriv_merg_info.loc[mainriv_merg_info['RivLength'] > 0].copy()
     idx = tarinfo.index[0]
 #    print(tarinfo.loc[idx,'BasArea'],"1")
     if len(mainriv_merg_info) > 0:
@@ -4344,11 +4343,10 @@ class LRRT:
         ### read riv ply info
         finalrivply_csv     = Path_Temp_final_rviply[:-3] + "dbf"
         finalrivply_info    = Dbf5(finalrivply_csv)
-        finalrivply_info    = finalrivply_info.to_dataframe().drop_duplicates(sub_colnm, keep='first')
+        finalrivply_info    = finalrivply_info.to_dataframe().drop_duplicates('SubId', keep='first')
 
         mapoldnew_info      = finalrivply_info.copy(deep = True)
-        mapoldnew_info['nsubid'] = mapoldnew_info['SubId']
-
+        mapoldnew_info['nsubid'] = mapoldnew_info['SubId'].values
         AllConnectLakeIDS   = finalrivply_info['HyLakeId'].values
         AllConnectLakeIDS   = AllConnectLakeIDS[AllConnectLakeIDS > 0]
         AllConnectLakeIDS   = np.unique(AllConnectLakeIDS)
@@ -4362,7 +4360,6 @@ class LRRT:
             lakesubids   = Lakesub_info[sub_colnm].values
             if len(lakesubids) > 1:  ## only for connected lakes
                 mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalrivply_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = lakesubids,mainriv = finalrivply_info,Islake = 1)
-
         UpdateTopology(mapoldnew_info,UpdateStreamorder = -1)
         mapoldnew_info.to_csv( os.path.join(Datafolder,'mapoldnew.csv'),sep=',',index=None)
 
