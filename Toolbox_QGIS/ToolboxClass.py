@@ -3735,10 +3735,10 @@ class LRRT:
             obsnms.to_csv(os.path.join(Obs_Folder,'obsinfo.csv'))
 
 
-    def Locate_subid_needsbyuser(self,Path_Points = '#', Guage_NMS = '#',Path_products='#'):
+    def Locate_subid_needsbyuser(self,Path_Points = '#', Gauge_NMS = '#',Path_products='#'):
         """Get Subbasin Ids 
 
-        Function that used to obtain subbasin ID of certain guage.
+        Function that used to obtain subbasin ID of certain gauge.
         or subbasin ID of the polygon that includes the given point
         shpfile. 
 
@@ -3749,7 +3749,7 @@ class LRRT:
             provided. The function will return subids of those catchment 
             polygons that includes these point 
 
-        Guage_NMS        : list
+        Gauge_NMS        : list
             Name of the streamflow gauges, such as ['09PC019'], if the gauge 
             name is provided, the subbasin ID that contain this gauge will be 
             returned
@@ -3764,7 +3764,7 @@ class LRRT:
 
         Notes
         -------
-        Path_Points or Guage_NMS should only provide one each time use this 
+        Path_Points or Gauge_NMS should only provide one each time use this 
         function 
 
         Returns:
@@ -3789,12 +3789,12 @@ class LRRT:
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
 
         SubId_Selected = -1
-        if Guage_NMS[0] != '#':
+        if Gauge_NMS[0] != '#':
             hyinfocsv  = Path_products[:-3] + "dbf"
             tempinfo   = Dbf5(hyinfocsv)
             hyshdinfo2 = tempinfo.to_dataframe().drop_duplicates('SubId', keep='first')
             hyshdinfo2 = hyshdinfo2.loc[hyshdinfo2['Obs_NM'] != '-9999.0']
-            hyshdinfo2 = hyshdinfo2.loc[hyshdinfo2['Obs_NM'].isin(Guage_NMS)]
+            hyshdinfo2 = hyshdinfo2.loc[hyshdinfo2['Obs_NM'].isin(Gauge_NMS)]
             hyshdinfo2 = hyshdinfo2[['Obs_NM','SubId']]
 #            hyshdinfo2.to_csv(os.path.join(self.OutputFolder,'SubIds_Selected.csv'),sep=',', index = None)
             SubId_Selected = hyshdinfo2['SubId'].values
@@ -3942,9 +3942,9 @@ class LRRT:
 
         Function that used to simplify the routing product by user 
         provided minimum drainage area. 
-        The input catchment polygons before merging for lakes. It 
-        is provided with the routing product.
-        The result is simplified catchment before merging for lakes.
+        The input catchment polygons are routing product before  
+        merging for lakes. It is provided with the routing product.
+        The result is still simplified catchment before merging for lakes.
         The result generated from this tools need further processed 
         by Define_Final_Catchment 
 
@@ -4241,8 +4241,8 @@ class LRRT:
 
         Function that used to simplify the routing product by user 
         provided lake area thresthold. 
-        The input catchment polygons before merging for lakes. It 
-        is provided with the routing product.
+        The input catchment polygons is the routing product before  
+        merging for lakes. It is provided with the routing product.
         The result is simplified catchment before merging for lakes.
         The result generated from this tools need further processed 
         by Define_Final_Catchment 

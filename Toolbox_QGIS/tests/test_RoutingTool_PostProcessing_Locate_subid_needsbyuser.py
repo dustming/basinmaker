@@ -14,7 +14,7 @@ def test_Locate_subid_needsbyuser():
     Expect_SubIDs = [1024]
     
     RTtool=LRRT()
-    subids = RTtool.Locate_subid_needsbyuser(Guage_NMS = Gauge_NM,Path_products=Routing_Product)
+    subids = RTtool.Locate_subid_needsbyuser(Gauge_NMS = Gauge_NM,Path_products=Routing_Product)
     assert len(subids) == len(Expect_SubIDs)
     assert all([a == b for a, b in zip(subids, Expect_SubIDs)])
     
