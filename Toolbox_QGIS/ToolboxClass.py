@@ -1082,18 +1082,18 @@ def UpdateTopology(mapoldnew_info,UpdateStreamorder = 1,UpdateSubId = 1):
             subid      = mapoldnew_info.loc[idx[i],'SubId']
             odownsubid = mapoldnew_info.loc[idx[i],'DowSubId']
 
-            donsubidinfo = mapoldnew_info.loc[mapoldnew_info['SubId'] == odownsubid]
+            donsubidinfo = mapoldnew_info.loc[mapoldnew_info['SubId'] == odownsubid].copy()
 
             if (len(donsubidinfo) >0):
                 mapoldnew_info.loc[idx[i],'ndownsubid'] = donsubidinfo['nsubid'].values[0]
             else:
                 mapoldnew_info.loc[idx[i],'ndownsubid'] = -1
 
-        mapoldnew_info['Old_SubId']    = mapoldnew_info['SubId']
-        mapoldnew_info['Old_DowSubId'] = mapoldnew_info['DowSubId']
-        mapoldnew_info['SubId']        = mapoldnew_info['nsubid']
+        mapoldnew_info['Old_SubId']    = mapoldnew_info['SubId'].values
+        mapoldnew_info['Old_DowSubId'] = mapoldnew_info['DowSubId'].values
+        mapoldnew_info['SubId']        = mapoldnew_info['nsubid'].values
 
-        mapoldnew_info['DowSubId'] = mapoldnew_info['ndownsubid']
+        mapoldnew_info['DowSubId'] = mapoldnew_info['ndownsubid'].values
 
     if UpdateStreamorder < 0:
         return mapoldnew_info
@@ -4022,7 +4022,7 @@ class LRRT:
         finalriv_info    = Dbf5(finalriv_csv)
         finalriv_info    = finalriv_info.to_dataframe().drop_duplicates(sub_colnm, keep='first')
 
-        Selected_riv     = finalriv_info.loc[finalriv_info[DA_colnm] >= Area_Min*1000*1000] # find river with drainage area larger than area thresthold
+        Selected_riv     = finalriv_info.loc[finalriv_info[DA_colnm] >= Area_Min*1000*1000].copy() # find river with drainage area larger than area thresthold
 
         Selected_riv     = UpdateTopology(Selected_riv,UpdateSubId = -1)
         Selected_riv     = Selected_riv.sort_values(["Strahler"], ascending = (True))   ###sort selected river by Strahler stream order
@@ -4036,7 +4036,7 @@ class LRRT:
         ### Obtain connected lakes based on current river segment
         Connected_Lake_Mainriv = Selected_riv.loc[Selected_riv['IsLake'] == 1]['HyLakeId'].values
         Connected_Lake_Mainriv = np.unique(Connected_Lake_Mainriv[Connected_Lake_Mainriv>0])
-        Lakecover_riv          = finalriv_info.loc[finalriv_info['HyLakeId'].isin(Connected_Lake_Mainriv)]
+        Lakecover_riv          = finalriv_info.loc[finalriv_info['HyLakeId'].isin(Connected_Lake_Mainriv)].copy()
         Subid_lakes            = Lakecover_riv[sub_colnm].values
 
 
@@ -4048,8 +4048,8 @@ class LRRT:
         Conn_Lakes_ply              = Conn_Lakes_ply.drop_duplicates('Hylak_id', keep='first')
         All_Conn_Lakeids            = Conn_Lakes_ply['Hylak_id'].values
         mask                        = np.in1d(All_Conn_Lakeids, Connected_Lake_Mainriv)
-        Conn_To_NonConlakeids       = All_Conn_Lakeids[np.logical_not(mask)]
-        Conn_To_NonConlake_info     = finalriv_info.loc[finalriv_info['HyLakeId'].isin(Conn_To_NonConlakeids)]
+        Conn_To_NonConlakeids       = All_Conn_Lakeids[np.logical_not(mask)].copy()
+        Conn_To_NonConlake_info     = finalriv_info.loc[finalriv_info['HyLakeId'].isin(Conn_To_NonConlakeids)].copy()
 
 
         Old_Non_Connect_SubIds     = finalriv_info.loc[finalriv_info['IsLake'] == 2]['SubId'].values
@@ -4083,7 +4083,7 @@ class LRRT:
             for j in range(0,len(Riv_Seg_IDS)):
 
                 iriv_seg = Riv_Seg_IDS[j]
-                Lake_Cat_seg_info = Lake_Cat_info.loc[Lake_Cat_info['Seg_ID'] == iriv_seg]
+                Lake_Cat_seg_info = Lake_Cat_info.loc[Lake_Cat_info['Seg_ID'] == iriv_seg].copy()
                 Lake_Cat_seg_info = Lake_Cat_seg_info.sort_values(["DA"], ascending = (False))
                 tsubid            = Lake_Cat_seg_info['SubId'].values[0]
 
@@ -4104,7 +4104,7 @@ class LRRT:
         for iseg in range(0,len(Seg_IDS)):
 #            print('#########################################################################################33333')
             i_seg_id        = Seg_IDS[iseg]
-            i_seg_info      = Selected_riv[Selected_riv['Seg_ID'] == i_seg_id]
+            i_seg_info      = Selected_riv.loc[Selected_riv['Seg_ID'] == i_seg_id].copy()
             i_seg_info      = i_seg_info.sort_values(["Seg_order"], ascending = (True))
 
             modifysubids = []
@@ -4120,7 +4120,7 @@ class LRRT:
                     seg_sub_ids   = np.asarray(modifysubids)
                     ## if needs to add lake sub around the main stream
                     if iorder_Lakeid > 0:
-                        subid_cur_lake_info        = finalriv_info.loc[finalriv_info['HyLakeId'] ==iorder_Lakeid]
+                        subid_cur_lake_info        = finalriv_info.loc[finalriv_info['HyLakeId'] ==iorder_Lakeid].copy()
                         routing_info_lake          = subid_cur_lake_info[['SubId','DowSubId']].astype('float').values
                         UpstreamLakeids            = Defcat(routing_info_lake,tsubid)
                         seg_sub_ids                = np.unique(np.concatenate([seg_sub_ids,UpstreamLakeids]))
@@ -4151,7 +4151,7 @@ class LRRT:
                     seg_sub_ids    = np.asarray(modifysubids)
                     ## if needs to add lake sub around the main stream
                     if iorder_Lakeid > 0:
-                        subid_cur_lake_info        = finalriv_info.loc[finalriv_info['HyLakeId'] ==iorder_Lakeid]
+                        subid_cur_lake_info        = finalriv_info.loc[finalriv_info['HyLakeId'] ==iorder_Lakeid].copy()
                         routing_info_lake          = subid_cur_lake_info[['SubId','DowSubId']].astype('float').values
                         UpstreamLakeids            = Defcat(routing_info_lake,tsubid)
                         seg_sub_ids                = np.unique(np.concatenate([seg_sub_ids,UpstreamLakeids]))

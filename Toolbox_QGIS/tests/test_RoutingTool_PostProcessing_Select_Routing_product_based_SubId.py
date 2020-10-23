@@ -39,7 +39,7 @@ def test_Select_Routing_product_based_SubId():
     
     ## run extract function 
     RTtool=LRRT()
-    subids = RTtool.Select_Routing_product_based_SubId(OutputFolder = Output_Folder, 
+    RTtool.Select_Routing_product_based_SubId(OutputFolder = Output_Folder, 
                                                        Path_Catchment_Polygon = Path_final_cat_ply,
                                                        Path_River_Polyline = Path_final_cat_riv,
                                                        Path_Con_Lake_ply = Path_Con_Lake_ply,

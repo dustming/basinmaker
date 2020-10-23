@@ -32,7 +32,7 @@ def test_SelectLakes():
     Lake_Area_thresthold_NonConnected_Lake = 3  
     
     RTtool=LRRT()
-    subids = RTtool.SelectLakes(Path_final_riv_ply = Path_final_riv_ply,
+    RTtool.SelectLakes(Path_final_riv_ply = Path_final_riv_ply,
                                 Path_final_riv = Path_final_riv, 
                                 Path_Con_Lake_ply=Path_Con_Lake_ply,
                                 Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,

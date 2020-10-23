@@ -25,7 +25,7 @@ def test_Define_Final_Catchment():
     Path_final_riv       = os.path.join(Routing_Product_Folder,'finalriv_info.shp')     ### Catchment polygons 
      
     RTtool=LRRT()
-    subids = RTtool.Define_Final_Catchment(Path_final_rivply = Path_final_riv_ply,
+    RTtool.Define_Final_Catchment(Path_final_rivply = Path_final_riv_ply,
                                            Path_final_riv = Path_final_riv, 
                                            OutputFolder = Output_Folder)                                           
     ###Read  result in pd dataframe 

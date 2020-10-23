@@ -11,9 +11,9 @@ def func_Q_DA(A, k, c):
 
 def UpdateNonConnectedcatchmentinfo(catinfo):
     routing_info         = catinfo[['SubId','DowSubId']].astype('float').values
-    catinfo_non_connected         = catinfo.loc[catinfo['IsLake'] == 2]
+    catinfo_non_connected         = catinfo.loc[catinfo['IsLake'] == 2].copy()
 
-    catids_nc  = catinfo_non_connected['SubId']
+    catids_nc  = catinfo_non_connected['SubId'].copy()
 
     catinfo.loc[catinfo['SubId'].isin(catids_nc),'RivLength'] = 0.0 ## no reiver length since not connected.
 
@@ -21,13 +21,13 @@ def UpdateNonConnectedcatchmentinfo(catinfo):
     for i in range(0,len(catinfo_non_connected)):
         c_subid = catinfo_non_connected['SubId'].values[i]
         d_subid = catinfo_non_connected['DowSubId'].values[i]
-        d_sub_info = catinfo.loc[catinfo['SubId'] == d_subid]
+        d_sub_info = catinfo.loc[catinfo['SubId'] == d_subid].copy()
 
         lc_subid = d_subid
 
         Upstreamcats      = Defcat(routing_info,c_subid)     ### alll subuds
 
-        Up_cat_info       = catinfo.loc[catinfo['SubId'].isin(Upstreamcats)]
+        Up_cat_info       = catinfo.loc[catinfo['SubId'].isin(Upstreamcats)].copy()
 
         DA                =sum(Up_cat_info['BasArea'].values)
 
@@ -44,9 +44,9 @@ def UpdateNonConnectedcatchmentinfo(catinfo):
 
         while d_sub_info['IsLake'].values[0]  == 2:
 
-            lc_subid_info = catinfo.loc[catinfo['SubId'] == lc_subid]
+            lc_subid_info = catinfo.loc[catinfo['SubId'] == lc_subid].copy()
             d_subid = lc_subid_info['DowSubId'].values[0]
-            d_sub_info = catinfo.loc[catinfo['SubId'] == d_subid]
+            d_sub_info = catinfo.loc[catinfo['SubId'] == d_subid].copy()
             if len(d_sub_info) < 1:
                 lc_subid   = -1
                 break
@@ -324,8 +324,8 @@ def UpdateChannelinfo(catinfo,allcatid,Netcat_array,SubId_WidDep_array,WidDep_in
 
 
 def Streamorderanddrainagearea(catinfoall):
-    catinfo                 = catinfoall.loc[catinfoall['IsLake'] != 2]  ### remove none connected lake catchments, which do not connected to the river system
-    catinfo_ncl             = catinfoall.loc[catinfoall['IsLake'] == 2]
+    catinfo                 = catinfoall.loc[catinfoall['IsLake'] != 2].copy()  ### remove none connected lake catchments, which do not connected to the river system
+    catinfo_ncl             = catinfoall.loc[catinfoall['IsLake'] == 2].copy()
     routing_ncl             = catinfo_ncl[['SubId','DowSubId']].astype('float').values
 
     catlist = np.full((len(catinfo)), -9)
@@ -345,7 +345,7 @@ def Streamorderanddrainagearea(catinfoall):
                  DA_ncl = 0.0
             else:
                 Upstreamcats      = Defcat(routing_ncl,catid)     ### alll subuds
-                Up_cat_info       = catinfo_ncl.loc[catinfo_ncl['SubId'].isin(Upstreamcats)]
+                Up_cat_info       = catinfo_ncl.loc[catinfo_ncl['SubId'].isin(Upstreamcats)].copy()
 
                 if len(Up_cat_info) > 0:
                     DA_ncl            = sum(Up_cat_info['BasArea'].values)
@@ -371,8 +371,8 @@ def Streamorderanddrainagearea(catinfoall):
         F_intersect = 1
 #        print("new start            ",i,catid)
         while F_intersect == 1 and catid > 0:
-            Up_Reaches_info = catinfo[catinfo['DowSubId'] == catid]
-            cur_Reach_info = catinfo[catinfo['SubId'] == catid]
+            Up_Reaches_info = catinfo.loc[catinfo['DowSubId'] == catid].copy()
+            cur_Reach_info = catinfo.loc[catinfo['SubId'] == catid].copy()
             curcat_idx = catinfo['SubId'] == catid
 
             #### calculate DA of None connected lakes
@@ -383,7 +383,7 @@ def Streamorderanddrainagearea(catinfoall):
 #                print(catid)
 #                print(routing_ncl)
                 Upstreamcats      = Defcat(routing_ncl,catid)     ### alll subuds
-                Up_cat_info       = catinfo_ncl.loc[catinfo_ncl['SubId'].isin(Upstreamcats)]
+                Up_cat_info       = catinfo_ncl.loc[catinfo_ncl['SubId'].isin(Upstreamcats)].copy()
                 if len(Up_cat_info) > 0:
                     DA_ncl            = sum(Up_cat_info['BasArea'].values)
                 else:

@@ -20,7 +20,7 @@ def test_GenerateHRUS():
     Output_Folder = os.path.join('./testdata','testout')
          
     RTtool=LRRT()
-    subids = RTtool.GenerateHRUS(OutputFolder = Output_Folder,
+    RTtool.GenerateHRUS(OutputFolder = Output_Folder,
                                  Path_Subbasin_Ply =  os.path.join(Routing_Product_Folder,'finalcat_info.shp'),
          						 Path_Connect_Lake_ply = os.path.join(Routing_Product_Folder,'Con_Lake_Ply.shp'),
 								 Path_Non_Connect_Lake_ply = os.path.join(Routing_Product_Folder,'Non_Con_Lake_Ply.shp'),

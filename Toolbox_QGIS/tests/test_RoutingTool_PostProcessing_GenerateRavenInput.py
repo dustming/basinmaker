@@ -22,7 +22,7 @@ def test_GenerateRavenInput(HYDAT_Path):
     Path_final_hru_info   = os.path.join(Routing_Product_Folder,'finalcat_hru_info.shp') ### River polyline 
      
     RTtool=LRRT()
-    subids = RTtool.GenerateRavenInput(Path_final_hru_info = Path_final_hru_info,
+    RTtool.GenerateRavenInput(Path_final_hru_info = Path_final_hru_info,
                                        OutputFolder = Output_Folder,
                                        Model_Name   = 'Mytest_model',
                                        WriteObsrvt  = True,
