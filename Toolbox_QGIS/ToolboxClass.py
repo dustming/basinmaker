@@ -3414,11 +3414,9 @@ class LRRT:
                     upregid               =reg_outlet_info['SubId'].values[i]
                     if upregid == outletid or np.sum(np.in1d(HydroBasins1, upregid)) < 1: ### the subregion ouetlet not within the target domain neglect
                         continue
-                    print(upregid)
                     HydroBasins_remove   = Defcat(routing_info_ext,upregid)
                     mask                 = np.in1d(HydroBasins1, HydroBasins_remove)  ### exluced ids that belongs to main river stream
                     HydroBasins1         = HydroBasins1[np.logical_not(mask)]
-                print(HydroBasins1)
 
             HydroBasins = HydroBasins1
         else:
@@ -3435,7 +3433,7 @@ class LRRT:
             HydroBasins  = Defcat(routing_info_ext,outletid)
 
 
-        if Obtain_High_Acc_Cat == -1:
+        if Obtain_High_Acc_Cat == -1 and self.Is_Sub_Region < 0:
             HydroBasins = hyshdinfo2['SubId'].values
         ### extract region of interest
         Selectfeatureattributes(processing,Input = os.path.join(self.tempfolder,'finalriv_catinfo_dis.shp'),Output=os.path.join(self.tempfolder,'finalriv_catinfo_dis_sel.shp'),Attri_NM = 'SubId',Values = HydroBasins)
