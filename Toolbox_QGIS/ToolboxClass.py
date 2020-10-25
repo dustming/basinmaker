@@ -2407,7 +2407,7 @@ class LRRT:
             pass
 
         try:
-            self.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = CheckLakeArea,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 9000,Pec_Grid_outlier = 0.99,Is_divid_region=1,max_memroy = max_memory)
+            self.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = CheckLakeArea,Thre_Lake_Area_nonConnect = -1,Is_divid_region=1,max_memroy = max_memory)
         except:
             print("Check print infomation, some unknown error occured, may have no influence on result")
             pass
