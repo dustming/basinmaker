@@ -1233,7 +1233,7 @@ def Add_Attributes_To_shpfile(processing,context,Layer,Attris_NM = ['Reg_ID','nS
         'FIELD_NAME': Attris_NM[1],
         'FIELD_PRECISION': Field_Precision[1],
         'FIELD_TYPE': 0,
-        'FORMULA':'  \"SubId\" +  ( \"Reg_ID\"  - 80000  ) * 200000 ', #' \"'+'SubId'+'\"'  + '2000000',   #
+        'FORMULA':'  \"SubId\" +  ( \"Reg_ID\"  - 80000  ) * 2000000 ', #' \"'+'SubId'+'\"'  + '2000000',   #
         'INPUT': add_regionid['OUTPUT'],
         'NEW_FIELD': True,
         'OUTPUT':'memory:'
@@ -1245,7 +1245,7 @@ def Add_Attributes_To_shpfile(processing,context,Layer,Attris_NM = ['Reg_ID','nS
         'FIELD_NAME': Attris_NM[2],
         'FIELD_PRECISION': Field_Precision[2],
         'FIELD_TYPE': 0,
-        'FORMULA':'  \"DowSubId\" +  ( \"Reg_ID\"  - 80000  ) * 200000 ', #' \"DowSubId\"  +  \"Reg_ID\"  * 200000', #' \"'+'SubId'+'\"'  + '2000000',   #
+        'FORMULA':'  \"DowSubId\" +  ( \"Reg_ID\"  - 80000  ) * 2000000 ', #' \"DowSubId\"  +  \"Reg_ID\"  * 200000', #' \"'+'SubId'+'\"'  + '2000000',   #
         'INPUT': add_subid['OUTPUT'],
         'NEW_FIELD': True,
         'OUTPUT':OutputPath
@@ -2847,7 +2847,7 @@ class LRRT:
 ###########################################################################################3
 
 ############################################################################################
-    def AutomatedWatershedsandLakesFilterToolset(self,Thre_Lake_Area_Connect = 0,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 10000,Pec_Grid_outlier = 1.0,Is_divid_region = -1,
+    def AutomatedWatershedsandLakesFilterToolset(self,Thre_Lake_Area_Connect = 0,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 1000000000,Pec_Grid_outlier = 1.0,Is_divid_region = -1,
     max_memroy = 1024):
 
         tempinfo = Dbf5(self.Path_allLakeply[:-3] + "dbf")
@@ -3170,7 +3170,7 @@ class LRRT:
         return
 
 ############################################################################3
-    def RoutingNetworkTopologyUpdateToolset_riv(self,projection = 'default', Min_DA_for_func_Q_DA = 100000000, max_manning_n = 0.15,min_manning_n = 0.01,Outlet_Obs_ID = -1,Obtain_High_Acc_Cat= -1):
+    def RoutingNetworkTopologyUpdateToolset_riv(self,projection = 'default', Min_DA_for_func_Q_DA = 10000000000, max_manning_n = 0.15,min_manning_n = 0.01,Outlet_Obs_ID = -1,Obtain_High_Acc_Cat= -1):
         import grass.script as grass
         from grass.script import array as garray
         import grass.script.setup as gsetup
@@ -3482,6 +3482,8 @@ class LRRT:
         if self.Path_obspoint_in != '#':
             grass.run_command('v.out.ogr', input = 'obspoint',output = os.path.join(self.OutputFolder,'obspoint_inputs.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
             grass.run_command('v.out.ogr', input = 'obspoint_snap_r2v',output = os.path.join(self.OutputFolder,'obspoint_snap.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
+        Clean_Attribute_Name(os.path.join(self.OutputFolder,'finalriv_info.shp'),   self.FieldName_List_Product)
+        Clean_Attribute_Name(os.path.join(self.OutputFolder,'finalriv_info_ply.shp'), self.FieldName_List_Product)
 
         print("********************Add routing parameters done ********************")
         PERMANENT.close()
@@ -5218,7 +5220,7 @@ class LRRT:
             for i in range(0,len(Sub_Region_info)):
                 isubregion = Sub_Region_info['Sub_Reg_ID'].values[i]
 
-                Sub_Region_cat_info = AllCatinfo.loc[AllCatinfo['Reg_ID'] == isubregion]
+                Sub_Region_cat_info = AllCatinfo.loc[AllCatinfo['Reg_ID'] == isubregion].copy()
 
                 if len(Sub_Region_cat_info) <= 0:
                     continue
@@ -5231,7 +5233,7 @@ class LRRT:
                 Dow_Sub_Region_id = Sub_Region_info['Dow_Sub_Reg_Id'].values[i]
 
             #### find downetream id
-                Down_Sub_info = DownCatinfo[DownCatinfo['value'] == isubregion]
+                Down_Sub_info = DownCatinfo.loc[DownCatinfo['value'] == isubregion].copy()
 
                 if len(Down_Sub_info) > 0:
                     DownSubid   = Down_Sub_info['nSubId'].values[0]
