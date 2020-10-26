@@ -49,44 +49,52 @@ def test_WatershedDiscretizationToolset():
     RTtool=LRRT(dem_in = Path_DEM_small,WidDep = Path_bkf_wd,
                Lakefile = Path_Lake_ply,Landuse = Path_Landuse,
                Landuseinfo = Path_Roughness_landuse,
-               OutputFolder = Final_Result_Folder_Expected,
-               TempOutFolder = Temporary_Result_Folder_Expected,
+               OutputFolder = Final_Result_Folder_Result,
+               TempOutFolder = Temporary_Result_Folder_Result,
                )
     ### test using extent of input dem as processing extent 
-#    RTtool.Generatmaskregion()
-#    RTtool.Generateinputdata()
-#    RTtool.WatershedDiscretizationToolset(accthresold = 500)
+    RTtool.Generatmaskregion()
+    RTtool.Generateinputdata()
+    RTtool.WatershedDiscretizationToolset(accthresold = 500)
 #    RTtool.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = 0,
 #                                                    Thre_Lake_Area_nonConnect = 0)
-    RTtool.RoutingNetworkTopologyUpdateToolset_riv(projection = 'EPSG:3573')
-    RTtool.Define_Final_Catchment(OutputFolder = Final_Result_Folder_Expected,
-                                  Path_final_rivply = os.path.join(Final_Result_Folder_Expected,'finalriv_info_ply.shp'),
-                                  Path_final_riv    = os.path.join(Final_Result_Folder_Expected,'finalriv_info.shp'))
+#    RTtool.RoutingNetworkTopologyUpdateToolset_riv(projection = 'EPSG:3573')
+#    RTtool.Define_Final_Catchment(OutputFolder = Final_Result_Folder_Expected,
+#                                  Path_final_rivply = os.path.join(Final_Result_Folder_Expected,'finalriv_info_ply.shp'),
+#                                  Path_final_riv    = os.path.join(Final_Result_Folder_Expected,'finalriv_info.shp'))
     
-    # Expected_Mask_Array = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Expected,'grassdata_toolbox'),
-    #                                              grass_location = 'Geographic',
-    #                                              raster_mn = 'alllake')
-    # Result_Mask_Array   = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Result,'grassdata_toolbox'),
-    #                                              grass_location = 'Geographic',
-    #                                              raster_mn = 'alllake')
-    # assert (Expected_Mask_Array == Result_Mask_Array).all()
+    Expected_Mask_Array = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Expected,'grassdata_toolbox'),
+                                                  grass_location = 'Geographic',
+                                                  raster_mn = 'cat1')
+    Result_Mask_Array   = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Result,'grassdata_toolbox'),
+                                                  grass_location = 'Geographic',
+                                                  raster_mn = 'cat1')
+    assert (Expected_Mask_Array == Result_Mask_Array).all()
     # 
     # 
-    # Expected_Mask_Array = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Expected,'grassdata_toolbox'),
-    #                                              grass_location = 'Geographic',
-    #                                              raster_mn = 'Lake_Bound')
-    # Result_Mask_Array   = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Result,'grassdata_toolbox'),
-    #                                              grass_location = 'Geographic',
-    #                                              raster_mn = 'Lake_Bound')
-    # assert (Expected_Mask_Array == Result_Mask_Array).all()
+    Expected_Mask_Array = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Expected,'grassdata_toolbox'),
+                                                  grass_location = 'Geographic',
+                                                  raster_mn = 'str_grass_r')
+    Result_Mask_Array   = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Result,'grassdata_toolbox'),
+                                                  grass_location = 'Geographic',
+                                                  raster_mn = 'str_grass_r')
+    assert (Expected_Mask_Array == Result_Mask_Array).all()
     # 
     # 
-    # Expected_Mask_Array = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Expected,'grassdata_toolbox'),
-    #                                              grass_location = 'Geographic',
-    #                                              raster_mn = 'acc_grass')
-    # Result_Mask_Array   = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Result,'grassdata_toolbox'),
-    #                                              grass_location = 'Geographic',
-    #                                              raster_mn = 'acc_grass')
-    # assert (Expected_Mask_Array == Result_Mask_Array).all()
-    
-test_WatershedDiscretizationToolset()        
+    Expected_Mask_Array = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Expected,'grassdata_toolbox'),
+                                                  grass_location = 'Geographic',
+                                                  raster_mn = 'Connect_Lake')
+    Result_Mask_Array   = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Result,'grassdata_toolbox'),
+                                                  grass_location = 'Geographic',
+                                                  raster_mn = 'Connect_Lake')
+    assert (Expected_Mask_Array == Result_Mask_Array).all()
+     
+    Expected_Mask_Array = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Expected,'grassdata_toolbox'),
+                                                  grass_location = 'Geographic',
+                                                  raster_mn = 'Nonconnect_Lake')
+    Result_Mask_Array   = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Result,'grassdata_toolbox'),
+                                                  grass_location = 'Geographic',
+                                                  raster_mn = 'Nonconnect_Lake')
+
+    assert (Expected_Mask_Array == Result_Mask_Array).all()
+     
