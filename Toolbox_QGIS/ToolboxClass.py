@@ -1998,7 +1998,8 @@ class LRRT:
     OutputFolder                       : string (optional)
         The folder to store generated final results. 
     TempOutFolder                      : string (optional)
-        The folder to store generated temporary files. 
+        The folder to store generated temporary files.If not provied 
+        the temporary will be located at system temporary folder. 
     Path_Sub_Reg_Out_Folder            : string (optional)
         It is a string to a folder, which cotains the subregion data.
     Path_Sub_Reg_Out_Folder            : integer (optional)
@@ -2032,6 +2033,8 @@ class LRRT:
         Generate the final lake river routing structure by merging subbasin 
         polygons that are covered by the same lake. The input can be output of
         RoutingNetworkTopologyUpdateToolset_riv or other postprocessing tools
+    Output_Clean
+        Remove contents in TempOutFolder
     
     ----------
     Postprocessing tools to generate routing structure from 
