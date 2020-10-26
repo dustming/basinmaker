@@ -1,0 +1,9 @@
+name: WGS 84 / North Pole LAEA Canada
+datum: wgs84
+ellps: wgs84
+proj: laea
+lat_0: 90
+lon_0: -100
+x_0: 0
+y_0: 0
+no_defs: defined

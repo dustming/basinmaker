@@ -1,0 +1,15 @@
+COMMAND: r.to.vect --overwrite input="Net_cat" output="Net_cat_F1" type="area" column="value"
+GISDBASE: ./testdata\Temporary_output_folder\Expected_InDEM\grassdata_toolbox
+LOCATION: Geographic MAPSET: PERMANENT USER: m43han DATE: Mon Oct 26 15:54:37 2020
+---------------------------------------------------------------------------------
+COMMAND: v.db.addcolumn.py map=Net_cat_F1 'columns=GC_str VARCHAR(40)'
+GISDBASE: ./testdata\Temporary_output_folder\Expected_InDEM\grassdata_toolbox
+LOCATION: Geographic MAPSET: PERMANENT USER: m43han DATE: Mon Oct 26 15:54:38 2020
+---------------------------------------------------------------------------------
+COMMAND: v.db.addcolumn.py map=Net_cat_F1 'columns=Area_m double'
+GISDBASE: ./testdata\Temporary_output_folder\Expected_InDEM\grassdata_toolbox
+LOCATION: Geographic MAPSET: PERMANENT USER: m43han DATE: Mon Oct 26 15:54:39 2020
+---------------------------------------------------------------------------------
+COMMAND: v.db.update.py map=Net_cat_F1 column=GC_str qcol=value
+GISDBASE: ./testdata\Temporary_output_folder\Expected_InDEM\grassdata_toolbox
+LOCATION: Geographic MAPSET: PERMANENT USER: m43han DATE: Mon Oct 26 15:54:40 2020

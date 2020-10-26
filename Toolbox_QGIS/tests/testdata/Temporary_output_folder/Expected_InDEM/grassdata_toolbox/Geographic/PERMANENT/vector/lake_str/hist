@@ -1,0 +1,12 @@
+COMMAND: v.in.ogr --overwrite input="./testdata\Temporary_output_folder\Expected_InDEM\grassdata_toolbox_temp\Hylake.shp" output="Hylake" min_area=0.0001 type="" snap=-1
+GISDBASE: ./testdata\Temporary_output_folder\Expected_InDEM\grassdata_toolbox
+LOCATION: Geographic MAPSET: PERMANENT USER: m43han DATE: Mon Oct 26 15:48:55 2020
+-----------------------------------------------------
+17 input polygons
+Total area: 3.63069E+07 (25 areas)
+Overlapping area: 0 (0 areas)
+Area without category: 969862 (8 areas)
+---------------------------------------------------------------------------------
+COMMAND: v.select --overwrite ainput="Hylake" alayer="1" atype="point,line,area" binput="str" blayer="1" btype="point,line,area" output="lake_str" operator="overlap"
+GISDBASE: ./testdata\Temporary_output_folder\Expected_InDEM\grassdata_toolbox
+LOCATION: Geographic MAPSET: PERMANENT USER: m43han DATE: Mon Oct 26 15:49:06 2020

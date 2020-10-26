@@ -103,3 +103,4 @@ venv.bak/
 # mypy
 .mypy_cache/
 Toolbox_QGIS/QGIS_Toolbox.bat
+/Toolbox_QGIS/tests/testdata/Temporary_output_folder/testout/*

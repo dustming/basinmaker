@@ -1,0 +1,39 @@
+COMMAND: r.to.vect --overwrite input="Net_cat" output="Net_cat_F1" type="area" column="value"
+GISDBASE: ./testdata\Temporary_output_folder\Expected_InDEM\grassdata_toolbox
+LOCATION: Geographic MAPSET: PERMANENT USER: m43han DATE: Mon Oct 26 15:54:37 2020
+---------------------------------------------------------------------------------
+COMMAND: v.db.addcolumn.py map=Net_cat_F1 'columns=GC_str VARCHAR(40)'
+GISDBASE: ./testdata\Temporary_output_folder\Expected_InDEM\grassdata_toolbox
+LOCATION: Geographic MAPSET: PERMANENT USER: m43han DATE: Mon Oct 26 15:54:38 2020
+---------------------------------------------------------------------------------
+COMMAND: v.db.addcolumn.py map=Net_cat_F1 'columns=Area_m double'
+GISDBASE: ./testdata\Temporary_output_folder\Expected_InDEM\grassdata_toolbox
+LOCATION: Geographic MAPSET: PERMANENT USER: m43han DATE: Mon Oct 26 15:54:39 2020
+---------------------------------------------------------------------------------
+COMMAND: v.db.update.py map=Net_cat_F1 column=GC_str qcol=value
+GISDBASE: ./testdata\Temporary_output_folder\Expected_InDEM\grassdata_toolbox
+LOCATION: Geographic MAPSET: PERMANENT USER: m43han DATE: Mon Oct 26 15:54:40 2020
+---------------------------------------------------------------------------------
+COMMAND: v.reclass input="Net_cat_F1" layer="1" type="point,line,boundary,centroid" output="Net_cat_F_169876" column="GC_str"
+GISDBASE: ./testdata\Temporary_output_folder\Expected_InDEM\grassdata_toolbox
+LOCATION: Geographic MAPSET: PERMANENT USER: m43han DATE: Mon Oct 26 15:54:41 2020
+---------------------------------------------------------------------------------
+COMMAND: v.extract -d input="Net_cat_F_169876" layer="1" type="area" output="Net_cat_F" new=-1
+GISDBASE: ./testdata\Temporary_output_folder\Expected_InDEM\grassdata_toolbox
+LOCATION: Geographic MAPSET: PERMANENT USER: m43han DATE: Mon Oct 26 15:54:42 2020
+---------------------------------------------------------------------------------
+COMMAND: v.dissolve.py --o input=Net_cat_F1 column=GC_str output=Net_cat_F
+GISDBASE: ./testdata\Temporary_output_folder\Expected_InDEM\grassdata_toolbox
+LOCATION: Geographic MAPSET: PERMANENT USER: m43han DATE: Mon Oct 26 15:54:42 2020
+---------------------------------------------------------------------------------
+COMMAND: v.db.addcolumn.py map=Net_cat_F 'columns=Gridcode INT'
+GISDBASE: ./testdata\Temporary_output_folder\Expected_InDEM\grassdata_toolbox
+LOCATION: Geographic MAPSET: PERMANENT USER: m43han DATE: Mon Oct 26 15:54:43 2020
+---------------------------------------------------------------------------------
+COMMAND: v.db.update.py map=Net_cat_F column=Gridcode qcol=GC_str
+GISDBASE: ./testdata\Temporary_output_folder\Expected_InDEM\grassdata_toolbox
+LOCATION: Geographic MAPSET: PERMANENT USER: m43han DATE: Mon Oct 26 15:54:44 2020
+---------------------------------------------------------------------------------
+COMMAND: v.proj --overwrite location="Geographic" mapset="PERMANENT" input="Net_cat_F" smax=10000
+GISDBASE: ./testdata\Temporary_output_folder\Expected_InDEM\grassdata_toolbox
+LOCATION: Projected MAPSET: PERMANENT USER: m43han DATE: Mon Oct 26 15:54:59 2020

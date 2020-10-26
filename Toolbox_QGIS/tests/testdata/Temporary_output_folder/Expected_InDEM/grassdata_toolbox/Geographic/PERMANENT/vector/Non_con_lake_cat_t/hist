@@ -1,0 +1,11 @@
+COMMAND: r.to.vect --overwrite input="Non_con_lake_cat" output="Non_con_lake_cat_t" type="area" column="value"
+GISDBASE: ./testdata\Temporary_output_folder\Expected_InDEM\grassdata_toolbox
+LOCATION: Geographic MAPSET: PERMANENT USER: m43han DATE: Mon Oct 26 15:49:21 2020
+---------------------------------------------------------------------------------
+COMMAND: v.db.addcolumn.py map=Non_con_lake_cat_t 'columns=Gridcodes VARCHAR(40)'
+GISDBASE: ./testdata\Temporary_output_folder\Expected_InDEM\grassdata_toolbox
+LOCATION: Geographic MAPSET: PERMANENT USER: m43han DATE: Mon Oct 26 15:49:22 2020
+---------------------------------------------------------------------------------
+COMMAND: v.db.update.py map=Non_con_lake_cat_t column=Gridcodes qcol=value
+GISDBASE: ./testdata\Temporary_output_folder\Expected_InDEM\grassdata_toolbox
+LOCATION: Geographic MAPSET: PERMANENT USER: m43han DATE: Mon Oct 26 15:49:23 2020
