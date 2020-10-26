@@ -2083,7 +2083,8 @@ class LRRT:
     def __init__(self, dem_in = '#',WidDep = '#',Lakefile = '#'
                                      ,Landuse = '#',Landuseinfo = '#',obspoint = '#',
                                      OutputFolder = '#',TempOutFolder = '#', 
-                                     Path_Sub_Reg_Out_Folder = '#',Is_Sub_Region = -1):
+                                     Path_Sub_Reg_Out_Folder = '#',Is_Sub_Region = -1
+                                     ):
         self.Path_dem_in = dem_in
         self.Path_WiDep_in = WidDep
         self.Path_Lakefile_in = Lakefile
@@ -2105,18 +2106,10 @@ class LRRT:
             self.Path_Sub_reg_dem          = os.path.join(Path_Sub_Reg_Out_Folder,'Sub_Reg_dem.pack')
 
         if OutputFolder != '#':
-            self.Path_OutputFolder = OutputFolder
+            self.OutputFolder = OutputFolder
         else:
-            self.Path_OutputFolder = os.path.join(tempfile.gettempdir(),str(np.random.randint(1, 10000 + 1)))
+            self.OutputFolder = os.path.join(tempfile.gettempdir(),str(np.random.randint(1, 10000 + 1)))
 
-
-        self.ProjectNM = str(np.random.randint(1, 10000 + 1))
-
-        if self.ProjectNM != '#':
-            self.OutputFolder = os.path.join(self.Path_OutputFolder,self.ProjectNM)
-
-            if not os.path.exists(self.OutputFolder):
-                os.makedirs(self.OutputFolder)
 
 
         self.Raveinputsfolder = self.OutputFolder + '/'+'RavenInput/'
@@ -2131,10 +2124,9 @@ class LRRT:
             if not os.path.exists(self.tempFolder):
                 os.makedirs(self.tempFolder)
                 
-        if self.ProjectNM != '#':
-            self.grassdb =os.path.join(self.tempFolder, 'grassdata_toolbox',self.ProjectNM)
-            if not os.path.exists(self.grassdb):
-                os.makedirs(self.grassdb)
+        self.grassdb =os.path.join(self.tempFolder, 'grassdata_toolbox')
+        if not os.path.exists(self.grassdb):
+            os.makedirs(self.grassdb)
 
         os.environ['GISDBASE'] = self.grassdb
 
@@ -2143,7 +2135,7 @@ class LRRT:
         self.grass_location_geo_temp1 = 'Geographic_temp1'
         self.grass_location_pro = 'Projected'
 
-        self.tempfolder = os.path.join(self.tempFolder, 'grassdata_toolbox_temp',self.ProjectNM)
+        self.tempfolder = os.path.join(self.tempFolder, 'grassdata_toolbox_temp')
 
         if not os.path.exists(self.tempfolder):
             os.makedirs(self.tempfolder)
@@ -2205,10 +2197,10 @@ class LRRT:
 
         Parameters
         ----------
-        OutletPoint                       : string (optional)
-            It is the path of the point file taht indicate the outlet of the
+        OutletPoint                       : list (optional)
+            It is list that indicate the outlet coordinates of the
             region of interest. If it is provided, the processing boundary polygon
-            will be defined as the drainage area controlled by this point.
+            will be defined as the drainage area controlled by this point. [x,y]
         Path_Sub_Polygon                  : string (optional)
             It is the path of a subregion polygon. It is only used when the Region
             of interest is very large and the resolution of the dem is very high.
