@@ -61,7 +61,7 @@ def test_AutomatedWatershedsandLakesFilterToolset():
     Expected outputs 
     ------- 
     all expected outputs are stored at a grass database in
-    <Temporary_Result_Folder_Expected>
+    os.path.join(Temporary_Result_Folder_Expected,'grassdata_toolbox')
          
     SelectedLakes                    : raster 
         it is a raster represent all lakes that are selected by two lake
@@ -83,7 +83,7 @@ def test_AutomatedWatershedsandLakesFilterToolset():
     test outputs 
     ------- 
     all test outputs are stored at a grass database in
-    <Temporary_Result_Folder_Result>           
+    os.path.join(Temporary_Result_Folder_Result,'grassdata_toolbox')           
     """
     ###The second version of routing product 
     Data_Folder  = './testdata/Required_data_to_start_from_dem/'
