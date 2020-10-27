@@ -57,26 +57,6 @@ def Return_Raster_As_Array(grassdb,grass_location,raster_mn):
 def test_AutomatedWatershedsandLakesFilterToolset():
     """test functiont that will: 
     Add lake inflow and outflow points as new subabsin outlet 
-    
-    Following result will be generated, but only two of them 
-    will be used to test this function. 
-    
-    SelectedLakes                    : raster 
-        it is a raster represent all lakes that are selected by two lake
-        area threstholds 
-    Select_Non_Connected_lakes       : raster 
-        it is a raster represent all non connected lakes that are selected 
-        by lake area threstholds 
-    Select_Connected_lakes           : raster 
-        it is a raster represent allconnected lakes that are selected 
-        by lake area threstholds 
-    nstr_seg                         : raster  
-        it is the updated river segment for each subbasin              
-    Net_cat                          : raster (tested)
-        it is a raster represent updated subbasins after adding lake inflow 
-        and outflow points as new subbasin outlet.  
-    ndir_grass                       : raster (tested) 
-        it is a raster represent modified flow directions
         
     """
     ###Floder where store the inputs for tests functions 
@@ -112,7 +92,7 @@ def test_AutomatedWatershedsandLakesFilterToolset():
     RTtool.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = 0,
                                                     Thre_Lake_Area_nonConnect = 0)
     
-    """Evalute raster Net_cat 
+    """Evaluate raster Net_cat 
        it is a subbsin raster after adding lake inlet and outlet as 
        additional subbasin outlet.      
     """
@@ -128,7 +108,7 @@ def test_AutomatedWatershedsandLakesFilterToolset():
     ### compare two Expected_Net_cat_Array and Result_Net_cat_Array 
     assert (Expected_Net_cat_Array == Result_Net_cat_Array).all()
 
-    """Evalute raster ndir_grass 
+    """Evaluate raster ndir_grass 
        it is a raster represent modified flow direction 
     """
     ### transfer expected raster ndir_grass into np array Expected_ndir_Array
@@ -138,8 +118,7 @@ def test_AutomatedWatershedsandLakesFilterToolset():
     ### transfer test raster ndir_grass into np array Result_ndir_Array
     Result_ndir_Array   = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Result,'grassdata_toolbox'),
                                                   grass_location = 'Geographic',
-                                                  raster_mn = 'ndir_grass')
-                                                  
+                                                  raster_mn = 'ndir_grass')                                          
     ### compare two Expected_ndir_Array and Result_ndir_Array 
     assert (Expected_ndir_Array == Result_ndir_Array).all()
     
