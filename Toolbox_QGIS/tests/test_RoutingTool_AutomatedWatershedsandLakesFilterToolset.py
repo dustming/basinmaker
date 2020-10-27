@@ -67,8 +67,8 @@ def test_AutomatedWatershedsandLakesFilterToolset():
     Temporary_Result_Folder_Expected = os.path.join('./testdata','Temporary_output_folder','Expected_InDEM')
      
     ###Folder where the output will be generated 
-    Temporary_Result_Folder_Result   = os.path.join('./testdata','Temporary_output_folder','testout')
-    Final_Result_Folder_Result       = os.path.join('./testdata','Final_output_folder','testout')
+    Temporary_Result_Folder_Result   = os.path.join('./testdata','Temporary_output_folder','testout1')
+    Final_Result_Folder_Result       = os.path.join('./testdata','Final_output_folder','testout1')
     shutil.rmtree(Temporary_Result_Folder_Result,ignore_errors=True)
     
     ###Define path of input dataset
