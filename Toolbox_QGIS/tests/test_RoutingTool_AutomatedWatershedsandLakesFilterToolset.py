@@ -55,7 +55,36 @@ def Return_Raster_As_Array(grassdb,grass_location,raster_mn):
     return Array
         
 def test_AutomatedWatershedsandLakesFilterToolset():
-
+    """test functiont that will: 
+    Add lake inflow and outflow points as new subabsin outlet
+    
+    Expected outputs 
+    ------- 
+    all expected outputs are stored at a grass database in
+    <Temporary_Result_Folder_Expected>
+         
+    SelectedLakes                    : raster 
+        it is a raster represent all lakes that are selected by two lake
+        area threstholds 
+    Select_Non_Connected_lakes       : raster 
+        it is a raster represent all non connected lakes that are selected 
+        by lake area threstholds 
+    Select_Connected_lakes           : raster 
+        it is a raster represent allconnected lakes that are selected 
+        by lake area threstholds 
+    nstr_seg                         : raster  
+        it is the updated river segment for each subbasin              
+    Net_cat                          : raster (test) 
+        it is a raster represent updated subbasins after adding lake inflow 
+        and outflow points as new subbasin outlet.  
+    ndir_grass                       : raster (test) 
+        it is a raster represent modified flow directions
+        
+    test outputs 
+    ------- 
+    all test outputs are stored at a grass database in
+    <Temporary_Result_Folder_Result>           
+    """
     ###The second version of routing product 
     Data_Folder  = './testdata/Required_data_to_start_from_dem/'
     
@@ -91,20 +120,20 @@ def test_AutomatedWatershedsandLakesFilterToolset():
 #                                  Path_final_rivply = os.path.join(Final_Result_Folder_Expected,'finalriv_info_ply.shp'),
 #                                  Path_final_riv    = os.path.join(Final_Result_Folder_Expected,'finalriv_info.shp'))
     
-    Expected_Mask_Array = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Expected,'grassdata_toolbox'),
+    Expected_Net_cat_Array = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Expected,'grassdata_toolbox'),
                                                   grass_location = 'Geographic',
                                                   raster_mn = 'Net_cat')
-    Result_Mask_Array   = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Result,'grassdata_toolbox'),
+    Result_Net_cat_Array   = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Result,'grassdata_toolbox'),
                                                   grass_location = 'Geographic',
                                                   raster_mn = 'Net_cat')
-    assert (Expected_Mask_Array == Result_Mask_Array).all()
+    assert (Expected_Net_cat_Array == Result_Net_cat_Array).all()
     # 
     # 
-    Expected_Mask_Array = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Expected,'grassdata_toolbox'),
+    Expected_ndir_Array = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Expected,'grassdata_toolbox'),
                                                   grass_location = 'Geographic',
                                                   raster_mn = 'ndir_grass')
-    Result_Mask_Array   = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Result,'grassdata_toolbox'),
+    Result_ndir_Array   = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Result,'grassdata_toolbox'),
                                                   grass_location = 'Geographic',
                                                   raster_mn = 'ndir_grass')
-    assert (Expected_Mask_Array == Result_Mask_Array).all()
+    assert (Expected_ndir_Array == Result_ndir_Array).all()
     RTtool.Output_Clean()

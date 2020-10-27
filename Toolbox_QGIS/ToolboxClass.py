@@ -3169,7 +3169,8 @@ class LRRT:
         Net_cat                          : raster 
             it is a raster represent updated subbasins after adding lake inflow 
             and outflow points as new subbasin outlet.  
-                    
+        ndir_grass                       : raster 
+            it is a raster represent modified flow directions     
         Returns:
         -------
            None
