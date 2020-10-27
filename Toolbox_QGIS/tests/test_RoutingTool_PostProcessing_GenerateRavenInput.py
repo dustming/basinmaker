@@ -39,4 +39,4 @@ def test_GenerateRavenInput(HYDAT_Path):
     assert filecmp.cmp(os.path.join(Output_Folder,'RavenInput','obs','02LE024_1024.rvt'),os.path.join(Expect_Result_Folder,'RavenInput','obs','02LE024_1024.rvt'))                      
     assert filecmp.cmp(os.path.join(Output_Folder,'RavenInput','obs','obsinfo.csv'),os.path.join(Expect_Result_Folder,'RavenInput','obs','obsinfo.csv'))                      
 
-    shutil.rmtree(Output_Folder) 
+    RTtool.Output_Clean()

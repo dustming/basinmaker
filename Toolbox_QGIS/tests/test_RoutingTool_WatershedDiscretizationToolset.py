@@ -35,7 +35,7 @@ def test_WatershedDiscretizationToolset():
     Temporary_Result_Folder_Expected = os.path.join('./testdata','Temporary_output_folder','Expected_InDEM')
     Temporary_Result_Folder_Result   = os.path.join('./testdata','Temporary_output_folder','testout')
     Final_Result_Folder_Result       = os.path.join('./testdata','Final_output_folder','testout')
-    
+    shutil.rmtree(Temporary_Result_Folder_Result,ignore_errors=True)
     ###The pathes for all inputs 
     Path_DEM_big           = os.path.join(Data_Folder, 'DEM_big_merit.tif')
     Path_DEM_small         = os.path.join(Data_Folder, 'DEM_samll_merit.tif')
@@ -62,7 +62,6 @@ def test_WatershedDiscretizationToolset():
 #    RTtool.Define_Final_Catchment(OutputFolder = Final_Result_Folder_Expected,
 #                                  Path_final_rivply = os.path.join(Final_Result_Folder_Expected,'finalriv_info_ply.shp'),
 #                                  Path_final_riv    = os.path.join(Final_Result_Folder_Expected,'finalriv_info.shp'))
-    
     Expected_Mask_Array = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Expected,'grassdata_toolbox'),
                                                   grass_location = 'Geographic',
                                                   raster_mn = 'cat1')
@@ -97,4 +96,5 @@ def test_WatershedDiscretizationToolset():
                                                   raster_mn = 'Nonconnect_Lake')
 
     assert (Expected_Mask_Array == Result_Mask_Array).all()
+    RTtool.Output_Clean()
      

@@ -35,7 +35,7 @@ def test_AutomatedWatershedsandLakesFilterToolset():
     Temporary_Result_Folder_Expected = os.path.join('./testdata','Temporary_output_folder','Expected_InDEM')
     Temporary_Result_Folder_Result   = os.path.join('./testdata','Temporary_output_folder','testout')
     Final_Result_Folder_Result       = os.path.join('./testdata','Final_output_folder','testout')
-    
+    shutil.rmtree(Temporary_Result_Folder_Result,ignore_errors=True)
     ###The pathes for all inputs 
     Path_DEM_big           = os.path.join(Data_Folder, 'DEM_big_merit.tif')
     Path_DEM_small         = os.path.join(Data_Folder, 'DEM_samll_merit.tif')
@@ -79,3 +79,4 @@ def test_AutomatedWatershedsandLakesFilterToolset():
                                                   grass_location = 'Geographic',
                                                   raster_mn = 'ndir_grass')
     assert (Expected_Mask_Array == Result_Mask_Array).all()
+    RTtool.Output_Clean()

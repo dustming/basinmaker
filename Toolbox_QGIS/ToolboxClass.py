@@ -3649,7 +3649,7 @@ class LRRT:
         return
 
 ###########################################################################3
-    def Output_Clean(self,Out = 'Simple',clean = 'True'):
+    def Output_Clean(self):
 
         import grass.script as grass
         from grass.script import array as garray

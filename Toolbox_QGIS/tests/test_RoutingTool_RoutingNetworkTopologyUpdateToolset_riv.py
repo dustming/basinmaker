@@ -38,6 +38,7 @@ def test_RoutingNetworkTopologyUpdateToolset_riv():
     Temporary_Result_Folder_Result   = os.path.join('./testdata','Temporary_output_folder','testout')
     Final_Result_Folder_Result       = os.path.join('./testdata','Final_output_folder','testout')
     
+    shutil.rmtree(Temporary_Result_Folder_Result,ignore_errors=True)
     ###The pathes for all inputs 
     Path_DEM_big           = os.path.join(Data_Folder, 'DEM_big_merit.tif')
     Path_DEM_small         = os.path.join(Data_Folder, 'DEM_samll_merit.tif')
@@ -61,7 +62,6 @@ def test_RoutingNetworkTopologyUpdateToolset_riv():
     RTtool.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = 0,
                                                     Thre_Lake_Area_nonConnect = 0)
     RTtool.RoutingNetworkTopologyUpdateToolset_riv(projection = 'EPSG:3573')
-
 #    RTtool.Define_Final_Catchment(OutputFolder = Final_Result_Folder_Expected,
 #                                  Path_final_rivply = os.path.join(Final_Result_Folder_Expected,'finalriv_info_ply.shp'),
 #                                  Path_final_riv    = os.path.join(Final_Result_Folder_Expected,'finalriv_info.shp'))
@@ -81,4 +81,5 @@ def test_RoutingNetworkTopologyUpdateToolset_riv():
     assert np.allclose(Result_Finalriv_info_ply['BasArea'].values,Expect_Finalriv_info_ply['BasArea'].values,atol = 0.001)
     assert Result_Con_Lake_Ply.equals(Expect_Con_Lake_Ply)
     assert Result_Non_Con_Lake_Ply.equals(Expect_Non_Con_Lake_Ply)
-        
+    RTtool.Output_Clean()
+    
