@@ -15,11 +15,39 @@ import copy
 os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
 
 def Dbf_To_Dataframe(file_path):
+    """Transfer an input dbf file to dataframe
+    
+    Parameters
+    ---------- 
+    file_path   : string
+    Full path to a shapefile 
+    
+    Returns:
+    -------
+    dataframe   : datafame 
+    a pandas dataframe of attribute table of input shapefile    
+    """
     tempinfo = Dbf5(file_path[:-3] + "dbf")
     dataframe = tempinfo.to_dataframe()
     return dataframe
     
-def Return_Raster_As_Array(grassdb,grass_location,raster_mn):    
+def Return_Raster_As_Array(grassdb,grass_location,raster_mn):
+    """Transfer an rater in grass database into np array
+    Parameters
+    ---------- 
+    grassdb         : string
+    Full path to a grass database 
+    grass_location  : string
+    location name in that grass database   
+    raster_mn       : string
+    raster name 
+        
+    Returns:
+    -------
+    Array            : array  
+    np array of the raster. 
+       
+    """     
     PERMANENT = Session()
     PERMANENT.open(gisdb=grassdb, location=grass_location,create_opts='')
     Array = copy.deepcopy(garray.array(mapname=raster_mn))
