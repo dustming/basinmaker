@@ -107,3 +107,5 @@ Toolbox_QGIS/QGIS_Toolbox.bat
 /Toolbox_QGIS/tests/testdata/Temporary_output_folder/Expected_InDEM/grassdata_toolbox/Geographic/PERMANENT/*
 /Toolbox_QGIS/tests/testdata/Temporary_output_folder/Expected_InDEM/grassdata_toolbox/Geographic/PERMANENT/.tmp/*
 /Toolbox_QGIS/tests/testdata/Final_output_folder/testout/*
+Toolbox_QGIS/tests/testdata/Temporary_output_folder/Expected_InDEM/grassdata_toolbox/Geographic/PERMANENT/sqlite/sqlite.db
+Toolbox_QGIS/tests/testdata/Temporary_output_folder/Expected_InDEM/grassdata_toolbox/Geographic/PERMANENT/sqlite/sqlite.db
