@@ -70,22 +70,22 @@ def test_GenerateHRUS():
     """ 
     
     ### transfer expected product into pandas dataframe
-    Expect_Finalriv_info_ply = Dbf_To_Dataframe(os.path.join(Expect_Result_Folder,'finalcat_hru_info.shp'))
+    Expect_finalcat_hru_info = Dbf_To_Dataframe(os.path.join(Expect_Result_Folder,'finalcat_hru_info.shp'))
     ### calcuate expected total number of HRUS:Expect_N_HRU
-    Expect_N_HRU = len(Expect_Finalriv_info_ply)
+    Expect_N_HRU = len(Expect_finalcat_hru_info)
     ### calcuate expected total river length :Expect_len_Riv
-    Expect_len_Riv = sum(Expect_Finalriv_info_ply['RivLength'])
+    Expect_len_Riv = sum(Expect_finalcat_hru_info['RivLength'])
     ### calcuate expected total HRU area :Expect_HRU_Area
-    Expect_HRU_Area = sum(Expect_Finalriv_info_ply['HRU_Area'])
+    Expect_HRU_Area = sum(Expect_finalcat_hru_info['HRU_Area'])
     
     ### transfer resulted product into pandas dataframe    
-    Result_Finalriv_info_ply = Dbf_To_Dataframe(os.path.join(Output_Folder,'finalcat_hru_info.shp'))
+    Result_finalcat_hru_info = Dbf_To_Dataframe(os.path.join(Output_Folder,'finalcat_hru_info.shp'))
     ### calcuate resulted total number of HRUS:Result_N_HRU
-    Result_N_HRU = len(Result_Finalriv_info_ply)
+    Result_N_HRU = len(Result_finalcat_hru_info)
     ### calcuate resulted total river length :Result_len_Riv
-    Result_len_Riv = sum(Result_Finalriv_info_ply['RivLength'])
+    Result_len_Riv = sum(Result_finalcat_hru_info['RivLength'])
     ### calcuate resulted total HRU area :Result_HRU_Area
-    Result_HRU_Area = sum(Result_Finalriv_info_ply['HRU_Area'])
+    Result_HRU_Area = sum(Result_finalcat_hru_info['HRU_Area'])
     
     ### compare Expect_N_HRU and Result_N_HRU
     assert Expect_N_HRU == Result_N_HRU

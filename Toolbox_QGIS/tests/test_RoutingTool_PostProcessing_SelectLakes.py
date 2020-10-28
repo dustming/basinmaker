@@ -43,7 +43,7 @@ def test_SelectLakes():
     Expect_Result_Folder = os.path.join('./testdata','Simplify_By_Lake_Area')
     
     ###Folder where the output will be generated 
-    Output_Folder = os.path.join('./testdata','testout')
+    Output_Folder = os.path.join('./testdata','testout10')
     
     
     ###The pathes for all inputs 

@@ -25,7 +25,7 @@ def test_GenerateRavenInput(HYDAT_Path):
     Expect_Result_Folder = os.path.join('./testdata','Simplified_By_DA')
 
     ###Folder where the output will be generated 
-    Output_Folder = os.path.join('./testdata','testout')
+    Output_Folder = os.path.join('./testdata','testout10')
     
     ###Define path of input dataset    
     CA_HYDAT   = HYDAT_Path

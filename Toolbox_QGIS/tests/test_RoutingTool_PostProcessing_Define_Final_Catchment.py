@@ -61,24 +61,24 @@ def test_Define_Final_Catchment():
     Lake_Area is the total lake area in the routing network     
     """ 
     ### transfer expected  product into pandas dataframe
-    Expect_Finalriv_info_ply = Dbf_To_Dataframe(os.path.join(Expect_Result_Folder,'finalcat_info.shp')).sort_values(by=['SubId'])
+    Expect_Finalcat_info = Dbf_To_Dataframe(os.path.join(Expect_Result_Folder,'finalcat_info.shp')).sort_values(by=['SubId'])
     ### calcuate expected total number of catchment:Expect_N_Cat
-    Expect_N_Cat = len(Expect_Finalriv_info_ply)
+    Expect_N_Cat = len(Expect_Finalcat_info)
     ### calcuate expected total river length :Expect_len_Riv
-    Expect_len_Riv = sum(Expect_Finalriv_info_ply['RivLength'])
+    Expect_len_Riv = sum(Expect_Finalcat_info['RivLength'])
     ### calcuate expected total basin area :Expect_Bas_Area
-    Expect_Bas_Area = sum(Expect_Finalriv_info_ply['BasArea'])
+    Expect_Bas_Area = sum(Expect_Finalcat_info['BasArea'])
     ### calcuate expected total lake area :Expect_Lake_Area
     Expect_Lake_Area = sum(Expect_Finalcat_info['LakeArea'])  
       
     ### transfer resulted  product into pandas dataframe    
-    Result_Finalriv_info_ply = Dbf_To_Dataframe(os.path.join(Output_Folder,'finalcat_info.shp')).sort_values(by=['SubId'])
+    Result_Finalcat_info = Dbf_To_Dataframe(os.path.join(Output_Folder,'finalcat_info.shp')).sort_values(by=['SubId'])
     ### calcuate resulted total number of catchment:Result_N_Cat
-    Result_N_Cat = len(Result_Finalriv_info_ply)
+    Result_N_Cat = len(Result_Finalcat_info)
     ### calcuate resulted total river length :Result_len_Riv
-    Result_len_Riv = sum(Result_Finalriv_info_ply['RivLength'])
+    Result_len_Riv = sum(Result_Finalcat_info['RivLength'])
     ### calcuate resulted total basin area :Result_Bas_Area
-    Result_Bas_Area = sum(Result_Finalriv_info_ply['BasArea'])
+    Result_Bas_Area = sum(Result_Finalcat_info['BasArea'])
     ### calcuate resulted total lake area :Result_Lake_Area
     Result_Lake_Area = sum(Result_Finalcat_info['LakeArea'])
 

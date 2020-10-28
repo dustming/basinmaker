@@ -72,8 +72,8 @@ def test_RoutingNetworkTopologyUpdateToolset_riv():
     Temporary_Result_Folder_Expected = os.path.join('./testdata','Temporary_output_folder','Expected_InDEM')
 
     ###Folder where the output will be generated     
-    Temporary_Result_Folder_Result   = os.path.join('./testdata','Temporary_output_folder','testout')
-    Final_Result_Folder_Result       = os.path.join('./testdata','Final_output_folder','testout')    
+    Temporary_Result_Folder_Result   = os.path.join('./testdata','Temporary_output_folder','testout4')
+    Final_Result_Folder_Result       = os.path.join('./testdata','Final_output_folder','testout4')    
     shutil.rmtree(Temporary_Result_Folder_Result,ignore_errors=True)
     
     ###The pathes for all inputs 
