@@ -3006,7 +3006,10 @@ class LRRT:
             str_grass_r
         obs                    : raster 
             it is the raster represent the observation gauges after 
-            snap to river network            
+            snap to river network 
+        cat1                   : raster 
+             it is the raster represent the delineated subbasins without
+             considering lakes            
         Returns:
         -------
            None
@@ -4031,7 +4034,7 @@ class LRRT:
         -------
         Following ouput files will be generated in "<OutputFolder>/RavenInput"
         modelname.rvh              - contains subbasins and HRUs
-        lakes.rvh                  - contains definition and parameters of lakes
+        Lakes.rvh                  - contains definition and parameters of lakes
         channel_properties.rvp     - contains definition and parameters for channels
         xxx.rvt                    - (optional) streamflow observation for each gauge 
                                      in shapefile database will be automatically 
@@ -5104,7 +5107,7 @@ class LRRT:
 
         """Generate HRU polygons and their attributes needed by hydrological model
 
-        Function that used to overlay: subbasin polygon, lake polygon (optional)
+        Function that be used to overlay: subbasin polygon, lake polygon (optional)
         , Land use polygon (optional), soil type polygon(optional),
         vegetation polygon (optional), and two other user defined polygons
         (optional).

@@ -55,7 +55,7 @@ def Return_Raster_As_Array(grassdb,grass_location,raster_mn):
     return Array
         
 def test_AutomatedWatershedsandLakesFilterToolset():
-    """test functiont that will: 
+    """test function that will: 
     Add lake inflow and outflow points as new subabsin outlet 
         
     """
@@ -72,7 +72,6 @@ def test_AutomatedWatershedsandLakesFilterToolset():
     shutil.rmtree(Temporary_Result_Folder_Result,ignore_errors=True)
     
     ###Define path of input dataset
-    ##path to DEM data 
     Path_DEM_small         = os.path.join(Data_Folder, 'DEM_samll_merit.tif')
     Path_Lake_ply          = os.path.join(Data_Folder, 'HyLake.shp')
     Path_bkf_wd            = os.path.join(Data_Folder, 'Bkfullwidth_depth.shp')
@@ -93,7 +92,7 @@ def test_AutomatedWatershedsandLakesFilterToolset():
                                                     Thre_Lake_Area_nonConnect = 0)
     
     """Evaluate raster Net_cat 
-       it is a subbsin raster after adding lake inlet and outlet as 
+       Net_cat is a subbsin raster after adding lake inlet and outlet as 
        additional subbasin outlet.      
     """
     ### transfer expected raster Net_cat into np array Expected_Net_cat_Array
@@ -109,7 +108,7 @@ def test_AutomatedWatershedsandLakesFilterToolset():
     assert (Expected_Net_cat_Array == Result_Net_cat_Array).all()
 
     """Evaluate raster ndir_grass 
-       it is a raster represent modified flow direction 
+       ndir_grass is a raster represent modified flow direction 
     """
     ### transfer expected raster ndir_grass into np array Expected_ndir_Array
     Expected_ndir_Array = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Expected,'grassdata_toolbox'),

@@ -54,61 +54,87 @@ def Return_Raster_As_Array(grassdb,grass_location,raster_mn):
     PERMANENT.close()
     return Array
         
-def test_Generatmaskregion():
-
-    ###The second version of routing product 
+def test_Generateinputdata():
+    """test function that will: 
+    Preprocessing input dataset, Function that used to project and clip 
+    input dataset such as DEM, Land use, Lake polygon etc with defined 
+    processing extent by function Generatmaskregion. And then it will
+    rasterize these vector files.
+        
+    """
+    ###Floder where store the inputs for tests function
     Data_Folder  = './testdata/Required_data_to_start_from_dem/'
     
+    ###Folder where store the expected resuts
     Final_Result_Folder_Expected     = os.path.join('./testdata','Final_output_folder','Expected_InDEM')
     Temporary_Result_Folder_Expected = os.path.join('./testdata','Temporary_output_folder','Expected_InDEM')
-    Temporary_Result_Folder_Result   = os.path.join('./testdata','Temporary_output_folder','testout')
-    Final_Result_Folder_Result       = os.path.join('./testdata','Final_output_folder','testout')
+    
+    ###Folder where the output will be generated 
+    Temporary_Result_Folder_Result   = os.path.join('./testdata','Temporary_output_folder','testout2')
+    Final_Result_Folder_Result       = os.path.join('./testdata','Final_output_folder','testout2')
     shutil.rmtree(Temporary_Result_Folder_Result,ignore_errors=True)
-    ###The pathes for all inputs 
+    
+    ###Define path of input dataset
     Path_DEM_big           = os.path.join(Data_Folder, 'DEM_big_merit.tif')
     Path_DEM_small         = os.path.join(Data_Folder, 'DEM_samll_merit.tif')
-
     Path_Lake_ply          = os.path.join(Data_Folder, 'HyLake.shp')
     Path_bkf_wd            = os.path.join(Data_Folder, 'Bkfullwidth_depth.shp')
     Path_Landuse           = os.path.join(Data_Folder, 'landuse.tif')
     Path_Roughness_landuse = os.path.join(Data_Folder, 'Landuse.csv')
-    ## run generate mask region using input dem  
-    
+
+    ###Generate test resuts    
     RTtool=LRRT(dem_in = Path_DEM_small,WidDep = Path_bkf_wd,
                Lakefile = Path_Lake_ply,Landuse = Path_Landuse,
                Landuseinfo = Path_Roughness_landuse,
                OutputFolder = Final_Result_Folder_Result,
                TempOutFolder = Temporary_Result_Folder_Result,
                )
-    ### test using extent of input dem as processing extent 
     RTtool.Generatmaskregion()
     RTtool.Generateinputdata()
-    
-    Expected_Mask_Array = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Expected,'grassdata_toolbox'),
+
+    """Evaluate raster alllake 
+       alllake is a lake raster which include all lakes
+    """ 
+    ### transfer expected raster alllake into np array Expected_alllake_Array   
+    Expected_alllake_Array = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Expected,'grassdata_toolbox'),
                                                  grass_location = 'Geographic',
                                                  raster_mn = 'alllake')
-    Result_Mask_Array   = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Result,'grassdata_toolbox'),
+    ### transfer resulted raster alllake into np array Result_alllake_Array
+    Result_alllake_Array   = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Result,'grassdata_toolbox'),
                                                  grass_location = 'Geographic',
                                                  raster_mn = 'alllake')
-    assert (Expected_Mask_Array == Result_Mask_Array).all()
+    ### compare two Expected_alllake_Array and Result_alllake_Array 
+    assert (Expected_alllake_Array == Result_alllake_Array).all()
     
-    
-    Expected_Mask_Array = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Expected,'grassdata_toolbox'),
+    """Evaluate raster Lake_Bound 
+       Lake_Bound is a raster represent the lake boundary grids  
+    """     
+    ### transfer expected raster Lake_Bound into np array Expected_LBound_Array       
+    Expected_LBound_Array = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Expected,'grassdata_toolbox'),
                                                  grass_location = 'Geographic',
                                                  raster_mn = 'Lake_Bound')
-    Result_Mask_Array   = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Result,'grassdata_toolbox'),
+    ### transfer resulted raster Lake_Bound into np array Result_LBound_Array
+    Result_LBound_Array   = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Result,'grassdata_toolbox'),
                                                  grass_location = 'Geographic',
                                                  raster_mn = 'Lake_Bound')
-    assert (Expected_Mask_Array == Result_Mask_Array).all()
+    ### compare two Expected_LBound_Array and Result_LBound_Array                                                  
+    assert (Expected_LBound_Array == Result_LBound_Array).all()
     
-    
-    Expected_Mask_Array = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Expected,'grassdata_toolbox'),
+    """Evaluate raster acc_grass 
+       Lake_Bound is the flow accumulation raster generated by 'r.watershed'  
+    """   
+    ### transfer expected raster acc_grass into np array Expected_acc_Array               
+    Expected_acc_Array = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Expected,'grassdata_toolbox'),
                                                  grass_location = 'Geographic',
                                                  raster_mn = 'acc_grass')
-    Result_Mask_Array   = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Result,'grassdata_toolbox'),
+    ### transfer resulted raster acc_grass into np array Result_acc_Array                                        
+    Result_acc_Array   = Return_Raster_As_Array(grassdb = os.path.join(Temporary_Result_Folder_Result,'grassdata_toolbox'),
                                                  grass_location = 'Geographic',
                                                  raster_mn = 'acc_grass')
-    assert (Expected_Mask_Array == Result_Mask_Array).all()
+    ### compare two Expected_acc_Array and Result_acc_Array                                                  
+    assert (Expected_acc_Array == Result_acc_Array).all()
+    
+    ### clean test output folder
     RTtool.Output_Clean()
 
         
