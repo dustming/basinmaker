@@ -2214,8 +2214,8 @@ class LRRT:
     def __init__(self, dem_in = '#',WidDep = '#',Lakefile = '#'
                                      ,Landuse = '#',Landuseinfo = '#',obspoint = '#',
                                      OutputFolder = '#',TempOutFolder = '#',
-                                     Path_Sub_Reg_Out_Folder = '#',Is_Sub_Region = -1
-                                     ):
+                                     Path_Sub_Reg_Out_Folder = '#',Is_Sub_Region = -1,
+                                     debug=False):
         self.Path_dem_in = dem_in
         self.Path_WiDep_in = WidDep
         self.Path_Lakefile_in = Lakefile
@@ -2223,6 +2223,7 @@ class LRRT:
         self.Path_Landuseinfo_in = Landuseinfo
         self.Path_obspoint_in = obspoint
         self.Path_Sub_Reg_Out_Folder = '#'
+        self.Debug = debug
         self.Is_Sub_Region          = Is_Sub_Region
         if Path_Sub_Reg_Out_Folder != '#':
             if not os.path.exists(Path_Sub_Reg_Out_Folder):
@@ -2256,7 +2257,6 @@ class LRRT:
             self.tempFolder =TempOutFolder
             if not os.path.exists(self.tempFolder):
                 os.makedirs(self.tempFolder)
-
         self.grassdb =os.path.join(self.tempFolder, 'grassdata_toolbox')
         if not os.path.exists(self.grassdb):
             os.makedirs(self.grassdb)
@@ -2395,7 +2395,6 @@ class LRRT:
 
         shutil.rmtree(self.grassdb,ignore_errors=True)
         shutil.rmtree(self.tempfolder,ignore_errors=True)
-
 
         if not os.path.exists(self.tempfolder):
                 os.makedirs(self.tempfolder)
@@ -3202,7 +3201,7 @@ class LRRT:
 ###########################################################################################3
 
 ############################################################################################
-    def AutomatedWatershedsandLakesFilterToolset(self,Thre_Lake_Area_Connect = 0,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 1000000000,Pec_Grid_outlier = 1.0,Is_divid_region = -1,
+    def AutomatedWatershedsandLakesFilterToolset(self,Thre_Lake_Area_Connect = 0,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 99999999999999,Pec_Grid_outlier = 1.0,Is_divid_region = -1,
     max_memroy = 1024):
 
         """Add lake inflow and outflow points as new subabsin outlet
@@ -3400,15 +3399,18 @@ class LRRT:
 
         outlakeids,chandir,ndir,BD_problem= check_lakecatchment(cat4_array,Lake1,acc_array,dir_array,bsid,self.nrows,self.ncols,LakeBD_array,nlakegrids,str_array,dir_array,Pec_Grid_outlier,MaximumLakegrids,Lakemorestream)
 
-        temparray[:,:] = chandir[:,:]
-        temparray.write(mapname="chandir", overwrite=True)
-        grass.run_command('r.null', map='chandir',setnull=-9999)
-#        grass.run_command('r.out.gdal', input = 'chandir',output = os.path.join(self.tempfolder,'chandir.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
 
-        temparray[:,:] = BD_problem[:,:]
-        temparray.write(mapname="BD_problem", overwrite=True)
-        grass.run_command('r.null', map='BD_problem',setnull=-9999)
-#        grass.run_command('r.out.gdal', input = 'BD_problem',output = os.path.join(self.tempfolder,'BD_problem.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
+        if self.Debug:
+            temparray[:,:] = chandir[:,:]
+            temparray.write(mapname="chandir", overwrite=True)
+            grass.run_command('r.null', map='chandir',setnull=-9999)
+            grass.run_command('r.out.gdal', input = 'chandir',output = os.path.join(self.tempfolder,'chandir.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
+
+        if self.Debug:
+            temparray[:,:] = BD_problem[:,:]
+            temparray.write(mapname="BD_problem", overwrite=True)
+            grass.run_command('r.null', map='BD_problem',setnull=-9999)
+            grass.run_command('r.out.gdal', input = 'BD_problem',output = os.path.join(self.tempfolder,'BD_problem.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
 
 
         temparray[:,:] = ndir[:,:]
@@ -3424,7 +3426,8 @@ class LRRT:
         df_P_2_F['eq'] = '='
         df_P_2_F.to_csv(os.path.join(self.tempfolder,'rule_cat5.txt'),sep = ' ',columns = ['cat','eq','value'],header = False,index=False)
         grass.run_command('r.reclass', input='cat5_t',output = 'cat5',rules =os.path.join(self.tempfolder,'rule_cat5.txt'), overwrite = True)
-#        grass.run_command('r.out.gdal', input = 'cat5',output = os.path.join(self.tempfolder,'cat5.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
+        if self.Debug:
+            grass.run_command('r.out.gdal', input = 'cat5',output = os.path.join(self.tempfolder,'cat5.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
         cat5_array =  garray.array(mapname="cat5")
         rowcols = np.argwhere(cat5_array == 0)
         cat5_array[rowcols[:,0],rowcols[:,1]] = -9999
@@ -3439,7 +3442,8 @@ class LRRT:
         if Is_divid_region > 0:
             print("********************Add lake into routing structure done ********************")
             return
-#        grass.run_command('r.out.gdal', input = 'finalcat',output = os.path.join(self.tempfolder,'cat_finaltddd.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
+        if self.Debug:
+            grass.run_command('r.out.gdal', input = 'finalcat',output = os.path.join(self.tempfolder,'finalcat.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
         temparray[:,:] = Non_con_lake_cat[:,:]
         temparray.write(mapname="Non_con_lake_cat", overwrite=True)
         grass.run_command('r.null', map='Non_con_lake_cat',setnull=-9999)
@@ -3568,7 +3572,8 @@ class LRRT:
         temparray.write(mapname="nstr_seg_t", overwrite=True)  #### write new stream id to a grass raster
         grass.run_command('r.null', map='nstr_seg_t',setnull=-9999)
         grass.run_command('r.mapcalc',expression = 'nstr_seg = int(nstr_seg_t)',overwrite = True)
-#        grass.run_command('r.out.gdal', input = 'nstr_seg',output =os.path.join(self.tempfolder,'nstr_seg.tif'),format= 'GTiff',overwrite = True)
+        if self.Debug:
+            grass.run_command('r.out.gdal', input = 'nstr_seg',output =os.path.join(self.tempfolder,'nstr_seg.tif'),format= 'GTiff',overwrite = True)
 
         ### Generate new catchment based on new stream
         grass.run_command('r.stream.basins',direction = 'ndir_grass', stream = 'nstr_seg', basins = 'Net_cat_connect_lake',overwrite = True)
@@ -3582,7 +3587,8 @@ class LRRT:
         grass.run_command('r.null', map='Non_con_lake_cat',setnull=[-9999,0])
         grass.run_command('r.mapcalc',expression = 'Non_con_lake_cat_t2 = int(Non_con_lake_cat) + ' + str(int(nstrid +10)),overwrite = True)
         grass.run_command('r.mapcalc',expression = 'Net_cat = if(isnull(Non_con_lake_cat_t2),Net_cat_connect_lake,Non_con_lake_cat_t2)',overwrite = True)
-#        grass.run_command('r.out.gdal', input = 'Net_cat',output =os.path.join(self.tempfolder,'Net_cat_test.tif'),format= 'GTiff',overwrite = True)
+        if self.Debug:
+            grass.run_command('r.out.gdal', input = 'Net_cat',output =os.path.join(self.tempfolder,'Net_cat_test.tif'),format= 'GTiff',overwrite = True)
 
         print("********************Add lake into routing structure done ********************")
         con.close()
