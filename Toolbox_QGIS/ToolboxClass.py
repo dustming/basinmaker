@@ -26,21 +26,21 @@ from AddlakesintoRoutingNetWork import Dirpoints_v3,check_lakecatchment
 
 def Dbf_To_Dataframe(file_path):
     """Transfer an input dbf file to dataframe
-    
+
     Parameters
-    ---------- 
+    ----------
     file_path   : string
-    Full path to a shapefile 
-    
+    Full path to a shapefile
+
     Returns:
     -------
-    dataframe   : datafame 
-    a pandas dataframe of attribute table of input shapefile    
+    dataframe   : datafame
+    a pandas dataframe of attribute table of input shapefile
     """
     tempinfo = Dbf5(file_path[:-3] + "dbf")
     dataframe = tempinfo.to_dataframe().copy()
     return dataframe
-    
+
 
 def checklakeboundary(lake1,lid,p_row,p_col):
     numnonlake = 0
@@ -896,7 +896,7 @@ def New_SubId_To_Dissolve(subid,catchmentinfo,mapoldnew_info,upsubid = -1,ismodi
     cbranch                  = catchmentinfo[catchmentinfo[sub_colnm].isin(Modify_subids)].copy()
     tarinfo                  = catchmentinfo[catchmentinfo[sub_colnm] == subid].copy()   ### define these subs attributes
     ### average river slope info
-   
+
     mainriv_merg_info = mainriv.loc[mainriv['SubId'].isin(Modify_subids)].copy()
     mainriv_merg_info = mainriv_merg_info.loc[mainriv_merg_info['RivLength'] > 0].copy()
     idx = tarinfo.index[0]
@@ -1226,12 +1226,87 @@ def ConnectLake_to_NonConnectLake_Updateinfo(NonC_Lakeinfo,finalriv_info,Merged_
 
     return NonC_Lakeinfo
 ##############################
-def Add_Attributes_To_shpfile(processing,context,Layer,SubID_info = '#', OutputPath = '#',Region_ID = 1):
 
+# def Conect_SubRegion_Update_Str_Order(AllCatinfo,DownCatinfo,Sub_Region_info)
+#
+#     ### update downsteam subbasin id for each subregion outlet subbasins
+#     ### current value is -1, updated to connected downstream subbasin ID
+#
+#     ###loop for each subregion
+#     for i in range(0,len(Sub_Region_info)):
+#
+#         ### obtain all subbasin data for i isubregion
+#         isubregion = Sub_Region_info['Sub_Reg_ID'].values[i]
+#         Sub_Region_cat_info = AllCatinfo.loc[AllCatinfo['Reg_ID'] == isubregion].copy()
+#
+#         ### check if this subregion exist in merged data
+#         if len(Sub_Region_cat_info) <= 0:
+#             continue
+#
+#         ### Subregion outlet subbasin ID
+#         outlet_mask = Sub_Region_cat_info['DowSubId'] == -1
+#         iReg_Outlet_Subid = Sub_Region_cat_info.loc[outlet_mask,'SubId'].values[0]    #(isubregion - 80000) * 200000 - 1
+#
+#         ### find downstream subregion id of current subregion
+#         Dow_Sub_Region_id = Sub_Region_info['Dow_Sub_Reg_Id'].values[i]
+#
+#         ### if this region has no down subregions. do not need to
+#         ### modify the dowsubid of the outlet subbasin of this subregion
+#         if Dow_Sub_Region_id < 0:
+#             continue
+#
+#         ### find downstrem subbasin id of outlet subbasin
+#         Down_Sub_info = DownCatinfo.loc[DownCatinfo['value'] == isubregion].copy()
+#
+#         if len(Down_Sub_info) == 1:###
+#             DownSubid   = Down_Sub_info['nSubId'].values[0]
+#             AllCatinfo.loc[outlet_mask,'DowSubId'] = DownSubid
+#         ### two subregion drainage to the same downstream subregion,
+#         ### the Down_Sub_info only contains one upper subregion
+#         ### the rest do not exist in Down_Sub_info
+#         elif len(Down_Sub_info) < 0: ###
+#
+#             ### find all subregion drainage to this down sub region
+#             All_up_regions_ids = Sub_Region_info[Sub_Region_info['Dow_Sub_Reg_Id'] == Dow_Sub_Region_id]['Sub_Reg_ID'].values
+#             Down_Sub_info = DownCatinfo.loc[DownCatinfo['value'].isin(All_up_regions_ids)]
+#             ####
+#                     if len(Down_Sub_info) == 1:
+#                         DownSubid   = Down_Sub_info['nSubId'].values[0]
+#                         AllCatinfo.loc[outlet_mask,'nDowSubId'] = DownSubid
+#                     else:
+# #                        print(isubregion,iReg_Outlet_nSubid)
+#                         AllCatinfo.loc[outlet_mask,'nDowSubId'] = -1
+
+def Add_Attributes_To_shpfile(processing,context,Layer,SubID_info = '#', OutputPath = '#',Region_ID = 1):
+    """ Asign new subbasin Id to each subbasins in each subregion
+    Parameters
+    ----------
+    processing                        : qgis object
+    context                           : qgis object
+    Layer                             : vector layer
+        it is the subbasin polygon or polyline of watershed delineation
+        result in each subregion
+    SubID_info                        : dataframe
+        it is a dataframe contains new subbasin id for each subbasin
+        in Layer
+    OutputPath                        : string
+        Path to the output file
+    Region_ID                         : integer
+        it is the subregion id of layer
+
+    Notes
+    -------
+        the output will be the same type of input Layer
+        stored in OutputPath
+
+    Returns:
+    -------
+        None
+    """
     alg_params = {
-        'FIELD_LENGTH': Field_Length[0],
-        'FIELD_NAME': Attris_NM[0],
-        'FIELD_PRECISION': Field_Precision[0],
+        'FIELD_LENGTH': 10,
+        'FIELD_NAME': 'Region_ID',
+        'FIELD_PRECISION': 0,
         'FIELD_TYPE': 0,
         'FORMULA':str(int(Region_ID)), #' \"'+'SubId'+'\"'  + '2000000',   #
         'INPUT': Layer,
@@ -1242,17 +1317,22 @@ def Add_Attributes_To_shpfile(processing,context,Layer,SubID_info = '#', OutputP
     processing.run('qgis:fieldcalculator', alg_params, context=context)['OUTPUT']
 
     layer_new=QgsVectorLayer(OutputPath,"")
-    
+
     features = layer_new.getFeatures()
     with edit(layer_new):
         for sf in features:
             cSubId = int(sf['SubId'])
             cDowSubId = int(sf['DowSubId'])
             nSubId = SubID_info.loc[SubID_info['SubId'] == cSubId]['nSubId']
-            nDowSubId = SubID_info.loc[SubID_info['SubId'] == cDowSubId]['nSubId']
+            if len(SubID_info.loc[SubID_info['SubId'] == cDowSubId]) == 0:
+                nDowSubId = -1
+            else:
+                nDowSubId = SubID_info.loc[SubID_info['SubId'] == cDowSubId]['nSubId']
+            sf['SubId'] = int(nSubId)
+            sf['DowSubId'] = int(nDowSubId)
             layer_new.updateFeature(sf)
     del layer_new
-    return 
+    return
 #######
 def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Path_Connect_Lake_ply = '#',
                             Path_Non_Connect_Lake_ply = '#',Sub_ID='SubId',
@@ -1673,7 +1753,7 @@ def Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Col_NM,info_d
     return Updatevalue
 
 def Clean_Attribute_Name(Path_to_Feature,FieldName_List):
-    
+
     fieldnames = set(FieldName_List)
     layer_cat  =QgsVectorLayer(Path_to_Feature, "")
     field_ids  = []
@@ -1685,7 +1765,7 @@ def Clean_Attribute_Name(Path_to_Feature,FieldName_List):
     layer_cat.commitChanges()
     del layer_cat
     return
-        
+
 def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,dissolve_filedname_list,
                          Sub_ID,Landuse_ID,Soil_ID,Veg_ID,Other_Ply_ID_1,Other_Ply_ID_2,
                          Landuse_info_data,Soil_info_data,
@@ -1952,145 +2032,145 @@ def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,disso
 
 
 class LRRT:
-    
+
     """
-    Toolsets to delelineate lake river routing structure 
+    Toolsets to delelineate lake river routing structure
     ...
 
     Attributes
     ----------
     Path_dem_in                        : string (optional)
-        It is a string to indicate the full path of the DEM 
+        It is a string to indicate the full path of the DEM
         dataset.It should be a hydrologically consistent DEM
-        in tif format. It is not needed when using tools to 
-        postprocess existing routing product.  
+        in tif format. It is not needed when using tools to
+        postprocess existing routing product.
     Path_WiDep_in                      : string (optional)
-        It is a string to indicate the full path of the 
-        polyline shapefile that having bankfull width and 
-        depth data. At least following three columns should 
+        It is a string to indicate the full path of the
+        polyline shapefile that having bankfull width and
+        depth data. At least following three columns should
         exist in the shapefile attribute table:  1) WIDTH,
         is the Bankfull width in m; 2) DEPTH, is the Bankfull
-        depth in m; 3) Q_Mean, is the annual mean discharge 
-        in m3/s. If it is not provided, -9999 will be used 
+        depth in m; 3) Q_Mean, is the annual mean discharge
+        in m3/s. If it is not provided, -9999 will be used
         for bankfull width and depth in the generated routing
-        structure 
+        structure
     Path_Lakefile_in                   : string (optional)
-        It is a string to indicate the full path of the polygon 
+        It is a string to indicate the full path of the polygon
         shapefile that include lake data. Follow attributes needs
-        to be include in the lake polygon shpfile: 1) Hylak_id, 
-        the unique Id of each lake within the lake polygon shpfile; 
-        2) Lake_type, type of the lake should be integer; 3) Vol_total, 
-        the volume of the lake in km3; 4) Depth_avg, the average depth 
+        to be include in the lake polygon shpfile: 1) Hylak_id,
+        the unique Id of each lake within the lake polygon shpfile;
+        2) Lake_type, type of the lake should be integer; 3) Vol_total,
+        the volume of the lake in km3; 4) Depth_avg, the average depth
         of the lake in m; 5) Lake_area, the area of the lake in km2.
-        If it is not provided, -9999 will be used for lake related  
+        If it is not provided, -9999 will be used for lake related
         parameters in the generated routing structure
- 
+
     Path_Landuse_in                    : string (optional)
         It is a string to indicate the full path of the landuse data.
-        It will be used to estimate the floodplain roughness 
+        It will be used to estimate the floodplain roughness
         coefficient. Should have the same projection with the DEM data
-        in ".tif" format.   
+        in ".tif" format.
     Path_Landuseinfo_in                : string (optional)
         It is a string to indicate the full path of the table in '.csv'
-        format.The table describe the floodplain roughness coefficient 
-        correspond to a given landuse type. The table should have two 
-        columns: RasterV and MannV. RasterV is the landuse value in the 
-        landuse raster for each land use type and the MannV is the 
-        roughness coefficient value for each landuse type.  
+        format.The table describe the floodplain roughness coefficient
+        correspond to a given landuse type. The table should have two
+        columns: RasterV and MannV. RasterV is the landuse value in the
+        landuse raster for each land use type and the MannV is the
+        roughness coefficient value for each landuse type.
     OutputFolder                       : string (optional)
-        The folder to store generated final results. 
+        The folder to store generated final results.
     TempOutFolder                      : string (optional)
-        The folder to store generated temporary files.If not provied 
-        the temporary will be located at system temporary folder. 
+        The folder to store generated temporary files.If not provied
+        the temporary will be located at system temporary folder.
     Path_Sub_Reg_Out_Folder            : string (optional)
-        It is a string to a folder, which cotains the subregion data.  
+        It is a string to a folder, which cotains the subregion data.
 
     Methods
     -------
-    
+
     ----------
     Tools to generate routing sturcture from DEM
-    ----------    
-    Generatmaskregion 
-        Define the processing extent. Function that used to define 
-        processing spatial extent (PSE). The processing spatial extent 
-        is a region where Toolbox will work in. Toolbox will not 
+    ----------
+    Generatmaskregion
+        Define the processing extent. Function that used to define
+        processing spatial extent (PSE). The processing spatial extent
+        is a region where Toolbox will work in. Toolbox will not
         process grids or features outside the processing spatial extent. Several
-        options is available here. 1) The PSE can be defined as the extent of 
-        input DEM. 2)The PSE can be defined using Hybasin product and a hydrobasin 
-        ID. All subbasin drainage to that hydrobasin ID will be extracted. And 
-        the extent of the extracted polygon will be used as PSE. 3)The PSE 
-        can be defined using DEM and an point coordinates. the drainage area 
+        options is available here. 1) The PSE can be defined as the extent of
+        input DEM. 2)The PSE can be defined using Hybasin product and a hydrobasin
+        ID. All subbasin drainage to that hydrobasin ID will be extracted. And
+        the extent of the extracted polygon will be used as PSE. 3)The PSE
+        can be defined using DEM and an point coordinates. the drainage area
         contribute to that point coordinate will be used as boundary polygon.
     Generateinputdata
-        Preprocessing input dataset, Function that used to project and clip 
-        input dataset such as DEM, Land use, Lake polygon etc with defined 
+        Preprocessing input dataset, Function that used to project and clip
+        input dataset such as DEM, Land use, Lake polygon etc with defined
         processing extent by function Generatmaskregion. And then it will
-         rasterize these vector files. Generated raster files will has the 
+         rasterize these vector files. Generated raster files will has the
         same extent and resolution as the "dem" generated by Generatmaskregion
-        and will be stored in a grass database located at 
+        and will be stored in a grass database located at
         os.path.join(self.tempFolder, 'grassdata_toolbox').
     WatershedDiscretizationToolset
-        Function that used to Generate a subbasin delineation and river 
-        network using user provied flow accumulation thresthold 
+        Function that used to Generate a subbasin delineation and river
+        network using user provied flow accumulation thresthold
         without considering lake.
     AutomatedWatershedsandLakesFilterToolset
-        Update the subbasin delineation result generated by 
-        "WatershedDiscretizationToolset". Lake's inflow and outflow points 
+        Update the subbasin delineation result generated by
+        "WatershedDiscretizationToolset". Lake's inflow and outflow points
         will be added into subbasin delineation result as a new subbasin
-        outlet. Result from this tool is not the final delineation result. 
-        Because some lake may cover several subbasins. these subbasin  
-        are not megered into one subbasin yet.  
+        outlet. Result from this tool is not the final delineation result.
+        Because some lake may cover several subbasins. these subbasin
+        are not megered into one subbasin yet.
     RoutingNetworkTopologyUpdateToolset_riv
         Calculate hydrological paramters for each subbasin generated by
-        "AutomatedWatershedsandLakesFilterToolset". The result generaed 
-        by this tool can be used as inputs for Define_Final_Catchment 
+        "AutomatedWatershedsandLakesFilterToolset". The result generaed
+        by this tool can be used as inputs for Define_Final_Catchment
         and other post processing tools
     Define_Final_Catchment
-        Generate the final lake river routing structure by merging subbasin 
+        Generate the final lake river routing structure by merging subbasin
         polygons that are covered by the same lake.
-        The input are the catchment polygons and river segements 
+        The input are the catchment polygons and river segements
         before merging for lakes. The input files can be output of
         any of following functions:
-        SelectLakes, Select_Routing_product_based_SubId, 
+        SelectLakes, Select_Routing_product_based_SubId,
         Customize_Routing_Topology,RoutingNetworkTopologyUpdateToolset_riv
-        The result is the final catchment polygon that ready to be used for 
-        hydrological modeling 
+        The result is the final catchment polygon that ready to be used for
+        hydrological modeling
     Output_Clean
         Remove contents in TempOutFolder
-    
+
     ----------
-    Postprocessing tools to generate routing structure from 
-    existing routing product 
-    ----------    
+    Postprocessing tools to generate routing structure from
+    existing routing product
+    ----------
     Locate_subid_needsbyuser
         Function that used to obtain subbasin ID of certain gauge.
         or subbasin ID of the polygon that includes the given point
         shapefile.
     Select_Routing_product_based_SubId
         Function that used to obtain the region of interest from routing
-        product based on given SubId 
+        product based on given SubId
     Customize_Routing_Topology
-        Function that used to simplify the routing product by 
-        using user provided minimum subbasin drainage area. 
-        The input catchment polygons are routing product before  
+        Function that used to simplify the routing product by
+        using user provided minimum subbasin drainage area.
+        The input catchment polygons are routing product before
         merging for lakes. It is provided with routing product.
-        The result is the simplified catchment polygons. But 
-        result from this fuction still not merging catchment 
-        covering by the same lake. Thus, The result generated 
-        from this tools need further processed by 
-        Define_Final_Catchment, or can be further processed by 
-        SelectLakes  
+        The result is the simplified catchment polygons. But
+        result from this fuction still not merging catchment
+        covering by the same lake. Thus, The result generated
+        from this tools need further processed by
+        Define_Final_Catchment, or can be further processed by
+        SelectLakes
     SelectLakes
-        Function that used to simplify the routing product by user 
-        provided lake area thresthold. 
-        The input catchment polygons is the routing product before  
+        Function that used to simplify the routing product by user
+        provided lake area thresthold.
+        The input catchment polygons is the routing product before
         merging for lakes. It is provided with the routing product.
-        The result is the simplified catchment polygons. But 
-        result from this fuction still not merging catchment 
-        covering by the same lake. Thus, The result generated 
-        from this tools need further processed by 
-        Define_Final_Catchment, or can be further processed by 
+        The result is the simplified catchment polygons. But
+        result from this fuction still not merging catchment
+        covering by the same lake. Thus, The result generated
+        from this tools need further processed by
+        Define_Final_Catchment, or can be further processed by
         Customize_Routing_Topology
     GenerateHRUS
         Generate HRU polygons and their attributes needed by hydrological model.
@@ -2098,7 +2178,7 @@ class LRRT:
         , Land use polygon (optional), soil type polygon(optional),
         vegetation polygon (optional), and two other user defined polygons
         (optional).
-        Non-lake HRU polygons in a subbasin is defined by an unique 
+        Non-lake HRU polygons in a subbasin is defined by an unique
         combination of all user provided datasets.
         A lake HRU polygon is defined the same as the provided lake polygon.
         All value of landuse and Veg polygon covered by lake will
@@ -2108,32 +2188,32 @@ class LRRT:
 
     ----------
     Tools for working with large datasets
-    ----------    
+    ----------
     Generatesubdomain
-        Define subregion based on minimum drainage area of each 
-        subregion 
+        Define subregion based on minimum drainage area of each
+        subregion
     Generatesubdomainmaskandinfo
-        Prepare input dataset that needed by toolbox for each 
+        Prepare input dataset that needed by toolbox for each
         subregion
     Combine_Sub_Region_Results
-        Combine routing sturcture of each subregion generated 
-        into one lake river routing sturcure. 
+        Combine routing sturcture of each subregion generated
+        into one lake river routing sturcure.
 
     ----------
-    Others 
-    ---------- 
+    Others
+    ----------
     GenerateRavenInput
-        Generate RavenInputs from routing structure. 
+        Generate RavenInputs from routing structure.
     Generate_Grid_Poly_From_NetCDF
-        Generate a polygon for each grids in a NetCDF file 
+        Generate a polygon for each grids in a NetCDF file
     Area_Weighted_Mapping_Between_Two_Polygons
         Calcuate Area weighted mapping between two polygons
-        
+
     """
-    
+
     def __init__(self, dem_in = '#',WidDep = '#',Lakefile = '#'
                                      ,Landuse = '#',Landuseinfo = '#',obspoint = '#',
-                                     OutputFolder = '#',TempOutFolder = '#', 
+                                     OutputFolder = '#',TempOutFolder = '#',
                                      Path_Sub_Reg_Out_Folder = '#',Is_Sub_Region = -1
                                      ):
         self.Path_dem_in = dem_in
@@ -2176,7 +2256,7 @@ class LRRT:
             self.tempFolder =TempOutFolder
             if not os.path.exists(self.tempFolder):
                 os.makedirs(self.tempFolder)
-                
+
         self.grassdb =os.path.join(self.tempFolder, 'grassdata_toolbox')
         if not os.path.exists(self.grassdb):
             os.makedirs(self.grassdb)
@@ -2194,18 +2274,18 @@ class LRRT:
             os.makedirs(self.tempfolder)
         #
         # if not os.path.exists(os.path.join(self.grassdb,self.grass_location_geo_temp)):
-	    #        os.makedirs(os.path.join(self.grassdb,self.grass_location_geo_temp))
+        #        os.makedirs(os.path.join(self.grassdb,self.grass_location_geo_temp))
         #
         # if not os.path.exists(os.path.join(self.grassdb,self.grass_location_pro)):
-	    #        os.makedirs(os.path.join(self.grassdb,self.grass_location_pro))
-       
+        #        os.makedirs(os.path.join(self.grassdb,self.grass_location_pro))
+
         self.FieldName_List_Product = ['SubId','HRULake_ID','HRU_IsLake','Landuse_ID','Soil_ID','Veg_ID','O_ID_1','O_ID_2',
-        	                           'HRU_Area','HRU_ID','LAND_USE_C','VEG_C','SOIL_PROF','HRU_CenX','HRU_CenY','DowSubId',
-                                       	'RivSlope','RivLength','BasSlope','BasAspect','BasArea','BkfWidth','BkfDepth','IsLake',
+                                       'HRU_Area','HRU_ID','LAND_USE_C','VEG_C','SOIL_PROF','HRU_CenX','HRU_CenY','DowSubId',
+                                           'RivSlope','RivLength','BasSlope','BasAspect','BasArea','BkfWidth','BkfDepth','IsLake',
                                         'HyLakeId','LakeVol','LakeDepth','LakeArea','Laketype','IsObs','MeanElev','FloodP_n',
                                         'Q_Mean','Ch_n','DA','Strahler','Seg_ID','Seg_order','Max_DEM','Min_DEM','DA_Obs','DA_error',
                                         'Obs_NM','SRC_obs', 'HRU_S_mean','HRU_A_mean','HRU_E_mean','centroid_x','centroid_y']
-                                        
+
         self.maximum_obs_id = 80000
         self.sqlpath = os.path.join(self.grassdb,'Geographic','PERMANENT','sqlite','sqlite.db')
         self.cellSize = -9.9999
@@ -2237,16 +2317,16 @@ class LRRT:
 ########################################################################################
     def Generatmaskregion(self,OutletPoint = [-1,-1],Path_Sub_Polygon = '#',Buffer_Distance = 0.0,
                           hyshdply = '#', OutHyID = -1 ,OutHyID2 = -1):
-        """Define processing extent 
+        """Define processing extent
 
-        Function that used to define processing spatial extent (PSE). The processing 
-        spatial extent is a region where Toolbox will work in. Toolbox will not 
+        Function that used to define processing spatial extent (PSE). The processing
+        spatial extent is a region where Toolbox will work in. Toolbox will not
         process grids or features outside the processing spatial extent. Several
-        options is available here. 1) The PSE can be defined as the extent of 
-        input DEM. 2)The PSE can be defined using Hybasin product and a hydrobasin 
-        ID. All subbasin drainage to that hydrobasin ID will be extracted. And 
-        the extent of the extracted polygon will be used as PSE. 3)The PSE 
-        can be defined using DEM and an point coordinates. the drainage area 
+        options is available here. 1) The PSE can be defined as the extent of
+        input DEM. 2)The PSE can be defined using Hybasin product and a hydrobasin
+        ID. All subbasin drainage to that hydrobasin ID will be extracted. And
+        the extent of the extracted polygon will be used as PSE. 3)The PSE
+        can be defined using DEM and an point coordinates. the drainage area
         contribute to that point coordinate will be used as boundary polygon.
 
         Parameters
@@ -2262,7 +2342,7 @@ class LRRT:
             And then using devided subregion polygon as PSE.
         Buffer_Distance                   : float (optional)
             It is a float number to increase the extent of the PSE
-            obtained from Hydrobasins. It is needed when input DEM is not from 
+            obtained from Hydrobasins. It is needed when input DEM is not from
             HydroSHEDS. Then the extent of the watershed will be different
             with PSE defined by HydroBASINS.
         hyshdply                         : string (optional)
@@ -2279,18 +2359,18 @@ class LRRT:
         Notes
         -------
         Outputs are following files
-                
-        self.Path_Maskply      : polygon 
-            it is a full path to a polygon file which is the PSE. 
-        MASK                   : raster 
-            it is a mask raster stored in grass database, which indicate 
-            the PSE. The grass database is located at 
+
+        self.Path_Maskply      : polygon
+            it is a full path to a polygon file which is the PSE.
+        MASK                   : raster
+            it is a mask raster stored in grass database, which indicate
+            the PSE. The grass database is located at
             os.path.join(self.tempFolder, 'grassdata_toolbox')
-        dem                   : raster 
-            it is a dem raster stored in grass database, which is 
-            has the same extent with MASK. The grass database is located at 
+        dem                   : raster
+            it is a dem raster stored in grass database, which is
+            has the same extent with MASK. The grass database is located at
             os.path.join(self.tempFolder, 'grassdata_toolbox')
-        
+
         Returns:
         -------
            None
@@ -2318,7 +2398,7 @@ class LRRT:
 
 
         if not os.path.exists(self.tempfolder):
-	            os.makedirs(self.tempfolder)
+                os.makedirs(self.tempfolder)
 
         if OutHyID > 0:
             r_dem_layer = QgsRasterLayer(self.Path_dem_in, "") ### load DEM raster as a  QGIS raster object to obtain attribute
@@ -2552,7 +2632,7 @@ class LRRT:
         from grass_session import Session
 
         if not os.path.exists(Out_Sub_Reg_Dem_Folder):
-	            os.makedirs(Out_Sub_Reg_Dem_Folder)
+                os.makedirs(Out_Sub_Reg_Dem_Folder)
 
         #### Determine Sub subregion without lake
         os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
@@ -2766,52 +2846,52 @@ class LRRT:
     def Generateinputdata(self, Is_divid_region = -1):
         """Preprocessing input dataset
 
-        Function that used to project and clip input dataset such as 
-        DEM, Land use, Lake polygon etc with defined processing extent 
-        by function Generatmaskregion. And then it will rasterize these 
-        vector files. Generated raster files will has the 
+        Function that used to project and clip input dataset such as
+        DEM, Land use, Lake polygon etc with defined processing extent
+        by function Generatmaskregion. And then it will rasterize these
+        vector files. Generated raster files will has the
         same extent and resolution as the "dem" generated by Generatmaskregion
-        and will be stored in a grass database located at 
+        and will be stored in a grass database located at
         os.path.join(self.tempFolder, 'grassdata_toolbox').
-        
+
         Parameters
         ----------
-        Is_divid_region     : integer 
-            It is a integer indicate if the tools is called to 
-            divide processing domain into subregions 
-            if it is smaller than 0, means no 
-            if it is larger than 0, means yes. 
+        Is_divid_region     : integer
+            It is a integer indicate if the tools is called to
+            divide processing domain into subregions
+            if it is smaller than 0, means no
+            if it is larger than 0, means yes.
 
         Notes
         -------
-        Raster and vector files that are generated by this function and 
-        will be used in next step are list in following. All files are 
-        stored at a grass database in os.path.join(self.tempFolder, 
+        Raster and vector files that are generated by this function and
+        will be used in next step are list in following. All files are
+        stored at a grass database in os.path.join(self.tempFolder,
         'grassdata_toolbox')
-        
-        alllake              : raster 
-            it is a raster represent all lakes within the processing extent. 
-        Lake_Bound           : raster 
-            it is a raster represent the lake boundary grids 
-        acc_grass            : raster 
-            it is the flow accumulation raster generated by 'r.watershed'     
-        width                : raster 
+
+        alllake              : raster
+            it is a raster represent all lakes within the processing extent.
+        Lake_Bound           : raster
+            it is a raster represent the lake boundary grids
+        acc_grass            : raster
+            it is the flow accumulation raster generated by 'r.watershed'
+        width                : raster
             it is the rasterized bankfull width depth polyline shapefile
-            using column "WIDTH"    
-        depth                : raster 
+            using column "WIDTH"
+        depth                : raster
             it is the rasterized bankfull width depth polyline shapefile
-            using column "DEPTH"   
-        qmean                : raster 
+            using column "DEPTH"
+        qmean                : raster
             it is the rasterized bankfull width depth polyline shapefile
-            using column "Q_Mean"   
-        up_area              : raster 
+            using column "Q_Mean"
+        up_area              : raster
             it is the rasterized bankfull width depth polyline shapefile
-            using column "UP_AREA"   
-        SubId_WidDep         : raster 
+            using column "UP_AREA"
+        SubId_WidDep         : raster
             it is the rasterized bankfull width depth polyline shapefile
-            using column "HYBAS_ID"  
-        landuse              : raster 
-            it is the landuse raster.                         
+            using column "HYBAS_ID"
+        landuse              : raster
+            it is the landuse raster.
         Returns:
         -------
            None
@@ -2967,56 +3047,56 @@ class LRRT:
     def WatershedDiscretizationToolset(self,accthresold = 100,Is_divid_region = -1,max_memroy = 1024,Search_Radius = 100):
         """Generate a subbasin delineation without considering lake
 
-        Function that used to Generate a subbasin delineation and river 
-        network using user provied flow accumulation thresthold 
-        without considering lake. 
-        
+        Function that used to Generate a subbasin delineation and river
+        network using user provied flow accumulation thresthold
+        without considering lake.
+
         Parameters
         ----------
-        accthresold         : float 
+        accthresold         : float
         It is the flow accumulation thresthold, used to determine
-        subbsains and river network. Increasing of accthresold will 
-        increase the size of generated subbasins, reduce the number 
+        subbsains and river network. Increasing of accthresold will
+        increase the size of generated subbasins, reduce the number
         subbasins and reduce the number of generated stream segments
-        Is_divid_region     : integer 
-            It is a integer indicate if the tools is called to 
-            divide processing domain into subregions 
-            if it is smaller than 0, means no 
-            if it is larger than 0, means yes.  
-        max_memroy          : integer 
+        Is_divid_region     : integer
+            It is a integer indicate if the tools is called to
+            divide processing domain into subregions
+            if it is smaller than 0, means no
+            if it is larger than 0, means yes.
+        max_memroy          : integer
             It is the maximum memeory that allow to be used.
-        Search_Radius       : integer 
-            It is the search ratio in number of grids to snap observation 
-            point into the river network.  
-            
+        Search_Radius       : integer
+            It is the search ratio in number of grids to snap observation
+            point into the river network.
+
         Notes
         -------
-        Raster and vector files that are generated by this function and 
-        will be used in next step are list in following. All files are 
-        stored at a grass database in os.path.join(self.tempFolder, 
+        Raster and vector files that are generated by this function and
+        will be used in next step are list in following. All files are
+        stored at a grass database in os.path.join(self.tempFolder,
         'grassdata_toolbox')
-        dir_grass              : raster 
-            it is a raster represent flow direction dataset, which is 
+        dir_grass              : raster
+            it is a raster represent flow direction dataset, which is
             using 1 - 8 to represent different directions
-        dir_Arcgis             : raster 
-            it is a raster represent flow direction dataset, which is 
+        dir_Arcgis             : raster
+            it is a raster represent flow direction dataset, which is
             using 1,2,4,...64,128 to represent different directions
-        str_grass_v            : vector  
-            it is a river network in vector format              
-        str_grass_r            : raster 
-            it is a river network in raster format  
-        Connect_Lake           : raster 
-            it is the lake raster only contain lakes connected by 
+        str_grass_v            : vector
+            it is a river network in vector format
+        str_grass_r            : raster
+            it is a river network in raster format
+        Connect_Lake           : raster
+            it is the lake raster only contain lakes connected by
             str_grass_r
-        Nonconnect_Lake        : raster 
-            it is the lake raster only contain lakes not connected by 
+        Nonconnect_Lake        : raster
+            it is the lake raster only contain lakes not connected by
             str_grass_r
-        obs                    : raster 
-            it is the raster represent the observation gauges after 
-            snap to river network 
-        cat1                   : raster 
+        obs                    : raster
+            it is the raster represent the observation gauges after
+            snap to river network
+        cat1                   : raster
              it is the raster represent the delineated subbasins without
-             considering lakes            
+             considering lakes
         Returns:
         -------
            None
@@ -3124,63 +3204,63 @@ class LRRT:
 ############################################################################################
     def AutomatedWatershedsandLakesFilterToolset(self,Thre_Lake_Area_Connect = 0,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 1000000000,Pec_Grid_outlier = 1.0,Is_divid_region = -1,
     max_memroy = 1024):
-        
-        """Add lake inflow and outflow points as new subabsin outlet 
 
-        Update the subbasin delineation result generated by 
-        "WatershedDiscretizationToolset". Lake's inflow and outflow points 
+        """Add lake inflow and outflow points as new subabsin outlet
+
+        Update the subbasin delineation result generated by
+        "WatershedDiscretizationToolset". Lake's inflow and outflow points
         will be added into subbasin delineation result as a new subbasin
-        outlet. Result from this tool is not the final delineation result. 
-        Because some lake may cover several subbasins. these subbasin  
-        are not megered into one subbasin yet.   
-        
+        outlet. Result from this tool is not the final delineation result.
+        Because some lake may cover several subbasins. these subbasin
+        are not megered into one subbasin yet.
+
         Parameters
         ----------
-        Thre_Lake_Area_Connect         : float 
+        Thre_Lake_Area_Connect         : float
             It is a lake area thresthold for connected lakes in km2
-            Connected Lake with lake area below this value will be 
-            not added into the subbasin delineation 
-        Thre_Lake_Area_nonConnect      : float 
+            Connected Lake with lake area below this value will be
+            not added into the subbasin delineation
+        Thre_Lake_Area_nonConnect      : float
             It is a lake area thresthold for non-connected lakes in km2
-            Non connected Lake with lake area below this value will be 
-            not added into the subbasin delineation         
-        MaximumLakegrids               : integer 
-            It is a maximum lake boundary grids. Lakes with number of grids 
-            needs to be correct larger than this value 
+            Non connected Lake with lake area below this value will be
+            not added into the subbasin delineation
+        MaximumLakegrids               : integer
+            It is a maximum lake boundary grids. Lakes with number of grids
+            needs to be correct larger than this value
             will be skipped for flow direction correction.
-        Pec_Grid_outlier               : float  
-            It is represent 1- percentage of lake grids that did not flow 
-            to lake outlets. Lakes with this percentage larger than this value 
-            will be skipped for flow direction correction. 
-        Is_divid_region     : integer 
-            It is a integer indicate if the tools is called to 
-            divide processing domain into subregions 
-            if it is smaller than 0, means no 
-            if it is larger than 0, means yes.  
-            
+        Pec_Grid_outlier               : float
+            It is represent 1- percentage of lake grids that did not flow
+            to lake outlets. Lakes with this percentage larger than this value
+            will be skipped for flow direction correction.
+        Is_divid_region     : integer
+            It is a integer indicate if the tools is called to
+            divide processing domain into subregions
+            if it is smaller than 0, means no
+            if it is larger than 0, means yes.
+
         Notes
         -------
-        Raster and vector files that are generated by this function and 
-        will be used by next step are list as following. All files are 
-        stored at a grass database in os.path.join(self.tempFolder, 
+        Raster and vector files that are generated by this function and
+        will be used by next step are list as following. All files are
+        stored at a grass database in os.path.join(self.tempFolder,
         'grassdata_toolbox')
-        
-        SelectedLakes                    : raster 
+
+        SelectedLakes                    : raster
             it is a raster represent all lakes that are selected by two lake
-            area threstholds 
-        Select_Non_Connected_lakes       : raster 
-            it is a raster represent all non connected lakes that are selected 
-            by lake area threstholds 
-        Select_Connected_lakes           : raster 
-            it is a raster represent allconnected lakes that are selected 
-            by lake area threstholds 
-        nstr_seg                         : raster  
-            it is the updated river segment for each subbasin              
-        Net_cat                          : raster 
-            it is a raster represent updated subbasins after adding lake inflow 
-            and outflow points as new subbasin outlet.  
-        ndir_grass                       : raster 
-            it is a raster represent modified flow directions     
+            area threstholds
+        Select_Non_Connected_lakes       : raster
+            it is a raster represent all non connected lakes that are selected
+            by lake area threstholds
+        Select_Connected_lakes           : raster
+            it is a raster represent allconnected lakes that are selected
+            by lake area threstholds
+        nstr_seg                         : raster
+            it is the updated river segment for each subbasin
+        Net_cat                          : raster
+            it is a raster represent updated subbasins after adding lake inflow
+            and outflow points as new subbasin outlet.
+        ndir_grass                       : raster
+            it is a raster represent modified flow directions
         Returns:
         -------
            None
@@ -3189,7 +3269,7 @@ class LRRT:
         -------
 
         """
-        
+
         tempinfo = Dbf5(self.Path_allLakeply[:-3] + "dbf")
         allLakinfo = tempinfo.to_dataframe()
         allLakinfo.to_csv(self.Path_alllakeinfoinfo,index = None, header=True)
@@ -3511,51 +3591,51 @@ class LRRT:
 
 ############################################################################3
     def RoutingNetworkTopologyUpdateToolset_riv(self,projection = 'EPSG:3573',max_manning_n = 0.15,min_manning_n = 0.01,Outlet_Obs_ID = -1,Obtain_High_Acc_Cat= -1):
-        """Calculate hydrological paramters 
+        """Calculate hydrological paramters
 
         Calculate hydrological paramters for each subbasin generated by
-        "AutomatedWatershedsandLakesFilterToolset". The result generaed 
-        by this tool can be used as inputs for Define_Final_Catchment 
+        "AutomatedWatershedsandLakesFilterToolset". The result generaed
+        by this tool can be used as inputs for Define_Final_Catchment
         and other post processing tools
-        
+
         Parameters
         ----------
-        projection                     : string 
-            It is a string indicate a projected coordinate system, 
+        projection                     : string
+            It is a string indicate a projected coordinate system,
             which wiil be used to calcuate area, slope and aspect.
-        max_manning_n                  : float 
-            It is the maximum main channel manning's coefficient 
-        max_manning_n                  : float 
-            It is the minimum main channel manning's coefficient 
-        Outlet_Obs_ID                  : integer 
-            It is one 'Obs_ID' in the provided observation gauge 
+        max_manning_n                  : float
+            It is the maximum main channel manning's coefficient
+        max_manning_n                  : float
+            It is the minimum main channel manning's coefficient
+        Outlet_Obs_ID                  : integer
+            It is one 'Obs_ID' in the provided observation gauge
             shapefile. If it is larger than zero. Subbasins that
-            do not drainage to this gauge will be removed from 
+            do not drainage to this gauge will be removed from
             delineation result.
-        Obtain_High_Acc_Cat            : integer 
-            It is a integer, when it is larger than zero, subbasins 
-            that do not drainage to the outlet with highest flow 
-            accumulation value will be removed from delineation result  
+        Obtain_High_Acc_Cat            : integer
+            It is a integer, when it is larger than zero, subbasins
+            that do not drainage to the outlet with highest flow
+            accumulation value will be removed from delineation result
         Notes
         -------
-        Five vector files will be generated by this function. these files 
+        Five vector files will be generated by this function. these files
         can be used to define final routing structure by "Define_Final_Catchment"
-        or be used as input for other postprocessing tools. All files 
+        or be used as input for other postprocessing tools. All files
         are stored at self.OutputFolder
-        
-        finalriv_info_ply.shp             : shapefile  
+
+        finalriv_info_ply.shp             : shapefile
             It is the subbasin polygon before merging lakes catchments and
-            need to be processed before used. 
-        finalriv_info.shp                 : shapefile 
+            need to be processed before used.
+        finalriv_info.shp                 : shapefile
             It is the subbasin river segment before merging lakes catchments and
-            need to be processed before used.  
-        Con_Lake_Ply.shp                  : shapefile 
+            need to be processed before used.
+        Con_Lake_Ply.shp                  : shapefile
             It is the connected lake polygon. Connected lakes are lakes that
             are connected by  Path_final_riv.
-        Non_Con_Lake_Ply.shp              : shapefile 
+        Non_Con_Lake_Ply.shp              : shapefile
             It is the  non connected lake polygon. Connected lakes are lakes
-            that are not connected by Path_final_cat_riv or Path_final_riv. 
-        obspoint_snap                     : shapefile 
+            that are not connected by Path_final_cat_riv or Path_final_riv.
+        obspoint_snap                     : shapefile
             It is the point shapefile that represent the observation gauge
             after snap to river network.
         Returns:
@@ -3920,7 +4000,7 @@ class LRRT:
 
         Path_final_hru_info     : string
             Path of the output shapefile from routing toolbox which includes
-            all required parameters; Each row in the attribute table of this 
+            all required parameters; Each row in the attribute table of this
             shapefile represent a HRU. Different HRU in the same subbasin has
             the same subbasin related attribute values.
 
@@ -3992,7 +4072,7 @@ class LRRT:
         WarmUp          : integer, optional
             The warmup time (in years) used after
             startyear. Values in output file "obs/xxx.rvt" containing
-            observations will be set to NoData value "-1.2345" from 
+            observations will be set to NoData value "-1.2345" from
             model start year to end of WarmUp year.
         Template_Folder : string, optional
             Input that is used to copy raven template files. It is a
@@ -4033,8 +4113,8 @@ class LRRT:
             group 2 with lake are (1,10],
             group 3 with lake are (10,20],
             group 4 with lake are (20,Max channel length].
-        OutputFolder                   : string 
-            Folder name that stores generated Raven input files. The raven 
+        OutputFolder                   : string
+            Folder name that stores generated Raven input files. The raven
             input file will be generated in "<OutputFolder>/RavenInput"
 
         Notes
@@ -4043,12 +4123,12 @@ class LRRT:
         modelname.rvh              - contains subbasins and HRUs
         Lakes.rvh                  - contains definition and parameters of lakes
         channel_properties.rvp     - contains definition and parameters for channels
-        xxx.rvt                    - (optional) streamflow observation for each gauge 
-                                     in shapefile database will be automatically 
+        xxx.rvt                    - (optional) streamflow observation for each gauge
+                                     in shapefile database will be automatically
                                      generagted in folder "OutputFolder/RavenInput/obs/".
-        obsinfo.csv                - information file generated reporting drainage area 
-                                     difference between observed in shapefile and 
-                                     standard database as well as number of missing 
+        obsinfo.csv                - information file generated reporting drainage area
+                                     difference between observed in shapefile and
+                                     standard database as well as number of missing
                                      values for each gauge
 
         Returns:
@@ -4067,9 +4147,9 @@ class LRRT:
 
         if not os.path.exists(OutputFolder):
             os.makedirs(OutputFolder)
-        
+
         shutil.rmtree(Raveinputsfolder,ignore_errors=True)
-        
+
         ### check if there is a model input template provided
         if Template_Folder != '#':
             fromDirectory = Template_Folder
@@ -4084,7 +4164,7 @@ class LRRT:
         if Forcing_Input_File != '#':
             fromDirectory = Forcing_Input_File
             toDirectory   = os.path.join(Raveinputsfolder,'GriddedForcings2.txt')
-            copyfile(fromDirectory, toDirectory)            
+            copyfile(fromDirectory, toDirectory)
 
         finalcatchpath = Path_final_hru_info
 
@@ -4121,22 +4201,22 @@ class LRRT:
 
 
     def Locate_subid_needsbyuser(self,Path_Points = '#', Gauge_NMS = '#',Path_products='#'):
-        """Get Subbasin Ids 
+        """Get Subbasin Ids
 
         Function that used to obtain subbasin ID of certain gauge.
         or subbasin ID of the polygon that includes the given point
-        shapefile. 
+        shapefile.
 
         Parameters
         ----------
         Path_Points      : string (Optional)
-            It is the path of the point shapefile. If the point shapefile is 
-            provided. The function will return subids of those catchment 
+            It is the path of the point shapefile. If the point shapefile is
+            provided. The function will return subids of those catchment
             polygons that includes these point in the point shapefile
 
         Gauge_NMS        : list
-            Name of the streamflow gauges, such as ['09PC019'], if the gauge 
-            name is provided, the subbasin ID that contain this gauge will be 
+            Name of the streamflow gauges, such as ['09PC019'], if the gauge
+            name is provided, the subbasin ID that contain this gauge will be
             returned
         Path_products    : string
             The path of the subbasin polygon shapefile.
@@ -4149,14 +4229,14 @@ class LRRT:
 
         Notes
         -------
-        Path_Points or Gauge_NMS should only provide one each time 
-        to use this function 
+        Path_Points or Gauge_NMS should only provide one each time
+        to use this function
 
         Returns:
         -------
-        SubId_Selected  : list 
-            It is a list contains the selected subid based on provided 
-            streamflow gauge name or provided point shapefile    
+        SubId_Selected  : list
+            It is a list contains the selected subid based on provided
+            streamflow gauge name or provided point shapefile
 
         Examples
         -------
@@ -4185,8 +4265,8 @@ class LRRT:
             SubId_Selected = hyshdinfo2['SubId'].values
 
         if Path_Points != '#':
-            r_dem_layer = QgsVectorLayer(Path_products, "") 
-            SpRef_in = r_dem_layer.crs().authid()   
+            r_dem_layer = QgsVectorLayer(Path_products, "")
+            SpRef_in = r_dem_layer.crs().authid()
             processing.run("native:reprojectlayer", {'INPUT':Path_Points,'TARGET_CRS':QgsCoordinateReferenceSystem(SpRef_in),'OUTPUT':os.path.join(self.tempfolder,'Obspoint_project2.shp')})
             processing.run("saga:addpolygonattributestopoints", {'INPUT':os.path.join(self.tempfolder,'Obspoint_project2.shp'),'POLYGONS':Path_products,'FIELDS':'SubId','OUTPUT':os.path.join(self.tempfolder,'Sub_Selected_by_Points.shp')})
             print(self.tempfolder)
@@ -4208,52 +4288,52 @@ class LRRT:
         """Extract region of interest based on provided Subid
 
         Function that used to obtain the region of interest from routing
-        product based on given SubId 
+        product based on given SubId
 
         Parameters
         ----------
-        OutputFolder                   : string 
-            Folder path that stores extracted routing product 
-        Path_Catchment_Polygon         : string 
+        OutputFolder                   : string
+            Folder path that stores extracted routing product
+        Path_Catchment_Polygon         : string
             Path to the catchment polygon
         Path_River_Polyline            : string (optional)
-            Path to the river polyline   
+            Path to the river polyline
         Path_Con_Lake_ply              : string (optional)
             Path to a connected lake polygon. Connected lakes are lakes that
             are connected by Path_final_cat_riv or Path_final_riv.
         Path_NonCon_Lake_ply           : string (optional)
             Path to a non connected lake polygon. Connected lakes are lakes
             that are not connected by Path_final_cat_riv or Path_final_riv.
-        mostdownid                     : integer 
-            It is the most downstream subbasin ID in the region of interest 
+        mostdownid                     : integer
+            It is the most downstream subbasin ID in the region of interest
         mostupstreamid                 : integer (optional)
             It is the most upstream subbasin ID in the region of interest.
-            Normally it is -1, indicating all subbasin drainage to mostdownid 
+            Normally it is -1, indicating all subbasin drainage to mostdownid
             is needed. In some case, if not all subbasin drainage to mostdownid
-            is needed, then the most upstream subbsin ID need to be provided 
-            here.               
+            is needed, then the most upstream subbsin ID need to be provided
+            here.
 
 
         Notes
         -------
-        This function has no return values, instead following fiels will be 
-        generated. The output files have are same as inputs expect the extent 
-        are different. 
-        
+        This function has no return values, instead following fiels will be
+        generated. The output files have are same as inputs expect the extent
+        are different.
+
         os.path.join(OutputFolder,os.path.basename(Path_Catchment_Polygon))
         os.path.join(OutputFolder,os.path.basename(Path_River_Polyline))
         os.path.join(OutputFolder,os.path.basename(Path_Con_Lake_ply))
         os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply))
-        
+
         Returns:
         -------
-        None   
+        None
 
         Examples
         -------
 
         """
-        
+
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
         Qgs.initQgis()
@@ -4262,7 +4342,7 @@ class LRRT:
         feedback = QgsProcessingFeedback()
         Processing.initialize()
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
-        
+
         sub_colnm  = 'SubId'
         down_colnm = 'DowSubId'
         ##3
@@ -4320,63 +4400,63 @@ class LRRT:
         Qgs.exit()
 
     def Customize_Routing_Topology(self,Path_final_riv_ply = '#',
-                                   Path_final_riv = '#', 
+                                   Path_final_riv = '#',
                                    Path_Con_Lake_ply='#',
                                    Path_NonCon_Lake_ply='#',
                                    Area_Min = -1,
                                    OutputFolder = '#'):
-        """Simplify the routing product by drainage area 
+        """Simplify the routing product by drainage area
 
-        Function that used to simplify the routing product by 
-        using user provided minimum subbasin drainage area. 
-        The input catchment polygons are routing product before  
+        Function that used to simplify the routing product by
+        using user provided minimum subbasin drainage area.
+        The input catchment polygons are routing product before
         merging for lakes. It is provided with routing product.
-        The result is the simplified catchment polygons. But 
-        result from this fuction still not merging catchment 
-        covering by the same lake. Thus, The result generated 
-        from this tools need further processed by 
-        Define_Final_Catchment, or can be further processed by 
-        SelectLakes 
+        The result is the simplified catchment polygons. But
+        result from this fuction still not merging catchment
+        covering by the same lake. Thus, The result generated
+        from this tools need further processed by
+        Define_Final_Catchment, or can be further processed by
+        SelectLakes
 
         Parameters
         ----------
 
-        Path_final_riv_ply             : string 
-            Path to the catchment polygon which is the routing product 
-            before merging lakes catchments and need to be processed before 
-            used. It is the input for simplify the routing product based 
-            on lake area or drianage area.  
-        Path_final_riv                 : string 
-            Path to the river polyline which is the routing product 
-            before merging lakes catchments and need to be processed before 
-            used. It is the input for simplify the routing product based 
-            on lake area or drianage area.    
-        Path_Con_Lake_ply              : string 
+        Path_final_riv_ply             : string
+            Path to the catchment polygon which is the routing product
+            before merging lakes catchments and need to be processed before
+            used. It is the input for simplify the routing product based
+            on lake area or drianage area.
+        Path_final_riv                 : string
+            Path to the river polyline which is the routing product
+            before merging lakes catchments and need to be processed before
+            used. It is the input for simplify the routing product based
+            on lake area or drianage area.
+        Path_Con_Lake_ply              : string
             Path to a connected lake polygon. Connected lakes are lakes that
             are connected by Path_final_riv.
-        Path_NonCon_Lake_ply           : string 
+        Path_NonCon_Lake_ply           : string
             Path to a non connected lake polygon. Connected lakes are lakes
             that are not connected by Path_final_riv.
-        Area_Min                       : float 
+        Area_Min                       : float
             The minimum drainage area of each catchment in km2
-        OutputFolder                   : string 
-            Folder name that stores generated simplified routing product 
-         
+        OutputFolder                   : string
+            Folder name that stores generated simplified routing product
+
         Notes
         -------
         This function has no return values, instead will generate following
         files. The output tpye will be the same as inputs, but the routing
-        network will be simplified by increase subbasin size, reduce 
+        network will be simplified by increase subbasin size, reduce
         number of subbasins and number of river segments.
-        
+
         os.path.join(OutputFolder,os.path.basename(Path_final_riv_ply))
         os.path.join(OutputFolder,os.path.basename(Path_final_riv))
         os.path.join(OutputFolder,os.path.basename(Path_Con_Lake_ply))
         os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply))
-        
+
         Returns:
         -------
-        None   
+        None
 
         Examples
         -------
@@ -4394,7 +4474,7 @@ class LRRT:
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
         context = dataobjects.createContext()
         context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
-        
+
         sub_colnm='SubId'
         down_colnm='DowSubId'
         DA_colnm = 'DA'
@@ -4603,7 +4683,7 @@ class LRRT:
         Clean_Attribute_Name(Path_out_final_rviply,   self.FieldName_List_Product)
         Clean_Attribute_Name(Path_out_final_rvi   , self.FieldName_List_Product)
 
-        
+
 #        Path_final_rviply = os.path.join(DataFolder,finalrvi_ply_NM)
 #        Path_final_riv    = os.path.join(DataFolder,finalriv_NM)
 #        Path_Non_ConL_cat = os.path.join(DataFolder,Non_ConnL_Cat_NM)
@@ -4619,7 +4699,7 @@ class LRRT:
 
 ###########################################################################3
     def SelectLakes(self,Path_final_riv_ply = '#',
-                         Path_final_riv = '#', 
+                         Path_final_riv = '#',
                          Path_Con_Lake_ply='#',
                          Path_NonCon_Lake_ply='#',
                          Thres_Area_Conn_Lakes = -1,
@@ -4627,69 +4707,69 @@ class LRRT:
                          Selection_Method = 'ByArea',
                          Selected_Lake_List_in=[],
                          OutputFolder = '#'):
-        """Simplify the routing product by lake area 
+        """Simplify the routing product by lake area
 
-        Function that used to simplify the routing product by user 
-        provided lake area thresthold. 
-        The input catchment polygons is the routing product before  
+        Function that used to simplify the routing product by user
+        provided lake area thresthold.
+        The input catchment polygons is the routing product before
         merging for lakes. It is provided with the routing product.
-        The result is the simplified catchment polygons. But 
-        result from this fuction still not merging catchment 
-        covering by the same lake. Thus, The result generated 
-        from this tools need further processed by 
-        Define_Final_Catchment, or can be further processed by 
-        Customize_Routing_Topology 
-     
+        The result is the simplified catchment polygons. But
+        result from this fuction still not merging catchment
+        covering by the same lake. Thus, The result generated
+        from this tools need further processed by
+        Define_Final_Catchment, or can be further processed by
+        Customize_Routing_Topology
+
         Parameters
         ----------
 
-        Path_final_riv_ply             : string 
-            Path to the catchment polygon which is the routing product 
-            before merging lakes catchments and need to be processed before 
-            used. It is the input for simplify the routing product based 
-            on lake area or drianage area.  
-        Path_final_riv                 : string 
-            Path to the river polyline which is the routing product 
-            before merging lakes catchments and need to be processed before 
-            used. It is the input for simplify the routing product based 
-            on lake area or drianage area.    
-        Path_Con_Lake_ply              : string 
+        Path_final_riv_ply             : string
+            Path to the catchment polygon which is the routing product
+            before merging lakes catchments and need to be processed before
+            used. It is the input for simplify the routing product based
+            on lake area or drianage area.
+        Path_final_riv                 : string
+            Path to the river polyline which is the routing product
+            before merging lakes catchments and need to be processed before
+            used. It is the input for simplify the routing product based
+            on lake area or drianage area.
+        Path_Con_Lake_ply              : string
             Path to a connected lake polygon. Connected lakes are lakes that
             are connected by Path_final_riv.
-        Path_NonCon_Lake_ply           : string 
+        Path_NonCon_Lake_ply           : string
             Path to a non connected lake polygon. Connected lakes are lakes
             that are not connected by Path_final_riv.
         Thres_Area_Conn_Lakes          : float (optional)
             It is the lake area threshold for connated lakes, in km2
         Thres_Area_Non_Conn_Lakes      : float (optional)
-            It is the lake area threshold for non connated lakes, in km2             
-        Selection_Method               : string 
+            It is the lake area threshold for non connated lakes, in km2
+        Selection_Method               : string
             It is a string indicate lake selection methods
-            "ByArea" means lake in the routing product will be selected based 
-            on two lake area thresthold Thres_Area_Conn_Lakes and 
+            "ByArea" means lake in the routing product will be selected based
+            on two lake area thresthold Thres_Area_Conn_Lakes and
             Thres_Area_Non_Conn_Lakes
-            "ByLakelist" means lake in the routing product will be selected 
+            "ByLakelist" means lake in the routing product will be selected
             based on user provided hydrolake id, in Selected_Lake_List_in
-        Selected_Lake_List_in          : list 
+        Selected_Lake_List_in          : list
             A list of lake ids that will be keeped in the routing product.
-            Lakes not in the list will be removed from routing product. 
-        OutputFolder                   : string 
-            Folder name that stores generated extracted routing product 
-    
+            Lakes not in the list will be removed from routing product.
+        OutputFolder                   : string
+            Folder name that stores generated extracted routing product
+
         Notes
         -------
         This function has no return values, instead will generate following
         files. The output tpye will be the same as inputs, but the routing
-        network will be simplified by removing lakes. 
-        
+        network will be simplified by removing lakes.
+
         os.path.join(OutputFolder,os.path.basename(Path_final_riv_ply))
         os.path.join(OutputFolder,os.path.basename(Path_final_riv))
         os.path.join(OutputFolder,os.path.basename(Path_Con_Lake_ply))
         os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply))
-        
+
         Returns:
         -------
-        None   
+        None
 
         Examples
         -------
@@ -4710,8 +4790,8 @@ class LRRT:
 
         if not os.path.exists(OutputFolder):
             os.makedirs(OutputFolder)
-            
-            
+
+
         Path_finalcat    = Path_final_riv_ply
         finalcat_info    = Path_finalcat[:-3] + "dbf"
         finalcat_info    = Dbf5(finalcat_info)
@@ -4759,12 +4839,12 @@ class LRRT:
 
         else:
             print(todo)
-        
+
         if len(Selected_Non_ConnLakes) > 0:
             Selectfeatureattributes(processing,Input = Path_NonCon_Lake_ply,Output=os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply)),Attri_NM = 'Hylak_id',Values = Selected_Non_ConnLakes)
         if len(Selected_ConnLakes) > 0:
             Selectfeatureattributes(processing,Input = Path_Con_Lake_ply ,Output=os.path.join(OutputFolder,os.path.basename(Path_Con_Lake_ply)),Attri_NM = 'Hylak_id',Values = Selected_ConnLakes)
-         
+
         print("####################################### Obtain selected Lake IDs done")
 
         #### upate NoncalnUpdateNonConnectedLakeArea_In_Finalcatinfo
@@ -4886,7 +4966,7 @@ class LRRT:
                     modifysubids.append(tsubid)
 
             Tar_Lake_Id = mapoldnew_info[mapoldnew_info['SubId'] == tsubid]['HyLakeId'].values[0]
-            
+
             if is_pre_modified > 0:
                 mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = mapoldnew_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = modifysubids,mainriv = finalcat_info_temp,Islake = Tar_Lake_Id)
             else:
@@ -4912,57 +4992,57 @@ class LRRT:
 
         Clean_Attribute_Name(os.path.join(OutputFolder,os.path.basename(Path_final_riv)),   self.FieldName_List_Product)
         Clean_Attribute_Name(os.path.join(OutputFolder,os.path.basename(Path_final_riv_ply))   , self.FieldName_List_Product)
-        
-        
+
+
         return
 
 
     def Define_Final_Catchment(self,OutputFolder,Path_final_rivply = '#',Path_final_riv = '#'):
-        """Define final lake river routing structure 
-        
-        Generate the final lake river routing structure by merging subbasin 
+        """Define final lake river routing structure
+
+        Generate the final lake river routing structure by merging subbasin
         polygons that are covered by the same lake.
-        The input are the catchment polygons and river segements 
+        The input are the catchment polygons and river segements
         before merging for lakes. The input files can be output of
         any of following functions:
-        SelectLakes, Select_Routing_product_based_SubId, 
+        SelectLakes, Select_Routing_product_based_SubId,
         Customize_Routing_Topology,RoutingNetworkTopologyUpdateToolset_riv
-        The result is the final catchment polygon that ready to be used for 
-        hydrological modeling 
+        The result is the final catchment polygon that ready to be used for
+        hydrological modeling
 
         Parameters
         ----------
-        OutputFolder                   : string 
+        OutputFolder                   : string
             Folder name that stores generated extracted routing product
-        Path_final_riv_ply             : string 
-            Path to the catchment polygon which is the routing product 
-            before merging lakes catchments and need to be processed before 
-            used. It is the input for simplify the routing product based 
-            on lake area or drianage area.  
-            routing product and can be directly used. 
-        Path_final_riv                 : string 
-            Path to the river polyline which is the routing product 
-            before merging lakes catchments and need to be processed before 
-            used. It is the input for simplify the routing product based 
-            on lake area or drianage area.    
+        Path_final_riv_ply             : string
+            Path to the catchment polygon which is the routing product
+            before merging lakes catchments and need to be processed before
+            used. It is the input for simplify the routing product based
+            on lake area or drianage area.
+            routing product and can be directly used.
+        Path_final_riv                 : string
+            Path to the river polyline which is the routing product
+            before merging lakes catchments and need to be processed before
+            used. It is the input for simplify the routing product based
+            on lake area or drianage area.
 
         Notes
         -------
         This function has no return values, instead will generate following
-        files. They are catchment polygons and river polylines that can be 
+        files. They are catchment polygons and river polylines that can be
         used for hydrological modeling.
         os.path.join(OutputFolder,'finalcat_info.shp')
         os.path.join(OutputFolder,'finalcat_info_riv.shp')
-        
+
         Returns:
         -------
-        None   
+        None
 
         Examples
         -------
 
         """
-                
+
 
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
@@ -4981,7 +5061,7 @@ class LRRT:
 
         if not os.path.exists(OutputFolder):
             os.makedirs(OutputFolder)
-            
+
         Path_Temp_final_rviply = os.path.join(self.tempfolder,'temp_finalriv_ply'+ str(np.random.randint(1, 10000 + 1)) +'.shp')
         Path_Temp_final_rvi    = os.path.join(self.tempfolder,'temp_finalriv'+  str(np.random.randint(1, 10000 + 1)) +'.shp')
 
@@ -5020,10 +5100,10 @@ class LRRT:
         Path_final_rvi    = os.path.join(OutputFolder,'finalcat_info_riv.shp')
         processing.run("native:dissolve", {'INPUT':Path_Temp_final_rvi,'FIELD':['SubId'],'OUTPUT':Path_final_rvi},context = context)
         processing.run("native:dissolve", {'INPUT':Path_Temp_final_rviply,'FIELD':['SubId'],'OUTPUT':Path_final_rviply},context = context)
-        
+
         Clean_Attribute_Name(Path_final_rvi,   self.FieldName_List_Product)
         Clean_Attribute_Name(Path_final_rviply, self.FieldName_List_Product)
-        
+
         Add_centroid_to_feature(Path_final_rviply,'centroid_x','centroid_y')
 
 
@@ -5118,7 +5198,7 @@ class LRRT:
         , Land use polygon (optional), soil type polygon(optional),
         vegetation polygon (optional), and two other user defined polygons
         (optional).
-        Non-lake HRU polygons in a subbasin is defined by an unique 
+        Non-lake HRU polygons in a subbasin is defined by an unique
         combination of all user provided datasets.
         A lake HRU polygon is defined the same as the provided lake polygon.
         All value of landuse and Veg polygon covered by lake will
@@ -5254,16 +5334,16 @@ class LRRT:
         >>> RTtool.GenerateHRUS(OutputFolder = DataFolder,
                                Path_Subbasin_Ply = os.path.join(DataFolder,"finalcat_info.shp"),
                                Path_Connect_Lake_ply = os.path.join(DataFolder,'Con_Lake_Ply.shp'),
-							   Path_Non_Connect_Lake_ply = os.path.join(DataFolder,'Non_Con_Lake_Ply.shp'),
-							   Path_Landuse_Ply = os.path.join(DataFolder,'modislanduse_exp_lg_pre.shp'),
+                               Path_Non_Connect_Lake_ply = os.path.join(DataFolder,'Non_Con_Lake_Ply.shp'),
+                               Path_Landuse_Ply = os.path.join(DataFolder,'modislanduse_exp_lg_pre.shp'),
                                Landuse_ID = 'gridcode',
-							   Path_Soil_Ply = os.path.join(DataFolder,'ca_all_slc_v3r2_exp_lg.shp'),
+                               Path_Soil_Ply = os.path.join(DataFolder,'ca_all_slc_v3r2_exp_lg.shp'),
                                Soil_ID = 'POLY_ID',
-							   Landuse_info=os.path.join(DataFolder,'landuse_info.csv'),
-							   Soil_info=os.path.join(DataFolder,'soil_info.csv'),
-							   Veg_info=os.path.join(DataFolder,'veg_info.csv'),
-							   DEM = os.path.join(DataFolder,'na_dem_15s_1.tif')
-							   )
+                               Landuse_info=os.path.join(DataFolder,'landuse_info.csv'),
+                               Soil_info=os.path.join(DataFolder,'soil_info.csv'),
+                               Veg_info=os.path.join(DataFolder,'veg_info.csv'),
+                               DEM = os.path.join(DataFolder,'na_dem_15s_1.tif')
+                               )
 
         """
         QgsApplication.setPrefixPath(self.qgisPP, True)
@@ -5519,48 +5599,49 @@ class LRRT:
 
 
     def Combine_Sub_Region_Results(self,Sub_Region_info = '#',Sub_Region_OutputFolder = '#', OutputFolder = '#',Path_Down_Stream_Points= '#',Is_Final_Result = True):
-        """Combine subregion watershed delineation results  
-        
-        It is a function that will combine watershed delineation results 
-        in different subregions. This function will assgin new subbasin 
-        id to each polygon in the combined result and update the 
-        stream orders in the combined result  
+        """Combine subregion watershed delineation results
+
+        It is a function that will combine watershed delineation results
+        in different subregions. This function will assgin new subbasin
+        id to each polygon in the combined result and update the
+        stream orders in the combined result
 
         Parameters
         ----------
-        Sub_Region_info                   : string 
-            It is the path to a csv file that contains the subregion 
-            information, such as subregion id etc. It is the output of 
+        Sub_Region_info                   : string
+            It is the path to a csv file that contains the subregion
+            information, such as subregion id etc. It is the output of
             Generatesubdomainmaskandinfo
-        Sub_Region_OutputFolder           : string 
-            It is the path to the subregion output folder.  
-        OutputFolder                      : string 
-            It is the path to a folder to save outputs 
-        Path_Down_Stream_Points           : string 
-            It is the path to a point shapefile, the point is located at 
-            next downstream grids of each subbasin outlets grid. it is 
+        Sub_Region_OutputFolder           : string
+            It is the path to the subregion output folder.
+        OutputFolder                      : string
+            It is the path to a folder to save outputs
+        Path_Down_Stream_Points           : string
+            It is the path to a point shapefile, the point is located at
+            next downstream grids of each subbasin outlets grid. it is
             generated by Generatesubdomainmaskandinfo
         Is_Final_Result                   : bool
-           Indicate the function is called to combine subbasin polygon of 
+           Indicate the function is called to combine subbasin polygon of
            final delineation results or subbasin polygons before merging
-           for lakes.        
+           for lakes.
 
         Notes
         -------
         This function has no return values, instead will generate following
-        files. They are catchment polygons and river polylines that can be 
+        files. They are catchment polygons and river polylines that can be
         used for hydrological modeling.
         os.path.join(OutputFolder,'finalcat_info.shp')
         os.path.join(OutputFolder,'finalcat_info_riv.shp')
-        
+
         Returns:
         -------
-        None   
+        None
 
         Examples
         -------
 
         """
+
 
         QgsApplication.setPrefixPath(self.qgisPP, True)
         Qgs = QgsApplication([],False)
@@ -5574,6 +5655,8 @@ class LRRT:
         context = dataobjects.createContext()
         context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
 
+        if not os.path.exists(OutputFolder):
+            os.makedirs(OutputFolder)
 
         Paths_Finalcat_ply      = []
         Paths_Finalcat_line     = []
@@ -5604,34 +5687,42 @@ class LRRT:
 
             if os.path.exists(Path_Finalcat_ply) != 1:   ### this sub region did not generate outputs
                 continue
-
             if Is_Final_Result == True:
-                SubID_info = Dbf_To_Dataframe(file_path)[['SubId,DowSubId']].copy()
+
+                SubID_info = Dbf_To_Dataframe(Path_Finalcat_ply)[['SubId','DowSubId']].copy()
                 SubID_info = SubID_info.reset_index()
-                SubID_info['nSubId'] = SubID_info.index() + subid_strat_iregion
-                
+                SubID_info['nSubId'] = SubID_info.index + subid_strat_iregion
+
                 layer_cat=QgsVectorLayer(Path_Finalcat_ply,"")
-                Add_Attributes_To_shpfile(processing,context,layer_cat, 
+                Add_Attributes_To_shpfile(processing,context,layer_cat,
                                           OutputPath = os.path.join(self.tempfolder,'finalcat_info_Region_'+str(isubregion)+'addatrri.shp'),
-                                          Region_ID = isubregion,SubID_info)
+                                          Region_ID = isubregion,SubID_info = SubID_info)
                 Paths_Finalcat_ply.append(os.path.join(self.tempfolder,'finalcat_info_Region_'+str(isubregion)+'addatrri.shp'))
                 del layer_cat
 
                 layer_cat=QgsVectorLayer(Path_Finalcat_line,"")
-                Add_Attributes_To_shpfile(processing,context,layer_cat, 
+                Add_Attributes_To_shpfile(processing,context,layer_cat,
                                           OutputPath = os.path.join(self.tempfolder,'finalcat_info_riv_Region_'+str(isubregion)+'addatrri.shp'),
-                                          Region_ID = isubregion,SubID_info)                
+                                          Region_ID = isubregion,SubID_info = SubID_info)
                 Paths_Finalcat_line.append(os.path.join(self.tempfolder,'finalcat_info_riv_Region_'+str(isubregion)+'addatrri.shp'))
                 del layer_cat
 
             else:
+                SubID_info = Dbf_To_Dataframe(Path_Finalriv_ply)[['SubId','DowSubId']].copy()
+                SubID_info = SubID_info.reset_index()
+                SubID_info['nSubId'] = SubID_info.index + subid_strat_iregion
+
                 layer_cat=QgsVectorLayer(Path_Finalriv_ply,"")
-                Add_Attributes_To_shpfile(processing,context,layer_cat, OutputPath = os.path.join(self.tempfolder,'finalriv_info_ply_Region_'+str(isubregion)+'addatrri.shp'),Region_ID = isubregion)
+                Add_Attributes_To_shpfile(processing,context,layer_cat,
+                                          OutputPath = os.path.join(self.tempfolder,'finalriv_info_ply_Region_'+str(isubregion)+'addatrri.shp'),
+                                          Region_ID = isubregion,SubID_info = SubID_info)
                 Paths_Finalriv_ply.append(os.path.join(self.tempfolder,'finalriv_info_ply_Region_'+str(isubregion)+'addatrri.shp'))
                 del layer_cat
 
                 layer_cat=QgsVectorLayer(Path_Finalriv_line,"")
-                Add_Attributes_To_shpfile(processing,context,layer_cat, OutputPath = os.path.join(self.tempfolder,'finalriv_info_Region_'+str(isubregion)+'addatrri.shp'),Region_ID = isubregion)
+                Add_Attributes_To_shpfile(processing,context,layer_cat,
+                                          OutputPath = os.path.join(self.tempfolder,'finalriv_info_Region_'+str(isubregion)+'addatrri.shp'),
+                                          Region_ID = isubregion,SubID_info = SubID_info)
                 Paths_Finalriv_line.append(os.path.join(self.tempfolder,'finalriv_info_Region_'+str(isubregion)+'addatrri.shp'))
                 del layer_cat
 
@@ -5641,9 +5732,10 @@ class LRRT:
                 Paths_None_Con_Lake_ply.append(Path_None_Con_Lake_ply)
             if os.path.exists(Path_obs_point) == 1:
                 Paths_obs_point.append(Path_obs_point)
+            print('Subregion ID is ',isubregion,'    the start new subid is    ', subid_strat_iregion, ' The end of subid is ', min(SubID_info['nSubId']) )
 
             subid_strat_iregion  = max(SubID_info['nSubId']) + 10
-        asdfsdf 
+
         if(len(Paths_Con_Lake_ply) > 0):
             processing.run("native:mergevectorlayers", {'LAYERS':Paths_Con_Lake_ply,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'Con_Lake_Ply.shp')})
         if(len(Paths_None_Con_Lake_ply) > 0):
@@ -5659,50 +5751,9 @@ class LRRT:
             processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalcat_line,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalcat_info_riv.shp')})
             processing.run("qgis:joinattributesbylocation", {'INPUT':Path_Outlet_Down_point,'JOIN':os.path.join(self.tempfolder,'finalcat_info.shp'),'PREDICATE':[5],'JOIN_FIELDS':[],'METHOD':1,'DISCARD_NONMATCHING':True,'PREFIX':'','OUTPUT':os.path.join(self.tempfolder,'Down_Sub_ID.shp')},context = context)
 
-            tempinfo = Dbf5(os.path.join(self.tempfolder,'finalcat_info.shp')[:-3] + "dbf")
-            AllCatinfo = tempinfo.to_dataframe().drop_duplicates('nSubId', keep='first')
-#        print(AllCatinfo)
+            AllCatinfo = Dbf_To_Dataframe(os.path.join(self.tempfolder,'finalcat_info.shp')).drop_duplicates('SubId', keep='first').copy()
+            DownCatinfo = Dbf_To_Dataframe(os.path.join(self.tempfolder,'Down_Sub_ID.shp')).drop_duplicates('SubId', keep='first').copy()
 
-            tempinfo = Dbf5(os.path.join(self.tempfolder,'Down_Sub_ID.shp')[:-3] + "dbf")
-            DownCatinfo = tempinfo.to_dataframe().drop_duplicates('nSubId', keep='first')
-#        print(DownCatinfo)
-
-            for i in range(0,len(Sub_Region_info)):
-                isubregion = Sub_Region_info['Sub_Reg_ID'].values[i]
-
-                Sub_Region_cat_info = AllCatinfo.loc[AllCatinfo['Reg_ID'] == isubregion].copy()
-
-                if len(Sub_Region_cat_info) <= 0:
-                    continue
-
-                Sub_Region_cat_info = Sub_Region_cat_info.sort_values(by='DA', ascending=False)
-                iReg_Outlet_nSubid = Sub_Region_cat_info['nSubId'].values[0]    #(isubregion - 80000) * 200000 - 1
-
-                outlet_mask = AllCatinfo['nSubId'] == iReg_Outlet_nSubid
-
-                Dow_Sub_Region_id = Sub_Region_info['Dow_Sub_Reg_Id'].values[i]
-
-            #### find downetream id
-                Down_Sub_info = DownCatinfo.loc[DownCatinfo['value'] == isubregion].copy()
-
-                if len(Down_Sub_info) > 0:
-                    DownSubid   = Down_Sub_info['nSubId'].values[0]
-                    AllCatinfo.loc[outlet_mask,'nDowSubId'] = DownSubid
-                else:
-                ### find all subregion drainage to this down sub region
-                    All_up_regions_ids = Sub_Region_info[Sub_Region_info['Dow_Sub_Reg_Id'] == Dow_Sub_Region_id]['Sub_Reg_ID'].values
-                    Down_Sub_info = DownCatinfo.loc[DownCatinfo['value'].isin(All_up_regions_ids)]
-                ####
-                    if len(Down_Sub_info) == 1:
-                        DownSubid   = Down_Sub_info['nSubId'].values[0]
-                        AllCatinfo.loc[outlet_mask,'nDowSubId'] = DownSubid
-                    else:
-#                        print(isubregion,iReg_Outlet_nSubid)
-                        AllCatinfo.loc[outlet_mask,'nDowSubId'] = -1
-
-
-            AllCatinfo['SubId'] = AllCatinfo['nSubId']
-            AllCatinfo['DowSubId'] = AllCatinfo['nDowSubId']
             AllCatinfo = Streamorderanddrainagearea(AllCatinfo)
             Copy_Pddataframe_to_shpfile(os.path.join(self.tempfolder,'finalcat_info.shp'),AllCatinfo)
             Copy_Pddataframe_to_shpfile(os.path.join(self.tempfolder,'finalcat_info_riv.shp'),AllCatinfo)
@@ -6080,11 +6131,11 @@ class LRRT:
         ogridforc.close()
         ########
         #/* example of calcuate grid index
-        #       	0	1	2	3	4
-        #       0	0	1	2	3	4
-        #       1	5	6	7	8	9
-        #       2	10	11	12	13	14
-        #       3	15	16	17	18	19
+        #           0    1    2    3    4
+        #       0    0    1    2    3    4
+        #       1    5    6    7    8    9
+        #       2    10    11    12    13    14
+        #       3    15    16    17    18    19
         ##  we have 4 rows (0-3) and 5 cols (0-4), the index of each cell
         #   should be calaulated by row*(max(colnums)+1) + colnum.
         #   for example row =2, col=0, index = 2*(4+1)+0 = 10
