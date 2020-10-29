@@ -5816,82 +5816,82 @@ class LRRT:
 
         subid_strat_iregion = 1
         seg_id_strat_iregion = 1
-        # for i in range(0,len(Sub_Region_info)):
-        #     isubregion = Sub_Region_info['Sub_Reg_ID'].values[i]
-        #     ProjectNM  = Sub_Region_info['ProjectNM'].values[i]
-        #     SubFolder  = os.path.join(Sub_Region_OutputFolder,ProjectNM)
-        #
-        #     ### define path of the output file in this sub region
-        #     Path_Finalcat_ply      = os.path.join(SubFolder,'finalcat_info.shp')
-        #     Path_Finalcat_line     = os.path.join(SubFolder,'finalcat_info_riv.shp')
-        #     Path_Finalriv_ply      = os.path.join(SubFolder,'finalriv_info_ply.shp')
-        #     Path_Finalriv_line     = os.path.join(SubFolder,'finalriv_info.shp')
-        #     Path_Con_Lake_ply      = os.path.join(SubFolder,'Con_Lake_Ply.shp')
-        #     Path_None_Con_Lake_ply = os.path.join(SubFolder,'Non_Con_Lake_Ply.shp')
-        #     Path_obs_point         = os.path.join(SubFolder,'obspoint.shp')
-        #
-        #     ### product do not exist
-        #     if os.path.exists(Path_Finalcat_ply) != 1:   ### this sub region did not generate outputs
-        #         continue
-        #     ### obtain new subid
-        #     if Is_Final_Result == True:
-        #
-        #         SubID_info = Dbf_To_Dataframe(Path_Finalcat_ply).drop_duplicates(subset=['SubId'], keep='first')[['SubId','DowSubId','Seg_ID']].copy()
-        #         SubID_info = SubID_info.reset_index()
-        #         SubID_info['nSubId'] = SubID_info.index + subid_strat_iregion
-        #         SubID_info['nSeg_ID'] = SubID_info['Seg_ID'] + seg_id_strat_iregion
-        #
-        #         layer_cat=QgsVectorLayer(Path_Finalcat_ply,"")
-        #         Add_Attributes_To_shpfile(processing,context,layer_cat,
-        #                                   OutputPath = os.path.join(self.tempfolder,'finalcat_info_Region_'+str(isubregion)+'addatrri.shp'),
-        #                                   Region_ID = isubregion,SubID_info = SubID_info)
-        #         Paths_Finalcat_ply.append(os.path.join(self.tempfolder,'finalcat_info_Region_'+str(isubregion)+'addatrri.shp'))
-        #         del layer_cat
-        #
-        #         layer_cat=QgsVectorLayer(Path_Finalcat_line,"")
-        #         Add_Attributes_To_shpfile(processing,context,layer_cat,
-        #                                   OutputPath = os.path.join(self.tempfolder,'finalcat_info_riv_Region_'+str(isubregion)+'addatrri.shp'),
-        #                                   Region_ID = isubregion,SubID_info = SubID_info)
-        #         Paths_Finalcat_line.append(os.path.join(self.tempfolder,'finalcat_info_riv_Region_'+str(isubregion)+'addatrri.shp'))
-        #         del layer_cat
-        #
-        #     else:
-        #         SubID_info = Dbf_To_Dataframe(Path_Finalcat_ply).drop_duplicates(subset=['SubId'], keep='first')[['SubId','DowSubId','Seg_ID']].copy()
-        #         SubID_info = SubID_info.reset_index()
-        #         SubID_info['nSubId'] = SubID_info.index + subid_strat_iregion
-        #         SubID_info['nSeg_ID'] = SubID_info['Seg_ID'] + seg_id_strat_iregion
-        #
-        #         layer_cat=QgsVectorLayer(Path_Finalriv_ply,"")
-        #         Add_Attributes_To_shpfile(processing,context,layer_cat,
-        #                                   OutputPath = os.path.join(self.tempfolder,'finalriv_info_ply_Region_'+str(isubregion)+'addatrri.shp'),
-        #                                   Region_ID = isubregion,SubID_info = SubID_info)
-        #         Paths_Finalriv_ply.append(os.path.join(self.tempfolder,'finalriv_info_ply_Region_'+str(isubregion)+'addatrri.shp'))
-        #         del layer_cat
-        #
-        #         layer_cat=QgsVectorLayer(Path_Finalriv_line,"")
-        #         Add_Attributes_To_shpfile(processing,context,layer_cat,
-        #                                   OutputPath = os.path.join(self.tempfolder,'finalriv_info_Region_'+str(isubregion)+'addatrri.shp'),
-        #                                   Region_ID = isubregion,SubID_info = SubID_info)
-        #         Paths_Finalriv_line.append(os.path.join(self.tempfolder,'finalriv_info_Region_'+str(isubregion)+'addatrri.shp'))
-        #         del layer_cat
-        #
-        #     if os.path.exists(Path_Con_Lake_ply) == 1:
-        #         Paths_Con_Lake_ply.append(Path_Con_Lake_ply)
-        #     if os.path.exists(Path_None_Con_Lake_ply) == 1:
-        #         Paths_None_Con_Lake_ply.append(Path_None_Con_Lake_ply)
-        #     if os.path.exists(Path_obs_point) == 1:
-        #         Paths_obs_point.append(Path_obs_point)
-        #     print('Subregion ID is ',isubregion,'    the start new subid is    ', subid_strat_iregion, ' The end of subid is ', min(SubID_info['nSubId']) )
-        #
-        #     subid_strat_iregion  = max(SubID_info['nSubId']) + 10
-        #     seg_id_strat_iregion = max(SubID_info['nSeg_ID']) + 10
-        #
-        # if(len(Paths_Con_Lake_ply) > 0):
-        #     processing.run("native:mergevectorlayers", {'LAYERS':Paths_Con_Lake_ply,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'Con_Lake_Ply.shp')})
-        # if(len(Paths_None_Con_Lake_ply) > 0):
-        #     processing.run("native:mergevectorlayers", {'LAYERS':Paths_None_Con_Lake_ply,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'Non_Con_Lake_Ply.shp')})
-        # if(len(Paths_obs_point) > 0):
-        #     processing.run("native:mergevectorlayers", {'LAYERS':Paths_obs_point,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'obspoint.shp')})
+        for i in range(0,len(Sub_Region_info)):
+            isubregion = Sub_Region_info['Sub_Reg_ID'].values[i]
+            ProjectNM  = Sub_Region_info['ProjectNM'].values[i]
+            SubFolder  = os.path.join(Sub_Region_OutputFolder,ProjectNM)
+
+            ### define path of the output file in this sub region
+            Path_Finalcat_ply      = os.path.join(SubFolder,'finalcat_info.shp')
+            Path_Finalcat_line     = os.path.join(SubFolder,'finalcat_info_riv.shp')
+            Path_Finalriv_ply      = os.path.join(SubFolder,'finalriv_info_ply.shp')
+            Path_Finalriv_line     = os.path.join(SubFolder,'finalriv_info.shp')
+            Path_Con_Lake_ply      = os.path.join(SubFolder,'Con_Lake_Ply.shp')
+            Path_None_Con_Lake_ply = os.path.join(SubFolder,'Non_Con_Lake_Ply.shp')
+            Path_obs_point         = os.path.join(SubFolder,'obspoint.shp')
+
+            ### product do not exist
+            if os.path.exists(Path_Finalcat_ply) != 1:   ### this sub region did not generate outputs
+                continue
+            ### obtain new subid
+            if Is_Final_Result == True:
+
+                SubID_info = Dbf_To_Dataframe(Path_Finalcat_ply).drop_duplicates(subset=['SubId'], keep='first')[['SubId','DowSubId','Seg_ID']].copy()
+                SubID_info = SubID_info.reset_index()
+                SubID_info['nSubId'] = SubID_info.index + subid_strat_iregion
+                SubID_info['nSeg_ID'] = SubID_info['Seg_ID'] + seg_id_strat_iregion
+
+                layer_cat=QgsVectorLayer(Path_Finalcat_ply,"")
+                Add_Attributes_To_shpfile(processing,context,layer_cat,
+                                          OutputPath = os.path.join(self.tempfolder,'finalcat_info_Region_'+str(isubregion)+'addatrri.shp'),
+                                          Region_ID = isubregion,SubID_info = SubID_info)
+                Paths_Finalcat_ply.append(os.path.join(self.tempfolder,'finalcat_info_Region_'+str(isubregion)+'addatrri.shp'))
+                del layer_cat
+
+                layer_cat=QgsVectorLayer(Path_Finalcat_line,"")
+                Add_Attributes_To_shpfile(processing,context,layer_cat,
+                                          OutputPath = os.path.join(self.tempfolder,'finalcat_info_riv_Region_'+str(isubregion)+'addatrri.shp'),
+                                          Region_ID = isubregion,SubID_info = SubID_info)
+                Paths_Finalcat_line.append(os.path.join(self.tempfolder,'finalcat_info_riv_Region_'+str(isubregion)+'addatrri.shp'))
+                del layer_cat
+
+            else:
+                SubID_info = Dbf_To_Dataframe(Path_Finalcat_ply).drop_duplicates(subset=['SubId'], keep='first')[['SubId','DowSubId','Seg_ID']].copy()
+                SubID_info = SubID_info.reset_index()
+                SubID_info['nSubId'] = SubID_info.index + subid_strat_iregion
+                SubID_info['nSeg_ID'] = SubID_info['Seg_ID'] + seg_id_strat_iregion
+
+                layer_cat=QgsVectorLayer(Path_Finalriv_ply,"")
+                Add_Attributes_To_shpfile(processing,context,layer_cat,
+                                          OutputPath = os.path.join(self.tempfolder,'finalriv_info_ply_Region_'+str(isubregion)+'addatrri.shp'),
+                                          Region_ID = isubregion,SubID_info = SubID_info)
+                Paths_Finalriv_ply.append(os.path.join(self.tempfolder,'finalriv_info_ply_Region_'+str(isubregion)+'addatrri.shp'))
+                del layer_cat
+
+                layer_cat=QgsVectorLayer(Path_Finalriv_line,"")
+                Add_Attributes_To_shpfile(processing,context,layer_cat,
+                                          OutputPath = os.path.join(self.tempfolder,'finalriv_info_Region_'+str(isubregion)+'addatrri.shp'),
+                                          Region_ID = isubregion,SubID_info = SubID_info)
+                Paths_Finalriv_line.append(os.path.join(self.tempfolder,'finalriv_info_Region_'+str(isubregion)+'addatrri.shp'))
+                del layer_cat
+
+            if os.path.exists(Path_Con_Lake_ply) == 1:
+                Paths_Con_Lake_ply.append(Path_Con_Lake_ply)
+            if os.path.exists(Path_None_Con_Lake_ply) == 1:
+                Paths_None_Con_Lake_ply.append(Path_None_Con_Lake_ply)
+            if os.path.exists(Path_obs_point) == 1:
+                Paths_obs_point.append(Path_obs_point)
+            print('Subregion ID is ',isubregion,'    the start new subid is    ', subid_strat_iregion, ' The end of subid is ', min(SubID_info['nSubId']) )
+
+            subid_strat_iregion  = max(SubID_info['nSubId']) + 10
+            seg_id_strat_iregion = max(SubID_info['nSeg_ID']) + 10
+
+        if(len(Paths_Con_Lake_ply) > 0):
+            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Con_Lake_ply,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'Con_Lake_Ply.shp')})
+        if(len(Paths_None_Con_Lake_ply) > 0):
+            processing.run("native:mergevectorlayers", {'LAYERS':Paths_None_Con_Lake_ply,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'Non_Con_Lake_Ply.shp')})
+        if(len(Paths_obs_point) > 0):
+            processing.run("native:mergevectorlayers", {'LAYERS':Paths_obs_point,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'obspoint.shp')})
 
 
         if Is_Final_Result == 1:
