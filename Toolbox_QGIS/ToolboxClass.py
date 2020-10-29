@@ -1046,7 +1046,8 @@ def UpdateConnectedLakeArea_In_Finalcatinfo(Path_Finalcatinfo,Conn_Lake_Ids):
     return
 
 #######
-def Copy_Pddataframe_to_shpfile(Path_shpfile,Pddataframe,link_col_nm = 'nSubId'):
+def Copy_Pddataframe_to_shpfile(Path_shpfile,Pddataframe,link_col_nm = 'nSubId',
+                                UpdateColNM = ['#']):
     layer_cat=QgsVectorLayer(Path_shpfile,"")
     Attri_Name = layer_cat.fields().names()
     features = layer_cat.getFeatures()
@@ -1055,13 +1056,19 @@ def Copy_Pddataframe_to_shpfile(Path_shpfile,Pddataframe,link_col_nm = 'nSubId')
             Atti_Valu    = sf.attributes()
             sf_subid     = sf[link_col_nm]
             tarinfo      = Pddataframe[Pddataframe[link_col_nm] == sf_subid]
-            for icolnm in range(0,len(Attri_Name)):     ### copy infomaiton
-                if  Attri_Name[icolnm] == 'Obs_NM' or Attri_Name[icolnm] == 'SRC_obs' or  Attri_Name[icolnm] == 'layer' or  Attri_Name[icolnm] == 'path'  :
-                    sf[Attri_Name[icolnm]] = str(tarinfo[Attri_Name[icolnm]].values[0])
-                elif Attri_Name[icolnm] == 'cat':
-                    continue
-                else:
-                    sf[Attri_Name[icolnm]] = float(tarinfo[Attri_Name[icolnm]].values[0])
+
+            if UpdateColNM[0] == '#':
+                for icolnm in range(0,len(Attri_Name)):     ### copy infomaiton
+                    if  Attri_Name[icolnm] == 'Obs_NM' or Attri_Name[icolnm] == 'SRC_obs' or  Attri_Name[icolnm] == 'layer' or  Attri_Name[icolnm] == 'path'  :
+                        sf[Attri_Name[icolnm]] = str(tarinfo[Attri_Name[icolnm]].values[0])
+                    elif Attri_Name[icolnm] == 'cat':
+                        continue
+                    else:
+                        sf[Attri_Name[icolnm]] = float(tarinfo[Attri_Name[icolnm]].values[0])
+            else:
+                for icolnm in range(0,len(UpdateColNM)):
+                    sf[UpdateColNM[icolnm]] = float(tarinfo[UpdateColNM[icolnm]].values[0])
+
             layer_cat.updateFeature(sf)
     del layer_cat
 
@@ -1227,55 +1234,173 @@ def ConnectLake_to_NonConnectLake_Updateinfo(NonC_Lakeinfo,finalriv_info,Merged_
     return NonC_Lakeinfo
 ##############################
 
-# def Conect_SubRegion_Update_Str_Order(AllCatinfo,DownCatinfo,Sub_Region_info)
-#
-#     ### update downsteam subbasin id for each subregion outlet subbasins
-#     ### current value is -1, updated to connected downstream subbasin ID
-#
-#     ###loop for each subregion
-#     for i in range(0,len(Sub_Region_info)):
-#
-#         ### obtain all subbasin data for i isubregion
-#         isubregion = Sub_Region_info['Sub_Reg_ID'].values[i]
-#         Sub_Region_cat_info = AllCatinfo.loc[AllCatinfo['Reg_ID'] == isubregion].copy()
-#
-#         ### check if this subregion exist in merged data
-#         if len(Sub_Region_cat_info) <= 0:
-#             continue
-#
-#         ### Subregion outlet subbasin ID
-#         outlet_mask = Sub_Region_cat_info['DowSubId'] == -1
-#         iReg_Outlet_Subid = Sub_Region_cat_info.loc[outlet_mask,'SubId'].values[0]    #(isubregion - 80000) * 200000 - 1
-#
-#         ### find downstream subregion id of current subregion
-#         Dow_Sub_Region_id = Sub_Region_info['Dow_Sub_Reg_Id'].values[i]
-#
-#         ### if this region has no down subregions. do not need to
-#         ### modify the dowsubid of the outlet subbasin of this subregion
-#         if Dow_Sub_Region_id < 0:
-#             continue
-#
-#         ### find downstrem subbasin id of outlet subbasin
-#         Down_Sub_info = DownCatinfo.loc[DownCatinfo['value'] == isubregion].copy()
-#
-#         if len(Down_Sub_info) == 1:###
-#             DownSubid   = Down_Sub_info['nSubId'].values[0]
-#             AllCatinfo.loc[outlet_mask,'DowSubId'] = DownSubid
-#         ### two subregion drainage to the same downstream subregion,
-#         ### the Down_Sub_info only contains one upper subregion
-#         ### the rest do not exist in Down_Sub_info
-#         elif len(Down_Sub_info) < 0: ###
-#
-#             ### find all subregion drainage to this down sub region
-#             All_up_regions_ids = Sub_Region_info[Sub_Region_info['Dow_Sub_Reg_Id'] == Dow_Sub_Region_id]['Sub_Reg_ID'].values
-#             Down_Sub_info = DownCatinfo.loc[DownCatinfo['value'].isin(All_up_regions_ids)]
-#             ####
-#                     if len(Down_Sub_info) == 1:
-#                         DownSubid   = Down_Sub_info['nSubId'].values[0]
-#                         AllCatinfo.loc[outlet_mask,'nDowSubId'] = DownSubid
-#                     else:
-# #                        print(isubregion,iReg_Outlet_nSubid)
-#                         AllCatinfo.loc[outlet_mask,'nDowSubId'] = -1
+def Connect_SubRegion_Update_DownSubId(AllCatinfo,DownCatinfo,Sub_Region_info):
+
+    ### update downsteam subbasin id for each subregion outlet subbasins
+    ### current value is -1, updated to connected downstream subbasin ID
+    ###loop for each subregion
+    routing_info      = Sub_Region_info[['Sub_Reg_ID','Dow_Sub_Reg_Id']].astype('float').values
+    for i in range(0,len(Sub_Region_info)):
+
+        ### obtain all subbasin data for i isubregion
+        isubregion = Sub_Region_info['Sub_Reg_ID'].values[i]
+        Sub_Region_cat_info = AllCatinfo.loc[AllCatinfo['Region_ID'] == isubregion].copy()
+
+        Sub_Region_info.loc[Sub_Region_info['Sub_Reg_ID'] == isubregion,'N_Up_SubRegion'] = len(Defcat(routing_info,isubregion))
+
+        ### check if this subregion exist in merged data
+        if len(Sub_Region_cat_info) <= 0:
+            continue
+
+        ### Subregion outlet subbasin ID
+        outlet_mask = Sub_Region_cat_info['DowSubId'] == -1
+        iReg_Outlet_Subid = Sub_Region_cat_info.loc[outlet_mask,'SubId'].values[0]    #(isubregion - 80000) * 200000 - 1
+        Sub_Region_info.loc[Sub_Region_info['Sub_Reg_ID'] == isubregion,'Outlet_SubId'] = iReg_Outlet_Subid
+        ### find downstream subregion id of current subregion
+        Dow_Sub_Region_id = Sub_Region_info['Dow_Sub_Reg_Id'].values[i]
+
+        ### if this region has no down subregions. do not need to
+        ### modify the dowsubid of the outlet subbasin of this subregion
+        if Dow_Sub_Region_id < 0:
+            continue
+
+        ### find downstrem subbasin id of outlet subbasin
+        Down_Sub_info = DownCatinfo.loc[DownCatinfo['value'] == isubregion].copy()
+
+        if len(Down_Sub_info) == 1:###
+            DownSubid   = Down_Sub_info['SubId'].values[0]
+            AllCatinfo.loc[AllCatinfo['SubId'] == iReg_Outlet_Subid,'DowSubId'] = DownSubid
+        ### two subregion drainage to the same downstream subregion,
+        ### the Down_Sub_info only contains one upper subregion
+        ### the rest do not exist in Down_Sub_info
+        elif Dow_Sub_Region_id == 79999:
+            AllCatinfo.loc[AllCatinfo['SubId'] == iReg_Outlet_Subid,'DowSubId'] = -1
+        else:
+            ### find if there is other subabsin drainage to this watershed
+            AllUpper_Subregions = DownCatinfo.loc[DownCatinfo['Region_ID'] == Dow_Sub_Region_id].copy()
+            if len(AllUpper_Subregions) == 1:
+                DownSubid   = AllUpper_Subregions['SubId'].values[0] ### share the same points
+                AllCatinfo.loc[AllCatinfo['SubId'] == iReg_Outlet_Subid,'DowSubId'] = DownSubid
+            else:
+                print("##################################################")
+                print("Subregion : ",isubregion,"   To  ",Dow_Sub_Region_id)
+                print("Need be manually connected")
+                print("##################################################")
+    return AllCatinfo,Sub_Region_info
+
+
+def Update_DA_Strahler_For_Combined_Result(AllCatinfo,Sub_Region_info):
+    ### start from head subregions with no upstream subregion
+    Subregion_list=Sub_Region_info[Sub_Region_info['N_Up_SubRegion'] == 1]['Sub_Reg_ID'].values
+    Subregion_list = np.unique(Subregion_list)
+    Subregion_list = Subregion_list.tolist()
+
+    #loop until Subregion_list has no subregions
+    # Subregion_list will be updated with downstream subregions of
+    # current subregion in Subregion_list
+    if len(AllCatinfo.loc[AllCatinfo['DowSubId'] == -1]) > 1:
+        print('Wathersed has multiple outlet  ')
+        print(AllCatinfo.loc[AllCatinfo['DowSubId'] == -1])
+        return AllCatinfo
+    elif len(AllCatinfo.loc[AllCatinfo['DowSubId'] == -1]) == 0:
+        print('Watershed has no outlet')
+        return AllCatinfo
+    else:
+        Watershedoutletsubid = AllCatinfo.loc[AllCatinfo['DowSubId'] == -1]['SubId'].values[0].astype(int)
+
+    ### Area and DA check
+    Total_DA_Subregion = 0.0
+    for i in range(0,len(Sub_Region_info)):
+        Outletsubid_csubr = Sub_Region_info['Outlet_SubId'].values[i]
+        Total_DA_Subregion = Total_DA_Subregion + AllCatinfo.loc[AllCatinfo['SubId'] == Outletsubid_csubr]['DA'].values[0]
+        print('######Area and DA check for subregion ',Sub_Region_info['Sub_Reg_ID'].values[i])
+        print('DA at the subregion outlet is    ',AllCatinfo.loc[AllCatinfo['SubId'] == Outletsubid_csubr]['DA'].values[0])
+        print('Total subregion area is          ',sum(AllCatinfo.loc[AllCatinfo['Region_ID'] == Sub_Region_info['Sub_Reg_ID'].values[i]]['BasArea'].values))
+
+    iloop = 1
+    while len(Subregion_list) > 0:
+        print("loop  ", iloop)
+        print(Subregion_list)
+        current_loop_list = copy.copy(Subregion_list)
+        Subregion_list = []
+        ### loop for current subregion list
+        for i in range(0,len(current_loop_list)):
+            ### current subregion id
+            c_subr_id =  current_loop_list[i]
+
+            ### down subregion id of current subregion
+            if c_subr_id == 79999:
+                continue
+
+            d_subr_id =  Sub_Region_info[Sub_Region_info['Sub_Reg_ID'] == c_subr_id]['Dow_Sub_Reg_Id'].values[0]
+            ### add down subregon id to the list for next while loop
+            Subregion_list.append(d_subr_id)
+
+            ### obtain outlet subid of this region
+            Outletsubid_csubr = Sub_Region_info[Sub_Region_info['Sub_Reg_ID'] == c_subr_id]['Outlet_SubId'].values[0]
+            ### obtain outlet sub info
+            Outletsub_info = AllCatinfo.loc[AllCatinfo['SubId'] == Outletsubid_csubr].copy()
+            ### obtain down subid of the outlet subbasin
+            downsubid = Outletsub_info['DowSubId'].values[0]
+
+            ### downsubid did not exist.....
+            if len(AllCatinfo.loc[AllCatinfo['SubId'] == downsubid]) <= 0:
+                if int(c_subr_id) != int(Watershedoutletsubid):
+                    print('Subregion:   ',c_subr_id)
+                    print('SubId is ',Outletsubid_csubr,' DownSubId is  ',downsubid, Watershedoutletsubid,int(c_subr_id) != int(Watershedoutletsubid))
+                continue
+
+            downsub_reg_id =  AllCatinfo.loc[AllCatinfo['SubId'] == downsubid]['Region_ID'].values[0]
+
+            if downsub_reg_id != d_subr_id:
+                print('Subregion:   ',c_subr_id,'  did not connected with    ',d_subr_id)
+                continue
+
+            while downsub_reg_id == d_subr_id:
+                csubid = downsubid ### update DA and Strahler for this subbasin
+
+                ### current subid info
+                C_sub_info = AllCatinfo.loc[AllCatinfo['SubId'] == csubid].copy()
+                ### find all subbasin drainge to this csubid
+                Upper_sub_info = AllCatinfo.loc[AllCatinfo['DowSubId'] == csubid].copy()
+
+                ### ## new DA = basin area + DA of upper subregions
+
+                NewDA = C_sub_info['BasArea'].values[0] + sum(Upper_sub_info['DA'].values)
+
+                ### calculate new Strahler orders
+                ## up stream Strahler orders
+                Strahlers = Upper_sub_info['Strahler'].values
+                maxStrahler = max(Strahlers)
+                if np.sum(Strahlers == maxStrahler) >=2:
+                    newStrahler = maxStrahler + 1
+                else:
+                    newStrahler = maxStrahler
+                #### updateAllCatinfo
+                AllCatinfo.loc[AllCatinfo['SubId'] == csubid,'Strahler'] = newStrahler
+                AllCatinfo.loc[AllCatinfo['SubId'] == csubid,'DA'] = NewDA
+
+                ####find next downsubbasin id
+                downsubid      = C_sub_info['DowSubId'].values[0]
+
+                ### downsubid did not exist.....
+                if len(AllCatinfo.loc[AllCatinfo['SubId'] == downsubid]) <= 0:
+                    if int(csubid) != int(Watershedoutletsubid):
+                        print('Subregion:   ',d_subr_id)
+                        print('SubId is ',csubid,' DownSubId is  ',downsubid,Watershedoutletsubid,int(csubid) != int(Watershedoutletsubid))
+                    break
+
+                downsub_reg_id = AllCatinfo.loc[AllCatinfo['SubId'] == downsubid]['Region_ID'].values[0]
+
+            ### update list for next loop
+        Subregion_list = list(set(Subregion_list))
+        iloop = iloop + 1
+    print("Check drainage area:")
+    print("Total basin area is              ",sum(AllCatinfo['BasArea'].values))
+    print("DA of the watersehd outlet is    ",AllCatinfo.loc[AllCatinfo['SubId'] == int(Watershedoutletsubid)]['DA'].values[0])
+    print("Total DA of each subregion       ",Total_DA_Subregion)
+    return AllCatinfo
+
 
 def Add_Attributes_To_shpfile(processing,context,Layer,SubID_info = '#', OutputPath = '#',Region_ID = 1):
     """ Asign new subbasin Id to each subbasins in each subregion
@@ -1328,8 +1453,10 @@ def Add_Attributes_To_shpfile(processing,context,Layer,SubID_info = '#', OutputP
                 nDowSubId = -1
             else:
                 nDowSubId = SubID_info.loc[SubID_info['SubId'] == cDowSubId]['nSubId']
+            nSeg_ID = SubID_info.loc[SubID_info['SubId'] == cSubId]['nSeg_ID']
             sf['SubId'] = int(nSubId)
             sf['DowSubId'] = int(nDowSubId)
+            sf['Seg_ID'] =   int(nSeg_ID)
             layer_new.updateFeature(sf)
     del layer_new
     return
@@ -5675,94 +5802,112 @@ class LRRT:
         Path_Outlet_Down_point = Path_Down_Stream_Points
 
         ### add new attribte
+        ### find outlet subregion id
+        outlet_subregion_id = Sub_Region_info.loc[Sub_Region_info['Dow_Sub_Reg_Id']== self.maximum_obs_id - 1]['Sub_Reg_ID'].values[0]
+        routing_info      = Sub_Region_info[['Sub_Reg_ID','Dow_Sub_Reg_Id']].astype('float').values
+        Subregion_to_outlet  = Defcat(routing_info,outlet_subregion_id)
+
+        ###remove subregions do not drainge to outlet subregion
+        Sub_Region_info    = Sub_Region_info.loc[Sub_Region_info['Sub_Reg_ID'].isin(Subregion_to_outlet)].copy()
+        routing_info      = Sub_Region_info[['Sub_Reg_ID','Dow_Sub_Reg_Id']].astype('float').values
+
+        Sub_Region_info['N_Up_SubRegion'] = np.nan
+        Sub_Region_info['Outlet_SubId'] = np.nan
+
         subid_strat_iregion = 1
-        for i in range(0,len(Sub_Region_info)):
-            isubregion = Sub_Region_info['Sub_Reg_ID'].values[i]
-            ProjectNM  = Sub_Region_info['ProjectNM'].values[i]
-            SubFolder  = os.path.join(Sub_Region_OutputFolder,ProjectNM)
-
-            ### define path of the output file in this sub region
-            Path_Finalcat_ply      = os.path.join(SubFolder,'finalcat_info.shp')
-            Path_Finalcat_line     = os.path.join(SubFolder,'finalcat_info_riv.shp')
-            Path_Finalriv_ply      = os.path.join(SubFolder,'finalriv_info_ply.shp')
-            Path_Finalriv_line     = os.path.join(SubFolder,'finalriv_info.shp')
-            Path_Con_Lake_ply      = os.path.join(SubFolder,'Con_Lake_Ply.shp')
-            Path_None_Con_Lake_ply = os.path.join(SubFolder,'Non_Con_Lake_Ply.shp')
-            Path_obs_point         = os.path.join(SubFolder,'obspoint.shp')
-
-
-            if os.path.exists(Path_Finalcat_ply) != 1:   ### this sub region did not generate outputs
-                continue
-            if Is_Final_Result == True:
-
-                SubID_info = Dbf_To_Dataframe(Path_Finalcat_ply)[['SubId','DowSubId']].copy()
-                SubID_info = SubID_info.reset_index()
-                SubID_info['nSubId'] = SubID_info.index + subid_strat_iregion
-
-                layer_cat=QgsVectorLayer(Path_Finalcat_ply,"")
-                Add_Attributes_To_shpfile(processing,context,layer_cat,
-                                          OutputPath = os.path.join(self.tempfolder,'finalcat_info_Region_'+str(isubregion)+'addatrri.shp'),
-                                          Region_ID = isubregion,SubID_info = SubID_info)
-                Paths_Finalcat_ply.append(os.path.join(self.tempfolder,'finalcat_info_Region_'+str(isubregion)+'addatrri.shp'))
-                del layer_cat
-
-                layer_cat=QgsVectorLayer(Path_Finalcat_line,"")
-                Add_Attributes_To_shpfile(processing,context,layer_cat,
-                                          OutputPath = os.path.join(self.tempfolder,'finalcat_info_riv_Region_'+str(isubregion)+'addatrri.shp'),
-                                          Region_ID = isubregion,SubID_info = SubID_info)
-                Paths_Finalcat_line.append(os.path.join(self.tempfolder,'finalcat_info_riv_Region_'+str(isubregion)+'addatrri.shp'))
-                del layer_cat
-
-            else:
-                SubID_info = Dbf_To_Dataframe(Path_Finalriv_ply)[['SubId','DowSubId']].copy()
-                SubID_info = SubID_info.reset_index()
-                SubID_info['nSubId'] = SubID_info.index + subid_strat_iregion
-
-                layer_cat=QgsVectorLayer(Path_Finalriv_ply,"")
-                Add_Attributes_To_shpfile(processing,context,layer_cat,
-                                          OutputPath = os.path.join(self.tempfolder,'finalriv_info_ply_Region_'+str(isubregion)+'addatrri.shp'),
-                                          Region_ID = isubregion,SubID_info = SubID_info)
-                Paths_Finalriv_ply.append(os.path.join(self.tempfolder,'finalriv_info_ply_Region_'+str(isubregion)+'addatrri.shp'))
-                del layer_cat
-
-                layer_cat=QgsVectorLayer(Path_Finalriv_line,"")
-                Add_Attributes_To_shpfile(processing,context,layer_cat,
-                                          OutputPath = os.path.join(self.tempfolder,'finalriv_info_Region_'+str(isubregion)+'addatrri.shp'),
-                                          Region_ID = isubregion,SubID_info = SubID_info)
-                Paths_Finalriv_line.append(os.path.join(self.tempfolder,'finalriv_info_Region_'+str(isubregion)+'addatrri.shp'))
-                del layer_cat
-
-            if os.path.exists(Path_Con_Lake_ply) == 1:
-                Paths_Con_Lake_ply.append(Path_Con_Lake_ply)
-            if os.path.exists(Path_None_Con_Lake_ply) == 1:
-                Paths_None_Con_Lake_ply.append(Path_None_Con_Lake_ply)
-            if os.path.exists(Path_obs_point) == 1:
-                Paths_obs_point.append(Path_obs_point)
-            print('Subregion ID is ',isubregion,'    the start new subid is    ', subid_strat_iregion, ' The end of subid is ', min(SubID_info['nSubId']) )
-
-            subid_strat_iregion  = max(SubID_info['nSubId']) + 10
-
-        if(len(Paths_Con_Lake_ply) > 0):
-            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Con_Lake_ply,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'Con_Lake_Ply.shp')})
-        if(len(Paths_None_Con_Lake_ply) > 0):
-            processing.run("native:mergevectorlayers", {'LAYERS':Paths_None_Con_Lake_ply,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'Non_Con_Lake_Ply.shp')})
-        if(len(Paths_obs_point) > 0):
-            processing.run("native:mergevectorlayers", {'LAYERS':Paths_obs_point,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'obspoint.shp')})
-
+        seg_id_strat_iregion = 1
+        # for i in range(0,len(Sub_Region_info)):
+        #     isubregion = Sub_Region_info['Sub_Reg_ID'].values[i]
+        #     ProjectNM  = Sub_Region_info['ProjectNM'].values[i]
+        #     SubFolder  = os.path.join(Sub_Region_OutputFolder,ProjectNM)
+        #
+        #     ### define path of the output file in this sub region
+        #     Path_Finalcat_ply      = os.path.join(SubFolder,'finalcat_info.shp')
+        #     Path_Finalcat_line     = os.path.join(SubFolder,'finalcat_info_riv.shp')
+        #     Path_Finalriv_ply      = os.path.join(SubFolder,'finalriv_info_ply.shp')
+        #     Path_Finalriv_line     = os.path.join(SubFolder,'finalriv_info.shp')
+        #     Path_Con_Lake_ply      = os.path.join(SubFolder,'Con_Lake_Ply.shp')
+        #     Path_None_Con_Lake_ply = os.path.join(SubFolder,'Non_Con_Lake_Ply.shp')
+        #     Path_obs_point         = os.path.join(SubFolder,'obspoint.shp')
+        #
+        #     ### product do not exist
+        #     if os.path.exists(Path_Finalcat_ply) != 1:   ### this sub region did not generate outputs
+        #         continue
+        #     ### obtain new subid
+        #     if Is_Final_Result == True:
+        #
+        #         SubID_info = Dbf_To_Dataframe(Path_Finalcat_ply).drop_duplicates(subset=['SubId'], keep='first')[['SubId','DowSubId','Seg_ID']].copy()
+        #         SubID_info = SubID_info.reset_index()
+        #         SubID_info['nSubId'] = SubID_info.index + subid_strat_iregion
+        #         SubID_info['nSeg_ID'] = SubID_info['Seg_ID'] + seg_id_strat_iregion
+        #
+        #         layer_cat=QgsVectorLayer(Path_Finalcat_ply,"")
+        #         Add_Attributes_To_shpfile(processing,context,layer_cat,
+        #                                   OutputPath = os.path.join(self.tempfolder,'finalcat_info_Region_'+str(isubregion)+'addatrri.shp'),
+        #                                   Region_ID = isubregion,SubID_info = SubID_info)
+        #         Paths_Finalcat_ply.append(os.path.join(self.tempfolder,'finalcat_info_Region_'+str(isubregion)+'addatrri.shp'))
+        #         del layer_cat
+        #
+        #         layer_cat=QgsVectorLayer(Path_Finalcat_line,"")
+        #         Add_Attributes_To_shpfile(processing,context,layer_cat,
+        #                                   OutputPath = os.path.join(self.tempfolder,'finalcat_info_riv_Region_'+str(isubregion)+'addatrri.shp'),
+        #                                   Region_ID = isubregion,SubID_info = SubID_info)
+        #         Paths_Finalcat_line.append(os.path.join(self.tempfolder,'finalcat_info_riv_Region_'+str(isubregion)+'addatrri.shp'))
+        #         del layer_cat
+        #
+        #     else:
+        #         SubID_info = Dbf_To_Dataframe(Path_Finalcat_ply).drop_duplicates(subset=['SubId'], keep='first')[['SubId','DowSubId','Seg_ID']].copy()
+        #         SubID_info = SubID_info.reset_index()
+        #         SubID_info['nSubId'] = SubID_info.index + subid_strat_iregion
+        #         SubID_info['nSeg_ID'] = SubID_info['Seg_ID'] + seg_id_strat_iregion
+        #
+        #         layer_cat=QgsVectorLayer(Path_Finalriv_ply,"")
+        #         Add_Attributes_To_shpfile(processing,context,layer_cat,
+        #                                   OutputPath = os.path.join(self.tempfolder,'finalriv_info_ply_Region_'+str(isubregion)+'addatrri.shp'),
+        #                                   Region_ID = isubregion,SubID_info = SubID_info)
+        #         Paths_Finalriv_ply.append(os.path.join(self.tempfolder,'finalriv_info_ply_Region_'+str(isubregion)+'addatrri.shp'))
+        #         del layer_cat
+        #
+        #         layer_cat=QgsVectorLayer(Path_Finalriv_line,"")
+        #         Add_Attributes_To_shpfile(processing,context,layer_cat,
+        #                                   OutputPath = os.path.join(self.tempfolder,'finalriv_info_Region_'+str(isubregion)+'addatrri.shp'),
+        #                                   Region_ID = isubregion,SubID_info = SubID_info)
+        #         Paths_Finalriv_line.append(os.path.join(self.tempfolder,'finalriv_info_Region_'+str(isubregion)+'addatrri.shp'))
+        #         del layer_cat
+        #
+        #     if os.path.exists(Path_Con_Lake_ply) == 1:
+        #         Paths_Con_Lake_ply.append(Path_Con_Lake_ply)
+        #     if os.path.exists(Path_None_Con_Lake_ply) == 1:
+        #         Paths_None_Con_Lake_ply.append(Path_None_Con_Lake_ply)
+        #     if os.path.exists(Path_obs_point) == 1:
+        #         Paths_obs_point.append(Path_obs_point)
+        #     print('Subregion ID is ',isubregion,'    the start new subid is    ', subid_strat_iregion, ' The end of subid is ', min(SubID_info['nSubId']) )
+        #
+        #     subid_strat_iregion  = max(SubID_info['nSubId']) + 10
+        #     seg_id_strat_iregion = max(SubID_info['nSeg_ID']) + 10
+        #
+        # if(len(Paths_Con_Lake_ply) > 0):
+        #     processing.run("native:mergevectorlayers", {'LAYERS':Paths_Con_Lake_ply,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'Con_Lake_Ply.shp')})
+        # if(len(Paths_None_Con_Lake_ply) > 0):
+        #     processing.run("native:mergevectorlayers", {'LAYERS':Paths_None_Con_Lake_ply,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'Non_Con_Lake_Ply.shp')})
+        # if(len(Paths_obs_point) > 0):
+        #     processing.run("native:mergevectorlayers", {'LAYERS':Paths_obs_point,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'obspoint.shp')})
 
 
         if Is_Final_Result == 1:
         #### Obtain downstream # id:
-            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalcat_ply,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalcat_info.shp')})
-            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalcat_line,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalcat_info_riv.shp')})
-            processing.run("qgis:joinattributesbylocation", {'INPUT':Path_Outlet_Down_point,'JOIN':os.path.join(self.tempfolder,'finalcat_info.shp'),'PREDICATE':[5],'JOIN_FIELDS':[],'METHOD':1,'DISCARD_NONMATCHING':True,'PREFIX':'','OUTPUT':os.path.join(self.tempfolder,'Down_Sub_ID.shp')},context = context)
+            # processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalcat_ply,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalcat_info.shp')})
+            # processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalcat_line,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalcat_info_riv.shp')})
+            # processing.run("qgis:joinattributesbylocation", {'INPUT':Path_Outlet_Down_point,'JOIN':os.path.join(self.tempfolder,'finalcat_info.shp'),'PREDICATE':[5],'JOIN_FIELDS':[],'METHOD':1,'DISCARD_NONMATCHING':True,'PREFIX':'','OUTPUT':os.path.join(self.tempfolder,'Down_Sub_ID.shp')},context = context)
 
             AllCatinfo = Dbf_To_Dataframe(os.path.join(self.tempfolder,'finalcat_info.shp')).drop_duplicates('SubId', keep='first').copy()
             DownCatinfo = Dbf_To_Dataframe(os.path.join(self.tempfolder,'Down_Sub_ID.shp')).drop_duplicates('SubId', keep='first').copy()
 
-            AllCatinfo = Streamorderanddrainagearea(AllCatinfo)
-            Copy_Pddataframe_to_shpfile(os.path.join(self.tempfolder,'finalcat_info.shp'),AllCatinfo)
-            Copy_Pddataframe_to_shpfile(os.path.join(self.tempfolder,'finalcat_info_riv.shp'),AllCatinfo)
+            AllCatinfo,Sub_Region_info = Connect_SubRegion_Update_DownSubId(AllCatinfo,DownCatinfo,Sub_Region_info)
+            AllCatinfo = Update_DA_Strahler_For_Combined_Result(AllCatinfo,Sub_Region_info)
+            asdf
+            Copy_Pddataframe_to_shpfile(os.path.join(self.tempfolder,'finalcat_info.shp'),AllCatinfo,link_col_nm = 'SubId',UpdateColNM=['DowSubId','DA','Strahler'])
+            Copy_Pddataframe_to_shpfile(os.path.join(self.tempfolder,'finalcat_info_riv.shp'),AllCatinfo,link_col_nm = 'SubId',UpdateColNM=['DowSubId','DA','Strahler'])
 
             processing.run("native:dissolve", {'INPUT':os.path.join(self.tempfolder,'finalcat_info.shp'),'FIELD':['SubId'],'OUTPUT':os.path.join(OutputFolder,'finalcat_info.shp')},context = context)
             processing.run("native:dissolve", {'INPUT':os.path.join(self.tempfolder,'finalcat_info_riv.shp'),'FIELD':['SubId'],'OUTPUT':os.path.join(OutputFolder,'finalcat_info_riv.shp')},context = context)
@@ -5772,53 +5917,12 @@ class LRRT:
             processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalriv_line,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalriv_info.shp')})
             processing.run("qgis:joinattributesbylocation", {'INPUT':Path_Outlet_Down_point,'JOIN':os.path.join(self.tempfolder,'finalriv_info_ply.shp'),'PREDICATE':[5],'JOIN_FIELDS':[],'METHOD':1,'DISCARD_NONMATCHING':True,'PREFIX':'','OUTPUT':os.path.join(self.tempfolder,'Down_Sub_ID.shp')},context = context)
 
-            tempinfo = Dbf5(os.path.join(self.tempfolder,'finalriv_info_ply.shp')[:-3] + "dbf")
-            AllCatinfo = tempinfo.to_dataframe().drop_duplicates('nSubId', keep='first')
-#        print(AllCatinfo)
+            AllCatinfo = Dbf_To_Dataframe(os.path.join(self.tempfolder,'finalriv_info_ply.shp')).drop_duplicates('SubId', keep='first').copy()
+            DownCatinfo = Dbf_To_Dataframe(os.path.join(self.tempfolder,'Down_Sub_ID.shp')).drop_duplicates('SubId', keep='first').copy()
+            AllCatinfo,Sub_Region_info = Connect_SubRegion_Update_DownSubId(AllCatinfo,DownCatinfo,Sub_Region_info)
 
-            tempinfo = Dbf5(os.path.join(self.tempfolder,'Down_Sub_ID.shp')[:-3] + "dbf")
-            DownCatinfo = tempinfo.to_dataframe().drop_duplicates('nSubId', keep='first')
-#        print(DownCatinfo)
-
-            for i in range(0,len(Sub_Region_info)):
-                isubregion = Sub_Region_info['Sub_Reg_ID'].values[i]
-
-                Sub_Region_cat_info = AllCatinfo.loc[AllCatinfo['Reg_ID'] == isubregion]
-
-                if len(Sub_Region_cat_info) <= 0:
-                    continue
-
-                Sub_Region_cat_info = Sub_Region_cat_info.sort_values(by='DA', ascending=False)
-                iReg_Outlet_nSubid = Sub_Region_cat_info['nSubId'].values[0]    #(isubregion - 80000) * 200000 - 1
-
-                outlet_mask = AllCatinfo['nSubId'] == iReg_Outlet_nSubid
-
-                Dow_Sub_Region_id = Sub_Region_info['Dow_Sub_Reg_Id'].values[i]
-
-            #### find downetream id
-                Down_Sub_info = DownCatinfo[DownCatinfo['value'] == isubregion]
-
-                if len(Down_Sub_info) > 0:
-                    DownSubid   = Down_Sub_info['nSubId'].values[0]
-                    AllCatinfo.loc[outlet_mask,'nDowSubId'] = DownSubid
-                else:
-                ### find all subregion drainage to this down sub region
-                    All_up_regions_ids = Sub_Region_info[Sub_Region_info['Dow_Sub_Reg_Id'] == Dow_Sub_Region_id]['Sub_Reg_ID'].values
-                    Down_Sub_info = DownCatinfo.loc[DownCatinfo['value'].isin(All_up_regions_ids)]
-                ####
-                    if len(Down_Sub_info) == 1:
-                        DownSubid   = Down_Sub_info['nSubId'].values[0]
-                        AllCatinfo.loc[outlet_mask,'nDowSubId'] = DownSubid
-                    else:
-                        print(isubregion,iReg_Outlet_nSubid)
-                        AllCatinfo.loc[outlet_mask,'nDowSubId'] = -1
-
-
-            AllCatinfo['SubId'] = AllCatinfo['nSubId']
-            AllCatinfo['DowSubId'] = AllCatinfo['nDowSubId']
-            AllCatinfo = Streamorderanddrainagearea(AllCatinfo)
-            Copy_Pddataframe_to_shpfile(os.path.join(self.tempfolder,'finalriv_info_ply.shp'),AllCatinfo)
-            Copy_Pddataframe_to_shpfile(os.path.join(self.tempfolder,'finalriv_info.shp'),AllCatinfo)
+            Copy_Pddataframe_to_shpfile(os.path.join(self.tempfolder,'finalriv_info_ply.shp'),AllCatinfo,link_col_nm = 'SubId',UpdateColNM=['DowSubId','DA','Strahler'])
+            Copy_Pddataframe_to_shpfile(os.path.join(self.tempfolder,'finalriv_info.shp'),AllCatinfo,link_col_nm = 'SubId',UpdateColNM=['DowSubId','DA','Strahler'])
 
             processing.run("native:dissolve", {'INPUT':os.path.join(self.tempfolder,'finalriv_info_ply.shp'),'FIELD':['SubId'],'OUTPUT':os.path.join(OutputFolder,'finalriv_info_ply.shp')},context = context)
             processing.run("native:dissolve", {'INPUT':os.path.join(self.tempfolder,'finalriv_info.shp'),'FIELD':['SubId'],'OUTPUT':os.path.join(OutputFolder,'finalriv_info.shp')},context = context)
