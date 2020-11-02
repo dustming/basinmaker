@@ -1160,7 +1160,7 @@ def Copyfeature_to_another_shp_by_attribute(Source_shp,Target_shp,Col_NM='SubId'
     del layer_src
     del layer_trg
 ###########
-
+###########
 def ConnectLake_to_NonConnectLake_Updateinfo(NonC_Lakeinfo,finalriv_info,Merged_subids,Connect_Lake_ply_info,ConLakeId):
 
     All_Mergedcatchments = finalriv_info[finalriv_info['SubId'].isin(Merged_subids)]
@@ -3948,6 +3948,70 @@ class LRRT:
         routing_info         = catinfo[['SubId','DowSubId']].astype('float').values
 #        print(routing_info)
 #        print(catinfo)
+
+        ##find subbasins only drainage to the subregion outlet id
+        ## remove subbasins drainage to other subregion outlet id
+        if self.Is_Sub_Region > 0:
+
+            #### read subregion outlet points raster
+            Sub_reg_outlets     = garray.array(mapname="Sub_reg_outlets")
+            #### obtain subregion outlet ids
+            Sub_reg_outlets_ids = np.unique(Sub_reg_outlets)
+            Sub_reg_outlets_ids = Sub_reg_outlets_ids[Sub_reg_outlets_ids > 0]
+            #### Find all obervation id that is subregion outlet
+            reg_outlet_info     = catinfo.loc[catinfo['IsObs'].isin(Sub_reg_outlets_ids)]
+
+            #### Define outlet ID
+            outletid = -1
+            if Outlet_Obs_ID > 0:
+                outletID_info = catinfo.loc[catinfo['IsObs'] == Outlet_Obs_ID]
+                if len(outletID_info) > 0:
+                    outletid = outletID_info['SubId'].values[0]
+                else:
+                    print("No Outlet id is founded for subregion   ",Outlet_Obs_ID)
+                    return
+            else:
+                print("To use subregion, the Subregion Id MUST provided as Outlet_Obs_ID")
+                return
+
+            ### find all subregion drainge to this outlet id
+            HydroBasins1   = Defcat(routing_info,outletid)
+
+            ### if there is other subregion outlet included in current sturcture
+            ### remove subbasins drainge to them
+
+            if len(reg_outlet_info) >= 2:  ### has upstream regin outlet s
+                ### remove subbains drainage to upstream regin outlet s
+                for i in range(0,len(reg_outlet_info)):
+                    upregid               =reg_outlet_info['SubId'].values[i]
+                    ### the subregion ouetlet not within the target domain neglect
+                    if upregid == outletid or np.sum(np.in1d(HydroBasins1, upregid)) < 1:
+                        continue
+                    HydroBasins_remove   = Defcat(routing_info,upregid)
+                    mask                 = np.in1d(HydroBasins1, HydroBasins_remove)  ### exluced ids that belongs to main river stream
+                    HydroBasins1         = HydroBasins1[np.logical_not(mask)]
+
+            HydroBasins = HydroBasins1
+
+        ### selected based on observation guage obs id
+        elif Outlet_Obs_ID > 0:
+            outletid = -1
+            if Outlet_Obs_ID > 0:
+                outletID_info = catinfo.loc[catinfo['IsObs'] == Outlet_Obs_ID]
+                if len(outletID_info) > 0:
+                    outletid = outletID_info['SubId'].values[0]
+                    ##find upsteam catchment id
+                    HydroBasins  = Defcat(routing_info,outletid)
+                else:
+                    HydroBasins  =  catinfo['SubId'].values
+        #### do not need to
+        else:
+            HydroBasins = catinfo['SubId'].values
+
+
+        ### remove non interesed subbasin s
+        catinfo = catinfo.loc[catinfo['SubId'].isin(HydroBasins)].copy()
+
         catinfo = Streamorderanddrainagearea(catinfo)
 
         catinfo['Seg_Slope'] = -1.2345
@@ -3984,66 +4048,7 @@ class LRRT:
         processing.run("native:dissolve", {'INPUT':os.path.join(self.tempfolder,'finalriv_info1.shp'),'FIELD':['SubId'],'OUTPUT':os.path.join(self.tempfolder,'finalriv_info_dis.shp')},context = context)
 
 
-        ### extract the watershed with maximum drianage area
-        Path_final_riv = os.path.join(self.tempfolder,'finalriv_catinfo_dis.shp')
-        hyinfocsv = Path_final_riv[:-3] + "dbf"
-        tempinfo = Dbf5(hyinfocsv)
-        hyshdinfo2 = tempinfo.to_dataframe().drop_duplicates('SubId', keep='first')
-        routing_info_ext =  hyshdinfo2[['SubId','DowSubId']].astype('float').values
 
-        ##find outlet id with maximum drainage area
-        if self.Is_Sub_Region > 0:
-
-            Sub_reg_outlets     = garray.array(mapname="Sub_reg_outlets")
-            Sub_reg_outlets_ids = np.unique(Sub_reg_outlets)
-            Sub_reg_outlets_ids = Sub_reg_outlets_ids[Sub_reg_outlets_ids > 0]
-            reg_outlet_info     = hyshdinfo2.loc[hyshdinfo2['IsObs'].isin(Sub_reg_outlets_ids)]
-            reg_outlet_info     = reg_outlet_info.sort_values(by='DA', ascending=False)
-
-            #### Define outlet ID
-            outletid = -1
-            if Outlet_Obs_ID > 0:
-                outletID_info = hyshdinfo2.loc[hyshdinfo2['IsObs'] == Outlet_Obs_ID]
-                if len(outletID_info) > 0:
-                    outletid = outletID_info['SubId'].values[0]
-
-            if outletid < 0:
-                if len(reg_outlet_info) > 0: ### has reg outlets
-                    outletid            = reg_outlet_info['SubId'].values[0] ### the most downstream regin outlet
-                else:### do not include a reginoutlet
-                    outlet_info  = hyshdinfo2[hyshdinfo2['DowSubId'] < 0]
-                    outlet_info  = outlet_info.sort_values(by='DA', ascending=False)
-                    outletid     = outlet_info['SubId'].values[0]
-
-            HydroBasins1   = Defcat(routing_info_ext,outletid)
-
-            if len(reg_outlet_info) >= 2:  ### has upstream regin outlet s
-                ### remove subbains drainage to upstream regin outlet s
-                for i in range(0,len(reg_outlet_info)):
-                    upregid               =reg_outlet_info['SubId'].values[i]
-                    if upregid == outletid or np.sum(np.in1d(HydroBasins1, upregid)) < 1: ### the subregion ouetlet not within the target domain neglect
-                        continue
-                    HydroBasins_remove   = Defcat(routing_info_ext,upregid)
-                    mask                 = np.in1d(HydroBasins1, HydroBasins_remove)  ### exluced ids that belongs to main river stream
-                    HydroBasins1         = HydroBasins1[np.logical_not(mask)]
-
-            HydroBasins = HydroBasins1
-        else:
-            outletid = -1
-            if Outlet_Obs_ID > 0:
-                outletID_info = hyshdinfo2.loc[hyshdinfo2['IsObs'] == Outlet_Obs_ID]
-                if len(outletID_info) > 0:
-                    outletid = outletID_info['SubId'].values[0]
-            if outletid < 0:
-                outlet_info  = hyshdinfo2[hyshdinfo2['DowSubId'] == -1]
-                outlet_info  = outlet_info.sort_values(by='DA', ascending=False)
-                outletid     = outlet_info['SubId'].values[0]
-        ##find upsteam catchment id
-            HydroBasins  = Defcat(routing_info_ext,outletid)
-
-
-        if Obtain_High_Acc_Cat == -1 and self.Is_Sub_Region < 0:
-            HydroBasins = hyshdinfo2['SubId'].values
         ### extract region of interest
         Selectfeatureattributes(processing,Input = os.path.join(self.tempfolder,'finalriv_catinfo_dis.shp'),Output=os.path.join(self.tempfolder,'finalriv_catinfo_dis_sel.shp'),Attri_NM = 'SubId',Values = HydroBasins)
         Selectfeatureattributes(processing,Input = os.path.join(self.tempfolder,'finalriv_info_dis.shp'),Output=os.path.join(self.tempfolder,'finalriv_info_dis_sel.shp'),Attri_NM = 'SubId',Values = HydroBasins)
