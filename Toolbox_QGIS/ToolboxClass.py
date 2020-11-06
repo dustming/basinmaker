@@ -1235,6 +1235,35 @@ def ConnectLake_to_NonConnectLake_Updateinfo(NonC_Lakeinfo,finalriv_info,Merged_
 ##############################
 
 def Connect_SubRegion_Update_DownSubId(AllCatinfo,DownCatinfo,Sub_Region_info):
+    """ Modify outlet subbasin's downstream subbasin ID for each subregion
+    Parameters
+    ----------
+    AllCatinfo                        : dataframe
+        it is a dataframe of the attribute table readed from finalcat_info
+        .shp or finalrivply_info.shp
+    DownCatinfo                       : dataframe
+        It is a dataframe includes two columns:
+        'Sub_Reg_ID': the subregion id
+        'Dow_Sub_Reg_Id': downstream subbasin id of the outlet subbasin in
+        this subregion
+    Sub_Region_info                   : dataframe
+        It is a dataframe includes subregion informations, with following
+        columns:
+        'Sub_Reg_ID' : the subregion id
+        'Dow_Sub_Reg_Id': the downstream subregion id
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        Sub_Region_info      : dataframe
+            An new columns indicate the outlet subbasin id of the sub region
+            will be added
+        AllCatinfo           : dataframe
+            Downstream subbasin ID of each subregion's outlet subbasin will
+            be updated.
+    """
 
     ### update downsteam subbasin id for each subregion outlet subbasins
     ### current value is -1, updated to connected downstream subbasin ID
@@ -1290,6 +1319,30 @@ def Connect_SubRegion_Update_DownSubId(AllCatinfo,DownCatinfo,Sub_Region_info):
 
 
 def Update_DA_Strahler_For_Combined_Result(AllCatinfo,Sub_Region_info):
+    """ Update Drainage area, strahler order of subbains
+
+    Update drainage area and strahler order for combined routing product
+    of each subregions
+    Parameters
+    ----------
+    AllCatinfo                        : dataframe
+        it is a dataframe of the attribute table readed from finalcat_info
+        .shp or finalrivply_info.shp
+    Sub_Region_info                   : dataframe
+        It is a dataframe includes subregion informations, with following
+        columns:
+        'Sub_Reg_ID' : the subregion id
+        'Dow_Sub_Reg_Id': the downstream subregion id
+
+    Notes
+    -------
+
+    Returns:
+    -------
+    AllCatinfo           : dataframe
+        Downstream DA and strahler order of each subregion along the flow
+        pathway between subregions will be updated.
+    """
     ### start from head subregions with no upstream subregion
     Subregion_list=Sub_Region_info[Sub_Region_info['N_Up_SubRegion'] == 1]['Sub_Reg_ID'].values
     Subregion_list = np.unique(Subregion_list)
@@ -1422,8 +1475,7 @@ def Add_Attributes_To_shpfile(processing,context,Layer,SubID_info = '#', OutputP
     Notes
     -------
         the output will be the same type of input Layer
-        stored in OutputPath
-
+        stored in OutputPath, a new SubId will be given
     Returns:
     -------
         None
@@ -5766,11 +5818,13 @@ class LRRT:
         Notes
         -------
         This function has no return values, instead will generate following
-        files. They are catchment polygons and river polylines that can be
-        used for hydrological modeling.
+        files.
+        when Is_Final_Result is true
         os.path.join(OutputFolder,'finalcat_info.shp')
         os.path.join(OutputFolder,'finalcat_info_riv.shp')
-
+        when Is_Final_Result is False
+        os.path.join(OutputFolder,'finalrivply_info.shp')
+        os.path.join(OutputFolder,'finalriv_info_riv.shp')
         Returns:
         -------
         None
@@ -5861,7 +5915,7 @@ class LRRT:
                 del layer_cat
 
             else:
-                SubID_info = Dbf_To_Dataframe(Path_Finalcat_ply).drop_duplicates(subset=['SubId'], keep='first')[['SubId','DowSubId','Seg_ID']].copy()
+                SubID_info = Dbf_To_Dataframe(Path_Finalriv_ply).drop_duplicates(subset=['SubId'], keep='first')[['SubId','DowSubId','Seg_ID']].copy()
                 SubID_info = SubID_info.reset_index()
                 SubID_info['nSubId'] = SubID_info.index + subid_strat_iregion
                 SubID_info['nSeg_ID'] = SubID_info['Seg_ID'] + seg_id_strat_iregion
@@ -5901,16 +5955,16 @@ class LRRT:
 
         if Is_Final_Result == 1:
         #### Obtain downstream # id:
-            # processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalcat_ply,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalcat_info.shp')})
-            # processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalcat_line,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalcat_info_riv.shp')})
-            # processing.run("qgis:joinattributesbylocation", {'INPUT':Path_Outlet_Down_point,'JOIN':os.path.join(self.tempfolder,'finalcat_info.shp'),'PREDICATE':[5],'JOIN_FIELDS':[],'METHOD':1,'DISCARD_NONMATCHING':True,'PREFIX':'','OUTPUT':os.path.join(self.tempfolder,'Down_Sub_ID.shp')},context = context)
+            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalcat_ply,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalcat_info.shp')})
+            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalcat_line,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalcat_info_riv.shp')})
+            processing.run("qgis:joinattributesbylocation", {'INPUT':Path_Outlet_Down_point,'JOIN':os.path.join(self.tempfolder,'finalcat_info.shp'),'PREDICATE':[5],'JOIN_FIELDS':[],'METHOD':1,'DISCARD_NONMATCHING':True,'PREFIX':'','OUTPUT':os.path.join(self.tempfolder,'Down_Sub_ID.shp')},context = context)
 
             AllCatinfo = Dbf_To_Dataframe(os.path.join(self.tempfolder,'finalcat_info.shp')).drop_duplicates('SubId', keep='first').copy()
             DownCatinfo = Dbf_To_Dataframe(os.path.join(self.tempfolder,'Down_Sub_ID.shp')).drop_duplicates('SubId', keep='first').copy()
 
             AllCatinfo,Sub_Region_info = Connect_SubRegion_Update_DownSubId(AllCatinfo,DownCatinfo,Sub_Region_info)
             AllCatinfo = Update_DA_Strahler_For_Combined_Result(AllCatinfo,Sub_Region_info)
-            asdf
+
             Copy_Pddataframe_to_shpfile(os.path.join(self.tempfolder,'finalcat_info.shp'),AllCatinfo,link_col_nm = 'SubId',UpdateColNM=['DowSubId','DA','Strahler'])
             Copy_Pddataframe_to_shpfile(os.path.join(self.tempfolder,'finalcat_info_riv.shp'),AllCatinfo,link_col_nm = 'SubId',UpdateColNM=['DowSubId','DA','Strahler'])
 
@@ -5924,7 +5978,9 @@ class LRRT:
 
             AllCatinfo = Dbf_To_Dataframe(os.path.join(self.tempfolder,'finalriv_info_ply.shp')).drop_duplicates('SubId', keep='first').copy()
             DownCatinfo = Dbf_To_Dataframe(os.path.join(self.tempfolder,'Down_Sub_ID.shp')).drop_duplicates('SubId', keep='first').copy()
+
             AllCatinfo,Sub_Region_info = Connect_SubRegion_Update_DownSubId(AllCatinfo,DownCatinfo,Sub_Region_info)
+            AllCatinfo = Update_DA_Strahler_For_Combined_Result(AllCatinfo,Sub_Region_info)
 
             Copy_Pddataframe_to_shpfile(os.path.join(self.tempfolder,'finalriv_info_ply.shp'),AllCatinfo,link_col_nm = 'SubId',UpdateColNM=['DowSubId','DA','Strahler'])
             Copy_Pddataframe_to_shpfile(os.path.join(self.tempfolder,'finalriv_info.shp'),AllCatinfo,link_col_nm = 'SubId',UpdateColNM=['DowSubId','DA','Strahler'])
