@@ -573,7 +573,7 @@ def Check_If_Str_Is_Head_Stream(prow,pcol,nrows,ncols,str,strid):
 
 
 ###
-def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir,Is_divid_region,Min_Grid_Number = 50):
+def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir,Is_divid_region,Min_Grid_Number = 5):
     GP_cat = copy.copy(cat)
     sblid = copy.copy(blid)
     Str_new = copy.copy(Str)
@@ -2934,6 +2934,7 @@ class LRRT:
             grass.run_command('r.out.gdal', input = 'MASK',output = os.path.join(self.tempfolder, 'Mask1.tif'),format= 'GTiff',overwrite = True)
             processing.run("gdal:polygonize", {'INPUT':os.path.join(self.tempfolder, 'Mask1.tif'),'BAND':1,'FIELD':'DN','EIGHT_CONNECTEDNESS':False,'EXTRA':'','OUTPUT':os.path.join(self.tempfolder, 'HyMask_region_'+ str(basinid)+'.shp')})
             processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask_region_'+ str(basinid)+'.shp'),'FIELD':'DN','OUTPUT':os.path.join(self.tempfolder, 'HyMask_region_f'+ str(basinid)+'.shp')})
+            processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask_region_'+ str(basinid)+'.shp'),'FIELD':'DN','OUTPUT':os.path.join(Out_Sub_Reg_Dem_Folder, 'HyMask_region_'+ str(int(basinid+self.maximum_obs_id))+'_nobuffer.shp')})
             processing.run("native:buffer", {'INPUT':os.path.join(self.tempfolder, 'HyMask_region_f'+ str(basinid)+'.shp'),'DISTANCE':0.005,'SEGMENTS':5,'END_CAP_STYLE':0,'JOIN_STYLE':0,'MITER_LIMIT':2,'DISSOLVE':True,'OUTPUT':os.path.join(Out_Sub_Reg_Dem_Folder, 'HyMask_region_'+ str(int(basinid+self.maximum_obs_id))+'.shp')})
 
 
