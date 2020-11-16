@@ -3332,9 +3332,7 @@ class LRRT:
                 else: 
                     
                     grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold = int(accthresold),stream_raster = 'str_grass_r',
-                                     stream_vector = 'str_grass_v',direction = 'dir_grass',overwrite = True,memory = max_memroy)
-                    grass.run_command('r.mapcalc',expression = "dir_grass = dir_in_Grass",overwrite = True)
-                        
+                                     stream_vector = 'str_grass_v',direction = 'dir_grass',overwrite = True,memory = max_memroy)                        
                 grass.run_command('r.reclass', input='dir_grass',output = 'dir_Arcgis',rules = os.path.join(self.RoutingToolPath,'Grass2ArcgisDIR.txt'), overwrite = True)
 
         grass.run_command('r.to.vect',  input = 'str_grass_r',output = 'str', type ='line' ,overwrite = True)
