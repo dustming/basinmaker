@@ -1,6 +1,121 @@
 import copy
 import numpy as np
+import os
+from GetBasinoutlet import Defcat
 
+def Generate_stats_list_from_grass_raster(grass,mode = 1,input_a = 'P_Connect_Lake',
+                                          input_b = 'str_grass_r',method='max'):
+    
+    list_a = []
+    list_b = []
+    if mode == 1:
+        p = grass.pipe_command('r.category', map = input_a, separator = ' ', quiet = True)
+    elif mode == 2:
+        p = grass.pipe_command('r.stats', input = [input_a,input_b],flags='n', quiet = True)
+    else:
+        print('error mode opton did not exist')
+    
+    for line in p.stdout:
+        line_str = line.decode('utf8').rstrip('\r\n').split(' ')
+        list_a.append(int(line_str[0]))
+        if mode != 1:
+            list_b.append(int(line_str[1]))
+    p.wait()
+    
+    return list_a,list_b
+    
+def Check_If_Lake_Have_Multi_OutLet(CL_Id,Str_Id,Routing_info):
+    
+    ### create a emppty array to store lake id with multi outlet 
+    Lakes_WIth_Multi_Outlet = []
+    
+    #### combine lake id and coresponding str id into two dim array 
+    CL_Str = np.column_stack((CL_Id, Str_Id))
+    #### obtain unique str id 
+    Str_Id_unique = np.unique(np.array(Str_Id))
+    #### obtain unique lake ids 
+    CL_Id_unique = np.unique(np.array(CL_Id))
+    
+    #### add maxacc of each str to CL_str 
+    Acc_Str_CL = np.full((len(CL_Str),1),np.nan)
+    for i in range(0,len(Str_Id_unique)):
+        strid  = Str_Id_unique[i]
+        maxacc = Routing_info.loc[Routing_info['SubId'] ==strid]['MaxAcc'].values[0]
+        Acc_Str_CL[CL_Str[:,1] == strid] = maxacc
+    CL_Str = np.append(CL_Str, Acc_Str_CL, axis=1)
+    
+    ### sort CL_str based on max acc of 
+    CL_Str = CL_Str[CL_Str[:,2].argsort()]
+    
+    
+    ### routing info 
+    routing_info_only      = Routing_info[['SubId','DowSubId']].astype('int').values
+    ### check if lakes have multi outlet 
+    for i in range(0,len(CL_Id_unique)):
+        ### got lake id 
+        lake_id = CL_Id_unique[i]
+        ### got all str overlaied by this lake id 
+        i_CL_Str = CL_Str[CL_Str[:,0] == lake_id]
+        
+        ### lake is overlaied by one str, so must only have one lake outlet 
+        if len(i_CL_Str) <= 1:
+            continue 
+        
+        ### len(i_CL_Str)>1 
+        ### check if all str covered by this lake will drainage to the str with 
+        ### maximum acc. if it is ture than lake has only one outelt,
+        ### if not the lake have multi outlet
+        
+        ###obtain str id with max acc among strs covered by the lake 
+        str_max_acc = i_CL_Str[len(i_CL_Str) - 1,1]
+        ### obtain all upstream str id of max acc str 
+        str_to_str_max_acc  = Defcat(routing_info_only,str_max_acc)
+        
+        ### create a mask for i_CL_Str[:,1], it will be true for in positon 
+        ### where it's value in str_to_str_max_acc
+        mask = np.isin(str_to_str_max_acc,i_CL_Str[:,1])
+        
+        #### not all element in i_CL_Str[:,1] exist in str_to_str_max_acc
+        #### the lake have muli outlet 
+        if len(mask[mask == True]) < len(i_CL_Str[:,1]):
+            Lakes_WIth_Multi_Outlet.append(lake_id)
+    return Lakes_WIth_Multi_Outlet
+    
+                
+def DefineConnected_Non_Connected_Lakes(self,grass,con,garray,Routing_info,str_r = 'str_grass_r',
+    Lake_r = 'alllake',Remove_Lake_Multi_OL = True):
+    
+    #### overlay str and lakes 
+    exp = "Connect_Lake_IDs = if(isnull('%s'),null(),%s)" %(str_r,Lake_r)
+    grass.run_command('r.mapcalc',expression = exp,overwrite = True)    
+    
+    ### obtain connected lake ids 
+    Connect_Lake_Ids,temp = Generate_stats_list_from_grass_raster(grass,mode = 1,input_a = 'Connect_Lake_IDs')
+    
+    #### create non connected lake raster  
+    grass.run_command('g.copy',rast = (Lake_r,'Nonconnect_Lake'),overwrite = True)
+    grass.run_command('r.null',map='Nonconnect_Lake', setnull = Connect_Lake_Ids,overwrite = True)
+    #### create potential connected lake raster 
+    exp = "Connect_Lake = if(isnull('%s'),%s,null())" %('Nonconnect_Lake',Lake_r)
+    grass.run_command('r.mapcalc',expression = exp,overwrite = True)   
+    
+    if Remove_Lake_Multi_OL == False:
+        return 
+    
+    
+    ##### obtain lake id and coresponding overlaied str id 
+    CL_Id,Str_Id = Generate_stats_list_from_grass_raster(grass,mode = 2,input_a = 'Connect_Lake',
+                                                         input_b = str_r)
+    
+    Lakes_WIth_Multi_Outlet = Check_If_Lake_Have_Multi_OutLet(CL_Id,Str_Id,Routing_info)
+    
+    ### no lake has multi outlet 
+    if len(Lakes_WIth_Multi_Outlet) > 0: 
+        grass.run_command('r.null',map='Connect_Lake', setnull = Lakes_WIth_Multi_Outlet,overwrite = True)
+        print("Following lakes have multiple outlet and has been removed:       ")
+        print("     ", Lakes_WIth_Multi_Outlet)
+    return 
+    
 def changeflowdirectionofedgegrids(N_dir,p_row,p_col,lake1,lid,ncols,nrows,BD_Out_Lakecat_Nriv_mask,Changed_ndir):
     ndir = copy.copy(N_dir)
     changed_ndir = copy.copy(Changed_ndir)

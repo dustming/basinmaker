@@ -661,7 +661,7 @@ def Generatecatinfo(Watseds,fac,fdir,lake,dem,area,catinfo,allcatid,lakeinfo,wid
 
 def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
                     obs,slope,aspect,landuse,slop_deg,Q_Mean,netcat,landuseinfo,lakeinfo,
-                    nrows,ncols,leninfo,areainfo,obsinfo,NonConcLakeInfo,NonCL_array,noncnlake_arr,maximum_obs_id):
+                    nrows,ncols,leninfo,areainfo,obsinfo,noncnlake_arr,maximum_obs_id):
     finalcat = copy.copy(netcat)
     for i in range(0,len(allcatid)):
         catid = allcatid[i].astype(int)

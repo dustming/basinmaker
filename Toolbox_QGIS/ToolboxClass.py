@@ -14,12 +14,12 @@ import tempfile
 import copy
 import pandas as pd
 import sqlite3
-from GetBasinoutlet import Getbasinoutlet,Nextcell,Defcat
+from GetBasinoutlet import Getbasinoutlet,Nextcell,Defcat,Generate_Routing_structure
 from Generatecatinfo import Generatecatinfo,Generatecatinfo_riv,calculateChannaln,Writecatinfotodbf,Streamorderanddrainagearea,UpdateChannelinfo,UpdateNonConnectedcatchmentinfo
 from WriteRavenInputs import Generate_Raven_Lake_rvh_String,Generate_Raven_Channel_rvp_rvh_String
 from WriteRavenInputs import Generate_Raven_Obs_rvt_String,WriteStringToFile
 from RavenOutputFuctions import plotGuagelineobs,Caluculate_Lake_Active_Depth_and_Lake_Evap
-from AddlakesintoRoutingNetWork import Dirpoints_v3,check_lakecatchment
+from AddlakesintoRoutingNetWork import Dirpoints_v3,check_lakecatchment,DefineConnected_Non_Connected_Lakes,Generate_stats_list_from_grass_raster
 
 
 
@@ -573,7 +573,7 @@ def Check_If_Str_Is_Head_Stream(prow,pcol,nrows,ncols,str,strid):
 
 
 ###
-def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir,Is_divid_region,Min_Grid_Number = 5):
+def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir,Is_divid_region,Min_Grid_Number = 50):
     GP_cat = copy.copy(cat)
     sblid = copy.copy(blid)
     Str_new = copy.copy(Str)
@@ -3307,7 +3307,7 @@ class LRRT:
         os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='2'))
         PERMANENT = Session()
         PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
-
+        con = sqlite3.connect(self.sqlpath)
         grsregion = gcore.region()
 
         #### if subregion oulet is inlcuded , use minmum acc of subregion outlet.
@@ -3338,23 +3338,11 @@ class LRRT:
         grass.run_command('r.to.vect',  input = 'str_grass_r',output = 'str', type ='line' ,overwrite = True)
         ##### generate catchment without lakes based on 'str_grass_r'
         grass.run_command('r.stream.basins',direction = 'dir_grass', stream = 'str_grass_r', basins = 'cat1',overwrite = True,memory = max_memroy)
-
-         
-################ check connected lakes  and non connected lakes
-        grass.run_command('v.select',ainput = 'Hylake',binput = 'str',output = 'lake_str',overwrite = True)
-        try:
-            grass.run_command('v.out.ogr', input = 'lake_str',output = os.path.join(self.tempfolder, "Connect_lake.shp"),format= 'ESRI_Shapefile',overwrite = True)
-            os.system('gdal_rasterize -at -of GTiff -a_nodata -9999 -a Hylak_id -tr  '+ str(grsregion['nsres']) + "  " +str(grsregion['ewres']) +'   -te   '+ str(grsregion['w'])+"   " +str(grsregion['s'])+"   " +str(grsregion['e'])+"   " +str(grsregion['n'])+"   " +"\"" +  os.path.join(self.tempfolder, "Connect_lake.shp") +"\""+ "    "+ "\""+os.path.join(self.tempfolder, "cnhylakegdal.tif")+"\"")
-            grass.run_command("r.in.gdal", input = os.path.join(self.tempfolder, "cnhylakegdal.tif"), output = 'cnlakeraster_in', overwrite = True)
-        except:
-            temparray = garray.array()
-            temparray[:,:] = -9999
-            temparray.write(mapname="cnlakeraster_in1", overwrite=True)
-            grass.run_command('r.null', map='cnlakeraster_in1',setnull=-9999)
-            grass.run_command('r.mapcalc',expression = 'cnlakeraster_in = int(cnlakeraster_in1)',overwrite = True)
-
-        grass.run_command('r.mapcalc',expression = 'Connect_Lake = int(cnlakeraster_in)',overwrite = True)
-        grass.run_command('r.mapcalc',expression = 'Nonconnect_Lake = if(isnull(Connect_Lake),alllake,null())',overwrite = True)
+        
+        Routing_info = Generate_Routing_structure(grass,con,cat = 'str_grass_r',acc = 'acc_grass')
+        
+        ################ check connected lakes  and non connected lakes
+        DefineConnected_Non_Connected_Lakes(self,grass,con,garray,Routing_info,str_r = 'str_grass_r',Lake_r = 'alllake')
 
         if Is_divid_region > 0:
             return
@@ -3640,7 +3628,9 @@ class LRRT:
         temparray[:,:] = Non_con_lake_cat[:,:]
         temparray.write(mapname="Non_con_lake_cat", overwrite=True)
         grass.run_command('r.null', map='Non_con_lake_cat',setnull=-9999)
-
+        
+        grass.run_command('r.to.vect', input='SelectedLakes',output='SelectedLakes_F',type='area', overwrite = True)
+        grass.run_command('r.to.vect', input='SelectedLakes',output='SelectedLakes_F',type='area', overwrite = True)
 ####   dissolve final catchment polygons
 #        grass.run_command('v.db.addcolumn', map= 'finalcat_F1', columns = "Gridcode VARCHAR(40)")
 #        grass.run_command('v.db.update', map= 'finalcat_F1', column = "Gridcode",qcol = 'value')
@@ -3651,7 +3641,7 @@ class LRRT:
 #        grass.run_command('v.out.ogr', input = 'str_finalcat',output = os.path.join(self.tempfolder,'str_finalcat.shp'),format= 'ESRI_Shapefile',overwrite = True)
 #        grass.run_command('v.out.ogr', input = 'finalcat_F1',output = os.path.join(self.tempfolder,'finalcat_F1.shp'),format= 'ESRI_Shapefile',overwrite = True)
 #        grass.run_command('v.out.ogr', input = 'str',output = os.path.join(self.tempfolder,'str.shp'),format= 'ESRI_Shapefile',overwrite = True)
-        grass.run_command('r.to.vect', input='SelectedLakes',output='SelectedLakes_F',type='area', overwrite = True)
+        
 #        grass.run_command('v.out.ogr', input = 'str_finalcat',output = os.path.join(self.tempfolder,'str_finalcat.shp'),format= 'ESRI_Shapefile',overwrite = True)
 #    grass.run_command('v.db.join', map= 'SelectedLakes_F',column = 'value', other_table = 'result',other_column ='SubId', overwrite = True)
 
@@ -3659,133 +3649,33 @@ class LRRT:
 #############################################################################################################################################
 #        Define routing network with lakes before merge connected lakes, and define nonconnecte lake catchments
 ############################################################################################################################################3
-        finalcat_arr      = garray.array(mapname="finalcat")          # final catchment raster generated by lake filter tool set
-        str_grass_r_array = Str_new #garray.array(mapname="str_grass_r")  # river networkt raster, each river has unique id
-        acc_array         = np.absolute(garray.array(mapname="acc_grass"))
-        NonCL_array       = garray.array(mapname="Non_con_lake_cat")
-        conlake_arr       = garray.array(mapname="Select_Connected_lakes")
-        self.ncols        = int(finalcat_arr.shape[1])                  # obtain rows and cols
-        self.nrows        = int(finalcat_arr.shape[0])
+         
+        temparray[:,:] = Str_new[:,:]
+        temparray.write(mapname="Str_new", overwrite=True)
+        grass.run_command('r.null',map='Str_new', setnull = [-9999,0],overwrite = True)
+        grass.run_command('r.cross', input=["Str_new","finalcat"],output='nstr_seg_t', flags = 'z',overwrite = True)
 
-        nstrarray = garray.array()
-        nstrarray[:,:] = -9999
-        ## loop for each str_grass_r
-
-        ## obtain all stream id
-        strids = np.unique(str_grass_r_array)#
-        strids = strids[strids>0]
-        #obtain all cat id
-        fcatids = np.unique(finalcat_arr)#### cat all catchment idd
-        fcatids = fcatids[fcatids>0]
-        ###A array store new stream id , old stream id and catchemtn id
-        nstrinfo = np.full((len(strids)*len(fcatids),5),-9999)   ### maximum possible number of new stream segments
-        nstrinfodf = pd.DataFrame(nstrinfo, columns = ['No_Lake_SubId', "Finalcat_SubId","With_Lake_SubId","MinAcc","MaxAcc"])
-
-        ### assign a unique stream id based on each combination of str_grass_r and final cat
-        nstrid = 1
-        idx    = 0
-        for i in range(0,len(strids)):
-            strid = strids[i]
-            strmask = str_grass_r_array == strid  ### mask array, true at location of str == strid
-            catsinstr = finalcat_arr[strmask]  ### get all cat id overlay with this stream
-            catsinstrids = np.unique(catsinstr)  ### get unique cat id overlay with this stream
-            catsinstrids = catsinstrids[catsinstrids > -100]
-            for j in range(0,len(catsinstrids)):   ### loop for each cat id, and assgin for a new stream id
-                finalcatmask = finalcat_arr == catsinstrids[j]
-                mask = np.logical_and(finalcatmask, strmask)   ### build mask for grids belong to current stream and current cat
-                stracc          = acc_array[mask]
-                nstrinfodf.loc[idx,'No_Lake_SubId']   = strid
-                nstrinfodf.loc[idx,'Finalcat_SubId']  = catsinstrids[j]
-                nstrinfodf.loc[idx,'MinAcc']          = np.amin(stracc)
-                nstrinfodf.loc[idx,'MaxAcc']          = np.amax(stracc)
-                if catsinstrids[j] == -99:
-                    nstrinfodf.loc[idx,'With_Lake_SubId'] = -nstrid
-                    nstrarray[mask] =  -nstrid   ## assgin new stream id to mask region
-                else:
-                    nstrinfodf.loc[idx,'With_Lake_SubId'] = nstrid
-                    nstrarray[mask] = nstrid   ## assgin new stream id to mask region
-                nstrid = nstrid + 1
-                idx    = idx    + 1
-
-            i_nstrinfodf = nstrinfodf.loc[nstrinfodf['No_Lake_SubId'] == strid]
-            i_nstrinfodf = i_nstrinfodf.sort_values(["MinAcc"], ascending = (True))
-#            print("#####################################################################3")
-#            print(len(catsinstrids))
-#            print(i_nstrinfodf)
-
-            for j in range(0,len(i_nstrinfodf) - 1):
-                newsubid =  i_nstrinfodf['With_Lake_SubId'].values[j]
-                if newsubid < 0:
-                    if j > 0:
-                        mask = nstrarray == i_nstrinfodf['With_Lake_SubId'].values[j]
-                        nstrarray[mask]   = i_nstrinfodf['With_Lake_SubId'].values[j-1]
-                        dropindx = int(nstrinfodf[nstrinfodf['With_Lake_SubId']==newsubid].index[0])
-                        nstrinfodf = nstrinfodf.drop(nstrinfodf.index[dropindx])
-                    else:
-                        mask = nstrarray == i_nstrinfodf['With_Lake_SubId'].values[j]
-                        nstrarray[mask]   = i_nstrinfodf['With_Lake_SubId'].values[j+1]
-                        dropindx = int(nstrinfodf[nstrinfodf['With_Lake_SubId']==newsubid].index[0])
-                        nstrinfodf = nstrinfodf.drop(nstrinfodf.index[dropindx])
-
-
-            i_nstrinfodf = nstrinfodf.loc[nstrinfodf['No_Lake_SubId'] == strid]
-            i_nstrinfodf = i_nstrinfodf.sort_values(["MinAcc"], ascending = (True))
-
-            for j in range(0,len(i_nstrinfodf) - 1):
-                if i_nstrinfodf['MaxAcc'].values[j] > i_nstrinfodf['MaxAcc'].values[j +1]:
-#                    print('###########################################################################3')
-#                    print(i_nstrinfodf)
-                    mask = nstrarray == i_nstrinfodf['With_Lake_SubId'].values[j+1]   ### build mask for grids belong to current stream and current cat
-                    nstrarray[mask]   = i_nstrinfodf['With_Lake_SubId'].values[j]   ## assgin new stream id to mask region
-                    # connected_Lakeids = conlake_arr[mask]
-                    # connected_Lakeids = connected_Lakeids[connected_Lakeids > 0]
-                    # connected_Lakeids = np.unique(connected_Lakeids)
-                    # if(len(connected_Lakeids) == 1):
-                    #     catid                       = i_nstrinfodf['Finalcat_SubId'].values[j+1]
-                    #     finalcatmask2               = finalcat_arr == catid
-                    #     NonCL_array[finalcatmask2]  = connected_Lakeids
-
-        temparray = garray.array()
-        temparray[:,:] = -9999
-        temparray[:,:] = NonCL_array[:,:]
-        temparray.write(mapname="Non_con_lake_cat_t", overwrite=True)
-        grass.run_command('r.null', map='Non_con_lake_cat_t',setnull=-9999)
-        grass.run_command('r.mapcalc',expression = 'Non_con_lake_cat = int(Non_con_lake_cat_t)',overwrite = True)
-        grass.run_command('r.to.vect', input='Non_con_lake_cat',output='Non_con_lake_cat_t',type='area', overwrite = True)
-        grass.run_command('v.db.addcolumn', map= 'Non_con_lake_cat_t', columns = "Gridcodes VARCHAR(40)")
-        grass.run_command('v.db.update', map= 'Non_con_lake_cat_t', column = "Gridcodes",qcol = 'value')
-        grass.run_command('v.dissolve', input= 'Non_con_lake_cat_t', column = "Gridcodes",output = 'Non_con_lake_cat_1',overwrite = True)
-#        grass.run_command('v.out.ogr', input = 'Non_con_lake_cat_1',output = os.path.join(self.tempfolder,'Non_con_lake_cat_1.shp'),format= 'ESRI_Shapefile',overwrite = True)
-
-
-
-        temparray = garray.array()
-        temparray[:,:] = -9999
-        temparray[:,:] = nstrarray[:,:]
-        temparray.write(mapname="nstr_seg_t", overwrite=True)  #### write new stream id to a grass raster
-        grass.run_command('r.null', map='nstr_seg_t',setnull=-9999)
-        grass.run_command('r.mapcalc',expression = 'nstr_seg = int(nstr_seg_t)',overwrite = True)
+        grass.run_command('r.mapcalc',expression = 'nstr_seg = int(nstr_seg_t) + 1',overwrite = True)
         if self.Debug:
             grass.run_command('r.out.gdal', input = 'nstr_seg',output =os.path.join(self.tempfolder,'nstr_seg.tif'),format= 'GTiff',overwrite = True)
 
         ### Generate new catchment based on new stream
         grass.run_command('r.stream.basins',direction = 'ndir_grass', stream = 'nstr_seg', basins = 'Net_cat_connect_lake',overwrite = True)
-
-        ### add none connected lake catchment into here
-        conlake_arr       = garray.array(mapname="Net_cat_connect_lake")
-        NoneCLakeids      = np.unique(NonCL_array)
-        NoneCLakeids      = NoneCLakeids[NoneCLakeids > 0]
-
-
+        
+        Nstr_IDS,temp = Generate_stats_list_from_grass_raster(grass,mode = 1,input_a = 'Net_cat_connect_lake')
+        
+        nstrid_max = max(Nstr_IDS)
         grass.run_command('r.null', map='Non_con_lake_cat',setnull=[-9999,0])
-        grass.run_command('r.mapcalc',expression = 'Non_con_lake_cat_t2 = int(Non_con_lake_cat) + ' + str(int(nstrid +10)),overwrite = True)
+        grass.run_command('r.mapcalc',expression = 'Non_con_lake_cat_t2 = int(Non_con_lake_cat) + ' + str(int(nstrid_max +10)),overwrite = True)
         grass.run_command('r.mapcalc',expression = 'Net_cat = if(isnull(Non_con_lake_cat_t2),Net_cat_connect_lake,Non_con_lake_cat_t2)',overwrite = True)
+        
         if self.Debug:
             grass.run_command('r.out.gdal', input = 'Net_cat',output =os.path.join(self.tempfolder,'Net_cat_test.tif'),format= 'GTiff',overwrite = True)
 
         print("********************Add lake into routing structure done ********************")
         con.close()
         PERMANENT.close()
+
         return
 
 ############################################################################3
@@ -3900,11 +3790,11 @@ class LRRT:
 
         grass.run_command('v.db.addcolumn', map= 'nstr_nfinalcat_F', columns = "Gridcode INT")
         grass.run_command('v.db.addcolumn', map= 'nstr_nfinalcat_F', columns = "Length_m double")
-        grass.run_command('v.db.addcolumn', map = 'Non_con_lake_cat_1',columns = "Area_m double")
-        grass.run_command('v.db.addcolumn', map= 'Non_con_lake_cat_1', columns = "Gridcode INT")
-        grass.run_command('v.db.update', map= 'Non_con_lake_cat_1', column = "Gridcode",qcol = 'Gridcodes')
-        grass.run_command('v.db.addcolumn', map= 'Non_con_lake_cat_1', columns = "value INT")
-        grass.run_command('v.db.update', map= 'Non_con_lake_cat_1', column = "value",qcol = 'Gridcodes')
+        # grass.run_command('v.db.addcolumn', map = 'Non_con_lake_cat_1',columns = "Area_m double")
+        # grass.run_command('v.db.addcolumn', map= 'Non_con_lake_cat_1', columns = "Gridcode INT")
+        # grass.run_command('v.db.update', map= 'Non_con_lake_cat_1', column = "Gridcode",qcol = 'Gridcodes')
+        # grass.run_command('v.db.addcolumn', map= 'Non_con_lake_cat_1', columns = "value INT")
+        # grass.run_command('v.db.update', map= 'Non_con_lake_cat_1', column = "value",qcol = 'Gridcodes')
         grass.run_command('v.db.update', map= 'nstr_nfinalcat_F', column = "Gridcode",qcol = 'b_GC_str')
         grass.run_command('v.db.dropcolumn', map= 'nstr_nfinalcat_F', columns = ['b_GC_str'])
         PERMANENT.close()
@@ -3923,11 +3813,11 @@ class LRRT:
 
             grass.run_command('v.proj', location=self.grass_location_geo,mapset = 'PERMANENT', input = 'nstr_nfinalcat_F',overwrite = True)
             grass.run_command('v.proj', location=self.grass_location_geo,mapset = 'PERMANENT', input = 'Net_cat_F',overwrite = True)
-            grass.run_command('v.proj', location=self.grass_location_geo,mapset = 'PERMANENT', input = 'Non_con_lake_cat_1',overwrite = True)
+            # grass.run_command('v.proj', location=self.grass_location_geo,mapset = 'PERMANENT', input = 'Non_con_lake_cat_1',overwrite = True)
 
             grass.run_command('v.to.db', map= 'Net_cat_F',option = 'area',columns = "Area_m", units = 'meters',overwrite = True)
             grass.run_command('v.to.db', map= 'nstr_nfinalcat_F',option = 'length', columns = "Length_m",units = 'meters',overwrite = True)
-            grass.run_command('v.to.db', map = 'Non_con_lake_cat_1',option = 'area',columns = "Area_m", units = 'meters',overwrite = True)
+            # grass.run_command('v.to.db', map = 'Non_con_lake_cat_1',option = 'area',columns = "Area_m", units = 'meters',overwrite = True)
 
             grass.run_command('r.slope.aspect', elevation= 'dem_proj',slope = 'slope',aspect = 'aspect',precision = 'DCELL',overwrite = True)
             grass.run_command('r.mapcalc',expression = 'tanslopedegree = tan(slope) ',overwrite = True)
@@ -3938,7 +3828,7 @@ class LRRT:
             grass.run_command('g.region', raster='dem')
             grass.run_command('v.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'nstr_nfinalcat_F',overwrite = True)
             grass.run_command('v.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'Net_cat_F',overwrite = True)
-            grass.run_command('v.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'Non_con_lake_cat_1',overwrite = True)
+            # grass.run_command('v.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'Non_con_lake_cat_1',overwrite = True)
             grass.run_command('r.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'tanslopedegree',overwrite = True)
             grass.run_command('r.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'slope',overwrite = True)
             grass.run_command('r.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'aspect',overwrite = True)
@@ -3976,8 +3866,8 @@ class LRRT:
         rivleninfo = pd.read_sql_query(sqlstat, con)
         sqlstat="SELECT Gridcode, Area_m FROM Net_cat_F"
         catareainfo = pd.read_sql_query(sqlstat, con)
-        sqlstat="SELECT Gridcode, Area_m FROM Non_con_lake_cat_1"
-        NonConcLakeInfo = pd.read_sql_query(sqlstat, con)
+        # sqlstat="SELECT Gridcode, Area_m FROM Non_con_lake_cat_1"
+        # NonConcLakeInfo = pd.read_sql_query(sqlstat, con)
 
         if self.Path_WiDep_in != '#':
             sqlstat="SELECT HYBAS_ID, NEXT_DOWN, UP_AREA, Q_Mean, WIDTH, DEPTH FROM WidDep"
@@ -4010,7 +3900,7 @@ class LRRT:
         catinfo = Generatecatinfo_riv(nstr_seg_array,acc_array,dir_array,conlake_arr,dem_array,
              catinfodf,allcatid,width_array,depth_array,obs_array,slope_array,aspect_array,landuse_array,
              slope_deg_array,Q_mean_array,Netcat_array,landuseinfo,allLakinfo,self.nrows,self.ncols,
-             rivleninfo.astype(float),catareainfo.astype(float),obsinfo,NonConcLakeInfo,NonCL_array,noncnlake_arr,self.maximum_obs_id)
+             rivleninfo.astype(float),catareainfo.astype(float),obsinfo,noncnlake_arr,self.maximum_obs_id)
         routing_info         = catinfo[['SubId','DowSubId']].astype('float').values
 #        print(routing_info)
 #        print(catinfo)

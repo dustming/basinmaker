@@ -1,7 +1,31 @@
 import numpy as np
 import copy
+import pandas as pd 
 
-
+def Generate_Routing_structure(grass,con,cat = 'str_grass_r',acc = 'acc_grass',Name = 'a1'):
+    grass.run_command('r.stats.zonal', base=cat,cover=acc, method='max', output=Name+'_maxacc', overwrite = True)
+    exp = "'%s' =if(%s == int('%s'),%s,null())" %(Name+'_OL',acc,Name+'_maxacc',cat)
+    grass.run_command('r.mapcalc',expression = exp,overwrite = True)
+    exp = "'%s'=if(isnull('%s'),null(),1)" %(Name+'_OL1',Name+'_OL')
+    grass.run_command('r.mapcalc',expression = exp,overwrite = True)
+    grass.run_command('r.grow', input=Name+'_OL1', output=Name+'_OL1_G', radius=1.5,overwrite = True)  
+    grass.run_command('r.clump', input=Name+'_OL1_G', output=Name+'_OL1_G_Clu',overwrite = True)   
+        
+    ###find inlets of each subbasin 
+    grass.run_command('r.stats.zonal', base=Name+'_OL1_G_Clu',cover=acc, method='max', output=Name+'_OL1_G_Clu_maxacc', overwrite = True)
+    exp = "'%s'=if(%s == int('%s'),%s,null())" %(Name+'_IL',acc,Name+'_OL1_G_Clu_maxacc',cat)
+    grass.run_command('r.mapcalc',expression = exp,overwrite = True) 
+    grass.run_command('r.stats.zonal', base=Name+'_OL1_G_Clu',cover=Name+'_IL', method='max', output=Name+'_OL1_G_Clu_IL_SubId', overwrite = True)
+        
+    grass.run_command('r.to.vect', input=Name+'_OL', output=Name+'_outlet', type='point',overwrite = True)        
+    grass.run_command('v.db.renamecolumn', map=Name+'_outlet', column='value,SubId')
+    grass.run_command('v.db.dropcolumn', map=Name+'_outlet', column='label')
+    grass.run_command('v.what.rast', map=Name+'_outlet', raster=Name+'_OL1_G_Clu_IL_SubId',column='DowSubId')
+    grass.run_command('v.what.rast', map=Name+'_outlet', raster=Name+'_maxacc',column='MaxAcc')
+    sqlstat="SELECT SubId, DowSubId, MaxAcc FROM %s" % (Name+'_outlet')
+    Routing_info = pd.read_sql_query(sqlstat, con)
+    return Routing_info
+    
 def Defcat(out,outletid):
     otsheds = np.full((1,1),outletid)
     Shedid = np.full((len(out)+1,1),-99999999999)
