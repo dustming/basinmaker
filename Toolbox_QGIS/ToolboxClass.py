@@ -3192,6 +3192,8 @@ class LRRT:
             copyfile(self.Path_Landuseinfo_in, self.Path_Landuseinfo)
             grass.run_command("r.external", input = self.Path_Landuse_in, output = 'landuse_in', overwrite = True)
             grass.run_command("r.clip", input = 'landuse_in', output = 'landuse', overwrite = True)
+            grass.run_command('r.reclass', input='landuse',output = 'landuse_Manning1',rules =self.Path_Landuseinfo,overwrite = True)
+            grass.run_command('r.mapcalc',expression = "landuse_Manning = float(landuse_Manning1)/1000",overwrite = True)
         else:
             kk = pd.DataFrame(columns=['RasterV', 'MannV'],index=range(0,1))
             kk.loc[0,'RasterV'] = -9999
@@ -3199,7 +3201,7 @@ class LRRT:
             kk.to_csv(self.Path_Landuseinfo,sep=",")
             temparray = garray.array()
             temparray[:,:] = -9999
-            temparray.write(mapname="landuse", overwrite=True)
+            temparray.write(mapname="landuse_Manning", overwrite=True)
 
 
 
@@ -3827,21 +3829,29 @@ class LRRT:
         grass.run_command('g.region', raster='dem')
         grass.run_command('v.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'nstr_nfinalcat_F',overwrite = True)
         grass.run_command('v.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'Net_cat_F',overwrite = True)
+        
+        ### add averaged manning coefficent along the river network into river attribut table 
+        grass.run_command('v.rast.stats',map = 'nstr_nfinalcat_F',raster='landuse_Manning',column_prefix = 'mn', method =['average'])
 
+
+        ### define routing structure 
+        Routing_temp = Generate_Routing_structure(grass,con,cat = 'Net_cat',acc = 'acc_grass',Name = 'Final')
+        ###       
+        ### add averaged lake id to each catchment outlet 
+        grass.run_command('v.what.rast', map='Final_outlet', raster='Select_Connected_lakes',column='CNLake') 
+        grass.run_command('v.what.rast', map='Final_outlet', raster='Select_Non_Connected_lakes',column='NCNLake') 
+        ### observation id to outlet  
+        grass.run_command('v.what.rast', map='Final_outlet', raster='obs',column='ObsId')  
+        
         ### Add attributes to each catchments
         # read raster arrays
-        Lake1_arr = garray.array(mapname="SelectedLakes")
-        noncnlake_arr = garray.array(mapname="Select_Non_Connected_lakes")
-#        NonCL_array = garray.array(mapname="Non_con_lake_cat")
-        conlake_arr = garray.array(mapname="Select_Connected_lakes")
+
         width_array = garray.array(mapname="width")
         depth_array = garray.array(mapname="depth")
-        obs_array = garray.array(mapname="obs")
         nstr_seg_array = garray.array(mapname="nstr_seg")
         acc_array = np.absolute(garray.array(mapname="acc_grass"))
         dir_array = garray.array(mapname="ndir_Arcgis")#ndir_Arcgis
         Q_mean_array = garray.array(mapname="qmean")
-        landuse_array = garray.array(mapname="landuse")
         Netcat_array = garray.array(mapname="Net_cat")
         SubId_WidDep_array = garray.array(mapname="SubId_WidDep")
 
@@ -3851,15 +3861,18 @@ class LRRT:
         ## read landuse and lake infomation data
         tempinfo = Dbf5(self.Path_allLakeply[:-3] + "dbf")
         allLakinfo = tempinfo.to_dataframe()
-        landuseinfo = pd.read_csv(self.Path_Landuseinfo,sep=",",low_memory=False)
+#        landuseinfo = pd.read_csv(self.Path_Landuseinfo,sep=",",low_memory=False)
         ### read length and maximum and minimum dem along channel 
-        sqlstat="SELECT Gridcode, Length_m, d_minimum, d_maximum FROM nstr_nfinalcat_F"
+        sqlstat="SELECT Gridcode, Length_m, d_minimum, d_maximum, mn_average FROM nstr_nfinalcat_F"
         rivleninfo = pd.read_sql_query(sqlstat, con)
         ### read catchment  
         sqlstat="SELECT Gridcode, Area_m,d_average,s_average,a_average FROM Net_cat_F"
         catareainfo = pd.read_sql_query(sqlstat, con)
-        # sqlstat="SELECT Gridcode, Area_m FROM Non_con_lake_cat_1"
-        # NonConcLakeInfo = pd.read_sql_query(sqlstat, con)
+        
+        ### read catchment  
+        sqlstat="SELECT SubId, DowSubId,CNLake,NCNLake,ObsId FROM Final_outlet"
+        Outletinfo = pd.read_sql_query(sqlstat, con)
+
 
         if self.Path_WiDep_in != '#':
             sqlstat="SELECT HYBAS_ID, NEXT_DOWN, UP_AREA, Q_Mean, WIDTH, DEPTH FROM WidDep"
@@ -3881,18 +3894,16 @@ class LRRT:
         Riv_Cat_IDS = Riv_Cat_IDS > 0
         allcatid    = np.unique(Netcat_array)
         allcatid = allcatid[allcatid > 0]
-        catinfo2 = np.full((len(allcatid),31),-9999.00000)
+        
+        catinfo2 = np.full((len(Outletinfo),31),-9999.00000)
         catinfodf = pd.DataFrame(catinfo2, columns = ['SubId', "DowSubId",'RivSlope','RivLength','BasSlope','BasAspect','BasArea',
                             'BkfWidth','BkfDepth','IsLake','HyLakeId','LakeVol','LakeDepth',
                              'LakeArea','Laketype','IsObs','MeanElev','FloodP_n','Q_Mean','Ch_n','DA','Strahler','Seg_ID','Seg_order'
                              ,'Max_DEM','Min_DEM','DA_Obs','DA_error','Obs_NM','SRC_obs','NonLDArea'])
         catinfodf['Obs_NM']   =catinfodf['Obs_NM'].astype(str)
         catinfodf['SRC_obs']  =catinfodf['SRC_obs'].astype(str)
-
-        catinfo = Generatecatinfo_riv(nstr_seg_array,acc_array,dir_array,conlake_arr,
-             catinfodf,allcatid,width_array,depth_array,obs_array,landuse_array,
-             Q_mean_array,Netcat_array,landuseinfo,allLakinfo,self.nrows,self.ncols,
-             rivleninfo.astype(float),catareainfo.astype(float),obsinfo,noncnlake_arr,self.maximum_obs_id)
+        
+        catinfo = Generatecatinfo_riv(catinfodf,allLakinfo,rivleninfo.astype(float),catareainfo.astype(float),obsinfo,Outletinfo)
         routing_info         = catinfo[['SubId','DowSubId']].astype('float').values
 #        print(routing_info)
 #        print(catinfo)

@@ -74,7 +74,7 @@ def test_RoutingNetworkTopologyUpdateToolset_riv():
     ###Folder where the output will be generated     
     Temporary_Result_Folder_Result   = os.path.join('./testdata','Temporary_output_folder','testout4')
     Final_Result_Folder_Result       = os.path.join('./testdata','Final_output_folder','testout4')    
-    shutil.rmtree(Temporary_Result_Folder_Result,ignore_errors=True)
+#    shutil.rmtree(Temporary_Result_Folder_Result,ignore_errors=True)
     
     ###The pathes for all inputs 
     Path_DEM_big           = os.path.join(Data_Folder, 'DEM_big_merit.tif')
@@ -82,7 +82,7 @@ def test_RoutingNetworkTopologyUpdateToolset_riv():
     Path_Lake_ply          = os.path.join(Data_Folder, 'HyLake.shp')
     Path_bkf_wd            = os.path.join(Data_Folder, 'Bkfullwidth_depth.shp')
     Path_Landuse           = os.path.join(Data_Folder, 'landuse.tif')
-    Path_Roughness_landuse = os.path.join(Data_Folder, 'Landuse.csv')
+    Path_Roughness_landuse = os.path.join(Data_Folder, 'Landuse_info.csv')
     
     ###Generate test resuts, for option 1 
     RTtool=LRRT(dem_in = Path_DEM_small,WidDep = Path_bkf_wd,
@@ -92,11 +92,11 @@ def test_RoutingNetworkTopologyUpdateToolset_riv():
                TempOutFolder = Temporary_Result_Folder_Result,
                )
     ### test using extent of input dem as processing extent 
-    RTtool.Generatmaskregion()
-    RTtool.Generateinputdata()
-    RTtool.WatershedDiscretizationToolset(accthresold = 500)
-    RTtool.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = 0,
-                                                    Thre_Lake_Area_nonConnect = 0)
+#    RTtool.Generatmaskregion()
+#    RTtool.Generateinputdata()
+#    RTtool.WatershedDiscretizationToolset(accthresold = 500)
+#    RTtool.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = 0,
+#                                                    Thre_Lake_Area_nonConnect = 0)
     RTtool.RoutingNetworkTopologyUpdateToolset_riv(projection = 'EPSG:3573')
 
     
@@ -159,5 +159,5 @@ def test_RoutingNetworkTopologyUpdateToolset_riv():
     assert Result_Con_Lake_Ply.equals(Expect_Con_Lake_Ply)
     ### compare two pandas dataframe Expect_Non_Con_Lake_Ply and Result_Non_Con_Lake_Ply
     assert Result_Non_Con_Lake_Ply.equals(Expect_Non_Con_Lake_Ply)
-    RTtool.Output_Clean()
+#    RTtool.Output_Clean()
     
