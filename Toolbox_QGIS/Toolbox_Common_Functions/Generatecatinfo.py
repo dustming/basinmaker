@@ -659,8 +659,8 @@ def Generatecatinfo(Watseds,fac,fdir,lake,dem,area,catinfo,allcatid,lakeinfo,wid
 
 
 
-def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
-                    obs,slope,aspect,landuse,slop_deg,Q_Mean,netcat,landuseinfo,lakeinfo,
+def Generatecatinfo_riv(Watseds,fac,fdir,lake,catinfo,allcatid,width,depth,
+                    obs,landuse,Q_Mean,netcat,landuseinfo,lakeinfo,
                     nrows,ncols,leninfo,areainfo,obsinfo,noncnlake_arr,maximum_obs_id):
     finalcat = copy.copy(netcat)
     for i in range(0,len(allcatid)):
@@ -737,37 +737,22 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
                 catinfo.loc[i,'Obs_NM']  = obsinfo.loc[obsinfo['Obs_ID'] == obsid]['STATION_NU'].values[0]
                 catinfo.loc[i,'SRC_obs'] = obsinfo.loc[obsinfo['Obs_ID'] == obsid]['SRC_obs'].values[0]
 #            print(obsinfo.loc[obsinfo['Obs_ID'] == obsid]['SRC_obs'])
-########Slopes slope,aspect,landuse,slop_deg
-        slopeinriv = slope[catmask2]   #### catchment mask
-        aspectinriv = aspect[catmask2]  #### catchment mask
-        slop_deginriv = slop_deg[catmask2]  #### catchment mask
-        deminriv2 = dem[catmask2]    ###catchment mask
-
-        if(len(slop_deginriv[slop_deginriv >= 0])) > 0:
-            slop_deginriv[slop_deginriv <0] = np.NaN
-            catinfo.loc[i,'BasSlope'] = np.maximum(np.nanmean(slop_deginriv),0.1)
-        else:
-            catinfo.loc[i,'BasSlope'] = -1.2345
-
-        if(len(aspectinriv[aspectinriv >= 0])) > 0:
-            aspectinriv[aspectinriv <0] = np.NaN
-            catinfo.loc[i,'BasAspect'] = np.maximum(np.nanmean(aspectinriv),0.1)
-        else:
-            catinfo.loc[i,'BasAspect'] = -1.2345
-
-        if(len(deminriv2[deminriv2 > 0])) > 0:
-            deminriv2[deminriv2 <=0] = np.NaN
-            catinfo.loc[i,'MeanElev'] = np.nanmean(deminriv2)
-        else:
-            catinfo.loc[i,'MeanElev'] =-1.2345
 
         catarea = np.unique(areainfo.loc[areainfo['Gridcode'] == catid]['Area_m'].values)  #'Area_m'
+        catslope = np.unique(areainfo.loc[areainfo['Gridcode'] == catid]['s_average'].values)
+        catelev = np.unique(areainfo.loc[areainfo['Gridcode'] == catid]['d_average'].values)
+        cataspect = np.unique(areainfo.loc[areainfo['Gridcode'] == catid]['a_average'].values)
         if len(catarea) == 1:
-            catinfo.loc[i,'BasArea'] = catarea
+            catinfo.loc[i,'BasArea']   = catarea
+            catinfo.loc[i,'BasSlope']  = catslope
+            catinfo.loc[i,'BasAspect'] = cataspect
+            catinfo.loc[i,'MeanElev']  = catelev
         else:
             print("Warning  basin area of stream  " , catid, "   need check   ", len(catarea) )
-            catinfo.loc[i,'BasArea'] = -1.2345
-
+            catinfo.loc[i,'BasArea'] = -9999
+            catinfo.loc[i,'BasSlope']  = -9999
+            catinfo.loc[i,'BasAspect'] = -9999
+            catinfo.loc[i,'MeanElev']  = -9999
 ##########
         Landtypes = landuse[catmask]
         Landtypeid = np.unique(Landtypes)
@@ -787,25 +772,18 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
 
 
 ###############################################################################33
-        #### parameter need  river map
+        #### parameter need  river 
 ################################################################################3
-        if len(np.unique(catmask[catmask > 0])) <= 0:   ### None connected catchment do not update these parameters
-            continue
-
-        deminriv = dem[catmask]      ###rive segment mas
-        if(len(deminriv[deminriv > 0])) > 0:
-            deminriv[deminriv <=0] = np.NaN
-            maxdem = np.nanmax(deminriv)
-            mindem = np.nanmin(deminriv)
-            catinfo.loc[i,'Min_DEM'] = mindem
-            catinfo.loc[i,'Max_DEM'] = maxdem
-        else:
-            maxdem = -1.2345
-            mindem = -1.2345
 
         rivlen = np.unique(leninfo.loc[leninfo['Gridcode'] == catid]['Length_m'].values)  #'Area_m'
+        dmaxelev = np.unique(leninfo.loc[leninfo['Gridcode'] == catid]['d_maximum'].values)
+        dminelev = np.unique(leninfo.loc[leninfo['Gridcode'] == catid]['d_minimum'].values)
         if len(rivlen) == 1:
             catinfo.loc[i,'RivLength'] = rivlen
+            maxdem = dmaxelev
+            mindem = dminelev
+            catinfo.loc[i,'Min_DEM'] = mindem
+            catinfo.loc[i,'Max_DEM'] = maxdem
             if rivlen >= 0:
                 if max(0,float((maxdem - mindem))/float(rivlen)) == 0:
                     catinfo.loc[i,'RivSlope'] =-9999
@@ -817,28 +795,6 @@ def Generatecatinfo_riv(Watseds,fac,fdir,lake,dem,catinfo,allcatid,width,depth,
             print("Warning  river length of stream  " , catid, "   need check   ", len(rivlen) )
             catinfo.loc[i,'RivLength'] = -9999
             catinfo.loc[i,'RivSlope'] = -9999
-
-########Got basin width and depth
-        # widthinriv = width[catmask2]   ###rive segment mask
-        # depthinriv = depth[catmask2]  ###rive segment mask
-        # Q_Meaninriv = Q_Mean[catmask2]  ###rive segment mask
-        #
-        # widthids = np.unique(widthinriv)
-        # widthids = widthids[widthids > 0]
-        #
-        # if(len(widthids)) > 0:
-        #     widthinriv[widthinriv <=0] = np.NaN
-        #     depthinriv[depthinriv <=0] = np.NaN
-        #     Q_Meaninriv[Q_Meaninriv <=0] = np.NaN
-        #     catinfo.loc[i,'BkfWidth'] = np.nanmean(widthinriv)
-        #     catinfo.loc[i,'BkfDepth'] = np.nanmean(depthinriv)
-        #     catinfo.loc[i,'Q_Mean'] = np.nanmean(Q_Meaninriv)
-        # else:
-        #     catinfo.loc[i,'BkfWidth'] = -1.2345
-        #     catinfo.loc[i,'BkfDepth'] = -1.2345
-        #     catinfo.loc[i,'Q_Mean'] =  -1.2345
-#        if catinfo['SubId'].values[i] == catinfo['DowSubId'].values[i]:
-#            catinfo.loc[i,'DowSubId'] = -1
 
     return catinfo
 
