@@ -663,19 +663,25 @@ def Generatecatinfo_riv(catinfo,lakeinfo,leninfo,areainfo,obsinfo,Outletinfo):
     for i in range(0,len(Outletinfo)):
         catid = Outletinfo['SubId'].values[i]
         DownSubID = Outletinfo['DowSubId'].values[i]
-        
         catinfo.loc[i,'SubId'] = catid
         ### change the downsub id to -1 for watershed outlet 
         if (len(Outletinfo.loc[Outletinfo['SubId'] == DownSubID]) < 1) or catid == DownSubID:
             catinfo.loc[i,'DowSubId'] = -1
         else:
             catinfo.loc[i,'DowSubId'] = DownSubID
-        
-        CL_LakeId = Outletinfo['CNLake'].values[i]
-        NCL_LakeId = Outletinfo['NCNLake'].values[i]
-        
+            
+        CL_LakeId_Outlet = Outletinfo['cl'].values[i]
+        ### catchment can be an connect lake catchment only when outlet of this catchment is 
+        ### in the lake catchment 
+        if CL_LakeId_Outlet > 0:
+            CL_LakeId = CL_LakeId_Outlet 
+        else:
+            CL_LakeId = -9999
+            
+        NCL_LakeId = Outletinfo['ncl'].values[i]
+#        print(CL_LakeId,NCL_LakeId)
         ### add lake info 
-        if CL_LakeId > 0 and np.isnan(NCL_LakeId):
+        if CL_LakeId > 0 and NCL_LakeId < 0:
             catinfo.loc[i,'IsLake'] = 1
             slakeinfo = lakeinfo.loc[lakeinfo['Hylak_id'] == CL_LakeId]
             catinfo.loc[i,'HyLakeId'] = CL_LakeId
@@ -683,7 +689,7 @@ def Generatecatinfo_riv(catinfo,lakeinfo,leninfo,areainfo,obsinfo,Outletinfo):
             catinfo.loc[i,'LakeArea']= slakeinfo.iloc[0]['Lake_area']
             catinfo.loc[i,'LakeDepth']= slakeinfo.iloc[0]['Depth_avg']
             catinfo.loc[i,'Laketype'] = slakeinfo.iloc[0]['Lake_type']  
-        if NCL_LakeId > 0 and np.isnan(CL_LakeId):
+        if NCL_LakeId > 0 and CL_LakeId < 0:
             catinfo.loc[i,'IsLake'] = 2
             slakeinfo = lakeinfo.loc[lakeinfo['Hylak_id'] == NCL_LakeId]
             catinfo.loc[i,'HyLakeId'] = NCL_LakeId
@@ -693,7 +699,7 @@ def Generatecatinfo_riv(catinfo,lakeinfo,leninfo,areainfo,obsinfo,Outletinfo):
             catinfo.loc[i,'Laketype'] = slakeinfo.iloc[0]['Lake_type']  
          ### add obs info 
         obsid = Outletinfo['ObsId'].values[i]
-        if obsid  > 0:
+        if obsid > 0: 
             catinfo.loc[i,'IsObs'] =  obsid
             if len(obsinfo.loc[obsinfo['Obs_ID'] == obsid]) > 0:
                 catinfo.loc[i,'DA_Obs']  = obsinfo.loc[obsinfo['Obs_ID'] == obsid]['DA_obs'].values[0]

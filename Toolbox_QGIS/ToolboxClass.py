@@ -573,7 +573,7 @@ def Check_If_Str_Is_Head_Stream(prow,pcol,nrows,ncols,str,strid):
 
 
 ###
-def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir,Is_divid_region,Min_Grid_Number = 50):
+def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir,Is_divid_region,Remove_Str,Min_Grid_Number = 50):
     GP_cat = copy.copy(cat)
     sblid = copy.copy(blid)
     Str_new = copy.copy(Str)
@@ -647,16 +647,21 @@ def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir,Is_divid_re
 
         for j in range(0,len(Strid_L)):  #### loop for each stream intercept with lake
             strid = Strid_L[j]
+            ### get [row,col] of strid in str grids 
             strrowcol = np.argwhere(Str == strid).astype(int)
+            ### get number of grids of this str 
             nstrrow = strrowcol.shape[0]
+            ### create an array 0 will store row 1 will be col and 2 will be acc
+            ### 3 will be the lake id  
             Strchek = np.full((nstrrow,4),-9999)##### 0 row, 1 col, 2 fac,
             Strchek[:,0] = strrowcol[:,0]
             Strchek[:,1] = strrowcol[:,1]
             Strchek[:,2] = fac[strrowcol[:,0],strrowcol[:,1]]
             Strchek[:,3] = lake[strrowcol[:,0],strrowcol[:,1]]
+            ### sort the grids by flow accumulation 
             Strchek = Strchek[Strchek[:,2].argsort()].astype(int)
 
-            ###3 find the first intersection point between river and lake
+            ### find the first intersection point between river and lake
             Grids_Lake_river = np.where(Strchek[:,3] == lid)
             irowst = np.nanmin(Grids_Lake_river)
             Intersection_Grid_row = Strchek[irowst,0]
@@ -2496,7 +2501,7 @@ class LRRT:
         self.Path_finalcatinfo_type = os.path.join(self.tempfolder,'catinfo.csvt')
         self.Path_alllakeinfoinfo = os.path.join(self.tempfolder,'hylake.csv')
         self.Path_Maskply = os.path.join(self.tempfolder, 'HyMask2.shp')
-
+        self.Remove_Str = []
 ########################################################################################
     def Generatmaskregion(self,OutletPoint = [-1,-1],Path_Sub_Polygon = '#',Buffer_Distance = 0.0,
                           hyshdply = '#', OutHyID = -1 ,OutHyID2 = -1):
@@ -3342,10 +3347,11 @@ class LRRT:
         grass.run_command('r.stream.basins',direction = 'dir_grass', stream = 'str_grass_r', basins = 'cat1',overwrite = True,memory = max_memroy)
         
         Routing_info = Generate_Routing_structure(grass,con,cat = 'str_grass_r',acc = 'acc_grass')
-        
+        Routing_info = Routing_info.fillna(-1)
         ################ check connected lakes  and non connected lakes
-        DefineConnected_Non_Connected_Lakes(self,grass,con,garray,Routing_info,str_r = 'str_grass_r',Lake_r = 'alllake')
-
+        Remove_Str = DefineConnected_Non_Connected_Lakes(self,grass,con,garray,Routing_info,str_r = 'str_grass_r',Lake_r = 'alllake')
+        self.Remove_Str = Remove_Str
+        
         if Is_divid_region > 0:
             return
         
@@ -3485,7 +3491,7 @@ class LRRT:
         bsid  = 2000000    ## begining of new cat id of in inflow of lakes
         blid2 = 3000000
         boid  = 4000000
-
+        Remove_Str = self.Remove_Str
         noncnlake_arr = garray.array(mapname="Nonconnect_Lake")
         conlake_arr   = garray.array(mapname="Connect_Lake")
         cat1_arr      = garray.array(mapname="cat1")
@@ -3532,7 +3538,7 @@ class LRRT:
 
 
 ####
-        Pourpoints,Lakemorestream,Str_new = GenerPourpoint(cat1_arr,Lake1,str_array,self.nrows,self.ncols,blid,bsid,bcid,acc_array,dir_array,Is_divid_region)
+        Pourpoints,Lakemorestream,Str_new = GenerPourpoint(cat1_arr,Lake1,str_array,self.nrows,self.ncols,blid,bsid,bcid,acc_array,dir_array,Is_divid_region,Remove_Str)
         temparray[:,:] = Pourpoints[:,:]
         temparray.write(mapname="Pourpoints_1", overwrite=True)
         grass.run_command('r.null', map='Pourpoints_1',setnull=-9999)
@@ -3791,6 +3797,9 @@ class LRRT:
         grass.run_command('v.db.addcolumn', map= 'nstr_nfinalcat_F', columns = "Length_m double")
         grass.run_command('v.db.update', map= 'nstr_nfinalcat_F', column = "Gridcode",qcol = 'b_GC_str')
         grass.run_command('v.db.dropcolumn', map= 'nstr_nfinalcat_F', columns = ['b_GC_str'])
+        grass.run_command('r.out.gdal', input = 'dem',output =os.path.join(self.tempfolder,'dem_par.tif'),format= 'GTiff',overwrite = True)
+        grass.run_command('r.mapcalc',expression = 'finalcat_int = int(finalcat)',overwrite = True)
+        grass.run_command('r.stats.zonal',base='finalcat_int',cover='Select_Connected_lakes', method='max', output='Connect_Lake_Cat_w_Lake_ID',overwrite = True)
         PERMANENT.close()
 
 
@@ -3798,13 +3807,12 @@ class LRRT:
         ### Calulate catchment area slope river length under projected coordinates system.
 
 
-        os.system('gdalwarp ' + "\"" + self.Path_dem +"\""+ "    "+ "\""+self.Path_demproj+"\""+ ' -t_srs  ' + "\""+projection+"\"")
+        os.system('gdalwarp ' + "\"" + os.path.join(self.tempfolder,'dem_par.tif') +"\""+ "    "+ "\""+self.Path_demproj+"\""+ ' -t_srs  ' + "\""+projection+"\"")
 
         project = Session()
         project.open(gisdb=self.grassdb, location=self.grass_location_pro,create_opts=projection)
         grass.run_command("r.import", input = self.Path_demproj, output = 'dem_proj', overwrite = True)
         grass.run_command('g.region', raster='dem_proj')
-
         grass.run_command('v.proj', location=self.grass_location_geo,mapset = 'PERMANENT', input = 'nstr_nfinalcat_F',overwrite = True)
         grass.run_command('v.proj', location=self.grass_location_geo,mapset = 'PERMANENT', input = 'Net_cat_F',overwrite = True)
         # grass.run_command('v.proj', location=self.grass_location_geo,mapset = 'PERMANENT', input = 'Non_con_lake_cat_1',overwrite = True)
@@ -3833,16 +3841,20 @@ class LRRT:
         
         ### add averaged manning coefficent along the river network into river attribut table 
         grass.run_command('v.rast.stats',map = 'nstr_nfinalcat_F',raster='landuse_Manning',column_prefix = 'mn', method =['average'])
+        grass.run_command('v.rast.stats', map='nstr_nfinalcat_F', raster='Select_Connected_lakes',column_prefix='cl',method =['maximum']) 
+#        grass.run_command('v.rast.stats', map='nstr_nfinalcat_F', raster='Select_Non_Connected_lakes',column_prefix='nl',method =['maximum']) 
 
-
-        ### define routing structure 
-        Routing_temp = Generate_Routing_structure(grass,con,cat = 'Net_cat',acc = 'acc_grass',Name = 'Final')
+        ### define routing structure, using cat may make subbasin drainge to wrong catchments
+        grass.run_command('r.mapcalc',expression = 'ndir_grass2 = if(dir_grass ==ndir_grass,dir_grass,ndir_grass)',overwrite = True)
+        grass.run_command('r.accumulate',direction = 'ndir_grass2', accumulation = 'acc_grass_CatOL', overwrite = True)
+        Routing_temp = Generate_Routing_structure(grass,con,cat = 'Net_cat',acc = 'acc_grass_CatOL',Name = 'Final')
         ###       
         ### add averaged lake id to each catchment outlet 
-        grass.run_command('v.what.rast', map='Final_outlet', raster='Select_Connected_lakes',column='CNLake') 
-        grass.run_command('v.what.rast', map='Final_outlet', raster='Select_Non_Connected_lakes',column='NCNLake') 
+
         ### observation id to outlet  
-        grass.run_command('v.what.rast', map='Final_outlet', raster='obs',column='ObsId')  
+        grass.run_command('v.what.rast', map='Final_outlet', raster='obs',column='ObsId')
+        grass.run_command('v.what.rast', map='Final_outlet', raster='Select_Non_Connected_lakes',column='ncl')
+        grass.run_command('v.what.rast', map='Final_outlet', raster='Connect_Lake_Cat_w_Lake_ID',column='cl')  
         
         ### Add attributes to each catchments
         # read raster arrays
@@ -3866,14 +3878,14 @@ class LRRT:
         allLakinfo = tempinfo.to_dataframe()
 #        landuseinfo = pd.read_csv(self.Path_Landuseinfo,sep=",",low_memory=False)
         ### read length and maximum and minimum dem along channel 
-        sqlstat="SELECT Gridcode, Length_m, d_minimum, d_maximum, mn_average FROM nstr_nfinalcat_F"
+        sqlstat="SELECT Gridcode, Length_m, d_minimum, d_maximum, mn_average,cl_maximum FROM nstr_nfinalcat_F"
         rivleninfo = pd.read_sql_query(sqlstat, con)
         ### read catchment  
         sqlstat="SELECT Gridcode, Area_m,d_average,s_average,a_average FROM Net_cat_F"
         catareainfo = pd.read_sql_query(sqlstat, con)
         
         ### read catchment  
-        sqlstat="SELECT SubId, DowSubId,CNLake,NCNLake,ObsId FROM Final_outlet"
+        sqlstat="SELECT SubId, DowSubId,ObsId,ncl,cl FROM Final_outlet"
         Outletinfo = pd.read_sql_query(sqlstat, con)
 
 
@@ -3897,6 +3909,10 @@ class LRRT:
         Riv_Cat_IDS = Riv_Cat_IDS > 0
         allcatid    = np.unique(Netcat_array)
         allcatid = allcatid[allcatid > 0]
+        Outletinfo = Outletinfo.fillna(-9999)
+        obsinfo    = obsinfo.fillna(-9999)
+        rivleninfo    = rivleninfo.astype(float).fillna(-9999)
+        catareainfo    = catareainfo.astype(float).fillna(-9999)
         
         catinfo2 = np.full((len(Outletinfo),31),-9999.00000)
         catinfodf = pd.DataFrame(catinfo2, columns = ['SubId', "DowSubId",'RivSlope','RivLength','BasSlope','BasAspect','BasArea',
@@ -3905,7 +3921,7 @@ class LRRT:
                              ,'Max_DEM','Min_DEM','DA_Obs','DA_error','Obs_NM','SRC_obs','NonLDArea'])
         catinfodf['Obs_NM']   =catinfodf['Obs_NM'].astype(str)
         catinfodf['SRC_obs']  =catinfodf['SRC_obs'].astype(str)
-        catinfo = Generatecatinfo_riv(catinfodf,allLakinfo,rivleninfo.astype(float),catareainfo.astype(float),obsinfo,Outletinfo)
+        catinfo = Generatecatinfo_riv(catinfodf,allLakinfo,rivleninfo,catareainfo,obsinfo,Outletinfo)
         routing_info         = catinfo[['SubId','DowSubId']].astype('float').values
 #        print(routing_info)
 #        print(catinfo)

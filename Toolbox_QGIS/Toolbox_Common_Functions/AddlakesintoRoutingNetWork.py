@@ -73,12 +73,14 @@ def Check_If_Lake_Have_Multi_OutLet(CL_Id,Str_Id,Routing_info):
         ### obtain all upstream str id of max acc str 
         str_to_str_max_acc  = Defcat(routing_info_only,str_max_acc)
         
+        if len(str_to_str_max_acc) <= 1: 
+            str_to_str_max_acc  = Defcat(routing_info_only,i_CL_Str[len(i_CL_Str) - 2,1])
         ### create a mask for i_CL_Str[:,1], it will be true for in positon 
         ### where it's value in str_to_str_max_acc
         mask = np.isin(i_CL_Str[:,1],str_to_str_max_acc)
-        
         #### not all element in i_CL_Str[:,1] exist in str_to_str_max_acc
         #### the lake have muli outlet 
+
         Remove_Str_i = []
         if len(mask[mask == True]) < len(i_CL_Str[:,1]):
             str_notflowto_lakeoutlet = i_CL_Str[np.logical_not(mask),1]
@@ -123,16 +125,17 @@ def DefineConnected_Non_Connected_Lakes(self,grass,con,garray,Routing_info,str_r
     
     Lakes_WIth_Multi_Outlet,Remove_Str = Check_If_Lake_Have_Multi_OutLet(CL_Id,Str_Id,Routing_info)
     ### no lake has multi outlet 
+
     if len(Lakes_WIth_Multi_Outlet) > 0: 
-        grass.run_command('r.null',map='Connect_Lake', setnull = Lakes_WIth_Multi_Outlet,overwrite = True)
+#        grass.run_command('r.null',map='Connect_Lake', setnull = Lakes_WIth_Multi_Outlet,overwrite = True)
         print("Following lakes have multiple outlet and has been removed:       ")
         print("     ", Lakes_WIth_Multi_Outlet)
     if len(Remove_Str) > 0:
-        grass.run_command('r.null',map='str_grass_r', setnull = Remove_Str,overwrite = True)
-        grass.run_command('r.null',map='cat1', setnull = Remove_Str,overwrite = True)
+#        grass.run_command('r.null',map='str_grass_r', setnull = Remove_Str,overwrite = True)
+#        grass.run_command('r.null',map='cat1', setnull = Remove_Str,overwrite = True)
         print("Following stream have been removed to make each lake has one lake outlet:       ")
         print("     ", Remove_Str)        
-    return 
+    return Remove_Str
     
 def changeflowdirectionofedgegrids(N_dir,p_row,p_col,lake1,lid,ncols,nrows,BD_Out_Lakecat_Nriv_mask,Changed_ndir):
     ndir = copy.copy(N_dir)
