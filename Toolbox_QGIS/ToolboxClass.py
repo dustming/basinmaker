@@ -20,7 +20,7 @@ from WriteRavenInputs import Generate_Raven_Lake_rvh_String,Generate_Raven_Chann
 from WriteRavenInputs import Generate_Raven_Obs_rvt_String,WriteStringToFile
 from RavenOutputFuctions import plotGuagelineobs,Caluculate_Lake_Active_Depth_and_Lake_Evap
 from AddlakesintoRoutingNetWork import Dirpoints_v3,check_lakecatchment,DefineConnected_Non_Connected_Lakes,Generate_stats_list_from_grass_raster
-
+import timeit
 
 
 
@@ -3579,10 +3579,11 @@ class LRRT:
         grass.run_command('r.reclass', input='cat4_t',output = 'cat4',rules =os.path.join(self.tempfolder,'rule_cat4.txt'), overwrite = True)
         cat4_array =  garray.array(mapname="cat4")
 #        grass.run_command('r.out.gdal', input = 'cat4',output = os.path.join(self.tempfolder,'cat4.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
-
+        start = timeit.default_timer()
         outlakeids,chandir,ndir,BD_problem= check_lakecatchment(cat4_array,Lake1,acc_array,dir_array,bsid,self.nrows,self.ncols,LakeBD_array,nlakegrids,str_array,dir_array,Pec_Grid_outlier,MaximumLakegrids,Lakemorestream)
-
-
+        End = timeit.default_timer()
+        print('Total time needs to adjust flow direction for lakes are ',End - start )
+        
         if self.Debug:
             temparray[:,:] = chandir[:,:]
             temparray.write(mapname="chandir", overwrite=True)
@@ -3845,6 +3846,8 @@ class LRRT:
         
         ### Add attributes to each catchments
         # read raster arrays
+        if self.Debug:
+            grass.run_command('v.out.ogr', input = 'Final_outlet',output = os.path.join(self.tempfolder,'Final_outlet.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
 
         width_array = garray.array(mapname="width")
         depth_array = garray.array(mapname="depth")
@@ -3902,7 +3905,6 @@ class LRRT:
                              ,'Max_DEM','Min_DEM','DA_Obs','DA_error','Obs_NM','SRC_obs','NonLDArea'])
         catinfodf['Obs_NM']   =catinfodf['Obs_NM'].astype(str)
         catinfodf['SRC_obs']  =catinfodf['SRC_obs'].astype(str)
-        
         catinfo = Generatecatinfo_riv(catinfodf,allLakinfo,rivleninfo.astype(float),catareainfo.astype(float),obsinfo,Outletinfo)
         routing_info         = catinfo[['SubId','DowSubId']].astype('float').values
 #        print(routing_info)

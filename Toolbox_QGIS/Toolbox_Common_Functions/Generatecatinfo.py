@@ -658,15 +658,15 @@ def Generatecatinfo(Watseds,fac,fdir,lake,dem,area,catinfo,allcatid,lakeinfo,wid
 
 
 
-
 def Generatecatinfo_riv(catinfo,lakeinfo,leninfo,areainfo,obsinfo,Outletinfo):
 #    finalcat = copy.copy(netcat)
     for i in range(0,len(Outletinfo)):
         catid = Outletinfo['SubId'].values[i]
         DownSubID = Outletinfo['DowSubId'].values[i]
+        
         catinfo.loc[i,'SubId'] = catid
         ### change the downsub id to -1 for watershed outlet 
-        if (len(catinfo.loc[catinfo['SubId'] == DownSubID]) < 1) or catid == DownSubID:
+        if (len(Outletinfo.loc[Outletinfo['SubId'] == DownSubID]) < 1) or catid == DownSubID:
             catinfo.loc[i,'DowSubId'] = -1
         else:
             catinfo.loc[i,'DowSubId'] = DownSubID
@@ -736,7 +736,8 @@ def Generatecatinfo_riv(catinfo,lakeinfo,leninfo,areainfo,obsinfo,Outletinfo):
             else:
                 catinfo.loc[i,'RivSlope'] = -9999
         else:
-            print("Warning  river length of stream  " , catid, "   need check   ", len(rivlen) )
+            if catinfo.loc[i,'IsLake'] != 2:
+                print("Warning  river length of stream  " , catid, "   need check   ", len(rivlen) )
             catinfo.loc[i,'RivLength'] = -9999
             catinfo.loc[i,'RivSlope'] = -9999
             catinfo.loc[i,'FloodP_n'] = -9999

@@ -45,6 +45,9 @@ def Defcat(out,outletid):
             irow = np.argwhere(rout[:,1]==otsheds[i]).astype(int)
 #            print(len(irow))
             for j in range(0,len(irow)):
+                #### if the catchment id already processed skip
+                if rout[irow[j],0] in Shedid:
+                    continue
                 noutshd[poshdid] = rout[irow[j],0]
                 poshdid = poshdid + 1
         noutshd = np.unique(noutshd)

@@ -28,7 +28,7 @@ def Check_If_Lake_Have_Multi_OutLet(CL_Id,Str_Id,Routing_info):
     
     ### create a emppty array to store lake id with multi outlet 
     Lakes_WIth_Multi_Outlet = []
-    
+    Remove_Str = []
     #### combine lake id and coresponding str id into two dim array 
     CL_Str = np.column_stack((CL_Id, Str_Id))
     #### obtain unique str id 
@@ -50,6 +50,7 @@ def Check_If_Lake_Have_Multi_OutLet(CL_Id,Str_Id,Routing_info):
     
     ### routing info 
     routing_info_only      = Routing_info[['SubId','DowSubId']].astype('int').values
+#    print(routing_info_only)
     ### check if lakes have multi outlet 
     for i in range(0,len(CL_Id_unique)):
         ### got lake id 
@@ -68,18 +69,31 @@ def Check_If_Lake_Have_Multi_OutLet(CL_Id,Str_Id,Routing_info):
         
         ###obtain str id with max acc among strs covered by the lake 
         str_max_acc = i_CL_Str[len(i_CL_Str) - 1,1]
+#        print(str_max_acc,len(routing_info_only),"#################")
         ### obtain all upstream str id of max acc str 
         str_to_str_max_acc  = Defcat(routing_info_only,str_max_acc)
         
         ### create a mask for i_CL_Str[:,1], it will be true for in positon 
         ### where it's value in str_to_str_max_acc
-        mask = np.isin(str_to_str_max_acc,i_CL_Str[:,1])
+        mask = np.isin(i_CL_Str[:,1],str_to_str_max_acc)
         
         #### not all element in i_CL_Str[:,1] exist in str_to_str_max_acc
         #### the lake have muli outlet 
+        Remove_Str_i = []
         if len(mask[mask == True]) < len(i_CL_Str[:,1]):
-            Lakes_WIth_Multi_Outlet.append(lake_id)
-    return Lakes_WIth_Multi_Outlet
+            str_notflowto_lakeoutlet = i_CL_Str[np.logical_not(mask),1]
+            for istr in range(0,len(str_notflowto_lakeoutlet)):
+                strid =  str_notflowto_lakeoutlet[istr]
+                upstrs  = Defcat(routing_info_only,strid)
+                #### no upstream str, ### remove str instead remove lake 
+                if len(upstrs) == 1:
+                    Remove_Str_i.append(strid)
+            
+            if len(Remove_Str_i) == len(str_notflowto_lakeoutlet):
+                Remove_Str = Remove_Str + Remove_Str_i
+            else:
+                Lakes_WIth_Multi_Outlet.append(lake_id)
+    return Lakes_WIth_Multi_Outlet,Remove_Str
     
                 
 def DefineConnected_Non_Connected_Lakes(self,grass,con,garray,Routing_info,str_r = 'str_grass_r',
@@ -107,13 +121,17 @@ def DefineConnected_Non_Connected_Lakes(self,grass,con,garray,Routing_info,str_r
     CL_Id,Str_Id = Generate_stats_list_from_grass_raster(grass,mode = 2,input_a = 'Connect_Lake',
                                                          input_b = str_r)
     
-    Lakes_WIth_Multi_Outlet = Check_If_Lake_Have_Multi_OutLet(CL_Id,Str_Id,Routing_info)
-    
+    Lakes_WIth_Multi_Outlet,Remove_Str = Check_If_Lake_Have_Multi_OutLet(CL_Id,Str_Id,Routing_info)
     ### no lake has multi outlet 
     if len(Lakes_WIth_Multi_Outlet) > 0: 
         grass.run_command('r.null',map='Connect_Lake', setnull = Lakes_WIth_Multi_Outlet,overwrite = True)
         print("Following lakes have multiple outlet and has been removed:       ")
         print("     ", Lakes_WIth_Multi_Outlet)
+    if len(Remove_Str) > 0:
+        grass.run_command('r.null',map='str_grass_r', setnull = Remove_Str,overwrite = True)
+        grass.run_command('r.null',map='cat1', setnull = Remove_Str,overwrite = True)
+        print("Following stream have been removed to make each lake has one lake outlet:       ")
+        print("     ", Remove_Str)        
     return 
     
 def changeflowdirectionofedgegrids(N_dir,p_row,p_col,lake1,lid,ncols,nrows,BD_Out_Lakecat_Nriv_mask,Changed_ndir):
