@@ -1,4 +1,4 @@
-# An automated GIS toolbox for watershed delineation with lakes (BasinMaker)
+# BasinMaker - An automated GIS toolbox for watershed delineation with lakes
  
 # Overview
 Before introducing the methodology and application procedure of the BasinMaker, the differences between routing structure without considering lake and routing structure with lakes defined by BasinMaker will be introduce in this section. 
