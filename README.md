@@ -42,7 +42,7 @@ Han, M., Mai, J., Tolson, B. A., Craig, J. R., Gaborit, É., Liu, H., and Lee, K
  
 Funded under Lake Futures project of Global Water Futures program.
 <p align="center">
-   <img src="https://github.com/dustming/Crop_Growth_Library/wiki/figures/logos/GWF_logo.png" width="35%" height="45%" />
-   <img src="https://github.com/dustming/Crop_Growth_Library/wiki/figures/logos/LAKEFUTURES_logo.png" width="35%" height="45%" />
+   <img src="https://github.com/dustming/Crop_Growth_Library/wiki/figures/logos/GWF_logo.png" width="15%"  />
+   <img src="https://github.com/dustming/Crop_Growth_Library/wiki/figures/logos/LAKEFUTURES_logo.png" width="15%"  />
 </p>
 
