@@ -1,8 +1,26 @@
 # An automated GIS toolbox for watershed delineation with lakes
 
-## Overview
+# An automated GIS toolbox for watershed delineation with lakes -- Overview
 
-This GIS toolbox is developed to automatically build river topology with multiple lakes and generate routing parameters for each catchments at the same time. 
+Before introducing methods and application procedures of the lake river routing toolbox, an overview about how this toolbox will represent lakes in the routing network is described here. Catchments defined by predefined river system without considering lakes are showed in Figure 1A. Both lake's inlets and outlets are not represented as catchment outlets. With this routing structure (Figure 1A), both lake’s inflow and outflow can’t be explicitly simulated by semi-distributed hydrological models such as SWAT, Raven and HYPE, because the streamflow is only explicitly simulated at each catchment’s outlet in these models. The lake river routing toolbox presented in this paper is developed to solve this problem. 
+
+
+Lakes within the drainage area (Figure 1A) are divided into two categories by the lake river routing toolbox: 1) lakes that are connected by the predefined river network and 2) lakes that are not connected by the predefined river network (Figure 1A). Connected lake polygons will be used to identify each lake's inlet and outlets and divide catchment polygons in Figure 1A into catchments with connected lakes and catchments without connected lakes (Figure 1B). Each connected lake will be represented by a catchment with connected lake Figure 1B. Both streamflow that routes into the connected lakes via each lake’s inlets and that release from each connected lake’s outlet can be explicitly represented by semi-distributed hydrological models with the routing structure showed in Figure 1B. 
+
+
+For lakes that are within the drainage area but not connected by the predefined river network, each of them will be represented by a catchment which is generated using each none connected lake’s outlet as a catchment outlet (Figure 1B). The water released from catchment with a none connected lake will directly move into the river channel of downstream catchment if downstream catchment do not have lakes or directly move into the lake of the downstream catchment if downstream catchment has connected lake or none connected lake. For example, water released from Cat_1 will directly move into none connected lake in Cat_2 and water released from Cat_2 will directly move into the river channel in Cat_3 (Figure 1B). The water transfer time from the outlet of the catchment with a none connected lake (Cat_1 or Cat_2) to downstream catchment's lake (Cat_2) or river channel (Cat_3) is neglected.
+
+<figure>
+    <p align="center">
+    <img src="https://github.com/dustming/RoutingTool/wiki/Figures/Figure1.png" width="100%" height="100%" />
+    </p>
+    <font size="1">
+    <figcaption width="50%"> <b>Figure 1</b>: Lakes in the generated routing network by the lake river routing toolbox. A is the predefined river network and catchment boundary (Catchment boundary (River)) defined by the predefined river network without considering lakes. Figure B, the generated lake river routing structure by this toolbox using predefined river network and lake's polygons.<br>
+    </figcaption>
+    </font>
+</figure>
+
+
 
 **Table of Contents**
 
