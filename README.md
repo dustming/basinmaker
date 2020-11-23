@@ -23,11 +23,11 @@ For both CL and NCL, the BasinMaker will use lake polygon to identify each lakeâ
 
 The BasinMaker is developed within python3 environment and using several basic raster and vector functions in QGIS and GRASS GIS. The list of functions from GRASS and QGIS and have been used by BasinMaker can be found in [here](https://github.com/dustming/RoutingTool/wiki/Installation-of-the-toolbox) 
 
-## The installation of the toolbox can be found in [here](https://github.com/dustming/RoutingTool/wiki/Application-procedure-for-watershed-delieation-with-lakes)
+* The installation of the toolbox can be found in [here](https://github.com/dustming/RoutingTool/wiki/Application-procedure-for-watershed-delieation-with-lakes)
 
-## The application procedure to delineate a lake river routing structure from DEM can be found in [here](https://github.com/dustming/RoutingTool/wiki/Application-procedure-for-watershed-delieation-with-lakes)
+* The application procedure to delineate a lake river routing structure from DEM can be found in [here](https://github.com/dustming/RoutingTool/wiki/Application-procedure-for-watershed-delieation-with-lakes)
 
-## The application procedure to simplify an existing routing network can be found in [here](https://github.com/dustming/RoutingTool/wiki/Application-procedure-for-post-processing-tools)
+* The application procedure to simplify an existing routing network can be found in [here](https://github.com/dustming/RoutingTool/wiki/Application-procedure-for-post-processing-tools)
 
 
 # Citation
