@@ -25,7 +25,7 @@ The BasinMaker is developed within python3 environment and using several basic r
 
 The installation of the toolbox can be found in [here](https://github.com/dustming/RoutingTool/wiki/Application-procedure-for-watershed-delieation-with-lakes)
 
-The application procedure to delineate a lake river routing structure from DEM can be found in here[https://github.com/dustming/RoutingTool/wiki/Application-procedure-for-watershed-delieation-with-lakes]
+The application procedure to delineate a lake river routing structure from DEM can be found in [here](https://github.com/dustming/RoutingTool/wiki/Application-procedure-for-watershed-delieation-with-lakes)
 
 The application procedure to simplify an existing routing network can be found in [here](https://github.com/dustming/RoutingTool/wiki/Application-procedure-for-post-processing-tools)
 
