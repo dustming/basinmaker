@@ -41,8 +41,8 @@ Han, M., Mai, J., Tolson, B. A., Craig, J. R., Gaborit, É., Liu, H., and Lee, K
 # Acknowledgments
  
 Funded under Lake Futures project of Global Water Futures program.
-<p align="center">
-   <img src="https://github.com/dustming/Crop_Growth_Library/wiki/figures/logos/GWF_logo.png" width="15%"  />
-   <img src="https://github.com/dustming/Crop_Growth_Library/wiki/figures/logos/LAKEFUTURES_logo.png" width="15%"  />
+<p align="left">
+   <img src="https://github.com/dustming/Crop_Growth_Library/wiki/figures/logos/GWF_logo.png" width="10%"  />
+   <img src="https://github.com/dustming/Crop_Growth_Library/wiki/figures/logos/LAKEFUTURES_logo.png" width="10%"  />
 </p>
 
