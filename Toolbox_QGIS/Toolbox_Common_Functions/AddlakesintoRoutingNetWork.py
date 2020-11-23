@@ -40,7 +40,7 @@ def Check_If_Lake_Have_Multi_OutLet(CL_Id,Str_Id,Routing_info):
     Acc_Str_CL = np.full((len(CL_Str),1),np.nan)
     for i in range(0,len(Str_Id_unique)):
         strid  = Str_Id_unique[i]
-        maxacc = Routing_info.loc[Routing_info['SubId'] ==strid]['MaxAcc'].values[0]
+        maxacc = Routing_info.loc[Routing_info['SubId'] ==strid]['MaxAcc_cat'].values[0]
         Acc_Str_CL[CL_Str[:,1] == strid] = maxacc
     CL_Str = np.append(CL_Str, Acc_Str_CL, axis=1)
     

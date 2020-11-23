@@ -665,7 +665,9 @@ def Generatecatinfo_riv(catinfo,lakeinfo,leninfo,areainfo,obsinfo,Outletinfo):
         DownSubID = Outletinfo['DowSubId'].values[i]
         catinfo.loc[i,'SubId'] = catid
         ### change the downsub id to -1 for watershed outlet 
-        if (len(Outletinfo.loc[Outletinfo['SubId'] == DownSubID]) < 1) or catid == DownSubID:
+        if (len(Outletinfo.loc[Outletinfo['SubId'] == DownSubID]) < 1):
+            catinfo.loc[i,'DowSubId'] = -1
+        elif catid == DownSubID:
             catinfo.loc[i,'DowSubId'] = -1
         else:
             catinfo.loc[i,'DowSubId'] = DownSubID

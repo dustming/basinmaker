@@ -573,7 +573,7 @@ def Check_If_Str_Is_Head_Stream(prow,pcol,nrows,ncols,str,strid):
 
 
 ###
-def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir,Is_divid_region,Remove_Str,Min_Grid_Number = 50):
+def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir,Is_divid_region,Remove_Str,Min_Grid_Number = 1000000):
     GP_cat = copy.copy(cat)
     sblid = copy.copy(blid)
     Str_new = copy.copy(Str)
@@ -3170,7 +3170,7 @@ class LRRT:
                 print("#####################Using provided flow direction dataset####################")
                 grass.run_command("r.import", input = self.Path_dir_in, output = 'dir_in_ArcGis', overwrite = True)
                 grass.run_command('r.reclass', input='dir_in_ArcGis',output = 'dir_in_Grass',rules = os.path.join(self.RoutingToolPath,'Arcgis2GrassDIR.txt'), overwrite = True)
-                grass.run_command('r.accumulate',direction = 'dir_in_Grass', accumulation = 'acc_grass', overwrite = True)
+                grass.run_command('r.accumulate',direction = 'dir_in_Grass', accumulation = 'acc_grass', flags = 'r',overwrite = True)
 
         if Is_divid_region > 0:
             print("********************Generate inputs dataset Done********************")
@@ -3335,7 +3335,6 @@ class LRRT:
                     grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold = int(accthresold),stream_raster = 'str_grass_r',
                                      stream_vector = 'str_grass_v',overwrite = True,memory = max_memroy)                
                     grass.run_command('r.mapcalc',expression = "dir_grass = dir_in_Grass",overwrite = True)
-
                 else: 
                     
                     grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold = int(accthresold),stream_raster = 'str_grass_r',
@@ -3346,7 +3345,7 @@ class LRRT:
         ##### generate catchment without lakes based on 'str_grass_r'
         grass.run_command('r.stream.basins',direction = 'dir_grass', stream = 'str_grass_r', basins = 'cat1',overwrite = True,memory = max_memroy)
         
-        Routing_info = Generate_Routing_structure(grass,con,cat = 'str_grass_r',acc = 'acc_grass')
+        Routing_info = Generate_Routing_structure(grass,con,cat = 'cat1',acc = 'acc_grass',str='str_grass_r')
         Routing_info = Routing_info.fillna(-1)
         ################ check connected lakes  and non connected lakes
         Remove_Str = DefineConnected_Non_Connected_Lakes(self,grass,con,garray,Routing_info,str_r = 'str_grass_r',Lake_r = 'alllake')
@@ -3847,19 +3846,21 @@ class LRRT:
         ### define routing structure, using cat may make subbasin drainge to wrong catchments
         grass.run_command('r.mapcalc',expression = 'ndir_grass2 = if(dir_grass ==ndir_grass,dir_grass,ndir_grass)',overwrite = True)
         grass.run_command('r.accumulate',direction = 'ndir_grass2', accumulation = 'acc_grass_CatOL', overwrite = True)
-        Routing_temp = Generate_Routing_structure(grass,con,cat = 'Net_cat',acc = 'acc_grass_CatOL',Name = 'Final')
+        Routing_temp = Generate_Routing_structure(grass,con,cat = 'Net_cat',acc = 'acc_grass_CatOL',Name = 'Final',str = 'nstr_seg')
         ###       
         ### add averaged lake id to each catchment outlet 
 
         ### observation id to outlet  
-        grass.run_command('v.what.rast', map='Final_outlet', raster='obs',column='ObsId')
-        grass.run_command('v.what.rast', map='Final_outlet', raster='Select_Non_Connected_lakes',column='ncl')
-        grass.run_command('v.what.rast', map='Final_outlet', raster='Connect_Lake_Cat_w_Lake_ID',column='cl')  
+        grass.run_command('v.what.rast', map='Final_OL_v', raster='obs',column='ObsId')
+        grass.run_command('v.what.rast', map='Final_OL_v', raster='Select_Non_Connected_lakes',column='ncl')
+        grass.run_command('v.what.rast', map='Final_OL_v', raster='Connect_Lake_Cat_w_Lake_ID',column='cl')  
         
         ### Add attributes to each catchments
         # read raster arrays
         if self.Debug:
-            grass.run_command('v.out.ogr', input = 'Final_outlet',output = os.path.join(self.tempfolder,'Final_outlet.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
+            grass.run_command('v.out.ogr', input = 'Final_OL_v',output = os.path.join(self.tempfolder,'Final_OL_v.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
+            grass.run_command('v.out.ogr', input = 'Final_IL_v',output = os.path.join(self.tempfolder,'Final_IL_v.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
+            grass.run_command('r.out.gdal', input = 'acc_grass_CatOL',output =os.path.join(self.tempfolder,'acc_grass_CatOL.tif'),format= 'GTiff',overwrite = True)
 
         width_array = garray.array(mapname="width")
         depth_array = garray.array(mapname="depth")
@@ -3885,7 +3886,7 @@ class LRRT:
         catareainfo = pd.read_sql_query(sqlstat, con)
         
         ### read catchment  
-        sqlstat="SELECT SubId, DowSubId,ObsId,ncl,cl FROM Final_outlet"
+        sqlstat="SELECT SubId, DowSubId,ObsId,ncl,cl,ILSubIdmax,ILSubIdmin FROM Final_OL_v"
         Outletinfo = pd.read_sql_query(sqlstat, con)
 
 
@@ -3987,7 +3988,7 @@ class LRRT:
 
 
         ### remove non interesed subbasin s
-        catinfo = catinfo.loc[catinfo['SubId'].isin(HydroBasins)].copy()
+#        catinfo = catinfo.loc[catinfo['SubId'].isin(HydroBasins)].copy()
 
         catinfo = Streamorderanddrainagearea(catinfo)
 
