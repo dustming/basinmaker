@@ -20,20 +20,22 @@ For both CL and NCL, the BasinMaker will use lake polygon to identify each lake�
 </figure>
 
 # Documentation 
-The BasinMaker is developed within python3 environment and using several basic raster and vector functions in QGIS and GRASS GIS. The list of functions from GRASS and QGIS and have been used by BasinMaker can be found in here[https://github.com/dustming/RoutingTool/wiki/Installation-of-the-toolbox] 
-The installation of the toolbox can be found in here[https://github.com/dustming/RoutingTool/wiki/Application-procedure-for-watershed-delieation-with-lakes]
+
+The BasinMaker is developed within python3 environment and using several basic raster and vector functions in QGIS and GRASS GIS. The list of functions from GRASS and QGIS and have been used by BasinMaker can be found in [here](https://github.com/dustming/RoutingTool/wiki/Installation-of-the-toolbox) 
+
+The installation of the toolbox can be found in [here](https://github.com/dustming/RoutingTool/wiki/Application-procedure-for-watershed-delieation-with-lakes)
 
 The application procedure to delineate a lake river routing structure from DEM can be found in here[https://github.com/dustming/RoutingTool/wiki/Application-procedure-for-watershed-delieation-with-lakes]
 
-The application procedure to simplify an existing routing network can be found in here[https://github.com/dustming/RoutingTool/wiki/Application-procedure-for-post-processing-tools]
+The application procedure to simplify an existing routing network can be found in [here](https://github.com/dustming/RoutingTool/wiki/Application-procedure-for-post-processing-tools)
 
 
 # Citation
-Han, M., Mai, J., Tolson, B. A., Craig, J. R., Gaborit, É., Liu, H., and Lee, K. (2020a): Subwatershed-based lake and river routing products for hydrologic and land surface models applied over Canada, Canadian Water Resources Journal, 0, 1-15. (publication[https://www.tandfonline.com/doi/ref/10.1080/07011784.2020.1772116?scroll=top])
+Han, M., Mai, J., Tolson, B. A., Craig, J. R., Gaborit, É., Liu, H., and Lee, K. (2020a): Subwatershed-based lake and river routing products for hydrologic and land surface models applied over Canada, Canadian Water Resources Journal, 0, 1-15. ([publication](https://www.tandfonline.com/doi/ref/10.1080/07011784.2020.1772116?scroll=top))
 
 Han, M. et al. (2020b): An automated GIS toolbox for watershed delineation with lakes
 In preparation.
 
-Han, M., Mai, J., Tolson, B. A., Craig, J. R., Gaborit, É., Liu, H., and Lee, K. (2020c): A catchment-based lake and river routing product for hydrologic and land surface models in Canada (Dataset) Zenodo. (dataset[https://zenodo.org/record/3667677#.X7xD0c1KiUk])
+Han, M., Mai, J., Tolson, B. A., Craig, J. R., Gaborit, É., Liu, H., and Lee, K. (2020c): A catchment-based lake and river routing product for hydrologic and land surface models in Canada (Dataset) Zenodo. ([dataset](https://zenodo.org/record/3667677#.X7xD0c1KiUk))
 
 
