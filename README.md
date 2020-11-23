@@ -38,4 +38,11 @@ In preparation.
 
 Han, M., Mai, J., Tolson, B. A., Craig, J. R., Gaborit, É., Liu, H., and Lee, K. (2020c): A catchment-based lake and river routing product for hydrologic and land surface models in Canada (Dataset) Zenodo. ([dataset](https://zenodo.org/record/3667677#.X7xD0c1KiUk))
 
+# Acknowledgments
+ 
+Funded under Lake Futures project of Global Water Futures program.
+<p align="center">
+   <img src="https://github.com/dustming/Crop_Growth_Library/wiki/figures/logos/GWF_logo.png" width="35%" height="45%" />
+   <img src="https://github.com/dustming/Crop_Growth_Library/wiki/figures/logos/LAKEFUTURES_logo.png" width="35%" height="45%" />
+</p>
 
