@@ -33,6 +33,9 @@ The BasinMaker is developed within python3 environment and using several basic r
 
 * The application procedure to simplify an existing routing network can be found in [here](https://github.com/dustming/RoutingTool/wiki/Application-procedure-for-post-processing-tools)
 
+* The application procedure to working with large domain with high resolution DEM [here]()
+
+
 # Citation
 Han, M., Mai, J., Tolson, B. A., Craig, J. R., Gaborit, É., Liu, H., and Lee, K. (2020a): Subwatershed-based lake and river routing products for hydrologic and land surface models applied over Canada, Canadian Water Resources Journal, 0, 1-15. ([publication](https://www.tandfonline.com/doi/ref/10.1080/07011784.2020.1772116?scroll=top))
 
