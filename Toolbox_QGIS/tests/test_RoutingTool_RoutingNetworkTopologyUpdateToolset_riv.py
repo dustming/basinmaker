@@ -92,11 +92,11 @@ def test_RoutingNetworkTopologyUpdateToolset_riv():
                TempOutFolder = Temporary_Result_Folder_Result,
                )
     ### test using extent of input dem as processing extent 
-#    RTtool.Generatmaskregion()
-#    RTtool.Generateinputdata()
-#    RTtool.WatershedDiscretizationToolset(accthresold = 500)
-#    RTtool.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = 0,
-#                                                    Thre_Lake_Area_nonConnect = 0)
+    RTtool.Generatmaskregion()
+    RTtool.Generateinputdata()
+    RTtool.WatershedDiscretizationToolset(accthresold = 500)
+    RTtool.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = 0,
+                                                    Thre_Lake_Area_nonConnect = 0)
     RTtool.RoutingNetworkTopologyUpdateToolset_riv(projection = 'EPSG:3573')
 
     
