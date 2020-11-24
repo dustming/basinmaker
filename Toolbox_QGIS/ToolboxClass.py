@@ -573,7 +573,7 @@ def Check_If_Str_Is_Head_Stream(prow,pcol,nrows,ncols,str,strid):
 
 
 ###
-def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir,Is_divid_region,Remove_Str,Min_Grid_Number = 1000000):
+def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir,Is_divid_region,Remove_Str,Min_Grid_Number = 50):
     GP_cat = copy.copy(cat)
     sblid = copy.copy(blid)
     Str_new = copy.copy(Str)
