@@ -21,8 +21,8 @@
 
 ###########################################################################################
 #
-# This is a python script to use BasinMaker to divide a large watershed domain into 
-# several sub-regions
+# This is a python script to use BasinMaker to combine lake river routing structure of 
+# each subregion 
 #
 ###########################################################################################
 
@@ -33,11 +33,10 @@ import pandas as pd
 import tempfile
 import shutil
 import sys
+import tempfile
 import timeit
-import pandas as pd 
-from simpledbf import Dbf5
 
-    
+
 ############ Variable needs to be modified to run this example ######     
 
 ### Define a output folder where to store subregion information 
@@ -46,40 +45,26 @@ Outputfolder = "C:/Users/dustm/OneDrive - University of Waterloo/Documents/Proje
 ### The BasinMaker folder 
 BasinMaker_Folder = "C:/Users/dustm/Documents/GitHub/RoutingTool"
 
-########### Variable needs to be modified to run this example ######
-
+############ Variable needs to be modified to run this example ######  
 
 
 ### Define derived folder 
 DataBase_Folder = os.path.join(BasinMaker_Folder,'Toolbox_QGIS','tests','testdata','Required_data_to_start_from_dem')
+Sub_Region_OutputFolder = Outputfolder
 Out_Sub_Reg_Dem_Folder = os.path.join(Outputfolder,'SubRegion_info')
+OutputFolder_Combined = os.path.join(Outputfolder,'Combined')
 
-### Start timer 
+####
+SubReg_info = pd.read_csv(os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_reg_info.csv'))
+
 start = timeit.default_timer()
 
-### Define input paths 
-na_hydem = os.path.join(DataBase_Folder,'DEM_big_merit.tif')#'HydroSHED15S.tif')#
-in_wd = os.path.join(DataBase_Folder,'Bkfullwidth_depth.shp')
-in_lake = os.path.join(DataBase_Folder,'HyLake.shp')
-in_obs = os.path.join(DataBase_Folder,'obs.shp')
-landuse = os.path.join(DataBase_Folder,'landuse.tif')
-landuseinfo = os.path.join(DataBase_Folder,'Landuse_info.csv')
-
-
-### Initialize the BasinMaker 
-RTtool=LRRT(dem_in = na_hydem, Lakefile = in_lake,
-            OutputFolder = Outputfolder,
-            Path_Sub_Reg_Out_Folder = Out_Sub_Reg_Dem_Folder,
-            Is_Sub_Region = -1
-            )
-### Define Region of Interest
-RTtool.Generatmaskregion()
-### Define sub-region 
-RTtool.Generatesubdomain(Min_Num_Domain = 1,Max_Num_Domain = 1000000000,Initaial_Acc = 500000,Delta_Acc = 500000,max_memory=2048*8,Acc_Thresthold_stream=2000,CheckLakeArea = 10)
-### Generate subregion output and define routing structure between subregions 
-RTtool.Generatesubdomainmaskandinfo(Out_Sub_Reg_Dem_Folder = Out_Sub_Reg_Dem_Folder)
-
+RTtool=LRRT()
+RTtool.Combine_Sub_Region_Results(Sub_Region_info = SubReg_info,Sub_Region_OutputFolder = Sub_Region_OutputFolder,
+                                  Path_Down_Stream_Points = os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_Reg_Outlets_Down.shp'),
+                                  Is_Final_Result = True,
+                                  OutputFolder = OutputFolder_Combined)
 End = timeit.default_timer()
 
 print("use    ",start - End)
-## -510.85583060000005 for woods lake watershed  
+### -73.6744739
