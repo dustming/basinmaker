@@ -47,7 +47,7 @@ Outputfolder = "C:/Users/dustm/OneDrive - University of Waterloo/Documents/Proje
 BasinMaker_Folder = "C:/Users/dustm/Documents/GitHub/RoutingTool"
 
 ### Define number of processors 
-ncores = 3
+ncores = 4
 ########### Variable needs to be modified to run this example ######
 
 

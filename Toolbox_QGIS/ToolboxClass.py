@@ -3350,6 +3350,9 @@ class LRRT:
         ################ check connected lakes  and non connected lakes
         Remove_Str = DefineConnected_Non_Connected_Lakes(self,grass,con,garray,Routing_info,str_r = 'str_grass_r',Lake_r = 'alllake')
         self.Remove_Str = Remove_Str
+        grass.run_command('g.copy',rast = ('cat1','cat_use_default_acc'),overwrite = True)
+        if len(Remove_Str) > 0:
+            grass.run_command('r.null',map='cat_use_default_acc', setnull = Remove_Str,overwrite = True)
         
         if Is_divid_region > 0:
             return
@@ -3843,10 +3846,12 @@ class LRRT:
         grass.run_command('v.rast.stats', map='nstr_nfinalcat_F', raster='Select_Connected_lakes',column_prefix='cl',method =['maximum']) 
 #        grass.run_command('v.rast.stats', map='nstr_nfinalcat_F', raster='Select_Non_Connected_lakes',column_prefix='nl',method =['maximum']) 
 
-        ### define routing structure, using cat may make subbasin drainge to wrong catchments
+        ### define routing structure, using cat may make subbasin drainge to wrong catchments   cat_use_default_acc
         grass.run_command('r.mapcalc',expression = 'ndir_grass2 = if(dir_grass ==ndir_grass,dir_grass,ndir_grass)',overwrite = True)
         grass.run_command('r.accumulate',direction = 'ndir_grass2', accumulation = 'acc_grass_CatOL', overwrite = True)
-        Routing_temp = Generate_Routing_structure(grass,con,cat = 'Net_cat',acc = 'acc_grass_CatOL',Name = 'Final',str = 'nstr_seg')
+        grass.run_command('r.mapcalc',expression = 'acc_grass_CatOL2 = if(isnull(cat_use_default_acc),acc_grass_CatOL,acc_grass)',overwrite = True)
+        
+        Routing_temp = Generate_Routing_structure(grass,con,cat = 'Net_cat',acc = 'acc_grass_CatOL2',Name = 'Final',str = 'nstr_seg')
         ###       
         ### add averaged lake id to each catchment outlet 
 
@@ -3861,6 +3866,8 @@ class LRRT:
             grass.run_command('v.out.ogr', input = 'Final_OL_v',output = os.path.join(self.tempfolder,'Final_OL_v.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
             grass.run_command('v.out.ogr', input = 'Final_IL_v',output = os.path.join(self.tempfolder,'Final_IL_v.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
             grass.run_command('r.out.gdal', input = 'acc_grass_CatOL',output =os.path.join(self.tempfolder,'acc_grass_CatOL.tif'),format= 'GTiff',overwrite = True)
+            grass.run_command('r.out.gdal', input = 'acc_grass_CatOL2',output =os.path.join(self.tempfolder,'acc_grass_CatOL2.tif'),format= 'GTiff',overwrite = True)
+            grass.run_command('r.out.gdal', input = 'cat_use_default_acc',output =os.path.join(self.tempfolder,'cat_use_default_acc.tif'),format= 'GTiff',overwrite = True)
 
         width_array = garray.array(mapname="width")
         depth_array = garray.array(mapname="depth")

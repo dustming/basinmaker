@@ -82,14 +82,20 @@ def Check_If_Lake_Have_Multi_OutLet(CL_Id,Str_Id,Routing_info):
         #### the lake have muli outlet 
 
         Remove_Str_i = []
+        
+        ### if not all str drainage to outlet str 
         if len(mask[mask == True]) < len(i_CL_Str[:,1]):
+            ### obtain strids of str not drainage to outlet str 
             str_notflowto_lakeoutlet = i_CL_Str[np.logical_not(mask),1]
+            ### loop for strids of str not drainage to outlet str
             for istr in range(0,len(str_notflowto_lakeoutlet)):
+                ### get i str id 
                 strid =  str_notflowto_lakeoutlet[istr]
-                upstrs  = Defcat(routing_info_only,strid)
+                ### check  streams drainage to current str
+#                upstrs  = Defcat(routing_info_only,strid)
                 #### no upstream str, ### remove str instead remove lake 
-                if len(upstrs) == 1:
-                    Remove_Str_i.append(strid)
+#                if len(upstrs) == 1:
+                Remove_Str_i.append(strid)
             
             if len(Remove_Str_i) == len(str_notflowto_lakeoutlet):
                 Remove_Str = Remove_Str + Remove_Str_i
@@ -128,12 +134,12 @@ def DefineConnected_Non_Connected_Lakes(self,grass,con,garray,Routing_info,str_r
 
     if len(Lakes_WIth_Multi_Outlet) > 0: 
 #        grass.run_command('r.null',map='Connect_Lake', setnull = Lakes_WIth_Multi_Outlet,overwrite = True)
-        print("Following lakes have multiple outlet and has been removed:       ")
+        print("Following lakes have identified outlet :       ")
         print("     ", Lakes_WIth_Multi_Outlet)
     if len(Remove_Str) > 0:
 #        grass.run_command('r.null',map='str_grass_r', setnull = Remove_Str,overwrite = True)
 #        grass.run_command('r.null',map='cat1', setnull = Remove_Str,overwrite = True)
-        print("Following stream have been removed to make each lake has one lake outlet:       ")
+        print("Following stream have been identified to make each lake has one lake outlet:       ")
         print("     ", Remove_Str)        
     return Remove_Str
     
