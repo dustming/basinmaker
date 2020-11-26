@@ -7,7 +7,7 @@ def Is_Point_Close_To_Id_In_Raster(prow,pcol,nrows,ncols,id,raster_array):
 
     Returns:
     -------
-    noout        : logical
+    Isclose               : logical
        True  : close to grids with value euqal to id 
        False : not close to grids with value to id 
     """    

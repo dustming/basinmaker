@@ -20,6 +20,7 @@ from WriteRavenInputs import Generate_Raven_Lake_rvh_String,Generate_Raven_Chann
 from WriteRavenInputs import Generate_Raven_Obs_rvt_String,WriteStringToFile
 from RavenOutputFuctions import plotGuagelineobs,Caluculate_Lake_Active_Depth_and_Lake_Evap
 from AddlakesintoRoutingNetWork import Dirpoints_v3,check_lakecatchment,DefineConnected_Non_Connected_Lakes,Generate_stats_list_from_grass_raster
+from raster_array_processing import Is_Point_Close_To_Id_In_Raster
 import timeit
 
 
@@ -672,7 +673,7 @@ def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir,Is_divid_re
             noout = 0
             ### double check if the head stream cell is nearby the lake
             if Strchek[0,0] != 0 and Strchek[0,0] != nrows -1 and Strchek[0,1] != 0 and Strchek[0,1] != ncols-1:
-                noout = Checklake(Strchek[0,0],Strchek[0,1],nrows,ncols,lid,lake)
+                noout,temp_notused = Is_Point_Close_To_Id_In_Raster(Strchek[0,0],Strchek[0,1],nrows,ncols,lid,lake)
             ####
 
             if irowst != 0: ## is the stream is not start within the lake
@@ -683,12 +684,12 @@ def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir,Is_divid_re
                         bsid = bsid + 1
 
                     ##### the head stream celll is not nearby the lake
-                    if noout == 0:
+                    if noout == False:
                         GP_cat[Strchek[irowst-1,0],Strchek[irowst-1,1]] = bsid
                         bsid = bsid + 1
             #### it is possible that two steam combine together near the lake, double check if the stream conncet to
             # anotehr stream and this steam is not witin the lake
-            if irowst == 0 or noout == 1:
+            if irowst == 0 or noout == True:
                 nostr = Str[Strchek[0,0],Strchek[0,1]]
                 a = 0
                 orowcol = np.full((8,3),-9999)
@@ -743,11 +744,11 @@ def GenerPourpoint(cat,lake,Str,nrows,ncols,blid,bsid,bcid,fac,hydir,Is_divid_re
                         iStrchek[:,1] = srowcol[:,1]
                         iStrchek[:,2] = fac[srowcol[:,0],srowcol[:,1]]
                         iStrchek = iStrchek[iStrchek[:,2].argsort()]
-                        noout = Checklake(iStrchek[0,0],iStrchek[0,1],nrows,ncols,lid,lake)
+                        noout,temp_notused = Is_Point_Close_To_Id_In_Raster(iStrchek[0,0],iStrchek[0,1],nrows,ncols,lid,lake)
                         Lakinstr = np.full(snrow,-9999)
                         Lakinstr[:] = lake[srowcol[:,0],srowcol[:,1]]
                         d = np.argwhere(Lakinstr==lid).astype(int)  #### the connected stream should not within the lake
-                        if len(d) < 1 and noout == 0:
+                        if len(d) < 1 and noout == False:
                             GP_cat[orowcol[ka,0],orowcol[ka,1]] = bsid
                             bsid = bsid + 1
 ################################################################################
