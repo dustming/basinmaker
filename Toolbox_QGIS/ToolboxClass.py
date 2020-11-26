@@ -230,27 +230,27 @@ def Dbf_To_Dataframe(file_path):
 #     return ndir
 
 
-def Checklake(prow,pcol,nrows,ncols,lid,lake):
-    noout=0
-    ### double check if the head stream cell is nearby the lake, if near by the lake the stream was ignored
-    if prow != 0 and prow != nrows -1 and pcol != 0 and pcol != ncols-1:
-        if lake[prow-1,pcol+1] == lid:
-            noout=1
-        if lake[prow-1,pcol-1] == lid:
-            noout=1
-        if lake[prow-1,pcol] == lid:
-            noout=1
-        if lake[prow,pcol+1] == lid:
-            noout=1
-        if lake[prow,pcol-1] == lid:
-            noout=1
-        if lake[prow+1,pcol-1] == lid:
-            noout=1
-        if lake[prow+1,pcol+1] == lid:
-            noout=1
-        if lake[prow+1,pcol] == lid:
-            noout=1
-    return noout
+# def Checklake(prow,pcol,nrows,ncols,lid,lake):
+#     noout=0
+#     ### double check if the head stream cell is nearby the lake, if near by the lake the stream was ignored
+#     if prow != 0 and prow != nrows -1 and pcol != 0 and pcol != ncols-1:
+#         if lake[prow-1,pcol+1] == lid:
+#             noout=1
+#         if lake[prow-1,pcol-1] == lid:
+#             noout=1
+#         if lake[prow-1,pcol] == lid:
+#             noout=1
+#         if lake[prow,pcol+1] == lid:
+#             noout=1
+#         if lake[prow,pcol-1] == lid:
+#             noout=1
+#         if lake[prow+1,pcol-1] == lid:
+#             noout=1
+#         if lake[prow+1,pcol+1] == lid:
+#             noout=1
+#         if lake[prow+1,pcol] == lid:
+#             noout=1
+#     return noout
 ############################################################################33
 
 ####################################################################3
@@ -477,7 +477,7 @@ def CE_mcat4lake2(cat1,lake,fac,fdir,bsid,nrows,ncols,Pourpoints,noncnlake,str_a
         pourid = Pours[i]
         rowcol = Pourpoints == pourid
         if cat[rowcol] < 0:
-            nout = Checkcat(rowcol[0,0],rowcol[0,1],nrows,ncols,pourid,cat)
+            temp_notused,nout = Is_Point_Close_To_Id_In_Raster(rowcol[0,0],rowcol[0,1],nrows,ncols,pourid,cat)
             if len(cat[cat == pourid]) > 0 and nout < 8:
                 cat[rowcol] = pourid
     rowcol1 = fac > 0
