@@ -195,18 +195,21 @@ def Add_New_SubId_To_Subregion_shpfile(processing,context,Layer,SubID_info = '#'
     -------
         None
     """
-    alg_params = {
-        'FIELD_LENGTH': 10,
-        'FIELD_NAME': 'Region_ID',
-        'FIELD_PRECISION': 0,
-        'FIELD_TYPE': 0,
-        'FORMULA':str(int(Region_ID)), #' \"'+'SubId'+'\"'  + '2000000',   #
-        'INPUT': Layer,
-        'NEW_FIELD': True,
-        'OUTPUT':OutputPath
-        }
-
-    processing.run('qgis:fieldcalculator', alg_params, context=context)['OUTPUT']
+    # alg_params = {
+    #     'FIELD_LENGTH': 10,
+    #     'FIELD_NAME': 'Region_ID',
+    #     'FIELD_PRECISION': 0,
+    #     'FIELD_TYPE': 0,
+    #     'FORMULA':str(int(Region_ID)), #' \"'+'SubId'+'\"'  + '2000000',   #
+    #     'INPUT': Layer,
+    #     'NEW_FIELD': True,
+    #     'OUTPUT':OutputPath
+    #     }
+    # processing.run('qgis:fieldcalculator', alg_params, context=context)['OUTPUT']
+    
+        
+    qgis_vector_field_calculator(processing = processing, context = context,FORMULA =str(int(Region_ID)),FIELD_NAME = 'Region_ID',INPUT =Layer,OUTPUT =OutputPath)
+    
 
     layer_new=QgsVectorLayer(OutputPath,"")
 
@@ -228,5 +231,30 @@ def Add_New_SubId_To_Subregion_shpfile(processing,context,Layer,SubID_info = '#'
     del layer_new
     return
     
-    
+def qgis_vector_field_calculator(processing,context,FORMULA,INPUT,OUTPUT,FIELD_NAME,
+                                 FIELD_PRECISION = 0,FIELD_TYPE = 0,NEW_FIELD = True,
+                                 FIELD_LENGTH = 10):
+    """ qgis filed calcuator 
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, 
+    """    
+    alg_params = {
+        'FIELD_LENGTH': FIELD_LENGTH,
+        'FIELD_NAME': FIELD_NAME,
+        'FIELD_PRECISION': FIELD_PRECISION,
+        'FIELD_TYPE': FIELD_TYPE,
+        'FORMULA':FORMULA, 
+        'INPUT': INPUT,
+        'NEW_FIELD': NEW_FIELD,
+        'OUTPUT':OUTPUT
+        }
+
+    out = processing.run('qgis:fieldcalculator', alg_params, context=context)
+    return out    
             
