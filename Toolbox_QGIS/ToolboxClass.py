@@ -24,7 +24,7 @@ from processing_functions_raster_array import Is_Point_Close_To_Id_In_Raster,Gen
 from processing_functions_raster_grass import grass_raster_setnull,Return_Raster_As_Array_With_garray
 from processing_functions_attribute_table import Calculate_Longest_flowpath,New_SubId_To_Dissolve,UpdateTopology,Connect_SubRegion_Update_DownSubId,Update_DA_Strahler_For_Combined_Result
 from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile,Remove_Unselected_Lake_Attribute_In_Finalcatinfo,Add_centroid_to_feature,Selectfeatureattributes,Copyfeature_to_another_shp_by_attribute,Add_New_SubId_To_Subregion_shpfile,qgis_vector_field_calculator
-from processing_functions_vector_qgis import qgis_vector_fix_geometries
+from processing_functions_vector_qgis import qgis_vector_fix_geometries,Clean_Attribute_Name
 from utilities import Dbf_To_Dataframe
 import timeit
 
@@ -122,13 +122,17 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
 #        memresult_addlakeid   = processing.run("qgis:fieldcalculator", {'INPUT':Subfixgeo['OUTPUT'],'FIELD_NAME':'Hylak_id','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT':'memory:'})
 #        memresult_addhruid    = processing.run("qgis:fieldcalculator", {'INPUT':memresult_addlakeid['OUTPUT'],'FIELD_NAME':'HRULake_ID','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':' \"SubId\" ','OUTPUT':'memory:'})
         layer_cat=memresult_addhruid['OUTPUT']
-        field_ids = []
-        for field in layer_cat.fields():
-            if field.name() not in fieldnames:
-                field_ids.append(layer_cat.dataProvider().fieldNameIndex(field.name()))
-        layer_cat.dataProvider().deleteAttributes(field_ids)
-        layer_cat.updateFields()
-        layer_cat.commitChanges()
+       
+        layer_cat = Clean_Attribute_Name(layer_cat,fieldnames,Input_Is_Feature_In_Mem = True)
+        
+        # field_ids = []
+        # for field in layer_cat.fields():
+        #     if field.name() not in fieldnames:
+        #         field_ids.append(layer_cat.dataProvider().fieldNameIndex(field.name()))
+        # layer_cat.dataProvider().deleteAttributes(field_ids)
+        # layer_cat.updateFields()
+        # layer_cat.commitChanges()
+
         Sub_Lake_HRU = qgis_vector_field_calculator(processing = processing, context = context,FORMULA ='-1',FIELD_NAME = 'HRU_IsLake',INPUT =layer_cat,OUTPUT ='memory:')
 #        Sub_Lake_HRU = processing.run("qgis:fieldcalculator", {'INPUT':layer_cat,'FIELD_NAME':'HRU_IsLake','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT':'memory:'})
         del layer_cat
@@ -165,17 +169,22 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
         # Fieldnames to save
 
         ## delete unused lake ids
-    for field in layer_cat.fields():
-        if field.name() not in fieldnames:
-            field_ids.append(layer_cat.dataProvider().fieldNameIndex(field.name()))
-        if field.name() == Sub_ID:
-            max_subbasin_id = layer_cat.maximumValue(layer_cat.dataProvider().fieldNameIndex(field.name()))
-    N_new_features = layer_cat.featureCount()
+    layer_cat,max_subbasin_id = Clean_Attribute_Name(layer_cat,fieldnames,Input_Is_Feature_In_Mem = True,Col_NM_Max ='SubId')
+    
+    # for field in layer_cat.fields():
+    #     if field.name() not in fieldnames:
+    #         field_ids.append(layer_cat.dataProvider().fieldNameIndex(field.name()))
+    #     if field.name() == Sub_ID:
+    #         max_subbasin_id = layer_cat.maximumValue(layer_cat.dataProvider().fieldNameIndex(field.name()))
+    
+    # layer_cat.dataProvider().deleteAttributes(field_ids)
+    # layer_cat.updateFields()
+    # layer_cat.commitChanges()
+    
 #    print("maximum subbasin Id is    ",max_subbasin_id, "N potential HRUS generated with lake polygon    ",N_new_features)
-    layer_cat.dataProvider().deleteAttributes(field_ids)
-    layer_cat.updateFields()
-    layer_cat.commitChanges()
-
+    
+    N_new_features = layer_cat.featureCount()
+    
     ## create HRU_lAKE_ID
     Attri_Name = layer_cat.fields().names()
     features = layer_cat.getFeatures()
@@ -465,19 +474,19 @@ def Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Col_NM,info_d
 #    print("asdfasdfsadf1",Updatevalue)
     return Updatevalue
 
-def Clean_Attribute_Name(Path_to_Feature,FieldName_List):
-
-    fieldnames = set(FieldName_List)
-    layer_cat  =QgsVectorLayer(Path_to_Feature, "")
-    field_ids  = []
-    for field in layer_cat.fields():
-        if field.name() not in fieldnames:
-            field_ids.append(layer_cat.dataProvider().fieldNameIndex(field.name()))
-    layer_cat.dataProvider().deleteAttributes(field_ids)
-    layer_cat.updateFields()
-    layer_cat.commitChanges()
-    del layer_cat
-    return
+# def Clean_Attribute_Name(Path_to_Feature,FieldName_List):
+# 
+#     fieldnames = set(FieldName_List)
+#     layer_cat  =QgsVectorLayer(Path_to_Feature, "")
+#     field_ids  = []
+#     for field in layer_cat.fields():
+#         if field.name() not in fieldnames:
+#             field_ids.append(layer_cat.dataProvider().fieldNameIndex(field.name()))
+#     layer_cat.dataProvider().deleteAttributes(field_ids)
+#     layer_cat.updateFields()
+#     layer_cat.commitChanges()
+#     del layer_cat
+#     return
 
 def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,dissolve_filedname_list,
                          Sub_ID,Landuse_ID,Soil_ID,Veg_ID,Other_Ply_ID_1,Other_Ply_ID_2,

@@ -271,4 +271,43 @@ def qgis_vector_fix_geometries(processing,context,INPUT,OUTPUT):
     """    
     out = processing.run("native:fixgeometries", {'INPUT':INPUT,'OUTPUT':OUTPUT})
     return out 
-                
+
+
+def Clean_Attribute_Name(Input,FieldName_List,Input_Is_Feature_In_Mem = False,Col_NM_Max ='SubId'):
+    """ Function clean feature attribute table, all colnmun not in FieldName_List
+        will be removed 
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, 
+    """  
+    
+    fieldnames = set(FieldName_List)
+    if Input_Is_Feature_In_Mem:
+       layer_cat = Input
+    else:
+        layer_cat  =QgsVectorLayer(Input, "")
+        
+    field_ids  = []
+    for field in layer_cat.fields():
+        if field.name() not in fieldnames:
+            field_ids.append(layer_cat.dataProvider().fieldNameIndex(field.name()))
+        if field.name() == Col_NM_Max:
+            max_subbasin_id = layer_cat.maximumValue(layer_cat.dataProvider().fieldNameIndex(field.name()))
+            
+    layer_cat.dataProvider().deleteAttributes(field_ids)
+    layer_cat.updateFields()
+    layer_cat.commitChanges()
+    
+    if Input_Is_Feature_In_Mem:
+       return layer_cat,max_subbasin_id
+    else:
+       del layer_cat 
+       return max_subbasin_id
+
+########
+                    
