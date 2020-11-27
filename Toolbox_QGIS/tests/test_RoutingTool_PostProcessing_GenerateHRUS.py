@@ -4,23 +4,9 @@ import os
 import pandas as pd 
 from simpledbf import Dbf5
 import shutil 
+from processing_functions_attribute_table import Evaluate_Two_Dataframes
+from utilities import Dbf_To_Dataframe
 
-def Dbf_To_Dataframe(file_path):
-    """Transfer an input dbf file to dataframe
-    
-    Parameters
-    ---------- 
-    file_path   : string
-    Full path to a shapefile 
-    
-    Returns:
-    -------
-    dataframe   : datafame 
-    a pandas dataframe of attribute table of input shapefile    
-    """
-    tempinfo = Dbf5(file_path[:-3] + "dbf")
-    dataframe = tempinfo.to_dataframe()
-    return dataframe
         
 def test_GenerateHRUS():
     """test function that will:
@@ -70,29 +56,14 @@ def test_GenerateHRUS():
     """ 
     
     ### transfer expected product into pandas dataframe
-    Expect_finalcat_hru_info = Dbf_To_Dataframe(os.path.join(Expect_Result_Folder,'finalcat_hru_info.shp'))
-    ### calcuate expected total number of HRUS:Expect_N_HRU
-    Expect_N_HRU = len(Expect_finalcat_hru_info)
-    ### calcuate expected total river length :Expect_len_Riv
-    Expect_len_Riv = sum(Expect_finalcat_hru_info['RivLength'])
-    ### calcuate expected total HRU area :Expect_HRU_Area
-    Expect_HRU_Area = sum(Expect_finalcat_hru_info['HRU_Area'])
-    
+    Expect_finalcat_hru_info = Dbf_To_Dataframe(os.path.join(Expect_Result_Folder,'finalcat_hru_info.shp')).sort_values(by=['SubId','HRU_Area'])
+
     ### transfer resulted product into pandas dataframe    
-    Result_finalcat_hru_info = Dbf_To_Dataframe(os.path.join(Output_Folder,'finalcat_hru_info.shp'))
-    ### calcuate resulted total number of HRUS:Result_N_HRU
-    Result_N_HRU = len(Result_finalcat_hru_info)
-    ### calcuate resulted total river length :Result_len_Riv
-    Result_len_Riv = sum(Result_finalcat_hru_info['RivLength'])
-    ### calcuate resulted total HRU area :Result_HRU_Area
-    Result_HRU_Area = sum(Result_finalcat_hru_info['HRU_Area'])
+    Result_finalcat_hru_info = Dbf_To_Dataframe(os.path.join(Output_Folder,'finalcat_hru_info.shp')).sort_values(by=['SubId','HRU_Area'])
     
-    ### compare Expect_N_HRU and Result_N_HRU
-    assert Expect_N_HRU == Result_N_HRU
-    ### compare Expect_len_Riv and Result_len_Riv
-    assert Expect_len_Riv == pytest.approx(Result_len_Riv, 0.1)
-    ### compare Expect_HRU_Area and Expect_HRU_Area
-    assert Expect_HRU_Area == pytest.approx(Expect_HRU_Area, 0.1)
+    print(Evaluate_Two_Dataframes(Result_finalcat_hru_info,Expect_finalcat_hru_info,Check_Col_NM = 'HRU_ID'))
+    assert Evaluate_Two_Dataframes(Result_finalcat_hru_info,Expect_finalcat_hru_info,Check_Col_NM = 'HRU_ID')
+    
                                           
     shutil.rmtree(Output_Folder) 
     

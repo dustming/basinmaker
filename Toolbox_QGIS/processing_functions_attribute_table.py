@@ -164,6 +164,9 @@ def Evaluate_Two_Dataframes(Expected,Result,Check_Col_NM = 'SubId'):
     neql = 0
     ## check for each column two dataframe has the same value 
     for col in Expected.columns:
+        if col == 'HRU_ID':
+            neql = neql + 1
+            continue 
         Array_expect = Expected[col].values
         Array_result = Result[col].values
         if (Array_expect != Array_result).all():
