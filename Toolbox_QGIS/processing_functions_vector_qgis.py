@@ -314,7 +314,20 @@ def qgis_vector_extract_by_attribute(processing,context,INPUT_Layer,FIELD,OPERAT
     return out 
 
 
+def qgis_vector_add_attributes(processing,context,INPUT_Layer,attribute_list):
+    """ qgis add attributes to vector  
+    ----------
+    Notes
+    -------
 
+    Returns:
+    -------
+        None, 
+    """    
+    INPUT_Layer.dataProvider().addAttributes(attribute_list)
+    INPUT_Layer.updateFields()
+    INPUT_Layer.commitChanges()
+    return INPUT_Layer
 
 
     

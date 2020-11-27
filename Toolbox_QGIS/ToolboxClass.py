@@ -25,6 +25,7 @@ from processing_functions_raster_grass import grass_raster_setnull,Return_Raster
 from processing_functions_attribute_table import Calculate_Longest_flowpath,New_SubId_To_Dissolve,UpdateTopology,Connect_SubRegion_Update_DownSubId,Update_DA_Strahler_For_Combined_Result
 from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile,Remove_Unselected_Lake_Attribute_In_Finalcatinfo,Add_centroid_to_feature,Selectfeatureattributes,Copyfeature_to_another_shp_by_attribute,Add_New_SubId_To_Subregion_shpfile,qgis_vector_field_calculator
 from processing_functions_vector_qgis import qgis_vector_fix_geometries,Clean_Attribute_Name,qgis_vector_merge_vector_layers,qgis_vector_return_crs_id,qgis_vector_union_two_layers,qgis_vector_extract_by_attribute
+from processing_functions_vector_qgis import qgis_vector_add_attributes
 from utilities import Dbf_To_Dataframe
 import timeit
 
@@ -153,8 +154,11 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
     
     # add attribute 
     layer_cat=mem_sub_lake_union
-    SpRef_in = layer_cat.crs().authid()   ### get Raster spatialReference id
-    layer_cat.dataProvider().addAttributes([QgsField('HRULake_ID', QVariant.Int),QgsField('HRU_IsLake', QVariant.Int)])
+    # obtain projection crs id 
+    SpRef_in = qgis_vector_return_crs_id(processing,context,layer_cat,Input_Is_Feature_In_Mem = True)   ### get Raster spatialReference id
+    
+    #add attribute to layer 
+    layer_cat = qgis_vector_add_attributes(processing,context,INPUT_Layer = layer_cat,attribute_list = [QgsField('HRULake_ID', QVariant.Int),QgsField('HRU_IsLake', QVariant.Int)])
      
     # remove column not in fieldnames
     layer_cat,max_subbasin_id = Clean_Attribute_Name(layer_cat,fieldnames,Input_Is_Feature_In_Mem = True,Col_NM_Max ='SubId')
@@ -635,14 +639,14 @@ def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,disso
                      Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Other_Ply_ID_2]        = Vali_Value
 
     ### add attributes columns
-    layer_area_id.dataProvider().addAttributes([QgsField('LAND_USE_C', QVariant.String),
-                                            QgsField('VEG_C', QVariant.String),
-                                            QgsField('SOIL_PROF', QVariant.String),
-                                            QgsField('HRU_CenX', QVariant.Double),
-                                            QgsField('HRU_CenY', QVariant.Double)])
-    layer_area_id.updateFields()
-    layer_area_id.commitChanges()
-    ### modify feature attributes
+    attribute_list = [QgsField('LAND_USE_C', QVariant.String),
+                      QgsField('VEG_C', QVariant.String),
+                      QgsField('SOIL_PROF', QVariant.String),
+                      QgsField('HRU_CenX', QVariant.Double),
+                      QgsField('HRU_CenY', QVariant.Double)]
+                      
+    layer_area_id = qgis_vector_add_attributes(processing,context,INPUT_Layer = layer_area_id,attribute_list = attribute_list)
+    
     src_features = layer_area_id.getFeatures()
     with edit(layer_area_id):
         for sf in src_features:
