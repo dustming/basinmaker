@@ -25,7 +25,7 @@ from processing_functions_raster_grass import grass_raster_setnull,Return_Raster
 from processing_functions_attribute_table import Calculate_Longest_flowpath,New_SubId_To_Dissolve,UpdateTopology,Connect_SubRegion_Update_DownSubId,Update_DA_Strahler_For_Combined_Result
 from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile,Remove_Unselected_Lake_Attribute_In_Finalcatinfo,Add_centroid_to_feature,Selectfeatureattributes,Copyfeature_to_another_shp_by_attribute,Add_New_SubId_To_Subregion_shpfile,qgis_vector_field_calculator
 from processing_functions_vector_qgis import qgis_vector_fix_geometries,Clean_Attribute_Name,qgis_vector_merge_vector_layers,qgis_vector_return_crs_id,qgis_vector_union_two_layers,qgis_vector_extract_by_attribute
-from processing_functions_vector_qgis import qgis_vector_add_attributes
+from processing_functions_vector_qgis import qgis_vector_add_attributes,qgis_vector_get_attributes
 from utilities import Dbf_To_Dataframe
 import timeit
 
@@ -147,7 +147,6 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
     
     # union merged polygon and subbasin polygon 
     mem_sub_lake_union_temp = qgis_vector_union_two_layers(processing = processing,context = context,INPUT = Subfixgeo['OUTPUT'],OVERLAY = meme_Alllakeply['OUTPUT'],OUTPUT = 'memory:')['OUTPUT']
-#    mem_sub_lake_union_temp = processing.run("native:union", {'INPUT':Subfixgeo['OUTPUT'],'OVERLAY':meme_Alllakeply['OUTPUT'],'OVERLAY_FIELDS_PREFIX':'','OUTPUT':'memory:'},context = context)['OUTPUT']
     
     # fix union geometry 
     mem_sub_lake_union = qgis_vector_fix_geometries(processing,context,INPUT = mem_sub_lake_union_temp,OUTPUT = 'memory:')['OUTPUT']
@@ -164,11 +163,11 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
     layer_cat,max_subbasin_id = Clean_Attribute_Name(layer_cat,fieldnames,Input_Is_Feature_In_Mem = True,Col_NM_Max ='SubId')
         
     
-    N_new_features = layer_cat.featureCount()
+    N_new_features = qgis_vector_get_attributes(processing,context,layer_cat,'count')
     
     ## create HRU_lAKE_ID
-    Attri_Name = layer_cat.fields().names()
-    features = layer_cat.getFeatures()
+    Attri_Name = qgis_vector_get_attributes(processing,context,layer_cat,'field_name') #layer_cat.fields().names()
+    features = qgis_vector_get_attributes(processing,context,layer_cat,'features') #layer_cat.getFeatures()
     new_hruid = 1
     new_hruid_list = np.full(N_new_features + 100,np.nan)
     old_newhruid_list = np.full(N_new_features + 100,np.nan)

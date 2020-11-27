@@ -330,7 +330,30 @@ def qgis_vector_add_attributes(processing,context,INPUT_Layer,attribute_list):
     return INPUT_Layer
 
 
+def qgis_vector_get_attributes(processing,context,INPUT_Layer,attribute_NM):
+    """ qgis retrun attribute value of vector  
+    ----------
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, 
+    """    
+    if attribute_NM == 'count':
+        out = INPUT_Layer.featureCount()
+        return out 
+    elif attribute_NM == 'field_name':
+        out = INPUT_Layer.fields().names()
+    elif attribute_NM == 'features':
+        out = INPUT_Layer.getFeatures()
+        return out 
+    else:
+        print("wrong attribute name")
+        return -1         
+#### 
     
+        
 
 def qgis_vector_union_two_layers(processing,context,INPUT,OVERLAY,OUTPUT,OVERLAY_FIELDS_PREFIX = ''):
     """ qgis union two layers 
