@@ -5,23 +5,7 @@ import pandas as pd
 from simpledbf import Dbf5
 import shutil 
 from processing_functions_attribute_table import Evaluate_Two_Dataframes
-
-def Dbf_To_Dataframe(file_path):
-    """Transfer an input dbf file to dataframe
-    
-    Parameters
-    ---------- 
-    file_path   : string
-    Full path to a shapefile 
-    
-    Returns:
-    -------
-    dataframe   : datafame 
-    a pandas dataframe of attribute table of input shapefile    
-    """
-    tempinfo = Dbf5(file_path[:-3] + "dbf")
-    dataframe = tempinfo.to_dataframe()
-    return dataframe
+from utilities import Dbf_To_Dataframe
         
 def test_SelectLakes():
     """test function that will: 
