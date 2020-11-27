@@ -20,7 +20,8 @@ from WriteRavenInputs import Generate_Raven_Lake_rvh_String,Generate_Raven_Chann
 from WriteRavenInputs import Generate_Raven_Obs_rvt_String,WriteStringToFile
 from RavenOutputFuctions import plotGuagelineobs,Caluculate_Lake_Active_Depth_and_Lake_Evap
 from AddlakesintoRoutingNetWork import Dirpoints_v3,check_lakecatchment,DefineConnected_Non_Connected_Lakes,Generate_stats_list_from_grass_raster
-from raster_array_processing import Is_Point_Close_To_Id_In_Raster
+from raster_array_processing_functions import Is_Point_Close_To_Id_In_Raster
+from raster_processing_functions_grass import grass_raster_setnull,Return_Raster_As_Array_With_garray
 import timeit
 
 
@@ -254,29 +255,29 @@ def Dbf_To_Dataframe(file_path):
 ############################################################################33
 
 ####################################################################3
-def Checkcat(prow,pcol,nrows,ncols,lid,lake):
-    noout=0
-    ### double check if the head stream cell is nearby the lake, if near by the lake the stream was ignored
-    if prow != 0 and prow != nrows -1 and pcol != 0 and pcol != ncols-1:
-        if not lake[prow-1,pcol+1] == lid:
-            noout=1 + noout
-        if not lake[prow-1,pcol-1] == lid:
-            noout=1 + noout
-        if not lake[prow-1,pcol] == lid:
-            noout=1 + noout
-        if not lake[prow,pcol+1] == lid:
-            noout=1 + noout
-        if not lake[prow,pcol-1] == lid:
-            noout=1 + noout
-        if not lake[prow+1,pcol-1] == lid:
-            noout=1 + noout
-        if not lake[prow+1,pcol+1] == lid:
-            noout=1 + noout
-        if not lake[prow+1,pcol] == lid:
-            noout=1 + noout
-    return noout
-
-###################################################################3
+# def Checkcat(prow,pcol,nrows,ncols,lid,lake):
+#     noout=0
+#     ### double check if the head stream cell is nearby the lake, if near by the lake the stream was ignored
+#     if prow != 0 and prow != nrows -1 and pcol != 0 and pcol != ncols-1:
+#         if not lake[prow-1,pcol+1] == lid:
+#             noout=1 + noout
+#         if not lake[prow-1,pcol-1] == lid:
+#             noout=1 + noout
+#         if not lake[prow-1,pcol] == lid:
+#             noout=1 + noout
+#         if not lake[prow,pcol+1] == lid:
+#             noout=1 + noout
+#         if not lake[prow,pcol-1] == lid:
+#             noout=1 + noout
+#         if not lake[prow+1,pcol-1] == lid:
+#             noout=1 + noout
+#         if not lake[prow+1,pcol+1] == lid:
+#             noout=1 + noout
+#         if not lake[prow+1,pcol] == lid:
+#             noout=1 + noout
+#     return noout
+# 
+# ###################################################################3
 
 def selectlake(hylake,noncnlake,NonConLThres,hylakeinfo):
 #    arcpy.AddMessage("123asdfasdfasdfasd")
@@ -3511,37 +3512,46 @@ class LRRT:
             obs_array     = garray.array(mapname="obs")
 
 ###### generate selected lakes
-        hylake1,Selected_Con_Lakes = selectlake2(conlake_arr,VolThreshold,allLakinfo) ### remove lakes with lake area smaller than the VolThreshold from connected lake raster
-        if NonConLThres >= 0:
-            Lake1, Selected_Non_Con_Lakes_ids = selectlake(hylake1,noncnlake_arr,NonConLThres,allLakinfo) ### remove lakes with lake area smaller than the NonConLThres from non-connected lake raster
-        else:
-            Lake1 = hylake1
+        Lakeid_lt_CL_Remove  = allLakinfo.loc[allLakinfo['Lake_area'] < Thre_Lake_Area_Connect]['Hylak_id'].values
+        Lakeid_lt_NCL_Remove = allLakinfo.loc[allLakinfo['Lake_area'] < Thre_Lake_Area_nonConnect]['Hylak_id'].values
+        Lakeid_lt_All_Remove = Lakeid_lt_NCL_Remove + Lakeid_lt_CL_Remove
+        grass_raster_setnull(grass,'Connect_Lake',Lakeid_lt_CL_Remove.tolist(),True,'Select_Connected_lakes1')
+        grass_raster_setnull(grass,'Nonconnect_Lake',Lakeid_lt_NCL_Remove.tolist(),True,'Select_Non_Connected_lakes1')
+        grass_raster_setnull(grass,'alllake',Lakeid_lt_All_Remove.tolist(),True,'SelectedLakes1')
 
-        mask3 = hylake1 == 0
-        hylake1[mask3]   = -9999
+#         hylake1,Selected_Con_Lakes = selectlake2(conlake_arr,VolThreshold,allLakinfo) ### remove lakes with lake area smaller than the VolThreshold from connected lake raster
+#         if NonConLThres >= 0:
+#             Lake1, Selected_Non_Con_Lakes_ids = selectlake(hylake1,noncnlake_arr,NonConLThres,allLakinfo) ### remove lakes with lake area smaller than the NonConLThres from non-connected lake raster
+#         else:
+#             Lake1 = hylake1
+# 
+#         mask3 = hylake1 == 0
+#         hylake1[mask3]   = -9999
+# 
+#         temparray[:,:] = hylake1[:,:]
+#         temparray.write(mapname="Select_Connected_lakes", overwrite=True)
+#         grass.run_command('r.null', map='Select_Connected_lakes',setnull=-9999)
+# #        grass.run_command('r.out.gdal', input = 'Select_Connected_lakes',output = os.path.join(self.tempfolder,'Select_Connected_lakes.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
+# 
+#         Selectedlaeks = copy.deepcopy(Lake1)
+#         maks                = hylake1 > 0
+#         Selectedlaeks[maks] = -9999
+#         mask2 = Selectedlaeks == 0
+#         Selectedlaeks[mask2]   = -9999
+#         temparray[:,:] = Selectedlaeks[:,:]
+#         temparray.write(mapname="Select_Non_Connected_lakes", overwrite=True)
+#         grass.run_command('r.null', map='Select_Non_Connected_lakes',setnull=-9999)
+# #        grass.run_command('r.out.gdal', input = 'Select_Non_Connected_lakes',output = os.path.join(self.tempfolder,'Select_Non_Connected_lakes.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
+# 
+#         mask1 = Lake1 == 0
+#         Lake1[mask1]   = -9999
+#         temparray[:,:] = Lake1[:,:]
+#         temparray.write(mapname="SelectedLakes", overwrite=True)
+#         grass.run_command('r.null', map='SelectedLakes',setnull=-9999)
 
-        temparray[:,:] = hylake1[:,:]
-        temparray.write(mapname="Select_Connected_lakes", overwrite=True)
-        grass.run_command('r.null', map='Select_Connected_lakes',setnull=-9999)
-#        grass.run_command('r.out.gdal', input = 'Select_Connected_lakes',output = os.path.join(self.tempfolder,'Select_Connected_lakes.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
-
-        Selectedlaeks = copy.deepcopy(Lake1)
-        maks                = hylake1 > 0
-        Selectedlaeks[maks] = -9999
-        mask2 = Selectedlaeks == 0
-        Selectedlaeks[mask2]   = -9999
-        temparray[:,:] = Selectedlaeks[:,:]
-        temparray.write(mapname="Select_Non_Connected_lakes", overwrite=True)
-        grass.run_command('r.null', map='Select_Non_Connected_lakes',setnull=-9999)
-#        grass.run_command('r.out.gdal', input = 'Select_Non_Connected_lakes',output = os.path.join(self.tempfolder,'Select_Non_Connected_lakes.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
-
-        mask1 = Lake1 == 0
-        Lake1[mask1]   = -9999
-        temparray[:,:] = Lake1[:,:]
-        temparray.write(mapname="SelectedLakes", overwrite=True)
-        grass.run_command('r.null', map='SelectedLakes',setnull=-9999)
-
-
+        Lake1 = Return_Raster_As_Array_With_garray(garray,'SelectedLakes')
+        noncnlake_arr =  Return_Raster_As_Array_With_garray(garray,'Select_Non_Connected_lakes') 
+        
 ####
         Pourpoints,Lakemorestream,Str_new = GenerPourpoint(cat1_arr,Lake1,str_array,self.nrows,self.ncols,blid,bsid,bcid,acc_array,dir_array,Is_divid_region,Remove_Str)
         temparray[:,:] = Pourpoints[:,:]
