@@ -4723,7 +4723,7 @@ class LRRT:
 
 
         ### create overlay betweeo two polygon and calcuate area of each new polygon in the overlay
-        qgis_vector_union_two_layers(processing = processing,context = context,INPUT = Target_Ply_Path,OVERLAY = Mapping_Ply_Path,'OVERLAY_FIELDS_PREFIX'='Map_',OUTPUT =Path_finalcat_hru_temp2)['OUTPUT']
+        qgis_vector_union_two_layers(processing = processing,context = context,INPUT = Target_Ply_Path,OVERLAY = Mapping_Ply_Path,OVERLAY_FIELDS_PREFIX='Map_',OUTPUT =Path_finalcat_hru_temp2)['OUTPUT']
         
         processing.run("native:extractbyattribute", {'INPUT':Path_finalcat_hru_temp,'FIELD':'HRU_ID','OPERATOR':2,'VALUE':'0','OUTPUT':Path_finalcat_hru_temp2})
         processing.run("native:dissolve", {'INPUT':Path_finalcat_hru_temp2,'FIELD':['HRU_ID','Map_FGID'],'OUTPUT':Path_finalcat_hru_temp_dissolve},context = context)
