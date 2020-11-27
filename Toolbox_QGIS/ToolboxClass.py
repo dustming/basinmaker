@@ -24,7 +24,7 @@ from processing_functions_raster_array import Is_Point_Close_To_Id_In_Raster,Gen
 from processing_functions_raster_grass import grass_raster_setnull,Return_Raster_As_Array_With_garray
 from processing_functions_attribute_table import Calculate_Longest_flowpath,New_SubId_To_Dissolve,UpdateTopology,Connect_SubRegion_Update_DownSubId,Update_DA_Strahler_For_Combined_Result
 from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile,Remove_Unselected_Lake_Attribute_In_Finalcatinfo,Add_centroid_to_feature,Selectfeatureattributes,Copyfeature_to_another_shp_by_attribute,Add_New_SubId_To_Subregion_shpfile,qgis_vector_field_calculator
-from processing_functions_vector_qgis import qgis_vector_fix_geometries,Clean_Attribute_Name,qgis_vector_merge_vector_layers,qgis_vector_return_crs_id,qgis_vector_union_two_layers
+from processing_functions_vector_qgis import qgis_vector_fix_geometries,Clean_Attribute_Name,qgis_vector_merge_vector_layers,qgis_vector_return_crs_id,qgis_vector_union_two_layers,qgis_vector_extract_by_attribute
 from utilities import Dbf_To_Dataframe
 import timeit
 
@@ -4725,7 +4725,6 @@ class LRRT:
         ### create overlay betweeo two polygon and calcuate area of each new polygon in the overlay
         qgis_vector_union_two_layers(processing = processing,context = context,INPUT = Target_Ply_Path,OVERLAY = Mapping_Ply_Path,'OVERLAY_FIELDS_PREFIX'='Map_',OUTPUT =Path_finalcat_hru_temp2)['OUTPUT']
         
-#        processing.run("native:union", {'INPUT':Target_Ply_Path,'OVERLAY':Mapping_Ply_Path,'OVERLAY_FIELDS_PREFIX':'Map_','OUTPUT':Path_finalcat_hru_temp},context = context)
         processing.run("native:extractbyattribute", {'INPUT':Path_finalcat_hru_temp,'FIELD':'HRU_ID','OPERATOR':2,'VALUE':'0','OUTPUT':Path_finalcat_hru_temp2})
         processing.run("native:dissolve", {'INPUT':Path_finalcat_hru_temp2,'FIELD':['HRU_ID','Map_FGID'],'OUTPUT':Path_finalcat_hru_temp_dissolve},context = context)
         qgis_vector_field_calculator(processing = processing, context = context,FORMULA ='area(transform($geometry, \'EPSG:4326\',\'EPSG:3573\'))',FIELD_NAME = 's_area',INPUT =Path_finalcat_hru_temp_dissolve,OUTPUT =Path_finalcat_hru_temp_dissolve_area,FIELD_PRECISION = 3)['OUTPUT']

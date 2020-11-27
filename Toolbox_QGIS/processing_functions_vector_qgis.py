@@ -195,19 +195,7 @@ def Add_New_SubId_To_Subregion_shpfile(processing,context,Layer,SubID_info = '#'
     -------
         None
     """
-    # alg_params = {
-    #     'FIELD_LENGTH': 10,
-    #     'FIELD_NAME': 'Region_ID',
-    #     'FIELD_PRECISION': 0,
-    #     'FIELD_TYPE': 0,
-    #     'FORMULA':str(int(Region_ID)), #' \"'+'SubId'+'\"'  + '2000000',   #
-    #     'INPUT': Layer,
-    #     'NEW_FIELD': True,
-    #     'OUTPUT':OutputPath
-    #     }
-    # processing.run('qgis:fieldcalculator', alg_params, context=context)['OUTPUT']
-    
-        
+            
     qgis_vector_field_calculator(processing = processing, context = context,FORMULA =str(int(Region_ID)),FIELD_NAME = 'Region_ID',INPUT =Layer,OUTPUT =OutputPath)
     
 
@@ -308,6 +296,27 @@ def qgis_vector_return_crs_id(processing,context,INPUT_Layer,Input_Is_Feature_In
         out =layer.crs().authid()
         
     return out 
+
+
+def qgis_vector_extract_by_attribute(processing,context,INPUT_Layer,FIELD,OPERATOR,VALUE,OUTPUT):
+    """ qgis extract vector by attribute 
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, 
+    """
+    out  = processing.run("native:extractbyattribute", {'INPUT':INPUT_Layer,'FIELD':FIELD,'OPERATOR':OPERATOR,'VALUE':VALUE,'OUTPUT':OUTPUT})
+        
+    return out 
+
+
+
+
+
     
 
 def qgis_vector_union_two_layers(processing,context,INPUT,OVERLAY,OUTPUT,OVERLAY_FIELDS_PREFIX = ''):
