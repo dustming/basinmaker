@@ -23,24 +23,9 @@ from AddlakesintoRoutingNetWork import Dirpoints_v3,check_lakecatchment,DefineCo
 from processing_functions_raster_array import Is_Point_Close_To_Id_In_Raster,GenerPourpoint,Check_If_Str_Is_Head_Stream,GenerateFinalPourpoints,CE_mcat4lake2
 from processing_functions_raster_grass import grass_raster_setnull,Return_Raster_As_Array_With_garray
 from processing_functions_attribute_table import Calculate_Longest_flowpath,New_SubId_To_Dissolve
-from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile,Remove_Unselected_Lake_Attribute_In_Finalcatinfo
+from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile,Remove_Unselected_Lake_Attribute_In_Finalcatinfo,Add_centroid_to_feature
 from utilities import Dbf_To_Dataframe
 import timeit
-
-
-#########
-def Add_centroid_to_feature(Path_feagure,centroidx_nm = '#',centroidy_nm='#'):
-    layer_cat=QgsVectorLayer(Path_feagure,"")
-    Attri_Name = layer_cat.fields().names()
-    features = layer_cat.getFeatures()
-    with edit(layer_cat):
-        for sf in features:
-            centroidxy = sf.geometry().centroid().asPoint()
-            sf[centroidx_nm] = centroidxy[0]
-            sf[centroidy_nm] = centroidxy[1]
-            layer_cat.updateFeature(sf)
-    del layer_cat
-    return
 
 ##########
 def Selectfeatureattributes(processing,Input = '#',Output='#',Attri_NM = '#',Values = []):

@@ -4,23 +4,9 @@ import os
 import pandas as pd 
 from simpledbf import Dbf5
 import shutil 
+from processing_functions_attribute_table import Evaluate_Two_Dataframes
+from utilities import Dbf_To_Dataframe
 
-def Dbf_To_Dataframe(file_path):
-    """Transfer an input dbf file to dataframe
-    
-    Parameters
-    ---------- 
-    file_path   : string
-    Full path to a shapefile 
-    
-    Returns:
-    -------
-    dataframe   : datafame 
-    a pandas dataframe of attribute table of input shapefile    
-    """
-    tempinfo = Dbf5(file_path[:-3] + "dbf")
-    dataframe = tempinfo.to_dataframe()
-    return dataframe
         
 def test_Define_Final_Catchment():
     """test function that will:
@@ -53,43 +39,16 @@ def test_Define_Final_Catchment():
                                            Path_final_riv = Path_final_riv, 
                                            OutputFolder = Output_Folder)  
                                            
-    """Evaluate total number of subbasin, total subbasin area, total river length
-       and total lake area 
-    N_Cat is the total number of subbasins in the routing network 
-    len_Riv is the total river length in the routing network 
-    Bas_Area is the total subbasin area in the routing network
-    Lake_Area is the total lake area in the routing network     
+    """Evaluate attribute table of two polygons   
     """ 
     ### transfer expected  product into pandas dataframe
     Expect_Finalcat_info = Dbf_To_Dataframe(os.path.join(Expect_Result_Folder,'finalcat_info.shp')).sort_values(by=['SubId'])
-    ### calcuate expected total number of catchment:Expect_N_Cat
-    Expect_N_Cat = len(Expect_Finalcat_info)
-    ### calcuate expected total river length :Expect_len_Riv
-    Expect_len_Riv = sum(Expect_Finalcat_info['RivLength'])
-    ### calcuate expected total basin area :Expect_Bas_Area
-    Expect_Bas_Area = sum(Expect_Finalcat_info['BasArea'])
-    ### calcuate expected total lake area :Expect_Lake_Area
-    Expect_Lake_Area = sum(Expect_Finalcat_info['LakeArea'])  
-      
+       
     ### transfer resulted  product into pandas dataframe    
     Result_Finalcat_info = Dbf_To_Dataframe(os.path.join(Output_Folder,'finalcat_info.shp')).sort_values(by=['SubId'])
-    ### calcuate resulted total number of catchment:Result_N_Cat
-    Result_N_Cat = len(Result_Finalcat_info)
-    ### calcuate resulted total river length :Result_len_Riv
-    Result_len_Riv = sum(Result_Finalcat_info['RivLength'])
-    ### calcuate resulted total basin area :Result_Bas_Area
-    Result_Bas_Area = sum(Result_Finalcat_info['BasArea'])
-    ### calcuate resulted total lake area :Result_Lake_Area
-    Result_Lake_Area = sum(Result_Finalcat_info['LakeArea'])
 
-    ### compare Expect_N_Cat and Result_N_Cat
-    assert Expect_N_Cat == Result_N_Cat
-    ### compare Expect_len_Riv and Result_len_Riv
-    assert Expect_len_Riv == pytest.approx(Result_len_Riv, 0.1)
-    ### compare Expect_Bas_Area and Result_Bas_Area
-    assert Expect_Bas_Area == pytest.approx(Result_Bas_Area, 0.1)
-    ### compare Expect_Lake_Area and Result_Lake_Area
-    assert Expect_Lake_Area == pytest.approx(Result_Lake_Area, 0.1)
+    assert Evaluate_Two_Dataframes(Expect_Finalcat_info,Result_Finalcat_info,Check_Col_NM = 'SubId')
+
     
     shutil.rmtree(Output_Folder) 
 

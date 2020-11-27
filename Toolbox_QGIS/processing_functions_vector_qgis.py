@@ -87,6 +87,27 @@ def Remove_Unselected_Lake_Attribute_In_Finalcatinfo(Path_Finalcatinfo,Conn_Lake
     return
     
     
-    
+#########
+def Add_centroid_to_feature(Path_feagure,centroidx_nm = '#',centroidy_nm='#'):
+    """ Functions will add centorid x y to Path_feagure
+    ----------
 
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, the attribute table of Path_shpfile will be updated 
+    """
+    layer_cat=QgsVectorLayer(Path_feagure,"")
+    Attri_Name = layer_cat.fields().names()
+    features = layer_cat.getFeatures()
+    with edit(layer_cat):
+        for sf in features:
+            centroidxy = sf.geometry().centroid().asPoint()
+            sf[centroidx_nm] = centroidxy[0]
+            sf[centroidy_nm] = centroidxy[1]
+            layer_cat.updateFeature(sf)
+    del layer_cat
+    return
     
