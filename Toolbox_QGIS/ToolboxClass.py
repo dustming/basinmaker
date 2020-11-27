@@ -23,50 +23,10 @@ from AddlakesintoRoutingNetWork import Dirpoints_v3,check_lakecatchment,DefineCo
 from processing_functions_raster_array import Is_Point_Close_To_Id_In_Raster,GenerPourpoint,Check_If_Str_Is_Head_Stream,GenerateFinalPourpoints,CE_mcat4lake2
 from processing_functions_raster_grass import grass_raster_setnull,Return_Raster_As_Array_With_garray
 from processing_functions_attribute_table import Calculate_Longest_flowpath,New_SubId_To_Dissolve
+from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile
+from utilities import Dbf_To_Dataframe
 import timeit
 
-
-
-def Dbf_To_Dataframe(file_path):
-    """Transfer an input dbf file to dataframe
-
-    Parameters
-    ----------
-    file_path   : string
-    Full path to a shapefile
-
-    Returns:
-    -------
-    dataframe   : datafame
-    a pandas dataframe of attribute table of input shapefile
-    """
-    tempinfo = Dbf5(file_path[:-3] + "dbf")
-    dataframe = tempinfo.to_dataframe().copy()
-    return dataframe
-
-
-
-def Modify_Feature_info(Path_feagure,mapoldnew_info):
-    sub_colnm = 'SubId'
-    layer_cat=QgsVectorLayer(Path_feagure,"")
-    Attri_Name = layer_cat.fields().names()
-    features = layer_cat.getFeatures()
-    with edit(layer_cat):
-
-        for sf in features:
-            Atti_Valu    = sf.attributes()
-            sf_subid     = sf[sub_colnm]
-            tarinfo      = mapoldnew_info[mapoldnew_info['Old_SubId'] == sf_subid]
-            for icolnm in range(0,len(Attri_Name)):     ### copy infomaiton
-                if  Attri_Name[icolnm] == 'Obs_NM' or Attri_Name[icolnm] == 'SRC_obs':
-                    sf[Attri_Name[icolnm]] = str(tarinfo[Attri_Name[icolnm]].values[0])
-                elif Attri_Name[icolnm] == 'cat' or Attri_Name[icolnm] == 'path' or Attri_Name[icolnm] == 'layer':
-                    continue
-                else:
-                    sf[Attri_Name[icolnm]] = float(tarinfo[Attri_Name[icolnm]].values[0])
-            layer_cat.updateFeature(sf)
-    del layer_cat
-    return
 
 #######
 def UpdateNonConnectedLakeCatchmentinfo(Path_Non_ConnL_Cat,mapoldnew_info):
@@ -128,31 +88,31 @@ def UpdateConnectedLakeArea_In_Finalcatinfo(Path_Finalcatinfo,Conn_Lake_Ids):
     return
 
 #######
-def Copy_Pddataframe_to_shpfile(Path_shpfile,Pddataframe,link_col_nm = 'nSubId',
-                                UpdateColNM = ['#']):
-    layer_cat=QgsVectorLayer(Path_shpfile,"")
-    Attri_Name = layer_cat.fields().names()
-    features = layer_cat.getFeatures()
-    with edit(layer_cat):
-        for sf in features:
-            Atti_Valu    = sf.attributes()
-            sf_subid     = sf[link_col_nm]
-            tarinfo      = Pddataframe[Pddataframe[link_col_nm] == sf_subid]
-
-            if UpdateColNM[0] == '#':
-                for icolnm in range(0,len(Attri_Name)):     ### copy infomaiton
-                    if  Attri_Name[icolnm] == 'Obs_NM' or Attri_Name[icolnm] == 'SRC_obs' or  Attri_Name[icolnm] == 'layer' or  Attri_Name[icolnm] == 'path'  :
-                        sf[Attri_Name[icolnm]] = str(tarinfo[Attri_Name[icolnm]].values[0])
-                    elif Attri_Name[icolnm] == 'cat':
-                        continue
-                    else:
-                        sf[Attri_Name[icolnm]] = float(tarinfo[Attri_Name[icolnm]].values[0])
-            else:
-                for icolnm in range(0,len(UpdateColNM)):
-                    sf[UpdateColNM[icolnm]] = float(tarinfo[UpdateColNM[icolnm]].values[0])
-
-            layer_cat.updateFeature(sf)
-    del layer_cat
+# def Copy_Pddataframe_to_shpfile(Path_shpfile,Pddataframe,link_col_nm = 'nSubId',
+#                                 UpdateColNM = ['#']):
+#     layer_cat=QgsVectorLayer(Path_shpfile,"")
+#     Attri_Name = layer_cat.fields().names()
+#     features = layer_cat.getFeatures()
+#     with edit(layer_cat):
+#         for sf in features:
+#             Atti_Valu    = sf.attributes()
+#             sf_subid     = sf[link_col_nm]
+#             tarinfo      = Pddataframe[Pddataframe[link_col_nm] == sf_subid]
+# 
+#             if UpdateColNM[0] == '#':
+#                 for icolnm in range(0,len(Attri_Name)):     ### copy infomaiton
+#                     if  Attri_Name[icolnm] == 'Obs_NM' or Attri_Name[icolnm] == 'SRC_obs' or  Attri_Name[icolnm] == 'layer' or  Attri_Name[icolnm] == 'path'  :
+#                         sf[Attri_Name[icolnm]] = str(tarinfo[Attri_Name[icolnm]].values[0])
+#                     elif Attri_Name[icolnm] == 'cat':
+#                         continue
+#                     else:
+#                         sf[Attri_Name[icolnm]] = float(tarinfo[Attri_Name[icolnm]].values[0])
+#             else:
+#                 for icolnm in range(0,len(UpdateColNM)):
+#                     sf[UpdateColNM[icolnm]] = float(tarinfo[UpdateColNM[icolnm]].values[0])
+# 
+#             layer_cat.updateFeature(sf)
+#     del layer_cat
 
 
 #########
@@ -3865,8 +3825,11 @@ class LRRT:
 
         UpdateTopology(mapoldnew_info)
         mapoldnew_info = UpdateNonConnectedcatchmentinfo(mapoldnew_info)
-        Modify_Feature_info(Path_Temp_final_rviply,mapoldnew_info)
-        Modify_Feature_info(Path_Temp_final_rvi,mapoldnew_info)
+        Copy_Pddataframe_to_shpfile(Path_Temp_final_rviply,mapoldnew_info,link_col_nm_shp = 'SubId'
+                                    ,link_col_nm_df = 'Old_SubId',UpdateColNM = ['#'])
+        Copy_Pddataframe_to_shpfile(Path_Temp_final_rvi,mapoldnew_info,link_col_nm_shp = 'SubId'
+                                    ,link_col_nm_df = 'Old_SubId',UpdateColNM = ['#'])
+                                    
 
         ######################################################################################################3
         ## create output folder
@@ -4190,8 +4153,11 @@ class LRRT:
 
         UpdateTopology(mapoldnew_info,UpdateStreamorder = -1)
         mapoldnew_info = UpdateNonConnectedcatchmentinfo(mapoldnew_info)
-        Modify_Feature_info(Path_Temp_final_rviply,mapoldnew_info)
-        Modify_Feature_info(Path_Temp_final_rvi,mapoldnew_info)
+        Copy_Pddataframe_to_shpfile(Path_Temp_final_rviply,mapoldnew_info,link_col_nm_shp = 'SubId'
+                                    ,link_col_nm_df = 'Old_SubId',UpdateColNM = ['#'])
+        Copy_Pddataframe_to_shpfile(Path_Temp_final_rvi,mapoldnew_info,link_col_nm_shp = 'SubId'
+                                    ,link_col_nm_df = 'Old_SubId',UpdateColNM = ['#'])
+                                    
 
 #        UpdateNonConnectedLakeArea_In_Finalcatinfo(Path_Temp_final_rvi,Non_ConL_cat_info)
 #        UpdateNonConnectedLakeArea_In_Finalcatinfo(Path_Temp_final_rviply,Non_ConL_cat_info)
@@ -4300,8 +4266,10 @@ class LRRT:
         UpdateTopology(mapoldnew_info,UpdateStreamorder = -1)
 #        mapoldnew_info.to_csv( os.path.join(Datafolder,'mapoldnew.csv'),sep=',',index=None)
 
-        Modify_Feature_info(Path_Temp_final_rviply,mapoldnew_info)
-        Modify_Feature_info(Path_Temp_final_rvi,mapoldnew_info)
+        Copy_Pddataframe_to_shpfile(Path_Temp_final_rviply,mapoldnew_info,link_col_nm_shp = 'SubId'
+                                    ,link_col_nm_df = 'Old_SubId',UpdateColNM = ['#'])
+        Copy_Pddataframe_to_shpfile(Path_Temp_final_rvi,mapoldnew_info,link_col_nm_shp = 'SubId'
+                                    ,link_col_nm_df = 'Old_SubId',UpdateColNM = ['#'])
 
         ## process Non connected lakes
 
