@@ -23,96 +23,9 @@ from AddlakesintoRoutingNetWork import Dirpoints_v3,check_lakecatchment,DefineCo
 from processing_functions_raster_array import Is_Point_Close_To_Id_In_Raster,GenerPourpoint,Check_If_Str_Is_Head_Stream,GenerateFinalPourpoints,CE_mcat4lake2
 from processing_functions_raster_grass import grass_raster_setnull,Return_Raster_As_Array_With_garray
 from processing_functions_attribute_table import Calculate_Longest_flowpath,New_SubId_To_Dissolve
-from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile
+from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile,Remove_Unselected_Lake_Attribute_In_Finalcatinfo
 from utilities import Dbf_To_Dataframe
 import timeit
-
-
-# #######
-# def UpdateNonConnectedLakeCatchmentinfo(Path_Non_ConnL_Cat,mapoldnew_info):
-#     layer_cat=QgsVectorLayer(Path_Non_ConnL_Cat,"")
-#     Attri_Name = layer_cat.fields().names()
-#     features = layer_cat.getFeatures()
-#     with edit(layer_cat):
-#         for sf in features:
-#             sf_ocatid_lake  = float(sf['SubId_riv'])
-#             tarinfo         = mapoldnew_info[mapoldnew_info['Old_SubId'] == sf_ocatid_lake]
-#             sf['SubId_riv'] = float(tarinfo['SubId'].values[0])
-#             layer_cat.updateFeature(sf)
-#     del layer_cat
-#     return
-# ##########
-
-##########
-# def UpdateNonConnectedLakeArea_In_Finalcatinfo(Path_Finalcatinfo,Non_ConnL_Cat_info):
-#     layer_cat=QgsVectorLayer(Path_Finalcatinfo,"")
-#     Attri_Name = layer_cat.fields().names()
-#     features = layer_cat.getFeatures()
-#     Non_ConnL_Cat_info['SubId_riv'] = Non_ConnL_Cat_info['SubId_riv'].astype(float)
-#     Non_ConnL_Cat_info['Area_m']    = Non_ConnL_Cat_info['Area_m'].astype(float)
-#     with edit(layer_cat):
-#         for sf in features:
-#             sf_subid        = float(sf['SubId'])
-#             tarinfo         = Non_ConnL_Cat_info[Non_ConnL_Cat_info['SubId_riv'] == sf_subid]
-#             if (len(tarinfo) == 0):
-#                 sf['NonLDArea']      = float(0)
-#             else:
-#                 total_non_conn_lake_area = 0.0
-#                 for idx in tarinfo.index:
-#                     total_non_conn_lake_area = total_non_conn_lake_area + float(tarinfo['Area_m'].values[0])
-# 
-#                 sf['NonLDArea'] = float(total_non_conn_lake_area)
-#             layer_cat.updateFeature(sf)
-#     del layer_cat
-#     return
-#########
-
-def UpdateConnectedLakeArea_In_Finalcatinfo(Path_Finalcatinfo,Conn_Lake_Ids):
-    layer_cat=QgsVectorLayer(Path_Finalcatinfo,"")
-    Attri_Name = layer_cat.fields().names()
-    features = layer_cat.getFeatures()
-    with edit(layer_cat):
-        for sf in features:
-            sf_subid        = float(sf['HyLakeId'])
-
-            if sf_subid in Conn_Lake_Ids or float(sf['IsLake']) == 2:
-                continue
-            sf['HyLakeId']      = float(-1.2345)
-            sf['LakeVol']       = float(-1.2345)
-            sf['LakeArea']      = float(-1.2345)
-            sf['LakeDepth']     = float(-1.2345)
-            sf['Laketype']      = float(-1.2345)
-            sf['IsLake']        = float(-1.2345)
-            layer_cat.updateFeature(sf)
-    del layer_cat
-    return
-
-#######
-# def Copy_Pddataframe_to_shpfile(Path_shpfile,Pddataframe,link_col_nm = 'nSubId',
-#                                 UpdateColNM = ['#']):
-#     layer_cat=QgsVectorLayer(Path_shpfile,"")
-#     Attri_Name = layer_cat.fields().names()
-#     features = layer_cat.getFeatures()
-#     with edit(layer_cat):
-#         for sf in features:
-#             Atti_Valu    = sf.attributes()
-#             sf_subid     = sf[link_col_nm]
-#             tarinfo      = Pddataframe[Pddataframe[link_col_nm] == sf_subid]
-# 
-#             if UpdateColNM[0] == '#':
-#                 for icolnm in range(0,len(Attri_Name)):     ### copy infomaiton
-#                     if  Attri_Name[icolnm] == 'Obs_NM' or Attri_Name[icolnm] == 'SRC_obs' or  Attri_Name[icolnm] == 'layer' or  Attri_Name[icolnm] == 'path'  :
-#                         sf[Attri_Name[icolnm]] = str(tarinfo[Attri_Name[icolnm]].values[0])
-#                     elif Attri_Name[icolnm] == 'cat':
-#                         continue
-#                     else:
-#                         sf[Attri_Name[icolnm]] = float(tarinfo[Attri_Name[icolnm]].values[0])
-#             else:
-#                 for icolnm in range(0,len(UpdateColNM)):
-#                     sf[UpdateColNM[icolnm]] = float(tarinfo[UpdateColNM[icolnm]].values[0])
-# 
-#             layer_cat.updateFeature(sf)
-#     del layer_cat
 
 
 #########
@@ -4029,8 +3942,8 @@ class LRRT:
 
         ####disolve catchment that are covered by non selected connected lakes
 
-        UpdateConnectedLakeArea_In_Finalcatinfo(Path_Temp_final_rviply,Selected_ConnLakes) ### remove lake attributes
-        UpdateConnectedLakeArea_In_Finalcatinfo(Path_Temp_final_rvi,Selected_ConnLakes)
+        Remove_Unselected_Lake_Attribute_In_Finalcatinfo(Path_Temp_final_rviply,Selected_ConnLakes) ### remove lake attributes
+        Remove_Unselected_Lake_Attribute_In_Finalcatinfo(Path_Temp_final_rvi,Selected_ConnLakes)
 
 
         finalcat_info_temp    = Path_Temp_final_rviply[:-3] + "dbf"

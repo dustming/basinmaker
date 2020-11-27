@@ -54,27 +54,38 @@ def Copy_Pddataframe_to_shpfile(Path_shpfile,Pddataframe,link_col_nm_shp = 'SubI
     del layer_cat
 
 
-def Modify_Feature_info(Path_feagure,mapoldnew_info):
-    sub_colnm = 'SubId'
-    layer_cat=QgsVectorLayer(Path_feagure,"")
+def Remove_Unselected_Lake_Attribute_In_Finalcatinfo(Path_Finalcatinfo,Conn_Lake_Ids):
+    """ Functions will set lake id not in Conn_Lake_Ids to -1.2345 in attribute 
+        table of Path_Finalcatinfo
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, the attribute table of Path_shpfile will be updated 
+    """
+    
+    layer_cat=QgsVectorLayer(Path_Finalcatinfo,"")
     Attri_Name = layer_cat.fields().names()
     features = layer_cat.getFeatures()
     with edit(layer_cat):
-
         for sf in features:
-            Atti_Valu    = sf.attributes()
-            sf_subid     = sf[sub_colnm]
-            tarinfo      = mapoldnew_info[mapoldnew_info['Old_SubId'] == sf_subid]
-            for icolnm in range(0,len(Attri_Name)):     ### copy infomaiton
-                if  Attri_Name[icolnm] == 'Obs_NM' or Attri_Name[icolnm] == 'SRC_obs':
-                    sf[Attri_Name[icolnm]] = str(tarinfo[Attri_Name[icolnm]].values[0])
-                elif Attri_Name[icolnm] == 'cat' or Attri_Name[icolnm] == 'path' or Attri_Name[icolnm] == 'layer':
-                    continue
-                else:
-                    sf[Attri_Name[icolnm]] = float(tarinfo[Attri_Name[icolnm]].values[0])
+            sf_subid        = float(sf['HyLakeId'])
+
+            if sf_subid in Conn_Lake_Ids or float(sf['IsLake']) == 2:
+                continue
+            sf['HyLakeId']      = float(-1.2345)
+            sf['LakeVol']       = float(-1.2345)
+            sf['LakeArea']      = float(-1.2345)
+            sf['LakeDepth']     = float(-1.2345)
+            sf['Laketype']      = float(-1.2345)
+            sf['IsLake']        = float(-1.2345)
             layer_cat.updateFeature(sf)
     del layer_cat
     return
+    
     
     
 
