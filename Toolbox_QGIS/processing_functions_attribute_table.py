@@ -155,4 +155,23 @@ def New_SubId_To_Dissolve(subid,catchmentinfo,mapoldnew_info,upsubid = -1,ismodi
 #    print(mapoldnew_info.loc[mask1,['BasArea','nsubid','SubId']])
 #    print(mapoldnew_info.loc[mapoldnew_info['nsubid'] == subid,['BasArea','nsubid','SubId']])
     return mapoldnew_info
-    
+
+def Evaluate_Two_Dataframes(Expected,Result,Check_Col_NM = 'SubId'):
+    ## check if two have the same column names 
+    if (Expected.columns != Result.columns).all():
+        return False 
+    neql = 0
+    ## check for each column two dataframe has the same value 
+    for col in Expected.columns:
+        Array_expect = Expected[col].values
+        Array_result = Result[col].values
+        if (Array_expect != Array_result).all():
+            print(col)
+            mask = Array_expect !=Array_result
+            print(Expected[Check_Col_NM].values[mask])
+        else:
+            neql = neql + 1 
+            
+    return neql == len(Expected.columns) 
+            
+                

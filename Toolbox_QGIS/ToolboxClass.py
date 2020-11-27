@@ -28,43 +28,43 @@ from utilities import Dbf_To_Dataframe
 import timeit
 
 
-#######
-def UpdateNonConnectedLakeCatchmentinfo(Path_Non_ConnL_Cat,mapoldnew_info):
-    layer_cat=QgsVectorLayer(Path_Non_ConnL_Cat,"")
-    Attri_Name = layer_cat.fields().names()
-    features = layer_cat.getFeatures()
-    with edit(layer_cat):
-        for sf in features:
-            sf_ocatid_lake  = float(sf['SubId_riv'])
-            tarinfo         = mapoldnew_info[mapoldnew_info['Old_SubId'] == sf_ocatid_lake]
-            sf['SubId_riv'] = float(tarinfo['SubId'].values[0])
-            layer_cat.updateFeature(sf)
-    del layer_cat
-    return
-##########
+# #######
+# def UpdateNonConnectedLakeCatchmentinfo(Path_Non_ConnL_Cat,mapoldnew_info):
+#     layer_cat=QgsVectorLayer(Path_Non_ConnL_Cat,"")
+#     Attri_Name = layer_cat.fields().names()
+#     features = layer_cat.getFeatures()
+#     with edit(layer_cat):
+#         for sf in features:
+#             sf_ocatid_lake  = float(sf['SubId_riv'])
+#             tarinfo         = mapoldnew_info[mapoldnew_info['Old_SubId'] == sf_ocatid_lake]
+#             sf['SubId_riv'] = float(tarinfo['SubId'].values[0])
+#             layer_cat.updateFeature(sf)
+#     del layer_cat
+#     return
+# ##########
 
 ##########
-def UpdateNonConnectedLakeArea_In_Finalcatinfo(Path_Finalcatinfo,Non_ConnL_Cat_info):
-    layer_cat=QgsVectorLayer(Path_Finalcatinfo,"")
-    Attri_Name = layer_cat.fields().names()
-    features = layer_cat.getFeatures()
-    Non_ConnL_Cat_info['SubId_riv'] = Non_ConnL_Cat_info['SubId_riv'].astype(float)
-    Non_ConnL_Cat_info['Area_m']    = Non_ConnL_Cat_info['Area_m'].astype(float)
-    with edit(layer_cat):
-        for sf in features:
-            sf_subid        = float(sf['SubId'])
-            tarinfo         = Non_ConnL_Cat_info[Non_ConnL_Cat_info['SubId_riv'] == sf_subid]
-            if (len(tarinfo) == 0):
-                sf['NonLDArea']      = float(0)
-            else:
-                total_non_conn_lake_area = 0.0
-                for idx in tarinfo.index:
-                    total_non_conn_lake_area = total_non_conn_lake_area + float(tarinfo['Area_m'].values[0])
-
-                sf['NonLDArea'] = float(total_non_conn_lake_area)
-            layer_cat.updateFeature(sf)
-    del layer_cat
-    return
+# def UpdateNonConnectedLakeArea_In_Finalcatinfo(Path_Finalcatinfo,Non_ConnL_Cat_info):
+#     layer_cat=QgsVectorLayer(Path_Finalcatinfo,"")
+#     Attri_Name = layer_cat.fields().names()
+#     features = layer_cat.getFeatures()
+#     Non_ConnL_Cat_info['SubId_riv'] = Non_ConnL_Cat_info['SubId_riv'].astype(float)
+#     Non_ConnL_Cat_info['Area_m']    = Non_ConnL_Cat_info['Area_m'].astype(float)
+#     with edit(layer_cat):
+#         for sf in features:
+#             sf_subid        = float(sf['SubId'])
+#             tarinfo         = Non_ConnL_Cat_info[Non_ConnL_Cat_info['SubId_riv'] == sf_subid]
+#             if (len(tarinfo) == 0):
+#                 sf['NonLDArea']      = float(0)
+#             else:
+#                 total_non_conn_lake_area = 0.0
+#                 for idx in tarinfo.index:
+#                     total_non_conn_lake_area = total_non_conn_lake_area + float(tarinfo['Area_m'].values[0])
+# 
+#                 sf['NonLDArea'] = float(total_non_conn_lake_area)
+#             layer_cat.updateFeature(sf)
+#     del layer_cat
+#     return
 #########
 
 def UpdateConnectedLakeArea_In_Finalcatinfo(Path_Finalcatinfo,Conn_Lake_Ids):
