@@ -257,4 +257,18 @@ def qgis_vector_field_calculator(processing,context,FORMULA,INPUT,OUTPUT,FIELD_N
 
     out = processing.run('qgis:fieldcalculator', alg_params, context=context)
     return out    
-            
+
+def qgis_vector_fix_geometries(processing,context,INPUT,OUTPUT):
+    """ qgis fixgeometries
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, 
+    """    
+    out = processing.run("native:fixgeometries", {'INPUT':INPUT,'OUTPUT':OUTPUT})
+    return out 
+                

@@ -24,6 +24,7 @@ from processing_functions_raster_array import Is_Point_Close_To_Id_In_Raster,Gen
 from processing_functions_raster_grass import grass_raster_setnull,Return_Raster_As_Array_With_garray
 from processing_functions_attribute_table import Calculate_Longest_flowpath,New_SubId_To_Dissolve,UpdateTopology,Connect_SubRegion_Update_DownSubId,Update_DA_Strahler_For_Combined_Result
 from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile,Remove_Unselected_Lake_Attribute_In_Finalcatinfo,Add_centroid_to_feature,Selectfeatureattributes,Copyfeature_to_another_shp_by_attribute,Add_New_SubId_To_Subregion_shpfile,qgis_vector_field_calculator
+from processing_functions_vector_qgis import qgis_vector_fix_geometries
 from utilities import Dbf_To_Dataframe
 import timeit
 
@@ -104,8 +105,9 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
             it is a string list
     """
     Path_finalcat_hru_out    = os.path.join(OutputFolder,"finalcat_hru_lake_info.shp")
-
-    Subfixgeo = processing.run("native:fixgeometries", {'INPUT':Path_Subbasin_ply,'OUTPUT':'memory:'})
+    
+    Subfixgeo = qgis_vector_fix_geometries(processing,context,INPUT = Path_Subbasin_ply,OUTPUT = 'memory:')    
+#    Subfixgeo = processing.run("native:fixgeometries", {'INPUT':Path_Subbasin_ply,'OUTPUT':'memory:'})
 
     fieldnames_list =['HRULake_ID','HRU_IsLake',Lake_Id,Sub_ID,Sub_Lake_ID] ### attribubte name in the need to be saved
 
@@ -134,9 +136,11 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
 
 
     if  Path_Connect_Lake_ply != '#':
-        ConLakefixgeo = processing.run("native:fixgeometries", {'INPUT':Path_Connect_Lake_ply,'OUTPUT':'memory:'})
+        ConLakefixgeo = qgis_vector_fix_geometries(processing,context,INPUT = Path_Connect_Lake_ply,OUTPUT = 'memory:')
+#        ConLakefixgeo = processing.run("native:fixgeometries", {'INPUT':Path_Connect_Lake_ply,'OUTPUT':'memory:'})
     if  Path_Non_Connect_Lake_ply !='#':
-        NonConLakefixgeo = processing.run("native:fixgeometries", {'INPUT':Path_Non_Connect_Lake_ply,'OUTPUT':'memory:'})
+        NonConLakefixgeo = qgis_vector_fix_geometries(processing,context,INPUT = Path_Non_Connect_Lake_ply,OUTPUT = 'memory:')
+#        NonConLakefixgeo = processing.run("native:fixgeometries", {'INPUT':Path_Non_Connect_Lake_ply,'OUTPUT':'memory:'})
 
     if Path_Connect_Lake_ply != '#' and Path_Non_Connect_Lake_ply != '#':
         meme_Alllakeply = processing.run("native:mergevectorlayers", {'LAYERS':[ConLakefixgeo['OUTPUT'],NonConLakefixgeo['OUTPUT']],'OUTPUT':'memory:'})
@@ -150,7 +154,8 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
     mem_sub_lake_union_temp = processing.run("native:union", {'INPUT':Subfixgeo['OUTPUT'],'OVERLAY':meme_Alllakeply['OUTPUT'],'OVERLAY_FIELDS_PREFIX':'','OUTPUT':'memory:'},context = context)['OUTPUT']
 
 #    mem_sub_lake_union_temp  = processing.run("saga:polygonunion", {'A':Subfixgeo['OUTPUT'],'B':meme_Alllakeply['OUTPUT'],'SPLIT':True,'RESULT':'TEMPORARY_OUTPUT'},context = context)['RESULT']
-    mem_sub_lake_union  = processing.run("native:fixgeometries", {'INPUT':mem_sub_lake_union_temp,'OUTPUT':'memory:'})['OUTPUT']
+    mem_sub_lake_union = qgis_vector_fix_geometries(processing,context,INPUT = mem_sub_lake_union_temp,OUTPUT = 'memory:')['OUTPUT']
+#    mem_sub_lake_union  = processing.run("native:fixgeometries", {'INPUT':mem_sub_lake_union_temp,'OUTPUT':'memory:'})['OUTPUT']
 
     layer_cat=mem_sub_lake_union
     SpRef_in = layer_cat.crs().authid()   ### get Raster spatialReference id
@@ -257,8 +262,10 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
                 print("Lake HRU have unexpected holes")
 
             layer_cat.updateFeature(sf)
-
-    mem_union_fix  = processing.run("native:fixgeometries", {'INPUT':layer_cat,'OUTPUT':'memory:'})['OUTPUT']
+    
+    mem_union_fix  = qgis_vector_fix_geometries(processing,context,INPUT = layer_cat,OUTPUT = 'memory:')['OUTPUT']
+    
+#    mem_union_fix  = processing.run("native:fixgeometries", {'INPUT':layer_cat,'OUTPUT':'memory:'})['OUTPUT']
 
     Sub_Lake_HRU1 = processing.run("native:dissolve", {'INPUT':mem_union_fix,'FIELD':['HRULake_ID'],'OUTPUT':os.path.join(tempfile.gettempdir(),str(np.random.randint(1, 10000 + 1))+'tempfile.shp')},context = context)['OUTPUT']
 
@@ -308,7 +315,8 @@ def Reproj_Clip_Dissolve_Simplify_Polygon(processing,context,layer_path,Project_
     """
 
     layer_proj = processing.run("native:reprojectlayer", {'INPUT':layer_path,'TARGET_CRS':QgsCoordinateReferenceSystem(trg_crs),'OUTPUT':'memory:'})['OUTPUT']
-    layer_fix  = processing.run("native:fixgeometries", {'INPUT':layer_proj,'OUTPUT':'memory:'})['OUTPUT']
+    layer_fix  = qgis_vector_fix_geometries(processing,context,INPUT = layer_proj,OUTPUT = 'memory:')['OUTPUT'] 
+#    layer_fix  = processing.run("native:fixgeometries", {'INPUT':layer_proj,'OUTPUT':'memory:'})['OUTPUT']
     layer_clip = processing.run("native:clip", {'INPUT':layer_fix,'OVERLAY':Layer_clip,'OUTPUT':'memory:'})['OUTPUT']
     layer_dis  = processing.run("native:dissolve", {'INPUT':layer_clip,'FIELD':[Class_Col],'OUTPUT':'memory:'},context = context)['OUTPUT']
     processing.run("qgis:createspatialindex", {'INPUT':layer_dis})
@@ -386,12 +394,14 @@ def Union_Ply_Layers_And_Simplify(processing,context,Merge_layer_list,dissolve_f
     ##union polygons
     if len(Merge_layer_list) == 1:
         mem_union = Merge_layer_list[0]
-        mem_union_fix_ext  = processing.run("native:fixgeometries", {'INPUT':mem_union,'OUTPUT':'memory:'})['OUTPUT']
+        mem_union_fix_ext  = qgis_vector_fix_geometries(processing,context,INPUT = mem_union,OUTPUT = 'memory:')['OUTPUT'] 
+#        mem_union_fix_ext  = processing.run("native:fixgeometries", {'INPUT':mem_union,'OUTPUT':'memory:'})['OUTPUT']
     elif len(Merge_layer_list) > 1:
         for i in range(0,len(Merge_layer_list)):
             if i == 0:
                 mem_union          = Merge_layer_list[i]
-                mem_union_fix_ext  = processing.run("native:fixgeometries", {'INPUT':mem_union,'OUTPUT':'memory:'})['OUTPUT']
+                mem_union_fix_ext  = qgis_vector_fix_geometries(processing,context,INPUT = mem_union,OUTPUT = 'memory:')['OUTPUT']
+#                mem_union_fix_ext  = processing.run("native:fixgeometries", {'INPUT':mem_union,'OUTPUT':'memory:'})['OUTPUT']
                 processing.run("qgis:createspatialindex", {'INPUT':mem_union_fix_ext})
             else:
                 mem_union_fix_temp = mem_union_fix_ext
@@ -399,8 +409,8 @@ def Union_Ply_Layers_And_Simplify(processing,context,Merge_layer_list,dissolve_f
 #                mem_union      = processing.run("native:union", {'INPUT':mem_union_fix_temp,'OVERLAY':Merge_layer_list[i],'OVERLAY_FIELDS_PREFIX':'','OUTPUT':'memory:'},context = context)['OUTPUT']
                 mem_union      = processing.run("saga:polygonunion", {'A':mem_union_fix_temp,'B':Merge_layer_list[i],'SPLIT':True,'RESULT':'TEMPORARY_OUTPUT'},context = context)['RESULT']
 #                print(mem_union)
-
-                mem_union_fix  = processing.run("native:fixgeometries", {'INPUT':mem_union,'OUTPUT':'memory:'})['OUTPUT']
+                mem_union_fix  = qgis_vector_fix_geometries(processing,context,INPUT = mem_union,OUTPUT = 'memory:')['OUTPUT']
+#                mem_union_fix  = processing.run("native:fixgeometries", {'INPUT':mem_union,'OUTPUT':'memory:'})['OUTPUT']
 #                ### remove unexpect polygon with area is 0 and some column value is null
 #                if i == 1:
 #                    formular = ' \"%s\" > 0  AND  \"%s\" > 0 ' % (dissolve_filedname_list[0],dissolve_filedname_list[1])
@@ -1661,7 +1671,8 @@ class LRRT:
             processing.run("native:extractbylocation", {'INPUT':os.path.join(self.tempfolder,'Lake_project.shp'),'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_allLakeply},context = context)
         except:
             print("Need fix lake boundary geometry to speed up")
-            processing.run("native:fixgeometries", {'INPUT':os.path.join(self.tempfolder,'Lake_project.shp'),'OUTPUT':self.Path_allLakeply_Temp})
+            qgis_vector_fix_geometries(processing,context,INPUT = os.path.join(self.tempfolder,'Lake_project.shp'),OUTPUT = self.Path_allLakeply_Temp)
+#            processing.run("native:fixgeometries", {'INPUT':os.path.join(self.tempfolder,'Lake_project.shp'),'OUTPUT':self.Path_allLakeply_Temp})
             processing.run("native:extractbylocation", {'INPUT':self.Path_allLakeply_Temp,'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_allLakeply},context = context)
         processing.run("native:polygonstolines", {'INPUT':self.Path_allLakeply,'OUTPUT':os.path.join(self.tempfolder,'Hylake_boundary.shp')},context = context)
         grass.run_command("v.import", input = self.Path_allLakeply, output = 'Hylake', overwrite = True)

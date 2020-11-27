@@ -65,6 +65,5 @@ def test_GenerateHRUS():
     assert Evaluate_Two_Dataframes(Result_finalcat_hru_info,Expect_finalcat_hru_info,Check_Col_NM = 'HRU_ID')
     
                                           
-    shutil.rmtree(Output_Folder) 
-test_GenerateHRUS()    
+    shutil.rmtree(Output_Folder)    
                     
