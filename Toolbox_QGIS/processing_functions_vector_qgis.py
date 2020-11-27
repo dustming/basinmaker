@@ -110,4 +110,22 @@ def Add_centroid_to_feature(Path_feagure,centroidx_nm = '#',centroidy_nm='#'):
             layer_cat.updateFeature(sf)
     del layer_cat
     return
+
+def Selectfeatureattributes(processing,Input = '#',Output='#',Attri_NM = '#',Values = []):
+    """ Functions extract features from Input, based on values in column Attri_NM
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, the attribute table of Path_shpfile will be updated 
+    """
+    exp =Attri_NM + '  IN  (  ' +  str(int(Values[0]))
+    for i in range(1,len(Values)):
+        exp = exp + " , "+str(int(Values[i]))
+    exp = exp + ')'
+    processing.run("native:extractbyexpression", {'INPUT':Input,'EXPRESSION':exp,'OUTPUT':Output})
     
+        

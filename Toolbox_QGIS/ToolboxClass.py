@@ -22,57 +22,16 @@ from RavenOutputFuctions import plotGuagelineobs,Caluculate_Lake_Active_Depth_an
 from AddlakesintoRoutingNetWork import Dirpoints_v3,check_lakecatchment,DefineConnected_Non_Connected_Lakes,Generate_stats_list_from_grass_raster
 from processing_functions_raster_array import Is_Point_Close_To_Id_In_Raster,GenerPourpoint,Check_If_Str_Is_Head_Stream,GenerateFinalPourpoints,CE_mcat4lake2
 from processing_functions_raster_grass import grass_raster_setnull,Return_Raster_As_Array_With_garray
-from processing_functions_attribute_table import Calculate_Longest_flowpath,New_SubId_To_Dissolve
-from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile,Remove_Unselected_Lake_Attribute_In_Finalcatinfo,Add_centroid_to_feature
+from processing_functions_attribute_table import Calculate_Longest_flowpath,New_SubId_To_Dissolve,UpdateTopology
+from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile,Remove_Unselected_Lake_Attribute_In_Finalcatinfo,Add_centroid_to_feature,Selectfeatureattributes
 from utilities import Dbf_To_Dataframe
 import timeit
 
 ##########
-def Selectfeatureattributes(processing,Input = '#',Output='#',Attri_NM = '#',Values = []):
-    exp =Attri_NM + '  IN  (  ' +  str(int(Values[0]))
-    for i in range(1,len(Values)):
-        exp = exp + " , "+str(int(Values[i]))
-    exp = exp + ')'
-    processing.run("native:extractbyexpression", {'INPUT':Input,'EXPRESSION':exp,'OUTPUT':Output})
+
 
 #####
-def UpdateTopology(mapoldnew_info,UpdateStreamorder = 1,UpdateSubId = 1):
-    idx = mapoldnew_info.index
 
-    if UpdateSubId > 0:
-        for i in range(0,len(idx)):
-            nsubid     = mapoldnew_info.loc[idx[i],'nsubid']
-            subid      = mapoldnew_info.loc[idx[i],'SubId']
-            odownsubid = mapoldnew_info.loc[idx[i],'DowSubId']
-
-            donsubidinfo = mapoldnew_info.loc[mapoldnew_info['SubId'] == odownsubid].copy()
-
-            if (len(donsubidinfo) >0):
-                mapoldnew_info.loc[idx[i],'ndownsubid'] = donsubidinfo['nsubid'].values[0]
-            else:
-                mapoldnew_info.loc[idx[i],'ndownsubid'] = -1
-
-        mapoldnew_info['Old_SubId']    = mapoldnew_info['SubId'].values
-        mapoldnew_info['Old_DowSubId'] = mapoldnew_info['DowSubId'].values
-        mapoldnew_info['SubId']        = mapoldnew_info['nsubid'].values
-
-        mapoldnew_info['DowSubId'] = mapoldnew_info['ndownsubid'].values
-
-    if UpdateStreamorder < 0:
-        return mapoldnew_info
-
-    mapoldnew_info_unique      = mapoldnew_info.drop_duplicates('SubId', keep='first')
-
-    mapoldnew_info_unique      = Streamorderanddrainagearea(mapoldnew_info_unique)
-
-    for i in range(0,len(mapoldnew_info_unique)):
-        isubid    =  mapoldnew_info_unique['SubId'].values[i]
-        mapoldnew_info.loc[mapoldnew_info['SubId'] == isubid,'Strahler']  = mapoldnew_info_unique['Strahler'].values[i]
-        mapoldnew_info.loc[mapoldnew_info['SubId'] == isubid,'Seg_ID']    = mapoldnew_info_unique['Seg_ID'].values[i]
-        mapoldnew_info.loc[mapoldnew_info['SubId'] == isubid,'Seg_order'] = mapoldnew_info_unique['Seg_order'].values[i]
-        mapoldnew_info.loc[mapoldnew_info['SubId'] == isubid,'DA']        = mapoldnew_info_unique['DA'].values[i]
-
-    return mapoldnew_info
 
 #######
 def Copyfeature_to_another_shp_by_attribute(Source_shp,Target_shp,Col_NM='SubId',Values=[-1],Attributes = [-1]):
@@ -2446,9 +2405,9 @@ class LRRT:
         Lakeid_lt_CL_Remove  = allLakinfo.loc[allLakinfo['Lake_area'] < Thre_Lake_Area_Connect]['Hylak_id'].values
         Lakeid_lt_NCL_Remove = allLakinfo.loc[allLakinfo['Lake_area'] < Thre_Lake_Area_nonConnect]['Hylak_id'].values
         Lakeid_lt_All_Remove = Lakeid_lt_NCL_Remove + Lakeid_lt_CL_Remove
-        grass_raster_setnull(grass,'Connect_Lake',Lakeid_lt_CL_Remove.tolist(),True,'Select_Connected_lakes1')
-        grass_raster_setnull(grass,'Nonconnect_Lake',Lakeid_lt_NCL_Remove.tolist(),True,'Select_Non_Connected_lakes1')
-        grass_raster_setnull(grass,'alllake',Lakeid_lt_All_Remove.tolist(),True,'SelectedLakes1')
+        grass_raster_setnull(grass,'Connect_Lake',Lakeid_lt_CL_Remove.tolist(),True,'Select_Connected_lakes')
+        grass_raster_setnull(grass,'Nonconnect_Lake',Lakeid_lt_NCL_Remove.tolist(),True,'Select_Non_Connected_lakes')
+        grass_raster_setnull(grass,'alllake',Lakeid_lt_All_Remove.tolist(),True,'SelectedLakes')
 
 #         hylake1,Selected_Con_Lakes = selectlake2(conlake_arr,VolThreshold,allLakinfo) ### remove lakes with lake area smaller than the VolThreshold from connected lake raster
 #         if NonConLThres >= 0:

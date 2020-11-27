@@ -13,25 +13,11 @@ from grass.pygrass.modules import Module
 from grass_session import Session
 import copy 
 import numpy as np 
+from processing_functions_attribute_table import Evaluate_Two_Dataframes
+from utilities import Dbf_To_Dataframe
 
 os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
 
-def Dbf_To_Dataframe(file_path):
-    """Transfer an input dbf file to dataframe
-    
-    Parameters
-    ---------- 
-    file_path   : string
-    Full path to a shapefile 
-    
-    Returns:
-    -------
-    dataframe   : datafame 
-    a pandas dataframe of attribute table of input shapefile    
-    """
-    tempinfo = Dbf5(file_path[:-3] + "dbf")
-    dataframe = tempinfo.to_dataframe()
-    return dataframe
     
 def Return_Raster_As_Array(grassdb,grass_location,raster_mn): 
     """Transfer an rater in grass database into np array
@@ -100,64 +86,33 @@ def test_RoutingNetworkTopologyUpdateToolset_riv():
     RTtool.RoutingNetworkTopologyUpdateToolset_riv(projection = 'EPSG:3573')
 
     
-    """Evaluate total number of subbasin, total subbasin area, total river length
-       and total lake area. 
-    N_Cat is the total number of subbasins in the simplified routing network 
-    len_Riv is the total river length in the simplified routing network 
-    Bas_Area is the total subbasin area in the simplified routing network
-    Lake_Area is the total lake area in the simplified routing network     
+    """Evaluate result attribute table of result polygon,polylie, and two 
+       lake polygons      
     """ 
 
     ### transfer expected siplified product into pandas dataframe
     Expect_Finalriv_info_ply = Dbf_To_Dataframe(os.path.join(Final_Result_Folder_Expected,'finalriv_info_ply.shp')).sort_values(by=['SubId'])
-    ### calcuate expected total number of catchment:Expect_N_Cat
-    Expect_N_Cat = len(Expect_Finalriv_info_ply)
-    ### calcuate expected total river length :Expect_len_Riv
-    Expect_len_Riv = sum(Expect_Finalriv_info_ply['RivLength'])
-    ### calcuate expected total basin area :Expect_Bas_Area
-    Expect_Bas_Area = sum(Expect_Finalriv_info_ply['BasArea'])
-    ### calcuate expected total lake area: Expect_Lake_Area
-    Expect_Lake_Area = sum(Expect_Finalriv_info_ply['LakeArea'])
-
-    ### transfer resulted siplified product into pandas dataframe    
     Result_Finalriv_info_ply = Dbf_To_Dataframe(os.path.join(Final_Result_Folder_Result,'finalriv_info_ply.shp')).sort_values(by=['SubId'])
-    ### calcuate resulted total number of catchment:Result_N_Cat
-    Result_N_Cat = len(Result_Finalriv_info_ply)
-    ### calcuate resulted total river length :Result_len_Riv
-    Result_len_Riv = sum(Result_Finalriv_info_ply['RivLength'])
-    ### calcuate resulted total basin area :Result_Bas_Area
-    Result_Bas_Area = sum(Result_Finalriv_info_ply['BasArea'])
-    ### calcuate resulted total lake area: Result_Lake_Area
-    Result_Lake_Area = sum(Result_Finalriv_info_ply['LakeArea'])
-    
-    ### compare Expect_N_Cat and Result_N_Cat
-    assert Expect_N_Cat == Result_N_Cat
-    ### compare Expect_len_Riv and Result_len_Riv
-    assert Expect_len_Riv == pytest.approx(Result_len_Riv, 0.1)
-    ### compare Expect_Bas_Area and Result_Bas_Area
-    assert Expect_Bas_Area == pytest.approx(Result_Bas_Area, 0.1)
-    ### compare Expect_Lake_Area and Result_Lake_Area    
-    assert Expect_Lake_Area == pytest.approx(Result_Lake_Area, 0.1)
-    
 
+    assert Evaluate_Two_Dataframes(Result_Finalriv_info_ply,Expect_Finalriv_info_ply,Check_Col_NM = 'SubId')
+    
     """Evaluate lake polygon files 
     Con_Lake_Ply is the lake polygon that connected by river network 
     Non_Con_Lake_Ply is the lake polygon that did not connected by 
     river network 
     """ 
     ### transfer expected siplified connected lake polygon  into pandas dataframe Expect_Con_Lake_Ply
-    Expect_Con_Lake_Ply      = Dbf_To_Dataframe(os.path.join(Final_Result_Folder_Expected,'Con_Lake_Ply.shp'))
+    Expect_Con_Lake_Ply      = Dbf_To_Dataframe(os.path.join(Expect_Result_Folder,'Con_Lake_Ply.shp')).sort_values(by=['Hylak_id'])
     ### transfer expected siplified non connected lake polygon  into pandas dataframe Expect_Non_Con_Lake_Ply
-    Expect_Non_Con_Lake_Ply  = Dbf_To_Dataframe(os.path.join(Final_Result_Folder_Expected,'Non_Con_Lake_Ply.shp'))
+    Expect_Non_Con_Lake_Ply  = Dbf_To_Dataframe(os.path.join(Expect_Result_Folder,'Non_Con_Lake_Ply.shp')).sort_values(by=['Hylak_id'])
     
     ### transfer resulted siplified connected lake polygon  into pandas dataframe Result_Con_Lake_Ply
-    Result_Con_Lake_Ply      = Dbf_To_Dataframe(os.path.join(Final_Result_Folder_Result,'Con_Lake_Ply.shp'))
+    Result_Con_Lake_Ply      = Dbf_To_Dataframe(os.path.join(Output_Folder,'Con_Lake_Ply.shp')).sort_values(by=['Hylak_id'])
     ### transfer resulted siplified non connected lake polygon  into pandas dataframe Result_Non_Con_Lake_Ply
-    Result_Non_Con_Lake_Ply  = Dbf_To_Dataframe(os.path.join(Final_Result_Folder_Result,'Non_Con_Lake_Ply.shp'))
+    Result_Non_Con_Lake_Ply  = Dbf_To_Dataframe(os.path.join(Output_Folder,'Non_Con_Lake_Ply.shp')).sort_values(by=['Hylak_id'])
     
     ### compare two pandas dataframe Expect_Con_Lake_Ply and Result_Con_Lake_Ply
-    assert Result_Con_Lake_Ply.equals(Expect_Con_Lake_Ply)
+    assert Evaluate_Two_Dataframes(Expect_Con_Lake_Ply,Result_Con_Lake_Ply,Check_Col_NM = 'Hylak_id')
     ### compare two pandas dataframe Expect_Non_Con_Lake_Ply and Result_Non_Con_Lake_Ply
-    assert Result_Non_Con_Lake_Ply.equals(Expect_Non_Con_Lake_Ply)
-#    RTtool.Output_Clean()
-    
+    assert Evaluate_Two_Dataframes(Expect_Non_Con_Lake_Ply,Result_Non_Con_Lake_Ply,Check_Col_NM = 'Hylak_id')
+    RTtool.Output_Clean()
