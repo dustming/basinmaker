@@ -23,7 +23,7 @@ from AddlakesintoRoutingNetWork import Dirpoints_v3,check_lakecatchment,DefineCo
 from processing_functions_raster_array import Is_Point_Close_To_Id_In_Raster,GenerPourpoint,Check_If_Str_Is_Head_Stream,GenerateFinalPourpoints,CE_mcat4lake2
 from processing_functions_raster_grass import grass_raster_setnull,Return_Raster_As_Array_With_garray
 from processing_functions_attribute_table import Calculate_Longest_flowpath,New_SubId_To_Dissolve,UpdateTopology,Connect_SubRegion_Update_DownSubId,Update_DA_Strahler_For_Combined_Result
-from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile,Remove_Unselected_Lake_Attribute_In_Finalcatinfo,Add_centroid_to_feature,Selectfeatureattributes,Copyfeature_to_another_shp_by_attribute,Add_New_SubId_To_Subregion_shpfile
+from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile,Remove_Unselected_Lake_Attribute_In_Finalcatinfo,Add_centroid_to_feature,Selectfeatureattributes,Copyfeature_to_another_shp_by_attribute,Add_New_SubId_To_Subregion_shpfile,qgis_vector_field_calculator
 from utilities import Dbf_To_Dataframe
 import timeit
 
@@ -115,8 +115,10 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
     fieldnames = set(fieldnames_list)
 
     if Path_Connect_Lake_ply == '#' and Path_Non_Connect_Lake_ply == '#':
-        memresult_addlakeid   = processing.run("qgis:fieldcalculator", {'INPUT':Subfixgeo['OUTPUT'],'FIELD_NAME':'Hylak_id','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT':'memory:'})
-        memresult_addhruid    = processing.run("qgis:fieldcalculator", {'INPUT':memresult_addlakeid['OUTPUT'],'FIELD_NAME':'HRULake_ID','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':' \"SubId\" ','OUTPUT':'memory:'})
+        memresult_addlakeid = qgis_vector_field_calculator(processing = processing, context = context,FORMULA ='-1',FIELD_NAME = 'Hylak_id',INPUT =Subfixgeo['OUTPUT'],OUTPUT ='memory:')
+        memresult_addhruid = qgis_vector_field_calculator(processing = processing, context = context,FORMULA =' \"SubId\" ',FIELD_NAME = 'HRULake_ID',INPUT =memresult_addlakeid['OUTPUT'],OUTPUT ='memory:')        
+#        memresult_addlakeid   = processing.run("qgis:fieldcalculator", {'INPUT':Subfixgeo['OUTPUT'],'FIELD_NAME':'Hylak_id','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT':'memory:'})
+#        memresult_addhruid    = processing.run("qgis:fieldcalculator", {'INPUT':memresult_addlakeid['OUTPUT'],'FIELD_NAME':'HRULake_ID','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':' \"SubId\" ','OUTPUT':'memory:'})
         layer_cat=memresult_addhruid['OUTPUT']
         field_ids = []
         for field in layer_cat.fields():
@@ -125,8 +127,8 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
         layer_cat.dataProvider().deleteAttributes(field_ids)
         layer_cat.updateFields()
         layer_cat.commitChanges()
-#        processing.run("qgis:fieldcalculator", {'INPUT':layer_cat,'FIELD_NAME':'HRU_IsLake','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT':Path_finalcat_hru_out})
-        Sub_Lake_HRU = processing.run("qgis:fieldcalculator", {'INPUT':layer_cat,'FIELD_NAME':'HRU_IsLake','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT':'memory:'})
+        Sub_Lake_HRU = qgis_vector_field_calculator(processing = processing, context = context,FORMULA ='-1',FIELD_NAME = 'HRU_IsLake',INPUT =layer_cat,OUTPUT ='memory:')
+#        Sub_Lake_HRU = processing.run("qgis:fieldcalculator", {'INPUT':layer_cat,'FIELD_NAME':'HRU_IsLake','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT':'memory:'})
         del layer_cat
         return Sub_Lake_HRU['OUTPUT'],Sub_Lake_HRU['OUTPUT'].crs().authid(),['HRULake_ID','HRU_IsLake',Sub_ID]
 
@@ -575,9 +577,9 @@ def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,disso
     ### calcuate area of each feature
     formular    = 'area(transform($geometry, \'%s\',\'%s\'))' % (hru_layer.crs().authid(),Project_crs)
 #    print(formular)
-    layer_area  = processing.run("qgis:fieldcalculator", {'INPUT':hru_layer,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formular,'OUTPUT':'memory:'})['OUTPUT']
-#
-    layer_area_id = processing.run("qgis:fieldcalculator", {'INPUT':layer_area,'FIELD_NAME':'HRU_ID','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':0,'NEW_FIELD':True,'FORMULA':' @row_number','OUTPUT':'memory:'})['OUTPUT']
+    layer_area    = qgis_vector_field_calculator(processing = processing, context = context,FORMULA =formular,FIELD_NAME = 'HRU_Area',INPUT =hru_layer,OUTPUT ='memory:')['OUTPUT']
+    layer_area_id = qgis_vector_field_calculator(processing = processing, context = context,FORMULA =' @row_number',FIELD_NAME = 'HRU_ID',INPUT =layer_area,OUTPUT ='memory:')['OUTPUT']
+    
     ### determine each lake hru's soil type
     Attri_table = Obtain_Attribute_Table(processing,context,layer_area_id)
 
@@ -711,19 +713,24 @@ def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,disso
     else:
         ## if no dem provided hru slope will use subbasin slope aspect and elevation
         formula = ' \"%s\" ' % 'BasSlope'
-        HRU_draft_sub_info_S = processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_sub_info,'FIELD_NAME':'HRU_S_mean','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
+        HRU_draft_sub_info_S = qgis_vector_field_calculator(processing = processing, context = context,FORMULA =formula,FIELD_NAME = 'HRU_S_mean',INPUT =HRU_draft_sub_info,OUTPUT ='memory:',FIELD_PRECISION = 3)['OUTPUT']
+#        HRU_draft_sub_info_S = processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_sub_info,'FIELD_NAME':'HRU_S_mean','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
 
         formula = ' \"%s\" ' % 'BasAspect'
-        HRU_draft_sub_info_A = processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_sub_info_S,'FIELD_NAME':'HRU_A_mean','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
+        HRU_draft_sub_info_A = qgis_vector_field_calculator(processing = processing, context = context,FORMULA =formula,FIELD_NAME = 'HRU_A_mean',INPUT =HRU_draft_sub_info_S,OUTPUT ='memory:',FIELD_PRECISION = 3)['OUTPUT']
+#        HRU_draft_sub_info_A = processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_sub_info_S,'FIELD_NAME':'HRU_A_mean','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
 
         formula = ' \"%s\" ' % 'MeanElev'
-        HRU_draft_sub_info_S = processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_sub_info_A,'FIELD_NAME':'HRU_E_mean','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
+        HRU_draft_sub_info_S = qgis_vector_field_calculator(processing = processing, context = context,FORMULA =formula,FIELD_NAME = 'HRU_E_mean',INPUT =HRU_draft_sub_info_A,OUTPUT ='memory:',FIELD_PRECISION = 3)['OUTPUT']        
+#        HRU_draft_sub_info_S = processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_sub_info_A,'FIELD_NAME':'HRU_E_mean','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
 
         HRU_draft_reproj = HRU_draft_sub_info_S
 
     ### update HRU area
     formular        = 'area(transform($geometry, \'%s\',\'%s\'))' % (trg_crs,Project_crs)
-    HRU_draf_final  = processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_reproj,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':False,'FORMULA':formular,'OUTPUT':'memory:'})['OUTPUT']
+    HRU_draf_final = qgis_vector_field_calculator(processing = processing, context = context,FORMULA =formular,FIELD_NAME = 'HRU_Area',INPUT =HRU_draft_reproj,OUTPUT ='memory:',NEW_FIELD=False,FIELD_PRECISION = 3)['OUTPUT']
+    
+#    HRU_draf_final  = processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_reproj,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':False,'FORMULA':formular,'OUTPUT':'memory:'})['OUTPUT']
 
 
 #    processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_reproj,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':False,'FORMULA':formular,'OUTPUT':os.path.join(OutputFolder,'hru_draft_final.shp')})
@@ -4075,31 +4082,36 @@ class LRRT:
 
         if Path_Landuse_Ply == '#': ### landuse polygon is not provided, landused id the same is IS lake 1 is lake -1 non land
             formula = '- \"%s\" ' % 'HRU_IsLake'
-            mem_union_landuse = processing.run("qgis:fieldcalculator", {'INPUT':mem_union,'FIELD_NAME':Landuse_ID,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
+            mem_union_landuse = qgis_vector_field_calculator(processing = processing, context = context,INPUT =mem_union, FIELD_NAME = Landuse_ID, FORMULA =formula,FIELD_PRECISION = 3,OUTPUT ='memory:')['OUTPUT']
+#            mem_union_landuse = processing.run("qgis:fieldcalculator", {'INPUT':mem_union,'FIELD_NAME':Landuse_ID,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
         else:
             mem_union_landuse = mem_union
 
         if Path_Soil_Ply == '#': #if soil is not provied, it the value will be the same as land use
             formula = ' \"%s\" ' % Landuse_ID
-            mem_union_soil = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_landuse,'FIELD_NAME':Soil_ID,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
+            mem_union_soil = qgis_vector_field_calculator(processing = processing, context = context,INPUT =mem_union_landuse, FIELD_NAME = Soil_ID, FORMULA =formula,FIELD_PRECISION = 3,OUTPUT ='memory:')['OUTPUT']
+#            mem_union_soil = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_landuse,'FIELD_NAME':Soil_ID,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
         else:
             mem_union_soil  = mem_union_landuse
 
         if Path_Veg_Ply == '#':  ### if no vegetation polygon is provide vegetation will be the same as landuse
             formula = ' \"%s\" ' % Landuse_ID
-            mem_union_veg = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_soil,'FIELD_NAME':Veg_ID,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
+            mem_union_veg = qgis_vector_field_calculator(processing = processing, context = context,INPUT =mem_union_soil, FIELD_NAME = Veg_ID, FORMULA =formula,FIELD_PRECISION = 3,OUTPUT ='memory:')['OUTPUT']
+#            mem_union_veg = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_soil,'FIELD_NAME':Veg_ID,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
         else:
             mem_union_veg = mem_union_soil
 
         if Path_Other_Ply_1 == '#':  ### if no vegetation polygon is provide vegetation will be the same as landuse
             formula = '- \"%s\" ' % 'HRU_IsLake'
-            mem_union_o1 = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_veg,'FIELD_NAME':Other_Ply_ID_1,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
+            mem_union_o1 = qgis_vector_field_calculator(processing = processing, context = context,INPUT =mem_union_veg, FIELD_NAME = Other_Ply_ID_1, FORMULA =formula,FIELD_PRECISION = 3,OUTPUT ='memory:')['OUTPUT']
+#            mem_union_o1 = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_veg,'FIELD_NAME':Other_Ply_ID_1,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
         else:
             mem_union_o1 = mem_union_veg
 
         if Path_Other_Ply_2 == '#':  ### if no vegetation polygon is provide vegetation will be the same as landuse
             formula = '- \"%s\" ' % 'HRU_IsLake'
-            mem_union_o2 = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_o1,'FIELD_NAME':Other_Ply_ID_2,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
+            mem_union_o2 = qgis_vector_field_calculator(processing = processing, context = context,INPUT =mem_union_o1, FIELD_NAME = Other_Ply_ID_2, FORMULA =formula,FIELD_PRECISION = 3,OUTPUT ='memory:')['OUTPUT']
+#            mem_union_o2 = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_o1,'FIELD_NAME':Other_Ply_ID_2,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
         else:
             mem_union_o2 = mem_union_o1
 
@@ -4112,8 +4124,10 @@ class LRRT:
                                                Landuse_info_data,Soil_info_data,
                                                Veg_info_data,DEM,Path_Subbasin_Ply,OutputFolder)
 
-
-        processing.run("qgis:fieldcalculator", {'INPUT':HRU_draf_final,'FIELD_NAME':'HRU_ID','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':0,'NEW_FIELD':False,'FORMULA':' @row_number','OUTPUT':output_hru_shp})
+        
+        qgis_vector_field_calculator(processing = processing, context = context,INPUT =HRU_draf_final, FIELD_NAME = 'HRU_ID', FORMULA =' @row_number',FIELD_PRECISION = 0,NEW_FIELD=False,OUTPUT =output_hru_shp)
+        
+#        processing.run("qgis:fieldcalculator", {'INPUT':HRU_draf_final,'FIELD_NAME':'HRU_ID','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':0,'NEW_FIELD':False,'FORMULA':' @row_number','OUTPUT':output_hru_shp})
 
         Clean_Attribute_Name(output_hru_shp ,self.FieldName_List_Product)
         del Sub_Lake_HRU_Layer,mem_union
@@ -4706,7 +4720,8 @@ class LRRT:
         processing.run("native:union", {'INPUT':Target_Ply_Path,'OVERLAY':Mapping_Ply_Path,'OVERLAY_FIELDS_PREFIX':'Map_','OUTPUT':Path_finalcat_hru_temp},context = context)
         processing.run("native:extractbyattribute", {'INPUT':Path_finalcat_hru_temp,'FIELD':'HRU_ID','OPERATOR':2,'VALUE':'0','OUTPUT':Path_finalcat_hru_temp2})
         processing.run("native:dissolve", {'INPUT':Path_finalcat_hru_temp2,'FIELD':['HRU_ID','Map_FGID'],'OUTPUT':Path_finalcat_hru_temp_dissolve},context = context)
-        processing.run("qgis:fieldcalculator", {'INPUT':Path_finalcat_hru_temp_dissolve,'FIELD_NAME':'s_area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'area(transform($geometry, \'EPSG:4326\',\'EPSG:3573\'))','OUTPUT':Path_finalcat_hru_temp_dissolve_area})
+        qgis_vector_field_calculator(processing = processing, context = context,FORMULA ='area(transform($geometry, \'EPSG:4326\',\'EPSG:3573\'))',FIELD_NAME = 's_area',INPUT =Path_finalcat_hru_temp_dissolve,OUTPUT =Path_finalcat_hru_temp_dissolve_area,FIELD_PRECISION = 3)['OUTPUT']
+#        processing.run("qgis:fieldcalculator", {'INPUT':Path_finalcat_hru_temp_dissolve,'FIELD_NAME':'s_area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'area(transform($geometry, \'EPSG:4326\',\'EPSG:3573\'))','OUTPUT':Path_finalcat_hru_temp_dissolve_area})
 
         ### calculate the area weight of the mapping polygon to target polygon
 

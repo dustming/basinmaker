@@ -160,6 +160,8 @@ def New_SubId_To_Dissolve(subid,catchmentinfo,mapoldnew_info,upsubid = -1,ismodi
 def Evaluate_Two_Dataframes(Expected,Result,Check_Col_NM = 'SubId'):
     ## check if two have the same column names 
     if (Expected.columns != Result.columns).all():
+        print(Expected.columns)
+        print(Result.columns)
         return False 
     neql = 0
     ## check for each column two dataframe has the same value 
