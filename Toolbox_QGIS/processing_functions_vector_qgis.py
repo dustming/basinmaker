@@ -168,4 +168,65 @@ def Copyfeature_to_another_shp_by_attribute(Source_shp,Target_shp,Col_NM='SubId'
     del layer_trg
     
         
-        
+
+
+def Add_New_SubId_To_Subregion_shpfile(processing,context,Layer,SubID_info = '#', OutputPath = '#',Region_ID = 1):
+    """ Asign new subbasin Id to each subbasins in each subregion
+    Parameters
+    ----------
+    processing                        : qgis object
+    context                           : qgis object
+    Layer                             : vector layer
+        it is the subbasin polygon or polyline of watershed delineation
+        result in each subregion
+    SubID_info                        : dataframe
+        it is a dataframe contains new subbasin id for each subbasin
+        in Layer
+    OutputPath                        : string
+        Path to the output file
+    Region_ID                         : integer
+        it is the subregion id of layer
+
+    Notes
+    -------
+        the output will be the same type of input Layer
+        stored in OutputPath, a new SubId will be given
+    Returns:
+    -------
+        None
+    """
+    alg_params = {
+        'FIELD_LENGTH': 10,
+        'FIELD_NAME': 'Region_ID',
+        'FIELD_PRECISION': 0,
+        'FIELD_TYPE': 0,
+        'FORMULA':str(int(Region_ID)), #' \"'+'SubId'+'\"'  + '2000000',   #
+        'INPUT': Layer,
+        'NEW_FIELD': True,
+        'OUTPUT':OutputPath
+        }
+
+    processing.run('qgis:fieldcalculator', alg_params, context=context)['OUTPUT']
+
+    layer_new=QgsVectorLayer(OutputPath,"")
+
+    features = layer_new.getFeatures()
+    with edit(layer_new):
+        for sf in features:
+            cSubId = int(sf['SubId'])
+            cDowSubId = int(sf['DowSubId'])
+            nSubId = SubID_info.loc[SubID_info['SubId'] == cSubId]['nSubId']
+            if len(SubID_info.loc[SubID_info['SubId'] == cDowSubId]) == 0:
+                nDowSubId = -1
+            else:
+                nDowSubId = SubID_info.loc[SubID_info['SubId'] == cDowSubId]['nSubId']
+            nSeg_ID = SubID_info.loc[SubID_info['SubId'] == cSubId]['nSeg_ID']
+            sf['SubId'] = int(nSubId)
+            sf['DowSubId'] = int(nDowSubId)
+            sf['Seg_ID'] =   int(nSeg_ID)
+            layer_new.updateFeature(sf)
+    del layer_new
+    return
+    
+    
+            

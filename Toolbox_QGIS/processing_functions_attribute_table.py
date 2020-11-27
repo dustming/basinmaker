@@ -399,5 +399,227 @@ def Defcat(out,outletid):
     Shedid = Shedid[Shedid>=0]
     return Shedid
     
-            
+
+
+def Connect_SubRegion_Update_DownSubId(AllCatinfo,DownCatinfo,Sub_Region_info):
+    """ Modify outlet subbasin's downstream subbasin ID for each subregion
+    Parameters
+    ----------
+    AllCatinfo                        : dataframe
+        it is a dataframe of the attribute table readed from finalcat_info
+        .shp or finalrivply_info.shp
+    DownCatinfo                       : dataframe
+        It is a dataframe includes two columns:
+        'Sub_Reg_ID': the subregion id
+        'Dow_Sub_Reg_Id': downstream subbasin id of the outlet subbasin in
+        this subregion
+    Sub_Region_info                   : dataframe
+        It is a dataframe includes subregion informations, with following
+        columns:
+        'Sub_Reg_ID' : the subregion id
+        'Dow_Sub_Reg_Id': the downstream subregion id
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        Sub_Region_info      : dataframe
+            An new columns indicate the outlet subbasin id of the sub region
+            will be added
+        AllCatinfo           : dataframe
+            Downstream subbasin ID of each subregion's outlet subbasin will
+            be updated.
+    """
+
+    ### update downsteam subbasin id for each subregion outlet subbasins
+    ### current value is -1, updated to connected downstream subbasin ID
+    ###loop for each subregion
+    routing_info      = Sub_Region_info[['Sub_Reg_ID','Dow_Sub_Reg_Id']].astype('float').values
+    for i in range(0,len(Sub_Region_info)):
+
+        ### obtain all subbasin data for i isubregion
+        isubregion = Sub_Region_info['Sub_Reg_ID'].values[i]
+        Sub_Region_cat_info = AllCatinfo.loc[AllCatinfo['Region_ID'] == isubregion].copy()
+
+        Sub_Region_info.loc[Sub_Region_info['Sub_Reg_ID'] == isubregion,'N_Up_SubRegion'] = len(Defcat(routing_info,isubregion))
+
+        ### check if this subregion exist in merged data
+        if len(Sub_Region_cat_info) <= 0:
+            continue
+
+        ### Subregion outlet subbasin ID
+        outlet_mask = Sub_Region_cat_info['DowSubId'] == -1
+        iReg_Outlet_Subid = Sub_Region_cat_info.loc[outlet_mask,'SubId'].values[0]    #(isubregion - 80000) * 200000 - 1
+        Sub_Region_info.loc[Sub_Region_info['Sub_Reg_ID'] == isubregion,'Outlet_SubId'] = iReg_Outlet_Subid
+        ### find downstream subregion id of current subregion
+        Dow_Sub_Region_id = Sub_Region_info['Dow_Sub_Reg_Id'].values[i]
+
+        ### if this region has no down subregions. do not need to
+        ### modify the dowsubid of the outlet subbasin of this subregion
+        if Dow_Sub_Region_id < 0:
+            continue
+
+        ### find downstrem subbasin id of outlet subbasin
+        Down_Sub_info = DownCatinfo.loc[DownCatinfo['value'] == isubregion].copy()
+
+        if len(Down_Sub_info) == 1:###
+            DownSubid   = Down_Sub_info['SubId'].values[0]
+            AllCatinfo.loc[AllCatinfo['SubId'] == iReg_Outlet_Subid,'DowSubId'] = DownSubid
+        ### two subregion drainage to the same downstream subregion,
+        ### the Down_Sub_info only contains one upper subregion
+        ### the rest do not exist in Down_Sub_info
+        elif Dow_Sub_Region_id == 79999:
+            AllCatinfo.loc[AllCatinfo['SubId'] == iReg_Outlet_Subid,'DowSubId'] = -1
+        else:
+            ### find if there is other subabsin drainage to this watershed
+            AllUpper_Subregions = DownCatinfo.loc[DownCatinfo['Region_ID'] == Dow_Sub_Region_id].copy()
+            if len(AllUpper_Subregions) == 1:
+                DownSubid   = AllUpper_Subregions['SubId'].values[0] ### share the same points
+                AllCatinfo.loc[AllCatinfo['SubId'] == iReg_Outlet_Subid,'DowSubId'] = DownSubid
+            else:
+                print("##################################################")
+                print("Subregion : ",isubregion,"   To  ",Dow_Sub_Region_id)
+                print("Need be manually connected")
+                print("##################################################")
+    return AllCatinfo,Sub_Region_info
+
+
+def Update_DA_Strahler_For_Combined_Result(AllCatinfo,Sub_Region_info):
+    """ Update Drainage area, strahler order of subbains
+
+    Update drainage area and strahler order for combined routing product
+    of each subregions
+    Parameters
+    ----------
+    AllCatinfo                        : dataframe
+        it is a dataframe of the attribute table readed from finalcat_info
+        .shp or finalrivply_info.shp
+    Sub_Region_info                   : dataframe
+        It is a dataframe includes subregion informations, with following
+        columns:
+        'Sub_Reg_ID' : the subregion id
+        'Dow_Sub_Reg_Id': the downstream subregion id
+
+    Notes
+    -------
+
+    Returns:
+    -------
+    AllCatinfo           : dataframe
+        Downstream DA and strahler order of each subregion along the flow
+        pathway between subregions will be updated.
+    """
+    ### start from head subregions with no upstream subregion
+    Subregion_list=Sub_Region_info[Sub_Region_info['N_Up_SubRegion'] == 1]['Sub_Reg_ID'].values
+    Subregion_list = np.unique(Subregion_list)
+    Subregion_list = Subregion_list.tolist()
+
+    #loop until Subregion_list has no subregions
+    # Subregion_list will be updated with downstream subregions of
+    # current subregion in Subregion_list
+    if len(AllCatinfo.loc[AllCatinfo['DowSubId'] == -1]) > 1:
+        print('Wathersed has multiple outlet  ')
+        print(AllCatinfo.loc[AllCatinfo['DowSubId'] == -1])
+        return AllCatinfo
+    elif len(AllCatinfo.loc[AllCatinfo['DowSubId'] == -1]) == 0:
+        print('Watershed has no outlet')
+        return AllCatinfo
+    else:
+        Watershedoutletsubid = AllCatinfo.loc[AllCatinfo['DowSubId'] == -1]['SubId'].values[0].astype(int)
+
+    ### Area and DA check
+    Total_DA_Subregion = 0.0
+    for i in range(0,len(Sub_Region_info)):
+        Outletsubid_csubr = Sub_Region_info['Outlet_SubId'].values[i]
+        Total_DA_Subregion = Total_DA_Subregion + AllCatinfo.loc[AllCatinfo['SubId'] == Outletsubid_csubr]['DA'].values[0]
+        print('######Area and DA check for subregion ',Sub_Region_info['Sub_Reg_ID'].values[i])
+        print('DA at the subregion outlet is    ',AllCatinfo.loc[AllCatinfo['SubId'] == Outletsubid_csubr]['DA'].values[0])
+        print('Total subregion area is          ',sum(AllCatinfo.loc[AllCatinfo['Region_ID'] == Sub_Region_info['Sub_Reg_ID'].values[i]]['BasArea'].values))
+
+    iloop = 1
+    while len(Subregion_list) > 0:
+        print("loop  ", iloop)
+        print(Subregion_list)
+        current_loop_list = copy.copy(Subregion_list)
+        Subregion_list = []
+        ### loop for current subregion list
+        for i in range(0,len(current_loop_list)):
+            ### current subregion id
+            c_subr_id =  current_loop_list[i]
+
+            ### down subregion id of current subregion
+            if c_subr_id == 79999:
+                continue
+
+            d_subr_id =  Sub_Region_info[Sub_Region_info['Sub_Reg_ID'] == c_subr_id]['Dow_Sub_Reg_Id'].values[0]
+            ### add down subregon id to the list for next while loop
+            Subregion_list.append(d_subr_id)
+
+            ### obtain outlet subid of this region
+            Outletsubid_csubr = Sub_Region_info[Sub_Region_info['Sub_Reg_ID'] == c_subr_id]['Outlet_SubId'].values[0]
+            ### obtain outlet sub info
+            Outletsub_info = AllCatinfo.loc[AllCatinfo['SubId'] == Outletsubid_csubr].copy()
+            ### obtain down subid of the outlet subbasin
+            downsubid = Outletsub_info['DowSubId'].values[0]
+
+            ### downsubid did not exist.....
+            if len(AllCatinfo.loc[AllCatinfo['SubId'] == downsubid]) <= 0:
+                if int(c_subr_id) != int(Watershedoutletsubid):
+                    print('Subregion:   ',c_subr_id)
+                    print('SubId is ',Outletsubid_csubr,' DownSubId is  ',downsubid, Watershedoutletsubid,int(c_subr_id) != int(Watershedoutletsubid))
+                continue
+
+            downsub_reg_id =  AllCatinfo.loc[AllCatinfo['SubId'] == downsubid]['Region_ID'].values[0]
+
+            if downsub_reg_id != d_subr_id:
+                print('Subregion:   ',c_subr_id,'  did not connected with    ',d_subr_id)
+                continue
+
+            while downsub_reg_id == d_subr_id:
+                csubid = downsubid ### update DA and Strahler for this subbasin
+
+                ### current subid info
+                C_sub_info = AllCatinfo.loc[AllCatinfo['SubId'] == csubid].copy()
+                ### find all subbasin drainge to this csubid
+                Upper_sub_info = AllCatinfo.loc[AllCatinfo['DowSubId'] == csubid].copy()
+
+                ### ## new DA = basin area + DA of upper subregions
+
+                NewDA = C_sub_info['BasArea'].values[0] + sum(Upper_sub_info['DA'].values)
+
+                ### calculate new Strahler orders
+                ## up stream Strahler orders
+                Strahlers = Upper_sub_info['Strahler'].values
+                maxStrahler = max(Strahlers)
+                if np.sum(Strahlers == maxStrahler) >=2:
+                    newStrahler = maxStrahler + 1
+                else:
+                    newStrahler = maxStrahler
+                #### updateAllCatinfo
+                AllCatinfo.loc[AllCatinfo['SubId'] == csubid,'Strahler'] = newStrahler
+                AllCatinfo.loc[AllCatinfo['SubId'] == csubid,'DA'] = NewDA
+
+                ####find next downsubbasin id
+                downsubid      = C_sub_info['DowSubId'].values[0]
+
+                ### downsubid did not exist.....
+                if len(AllCatinfo.loc[AllCatinfo['SubId'] == downsubid]) <= 0:
+                    if int(csubid) != int(Watershedoutletsubid):
+                        print('Subregion:   ',d_subr_id)
+                        print('SubId is ',csubid,' DownSubId is  ',downsubid,Watershedoutletsubid,int(csubid) != int(Watershedoutletsubid))
+                    break
+
+                downsub_reg_id = AllCatinfo.loc[AllCatinfo['SubId'] == downsubid]['Region_ID'].values[0]
+
+            ### update list for next loop
+        Subregion_list = list(set(Subregion_list))
+        iloop = iloop + 1
+    print("Check drainage area:")
+    print("Total basin area is              ",sum(AllCatinfo['BasArea'].values))
+    print("DA of the watersehd outlet is    ",AllCatinfo.loc[AllCatinfo['SubId'] == int(Watershedoutletsubid)]['DA'].values[0])
+    print("Total DA of each subregion       ",Total_DA_Subregion)
+    return AllCatinfo
+    
+                
                     
