@@ -273,6 +273,27 @@ def qgis_vector_fix_geometries(processing,context,INPUT,OUTPUT):
     return out 
 
 
+
+def qgis_vector_merge_vector_layers(processing,context,INPUT_Layer_List,OUTPUT):
+    """ qgis merge_vector_layers
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, 
+    """    
+    out = processing.run("native:mergevectorlayers", {'LAYERS':INPUT_Layer_List,'OUTPUT':OUTPUT})
+    
+    return out 
+    
+    
+
+
+
+
 def Clean_Attribute_Name(Input,FieldName_List,Input_Is_Feature_In_Mem = False,Col_NM_Max ='SubId'):
     """ Function clean feature attribute table, all colnmun not in FieldName_List
         will be removed 

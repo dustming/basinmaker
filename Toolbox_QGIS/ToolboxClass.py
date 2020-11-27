@@ -24,7 +24,7 @@ from processing_functions_raster_array import Is_Point_Close_To_Id_In_Raster,Gen
 from processing_functions_raster_grass import grass_raster_setnull,Return_Raster_As_Array_With_garray
 from processing_functions_attribute_table import Calculate_Longest_flowpath,New_SubId_To_Dissolve,UpdateTopology,Connect_SubRegion_Update_DownSubId,Update_DA_Strahler_For_Combined_Result
 from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile,Remove_Unselected_Lake_Attribute_In_Finalcatinfo,Add_centroid_to_feature,Selectfeatureattributes,Copyfeature_to_another_shp_by_attribute,Add_New_SubId_To_Subregion_shpfile,qgis_vector_field_calculator
-from processing_functions_vector_qgis import qgis_vector_fix_geometries,Clean_Attribute_Name
+from processing_functions_vector_qgis import qgis_vector_fix_geometries,Clean_Attribute_Name,qgis_vector_merge_vector_layers
 from utilities import Dbf_To_Dataframe
 import timeit
 
@@ -139,7 +139,8 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
 #        NonConLakefixgeo = processing.run("native:fixgeometries", {'INPUT':Path_Non_Connect_Lake_ply,'OUTPUT':'memory:'})
 
     if Path_Connect_Lake_ply != '#' and Path_Non_Connect_Lake_ply != '#':
-        meme_Alllakeply = processing.run("native:mergevectorlayers", {'LAYERS':[ConLakefixgeo['OUTPUT'],NonConLakefixgeo['OUTPUT']],'OUTPUT':'memory:'})
+        meme_Alllakeply = qgis_vector_merge_vector_layers(processing,context,INPUT_Layer_List = [ConLakefixgeo['OUTPUT'],NonConLakefixgeo['OUTPUT']],OUTPUT ='memory:')
+#        meme_Alllakeply = processing.run("native:mergevectorlayers", {'LAYERS':[ConLakefixgeo['OUTPUT'],NonConLakefixgeo['OUTPUT']],'OUTPUT':'memory:'})
     elif Path_Connect_Lake_ply !='#' and Path_Non_Connect_Lake_ply == '#':
         meme_Alllakeply = ConLakefixgeo
     elif Path_Connect_Lake_ply =='#' and Path_Non_Connect_Lake_ply != '#':
@@ -4429,17 +4430,22 @@ class LRRT:
             seg_id_strat_iregion = max(SubID_info['nSeg_ID']) + 10
 
         if(len(Paths_Con_Lake_ply) > 0):
-            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Con_Lake_ply,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'Con_Lake_Ply.shp')})
+            qgis_vector_merge_vector_layers(processing,context,INPUT_Layer_List = Paths_Con_Lake_ply,OUTPUT =os.path.join(OutputFolder,'Con_Lake_Ply.shp'))
+#            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Con_Lake_ply,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'Con_Lake_Ply.shp')})
         if(len(Paths_None_Con_Lake_ply) > 0):
-            processing.run("native:mergevectorlayers", {'LAYERS':Paths_None_Con_Lake_ply,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'Non_Con_Lake_Ply.shp')})
+            qgis_vector_merge_vector_layers(processing,context,INPUT_Layer_List = Paths_None_Con_Lake_ply,OUTPUT =os.path.join(OutputFolder,'Non_Con_Lake_Ply.shp'))
+#            processing.run("native:mergevectorlayers", {'LAYERS':Paths_None_Con_Lake_ply,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'Non_Con_Lake_Ply.shp')})
         if(len(Paths_obs_point) > 0):
-            processing.run("native:mergevectorlayers", {'LAYERS':Paths_obs_point,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'obspoint.shp')})
+            qgis_vector_merge_vector_layers(processing,context,INPUT_Layer_List = Paths_obs_point,OUTPUT =os.path.join(OutputFolder,'obspoint.shp'))            
+#            processing.run("native:mergevectorlayers", {'LAYERS':Paths_obs_point,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'obspoint.shp')})
 
 
         if Is_Final_Result == 1:
         #### Obtain downstream # id:
-            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalcat_ply,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalcat_info.shp')})
-            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalcat_line,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalcat_info_riv.shp')})
+            qgis_vector_merge_vector_layers(processing,context,INPUT_Layer_List = Paths_Finalcat_ply,OUTPUT =os.path.join(self.tempfolder,'finalcat_info.shp'))
+            qgis_vector_merge_vector_layers(processing,context,INPUT_Layer_List = Paths_Finalcat_line,OUTPUT =os.path.join(self.tempfolder,'finalcat_info_riv.shp'))            
+#            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalcat_ply,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalcat_info.shp')})
+#            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalcat_line,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalcat_info_riv.shp')})
             processing.run("qgis:joinattributesbylocation", {'INPUT':Path_Outlet_Down_point,'JOIN':os.path.join(self.tempfolder,'finalcat_info.shp'),'PREDICATE':[5],'JOIN_FIELDS':[],'METHOD':1,'DISCARD_NONMATCHING':True,'PREFIX':'','OUTPUT':os.path.join(self.tempfolder,'Down_Sub_ID.shp')},context = context)
 
             AllCatinfo = Dbf_To_Dataframe(os.path.join(self.tempfolder,'finalcat_info.shp')).drop_duplicates('SubId', keep='first').copy()
@@ -4455,8 +4461,11 @@ class LRRT:
             processing.run("native:dissolve", {'INPUT':os.path.join(self.tempfolder,'finalcat_info_riv.shp'),'FIELD':['SubId'],'OUTPUT':os.path.join(OutputFolder,'finalcat_info_riv.shp')},context = context)
 
         else:
-            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalriv_ply,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalriv_info_ply.shp')})
-            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalriv_line,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalriv_info.shp')})
+            qgis_vector_merge_vector_layers(processing,context,INPUT_Layer_List = Paths_Finalriv_ply,OUTPUT =os.path.join(self.tempfolder,'finalriv_info_ply.shp'))
+            qgis_vector_merge_vector_layers(processing,context,INPUT_Layer_List = Paths_Finalriv_line,OUTPUT =os.path.join(self.tempfolder,'finalriv_info.shp'))            
+
+#            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalriv_ply,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalriv_info_ply.shp')})
+#            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalriv_line,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalriv_info.shp')})
             processing.run("qgis:joinattributesbylocation", {'INPUT':Path_Outlet_Down_point,'JOIN':os.path.join(self.tempfolder,'finalriv_info_ply.shp'),'PREDICATE':[5],'JOIN_FIELDS':[],'METHOD':1,'DISCARD_NONMATCHING':True,'PREFIX':'','OUTPUT':os.path.join(self.tempfolder,'Down_Sub_ID.shp')},context = context)
 
             AllCatinfo = Dbf_To_Dataframe(os.path.join(self.tempfolder,'finalriv_info_ply.shp')).drop_duplicates('SubId', keep='first').copy()
