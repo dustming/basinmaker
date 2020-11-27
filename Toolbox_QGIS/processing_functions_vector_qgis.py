@@ -290,7 +290,25 @@ def qgis_vector_merge_vector_layers(processing,context,INPUT_Layer_List,OUTPUT):
     return out 
     
     
+def qgis_vector_return_crs_id(processing,context,INPUT_Layer,Input_Is_Feature_In_Mem = True):
+    """ qgis return vector layer projection crs id 
+    ----------
 
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, 
+    """
+    if Input_Is_Feature_In_Mem:   
+        out =INPUT_Layer.crs().authid()
+    else:
+        layer = QgsVectorLayer(INPUT_Layer, "")
+        out =layer.crs().authid()
+        
+    return out 
+    
 
 
 

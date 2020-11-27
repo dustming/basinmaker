@@ -24,7 +24,7 @@ from processing_functions_raster_array import Is_Point_Close_To_Id_In_Raster,Gen
 from processing_functions_raster_grass import grass_raster_setnull,Return_Raster_As_Array_With_garray
 from processing_functions_attribute_table import Calculate_Longest_flowpath,New_SubId_To_Dissolve,UpdateTopology,Connect_SubRegion_Update_DownSubId,Update_DA_Strahler_For_Combined_Result
 from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile,Remove_Unselected_Lake_Attribute_In_Finalcatinfo,Add_centroid_to_feature,Selectfeatureattributes,Copyfeature_to_another_shp_by_attribute,Add_New_SubId_To_Subregion_shpfile,qgis_vector_field_calculator
-from processing_functions_vector_qgis import qgis_vector_fix_geometries,Clean_Attribute_Name,qgis_vector_merge_vector_layers
+from processing_functions_vector_qgis import qgis_vector_fix_geometries,Clean_Attribute_Name,qgis_vector_merge_vector_layers,qgis_vector_return_crs_id
 from utilities import Dbf_To_Dataframe
 import timeit
 
@@ -104,67 +104,60 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
         ['HRULake_ID','HRU_IsLake',Sub_ID]       : list
             it is a string list
     """
+    
+    #Define output path
     Path_finalcat_hru_out    = os.path.join(OutputFolder,"finalcat_hru_lake_info.shp")
     
+    #Fix geometry errors in subbasin polygon 
     Subfixgeo = qgis_vector_fix_geometries(processing,context,INPUT = Path_Subbasin_ply,OUTPUT = 'memory:')    
-#    Subfixgeo = processing.run("native:fixgeometries", {'INPUT':Path_Subbasin_ply,'OUTPUT':'memory:'})
-
+     
+    #Create a file name list that will be strored in output attribute table 
     fieldnames_list =['HRULake_ID','HRU_IsLake',Lake_Id,Sub_ID,Sub_Lake_ID] ### attribubte name in the need to be saved
-
-#    for field in Subfixgeo['OUTPUT'].fields():
-#        fieldnames_list.append(field.name())
-
     fieldnames = set(fieldnames_list)
 
+    # if no lake polygon is provided, use subId as HRULake_ID. 
     if Path_Connect_Lake_ply == '#' and Path_Non_Connect_Lake_ply == '#':
         memresult_addlakeid = qgis_vector_field_calculator(processing = processing, context = context,FORMULA ='-1',FIELD_NAME = 'Hylak_id',INPUT =Subfixgeo['OUTPUT'],OUTPUT ='memory:')
         memresult_addhruid = qgis_vector_field_calculator(processing = processing, context = context,FORMULA =' \"SubId\" ',FIELD_NAME = 'HRULake_ID',INPUT =memresult_addlakeid['OUTPUT'],OUTPUT ='memory:')        
-#        memresult_addlakeid   = processing.run("qgis:fieldcalculator", {'INPUT':Subfixgeo['OUTPUT'],'FIELD_NAME':'Hylak_id','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT':'memory:'})
-#        memresult_addhruid    = processing.run("qgis:fieldcalculator", {'INPUT':memresult_addlakeid['OUTPUT'],'FIELD_NAME':'HRULake_ID','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':' \"SubId\" ','OUTPUT':'memory:'})
         layer_cat=memresult_addhruid['OUTPUT']
-       
-        layer_cat = Clean_Attribute_Name(layer_cat,fieldnames,Input_Is_Feature_In_Mem = True)
-        
+        # remove column not in fieldnames
+        layer_cat = Clean_Attribute_Name(layer_cat,fieldnames,Input_Is_Feature_In_Mem = True)        
         Sub_Lake_HRU = qgis_vector_field_calculator(processing = processing, context = context,FORMULA ='-1',FIELD_NAME = 'HRU_IsLake',INPUT =layer_cat,OUTPUT ='memory:')
-#        Sub_Lake_HRU = processing.run("qgis:fieldcalculator", {'INPUT':layer_cat,'FIELD_NAME':'HRU_IsLake','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'-1','OUTPUT':'memory:'})
         del layer_cat
-        return Sub_Lake_HRU['OUTPUT'],Sub_Lake_HRU['OUTPUT'].crs().authid(),['HRULake_ID','HRU_IsLake',Sub_ID]
+        crs_id = qgis_vector_return_crs_id(processing,context,Sub_Lake_HRU['OUTPUT'],Input_Is_Feature_In_Mem = True)
+        return Sub_Lake_HRU['OUTPUT'],crs_id,['HRULake_ID','HRU_IsLake',Sub_ID]
 
-
+    # fix lake polygon  geometry 
     if  Path_Connect_Lake_ply != '#':
         ConLakefixgeo = qgis_vector_fix_geometries(processing,context,INPUT = Path_Connect_Lake_ply,OUTPUT = 'memory:')
-#        ConLakefixgeo = processing.run("native:fixgeometries", {'INPUT':Path_Connect_Lake_ply,'OUTPUT':'memory:'})
+    # fix lake polygon geometry 
     if  Path_Non_Connect_Lake_ply !='#':
         NonConLakefixgeo = qgis_vector_fix_geometries(processing,context,INPUT = Path_Non_Connect_Lake_ply,OUTPUT = 'memory:')
-#        NonConLakefixgeo = processing.run("native:fixgeometries", {'INPUT':Path_Non_Connect_Lake_ply,'OUTPUT':'memory:'})
-
+    
+    # Merge connected and non connected lake polygons first 
     if Path_Connect_Lake_ply != '#' and Path_Non_Connect_Lake_ply != '#':
         meme_Alllakeply = qgis_vector_merge_vector_layers(processing,context,INPUT_Layer_List = [ConLakefixgeo['OUTPUT'],NonConLakefixgeo['OUTPUT']],OUTPUT ='memory:')
-#        meme_Alllakeply = processing.run("native:mergevectorlayers", {'LAYERS':[ConLakefixgeo['OUTPUT'],NonConLakefixgeo['OUTPUT']],'OUTPUT':'memory:'})
     elif Path_Connect_Lake_ply !='#' and Path_Non_Connect_Lake_ply == '#':
         meme_Alllakeply = ConLakefixgeo
     elif Path_Connect_Lake_ply =='#' and Path_Non_Connect_Lake_ply != '#':
         meme_Alllakeply = NonConLakefixgeo
     else:
         print("should never happened......")
-
+    
+    # union merged polygon and subbasin polygon 
     mem_sub_lake_union_temp = processing.run("native:union", {'INPUT':Subfixgeo['OUTPUT'],'OVERLAY':meme_Alllakeply['OUTPUT'],'OVERLAY_FIELDS_PREFIX':'','OUTPUT':'memory:'},context = context)['OUTPUT']
-
-#    mem_sub_lake_union_temp  = processing.run("saga:polygonunion", {'A':Subfixgeo['OUTPUT'],'B':meme_Alllakeply['OUTPUT'],'SPLIT':True,'RESULT':'TEMPORARY_OUTPUT'},context = context)['RESULT']
+    
+    # fix union geometry 
     mem_sub_lake_union = qgis_vector_fix_geometries(processing,context,INPUT = mem_sub_lake_union_temp,OUTPUT = 'memory:')['OUTPUT']
-#    mem_sub_lake_union  = processing.run("native:fixgeometries", {'INPUT':mem_sub_lake_union_temp,'OUTPUT':'memory:'})['OUTPUT']
-
+    
+    # add attribute 
     layer_cat=mem_sub_lake_union
     SpRef_in = layer_cat.crs().authid()   ### get Raster spatialReference id
     layer_cat.dataProvider().addAttributes([QgsField('HRULake_ID', QVariant.Int),QgsField('HRU_IsLake', QVariant.Int)])
-    field_ids = []
-
-        # Fieldnames to save
-
-        ## delete unused lake ids
+     
+    # remove column not in fieldnames
     layer_cat,max_subbasin_id = Clean_Attribute_Name(layer_cat,fieldnames,Input_Is_Feature_In_Mem = True,Col_NM_Max ='SubId')
         
-#    print("maximum subbasin Id is    ",max_subbasin_id, "N potential HRUS generated with lake polygon    ",N_new_features)
     
     N_new_features = layer_cat.featureCount()
     
@@ -265,7 +258,8 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
     Sub_Lake_HRU = processing.run("native:dissolve", {'INPUT':Sub_Lake_HRU1,'FIELD':['HRULake_ID'],'OUTPUT':'memory:'},context = context)
 
     del layer_cat
-    return Sub_Lake_HRU['OUTPUT'],Sub_Lake_HRU['OUTPUT'].crs().authid(),['HRULake_ID','HRU_IsLake',Sub_ID]
+    crs_id = qgis_vector_return_crs_id(processing,context,Sub_Lake_HRU['OUTPUT'],Input_Is_Feature_In_Mem = True)
+    return Sub_Lake_HRU['OUTPUT'],crs_id,['HRULake_ID','HRU_IsLake',Sub_ID]
 ############
 
 def Reproj_Clip_Dissolve_Simplify_Polygon(processing,context,layer_path,Project_crs,trg_crs,
