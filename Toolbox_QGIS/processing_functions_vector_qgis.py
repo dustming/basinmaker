@@ -127,5 +127,45 @@ def Selectfeatureattributes(processing,Input = '#',Output='#',Attri_NM = '#',Val
         exp = exp + " , "+str(int(Values[i]))
     exp = exp + ')'
     processing.run("native:extractbyexpression", {'INPUT':Input,'EXPRESSION':exp,'OUTPUT':Output})
+
+
+def Copyfeature_to_another_shp_by_attribute(Source_shp,Target_shp,Col_NM='SubId',Values=[-1],Attributes = [-1]):
+
+    """ Functions that will copy features in Source_shp to Target_shp 
+    based on attribute values in Values
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, the attribute table of Path_shpfile will be updated 
+    """
     
+    layer_src=QgsVectorLayer(Source_shp,"")
+    layer_trg=QgsVectorLayer(Target_shp,"")
+
+    src_features = layer_src.getFeatures()
+
+    Selected_Features = []
+    for sf in src_features:
+        #centroidxy = sf.geometry().centroid().asPoint()
+        Select_value = sf[Col_NM]
+        if Select_value in Values:
+            src_geometry =  sf.geometry()
+            attribute = Attributes.loc[Attributes[Col_NM] == Select_value].values
+            temp_feature=QgsFeature()
+            temp_feature.setGeometry(src_geometry)
+            temp_feature.setAttributes(attribute.tolist()[0])
+            Selected_Features.append(temp_feature)
+
+    layer_trg.startEditing()
+    layer_trg.addFeatures(Selected_Features)
+    layer_trg.commitChanges()
+    layer_trg.updateExtents()
+    del layer_src
+    del layer_trg
+    
+        
         

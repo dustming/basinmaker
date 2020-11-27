@@ -23,42 +23,11 @@ from AddlakesintoRoutingNetWork import Dirpoints_v3,check_lakecatchment,DefineCo
 from processing_functions_raster_array import Is_Point_Close_To_Id_In_Raster,GenerPourpoint,Check_If_Str_Is_Head_Stream,GenerateFinalPourpoints,CE_mcat4lake2
 from processing_functions_raster_grass import grass_raster_setnull,Return_Raster_As_Array_With_garray
 from processing_functions_attribute_table import Calculate_Longest_flowpath,New_SubId_To_Dissolve,UpdateTopology
-from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile,Remove_Unselected_Lake_Attribute_In_Finalcatinfo,Add_centroid_to_feature,Selectfeatureattributes
+from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile,Remove_Unselected_Lake_Attribute_In_Finalcatinfo,Add_centroid_to_feature,Selectfeatureattributes,Copyfeature_to_another_shp_by_attribute
 from utilities import Dbf_To_Dataframe
 import timeit
 
-##########
 
-
-#####
-
-
-#######
-def Copyfeature_to_another_shp_by_attribute(Source_shp,Target_shp,Col_NM='SubId',Values=[-1],Attributes = [-1]):
-    layer_src=QgsVectorLayer(Source_shp,"")
-    layer_trg=QgsVectorLayer(Target_shp,"")
-
-    src_features = layer_src.getFeatures()
-
-    Selected_Features = []
-    for sf in src_features:
-        #centroidxy = sf.geometry().centroid().asPoint()
-        Select_value = sf[Col_NM]
-        if Select_value in Values:
-            src_geometry =  sf.geometry()
-            attribute = Attributes.loc[Attributes[Col_NM] == Select_value].values
-            temp_feature=QgsFeature()
-            temp_feature.setGeometry(src_geometry)
-            temp_feature.setAttributes(attribute.tolist()[0])
-            Selected_Features.append(temp_feature)
-
-    layer_trg.startEditing()
-    layer_trg.addFeatures(Selected_Features)
-    layer_trg.commitChanges()
-    layer_trg.updateExtents()
-    del layer_src
-    del layer_trg
-###########
 ###########
 def ConnectLake_to_NonConnectLake_Updateinfo(NonC_Lakeinfo,finalriv_info,Merged_subids,Connect_Lake_ply_info,ConLakeId):
 
