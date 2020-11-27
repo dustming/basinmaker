@@ -310,6 +310,23 @@ def qgis_vector_return_crs_id(processing,context,INPUT_Layer,Input_Is_Feature_In
     return out 
     
 
+def qgis_vector_union_two_layers(processing,context,INPUT,OVERLAY,OUTPUT,OVERLAY_FIELDS_PREFIX = ''):
+    """ qgis union two layers 
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, 
+    """
+    
+    out = processing.run("native:union", {'INPUT':INPUT,'OVERLAY':OVERLAY,'OVERLAY_FIELDS_PREFIX':OVERLAY_FIELDS_PREFIX,'OUTPUT':OUTPUT},context = context)
+            
+    return out 
+    
+
 
 
 def Clean_Attribute_Name(Input,FieldName_List,Input_Is_Feature_In_Mem = False,Col_NM_Max ='SubId'):
