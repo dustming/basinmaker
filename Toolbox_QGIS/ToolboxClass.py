@@ -25,7 +25,7 @@ from processing_functions_raster_grass import grass_raster_setnull,Return_Raster
 from processing_functions_attribute_table import Calculate_Longest_flowpath,New_SubId_To_Dissolve,UpdateTopology,Connect_SubRegion_Update_DownSubId,Update_DA_Strahler_For_Combined_Result
 from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile,Remove_Unselected_Lake_Attribute_In_Finalcatinfo,Add_centroid_to_feature,Selectfeatureattributes,Copyfeature_to_another_shp_by_attribute,Add_New_SubId_To_Subregion_shpfile,qgis_vector_field_calculator
 from processing_functions_vector_qgis import qgis_vector_fix_geometries,Clean_Attribute_Name,qgis_vector_merge_vector_layers,qgis_vector_return_crs_id,qgis_vector_union_two_layers,qgis_vector_extract_by_attribute
-from processing_functions_vector_qgis import qgis_vector_add_attributes,qgis_vector_get_attributes
+from processing_functions_vector_qgis import qgis_vector_add_attributes,qgis_vector_get_attributes,qgis_vector_dissolve
 from utilities import Dbf_To_Dataframe
 import timeit
 
@@ -163,9 +163,8 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
     layer_cat,max_subbasin_id = Clean_Attribute_Name(layer_cat,fieldnames,Input_Is_Feature_In_Mem = True,Col_NM_Max ='SubId')
         
     
-    N_new_features = qgis_vector_get_attributes(processing,context,layer_cat,'count')
-    
     ## create HRU_lAKE_ID
+    N_new_features = qgis_vector_get_attributes(processing,context,layer_cat,'count')
     Attri_Name = qgis_vector_get_attributes(processing,context,layer_cat,'field_name') #layer_cat.fields().names()
     features = qgis_vector_get_attributes(processing,context,layer_cat,'features') #layer_cat.getFeatures()
     new_hruid = 1
@@ -220,7 +219,7 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
             layer_cat.updateFeature(sf)
 
     Attri_table = Obtain_Attribute_Table(processing,context,layer_cat)
-    features = layer_cat.getFeatures()
+    features = qgis_vector_get_attributes(processing,context,layer_cat,'features') #layer_cat.getFeatures()
     with edit(layer_cat):
         for sf in features:
 
@@ -254,12 +253,9 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
     
     mem_union_fix  = qgis_vector_fix_geometries(processing,context,INPUT = layer_cat,OUTPUT = 'memory:')['OUTPUT']
     
-#    mem_union_fix  = processing.run("native:fixgeometries", {'INPUT':layer_cat,'OUTPUT':'memory:'})['OUTPUT']
-
-    Sub_Lake_HRU1 = processing.run("native:dissolve", {'INPUT':mem_union_fix,'FIELD':['HRULake_ID'],'OUTPUT':os.path.join(tempfile.gettempdir(),str(np.random.randint(1, 10000 + 1))+'tempfile.shp')},context = context)['OUTPUT']
-
-    Sub_Lake_HRU2 = processing.run("native:dissolve", {'INPUT':Sub_Lake_HRU1,'FIELD':['HRULake_ID'],'OUTPUT':Path_finalcat_hru_out},context = context)
-    Sub_Lake_HRU = processing.run("native:dissolve", {'INPUT':Sub_Lake_HRU1,'FIELD':['HRULake_ID'],'OUTPUT':'memory:'},context = context)
+    Sub_Lake_HRU1 = qgis_vector_dissolve(processing,context,INPUT = mem_union_fix,FIELD = ['HRULake_ID'],OUTPUT = os.path.join(tempfile.gettempdir(),str(np.random.randint(1, 10000 + 1))+'tempfile.shp'))['OUTPUT']
+    Sub_Lake_HRU2 = qgis_vector_dissolve(processing,context,INPUT = Sub_Lake_HRU1,FIELD = ['HRULake_ID'],OUTPUT = Path_finalcat_hru_out)
+    Sub_Lake_HRU = qgis_vector_dissolve(processing,context,INPUT = Sub_Lake_HRU1,FIELD = ['HRULake_ID'],OUTPUT = 'memory:')
 
     del layer_cat
     crs_id = qgis_vector_return_crs_id(processing,context,Sub_Lake_HRU['OUTPUT'],Input_Is_Feature_In_Mem = True)
@@ -306,9 +302,8 @@ def Reproj_Clip_Dissolve_Simplify_Polygon(processing,context,layer_path,Project_
 
     layer_proj = processing.run("native:reprojectlayer", {'INPUT':layer_path,'TARGET_CRS':QgsCoordinateReferenceSystem(trg_crs),'OUTPUT':'memory:'})['OUTPUT']
     layer_fix  = qgis_vector_fix_geometries(processing,context,INPUT = layer_proj,OUTPUT = 'memory:')['OUTPUT'] 
-#    layer_fix  = processing.run("native:fixgeometries", {'INPUT':layer_proj,'OUTPUT':'memory:'})['OUTPUT']
     layer_clip = processing.run("native:clip", {'INPUT':layer_fix,'OVERLAY':Layer_clip,'OUTPUT':'memory:'})['OUTPUT']
-    layer_dis  = processing.run("native:dissolve", {'INPUT':layer_clip,'FIELD':[Class_Col],'OUTPUT':'memory:'},context = context)['OUTPUT']
+    layer_dis  = gis_vector_dissolve(processing,context,INPUT = layer_clip,FIELD = [Class_Col],OUTPUT = 'memory:')['OUTPUT']
     processing.run("qgis:createspatialindex", {'INPUT':layer_dis})
 
 
@@ -433,9 +428,7 @@ def Union_Ply_Layers_And_Simplify(processing,context,Merge_layer_list,dissolve_f
     mem_union_fix_ext.updateFields()
     mem_union_fix_ext.commitChanges()
 
-
-    mem_union_dis = processing.run("native:dissolve", {'INPUT':mem_union_fix_ext,'FIELD':dissolve_filedname_list,'OUTPUT':'memory:'},context = context)['OUTPUT']
-#    processing.run("native:dissolve", {'INPUT':mem_union_fix_ext,'FIELD':dissolve_filedname_list,'OUTPUT':os.path.join(OutputFolder,'union_diso.shp')},context = context)
+    mem_union_dis  = qgis_vector_dissolve(processing,context,INPUT = mem_union_fix_ext,FIELD =dissolve_filedname_list,OUTPUT = 'memory:')['OUTPUT']
 
     return mem_union_dis
 

@@ -129,6 +129,7 @@ def Selectfeatureattributes(processing,Input = '#',Output='#',Attri_NM = '#',Val
     processing.run("native:extractbyexpression", {'INPUT':Input,'EXPRESSION':exp,'OUTPUT':Output})
 
 
+
 def Copyfeature_to_another_shp_by_attribute(Source_shp,Target_shp,Col_NM='SubId',Values=[-1],Attributes = [-1]):
 
     """ Functions that will copy features in Source_shp to Target_shp 
@@ -245,6 +246,23 @@ def qgis_vector_field_calculator(processing,context,FORMULA,INPUT,OUTPUT,FIELD_N
 
     out = processing.run('qgis:fieldcalculator', alg_params, context=context)
     return out    
+
+
+
+def qgis_vector_dissolve(processing,context,INPUT,FIELD,OUTPUT):
+    """ qgis dissolve input vector based on values in FIELD list
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, 
+    """    
+    out = processing.run("native:dissolve", {'INPUT':INPUT,'FIELD':FIELD,'OUTPUT':OUTPUT},context = context)
+    return out 
+
 
 def qgis_vector_fix_geometries(processing,context,INPUT,OUTPUT):
     """ qgis fixgeometries
