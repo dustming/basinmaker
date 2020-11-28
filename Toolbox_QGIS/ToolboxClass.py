@@ -22,7 +22,7 @@ from RavenOutputFuctions import plotGuagelineobs,Caluculate_Lake_Active_Depth_an
 from AddlakesintoRoutingNetWork import Dirpoints_v3,check_lakecatchment,DefineConnected_Non_Connected_Lakes,Generate_stats_list_from_grass_raster
 from processing_functions_raster_array import Is_Point_Close_To_Id_In_Raster,GenerPourpoint,Check_If_Str_Is_Head_Stream,GenerateFinalPourpoints,CE_mcat4lake2
 from processing_functions_raster_grass import grass_raster_setnull,Return_Raster_As_Array_With_garray
-from processing_functions_attribute_table import Calculate_Longest_flowpath,New_SubId_To_Dissolve,UpdateTopology,Connect_SubRegion_Update_DownSubId,Update_DA_Strahler_For_Combined_Result,Determine_Lake_HRU_Id
+from processing_functions_attribute_table import Calculate_Longest_flowpath,New_SubId_To_Dissolve,UpdateTopology,Connect_SubRegion_Update_DownSubId,Update_DA_Strahler_For_Combined_Result,Determine_Lake_HRU_Id,Determine_HRU_Attributes
 from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile,Remove_Unselected_Lake_Attribute_In_Finalcatinfo,Add_centroid_to_feature,Selectfeatureattributes,Copyfeature_to_another_shp_by_attribute,Add_New_SubId_To_Subregion_shpfile,qgis_vector_field_calculator
 from processing_functions_vector_qgis import qgis_vector_fix_geometries,Clean_Attribute_Name,qgis_vector_merge_vector_layers,qgis_vector_return_crs_id,qgis_vector_union_two_layers,qgis_vector_extract_by_attribute
 from processing_functions_vector_qgis import qgis_vector_add_attributes,qgis_vector_get_attributes,qgis_vector_dissolve,qgis_vector_reproject_layers,qgis_vector_create_spatial_index,qgis_vector_clip,Obtain_Attribute_Table
@@ -439,62 +439,6 @@ def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,disso
     layer_area    = qgis_vector_field_calculator(processing = processing, context = context,FORMULA =formular,FIELD_NAME = 'HRU_Area',INPUT =hru_layer,OUTPUT ='memory:')['OUTPUT']
     layer_area_id = qgis_vector_field_calculator(processing = processing, context = context,FORMULA =' @row_number',FIELD_NAME = 'HRU_ID',INPUT =layer_area,OUTPUT ='memory:')['OUTPUT']
     
-    ### determine each lake hru's soil type
-    Attri_table = Obtain_Attribute_Table(processing,context,layer_area_id)
-    
-    Lake_HRU_IDS = np.unique(Attri_table['HRULake_ID'].values)
-
-    for i in range(0,len(Lake_HRU_IDS)):
-        ilake_hru_id = Lake_HRU_IDS[i]
-        if ilake_hru_id == 0:
-            continue
-        Attri_table_Lake_HRU_i = Attri_table.loc[Attri_table['HRULake_ID'] == ilake_hru_id]
-        Attri_table_Lake_HRU_i = Attri_table_Lake_HRU_i.sort_values(by='HRU_Area', ascending=False)
-        Subid   = Attri_table_Lake_HRU_i['SubId'].values[0]
-        SubInfo = Attri_table.loc[Attri_table['SubId'] == Subid]
-        for j in range(0,len(Attri_table_Lake_HRU_i)):
-            ihru_id      = Attri_table_Lake_HRU_i['HRU_ID'].values[j]
-            is_Lake      = Attri_table_Lake_HRU_i['HRU_IsLake'].values[j]
-            if is_Lake > 0:
-
-                if Attri_table_Lake_HRU_i[Soil_ID].values[0] == 0:  ###  the current hru has invalidate soil id
-                     Vali_Value = Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Soil_ID,Soil_info_data)
-                     Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Soil_ID]        = Vali_Value
-                else:
-                     Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Soil_ID] = Attri_table_Lake_HRU_i[Soil_ID].values[0]
-
-                if Attri_table_Lake_HRU_i[Other_Ply_ID_1].values[0] == 0:  ###  the current hru has invalidate soil id
-                     Vali_Value = Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Other_Ply_ID_1,Attri_table)
-                     Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Other_Ply_ID_1]        = Vali_Value
-                else:
-                     Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Other_Ply_ID_1] = Attri_table_Lake_HRU_i[Other_Ply_ID_1].values[0]
-
-                if Attri_table_Lake_HRU_i[Other_Ply_ID_2].values[0] == 0:  ###  the current hru has invalidate soil id
-                     Vali_Value = Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Other_Ply_ID_2,Attri_table)
-                     Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Other_Ply_ID_2]        = Vali_Value
-                else:
-                     Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Other_Ply_ID_2] = Attri_table_Lake_HRU_i[Other_Ply_ID_2].values[0]
-
-                Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Landuse_ID]     = int(-1)
-                Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Veg_ID]         = int(-1)
-
-            else:
-                if Attri_table_Lake_HRU_i[Soil_ID].values[j] == 0:  ###  the current hru has invalidate soil id
-                     Vali_Value = Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Soil_ID,Soil_info_data)
-                     Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Soil_ID]        = Vali_Value
-                if Attri_table_Lake_HRU_i[Landuse_ID].values[j] == 0:  ###  the current hru has invalidate soil id
-                     Vali_Value = Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Landuse_ID,Landuse_info_data)
-                     Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Landuse_ID]        = Vali_Value
-                if Attri_table_Lake_HRU_i[Veg_ID].values[j] == 0:  ###  the current hru has invalidate soil id
-                     Vali_Value = Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Veg_ID,Veg_info_data)
-                     Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Veg_ID]        = Vali_Value
-                if Attri_table_Lake_HRU_i[Other_Ply_ID_1].values[j] == 0:  ###  the current hru has invalidate soil id
-                     Vali_Value = Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Other_Ply_ID_1,Attri_table)
-                     Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Other_Ply_ID_1]        = Vali_Value
-                if Attri_table_Lake_HRU_i[Other_Ply_ID_2].values[j] == 0:  ###  the current hru has invalidate soil id
-                     Vali_Value = Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Other_Ply_ID_2,Attri_table)
-                     Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Other_Ply_ID_2]        = Vali_Value
-
     ### add attributes columns
     attribute_list = [QgsField('LAND_USE_C', QVariant.String),
                       QgsField('VEG_C', QVariant.String),
@@ -504,32 +448,17 @@ def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,disso
                       
     layer_area_id = qgis_vector_add_attributes(processing,context,INPUT_Layer = layer_area_id,attribute_list = attribute_list)
     
-    src_features = layer_area_id.getFeatures()
-    with edit(layer_area_id):
-        for sf in src_features:
-            if sf['HRULake_ID'] == 0:
-#               print('2324')
-               continue
-            Is_lake_hru = sf['HRU_IsLake']
-            lake_hru_ID = sf['HRULake_ID']
-            hruid       = sf['HRU_ID']
-            centroidxy  = sf.geometry().centroid().asPoint()
-            sf[Landuse_ID] = int(Attri_table.loc[Attri_table['HRU_ID'] == hruid][Landuse_ID].values[0])
-            sf[Veg_ID]     = int(Attri_table.loc[Attri_table['HRU_ID'] == hruid][Veg_ID].values[0])
-            sf[Soil_ID]    = int(Attri_table.loc[Attri_table['HRU_ID'] == hruid][Soil_ID].values[0])
-            sf[Other_Ply_ID_1]    = int(Attri_table.loc[Attri_table['HRU_ID'] == hruid][Other_Ply_ID_1].values[0])
-            sf[Other_Ply_ID_2]    = int(Attri_table.loc[Attri_table['HRU_ID'] == hruid][Other_Ply_ID_2].values[0])
-            sf['LAND_USE_C'] = Landuse_info_data.loc[Landuse_info_data[Landuse_ID] == int(sf[Landuse_ID]),'LAND_USE_C'].values[0]
-            sf['VEG_C'] = Veg_info_data.loc[Veg_info_data[Veg_ID] == int(sf[Veg_ID]),'VEG_C'].values[0]
-            sf['HRU_CenX'] = centroidxy[0]
-            sf['HRU_CenY'] = centroidxy[1]
-            if Is_lake_hru > 0:
-                sf['SOIL_PROF'] = 'Lake_' + Soil_info_data.loc[Soil_info_data[Soil_ID] == int(sf[Soil_ID]),'SOIL_PROF'].values[0]
-#                print(hruid,Attri_table.loc[Attri_table['HRU_ID'] == hruid][[Landuse_ID,Veg_ID,Soil_ID]])
-            else:
-                sf['SOIL_PROF'] =  Soil_info_data.loc[Soil_info_data[Soil_ID] == int(sf[Soil_ID]),'SOIL_PROF'].values[0]
-            layer_area_id.updateFeature(sf)
-
+    
+    
+    ### Determine HRU attribute HruID, LAND_USE_C,VEG_C,SOIL_PROF
+    Attri_table = Obtain_Attribute_Table(processing,context,layer_area_id)
+    Attri_table = Determine_HRU_Attributes(Attri_table,Sub_ID,Landuse_ID,Soil_ID,Veg_ID,Other_Ply_ID_1,Other_Ply_ID_2,
+                                           Landuse_info_data,Soil_info_data,Veg_info_data)
+    
+    layer_area_id   = Copy_Pddataframe_to_shpfile(Path_shpfile = layer_area_id,Pddataframe = Attri_table,link_col_nm_shp = 'HRU_ID'
+    ,link_col_nm_df = 'HRU_ID',UpdateColNM = [Sub_ID,Landuse_ID,Soil_ID,Veg_ID,Other_Ply_ID_1,Other_Ply_ID_2,'LAND_USE_C','SOIL_PROF','VEG_C'],Input_Is_Feature_In_Mem = True)
+    layer_area_id = Add_centroid_to_feature(Path_feagure = layer_area_id,centroidx_nm = 'HRU_CenX',centroidy_nm='HRU_CenY',Input_Is_Feature_In_Mem = True)
+     
     ### merge lake hru.
     HRU_draft = processing.run("native:dissolve", {'INPUT':layer_area_id,'FIELD':dissolve_filedname_list,'OUTPUT':'memory:'},context = context)['OUTPUT']
 

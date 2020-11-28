@@ -44,16 +44,21 @@ def Copy_Pddataframe_to_shpfile(Path_shpfile,Pddataframe,link_col_nm_shp = 'SubI
 
             if UpdateColNM[0] == '#':
                 for icolnm in range(0,len(Attri_Name)):     ### copy infomaiton
-                    if  Attri_Name[icolnm] == 'Obs_NM' or Attri_Name[icolnm] == 'SRC_obs':
+                    if  Attri_Name[icolnm] == 'Obs_NM' or Attri_Name[icolnm] == 'SRC_obs' or Attri_Name[icolnm] == 'LAND_USE_C' or Attri_Name[icolnm] == 'SOIL_PROF' or Attri_Name[icolnm] == 'VEG_C':
                         sf[Attri_Name[icolnm]] = str(tarinfo[Attri_Name[icolnm]].values[0])
-                    elif Attri_Name[icolnm] == 'cat' or  Attri_Name[icolnm] == 'layer' or  Attri_Name[icolnm] == 'path':
+                    elif Attri_Name[icolnm] == 'cat' or  Attri_Name[icolnm] == 'layer' or  Attri_Name[icolnm] == 'path' :
                         continue
                     else:
                         sf[Attri_Name[icolnm]] = float(tarinfo[Attri_Name[icolnm]].values[0])
             else:
                 for icolnm in range(0,len(UpdateColNM)):
-                    sf[UpdateColNM[icolnm]] = float(tarinfo[UpdateColNM[icolnm]].values[0])
-
+                    if UpdateColNM[icolnm] == 'Obs_NM' or UpdateColNM[icolnm] == 'SRC_obs' or UpdateColNM[icolnm] == 'LAND_USE_C' or UpdateColNM[icolnm] == 'SOIL_PROF' or UpdateColNM[icolnm] == 'VEG_C':
+                        sf[UpdateColNM[icolnm]] = str(tarinfo[UpdateColNM[icolnm]].values[0])
+                    elif UpdateColNM[icolnm] == 'cat' or  UpdateColNM[icolnm] == 'layer' or  UpdateColNM[icolnm] == 'path' :
+                        continue
+                    else:
+                        sf[UpdateColNM[icolnm]] = float(tarinfo[UpdateColNM[icolnm]].values[0])
+                        
             layer_cat.updateFeature(sf)
     if Input_Is_Feature_In_Mem:
         return layer_cat
@@ -95,7 +100,7 @@ def Remove_Unselected_Lake_Attribute_In_Finalcatinfo(Path_Finalcatinfo,Conn_Lake
     
     
 #########
-def Add_centroid_to_feature(Path_feagure,centroidx_nm = '#',centroidy_nm='#'):
+def Add_centroid_to_feature(Path_feagure,centroidx_nm = '#',centroidy_nm='#',Input_Is_Feature_In_Mem = False):
     """ Functions will add centorid x y to Path_feagure
     ----------
 
@@ -106,7 +111,10 @@ def Add_centroid_to_feature(Path_feagure,centroidx_nm = '#',centroidy_nm='#'):
     -------
         None, the attribute table of Path_shpfile will be updated 
     """
-    layer_cat=QgsVectorLayer(Path_feagure,"")
+    if Input_Is_Feature_In_Mem:
+        layer_cat = Path_feagure
+    else:
+        layer_cat=QgsVectorLayer(Path_feagure,"")
     Attri_Name = layer_cat.fields().names()
     features = layer_cat.getFeatures()
     with edit(layer_cat):
@@ -115,8 +123,10 @@ def Add_centroid_to_feature(Path_feagure,centroidx_nm = '#',centroidy_nm='#'):
             sf[centroidx_nm] = centroidxy[0]
             sf[centroidy_nm] = centroidxy[1]
             layer_cat.updateFeature(sf)
-    del layer_cat
-    return
+    if Input_Is_Feature_In_Mem:
+        return layer_cat
+    else:
+        del layer_cat
 
 def Selectfeatureattributes(processing,Input = '#',Output='#',Attri_NM = '#',Values = []):
     """ Functions extract features from Input, based on values in column Attri_NM

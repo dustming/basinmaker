@@ -742,4 +742,115 @@ def Determine_Lake_HRU_Id(Attribute_Table):
         Attribute_Table.loc[i,Sub_Lake_ID] = tar_info[Sub_Lake_ID].values[0]
     
     return Attribute_Table
+
+
+def Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Col_NM,info_data):
+
+    info_lake_hru = Attri_table_Lake_HRU_i.loc[Attri_table_Lake_HRU_i[Col_NM] != 0]
+    if len(info_lake_hru) > 0: #other part of this lake hru has validate soilid use the one with maximum area
+        Updatevalue = info_lake_hru[Col_NM].values[0]
+    else:### check if the subbasin has a valid soil id
+        SubInfo = SubInfo.loc[Col_NM != 0]
+        SubInfo = SubInfo.sort_values(by='HRU_Area', ascending=False)
+        if len(SubInfo) > 0:
+            Updatevalue = SubInfo[Col_NM].values[0]
+        else:
+            Updatevalue = info_data.loc[info_data[Col_NM] != 0][Col_NM].values[0]
+#            print("asdfasdfsadf2",Updatevalue)
+#    print("asdfasdfsadf1",Updatevalue)
+    return Updatevalue
     
+    
+
+def Determine_HRU_Attributes(Attri_table,Sub_ID,Landuse_ID,Soil_ID,Veg_ID,Other_Ply_ID_1,Other_Ply_ID_2,
+                             Landuse_info_data,Soil_info_data,Veg_info_data):
+    """ Function to determine landuse,soil,and veg and other properties after union all polygons 
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, 
+    """
+    
+    Lake_HRU_IDS = np.unique(Attri_table['HRULake_ID'].values)
+    
+    ### landuse,soil,and veg and other properties for lake hrus 
+    
+    for i in range(0,len(Lake_HRU_IDS)):
+        ilake_hru_id = Lake_HRU_IDS[i]
+        if ilake_hru_id == 0:
+            continue
+        # obtain i lake hru attributes 
+        Attri_table_Lake_HRU_i = Attri_table.loc[Attri_table['HRULake_ID'] == ilake_hru_id]
+        Attri_table_Lake_HRU_i = Attri_table_Lake_HRU_i.sort_values(by='HRU_Area', ascending=False)
+        Subid   = Attri_table_Lake_HRU_i['SubId'].values[0]
+        SubInfo = Attri_table.loc[Attri_table['SubId'] == Subid]
+        for j in range(0,len(Attri_table_Lake_HRU_i)):
+            ihru_id      = Attri_table_Lake_HRU_i['HRU_ID'].values[j]
+            is_Lake      = Attri_table_Lake_HRU_i['HRU_IsLake'].values[j]
+            if is_Lake > 0:
+
+                if Attri_table_Lake_HRU_i[Soil_ID].values[0] == 0:  ###  the current hru has invalidate soil id
+                     Vali_Value = Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Soil_ID,Soil_info_data)
+                     Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Soil_ID]        = Vali_Value
+                else:
+                     Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Soil_ID] = Attri_table_Lake_HRU_i[Soil_ID].values[0]
+
+                if Attri_table_Lake_HRU_i[Other_Ply_ID_1].values[0] == 0:  ###  the current hru has invalidate soil id
+                     Vali_Value = Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Other_Ply_ID_1,Attri_table)
+                     Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Other_Ply_ID_1]        = Vali_Value
+                else:
+                     Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Other_Ply_ID_1] = Attri_table_Lake_HRU_i[Other_Ply_ID_1].values[0]
+
+                if Attri_table_Lake_HRU_i[Other_Ply_ID_2].values[0] == 0:  ###  the current hru has invalidate soil id
+                     Vali_Value = Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Other_Ply_ID_2,Attri_table)
+                     Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Other_Ply_ID_2]        = Vali_Value
+                else:
+                     Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Other_Ply_ID_2] = Attri_table_Lake_HRU_i[Other_Ply_ID_2].values[0]
+
+                Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Landuse_ID]     = int(-1)
+                Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Veg_ID]         = int(-1)
+
+            else:
+                if Attri_table_Lake_HRU_i[Soil_ID].values[j] == 0:  ###  the current hru has invalidate soil id
+                     Vali_Value = Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Soil_ID,Soil_info_data)
+                     Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Soil_ID]        = Vali_Value
+                if Attri_table_Lake_HRU_i[Landuse_ID].values[j] == 0:  ###  the current hru has invalidate soil id
+                     Vali_Value = Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Landuse_ID,Landuse_info_data)
+                     Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Landuse_ID]        = Vali_Value
+                if Attri_table_Lake_HRU_i[Veg_ID].values[j] == 0:  ###  the current hru has invalidate soil id
+                     Vali_Value = Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Veg_ID,Veg_info_data)
+                     Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Veg_ID]        = Vali_Value
+                if Attri_table_Lake_HRU_i[Other_Ply_ID_1].values[j] == 0:  ###  the current hru has invalidate soil id
+                     Vali_Value = Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Other_Ply_ID_1,Attri_table)
+                     Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Other_Ply_ID_1]        = Vali_Value
+                if Attri_table_Lake_HRU_i[Other_Ply_ID_2].values[j] == 0:  ###  the current hru has invalidate soil id
+                     Vali_Value = Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Other_Ply_ID_2,Attri_table)
+                     Attri_table.loc[Attri_table['HRU_ID'] == ihru_id,Other_Ply_ID_2]        = Vali_Value
+
+
+    for i in range(0,len(Attri_table)):
+        if Attri_table['HRULake_ID'].values[i] == 0:
+            continue
+        Is_lake_hru = Attri_table['HRU_IsLake'].values[i]
+        lake_hru_ID = Attri_table['HRULake_ID'].values[i]
+        hruid       = Attri_table['HRU_ID'].values[i]
+        Landuse_ID_num = Attri_table[Landuse_ID].values[i]
+        Soil_ID_num       = Attri_table[Soil_ID].values[i]
+        Veg_ID_num       = Attri_table[Veg_ID].values[i]
+        
+        Attri_table.loc[i,Landuse_ID] = int(Attri_table.loc[Attri_table['HRU_ID'] == hruid][Landuse_ID].values[0])
+        Attri_table.loc[i,Veg_ID]     = int(Attri_table.loc[Attri_table['HRU_ID'] == hruid][Veg_ID].values[0])
+        Attri_table.loc[i,Soil_ID]    = int(Attri_table.loc[Attri_table['HRU_ID'] == hruid][Soil_ID].values[0])
+        Attri_table.loc[i,Other_Ply_ID_1]    = int(Attri_table.loc[Attri_table['HRU_ID'] == hruid][Other_Ply_ID_1].values[0])
+        Attri_table.loc[i,Other_Ply_ID_2]    = int(Attri_table.loc[Attri_table['HRU_ID'] == hruid][Other_Ply_ID_2].values[0])
+        Attri_table.loc[i,'LAND_USE_C'] = Landuse_info_data.loc[Landuse_info_data[Landuse_ID] == int(Landuse_ID_num),'LAND_USE_C'].values[0]
+        Attri_table.loc[i,'VEG_C'] = Veg_info_data.loc[Veg_info_data[Veg_ID] == int(Veg_ID_num),'VEG_C'].values[0]
+        if Is_lake_hru > 0:
+            Attri_table.loc[i,'SOIL_PROF'] = 'Lake_' + Soil_info_data.loc[Soil_info_data[Soil_ID] == int(Soil_ID_num),'SOIL_PROF'].values[0]
+        else:
+            Attri_table.loc[i,'SOIL_PROF'] =  Soil_info_data.loc[Soil_info_data[Soil_ID] == int(Soil_ID_num),'SOIL_PROF'].values[0]
+    return Attri_table
