@@ -25,7 +25,7 @@ from processing_functions_raster_grass import grass_raster_setnull,Return_Raster
 from processing_functions_attribute_table import Calculate_Longest_flowpath,New_SubId_To_Dissolve,UpdateTopology,Connect_SubRegion_Update_DownSubId,Update_DA_Strahler_For_Combined_Result,Determine_Lake_HRU_Id
 from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile,Remove_Unselected_Lake_Attribute_In_Finalcatinfo,Add_centroid_to_feature,Selectfeatureattributes,Copyfeature_to_another_shp_by_attribute,Add_New_SubId_To_Subregion_shpfile,qgis_vector_field_calculator
 from processing_functions_vector_qgis import qgis_vector_fix_geometries,Clean_Attribute_Name,qgis_vector_merge_vector_layers,qgis_vector_return_crs_id,qgis_vector_union_two_layers,qgis_vector_extract_by_attribute
-from processing_functions_vector_qgis import qgis_vector_add_attributes,qgis_vector_get_attributes,qgis_vector_dissolve
+from processing_functions_vector_qgis import qgis_vector_add_attributes,qgis_vector_get_attributes,qgis_vector_dissolve,qgis_vector_reproject_layers,qgis_vector_create_spatial_index,qgis_vector_clip
 from utilities import Dbf_To_Dataframe
 import timeit
 
@@ -222,14 +222,13 @@ def Reproj_Clip_Dissolve_Simplify_Polygon(processing,context,layer_path,Project_
         layer_dis                  : qgis object
             it is a polygon after preprocess
     """
-
-    layer_proj = processing.run("native:reprojectlayer", {'INPUT':layer_path,'TARGET_CRS':QgsCoordinateReferenceSystem(trg_crs),'OUTPUT':'memory:'})['OUTPUT']
-    layer_fix  = qgis_vector_fix_geometries(processing,context,INPUT = layer_proj,OUTPUT = 'memory:')['OUTPUT'] 
-    layer_clip = processing.run("native:clip", {'INPUT':layer_fix,'OVERLAY':Layer_clip,'OUTPUT':'memory:'})['OUTPUT']
+    layer_proj =  qgis_vector_reproject_layers(processing,context,layer_path,trg_crs,'memory:')['OUTPUT']
+#    layer_proj = processing.run("native:reprojectlayer", {'INPUT':layer_path,'TARGET_CRS':QgsCoordinateReferenceSystem(trg_crs),'OUTPUT':'memory:'})['OUTPUT']
+    layer_fix  = qgis_vector_fix_geometries(processing,context,INPUT = layer_proj,OUTPUT = 'memory:')['OUTPUT']
+    layer_clip = qgis_vector_clip(processing,context,layer_fix,Layer_clip,'memory:')['OUTPUT'] 
+#    layer_clip = processing.run("native:clip", {'INPUT':layer_fix,'OVERLAY':Layer_clip,'OUTPUT':'memory:'})['OUTPUT']
     layer_dis  = gis_vector_dissolve(processing,context,INPUT = layer_clip,FIELD = [Class_Col],OUTPUT = 'memory:')['OUTPUT']
-    processing.run("qgis:createspatialindex", {'INPUT':layer_dis})
-
-
+    layer_dis  = qgis_vector_create_spatial_index(processing,context,layer_dis)
 #    formular = 'area(transform($geometry, \'%s\',\'%s\'))' % (trg_crs,Project_crs)
 #    layer_area         = processing.run("qgis:fieldcalculator", {'INPUT':layer_landuse_fix,'FIELD_NAME':'Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formular,'OUTPUT':'memory:'})['OUTPUT']
 #    processing.run("qgis:fieldcalculator", {'INPUT':layer_landuse_fix,'FIELD_NAME':'Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formular,'OUTPUT':os.path.join(OutputFolder,'part3.shp')})
@@ -310,7 +309,7 @@ def Union_Ply_Layers_And_Simplify(processing,context,Merge_layer_list,dissolve_f
                 mem_union          = Merge_layer_list[i]
                 mem_union_fix_ext  = qgis_vector_fix_geometries(processing,context,INPUT = mem_union,OUTPUT = 'memory:')['OUTPUT']
 #                mem_union_fix_ext  = processing.run("native:fixgeometries", {'INPUT':mem_union,'OUTPUT':'memory:'})['OUTPUT']
-                processing.run("qgis:createspatialindex", {'INPUT':mem_union_fix_ext})
+                mem_union_fix_ext  = qgis_vector_create_spatial_index(processing,context,mem_union_fix_ext)
             else:
                 mem_union_fix_temp = mem_union_fix_ext
                 del mem_union_fix_ext
@@ -335,22 +334,14 @@ def Union_Ply_Layers_And_Simplify(processing,context,Merge_layer_list,dissolve_f
 
 #                mem_union_fix_ext = processing.run("native:extractbyexpression", {'INPUT':mem_union_fix,'EXPRESSION':formular,'OUTPUT':'memory:'})['OUTPUT']
                 mem_union_fix_ext = mem_union_fix
-                processing.run("qgis:createspatialindex", {'INPUT':mem_union_fix_ext})
+                mem_union_fix_ext  = qgis_vector_create_spatial_index(processing,context,mem_union_fix_ext)
 #                print(formular)
 #            processing.run("native:union", {'INPUT':mem_union_temp,'OVERLAY':Merge_layer_list[i],'OVERLAY_FIELDS_PREFIX':'','OUTPUT':os.path.join(OutputFolder,'union.shp')},context = context)
     else:
         print("No polygon needs to be overlaied.........should not happen ")
 
     ## remove non interested filed
-    field_ids = []
-    for field in mem_union_fix_ext.fields():
-        if field.name() not in fieldnames:
-            field_ids.append(mem_union_fix_ext.dataProvider().fieldNameIndex(field.name()))
-
-    mem_union_fix_ext.dataProvider().deleteAttributes(field_ids)
-    mem_union_fix_ext.updateFields()
-    mem_union_fix_ext.commitChanges()
-
+    mem_union_fix_ext,temp_out_notused = Clean_Attribute_Name(mem_union_fix_ext,fieldnames,Input_Is_Feature_In_Mem = True)
     mem_union_dis  = qgis_vector_dissolve(processing,context,INPUT = mem_union_fix_ext,FIELD =dissolve_filedname_list,OUTPUT = 'memory:')['OUTPUT']
 
     return mem_union_dis

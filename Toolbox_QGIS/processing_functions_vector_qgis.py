@@ -395,8 +395,57 @@ def qgis_vector_union_two_layers(processing,context,INPUT,OVERLAY,OUTPUT,OVERLAY
             
     return out 
     
+def qgis_vector_reproject_layers(processing,context,INPUT,TARGET_CRS,OUTPUT):
+    """ qgis function reproject vector layer 
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, 
+    """  
+    out = processing.run("native:reprojectlayer", {'INPUT':INPUT,'TARGET_CRS':QgsCoordinateReferenceSystem(TARGET_CRS),'OUTPUT':OUTPUT})
+    return out 
 
 
+def qgis_vector_clip(processing,context,INPUT,OVERLAY,OUTPUT):
+    """ qgis function reproject vector layer 
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, 
+    """  
+    layer_clip = processing.run("native:clip", {'INPUT':INPUT,'OVERLAY':OVERLAY,'OUTPUT':OUTPUT})
+    
+    return out
+    
+    
+
+
+
+
+
+
+def qgis_vector_create_spatial_index(processing,context,INPUT):
+    """ qgis function create spatial index
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, 
+    """  
+    out = processing.run("qgis:createspatialindex", {'INPUT':INPUT})
+    return out 
+    
 
 def Clean_Attribute_Name(Input,FieldName_List,Input_Is_Feature_In_Mem = False,Col_NM_Max ='SubId'):
     """ Function clean feature attribute table, all colnmun not in FieldName_List
