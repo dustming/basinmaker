@@ -22,7 +22,7 @@ from RavenOutputFuctions import plotGuagelineobs,Caluculate_Lake_Active_Depth_an
 from AddlakesintoRoutingNetWork import Dirpoints_v3,check_lakecatchment,DefineConnected_Non_Connected_Lakes,Generate_stats_list_from_grass_raster
 from processing_functions_raster_array import Is_Point_Close_To_Id_In_Raster,GenerPourpoint,Check_If_Str_Is_Head_Stream,GenerateFinalPourpoints,CE_mcat4lake2
 from processing_functions_raster_grass import grass_raster_setnull,Return_Raster_As_Array_With_garray
-from processing_functions_attribute_table import Calculate_Longest_flowpath,New_SubId_To_Dissolve,UpdateTopology,Connect_SubRegion_Update_DownSubId,Update_DA_Strahler_For_Combined_Result
+from processing_functions_attribute_table import Calculate_Longest_flowpath,New_SubId_To_Dissolve,UpdateTopology,Connect_SubRegion_Update_DownSubId,Update_DA_Strahler_For_Combined_Result,Determine_Lake_HRU_Id
 from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile,Remove_Unselected_Lake_Attribute_In_Finalcatinfo,Add_centroid_to_feature,Selectfeatureattributes,Copyfeature_to_another_shp_by_attribute,Add_New_SubId_To_Subregion_shpfile,qgis_vector_field_calculator
 from processing_functions_vector_qgis import qgis_vector_fix_geometries,Clean_Attribute_Name,qgis_vector_merge_vector_layers,qgis_vector_return_crs_id,qgis_vector_union_two_layers,qgis_vector_extract_by_attribute
 from processing_functions_vector_qgis import qgis_vector_add_attributes,qgis_vector_get_attributes,qgis_vector_dissolve
@@ -160,99 +160,22 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
     layer_cat = qgis_vector_add_attributes(processing,context,INPUT_Layer = layer_cat,attribute_list = [QgsField('HRULake_ID', QVariant.Int),QgsField('HRU_IsLake', QVariant.Int)])
      
     # remove column not in fieldnames
-    layer_cat,max_subbasin_id = Clean_Attribute_Name(layer_cat,fieldnames,Input_Is_Feature_In_Mem = True,Col_NM_Max ='SubId')
-        
+    layer_cat = qgis_vector_field_calculator(processing = processing, context = context,FORMULA =' @row_number',FIELD_NAME = 'HRU_ID_Temp',INPUT =layer_cat,OUTPUT ='memory:')['OUTPUT']
     
-    ## create HRU_lAKE_ID
-    N_new_features = qgis_vector_get_attributes(processing,context,layer_cat,'count')
-    Attri_Name = qgis_vector_get_attributes(processing,context,layer_cat,'field_name') #layer_cat.fields().names()
-    features = qgis_vector_get_attributes(processing,context,layer_cat,'features') #layer_cat.getFeatures()
-    new_hruid = 1
-    new_hruid_list = np.full(N_new_features + 100,np.nan)
-    old_newhruid_list = np.full(N_new_features + 100,np.nan)
-    with edit(layer_cat):
-        for sf in features:
-            subid_sf   = sf[Sub_ID]
-            try:
-                subid_sf = float(subid_sf)
-            except TypeError:
-                subid_sf = -1
-                pass
-
-            if subid_sf < 0:
-                continue
-
-            lakelakeid_sf   = sf[Lake_Id]
-            try:
-                lakelakeid_sf = float(lakelakeid_sf)
-            except TypeError:
-                lakelakeid_sf = -1
-                pass
-
-            Sub_Lakeid_sf   = sf[Sub_Lake_ID]
-            try:
-                Sub_Lakeid_sf = float(Sub_Lakeid_sf)
-            except TypeError:
-                Sub_Lakeid_sf = -1
-                pass
-
-            if Sub_Lakeid_sf < 0:
-                old_new_hruid     = float(subid_sf)
-                sf['HRU_IsLake']  = float(-1)
-
-            if Sub_Lakeid_sf > 0:
-                if lakelakeid_sf == Sub_Lakeid_sf: ### the lakeid from lake polygon = lake id in subbasin polygon
-                    old_new_hruid     = float(subid_sf) + max_subbasin_id + 10
-                    sf['HRU_IsLake']  = float(1)
-                else: ### the lakeid from lake polygon != lake id in subbasin polygon, this lake do not belong to this subbasin, this part of subbasin treat as non lake hru
-                    old_new_hruid     = float(subid_sf)
-                    sf['HRU_IsLake']  = float(-1)
-            if old_new_hruid not in old_newhruid_list:
-                sf['HRULake_ID'] = new_hruid
-                old_newhruid_list[new_hruid] = old_new_hruid
-                new_hruid        = new_hruid + 1
-            else:
-                sf['HRULake_ID'] = int(np.argwhere(old_newhruid_list == old_new_hruid)[0])
-
-#            if subid_sf == 1000061:
-#                print(sf['HRULake_ID'],old_new_hruid,new_hruid)
-            layer_cat.updateFeature(sf)
-
-    Attri_table = Obtain_Attribute_Table(processing,context,layer_cat)
-    features = qgis_vector_get_attributes(processing,context,layer_cat,'features') #layer_cat.getFeatures()
-    with edit(layer_cat):
-        for sf in features:
-
-            subid_sf   = sf[Sub_ID]
-            try:
-                subid_sf = float(subid_sf)
-            except TypeError:
-                subid_sf = -1
-                pass
-
-            lakelakeid_sf   = sf[Lake_Id]
-            try:
-                lakelakeid_sf = float(lakelakeid_sf)
-            except TypeError:
-                lakelakeid_sf = -1
-                pass
-            if subid_sf > 0 and lakelakeid_sf >0 :
-                continue
-            elif subid_sf < 0 and lakelakeid_sf > 0:
-                tar_info = Attri_table.loc[(Attri_table[Lake_Id]==lakelakeid_sf) & (Attri_table['HRU_IsLake'] > 0)]
-                sf[Sub_ID] = float(tar_info[Sub_ID].values[0])
-                sf['HRU_IsLake']  = float(tar_info['HRU_IsLake'].values[0])
-                sf['HRULake_ID']  = float(tar_info['HRULake_ID'].values[0])
-                sf[Sub_Lake_ID] = float(tar_info[Sub_Lake_ID].values[0])
-            elif subid_sf > 0 and lakelakeid_sf < 0:
-                continue
-            else:
-                print("Lake HRU have unexpected holes")
-
-            layer_cat.updateFeature(sf)
+    # create HRU_lAKE_ID
     
+    # obtain attribute table in vector 
+    Attri_table = Obtain_Attribute_Table(processing,context,layer_cat) 
+    # determine lake hru id    
+    Attri_table = Determine_Lake_HRU_Id(Attri_table)
+    # copy determined lake hru id to vector 
+    layer_cat   = Copy_Pddataframe_to_shpfile(Path_shpfile = layer_cat,Pddataframe = Attri_table,link_col_nm_shp = 'HRU_ID_Temp'
+    ,link_col_nm_df = 'HRU_ID_Temp',UpdateColNM = ['HRU_IsLake','HRULake_ID','SubId','HyLakeId'],Input_Is_Feature_In_Mem = True)
+    # clean attribute table 
+    layer_cat,temp_not_used = Clean_Attribute_Name(layer_cat,fieldnames,Input_Is_Feature_In_Mem = True,Col_NM_Max ='SubId')      
+    
+    # dissolve and fix geometry export output     
     mem_union_fix  = qgis_vector_fix_geometries(processing,context,INPUT = layer_cat,OUTPUT = 'memory:')['OUTPUT']
-    
     Sub_Lake_HRU1 = qgis_vector_dissolve(processing,context,INPUT = mem_union_fix,FIELD = ['HRULake_ID'],OUTPUT = os.path.join(tempfile.gettempdir(),str(np.random.randint(1, 10000 + 1))+'tempfile.shp'))['OUTPUT']
     Sub_Lake_HRU2 = qgis_vector_dissolve(processing,context,INPUT = Sub_Lake_HRU1,FIELD = ['HRULake_ID'],OUTPUT = Path_finalcat_hru_out)
     Sub_Lake_HRU = qgis_vector_dissolve(processing,context,INPUT = Sub_Lake_HRU1,FIELD = ['HRULake_ID'],OUTPUT = 'memory:')
@@ -575,8 +498,7 @@ def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,disso
     
     ### determine each lake hru's soil type
     Attri_table = Obtain_Attribute_Table(processing,context,layer_area_id)
-
-
+    
     Lake_HRU_IDS = np.unique(Attri_table['HRULake_ID'].values)
 
     for i in range(0,len(Lake_HRU_IDS)):

@@ -5,7 +5,7 @@ from qgis.PyQt.QtCore import *
 
 
 def Copy_Pddataframe_to_shpfile(Path_shpfile,Pddataframe,link_col_nm_shp = 'SubId'
-                                ,link_col_nm_df = 'SubId',UpdateColNM = ['#']):
+                                ,link_col_nm_df = 'SubId',UpdateColNM = ['#'],Input_Is_Feature_In_Mem = False):
     """ Function modify attribute table of Path_shpfile using value from Pddataframe
     Parameters
     ----------
@@ -28,8 +28,11 @@ def Copy_Pddataframe_to_shpfile(Path_shpfile,Pddataframe,link_col_nm_shp = 'SubI
     -------
         None, the attribute table of Path_shpfile will be updated 
     """
-    
-    layer_cat=QgsVectorLayer(Path_shpfile,"")
+    if Input_Is_Feature_In_Mem:
+        layer_cat = Path_shpfile
+    else:
+        layer_cat=QgsVectorLayer(Path_shpfile,"")
+        
     Attri_Name = layer_cat.fields().names()
     features = layer_cat.getFeatures()
     with edit(layer_cat):
@@ -51,8 +54,11 @@ def Copy_Pddataframe_to_shpfile(Path_shpfile,Pddataframe,link_col_nm_shp = 'SubI
                     sf[UpdateColNM[icolnm]] = float(tarinfo[UpdateColNM[icolnm]].values[0])
 
             layer_cat.updateFeature(sf)
-    del layer_cat
-
+    if Input_Is_Feature_In_Mem:
+        return layer_cat
+    else:
+        del layer_cat
+        return 
 
 def Remove_Unselected_Lake_Attribute_In_Finalcatinfo(Path_Finalcatinfo,Conn_Lake_Ids):
     """ Functions will set lake id not in Conn_Lake_Ids to -1.2345 in attribute 

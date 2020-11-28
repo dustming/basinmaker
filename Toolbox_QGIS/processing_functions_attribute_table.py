@@ -626,5 +626,120 @@ def Update_DA_Strahler_For_Combined_Result(AllCatinfo,Sub_Region_info):
     print("Total DA of each subregion       ",Total_DA_Subregion)
     return AllCatinfo
     
-                
-                    
+
+def Determine_Lake_HRU_Id(Attribute_Table):
+    """ Function to determin hruid after combine lake polygon 
+    and subbasin polygon 
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, 
+    """
+    Attribute_Table = Attribute_Table.fillna(-1)
+    Attribute_Table = Attribute_Table.replace(to_replace="NULL",value=-1)
+    
+    Sub_ID='SubId'
+    Sub_Lake_ID = 'HyLakeId'
+    Lake_Id = 'Hylak_id'
+       
+    # get current maximum subbasin Id 
+    max_subbasin_id = max(Attribute_Table[Sub_ID].values)
+    # total number of new feature by overaly two polygon 
+    N_new_features = len(Attribute_Table)
+    new_hruid = 1
+    new_hruid_list = np.full(N_new_features + 100,np.nan)
+    old_newhruid_list = np.full(N_new_features + 100,np.nan)
+    
+    #The new hru id is determined by following rules
+    #1 if subbasin hylake id < 0, means this feature do not have lake 
+    #  then, the new hru id  = old subid 
+    #2 if subbasin hylke >0 and subbasin hylake = overlayied hyalke id 
+    #  then this feature is a lake hru 
+    #  the hru id is the hru id  = old subid + max_subbasin_id + 10
+    #3 if the subbasin hylakeid >0, but subbasin hylake id != overlaied lake id 
+    #  then this feature is not covered by the lake the new hru id  = old subid
+     
+    for i in range(0,len(Attribute_Table)):
+        subid_sf_obj = Attribute_Table[Sub_ID].values[i]
+        lakelakeid_sf_obj   = Attribute_Table[Lake_Id].values[i]
+        Sub_Lakeid_sf_obj   = Attribute_Table[Sub_Lake_ID].values[i]
+        
+        ### the null value in the attribute table is not convertable try and set 
+        ### to -1 
+        try:
+            subid_sf = float(subid_sf_obj)
+        except:
+            subid_sf = -1
+            Attribute_Table.loc[i,Sub_ID] = -1
+            pass
+
+        try:
+            lakelakeid_sf = float(lakelakeid_sf_obj)
+        except:
+            lakelakeid_sf = -1
+            Attribute_Table.loc[i,Lake_Id] = -1
+            pass
+
+        try:
+            Sub_Lakeid_sf = float(Sub_Lakeid_sf_obj)
+        except:
+            Sub_Lakeid_sf = -1
+            Attribute_Table.loc[i,Sub_Lake_ID] = -1
+            pass
+
+        
+        # first skip feature with subbasin id < 0
+        # deal with this later 
+        if subid_sf < 0:
+            continue 
+            
+        # feature is not lake 
+        if Sub_Lakeid_sf < 0:
+            old_new_hruid     = subid_sf
+            Attribute_Table.loc[i,'HRU_IsLake']  = -1
+ 
+        if Sub_Lakeid_sf > 0:
+            if lakelakeid_sf == Sub_Lakeid_sf: ### the lakeid from lake polygon = lake id in subbasin polygon
+                old_new_hruid     = subid_sf + max_subbasin_id + 10
+                Attribute_Table.loc[i,'HRU_IsLake']  = 1
+            else: ### the lakeid from lake polygon != lake id in subbasin polygon, this lake do not belong to this subbasin, this part of subbasin treat as non lake hru
+                old_new_hruid     = float(subid_sf)
+                Attribute_Table.loc[i,'HRU_IsLake']  = -1
+        
+        # if it is a new hru id         
+        if old_new_hruid not in old_newhruid_list:
+            Attribute_Table.loc[i,'HRULake_ID'] = new_hruid
+            old_newhruid_list[new_hruid] = old_new_hruid
+            new_hruid        = new_hruid + 1
+        # if it is not new hru id 
+        else:
+            Attribute_Table.loc[i,'HRULake_ID'] = int(np.argwhere(old_newhruid_list == old_new_hruid)[0])
+
+    # deal with feature with negative subbasin id  
+    # use the Sub_Lake_ID to find subbasin id, 
+    # if Sub_Lake_ID from lake polygon is also sammller than zero 
+    #    report an error 
+    for i in range(0,len(Attribute_Table)):
+        subid_sf = Attribute_Table[Sub_ID].values[i]
+        lakelakeid_sf   = Attribute_Table[Lake_Id].values[i]
+        Sub_Lakeid_sf   = Attribute_Table[Sub_Lake_ID].values[i]
+        if subid_sf > 0:
+            continue 
+        if lakelakeid_sf < 0:
+            print("lake has unexpected holes ")
+            print(Attribute_Table.loc[i,:])
+            continue 
+        ### find the subid of lakelakeid_sf
+        tar_info = Attri_table.loc[(Attri_table[Lake_Id]==lakelakeid_sf) & (Attri_table['HRU_IsLake'] > 0)]
+        
+        Attribute_Table.loc[i,Sub_ID] = tar_info[Sub_ID].values[0]
+        Attribute_Table.loc[i,'HRU_IsLake']  = tar_info['HRU_IsLake'].values[0]
+        Attribute_Table.loc[i,'HRULake_ID']  = tar_info['HRULake_ID'].values[0]
+        Attribute_Table.loc[i,Sub_Lake_ID] = tar_info[Sub_Lake_ID].values[0]
+    
+    return Attribute_Table
+    
