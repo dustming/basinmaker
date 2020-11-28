@@ -26,6 +26,7 @@ from processing_functions_attribute_table import Calculate_Longest_flowpath,New_
 from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile,Remove_Unselected_Lake_Attribute_In_Finalcatinfo,Add_centroid_to_feature,Selectfeatureattributes,Copyfeature_to_another_shp_by_attribute,Add_New_SubId_To_Subregion_shpfile,qgis_vector_field_calculator
 from processing_functions_vector_qgis import qgis_vector_fix_geometries,Clean_Attribute_Name,qgis_vector_merge_vector_layers,qgis_vector_return_crs_id,qgis_vector_union_two_layers,qgis_vector_extract_by_attribute
 from processing_functions_vector_qgis import qgis_vector_add_attributes,qgis_vector_get_attributes,qgis_vector_dissolve,qgis_vector_reproject_layers,qgis_vector_create_spatial_index,qgis_vector_clip,Obtain_Attribute_Table,qgis_vector_join_attribute_table
+from processing_functions_raster_qgis import qgis_raster_gdal_warpreproject,qgis_raster_clip_raster_by_mask,qgis_raster_slope,qgis_raster_aspect,qgis_raster_zonal_statistics
 from utilities import Dbf_To_Dataframe
 import timeit
 
@@ -298,36 +299,6 @@ def Union_Ply_Layers_And_Simplify(processing,context,Merge_layer_list,dissolve_f
 
     return mem_union_dis
 
-def Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i,SubInfo,Col_NM,info_data):
-
-    info_lake_hru = Attri_table_Lake_HRU_i.loc[Attri_table_Lake_HRU_i[Col_NM] != 0]
-    if len(info_lake_hru) > 0: #other part of this lake hru has validate soilid use the one with maximum area
-        Updatevalue = info_lake_hru[Col_NM].values[0]
-    else:### check if the subbasin has a valid soil id
-        SubInfo = SubInfo.loc[Col_NM != 0]
-        SubInfo = SubInfo.sort_values(by='HRU_Area', ascending=False)
-        if len(SubInfo) > 0:
-            Updatevalue = SubInfo[Col_NM].values[0]
-        else:
-            Updatevalue = info_data.loc[info_data[Col_NM] != 0][Col_NM].values[0]
-#            print("asdfasdfsadf2",Updatevalue)
-#    print("asdfasdfsadf1",Updatevalue)
-    return Updatevalue
-
-# def Clean_Attribute_Name(Path_to_Feature,FieldName_List):
-# 
-#     fieldnames = set(FieldName_List)
-#     layer_cat  =QgsVectorLayer(Path_to_Feature, "")
-#     field_ids  = []
-#     for field in layer_cat.fields():
-#         if field.name() not in fieldnames:
-#             field_ids.append(layer_cat.dataProvider().fieldNameIndex(field.name()))
-#     layer_cat.dataProvider().deleteAttributes(field_ids)
-#     layer_cat.updateFields()
-#     layer_cat.commitChanges()
-#     del layer_cat
-#     return
-
 def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,dissolve_filedname_list,
                          Sub_ID,Landuse_ID,Soil_ID,Veg_ID,Other_Ply_ID_1,Other_Ply_ID_2,
                          Landuse_info_data,Soil_info_data,
@@ -466,68 +437,39 @@ def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,disso
     
     HRU_draft_sub_info = qgis_vector_join_attribute_table(processing,context,INPUT1 = HRU_draft,FIELD1 = Sub_ID,INPUT2 = Path_Subbasin_Ply,FIELD2 = Sub_ID,OUTPUT = 'memory:')['OUTPUT']
     
-# qgis_vector_join_attribute_table(processing,context,INPUT1,FIELD1,INPUT2,FIELD2,OUTPUT,
-#                                     FIELDS_TO_COPY =[],METHOD=1,DISCARD_NONMATCHING=False,
-#                                     PREFIX = '')
-                                    
-#    HRU_draft_sub_info = processing.run("native:joinattributestable", {'INPUT':HRU_draft,'FIELD':Sub_ID,'INPUT_2':Path_Subbasin_Ply,'FIELD_2':Sub_ID,
-#                    'FIELDS_TO_COPY':[],'METHOD':1,'DISCARD_NONMATCHING':False,'PREFIX':'',
-#                    'OUTPUT':'memory:'},context = context)['OUTPUT']
-
     if DEM != '#':
         
         HRU_draft_proj = qgis_vector_reproject_layers(processing,context,HRU_draft_sub_info,Project_crs,'memory:')['OUTPUT']
+        
+        DEM_proj   = qgis_raster_gdal_warpreproject(processing,Input = DEM,TARGET_CRS = Project_crs, Output = 'TEMPORARY_OUTPUT')['OUTPUT']
+        DEM_clip   = qgis_raster_clip_raster_by_mask(processing,Input = DEM_proj,MASK = HRU_draft_proj,TARGET_CRS = Project_crs, Output = 'TEMPORARY_OUTPUT')['OUTPUT']
+        DEM_slope  = qgis_raster_slope(processing,Input = DEM_clip, Output = 'TEMPORARY_OUTPUT')['OUTPUT']
+        DEM_aspect = qgis_raster_aspect(processing,Input = DEM_clip, Output = 'TEMPORARY_OUTPUT')['OUTPUT']
 
-        DEM_proj = processing.run("gdal:warpreproject", {'INPUT':DEM,'SOURCE_CRS':None,'TARGET_CRS':QgsCoordinateReferenceSystem(Project_crs),
-                                                        'RESAMPLING':0,'NODATA':None,'TARGET_RESOLUTION':None,'OPTIONS':'','DATA_TYPE':0,
-                                                        'TARGET_EXTENT':None,'TARGET_EXTENT_CRS':None,'MULTITHREADING':False,
-                                                         'EXTRA':'','OUTPUT':'TEMPORARY_OUTPUT'})['OUTPUT']
-        DEM_clip = processing.run("gdal:cliprasterbymasklayer", {'INPUT':DEM_proj,'MASK':HRU_draft_proj,'SOURCE_CRS':None,
-                                                      'TARGET_CRS':QgsCoordinateReferenceSystem(Project_crs),'NODATA':None,'ALPHA_BAND':False,
-                                                      'CROP_TO_CUTLINE':True,'KEEP_RESOLUTION':False,
-                                                      'SET_RESOLUTION':False,'X_RESOLUTION':None,
-                                                      'Y_RESOLUTION':None,'MULTITHREADING':False,'OPTIONS':'',
-                                                      'DATA_TYPE':0,'EXTRA':'',
-                                                      'OUTPUT':'TEMPORARY_OUTPUT'})['OUTPUT']
-
-        DEM_slope  = processing.run("qgis:slope", {'INPUT':DEM_clip,'Z_FACTOR':1,'OUTPUT':'TEMPORARY_OUTPUT'})['OUTPUT']
-#        processing.run("qgis:slope", {'INPUT':DEM_clip,'Z_FACTOR':1,'OUTPUT':os.path.join(OutputFolder,'slope.tif')})
-        DEM_aspect = processing.run("qgis:aspect", {'INPUT':DEM_clip,'Z_FACTOR':1,'OUTPUT':'TEMPORARY_OUTPUT'})['OUTPUT']
-#        processing.run("qgis:aspect", {'INPUT':DEM_clip,'Z_FACTOR':1,'OUTPUT':os.path.join(OutputFolder,'aspect.tif')})
-
-
-        processing.run("qgis:zonalstatistics", {'INPUT_RASTER':DEM_slope,'RASTER_BAND':1,'INPUT_VECTOR':HRU_draft_proj,'COLUMN_PREFIX':'HRU_S_','STATS':[2]})
-        processing.run("qgis:zonalstatistics", {'INPUT_RASTER':DEM_aspect,'RASTER_BAND':1,'INPUT_VECTOR':HRU_draft_proj,'COLUMN_PREFIX':'HRU_A_','STATS':[2]})
-        processing.run("qgis:zonalstatistics", {'INPUT_RASTER':DEM_clip,'RASTER_BAND':1,'INPUT_VECTOR':HRU_draft_proj,'COLUMN_PREFIX':'HRU_E_','STATS':[2]})
-
-        HRU_draft_reproj = processing.run("native:reprojectlayer", {'INPUT':HRU_draft_proj,'TARGET_CRS':QgsCoordinateReferenceSystem(trg_crs),'OUTPUT':'memory:'})['OUTPUT']
-#        processing.run("native:reprojectlayer", {'INPUT':HRU_draft_proj,'TARGET_CRS':QgsCoordinateReferenceSystem(trg_crs),'OUTPUT':os.path.join(OutputFolder,'hru_draft_reproj.shp')})
+        qgis_raster_zonal_statistics(processing,INPUT_RASTER = DEM_slope,INPUT_VECTOR = HRU_draft_proj,COLUMN_PREFIX = 'HRU_S_')
+        qgis_raster_zonal_statistics(processing,INPUT_RASTER = DEM_aspect,INPUT_VECTOR = HRU_draft_proj,COLUMN_PREFIX = 'HRU_A_')
+        qgis_raster_zonal_statistics(processing,INPUT_RASTER = DEM_clip,INPUT_VECTOR = HRU_draft_proj,COLUMN_PREFIX = 'HRU_E_')
+        
+        
+        HRU_draft_reproj = qgis_vector_reproject_layers(processing,context,INPUT = HRU_draft_proj,TARGET_CRS = trg_crs,OUTPUT = 'memory:')['OUTPUT']
 
     else:
         ## if no dem provided hru slope will use subbasin slope aspect and elevation
         formula = ' \"%s\" ' % 'BasSlope'
         HRU_draft_sub_info_S = qgis_vector_field_calculator(processing = processing, context = context,FORMULA =formula,FIELD_NAME = 'HRU_S_mean',INPUT =HRU_draft_sub_info,OUTPUT ='memory:',FIELD_PRECISION = 3)['OUTPUT']
-#        HRU_draft_sub_info_S = processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_sub_info,'FIELD_NAME':'HRU_S_mean','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
 
         formula = ' \"%s\" ' % 'BasAspect'
         HRU_draft_sub_info_A = qgis_vector_field_calculator(processing = processing, context = context,FORMULA =formula,FIELD_NAME = 'HRU_A_mean',INPUT =HRU_draft_sub_info_S,OUTPUT ='memory:',FIELD_PRECISION = 3)['OUTPUT']
-#        HRU_draft_sub_info_A = processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_sub_info_S,'FIELD_NAME':'HRU_A_mean','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
 
         formula = ' \"%s\" ' % 'MeanElev'
         HRU_draft_sub_info_S = qgis_vector_field_calculator(processing = processing, context = context,FORMULA =formula,FIELD_NAME = 'HRU_E_mean',INPUT =HRU_draft_sub_info_A,OUTPUT ='memory:',FIELD_PRECISION = 3)['OUTPUT']        
-#        HRU_draft_sub_info_S = processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_sub_info_A,'FIELD_NAME':'HRU_E_mean','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
 
         HRU_draft_reproj = HRU_draft_sub_info_S
 
     ### update HRU area
     formular        = 'area(transform($geometry, \'%s\',\'%s\'))' % (trg_crs,Project_crs)
     HRU_draf_final = qgis_vector_field_calculator(processing = processing, context = context,FORMULA =formular,FIELD_NAME = 'HRU_Area',INPUT =HRU_draft_reproj,OUTPUT ='memory:',NEW_FIELD=False,FIELD_PRECISION = 3)['OUTPUT']
-    
-#    HRU_draf_final  = processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_reproj,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':False,'FORMULA':formular,'OUTPUT':'memory:'})['OUTPUT']
-
-
 #    processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_reproj,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':False,'FORMULA':formular,'OUTPUT':os.path.join(OutputFolder,'hru_draft_final.shp')})
-
 
     return HRU_draf_final
 
