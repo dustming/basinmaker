@@ -25,7 +25,7 @@ from processing_functions_raster_grass import grass_raster_setnull,Return_Raster
 from processing_functions_attribute_table import Calculate_Longest_flowpath,New_SubId_To_Dissolve,UpdateTopology,Connect_SubRegion_Update_DownSubId,Update_DA_Strahler_For_Combined_Result,Determine_Lake_HRU_Id,Determine_HRU_Attributes
 from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile,Remove_Unselected_Lake_Attribute_In_Finalcatinfo,Add_centroid_to_feature,Selectfeatureattributes,Copyfeature_to_another_shp_by_attribute,Add_New_SubId_To_Subregion_shpfile,qgis_vector_field_calculator
 from processing_functions_vector_qgis import qgis_vector_fix_geometries,Clean_Attribute_Name,qgis_vector_merge_vector_layers,qgis_vector_return_crs_id,qgis_vector_union_two_layers,qgis_vector_extract_by_attribute
-from processing_functions_vector_qgis import qgis_vector_add_attributes,qgis_vector_get_attributes,qgis_vector_dissolve,qgis_vector_reproject_layers,qgis_vector_create_spatial_index,qgis_vector_clip,Obtain_Attribute_Table
+from processing_functions_vector_qgis import qgis_vector_add_attributes,qgis_vector_get_attributes,qgis_vector_dissolve,qgis_vector_reproject_layers,qgis_vector_create_spatial_index,qgis_vector_clip,Obtain_Attribute_Table,qgis_vector_join_attribute_table
 from utilities import Dbf_To_Dataframe
 import timeit
 
@@ -460,18 +460,24 @@ def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,disso
     layer_area_id = Add_centroid_to_feature(Path_feagure = layer_area_id,centroidx_nm = 'HRU_CenX',centroidy_nm='HRU_CenY',Input_Is_Feature_In_Mem = True)
      
     ### merge lake hru.
-    HRU_draft = processing.run("native:dissolve", {'INPUT':layer_area_id,'FIELD':dissolve_filedname_list,'OUTPUT':'memory:'},context = context)['OUTPUT']
+    HRU_draft = qgis_vector_dissolve(processing,context,layer_area_id,dissolve_filedname_list,'memory:')['OUTPUT']
 
-#    processing.run("native:dissolve", {'INPUT':hru_layer,'FIELD':dissolve_filedname_list,'OUTPUT':os.path.join(OutputFolder,'hrudraft.shp')},context = context)
     ### add subbasin attribute back to hru polygons
-    HRU_draft_sub_info = processing.run("native:joinattributestable", {'INPUT':HRU_draft,'FIELD':Sub_ID,'INPUT_2':Path_Subbasin_Ply,'FIELD_2':Sub_ID,
-                    'FIELDS_TO_COPY':[],'METHOD':1,'DISCARD_NONMATCHING':False,'PREFIX':'',
-                    'OUTPUT':'memory:'},context = context)['OUTPUT']
+    
+    HRU_draft_sub_info = qgis_vector_join_attribute_table(processing,context,INPUT1 = HRU_draft,FIELD1 = Sub_ID,INPUT2 = Path_Subbasin_Ply,FIELD2 = Sub_ID,OUTPUT = 'memory:')['OUTPUT']
+    
+# qgis_vector_join_attribute_table(processing,context,INPUT1,FIELD1,INPUT2,FIELD2,OUTPUT,
+#                                     FIELDS_TO_COPY =[],METHOD=1,DISCARD_NONMATCHING=False,
+#                                     PREFIX = '')
+                                    
+#    HRU_draft_sub_info = processing.run("native:joinattributestable", {'INPUT':HRU_draft,'FIELD':Sub_ID,'INPUT_2':Path_Subbasin_Ply,'FIELD_2':Sub_ID,
+#                    'FIELDS_TO_COPY':[],'METHOD':1,'DISCARD_NONMATCHING':False,'PREFIX':'',
+#                    'OUTPUT':'memory:'},context = context)['OUTPUT']
 
     if DEM != '#':
+        
+        HRU_draft_proj = qgis_vector_reproject_layers(processing,context,HRU_draft_sub_info,Project_crs,'memory:')['OUTPUT']
 
-        HRU_draft_proj = processing.run("native:reprojectlayer", {'INPUT':HRU_draft_sub_info,'TARGET_CRS':QgsCoordinateReferenceSystem(Project_crs),'OUTPUT':'memory:'})['OUTPUT']
-#        processing.run("native:reprojectlayer", {'INPUT':HRU_draft,'TARGET_CRS':QgsCoordinateReferenceSystem(Project_crs),'OUTPUT':os.path.join(OutputFolder,'hru_draft_proj.shp')})
         DEM_proj = processing.run("gdal:warpreproject", {'INPUT':DEM,'SOURCE_CRS':None,'TARGET_CRS':QgsCoordinateReferenceSystem(Project_crs),
                                                         'RESAMPLING':0,'NODATA':None,'TARGET_RESOLUTION':None,'OPTIONS':'','DATA_TYPE':0,
                                                         'TARGET_EXTENT':None,'TARGET_EXTENT_CRS':None,'MULTITHREADING':False,

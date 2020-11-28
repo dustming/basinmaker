@@ -436,9 +436,29 @@ def qgis_vector_clip(processing,context,INPUT,OVERLAY,OUTPUT):
     
     return out
     
-    
 
+def qgis_vector_join_attribute_table(processing,context,INPUT1,FIELD1,INPUT2,FIELD2,OUTPUT,
+                                    FIELDS_TO_COPY =[],METHOD=1,DISCARD_NONMATCHING=False,
+                                    PREFIX = ''):
+    """ qgis function join attibute table 
+    ----------
 
+    Notes
+    -------
+
+    Returns:
+    -------
+    """    
+            
+
+    out =  processing.run("native:joinattributestable", {'INPUT':INPUT1,'FIELD':FIELD1,'INPUT_2':INPUT2,'FIELD_2':FIELD2,
+                    'FIELDS_TO_COPY':FIELDS_TO_COPY,'METHOD':METHOD,'DISCARD_NONMATCHING':DISCARD_NONMATCHING,'PREFIX':PREFIX,
+                    'OUTPUT':OUTPUT},context = context)
+#          processing.run("native:joinattributestable", {'INPUT':HRU_draft,'FIELD':Sub_ID,'INPUT_2':Path_Subbasin_Ply,'FIELD_2':Sub_ID,
+#                    'FIELDS_TO_COPY':[],'METHOD':1,'DISCARD_NONMATCHING':False,'PREFIX':'',
+#                    'OUTPUT':'memory:'},context = context)['OUTPUT']
+                    
+    return out             
 
 
 
