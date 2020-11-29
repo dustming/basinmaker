@@ -21,7 +21,7 @@ from processing_functions_raster_array import Is_Point_Close_To_Id_In_Raster,Gen
 from processing_functions_raster_grass import grass_raster_setnull,Return_Raster_As_Array_With_garray
 from processing_functions_attribute_table import Calculate_Longest_flowpath,New_SubId_To_Dissolve,UpdateTopology,Connect_SubRegion_Update_DownSubId,Update_DA_Strahler_For_Combined_Result,Determine_Lake_HRU_Id,Determine_HRU_Attributes
 from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile,Remove_Unselected_Lake_Attribute_In_Finalcatinfo,Add_centroid_to_feature,Selectfeatureattributes,Copyfeature_to_another_shp_by_attribute,Add_New_SubId_To_Subregion_shpfile,qgis_vector_field_calculator
-from processing_functions_vector_qgis import qgis_vector_fix_geometries,Clean_Attribute_Name,qgis_vector_merge_vector_layers,qgis_vector_return_crs_id,qgis_vector_union_two_layers,qgis_vector_extract_by_attribute
+from processing_functions_vector_qgis import qgis_vector_fix_geometries,Clean_Attribute_Name,qgis_vector_merge_vector_layers,qgis_vector_return_crs_id,qgis_vector_union_two_layers,qgis_vector_extract_by_attribute,qgis_vector_read_vector,qgis_vector_add_polygon_attribute_to_points
 from processing_functions_vector_qgis import qgis_vector_add_attributes,qgis_vector_get_attributes,qgis_vector_dissolve,qgis_vector_reproject_layers,qgis_vector_create_spatial_index,qgis_vector_clip,Obtain_Attribute_Table,qgis_vector_join_attribute_table
 from processing_functions_raster_qgis import qgis_raster_gdal_warpreproject,qgis_raster_clip_raster_by_mask,qgis_raster_slope,qgis_raster_aspect,qgis_raster_zonal_statistics
 from utilities import Dbf_To_Dataframe,WriteStringToFile
@@ -2641,10 +2641,14 @@ class LRRT:
         Qgs.initQgis()
         from qgis import processing
         from processing.core.Processing import Processing
+                
+        from processing.tools import dataobjects
         feedback = QgsProcessingFeedback()
         Processing.initialize()
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
-
+        context = dataobjects.createContext()
+        context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
+        
         SubId_Selected = -1
         if Gauge_NMS[0] != '#':
             hyinfocsv  = Path_products[:-3] + "dbf"
@@ -2657,15 +2661,14 @@ class LRRT:
             SubId_Selected = hyshdinfo2['SubId'].values
 
         if Path_Points != '#':
-            r_dem_layer = QgsVectorLayer(Path_products, "")
-            SpRef_in = r_dem_layer.crs().authid()
-            processing.run("native:reprojectlayer", {'INPUT':Path_Points,'TARGET_CRS':QgsCoordinateReferenceSystem(SpRef_in),'OUTPUT':os.path.join(self.tempfolder,'Obspoint_project2.shp')})
-            processing.run("saga:addpolygonattributestopoints", {'INPUT':os.path.join(self.tempfolder,'Obspoint_project2.shp'),'POLYGONS':Path_products,'FIELDS':'SubId','OUTPUT':os.path.join(self.tempfolder,'Sub_Selected_by_Points.shp')})
-            print(self.tempfolder)
-            hyinfocsv  = os.path.join(self.tempfolder,'Sub_Selected_by_Points.shp')[:-3] + "dbf"
-            tempinfo   = Dbf5(hyinfocsv)
-            hyshdinfo2 = tempinfo.to_dataframe()
-    #        hyshdinfo2.to_csv(os.path.join(self.OutputFolder,'SubIds_Selected.csv'),sep=',', index = None)
+            vector_layer = qgis_vector_read_vector(processing,context,Path_products)
+            SpRef_in     = qgis_vector_return_crs_id(processing,context,vector_layer)
+            
+            qgis_vector_reproject_layers(processing,context,INPUT = Path_Points,TARGET_CRS = SpRef_in,OUTPUT = os.path.join(self.tempfolder,'Obspoint_project2.shp'))
+            
+            qgis_vector_add_polygon_attribute_to_points(processing,context,INPUT_Layer = os.path.join(self.tempfolder,'Obspoint_project2.shp'),POLYGONS = Path_products,FIELDS = 'SubId',OUTPUT = os.path.join(self.tempfolder,'Sub_Selected_by_Points.shp'))
+            
+            hyshdinfo2 = Dbf_To_Dataframe(os.path.join(self.tempfolder,'Sub_Selected_by_Points.shp'))
             SubId_Selected = hyshdinfo2['SubId'].values
             SubId_Selected = SubId_Selected[SubId_Selected > 0]
 
