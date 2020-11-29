@@ -3711,7 +3711,8 @@ class LRRT:
             ### product do not exist
             if os.path.exists(Path_Finalcat_ply) != 1:   ### this sub region did not generate outputs
                 continue
-            ### obtain new subid
+            
+            ### For each subregion, add new subid to each polygon files, and append result file in the merge list 
             if Is_Final_Result == True:
 
                 SubID_info = Dbf_To_Dataframe(Path_Finalcat_ply).drop_duplicates(subset=['SubId'], keep='first')[['SubId','DowSubId','Seg_ID']].copy()
@@ -3752,7 +3753,7 @@ class LRRT:
                                           Region_ID = isubregion,SubID_info = SubID_info)
                 Paths_Finalriv_line.append(os.path.join(self.tempfolder,'finalriv_info_Region_'+str(isubregion)+'addatrri.shp'))
                 del layer_cat
-
+ 
             if os.path.exists(Path_Con_Lake_ply) == 1:
                 Paths_Con_Lake_ply.append(Path_Con_Lake_ply)
             if os.path.exists(Path_None_Con_Lake_ply) == 1:
@@ -3763,18 +3764,20 @@ class LRRT:
 
             subid_strat_iregion  = max(SubID_info['nSubId']) + 10
             seg_id_strat_iregion = max(SubID_info['nSeg_ID']) + 10
-
+        
+        # merge connected lake polygons 
         if(len(Paths_Con_Lake_ply) > 0):
             qgis_vector_merge_vector_layers(processing,context,INPUT_Layer_List = Paths_Con_Lake_ply,OUTPUT =os.path.join(OutputFolder,'Con_Lake_Ply.shp'))
-#            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Con_Lake_ply,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'Con_Lake_Ply.shp')})
+        
+        # merge non connected lake polygon 
         if(len(Paths_None_Con_Lake_ply) > 0):
             qgis_vector_merge_vector_layers(processing,context,INPUT_Layer_List = Paths_None_Con_Lake_ply,OUTPUT =os.path.join(OutputFolder,'Non_Con_Lake_Ply.shp'))
-#            processing.run("native:mergevectorlayers", {'LAYERS':Paths_None_Con_Lake_ply,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'Non_Con_Lake_Ply.shp')})
+        
+        # merge observation points 
         if(len(Paths_obs_point) > 0):
             qgis_vector_merge_vector_layers(processing,context,INPUT_Layer_List = Paths_obs_point,OUTPUT =os.path.join(OutputFolder,'obspoint.shp'))            
-#            processing.run("native:mergevectorlayers", {'LAYERS':Paths_obs_point,'CRS':None,'OUTPUT':os.path.join(OutputFolder,'obspoint.shp')})
 
-
+        # merge catchment polygon and polyline layers, and update their attirbutes 
         if Is_Final_Result == 1:
         #### Obtain downstream # id:
             qgis_vector_merge_vector_layers(processing,context,INPUT_Layer_List = Paths_Finalcat_ply,OUTPUT =os.path.join(self.tempfolder,'finalcat_info.shp'))
