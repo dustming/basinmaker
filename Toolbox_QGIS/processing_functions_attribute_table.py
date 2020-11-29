@@ -1026,3 +1026,190 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(fina
                 seg_order      = seg_order + 1
 
     return mapoldnew_info,Selected_riv_ids,Connected_Lake_Mainriv,Old_Non_Connect_LakeIds,Conn_To_NonConlakeids
+
+def Return_Selected_Lakes_Attribute_Table_And_Id(finalcat_info,Thres_Area_Conn_Lakes,Thres_Area_Non_Conn_Lakes,Selection_Method,Selected_Lake_List_in):
+    """ Retrun selected lake's attribute table and ID
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, 
+    """
+        
+    finalcat_info['LakeArea']  = finalcat_info['LakeArea'].astype(float)
+    finalcat_info['HyLakeId']  = finalcat_info['HyLakeId'].astype(int)
+    finalcat_info['Seg_ID']  = finalcat_info['Seg_ID'].astype(int)
+
+    Non_ConnL_info           = finalcat_info.loc[finalcat_info['IsLake'] == 2]
+    ConnL_info               = finalcat_info.loc[finalcat_info['IsLake'] == 1]
+
+    if Selection_Method == 'ByArea':
+        ### process connected lakes first
+        Selected_ConnLakes = finalcat_info.loc[(finalcat_info['IsLake'] == 1) & (finalcat_info['LakeArea'] >= Thres_Area_Conn_Lakes)]['HyLakeId'].values
+        Selected_ConnLakes = np.unique(Selected_ConnLakes)
+        Un_Selected_ConnLakes_info  =finalcat_info.loc[(finalcat_info['IsLake'] == 1) & (finalcat_info['LakeArea'] < Thres_Area_Conn_Lakes) & (finalcat_info['LakeArea'] > 0)]
+        ### process non connected selected lakes
+        if Thres_Area_Non_Conn_Lakes >= 0:
+            Selected_Non_ConnLakes = Non_ConnL_info[Non_ConnL_info['LakeArea'] >= Thres_Area_Non_Conn_Lakes]['HyLakeId'].values
+            Selected_Non_ConnLakes = np.unique(Selected_Non_ConnLakes)
+            Selected_Non_ConnL_info = Non_ConnL_info[Non_ConnL_info['LakeArea'] >= Thres_Area_Non_Conn_Lakes]
+            Un_Selected_Non_ConnL_info = Non_ConnL_info[Non_ConnL_info['LakeArea'] < Thres_Area_Non_Conn_Lakes]
+        else:
+            Selected_Non_ConnLakes = Non_ConnL_info[Non_ConnL_info['LakeArea'] >= 10000000]['HyLakeId'].values
+            Selected_Non_ConnLakes = np.unique(Selected_Non_ConnLakes)
+            Selected_Non_ConnL_info = Non_ConnL_info[Non_ConnL_info['LakeArea'] >= 10000000]
+
+    elif Selection_Method == 'ByLakelist':
+        All_ConnL     = ConnL_info['HyLakeId'].values
+        All_Non_ConnL = Non_ConnL_info['HyLakeId'].values
+        Selected_Lake_List_in_array = np.array(Selected_Lake_List_in)
+
+        mask_CL  = np.in1d(All_ConnL, Selected_Lake_List_in_array)
+        mask_NCL = np.in1d(All_Non_ConnL, Selected_Lake_List_in_array)
+
+        Selected_ConnLakes     = All_ConnL[mask_CL]
+        Selected_ConnLakes     = np.unique(Selected_ConnLakes)
+        Selected_Non_ConnLakes = All_Non_ConnL[mask_NCL]
+        Selected_Non_ConnLakes = np.unique(Selected_Non_ConnLakes)
+
+        Un_Selected_ConnLakes_info  =finalcat_info.loc[(finalcat_info['IsLake'] == 1) & (np.logical_not(finalcat_info['HyLakeId'].isin(Selected_ConnLakes)))]
+        Un_Selected_Non_ConnL_info  =finalcat_info.loc[(finalcat_info['IsLake'] == 2) & (np.logical_not(finalcat_info['HyLakeId'].isin(Selected_Non_ConnLakes)))]
+
+
+    else:
+        print(todo)
+    return Selected_Non_ConnLakes,Selected_ConnLakes,Un_Selected_ConnLakes_info,Un_Selected_Non_ConnL_info
+
+def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_CL(finalcat_info_temp,Un_Selected_ConnLakes_info):
+    """ Change attributes for catchments that needs to be merged due to remove 
+        connected lakes 
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, 
+    """    
+    mapoldnew_info      = finalcat_info_temp.copy(deep = True)
+    mapoldnew_info['nsubid']     = -1
+    mapoldnew_info['ndownsubid'] = -1
+    mapoldnew_info['nsubid2']    = mapoldnew_info['SubId']
+    mapoldnew_info.reset_index(drop=True, inplace=True)
+    ### Loop each unselected lake stream seg
+
+    Seg_IDS = Un_Selected_ConnLakes_info['Seg_ID'].values
+    Seg_IDS = np.unique(Seg_IDS)
+    for iseg in range(0,len(Seg_IDS)):
+#            print('#########################################################################################33333')
+        i_seg_id   = Seg_IDS[iseg]
+        i_seg_info = finalcat_info_temp.loc[(finalcat_info_temp['Seg_ID'] == i_seg_id) & (finalcat_info_temp['IsLake'] != 2)].copy()
+        i_seg_info = i_seg_info.sort_values(["Seg_order"], ascending = (True))
+
+        ###each part of the segment are not avaiable to be merged
+        N_Hylakeid = np.unique(i_seg_info['HyLakeId'].values)
+        if len(i_seg_info) == len(N_Hylakeid):
+            continue
+
+        ### All lakes in this segment are removed
+        if np.max(N_Hylakeid)  < 0:   ##
+            tsubid        = i_seg_info['SubId'].values[len(i_seg_info) - 1]
+            seg_sub_ids   = i_seg_info['SubId'].values
+            mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalcat_info_temp,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = seg_sub_ids,mainriv = finalcat_info_temp,Islake = -1,seg_order = 1)
+
+        ### loop from the first order of the current segment
+        modifysubids = []
+        seg_order = 1
+        for iorder in range(0,len(i_seg_info)):
+            tsubid = i_seg_info['SubId'].values[iorder]
+            modifysubids.append(tsubid)
+
+            ### two seg has the same HyLakeId id, can be merged
+            if iorder == len(i_seg_info) - 1:
+                seg_sub_ids   = np.asarray(modifysubids)
+                mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalcat_info_temp,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = seg_sub_ids,mainriv = finalcat_info_temp,Islake = i_seg_info['HyLakeId'].values[iorder],seg_order = seg_order)
+                modifysubids = []
+                seg_order    = seg_order + 1
+
+            elif i_seg_info['HyLakeId'].values[iorder] == i_seg_info['HyLakeId'].values[iorder + 1]:
+                continue
+            else:
+                seg_sub_ids   = np.asarray(modifysubids)
+                mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalcat_info_temp,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = seg_sub_ids,mainriv = finalcat_info_temp,Islake = i_seg_info['HyLakeId'].values[iorder],seg_order = seg_order)
+                modifysubids = []
+                seg_order    = seg_order + 1
+    return   mapoldnew_info                 
+
+def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_NCL(mapoldnew_info,finalcat_info_temp,Un_Selected_Non_ConnL_info):
+    """ Change attributes for catchments that needs to be merged due to remove 
+        non connected lakes 
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, 
+    """
+
+    Un_Selected_Non_ConnL_info = Un_Selected_Non_ConnL_info.sort_values(['DA'], ascending=[False])
+    for i in range(0,len(Un_Selected_Non_ConnL_info)):
+        Remove_Non_ConnL_Lakeid        = Un_Selected_Non_ConnL_info['HyLakeId'].values[i] ##select one non connected lake
+        Remove_Non_ConnL_Lake_Sub_info = finalcat_info_temp.loc[finalcat_info_temp['HyLakeId'] == Remove_Non_ConnL_Lakeid].copy() ## obtain cat info of this non connected lake catchment
+        if len(Remove_Non_ConnL_Lake_Sub_info) != 1:
+            print("It is not a non connected lake catchment")
+            print(Remove_Non_ConnL_Lake_Sub_info)
+            continue
+        modifysubids = [] ##array store all catchment id needs to be merged
+        csubid  = Remove_Non_ConnL_Lake_Sub_info['SubId'].values[0]  ### intial subid
+        downsubid = Remove_Non_ConnL_Lake_Sub_info['DowSubId'].values[0] ### downstream subid
+        modifysubids.append(csubid)  ### add inital subid into the list
+        tsubid = -1
+        is_pre_modified = 0
+
+        Down_Sub_info = finalcat_info_temp.loc[finalcat_info_temp['SubId'] == downsubid].copy() ###obtain downstream infomation
+        if Down_Sub_info['IsLake'].values[0] != 2:
+            ### check if this downsubid has a new subid
+            nsubid = mapoldnew_info.loc[mapoldnew_info['SubId'] == downsubid]['nsubid'].values[0] ## check if this catchment has modified: either merged to other catchment
+
+            if nsubid > 0:  ### if it been already processed
+                tsubid = nsubid  ### the target catchment id will be the newsunid
+                is_pre_modified = 1 ### set is modifed to 1
+                modifysubids.append(tsubid) ### add this subid to the list
+            else:
+                tsubid = downsubid
+                is_pre_modified = -1
+                modifysubids.append(tsubid)
+
+        else: ### down stream cat is a non connected lake cat
+
+            nsubid = mapoldnew_info.loc[mapoldnew_info['SubId'] == downsubid]['nsubid'].values[0]
+            if nsubid > 0:
+                tsubid = nsubid
+                is_pre_modified = 1
+                modifysubids.append(tsubid)
+            else:
+                tsubid = downsubid
+#                    print("This value should always be zero:    ", np.sum(Un_Selected_Non_ConnL_info['SubId'] == downsubid))
+                is_pre_modified = -1
+                modifysubids.append(tsubid)
+
+        Tar_Lake_Id = mapoldnew_info[mapoldnew_info['SubId'] == tsubid]['HyLakeId'].values[0]
+
+        if is_pre_modified > 0:
+            mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = mapoldnew_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = modifysubids,mainriv = finalcat_info_temp,Islake = Tar_Lake_Id)
+        else:
+            mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = mapoldnew_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = modifysubids,mainriv = finalcat_info_temp,Islake = Tar_Lake_Id)
+
+    unprocessedmask = mapoldnew_info['nsubid'] <= 0
+
+    mapoldnew_info.loc[unprocessedmask,'nsubid'] = mapoldnew_info.loc[unprocessedmask,'nsubid2'].values
+
+    mapoldnew_info.drop(columns=['nsubid2'])
+            
+    return mapoldnew_info    
