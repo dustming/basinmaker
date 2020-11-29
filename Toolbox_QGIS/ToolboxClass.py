@@ -19,7 +19,7 @@ from Generatecatinfo import Generatecatinfo,Generatecatinfo_riv,calculateChannal
 from AddlakesintoRoutingNetWork import Dirpoints_v3,check_lakecatchment,DefineConnected_Non_Connected_Lakes,Generate_stats_list_from_grass_raster
 from processing_functions_raster_array import Is_Point_Close_To_Id_In_Raster,GenerPourpoint,Check_If_Str_Is_Head_Stream,GenerateFinalPourpoints,CE_mcat4lake2
 from processing_functions_raster_grass import grass_raster_setnull,Return_Raster_As_Array_With_garray
-from processing_functions_attribute_table import Calculate_Longest_flowpath,New_SubId_To_Dissolve,UpdateTopology,Connect_SubRegion_Update_DownSubId,Update_DA_Strahler_For_Combined_Result,Determine_Lake_HRU_Id,Determine_HRU_Attributes
+from processing_functions_attribute_table import Calculate_Longest_flowpath,New_SubId_To_Dissolve,UpdateTopology,Connect_SubRegion_Update_DownSubId,Update_DA_Strahler_For_Combined_Result,Determine_Lake_HRU_Id,Determine_HRU_Attributes,Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA
 from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile,Remove_Unselected_Lake_Attribute_In_Finalcatinfo,Add_centroid_to_feature,Selectfeatureattributes,Copyfeature_to_another_shp_by_attribute,Add_New_SubId_To_Subregion_shpfile,qgis_vector_field_calculator
 from processing_functions_vector_qgis import qgis_vector_fix_geometries,Clean_Attribute_Name,qgis_vector_merge_vector_layers,qgis_vector_return_crs_id,qgis_vector_union_two_layers,qgis_vector_extract_by_attribute,qgis_vector_read_vector,qgis_vector_add_polygon_attribute_to_points
 from processing_functions_vector_qgis import qgis_vector_add_attributes,qgis_vector_get_attributes,qgis_vector_dissolve,qgis_vector_reproject_layers,qgis_vector_create_spatial_index,qgis_vector_clip,Obtain_Attribute_Table,qgis_vector_join_attribute_table
@@ -2872,220 +2872,69 @@ class LRRT:
         down_colnm='DowSubId'
         DA_colnm = 'DA'
         SegID_colnm = 'Seg_ID'
-
+        
+        # overall procedure, 
+        # 1. first get product attribute table 
+        # 2. determine which features needs to be merged together to increage 
+        #    drainage area of the sub basin, for example sub a, b c 
+        # 3. in the attribute table, change sub a b c 's content to a, assuming sub b and c drainge to a.  
+        # 4. copy modified attribute table 
+        # 5. dissolve based on subid amd finished 
+        # overall procedure,
         # obtain river segment ids based on area thresthold
-
+        
+        # read attribute table, and
         Path_final_rviply = Path_final_riv_ply
         Path_final_riv    = Path_final_riv
         Path_Conl_ply     = Path_Con_Lake_ply
         Path_Non_ConL_ply = Path_NonCon_Lake_ply
-
-
-        finalriv_csv     = Path_final_rviply[:-3] + "dbf"
-        finalriv_info    = Dbf5(finalriv_csv)
-        finalriv_info    = finalriv_info.to_dataframe().drop_duplicates(sub_colnm, keep='first')
-
-        Selected_riv     = finalriv_info.loc[finalriv_info[DA_colnm] >= Area_Min*1000*1000].copy() # find river with drainage area larger than area thresthold
-
-        Selected_riv     = UpdateTopology(Selected_riv,UpdateSubId = -1)
-        Selected_riv     = Selected_riv.sort_values(["Strahler"], ascending = (True))   ###sort selected river by Strahler stream order
-        Subid_main       = Selected_riv[sub_colnm].values
-
-        mapoldnew_info   = finalriv_info.copy(deep = True)
-        mapoldnew_info['nsubid']     = -1
-        mapoldnew_info['ndownsubid'] = -1
-        mapoldnew_info.reset_index(drop=True, inplace=True)
-
-        ### Obtain connected lakes based on current river segment
-        Connected_Lake_Mainriv = Selected_riv.loc[Selected_riv['IsLake'] == 1]['HyLakeId'].values
-        Connected_Lake_Mainriv = np.unique(Connected_Lake_Mainriv[Connected_Lake_Mainriv>0])
-        Lakecover_riv          = finalriv_info.loc[finalriv_info['HyLakeId'].isin(Connected_Lake_Mainriv)].copy()
-        Subid_lakes            = Lakecover_riv[sub_colnm].values
-
-
-        #####
-
-        Conn_Lakes_ply              = Path_Conl_ply[:-3] + "dbf"
-        Conn_Lakes_ply              = Dbf5(Conn_Lakes_ply)
-        Conn_Lakes_ply              = Conn_Lakes_ply.to_dataframe()
-        Conn_Lakes_ply              = Conn_Lakes_ply.drop_duplicates('Hylak_id', keep='first')
-        All_Conn_Lakeids            = Conn_Lakes_ply['Hylak_id'].values
-        mask                        = np.in1d(All_Conn_Lakeids, Connected_Lake_Mainriv)
-        Conn_To_NonConlakeids       = All_Conn_Lakeids[np.logical_not(mask)].copy()
-        Conn_To_NonConlake_info     = finalriv_info.loc[finalriv_info['HyLakeId'].isin(Conn_To_NonConlakeids)].copy()
-
-
-        Old_Non_Connect_SubIds     = finalriv_info.loc[finalriv_info['IsLake'] == 2]['SubId'].values
-        Old_Non_Connect_SubIds     = np.unique(Old_Non_Connect_SubIds[Old_Non_Connect_SubIds>0])
-        Old_Non_Connect_LakeIds    = finalriv_info.loc[finalriv_info['IsLake'] == 2]['HyLakeId'].values
-        Old_Non_Connect_LakeIds     = np.unique(Old_Non_Connect_LakeIds[Old_Non_Connect_LakeIds>0])
-
-#        Select_SubId_Link= Select_SubId_Lakes(ConLakeId,finalriv_info,Subid_main)
-        ### obtain rivsegments that covered by remaining lakes
-        Selected_riv_ids  = np.unique(Subid_main) #np.unique(np.concatenate([Subid_main,Subid_lakes]))
-        routing_info      = finalriv_info[['SubId','DowSubId']].astype('float').values
-        Seg_IDS           = Selected_riv['Seg_ID'].values
-        Seg_IDS           = np.unique(Seg_IDS)
-
-        ##### for Non connected lakes, catchment polygon do not need to change
-        mapoldnew_info.loc[mapoldnew_info['IsLake'] == 2,'nsubid'] = mapoldnew_info.loc[mapoldnew_info['IsLake'] == 2]['SubId'].values
-
-        #####for catchment polygon flow to lake with is changed from connected lake to non connected lakes
-        idx = Conn_To_NonConlake_info.groupby(['HyLakeId'])['DA'].transform(max) == Conn_To_NonConlake_info['DA']
-        Conn_To_NonConlake_info_outlet = Conn_To_NonConlake_info[idx]
-
-        Conn_To_NonConlake_info_outlet = Conn_To_NonConlake_info_outlet.sort_values(['Strahler', 'DA'], ascending=[True, True])
-        ### process fron upstream lake to down stream lake
-        for i in range(0,len(Conn_To_NonConlake_info_outlet)):
-            processed_subid = np.unique(mapoldnew_info.loc[mapoldnew_info['nsubid'] > 0][sub_colnm].values)
-
-            C_T_N_Lakeid   = Conn_To_NonConlake_info_outlet['HyLakeId'].values[i]
-            Lake_Cat_info  = finalriv_info[finalriv_info['HyLakeId'] == C_T_N_Lakeid]
-            Riv_Seg_IDS    = np.unique(Lake_Cat_info['Seg_ID'].values)
-            modifysubids = []
-            for j in range(0,len(Riv_Seg_IDS)):
-
-                iriv_seg = Riv_Seg_IDS[j]
-                Lake_Cat_seg_info = Lake_Cat_info.loc[Lake_Cat_info['Seg_ID'] == iriv_seg].copy()
-                Lake_Cat_seg_info = Lake_Cat_seg_info.sort_values(["DA"], ascending = (False))
-                tsubid            = Lake_Cat_seg_info['SubId'].values[0]
-
-                All_up_subids  = Defcat(routing_info,tsubid)
-                All_up_subids  = All_up_subids[All_up_subids > 0]
-
-
-                mask           = np.in1d(All_up_subids, processed_subid)
-                seg_sub_ids    = All_up_subids[np.logical_not(mask)]
-
-                modifysubids   = [*modifysubids,*seg_sub_ids.tolist()] ### combine two list not sum
-
-            modifysubids   = np.asarray(modifysubids)
-
-            mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalriv_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,mainriv = finalriv_info,modifiidin = modifysubids,Islake = 2)
-
-        ####################3 for rest of the polygons dissolve to main river
-        for iseg in range(0,len(Seg_IDS)):
-#            print('#########################################################################################33333')
-            i_seg_id        = Seg_IDS[iseg]
-            i_seg_info      = Selected_riv.loc[Selected_riv['Seg_ID'] == i_seg_id].copy()
-            i_seg_info      = i_seg_info.sort_values(["Seg_order"], ascending = (True))
-
-            modifysubids = []
-            seg_order = 1
-            for iorder in range(0,len(i_seg_info)):
-                tsubid              = i_seg_info['SubId'].values[iorder]
-                iorder_Lakeid       = i_seg_info['HyLakeId'].values[iorder]
-                modifysubids.append(tsubid)
-                processed_subid = np.unique(mapoldnew_info.loc[mapoldnew_info['nsubid'] > 0][sub_colnm].values)
-
-                ### two seg has the same HyLakeId id, can be merged
-                if iorder == len(i_seg_info) - 1:
-                    seg_sub_ids   = np.asarray(modifysubids)
-                    ## if needs to add lake sub around the main stream
-                    if iorder_Lakeid > 0:
-                        subid_cur_lake_info        = finalriv_info.loc[finalriv_info['HyLakeId'] ==iorder_Lakeid].copy()
-                        routing_info_lake          = subid_cur_lake_info[['SubId','DowSubId']].astype('float').values
-                        UpstreamLakeids            = Defcat(routing_info_lake,tsubid)
-                        seg_sub_ids                = np.unique(np.concatenate([seg_sub_ids,UpstreamLakeids]))
-                        seg_sub_ids                = seg_sub_ids[seg_sub_ids>0]
-
-                    ### merge all subbasin not connected to the main river but drainarge to this tsubid
-                    All_up_subids         = Defcat(routing_info,tsubid)
-                    All_up_subids         = All_up_subids[All_up_subids > 0]
-                    mask1                 = np.in1d(All_up_subids, Subid_main)  ### exluced ids that belongs to main river stream
-                    All_up_subids_no_main = All_up_subids[np.logical_not(mask1)]
-
-                    seg_sub_ids   = np.unique(np.concatenate([seg_sub_ids,All_up_subids_no_main]))
-                    seg_sub_ids   = seg_sub_ids[seg_sub_ids>0]
-                    mask          = np.in1d(seg_sub_ids, processed_subid)
-                    seg_sub_ids   = seg_sub_ids[np.logical_not(mask)]
-
-                    mask_old_nonLake = np.in1d(seg_sub_ids, Old_Non_Connect_SubIds)
-                    seg_sub_ids   = seg_sub_ids[np.logical_not(mask_old_nonLake)]
-
-                    mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalriv_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = seg_sub_ids,mainriv = Selected_riv,Islake = 3,seg_order = seg_order)
-#                    New_NonConn_Lakes = ConnectLake_to_NonConnectLake_Updateinfo(NonC_Lakeinfo = New_NonConn_Lakes,finalriv_info = finalriv_info ,Merged_subids = seg_sub_ids,Connect_Lake_ply_info = Conn_Lakes_ply,ConLakeId = iorder_Lakeid)
-                    modifysubids   = []
-                    seg_order      = seg_order + 1
-
-                elif i_seg_info['HyLakeId'].values[iorder] == i_seg_info['HyLakeId'].values[iorder + 1] and i_seg_info['IsObs'].values[iorder] < 0:
-                    continue
-                else:
-                    seg_sub_ids    = np.asarray(modifysubids)
-                    ## if needs to add lake sub around the main stream
-                    if iorder_Lakeid > 0:
-                        subid_cur_lake_info        = finalriv_info.loc[finalriv_info['HyLakeId'] ==iorder_Lakeid].copy()
-                        routing_info_lake          = subid_cur_lake_info[['SubId','DowSubId']].astype('float').values
-                        UpstreamLakeids            = Defcat(routing_info_lake,tsubid)
-                        seg_sub_ids                = np.unique(np.concatenate([seg_sub_ids,UpstreamLakeids]))
-                        seg_sub_ids                = seg_sub_ids[seg_sub_ids>0]
-
-                    All_up_subids         = Defcat(routing_info,tsubid)
-                    All_up_subids         = All_up_subids[All_up_subids > 0]
-                    mask1                 = np.in1d(All_up_subids, Subid_main)  ### exluced ids that belongs to main river stream
-                    All_up_subids_no_main = All_up_subids[np.logical_not(mask1)]
-
-                    seg_sub_ids   = np.unique(np.concatenate([seg_sub_ids,All_up_subids_no_main]))
-                    seg_sub_ids   = seg_sub_ids[seg_sub_ids>0]
-                    mask          = np.in1d(seg_sub_ids, processed_subid)
-                    seg_sub_ids   = seg_sub_ids[np.logical_not(mask)]
-
-                    mask_old_nonLake = np.in1d(seg_sub_ids, Old_Non_Connect_SubIds)
-                    seg_sub_ids   = seg_sub_ids[np.logical_not(mask_old_nonLake)]
-
-                    mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalriv_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = seg_sub_ids,mainriv = Selected_riv,Islake = 3,seg_order = seg_order)
-#                    New_NonConn_Lakes = ConnectLake_to_NonConnectLake_Updateinfo(NonC_Lakeinfo = New_NonConn_Lakes,finalriv_info = finalriv_info ,Merged_subids = seg_sub_ids,Connect_Lake_ply_info = Conn_Lakes_ply,ConLakeId = iorder_Lakeid)
-                    modifysubids   = []
-                    seg_order      = seg_order + 1
-
-        ######################################################################
-        ## select river based on river ids
+        
+        finalriv_info = Dbf_To_Dataframe(Path_final_rviply).drop_duplicates(sub_colnm, keep='first')
+        Conn_Lakes_ply = Dbf_To_Dataframe(Path_Conl_ply).drop_duplicates('Hylak_id', keep='first')
+        
+        # change attribute table 
+        mapoldnew_info,Selected_riv_ids,Connected_Lake_Mainriv,Old_Non_Connect_LakeIds,Conn_To_NonConlakeids= Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(finalriv_info,Conn_Lakes_ply,Area_Min)
+        
+        # remove river polyline
         Path_Temp_final_rviply = os.path.join(self.tempfolder,'temp1_finalriv_ply.shp')
         Path_Temp_final_rvi    = os.path.join(self.tempfolder,'temp1_finalriv.shp')
-
-
         Selectfeatureattributes(processing,Input = Path_final_riv    ,Output=Path_Temp_final_rvi    ,Attri_NM = 'SubId',Values = Selected_riv_ids)
-        processing.run("native:dissolve", {'INPUT':Path_final_rviply,'FIELD':['SubId'],'OUTPUT':Path_Temp_final_rviply},context = context)
-
+        qgis_vector_dissolve(processing,context,INPUT = Path_final_rviply,FIELD = ['SubId'],OUTPUT = Path_Temp_final_rviply)
+         
+        # update topology of new attribute table 
         UpdateTopology(mapoldnew_info)
         mapoldnew_info = UpdateNonConnectedcatchmentinfo(mapoldnew_info)
+        
+        # copy new attribute table to subbasin polyline and polygon  
         Copy_Pddataframe_to_shpfile(Path_Temp_final_rviply,mapoldnew_info,link_col_nm_shp = 'SubId'
                                     ,link_col_nm_df = 'Old_SubId',UpdateColNM = ['#'])
         Copy_Pddataframe_to_shpfile(Path_Temp_final_rvi,mapoldnew_info,link_col_nm_shp = 'SubId'
                                     ,link_col_nm_df = 'Old_SubId',UpdateColNM = ['#'])
                                     
-
-        ######################################################################################################3
-        ## create output folder
+        # create output folder
         outputfolder_subid = OutputFolder
         if not os.path.exists(outputfolder_subid):
             os.makedirs(outputfolder_subid)
 
-        #### export lake polygons
+        # export lake polygons
 
         Selectfeatureattributes(processing,Input =Path_Conl_ply ,Output=os.path.join(outputfolder_subid,os.path.basename(Path_Conl_ply)),Attri_NM = 'Hylak_id',Values = Connected_Lake_Mainriv)
         Selectfeatureattributes(processing,Input =Path_Non_ConL_ply ,Output=os.path.join(outputfolder_subid,os.path.basename(Path_Non_ConL_ply)),Attri_NM = 'Hylak_id',Values = Old_Non_Connect_LakeIds)
 
-        ###
-
+        # Copy connected lakes that are transfered into non-connected lake to non connected lake polygon 
         Copyfeature_to_another_shp_by_attribute(Source_shp = Path_Conl_ply,Target_shp =os.path.join(outputfolder_subid,os.path.basename(Path_Non_ConL_ply)),Col_NM='Hylak_id',Values=Conn_To_NonConlakeids,Attributes = Conn_Lakes_ply)
 
-
+        
+        # dissolve subbasin polygon based on new subbasin id 
         Path_out_final_rviply = os.path.join(outputfolder_subid,os.path.basename(Path_final_riv_ply))
         Path_out_final_rvi    = os.path.join(outputfolder_subid,os.path.basename(Path_final_riv))
-        processing.run("native:dissolve", {'INPUT':Path_Temp_final_rviply,'FIELD':['SubId'],'OUTPUT':Path_out_final_rviply},context = context)
-        processing.run("native:dissolve", {'INPUT':Path_Temp_final_rvi,'FIELD':['SubId'],'OUTPUT':Path_out_final_rvi},context = context)
-
+        
+        qgis_vector_dissolve(processing,context,INPUT = Path_Temp_final_rviply,FIELD = ['SubId'],OUTPUT = Path_out_final_rviply)
+        qgis_vector_dissolve(processing,context,INPUT = Path_Temp_final_rvi,FIELD = ['SubId'],OUTPUT = Path_out_final_rvi)
+                
+        # clean attribute table and done 
         Clean_Attribute_Name(Path_out_final_rviply,   self.FieldName_List_Product)
         Clean_Attribute_Name(Path_out_final_rvi   , self.FieldName_List_Product)
-
-
-#        Path_final_rviply = os.path.join(DataFolder,finalrvi_ply_NM)
-#        Path_final_riv    = os.path.join(DataFolder,finalriv_NM)
-#        Path_Non_ConL_cat = os.path.join(DataFolder,Non_ConnL_Cat_NM)
-#        Path_Conl_ply     = os.path.join(DataFolder,ConnL_ply_NM)
-#        Path_Non_ConL_ply = os.path.join(DataFolder,Non_ConnL_ply_NM)
-
 
         Qgs.exit()
 

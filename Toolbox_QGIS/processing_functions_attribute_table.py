@@ -854,3 +854,175 @@ def Determine_HRU_Attributes(Attri_table,Sub_ID,Landuse_ID,Soil_ID,Veg_ID,Other_
         else:
             Attri_table.loc[i,'SOIL_PROF'] =  Soil_info_data.loc[Soil_info_data[Soil_ID] == int(Soil_ID_num),'SOIL_PROF'].values[0]
     return Attri_table
+    
+    
+def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(finalriv_info,Conn_Lakes_ply,Area_Min):
+    """ Modify attribute table mapoldnew_info, create new sub id for subbasin needs to be merged.  
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, 
+    """
+    sub_colnm='SubId'
+    down_colnm='DowSubId'
+    DA_colnm = 'DA'
+    SegID_colnm = 'Seg_ID'
+    ### Modify attribute table mapoldnew_info, create new sub id for 
+    ### 1. catchment needs to be merged due to meet the drainage area thresthold 
+    ### 2. connected lake catchment are transfered into non-connected lake catchment 
+               
+    # copy attribute tabke and create two column to store new subid 
+    mapoldnew_info   = finalriv_info.copy(deep = True)
+    mapoldnew_info['nsubid']     = -1
+    mapoldnew_info['ndownsubid'] = -1
+    mapoldnew_info.reset_index(drop=True, inplace=True)
+
+    # select catchment segment that meet the drainage area 
+    Selected_riv     = finalriv_info.loc[finalriv_info[DA_colnm] >= Area_Min*1000*1000].copy() # find river with drainage area larger than area thresthold
+    
+    # calcuate topology for the selected catchment 
+    Selected_riv     = UpdateTopology(Selected_riv,UpdateSubId = -1)
+    Selected_riv     = Selected_riv.sort_values(["Strahler"], ascending = (True))   ###sort selected river by Strahler stream order
+    Subid_main       = Selected_riv[sub_colnm].values
+
+
+    ### Obtain connected lakes based on current river segment
+    Connected_Lake_Mainriv = Selected_riv.loc[Selected_riv['IsLake'] == 1]['HyLakeId'].values
+    Connected_Lake_Mainriv = np.unique(Connected_Lake_Mainriv[Connected_Lake_Mainriv>0])
+    Lakecover_riv          = finalriv_info.loc[finalriv_info['HyLakeId'].isin(Connected_Lake_Mainriv)].copy()
+    Subid_lakes            = Lakecover_riv[sub_colnm].values
+    #####
+    
+    # identify which connected lake will be moved to non connected lake due to remove of river network 
+    All_Conn_Lakeids            = Conn_Lakes_ply['Hylak_id'].values
+    mask                        = np.in1d(All_Conn_Lakeids, Connected_Lake_Mainriv)
+    Conn_To_NonConlakeids       = All_Conn_Lakeids[np.logical_not(mask)].copy()
+    Conn_To_NonConlake_info     = finalriv_info.loc[finalriv_info['HyLakeId'].isin(Conn_To_NonConlakeids)].copy()
+
+    # Get origional non connected lake subid and lake id 
+    Old_Non_Connect_SubIds     = finalriv_info.loc[finalriv_info['IsLake'] == 2]['SubId'].values
+    Old_Non_Connect_SubIds     = np.unique(Old_Non_Connect_SubIds[Old_Non_Connect_SubIds>0])
+    Old_Non_Connect_LakeIds    = finalriv_info.loc[finalriv_info['IsLake'] == 2]['HyLakeId'].values
+    Old_Non_Connect_LakeIds     = np.unique(Old_Non_Connect_LakeIds[Old_Non_Connect_LakeIds>0])
+       
+    ### obtain rivsegments that covered by remaining lakes
+    Selected_riv_ids  = np.unique(Subid_main) #np.unique(np.concatenate([Subid_main,Subid_lakes]))
+    routing_info      = finalriv_info[['SubId','DowSubId']].astype('float').values
+    Seg_IDS           = Selected_riv['Seg_ID'].values
+    Seg_IDS           = np.unique(Seg_IDS)
+
+    ##### for Non connected lakes, catchment polygon do not need to change
+    mapoldnew_info.loc[mapoldnew_info['IsLake'] == 2,'nsubid'] = mapoldnew_info.loc[mapoldnew_info['IsLake'] == 2]['SubId'].values
+
+    #####for catchment polygon flow to lake with is changed from connected lake to non connected lakes
+    idx = Conn_To_NonConlake_info.groupby(['HyLakeId'])['DA'].transform(max) == Conn_To_NonConlake_info['DA']
+    Conn_To_NonConlake_info_outlet = Conn_To_NonConlake_info[idx]
+
+    Conn_To_NonConlake_info_outlet = Conn_To_NonConlake_info_outlet.sort_values(['Strahler', 'DA'], ascending=[True, True])
+    ### process fron upstream lake to down stream lake
+    for i in range(0,len(Conn_To_NonConlake_info_outlet)):
+        processed_subid = np.unique(mapoldnew_info.loc[mapoldnew_info['nsubid'] > 0][sub_colnm].values)
+
+        C_T_N_Lakeid   = Conn_To_NonConlake_info_outlet['HyLakeId'].values[i]
+        Lake_Cat_info  = finalriv_info[finalriv_info['HyLakeId'] == C_T_N_Lakeid]
+        Riv_Seg_IDS    = np.unique(Lake_Cat_info['Seg_ID'].values)
+        modifysubids = []
+        for j in range(0,len(Riv_Seg_IDS)):
+
+            iriv_seg = Riv_Seg_IDS[j]
+            Lake_Cat_seg_info = Lake_Cat_info.loc[Lake_Cat_info['Seg_ID'] == iriv_seg].copy()
+            Lake_Cat_seg_info = Lake_Cat_seg_info.sort_values(["DA"], ascending = (False))
+            tsubid            = Lake_Cat_seg_info['SubId'].values[0]
+
+            All_up_subids  = Defcat(routing_info,tsubid)
+            All_up_subids  = All_up_subids[All_up_subids > 0]
+
+
+            mask           = np.in1d(All_up_subids, processed_subid)
+            seg_sub_ids    = All_up_subids[np.logical_not(mask)]
+
+            modifysubids   = [*modifysubids,*seg_sub_ids.tolist()] ### combine two list not sum
+
+        modifysubids   = np.asarray(modifysubids)
+
+        mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalriv_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,mainriv = finalriv_info,modifiidin = modifysubids,Islake = 2)
+
+        ####################3 for rest of the polygons dissolve to main river
+    for iseg in range(0,len(Seg_IDS)):
+#            print('#########################################################################################33333')
+        i_seg_id        = Seg_IDS[iseg]
+        i_seg_info      = Selected_riv.loc[Selected_riv['Seg_ID'] == i_seg_id].copy()
+        i_seg_info      = i_seg_info.sort_values(["Seg_order"], ascending = (True))
+
+        modifysubids = []
+        seg_order = 1
+        for iorder in range(0,len(i_seg_info)):
+            tsubid              = i_seg_info['SubId'].values[iorder]
+            iorder_Lakeid       = i_seg_info['HyLakeId'].values[iorder]
+            modifysubids.append(tsubid)
+            processed_subid = np.unique(mapoldnew_info.loc[mapoldnew_info['nsubid'] > 0][sub_colnm].values)
+
+                ### two seg has the same HyLakeId id, can be merged
+            if iorder == len(i_seg_info) - 1:
+                seg_sub_ids   = np.asarray(modifysubids)
+                ## if needs to add lake sub around the main stream
+                if iorder_Lakeid > 0:
+                    subid_cur_lake_info        = finalriv_info.loc[finalriv_info['HyLakeId'] ==iorder_Lakeid].copy()
+                    routing_info_lake          = subid_cur_lake_info[['SubId','DowSubId']].astype('float').values
+                    UpstreamLakeids            = Defcat(routing_info_lake,tsubid)
+                    seg_sub_ids                = np.unique(np.concatenate([seg_sub_ids,UpstreamLakeids]))
+                    seg_sub_ids                = seg_sub_ids[seg_sub_ids>0]
+
+                    ### merge all subbasin not connected to the main river but drainarge to this tsubid
+                All_up_subids         = Defcat(routing_info,tsubid)
+                All_up_subids         = All_up_subids[All_up_subids > 0]
+                mask1                 = np.in1d(All_up_subids, Subid_main)  ### exluced ids that belongs to main river stream
+                All_up_subids_no_main = All_up_subids[np.logical_not(mask1)]
+
+                seg_sub_ids   = np.unique(np.concatenate([seg_sub_ids,All_up_subids_no_main]))
+                seg_sub_ids   = seg_sub_ids[seg_sub_ids>0]
+                mask          = np.in1d(seg_sub_ids, processed_subid)
+                seg_sub_ids   = seg_sub_ids[np.logical_not(mask)]
+
+                mask_old_nonLake = np.in1d(seg_sub_ids, Old_Non_Connect_SubIds)
+                seg_sub_ids   = seg_sub_ids[np.logical_not(mask_old_nonLake)]
+
+                mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalriv_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = seg_sub_ids,mainriv = Selected_riv,Islake = 3,seg_order = seg_order)
+#                    New_NonConn_Lakes = ConnectLake_to_NonConnectLake_Updateinfo(NonC_Lakeinfo = New_NonConn_Lakes,finalriv_info = finalriv_info ,Merged_subids = seg_sub_ids,Connect_Lake_ply_info = Conn_Lakes_ply,ConLakeId = iorder_Lakeid)
+                modifysubids   = []
+                seg_order      = seg_order + 1
+
+            elif i_seg_info['HyLakeId'].values[iorder] == i_seg_info['HyLakeId'].values[iorder + 1] and i_seg_info['IsObs'].values[iorder] < 0:
+                continue
+            else:
+                seg_sub_ids    = np.asarray(modifysubids)
+                ## if needs to add lake sub around the main stream
+                if iorder_Lakeid > 0:
+                    subid_cur_lake_info        = finalriv_info.loc[finalriv_info['HyLakeId'] ==iorder_Lakeid].copy()
+                    routing_info_lake          = subid_cur_lake_info[['SubId','DowSubId']].astype('float').values
+                    UpstreamLakeids            = Defcat(routing_info_lake,tsubid)
+                    seg_sub_ids                = np.unique(np.concatenate([seg_sub_ids,UpstreamLakeids]))
+                    seg_sub_ids                = seg_sub_ids[seg_sub_ids>0]
+
+                All_up_subids         = Defcat(routing_info,tsubid)
+                All_up_subids         = All_up_subids[All_up_subids > 0]
+                mask1                 = np.in1d(All_up_subids, Subid_main)  ### exluced ids that belongs to main river stream
+                All_up_subids_no_main = All_up_subids[np.logical_not(mask1)]
+
+                seg_sub_ids   = np.unique(np.concatenate([seg_sub_ids,All_up_subids_no_main]))
+                seg_sub_ids   = seg_sub_ids[seg_sub_ids>0]
+                mask          = np.in1d(seg_sub_ids, processed_subid)
+                seg_sub_ids   = seg_sub_ids[np.logical_not(mask)]
+
+                mask_old_nonLake = np.in1d(seg_sub_ids, Old_Non_Connect_SubIds)
+                seg_sub_ids   = seg_sub_ids[np.logical_not(mask_old_nonLake)]
+
+                mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalriv_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = seg_sub_ids,mainriv = Selected_riv,Islake = 3,seg_order = seg_order)
+                modifysubids   = []
+                seg_order      = seg_order + 1
+
+    return mapoldnew_info,Selected_riv_ids,Connected_Lake_Mainriv,Old_Non_Connect_LakeIds,Conn_To_NonConlakeids
