@@ -1246,3 +1246,31 @@ def Change_Attribute_Values_For_Catchments_Covered_By_Same_Lake(finalrivply_info
             mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalrivply_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = lakesubids,mainriv = finalrivply_info,Islake = 1)
     return mapoldnew_info
   
+  
+def Return_SubIds_Between_Two_Subbasins_In_Rouing_Network(routing_info,subid_downstream,subid_upstream):
+    """ Return subid of subbasins between two subid in the routing network 
+    ----------
+
+    Notes
+    -------
+        For example, lake 'la' covering catchment a,b,c. the lake outlet catchment 
+        is a. then this function will change attribute of b and c to a. 
+    Returns:
+    -------
+        None, 
+    """
+            
+    HydroBasins1 = Defcat(routing_info,subid_downstream) ### return fid of polygons that needs to be select
+
+    if subid_upstream > 0:
+        HydroBasins2 = Defcat(routing_info,subid_upstream)
+        for i in range(len(HydroBasins2)):
+            if HydroBasins2[i] == subid_upstream:
+                continue
+            rows =np.argwhere(HydroBasins1 == HydroBasins2[i])
+            HydroBasins1 = np.delete(HydroBasins1, rows)
+        HydroBasins = HydroBasins1
+    else:
+        HydroBasins = HydroBasins1
+        
+    return  HydroBasins  

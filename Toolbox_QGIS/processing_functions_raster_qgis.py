@@ -95,9 +95,34 @@ def qgis_raster_zonal_statistics(processing,INPUT_RASTER,INPUT_VECTOR,COLUMN_PRE
     processing.run("qgis:zonalstatistics", {'INPUT_RASTER':INPUT_RASTER,'RASTER_BAND':1,'INPUT_VECTOR':INPUT_VECTOR,'COLUMN_PREFIX':COLUMN_PREFIX,'STATS':[2]})
     return
     
+def qgis_raster_read_raster(processing,INPUT):
+    """ qgis function read raster into memeory
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, 
+    """  
+    out = QgsRasterLayer(INPUT, "")
+    return out 
 
 
+def qgis_raster_return_raster_properties(processing,INPUT):
+    """ qgis function return raster projection and cellsize
+    ----------
 
+    Notes
+    -------
 
+    Returns:
+    -------
+        None, 
+    """  
+    cellSize = float(INPUT.rasterUnitsPerPixelX())  ### Get Raster cell size
+    SpRef_in = INPUT.crs().authid()   ### get Raster spatialReference id
+    return cellSize,SpRef_in
 
         

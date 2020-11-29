@@ -20,11 +20,12 @@ from AddlakesintoRoutingNetWork import Dirpoints_v3,check_lakecatchment,DefineCo
 from processing_functions_raster_array import Is_Point_Close_To_Id_In_Raster,GenerPourpoint,Check_If_Str_Is_Head_Stream,GenerateFinalPourpoints,CE_mcat4lake2
 from processing_functions_raster_grass import grass_raster_setnull,Return_Raster_As_Array_With_garray
 from processing_functions_attribute_table import Calculate_Longest_flowpath,New_SubId_To_Dissolve,UpdateTopology,Connect_SubRegion_Update_DownSubId,Update_DA_Strahler_For_Combined_Result,Determine_Lake_HRU_Id,Determine_HRU_Attributes,Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA
-from processing_functions_attribute_table import Return_Selected_Lakes_Attribute_Table_And_Id,Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_CL,Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_NCL,Change_Attribute_Values_For_Catchments_Covered_By_Same_Lake
+from processing_functions_attribute_table import Return_Selected_Lakes_Attribute_Table_And_Id,Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_CL,Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_NCL,Change_Attribute_Values_For_Catchments_Covered_By_Same_Lake,Return_SubIds_Between_Two_Subbasins_In_Rouing_Network
 from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile,Remove_Unselected_Lake_Attribute_In_Finalcatinfo,Add_centroid_to_feature,Selectfeatureattributes,Copyfeature_to_another_shp_by_attribute,Add_New_SubId_To_Subregion_shpfile,qgis_vector_field_calculator
 from processing_functions_vector_qgis import qgis_vector_fix_geometries,Clean_Attribute_Name,qgis_vector_merge_vector_layers,qgis_vector_return_crs_id,qgis_vector_union_two_layers,qgis_vector_extract_by_attribute,qgis_vector_read_vector,qgis_vector_add_polygon_attribute_to_points
 from processing_functions_vector_qgis import qgis_vector_add_attributes,qgis_vector_get_attributes,qgis_vector_dissolve,qgis_vector_reproject_layers,qgis_vector_create_spatial_index,qgis_vector_clip,Obtain_Attribute_Table,qgis_vector_join_attribute_table
 from processing_functions_raster_qgis import qgis_raster_gdal_warpreproject,qgis_raster_clip_raster_by_mask,qgis_raster_slope,qgis_raster_aspect,qgis_raster_zonal_statistics
+from processing_functions_raster_qgis import qgis_raster_read_raster,qgis_raster_return_raster_properties
 from utilities import Dbf_To_Dataframe,WriteStringToFile
 from processing_functions_raven_model_io import Generate_Raven_Lake_rvh_String,Generate_Raven_Channel_rvp_rvh_String
 from processing_functions_raven_model_io import Generate_Raven_Obs_rvt_String
@@ -848,29 +849,16 @@ class LRRT:
                 os.makedirs(self.tempfolder)
 
         if OutHyID > 0:
-            r_dem_layer = QgsRasterLayer(self.Path_dem_in, "") ### load DEM raster as a  QGIS raster object to obtain attribute
-            self.cellSize = float(r_dem_layer.rasterUnitsPerPixelX())  ### Get Raster cell size
-            self.SpRef_in = r_dem_layer.crs().authid()   ### get Raster spatialReference id
-
-            hyinfocsv = hyshdply[:-3] + "dbf"
-            tempinfo = Dbf5(hyinfocsv)
-            hyshdinfo = tempinfo.to_dataframe()
+            ### OutHyID means using hydrobasins product to define region of interest 
+            r_dem_layer =  qgis_raster_read_raster(processing,self.Path_dem_in) ### load DEM raster as a  QGIS raster object to obtain attribute
+            self.cellSize,self.SpRef_in= qgis_raster_return_raster_properties(processing,r_dem_layer)  ### Get Raster cell size
+            
+            hyshdinfo = Dbf_To_Dataframe(hyshdply)
             routing_info = hyshdinfo[['HYBAS_ID','NEXT_DOWN']].astype('float').values
-
-            HydroBasins1 = Defcat(routing_info,OutHyID) ### return fid of polygons that needs to be select
-
-            if OutHyID2 > 0:
-                HydroBasins2 = Defcat(routing_info,OutHyID2)
-    ###  exculde the Ids in HydroBasins2 from HydroBasins1
-                for i in range(len(HydroBasins2)):
-                    if HydroBasins2[i] == OutHyID2:
-                        continue
-                    rows =np.argwhere(HydroBasins1 == HydroBasins2[i])
-                    HydroBasins1 = np.delete(HydroBasins1, rows)
-                HydroBasins = HydroBasins1
-            else:
-                HydroBasins = HydroBasins1
-
+            
+            # obtain sub id of subbasins between OutHyID and OutHyID2 in the routing network
+            HydroBasins = Return_SubIds_Between_Two_Subbasins_In_Rouing_Network(routing_info,OutHyID,OutHyID2)
+            
     ### Load HydroSHED Layers
             hyshedl12 = QgsVectorLayer(hyshdply, "")
 
