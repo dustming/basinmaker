@@ -20,7 +20,7 @@ from AddlakesintoRoutingNetWork import Dirpoints_v3,check_lakecatchment,DefineCo
 from processing_functions_raster_array import Is_Point_Close_To_Id_In_Raster,GenerPourpoint,Check_If_Str_Is_Head_Stream,GenerateFinalPourpoints,CE_mcat4lake2
 from processing_functions_raster_grass import grass_raster_setnull,Return_Raster_As_Array_With_garray
 from processing_functions_attribute_table import Calculate_Longest_flowpath,New_SubId_To_Dissolve,UpdateTopology,Connect_SubRegion_Update_DownSubId,Update_DA_Strahler_For_Combined_Result,Determine_Lake_HRU_Id,Determine_HRU_Attributes,Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA
-from processing_functions_attribute_table import Return_Selected_Lakes_Attribute_Table_And_Id,Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_CL,Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_NCL
+from processing_functions_attribute_table import Return_Selected_Lakes_Attribute_Table_And_Id,Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_CL,Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_NCL,Change_Attribute_Values_For_Catchments_Covered_By_Same_Lake
 from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile,Remove_Unselected_Lake_Attribute_In_Finalcatinfo,Add_centroid_to_feature,Selectfeatureattributes,Copyfeature_to_another_shp_by_attribute,Add_New_SubId_To_Subregion_shpfile,qgis_vector_field_calculator
 from processing_functions_vector_qgis import qgis_vector_fix_geometries,Clean_Attribute_Name,qgis_vector_merge_vector_layers,qgis_vector_return_crs_id,qgis_vector_union_two_layers,qgis_vector_extract_by_attribute,qgis_vector_read_vector,qgis_vector_add_polygon_attribute_to_points
 from processing_functions_vector_qgis import qgis_vector_add_attributes,qgis_vector_get_attributes,qgis_vector_dissolve,qgis_vector_reproject_layers,qgis_vector_create_spatial_index,qgis_vector_clip,Obtain_Attribute_Table,qgis_vector_join_attribute_table
@@ -3155,50 +3155,41 @@ class LRRT:
         if not os.path.exists(OutputFolder):
             os.makedirs(OutputFolder)
 
+
+        ### create a copy of shapfiles in temp folder 
         Path_Temp_final_rviply = os.path.join(self.tempfolder,'temp_finalriv_ply'+ str(np.random.randint(1, 10000 + 1)) +'.shp')
         Path_Temp_final_rvi    = os.path.join(self.tempfolder,'temp_finalriv'+  str(np.random.randint(1, 10000 + 1)) +'.shp')
-
-        processing.run("native:dissolve", {'INPUT':Path_final_rviply,'FIELD':['SubId'],'OUTPUT':Path_Temp_final_rviply},context = context)
-        processing.run("native:dissolve", {'INPUT':Path_final_riv,'FIELD':['SubId'],'OUTPUT':Path_Temp_final_rvi},context = context)
+        qgis_vector_dissolve(processing,context,INPUT = Path_final_rviply,FIELD = ['SubId'],OUTPUT = Path_Temp_final_rviply)
+        qgis_vector_dissolve(processing,context,INPUT = Path_final_riv,FIELD = ['SubId'],OUTPUT = Path_Temp_final_rvi)
 
         ### read riv ply info
-        finalrivply_csv     = Path_Temp_final_rviply[:-3] + "dbf"
-        finalrivply_info    = Dbf5(finalrivply_csv)
-        finalrivply_info    = finalrivply_info.to_dataframe().drop_duplicates('SubId', keep='first')
-
-        mapoldnew_info      = finalrivply_info.copy(deep = True)
-        mapoldnew_info['nsubid'] = mapoldnew_info['SubId'].values
-        AllConnectLakeIDS   = finalrivply_info['HyLakeId'].values
-        AllConnectLakeIDS   = AllConnectLakeIDS[AllConnectLakeIDS > 0]
-        AllConnectLakeIDS   = np.unique(AllConnectLakeIDS)
-
-        ### process connected lakes  merge polygons
-        for i in range(0,len(AllConnectLakeIDS)):
-            lakeid       = AllConnectLakeIDS[i]
-            Lakesub_info = finalrivply_info.loc[finalrivply_info['HyLakeId'] == lakeid]
-            Lakesub_info = Lakesub_info.sort_values(["DA"], ascending = (False))
-            tsubid       = Lakesub_info[sub_colnm].values[0]  ### outlet subbasin id with highest acc
-            lakesubids   = Lakesub_info[sub_colnm].values
-            if len(lakesubids) > 1:  ## only for connected lakes
-                mapoldnew_info = New_SubId_To_Dissolve(subid = tsubid,catchmentinfo = finalrivply_info,mapoldnew_info = mapoldnew_info,ismodifids = 1,modifiidin = lakesubids,mainriv = finalrivply_info,Islake = 1)
+        ### read attribute table 
+        finalrivply_info = Dbf_To_Dataframe(Path_Temp_final_rviply).drop_duplicates('SubId', keep='first')
+        
+        # change attribute table for lake covered catchments, 
+        mapoldnew_info = Change_Attribute_Values_For_Catchments_Covered_By_Same_Lake(finalrivply_info)
+        
+        # update topology for new attribute table 
         UpdateTopology(mapoldnew_info,UpdateStreamorder = -1)
-#        mapoldnew_info.to_csv( os.path.join(Datafolder,'mapoldnew.csv'),sep=',',index=None)
-
+        
+        # copy new attribute table to shpfile 
         Copy_Pddataframe_to_shpfile(Path_Temp_final_rviply,mapoldnew_info,link_col_nm_shp = 'SubId'
                                     ,link_col_nm_df = 'Old_SubId',UpdateColNM = ['#'])
         Copy_Pddataframe_to_shpfile(Path_Temp_final_rvi,mapoldnew_info,link_col_nm_shp = 'SubId'
                                     ,link_col_nm_df = 'Old_SubId',UpdateColNM = ['#'])
 
-        ## process Non connected lakes
-
+        
+        # dissolve shpfile based on new subid 
         Path_final_rviply = os.path.join(OutputFolder,'finalcat_info.shp')
         Path_final_rvi    = os.path.join(OutputFolder,'finalcat_info_riv.shp')
-        processing.run("native:dissolve", {'INPUT':Path_Temp_final_rvi,'FIELD':['SubId'],'OUTPUT':Path_final_rvi},context = context)
-        processing.run("native:dissolve", {'INPUT':Path_Temp_final_rviply,'FIELD':['SubId'],'OUTPUT':Path_final_rviply},context = context)
-
+        qgis_vector_dissolve(processing,context,INPUT = Path_Temp_final_rvi,FIELD = ['SubId'],OUTPUT = Path_final_rvi)
+        qgis_vector_dissolve(processing,context,INPUT = Path_Temp_final_rviply,FIELD = ['SubId'],OUTPUT = Path_final_rviply)
+        
+        # clean attribute table of shpfile 
         Clean_Attribute_Name(Path_final_rvi,   self.FieldName_List_Product)
         Clean_Attribute_Name(Path_final_rviply, self.FieldName_List_Product)
-
+         
+        # add centroid to new drived polygons 
         Add_centroid_to_feature(Path_final_rviply,'centroid_x','centroid_y')
 
 
