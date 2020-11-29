@@ -2876,12 +2876,11 @@ class LRRT:
         # overall procedure, 
         # 1. first get product attribute table 
         # 2. determine which features needs to be merged together to increage 
-        #    drainage area of the sub basin, for example sub a, b c 
+        #    drainage area of the sub basin, for example sub a, b c needs to be merged 
         # 3. in the attribute table, change sub a b c 's content to a, assuming sub b and c drainge to a.  
-        # 4. copy modified attribute table 
+        # 4. copy modified attribute table to shafiles 
         # 5. dissolve based on subid amd finished 
         # overall procedure,
-        # obtain river segment ids based on area thresthold
         
         # read attribute table, and
         Path_final_rviply = Path_final_riv_ply
