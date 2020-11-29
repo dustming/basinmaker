@@ -2741,9 +2741,7 @@ class LRRT:
         sub_colnm  = 'SubId'
         down_colnm = 'DowSubId'
         ##3
-        hyinfocsv = Path_Catchment_Polygon[:-3] + "dbf"
-        tempinfo = Dbf5(hyinfocsv)
-        hyshdinfo2 = tempinfo.to_dataframe().drop_duplicates(sub_colnm, keep='first')
+        hyshdinfo2 = Dbf_To_Dataframe(Path_Catchment_Polygon).drop_duplicates(sub_colnm, keep='first')
         hyshdinfo =  hyshdinfo2[[sub_colnm,down_colnm]].astype('int32').values
 
 
