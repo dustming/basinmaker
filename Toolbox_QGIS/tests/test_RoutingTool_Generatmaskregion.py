@@ -71,7 +71,6 @@ def test_Generatmaskregion():
     ###Folder where the output will be generated 
     Temporary_Result_Folder_Result   = os.path.join('./testdata','Temporary_output_folder','testout3')
     Final_Result_Folder_Result       = os.path.join('./testdata','Final_output_folder','testout3')
-    shutil.rmtree(Temporary_Result_Folder_Result,ignore_errors=True)
     
     ###The pathes for all inputs 
     Path_DEM_big           = os.path.join(Data_Folder, 'DEM_big_merit.tif')
@@ -105,7 +104,6 @@ def test_Generatmaskregion():
                                                  
     ### compare two Expected_Mask_Array and Result_Mask_Array 
     assert (Expected_Mask_Array == Result_Mask_Array).all()
-    shutil.rmtree(Temporary_Result_Folder_Result) 
 
     ### test another option to define processing extent
     ### Folder where the output will be generated 
@@ -114,7 +112,6 @@ def test_Generatmaskregion():
     ###Folder where the output will be generated 
     Temporary_Result_Folder_Result   = os.path.join('./testdata','Temporary_output_folder','testout4')
     Final_Result_Folder_Result       = os.path.join('./testdata','Final_output_folder','testout4')
-    shutil.rmtree(Temporary_Result_Folder_Result,ignore_errors=True)
     
     RTtool=LRRT(dem_in = Path_DEM_small,WidDep = Path_bkf_wd,
                Lakefile = Path_Lake_ply,Landuse = Path_Landuse,
@@ -140,7 +137,6 @@ def test_Generatmaskregion():
     ### compare two Expected_Mask_Array and Result_Mask_Array 
     assert (Expected_Mask_Array == Result_Mask_Array).all()
     
-    shutil.rmtree(Temporary_Result_Folder_Result) 
 
     
                    
