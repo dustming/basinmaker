@@ -442,6 +442,29 @@ def qgis_vector_reproject_layers(processing,context,INPUT,TARGET_CRS,OUTPUT):
     return out 
 
 
+
+def qgis_vector_buffer(processing,context,INPUT,Buffer_Distance,OUTPUT):
+    """ qgis function buffer vector layer with a buffer distance 
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, 
+    """  
+    out = processing.run("native:buffer", {'INPUT':INPUT,'DISTANCE':Buffer_Distance,'SEGMENTS':5,'END_CAP_STYLE':0,'JOIN_STYLE':0,'MITER_LIMIT':2,'DISSOLVE':True,'OUTPUT':OUTPUT},context = context)
+    return out 
+    
+    
+
+
+
+
+
+
+
 def qgis_vector_clip(processing,context,INPUT,OVERLAY,OUTPUT):
     """ qgis function reproject vector layer 
     ----------

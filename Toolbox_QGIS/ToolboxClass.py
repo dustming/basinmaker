@@ -18,12 +18,12 @@ from GetBasinoutlet import Getbasinoutlet,Nextcell,Defcat,Generate_Routing_struc
 from Generatecatinfo import Generatecatinfo,Generatecatinfo_riv,calculateChannaln,Writecatinfotodbf,Streamorderanddrainagearea,UpdateChannelinfo,UpdateNonConnectedcatchmentinfo
 from AddlakesintoRoutingNetWork import Dirpoints_v3,check_lakecatchment,DefineConnected_Non_Connected_Lakes,Generate_stats_list_from_grass_raster
 from processing_functions_raster_array import Is_Point_Close_To_Id_In_Raster,GenerPourpoint,Check_If_Str_Is_Head_Stream,GenerateFinalPourpoints,CE_mcat4lake2
-from processing_functions_raster_grass import grass_raster_setnull,Return_Raster_As_Array_With_garray
+from processing_functions_raster_grass import grass_raster_setnull,Return_Raster_As_Array_With_garray,grass_raster_r_in_gdal,grass_raster_r_mask,grass_raster_g_region
 from processing_functions_attribute_table import Calculate_Longest_flowpath,New_SubId_To_Dissolve,UpdateTopology,Connect_SubRegion_Update_DownSubId,Update_DA_Strahler_For_Combined_Result,Determine_Lake_HRU_Id,Determine_HRU_Attributes,Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA
 from processing_functions_attribute_table import Return_Selected_Lakes_Attribute_Table_And_Id,Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_CL,Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_NCL,Change_Attribute_Values_For_Catchments_Covered_By_Same_Lake,Return_SubIds_Between_Two_Subbasins_In_Rouing_Network
 from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile,Remove_Unselected_Lake_Attribute_In_Finalcatinfo,Add_centroid_to_feature,Selectfeatureattributes,Copyfeature_to_another_shp_by_attribute,Add_New_SubId_To_Subregion_shpfile,qgis_vector_field_calculator
 from processing_functions_vector_qgis import qgis_vector_fix_geometries,Clean_Attribute_Name,qgis_vector_merge_vector_layers,qgis_vector_return_crs_id,qgis_vector_union_two_layers,qgis_vector_extract_by_attribute,qgis_vector_read_vector,qgis_vector_add_polygon_attribute_to_points
-from processing_functions_vector_qgis import qgis_vector_add_attributes,qgis_vector_get_attributes,qgis_vector_dissolve,qgis_vector_reproject_layers,qgis_vector_create_spatial_index,qgis_vector_clip,Obtain_Attribute_Table,qgis_vector_join_attribute_table
+from processing_functions_vector_qgis import qgis_vector_add_attributes,qgis_vector_get_attributes,qgis_vector_dissolve,qgis_vector_reproject_layers,qgis_vector_create_spatial_index,qgis_vector_clip,Obtain_Attribute_Table,qgis_vector_join_attribute_table,qgis_vector_buffer
 from processing_functions_raster_qgis import qgis_raster_gdal_warpreproject,qgis_raster_clip_raster_by_mask,qgis_raster_slope,qgis_raster_aspect,qgis_raster_zonal_statistics
 from processing_functions_raster_qgis import qgis_raster_read_raster,qgis_raster_return_raster_properties
 from utilities import Dbf_To_Dataframe,WriteStringToFile
@@ -847,9 +847,12 @@ class LRRT:
 
         if not os.path.exists(self.tempfolder):
                 os.makedirs(self.tempfolder)
-
+        
+        # OutHyID > 0  means using hydrobasins product to define region of interest
+        # subbasins between two subbsin id in hydrobasin routing product will be 
+        # extracted
         if OutHyID > 0:
-            ### OutHyID means using hydrobasins product to define region of interest 
+             
             r_dem_layer =  qgis_raster_read_raster(processing,self.Path_dem_in) ### load DEM raster as a  QGIS raster object to obtain attribute
             self.cellSize,self.SpRef_in= qgis_raster_return_raster_properties(processing,r_dem_layer)  ### Get Raster cell size
             
@@ -859,52 +862,21 @@ class LRRT:
             # obtain sub id of subbasins between OutHyID and OutHyID2 in the routing network
             HydroBasins = Return_SubIds_Between_Two_Subbasins_In_Rouing_Network(routing_info,OutHyID,OutHyID2)
             
-    ### Load HydroSHED Layers
-            hyshedl12 = QgsVectorLayer(hyshdply, "")
-
-    ### Build qgis selection expression
-            where_clause = '"HYBAS_ID" IN'+ " ("
-            for i in range(0,len(HydroBasins)):
-                if i == 0:
-                    where_clause = where_clause + str(HydroBasins[i])
-                else:
-                    where_clause = where_clause + "," + str(HydroBasins[i])
-            where_clause = where_clause + ")"
-
-            req = QgsFeatureRequest().setFlags( QgsFeatureRequest.NoGeometry)
-            req.setFilterExpression(where_clause)
-            it = hyshedl12.getFeatures( req )
-
-        ### obtain all feature id of selected polygons
-            selectedFeatureID = []
-
-            for feature in it:
-    #        print(feature.id())
-                selectedFeatureID.append(feature.id())
-
-            hyshedl12.select(selectedFeatureID)   ### select with polygon id
-
-        # Save selected polygons to output
-            _writer = QgsVectorFileWriter.writeAsVectorFormat(hyshedl12, os.path.join(self.tempfolder, 'HyMask.shp'), "UTF-8", hyshedl12.crs(), "ESRI Shapefile", onlySelected=True)
+            # extract subbasins from hydrobasin product
+            Selectfeatureattributes(processing,Input = hyshdply,Output=os.path.join(self.tempfolder, 'HyMask.shp'),Attri_NM = 'HYBAS_ID',Values = HydroBasins)
 
             print("Mask Region:   Using buffered hydroBasin product polygons ")
-            processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask.shp'),'FIELD':'MAIN_BAS','OUTPUT':os.path.join(self.tempfolder, 'HyMask1.shp')},context = context)
-            processing.run("native:buffer", {'INPUT':os.path.join(self.tempfolder, 'HyMask1.shp'),'DISTANCE':Buffer_Distance,'SEGMENTS':5,'END_CAP_STYLE':0,'JOIN_STYLE':0,'MITER_LIMIT':2,'DISSOLVE':True,'OUTPUT':os.path.join(self.tempfolder, 'HyMask3.shp')},context = context)
-            processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask3.shp'),'FIELD':'MAIN_BAS','OUTPUT':os.path.join(self.tempfolder, 'HyMask4.shp')},context = context)
 
-            processing.run("native:reprojectlayer", {'INPUT':os.path.join(self.tempfolder, 'HyMask4.shp'),'TARGET_CRS':QgsCoordinateReferenceSystem(self.SpRef_in),'OUTPUT':self.Path_Maskply},context = context)
-
-            params = {'INPUT': self.Path_dem_in,'MASK': self.Path_Maskply,'NODATA': -9999,'ALPHA_BAND': False,'CROP_TO_CUTLINE': True,
-                                                                    'SOURCE_CRS':None,'TARGET_CRS':None,
-                                                                    'KEEP_RESOLUTION': True,'SET_RESOLUTION':False,'X_RESOLUTION':None,'Y_RESOLUTION':None,
-                                                                    'OPTIONS': '', #'COMPRESS=LZW',
-                                                                    'DATA_TYPE': 6,  # Byte
-                                                                    'OUTPUT': self.Path_dem}
-
-            dem = processing.run('gdal:cliprasterbymasklayer',params)  #### extract dem
-            r_dem_layer = QgsRasterLayer(self.Path_dem, "") ### load DEM raster as a  QGIS raster object to obtain attribute
-            self.cellSize = float(r_dem_layer.rasterUnitsPerPixelX())  ### Get Raster cell size
-            self.SpRef_in = r_dem_layer.crs().authid()   ### get Raster spatialReference id
+            # dissolve, buffer and reproject the extracted hydrobasin product             
+            qgis_vector_dissolve(processing,context,INPUT = os.path.join(self.tempfolder, 'HyMask.shp'),FIELD = 'MAIN_BAS',OUTPUT = os.path.join(self.tempfolder, 'HyMask1.shp'))
+            qgis_vector_buffer(processing,context,INPUT = os.path.join(self.tempfolder, 'HyMask1.shp'),Buffer_Distance = Buffer_Distance,OUTPUT = os.path.join(self.tempfolder, 'HyMask3.shp'))
+            qgis_vector_dissolve(processing,context,INPUT = os.path.join(self.tempfolder, 'HyMask3.shp'),FIELD = 'MAIN_BAS',OUTPUT = os.path.join(self.tempfolder, 'HyMask4.shp'))
+            qgis_vector_reproject_layers(processing,context,INPUT = os.path.join(self.tempfolder, 'HyMask4.shp'),TARGET_CRS = self.SpRef_in,OUTPUT = self.Path_Maskply)
+            
+            # clip raster layer with this mask 
+            qgis_raster_clip_raster_by_mask(processing,Input = self.Path_dem_in,MASK = self.Path_Maskply,TARGET_CRS = self.SpRef_in, Output = self.Path_dem)
+            
+            # use clipped DEM to great a grass work enviroment
             import grass.script as grass
             from grass.script import array as garray
             from grass.script import core as gcore
@@ -913,24 +885,27 @@ class LRRT:
             from grass.pygrass.modules.shortcuts import raster as r
             from grass.pygrass.modules import Module
             from grass_session import Session
-
+            
+            # open/create a grass location 
             os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
             PERMANENT_temp = Session()
-
             PERMANENT_temp.open(gisdb=self.grassdb, location=self.grass_location_geo_temp,create_opts='EPSG:4326')
-
-            grass.run_command("r.in.gdal", input = self.Path_dem, output = 'dem', overwrite = True,location =self.grass_location_geo)
+            
+            # import clipped dem to target location  
+            grass_raster_r_in_gdal(grass = grass,raster_path = self.Path_dem,output_nm = 'dem',location = self.grass_location_geo)
+#            grass.run_command("r.in.gdal", input = self.Path_dem, output = 'dem', overwrite = True,location =self.grass_location_geo)
             PERMANENT_temp.close()
-
+            
+            # Define mask and processing region for grass working enviroments
             PERMANENT = Session()
             PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
-
-            grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
-            grass.run_command('g.region', raster='dem')
-
+            
+            # define mask of current working enviroments 
+            grass_raster_r_mask(grass,'dem')
+            # define processing extent of the current working enviroment  
+            grass_raster_g_region(grass,'dem') 
             PERMANENT.close()
 
-            del hyshedl12
 
         elif self.Is_Sub_Region < 0 and OutHyID <= 0:
             r_dem_layer = QgsRasterLayer(self.Path_dem_in, "") ### load DEM raster as a  QGIS raster object to obtain attribute

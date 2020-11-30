@@ -37,6 +37,7 @@ def Return_Raster_As_Array_With_Db_Path(grassdb,grass_location,raster_mn):
     PERMANENT.open(gisdb=grassdb, location=grass_location,create_opts='')
     Array = copy.deepcopy(garray.array(mapname=raster_mn))
     PERMANENT.close()
+    Array[Array <= 0] = -9999
     return Array
     
 ###
@@ -56,3 +57,42 @@ def Return_Raster_As_Array_With_garray(garray_f,raster_mn):
     Array = copy.deepcopy(garray_f.array(mapname=raster_mn))
     Array[Array <= 0] = -9999
     return Array    
+    
+    
+def grass_raster_r_in_gdal(grass,raster_path,output_nm,location):
+    """ import dem to target location 
+    Parameters
+    ----------    
+        
+    Returns:
+    -------
+       
+    """      
+    grass.run_command("r.in.gdal", input = raster_path, output = output_nm, overwrite = True,location =location)
+###    
+
+def grass_raster_r_mask(grass,raster_nm):
+    """ define grass working mask for current location 
+    Parameters
+    ----------    
+        
+    Returns:
+    -------
+       
+    """      
+    grass.run_command('r.mask', raster=raster_nm, maskcats = '*',overwrite = True)
+    
+### 
+
+def grass_raster_g_region(grass,raster_nm):
+    """ define grass working region for current location 
+    Parameters
+    ----------    
+        
+    Returns:
+    -------
+       
+    """      
+    grass.run_command('g.region', raster=raster_nm)
+    
+### 
