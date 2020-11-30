@@ -1014,7 +1014,10 @@ class LRRT:
                 # qgis dissolve function for some reason not working here....
                 qgis_vector_dissolve(processing,context,INPUT = os.path.join(self.tempfolder, 'HyMask.shp'),FIELD = 'DN',OUTPUT = self.Path_Maskply,USING_GDAL_FUNCTION = True)
                 PERMANENT.close()
-                
+        
+        # the option here using pre generated mask for current subregion. 
+        # the precedure will load Sub_Region_Mask_ply, and dem 
+        # and then define mask and region for grass working env  
         else:
             import grass.script as grass
             from grass.script import array as garray
