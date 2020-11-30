@@ -17,23 +17,14 @@ import sqlite3
 from GetBasinoutlet import Getbasinoutlet,Nextcell,Defcat,Generate_Routing_structure
 from Generatecatinfo import Generatecatinfo,Generatecatinfo_riv,calculateChannaln,Writecatinfotodbf,Streamorderanddrainagearea,UpdateChannelinfo,UpdateNonConnectedcatchmentinfo
 from AddlakesintoRoutingNetWork import Dirpoints_v3,check_lakecatchment,DefineConnected_Non_Connected_Lakes,Generate_stats_list_from_grass_raster
-from processing_functions_raster_array import Is_Point_Close_To_Id_In_Raster,GenerPourpoint,Check_If_Str_Is_Head_Stream,GenerateFinalPourpoints,CE_mcat4lake2
-from processing_functions_raster_grass import grass_raster_setnull,Return_Raster_As_Array_With_garray,grass_raster_r_in_gdal,grass_raster_r_mask,grass_raster_g_region
-from processing_functions_raster_grass import grass_raster_r_watershed,grass_raster_r_mapcalc,grass_raster_r_water_outlet,grass_raster_r_out_gdal
-from processing_functions_attribute_table import Calculate_Longest_flowpath,New_SubId_To_Dissolve,UpdateTopology,Connect_SubRegion_Update_DownSubId,Update_DA_Strahler_For_Combined_Result,Determine_Lake_HRU_Id,Determine_HRU_Attributes,Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA
-from processing_functions_attribute_table import Return_Selected_Lakes_Attribute_Table_And_Id,Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_CL,Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_NCL,Change_Attribute_Values_For_Catchments_Covered_By_Same_Lake,Return_SubIds_Between_Two_Subbasins_In_Rouing_Network
-from processing_functions_vector_qgis import Copy_Pddataframe_to_shpfile,Remove_Unselected_Lake_Attribute_In_Finalcatinfo,Add_centroid_to_feature,Selectfeatureattributes,Copyfeature_to_another_shp_by_attribute,Add_New_SubId_To_Subregion_shpfile,qgis_vector_field_calculator
-from processing_functions_vector_qgis import qgis_vector_fix_geometries,Clean_Attribute_Name,qgis_vector_merge_vector_layers,qgis_vector_return_crs_id,qgis_vector_union_two_layers,qgis_vector_extract_by_attribute,qgis_vector_read_vector,qgis_vector_add_polygon_attribute_to_points
-from processing_functions_vector_qgis import qgis_vector_add_attributes,qgis_vector_get_attributes,qgis_vector_dissolve,qgis_vector_reproject_layers,qgis_vector_create_spatial_index,qgis_vector_clip,Obtain_Attribute_Table,qgis_vector_join_attribute_table,qgis_vector_buffer
-from processing_functions_raster_qgis import qgis_raster_gdal_warpreproject,qgis_raster_clip_raster_by_mask,qgis_raster_slope,qgis_raster_aspect,qgis_raster_zonal_statistics
-from processing_functions_raster_qgis import qgis_raster_read_raster,qgis_raster_return_raster_properties,qgis_raster_gdal_translate,qgis_raster_gdal_polygonize,qgis_raster_saga_clip_raster_with_polygon
-from utilities import Dbf_To_Dataframe,WriteStringToFile
-from processing_functions_raven_model_io import Generate_Raven_Lake_rvh_String,Generate_Raven_Channel_rvp_rvh_String
-from processing_functions_raven_model_io import Generate_Raven_Obs_rvt_String
-from processing_functions_raven_model_io import plotGuagelineobs,Caluculate_Lake_Active_Depth_and_Lake_Evap
-import timeit
-
-
+from processing_functions_raster_grass import *
+from processing_functions_vector_grass import *
+from processing_functions_vector_qgis import *
+from processing_functions_raster_qgis import *
+from processing_functions_attribute_table import *
+from processing_functions_raster_array import * 
+from utilities import *
+from processing_functions_raven_model_io import * 
 ##############################
 
 
@@ -1028,34 +1019,47 @@ class LRRT:
             from grass_session import Session
             print("Mask Region:  Using subregion buffered mask : ")
             os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
-
+            
+            # load subregion mask polygon to target grass location 
             PERMANENT = Session()
             PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo_temp,create_opts='EPSG:4326')
-            grass.run_command("v.in.ogr", input = Path_Sub_Polygon,output = 'Sub_Region_Mask_ply', overwrite = True,location =self.grass_location_geo)
+            grass_raster_v_in_org(grass,input_path = Path_Sub_Polygon,output_vector_nm = 'Sub_Region_Mask_ply',location = self.grass_location_geo)
+#            grass.run_command("v.in.ogr", input = Path_Sub_Polygon,output = 'Sub_Region_Mask_ply', overwrite = True,location =self.grass_location_geo)
             PERMANENT.close()
+            
+            # unpack dem and generate mask with loaded vector 
+            
             PERMANENT = Session()
             PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
-
-            grass.run_command('r.unpack', input = self.Path_Sub_reg_dem, output = 'dem_big',overwrite = True)
+            
+            # unpack dem dataset 
+            grass_raster_r_unpack(grass, input = self.Path_Sub_reg_dem,output = 'dem_big')
 
             ###Use polygon to define a smaller region
-            grass.run_command('g.region', raster='dem_big') ### Initially set as big DEM
-            grass.run_command('r.mask'  , vector='Sub_Region_Mask_ply', overwrite = True)  ### define a mask
-            grass.run_command('g.region', zoom='MASK')  ### define new region with this maks
-
-            grass.run_command('r.mask'  , vector='Sub_Region_Mask_ply', overwrite = True) ### mask with current region
-            grass.run_command('r.mapcalc',expression = "dem = dem_big",overwrite = True)  ###clip big dem using mask
-
-            grass.run_command('r.mask'  , raster='dem', overwrite = True)  ##3 set dem as mask
-
-            ### exmport polygonsa
-
+            # use big dem define region first and then change it by vector mask  
+            grass_raster_g_region(grass,'dem_big')
+            # define mask of current working enviroments 
+            grass_raster_r_mask(grass,raster_nm = '#',vector_nm = 'Sub_Region_Mask_ply')
+            # define new region with this mask
+            grass_raster_g_region(grass,raster_nm = '#', zoom = 'MASK') 
+            
+            # using vector define mask and clip big raster dem 
+            grass_raster_r_mask(grass,raster_nm = '#',vector_nm = 'Sub_Region_Mask_ply')
+            grass_raster_r_mapcalc(grass,expression = "dem = dem_big")
+            
+            # using clipped dem to defing mask 
+            grass_raster_r_mask(grass,raster_nm = 'dem')
+            
+            # export dem and mask and generate mask polygon 
             self.Path_dem_in = os.path.join(self.tempfolder, 'dem.tif')
             self.Path_dem    = os.path.join(self.tempfolder, 'dem.tif')
-            grass.run_command('r.out.gdal', input = 'MASK',output = os.path.join(self.tempfolder, 'Mask1.tif'),format= 'GTiff',overwrite = True)
-            grass.run_command('r.out.gdal', input = 'dem',output = os.path.join(self.tempfolder, 'dem.tif'),format= 'GTiff',overwrite = True)
-            processing.run("gdal:polygonize", {'INPUT':os.path.join(self.tempfolder, 'Mask1.tif'),'BAND':1,'FIELD':'DN','EIGHT_CONNECTEDNESS':False,'EXTRA':'','OUTPUT':os.path.join(self.tempfolder, 'HyMask.shp')},context = context)
-            processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask.shp'),'FIELD':'DN','OUTPUT':self.Path_Maskply},context = context)
+            grass_raster_r_out_gdal(grass,input_nm = 'MASK',output = os.path.join(self.tempfolder, 'Mask1.tif'),format= 'GTiff')
+            grass_raster_r_out_gdal(grass,input_nm = 'dem',output = os.path.join(self.tempfolder, 'dem.tif'),format= 'GTiff')
+            # polygonize exported mask raster, and polygonize and dissove it. 
+            qgis_raster_gdal_polygonize(processing,context,INPUT = os.path.join(self.tempfolder, 'Mask1.tif'),OUTPUT = os.path.join(self.tempfolder, 'HyMask.shp'))
+            # qgis dissolve function for some reason not working here....
+            qgis_vector_dissolve(processing,context,INPUT = os.path.join(self.tempfolder, 'HyMask.shp'),FIELD = 'DN',OUTPUT = self.Path_Maskply,USING_GDAL_FUNCTION = True)
+            
             PERMANENT.close()
 
         Qgs.exit()

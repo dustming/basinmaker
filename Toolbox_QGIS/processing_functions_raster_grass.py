@@ -71,7 +71,7 @@ def grass_raster_r_in_gdal(grass,raster_path,output_nm,location):
     grass.run_command("r.in.gdal", input = raster_path, output = output_nm, overwrite = True,location =location)
 ###    
 
-def grass_raster_r_mask(grass,raster_nm):
+def grass_raster_r_mask(grass,raster_nm,vector_nm = '#'):
     """ define grass working mask for current location 
     Parameters
     ----------    
@@ -80,11 +80,13 @@ def grass_raster_r_mask(grass,raster_nm):
     -------
        
     """      
-    grass.run_command('r.mask', raster=raster_nm, maskcats = '*',overwrite = True)
-    
+    if vector_nm == '#':
+        grass.run_command('r.mask', raster=raster_nm, maskcats = '*',overwrite = True)
+    else:
+        grass.run_command('r.mask', vector=vector_nm, maskcats = '*',overwrite = True)
 ### 
 
-def grass_raster_g_region(grass,raster_nm):
+def grass_raster_g_region(grass,raster_nm,zoom = '#'):
     """ define grass working region for current location 
     Parameters
     ----------    
@@ -93,12 +95,13 @@ def grass_raster_g_region(grass,raster_nm):
     -------
        
     """      
-    grass.run_command('g.region', raster=raster_nm)
-    
+    if zoom == '#':
+        grass.run_command('g.region', raster=raster_nm)
+    else:
+        grass.run_command('g.region', zoom=zoom)
 ### 
 
-
-def grass_raster_g_region(grass,raster_nm):
+def grass_raster_r_unpack(grass,input,output):
     """ define grass working region for current location 
     Parameters
     ----------    
@@ -107,7 +110,7 @@ def grass_raster_g_region(grass,raster_nm):
     -------
        
     """      
-    grass.run_command('g.region', raster=raster_nm)
+    grass.run_command('r.unpack', input = input, output = output,overwrite = True)
     
 ### 
 
