@@ -80,7 +80,7 @@ def test_Generateinputdata():
     Path_Lake_ply          = os.path.join(Data_Folder, 'HyLake.shp')
     Path_bkf_wd            = os.path.join(Data_Folder, 'Bkfullwidth_depth.shp')
     Path_Landuse           = os.path.join(Data_Folder, 'landuse.tif')
-    Path_Roughness_landuse = os.path.join(Data_Folder, 'Landuse.csv')
+    Path_Roughness_landuse = os.path.join(Data_Folder, 'Landuse_info.csv')
 
     ###Generate test resuts    
     RTtool=LRRT(dem_in = Path_DEM_small,WidDep = Path_bkf_wd,
