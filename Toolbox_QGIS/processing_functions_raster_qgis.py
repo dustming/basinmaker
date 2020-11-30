@@ -49,6 +49,29 @@ def qgis_raster_clip_raster_by_mask(processing,Input,MASK,TARGET_CRS, Output):
     return out
     
 
+def qgis_raster_saga_clip_raster_with_polygon(processing,context,Input,MASK, Output):
+    """ Functions clip raster by mask, 
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, the attribute table of Path_shpfile will be updated 
+    """
+
+    out = processing.run("saga:cliprasterwithpolygon", {'INPUT':Input,'POLYGONS':MASK,'OUTPUT':Output},context = context)
+    
+    return out
+    
+    
+
+ 
+ 
+ 
+ 
+ 
 def qgis_raster_slope(processing,Input, Output):
     """ Functions calculate slope from DEM
     ----------
@@ -110,6 +133,22 @@ def qgis_raster_read_raster(processing,INPUT):
     return out 
 
 
+def qgis_raster_gdal_translate(processing,INPUT,OUTPUT,format='GTiff'):
+    """ qgis function read raster into memeory
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, 
+    """  
+    params = {'INPUT':INPUT, 'format': format, 'OUTPUT': OUTPUT}
+    out = processing.run('gdal:translate',params)
+    return out 
+    
+
 def qgis_raster_return_raster_properties(processing,INPUT):
     """ qgis function return raster projection and cellsize
     ----------
@@ -125,4 +164,20 @@ def qgis_raster_return_raster_properties(processing,INPUT):
     SpRef_in = INPUT.crs().authid()   ### get Raster spatialReference id
     return cellSize,SpRef_in
 
+
+def qgis_raster_gdal_polygonize(processing,context,INPUT,OUTPUT):
+    """ qgis function polygonize rater to polygon 
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, 
+    """  
+    out = processing.run("gdal:polygonize", {'INPUT':INPUT,'BAND':1,'FIELD':'DN','EIGHT_CONNECTEDNESS':False,'EXTRA':'','OUTPUT':OUTPUT},context = context)
+
+    return out
+    
         

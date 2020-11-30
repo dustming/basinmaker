@@ -96,3 +96,79 @@ def grass_raster_g_region(grass,raster_nm):
     grass.run_command('g.region', raster=raster_nm)
     
 ### 
+
+
+def grass_raster_g_region(grass,raster_nm):
+    """ define grass working region for current location 
+    Parameters
+    ----------    
+        
+    Returns:
+    -------
+       
+    """      
+    grass.run_command('g.region', raster=raster_nm)
+    
+### 
+
+
+def grass_raster_r_watershed(grass,elevation,drainage,accumulation,flags):
+    """ generate watershed from dem,output includes flow accumulation
+        and flow direction  
+    Parameters
+    ----------    
+        
+    Returns:
+    -------
+       
+    """      
+    grass.run_command('r.watershed',elevation = elevation, drainage = drainage,accumulation = accumulation,flags = flags, overwrite = True)
+    
+### 
+
+
+def grass_raster_r_mapcalc(grass,expression):
+    """ grass map calculator   
+    Parameters
+    ----------    
+        
+    Returns:
+    -------
+       
+    """      
+    grass.run_command('r.mapcalc',expression = expression,overwrite = True)
+    
+### 
+
+
+def grass_raster_r_water_outlet(grass,input_dir_nm,output_watshed_nm,outlet_coordinates):
+    """ grass generate watershed based on outlet points    
+    Parameters
+    ----------    
+        
+    Returns:
+    -------
+       
+    """      
+    grass.run_command('r.water.outlet',input = input_dir_nm, output = output_watshed_nm, coordinates  = outlet_coordinates,overwrite = True)
+    
+### 
+
+
+def grass_raster_r_out_gdal(grass,input_nm,output,format= 'GTiff'):
+    """ grass export raster in grass working enviroment to other folder in
+        different format.  
+    Parameters
+    ----------    
+        
+    Returns:
+    -------
+       
+    """      
+    grass.run_command('r.out.gdal', input = input_nm,output =output,format= 'GTiff',overwrite = True)
+    
+### 
+
+
+
+

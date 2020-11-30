@@ -266,7 +266,7 @@ def qgis_vector_field_calculator(processing,context,FORMULA,INPUT,OUTPUT,FIELD_N
 
 
 
-def qgis_vector_dissolve(processing,context,INPUT,FIELD,OUTPUT):
+def qgis_vector_dissolve(processing,context,INPUT,FIELD,OUTPUT,USING_GDAL_FUNCTION = False):
     """ qgis dissolve input vector based on values in FIELD list
     ----------
 
@@ -276,8 +276,11 @@ def qgis_vector_dissolve(processing,context,INPUT,FIELD,OUTPUT):
     Returns:
     -------
         None, 
-    """    
-    out = processing.run("native:dissolve", {'INPUT':INPUT,'FIELD':FIELD,'OUTPUT':OUTPUT},context = context)
+    """  
+    if USING_GDAL_FUNCTION:
+        out = processing.run("gdal:dissolve", {'INPUT':INPUT,'FIELD':FIELD,'OUTPUT':OUTPUT},context = context)
+    else:  
+        out = processing.run("native:dissolve", {'INPUT':INPUT,'FIELD':FIELD,'OUTPUT':OUTPUT},context = context)
     return out 
 
 
