@@ -114,14 +114,12 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
     # if no lake polygon is provided, use subId as HRULake_ID. 
     if Path_Connect_Lake_ply == '#' and Path_Non_Connect_Lake_ply == '#':
         memresult_addlakeid = qgis_vector_field_calculator(processing = processing, context = context,FORMULA ='-1',FIELD_NAME = 'Hylak_id',INPUT =Subfixgeo['OUTPUT'],OUTPUT ='memory:')
-        memresult_addhruid = qgis_vector_field_calculator(processing = processing, context = context,FORMULA =' \"SubId\" ',FIELD_NAME = 'HRULake_ID',INPUT =memresult_addlakeid['OUTPUT'],OUTPUT ='memory:')        
-        layer_cat=memresult_addhruid['OUTPUT']
+        memresult_addhruid = qgis_vector_field_calculator(processing = processing, context = context,FORMULA =' \"SubId\" ',FIELD_NAME = 'HRULake_ID',INPUT =memresult_addlakeid['OUTPUT'],OUTPUT ='memory:')
+        Sub_Lake_HRU = qgis_vector_field_calculator(processing = processing, context = context,FORMULA ='-1',FIELD_NAME = 'HRU_IsLake',INPUT =memresult_addhruid['OUTPUT'],OUTPUT ='memory:')        
         # remove column not in fieldnames
-        layer_cat = Clean_Attribute_Name(layer_cat,fieldnames,Input_Is_Feature_In_Mem = True)        
-        Sub_Lake_HRU = qgis_vector_field_calculator(processing = processing, context = context,FORMULA ='-1',FIELD_NAME = 'HRU_IsLake',INPUT =layer_cat,OUTPUT ='memory:')
-        del layer_cat
-        crs_id = qgis_vector_return_crs_id(processing,context,Sub_Lake_HRU['OUTPUT'],Input_Is_Feature_In_Mem = True)
-        return Sub_Lake_HRU['OUTPUT'],crs_id,['HRULake_ID','HRU_IsLake',Sub_ID]
+        Sub_Lake_HRU,temp_out = Clean_Attribute_Name(Sub_Lake_HRU['OUTPUT'],fieldnames,Input_Is_Feature_In_Mem = True)        
+        crs_id = qgis_vector_return_crs_id(processing,context,Sub_Lake_HRU,Input_Is_Feature_In_Mem = True)
+        return Sub_Lake_HRU,crs_id,['HRULake_ID','HRU_IsLake',Sub_ID]
 
     # fix lake polygon  geometry 
     if  Path_Connect_Lake_ply != '#':
@@ -725,7 +723,8 @@ class LRRT:
                                            'RivSlope','RivLength','BasSlope','BasAspect','BasArea','BkfWidth','BkfDepth','IsLake',
                                         'HyLakeId','LakeVol','LakeDepth','LakeArea','Laketype','IsObs','MeanElev','FloodP_n',
                                         'Q_Mean','Ch_n','DA','Strahler','Seg_ID','Seg_order','Max_DEM','Min_DEM','DA_Obs','DA_error',
-                                        'Obs_NM','SRC_obs', 'HRU_S_mean','HRU_A_mean','HRU_E_mean','centroid_x','centroid_y']
+                                        'Obs_NM','SRC_obs', 'HRU_S_mean','HRU_A_mean','HRU_E_mean','centroid_x','centroid_y',
+                                        'Rivlen','area']
 
         self.maximum_obs_id = 80000
         self.sqlpath = os.path.join(self.grassdb,'Geographic','PERMANENT','sqlite','sqlite.db')
