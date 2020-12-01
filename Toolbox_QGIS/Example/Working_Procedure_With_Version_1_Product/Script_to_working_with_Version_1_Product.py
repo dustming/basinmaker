@@ -23,7 +23,7 @@ RTtool=LRRT()
 #
 RTtool.GenerateHRUS(OutputFolder = Output_Folder,
                     Path_Subbasin_Ply =  os.path.join(Routing_Product_Folder,'finalcat_info.shp'),
-     				Path_Connect_Lake_ply = os.path.join(Routing_Product_Folder,'Con_Lake_Ply.shp'),
+                    Path_Connect_Lake_ply = os.path.join(Routing_Product_Folder,'Con_Lake_Ply.shp'),
                     Path_Non_Connect_Lake_ply = '#',
                     Path_Landuse_Ply = '#',Landuse_ID = 'Landuse_ID',
                     Path_Soil_Ply = '#',Soil_ID = 'Soil_ID',
