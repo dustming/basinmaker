@@ -18,53 +18,63 @@
 #
 
 
-
 ###########################################################################################
 #
-# This is a python script to use BasinMaker to combine lake river routing structure of 
-# each subregion 
+# This is a python script to use BasinMaker to combine lake river routing structure of
+# each subregion
 #
 ###########################################################################################
 
 
-from ToolboxClass import LRRT
 import os
-import pandas as pd
-import tempfile
 import shutil
 import sys
 import tempfile
 import timeit
 
+import pandas as pd
 
-############ Variable needs to be modified to run this example ######     
+from ToolboxClass import LRRT
 
-### Define a output folder where to store subregion information 
+############ Variable needs to be modified to run this example ######
+
+### Define a output folder where to store subregion information
 Outputfolder = "C:/Users/dustm/OneDrive - University of Waterloo/Documents/ProjectData/Petawawa/lake_of_woods/"
 
-### The BasinMaker folder 
+### The BasinMaker folder
 BasinMaker_Folder = "C:/Users/dustm/Documents/GitHub/RoutingTool"
 
-############ Variable needs to be modified to run this example ######  
+############ Variable needs to be modified to run this example ######
 
 
-### Define derived folder 
-DataBase_Folder = os.path.join(BasinMaker_Folder,'Toolbox_QGIS','tests','testdata','Required_data_to_start_from_dem')
+### Define derived folder
+DataBase_Folder = os.path.join(
+    BasinMaker_Folder,
+    "Toolbox_QGIS",
+    "tests",
+    "testdata",
+    "Required_data_to_start_from_dem",
+)
 Sub_Region_OutputFolder = Outputfolder
-Out_Sub_Reg_Dem_Folder = os.path.join(Outputfolder,'SubRegion_info')
-OutputFolder_Combined = os.path.join(Outputfolder,'Combined')
+Out_Sub_Reg_Dem_Folder = os.path.join(Outputfolder, "SubRegion_info")
+OutputFolder_Combined = os.path.join(Outputfolder, "Combined")
 
 ####
-SubReg_info = pd.read_csv(os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_reg_info.csv'))
+SubReg_info = pd.read_csv(os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_reg_info.csv"))
 
 start = timeit.default_timer()
 
-RTtool=LRRT()
-RTtool.Combine_Sub_Region_Results(Sub_Region_info = SubReg_info,Sub_Region_OutputFolder = Sub_Region_OutputFolder,
-                                  Path_Down_Stream_Points = os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_Reg_Outlets_Down.shp'),
-                                  Is_Final_Result = True,
-                                  OutputFolder = OutputFolder_Combined)
+RTtool = LRRT()
+RTtool.Combine_Sub_Region_Results(
+    Sub_Region_info=SubReg_info,
+    Sub_Region_OutputFolder=Sub_Region_OutputFolder,
+    Path_Down_Stream_Points=os.path.join(
+        Out_Sub_Reg_Dem_Folder, "Sub_Reg_Outlets_Down.shp"
+    ),
+    Is_Final_Result=True,
+    OutputFolder=OutputFolder_Combined,
+)
 End = timeit.default_timer()
 
-print("use    ",start - End)
+print("use    ", start - End)
 ### -73.6744739

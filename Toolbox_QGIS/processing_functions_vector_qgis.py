@@ -1,73 +1,109 @@
-from qgis.core import *
+import numpy as np
+import pandas as pd
 import qgis
 from qgis.analysis import QgsNativeAlgorithms
+from qgis.core import *
 from qgis.PyQt.QtCore import *
-import pandas as pd 
-import numpy as np 
 
-def Copy_Pddataframe_to_shpfile(Path_shpfile,Pddataframe,link_col_nm_shp = 'SubId'
-                                ,link_col_nm_df = 'SubId',UpdateColNM = ['#'],Input_Is_Feature_In_Mem = False):
-    """ Function modify attribute table of Path_shpfile using value from Pddataframe
+
+def Copy_Pddataframe_to_shpfile(
+    Path_shpfile,
+    Pddataframe,
+    link_col_nm_shp="SubId",
+    link_col_nm_df="SubId",
+    UpdateColNM=["#"],
+    Input_Is_Feature_In_Mem=False,
+):
+    """Function modify attribute table of Path_shpfile using value from Pddataframe
     Parameters
     ----------
-    Path_shpfile                        : shpfile 
-        Path to the shpfile 
+    Path_shpfile                        : shpfile
+        Path to the shpfile
     Pddataframe                         : dataframe
-        Dataframe constains data that will be used to update attribute table of 
+        Dataframe constains data that will be used to update attribute table of
         Path_shpfile
-    link_col_nm_shp                     : string 
+    link_col_nm_shp                     : string
         The column name that link Pddataframe attribute table in Path_shpfile
-    link_col_nm_df                      : string 
+    link_col_nm_df                      : string
         The column name that link Path_shpfile attribute table in Pddataframe
-    UpdateColNM                         : list 
-        It is a list of column name, it is equal to '#', all column value will 
-        be updated, otherwise only column name in UpdateColNM will be updated. 
+    UpdateColNM                         : list
+        It is a list of column name, it is equal to '#', all column value will
+        be updated, otherwise only column name in UpdateColNM will be updated.
     Notes
     -------
 
     Returns:
     -------
-        None, the attribute table of Path_shpfile will be updated 
+        None, the attribute table of Path_shpfile will be updated
     """
     if Input_Is_Feature_In_Mem:
         layer_cat = Path_shpfile
     else:
-        layer_cat=QgsVectorLayer(Path_shpfile,"")
-        
+        layer_cat = QgsVectorLayer(Path_shpfile, "")
+
     Attri_Name = layer_cat.fields().names()
     features = layer_cat.getFeatures()
     with edit(layer_cat):
         for sf in features:
-            Atti_Valu    = sf.attributes()
-            sf_subid     = sf[link_col_nm_shp]
-            tarinfo      = Pddataframe[Pddataframe[link_col_nm_df] == sf_subid]
+            Atti_Valu = sf.attributes()
+            sf_subid = sf[link_col_nm_shp]
+            tarinfo = Pddataframe[Pddataframe[link_col_nm_df] == sf_subid]
 
-            if UpdateColNM[0] == '#':
-                for icolnm in range(0,len(Attri_Name)):     ### copy infomaiton
-                    if  Attri_Name[icolnm] == 'Obs_NM' or Attri_Name[icolnm] == 'SRC_obs' or Attri_Name[icolnm] == 'LAND_USE_C' or Attri_Name[icolnm] == 'SOIL_PROF' or Attri_Name[icolnm] == 'VEG_C':
-                        sf[Attri_Name[icolnm]] = str(tarinfo[Attri_Name[icolnm]].values[0])
-                    elif Attri_Name[icolnm] == 'cat' or  Attri_Name[icolnm] == 'layer' or  Attri_Name[icolnm] == 'path' :
+            if UpdateColNM[0] == "#":
+                for icolnm in range(0, len(Attri_Name)):  ### copy infomaiton
+                    if (
+                        Attri_Name[icolnm] == "Obs_NM"
+                        or Attri_Name[icolnm] == "SRC_obs"
+                        or Attri_Name[icolnm] == "LAND_USE_C"
+                        or Attri_Name[icolnm] == "SOIL_PROF"
+                        or Attri_Name[icolnm] == "VEG_C"
+                    ):
+                        sf[Attri_Name[icolnm]] = str(
+                            tarinfo[Attri_Name[icolnm]].values[0]
+                        )
+                    elif (
+                        Attri_Name[icolnm] == "cat"
+                        or Attri_Name[icolnm] == "layer"
+                        or Attri_Name[icolnm] == "path"
+                    ):
                         continue
                     else:
-                        sf[Attri_Name[icolnm]] = float(tarinfo[Attri_Name[icolnm]].values[0])
+                        sf[Attri_Name[icolnm]] = float(
+                            tarinfo[Attri_Name[icolnm]].values[0]
+                        )
             else:
-                for icolnm in range(0,len(UpdateColNM)):
-                    if UpdateColNM[icolnm] == 'Obs_NM' or UpdateColNM[icolnm] == 'SRC_obs' or UpdateColNM[icolnm] == 'LAND_USE_C' or UpdateColNM[icolnm] == 'SOIL_PROF' or UpdateColNM[icolnm] == 'VEG_C':
-                        sf[UpdateColNM[icolnm]] = str(tarinfo[UpdateColNM[icolnm]].values[0])
-                    elif UpdateColNM[icolnm] == 'cat' or  UpdateColNM[icolnm] == 'layer' or  UpdateColNM[icolnm] == 'path' :
+                for icolnm in range(0, len(UpdateColNM)):
+                    if (
+                        UpdateColNM[icolnm] == "Obs_NM"
+                        or UpdateColNM[icolnm] == "SRC_obs"
+                        or UpdateColNM[icolnm] == "LAND_USE_C"
+                        or UpdateColNM[icolnm] == "SOIL_PROF"
+                        or UpdateColNM[icolnm] == "VEG_C"
+                    ):
+                        sf[UpdateColNM[icolnm]] = str(
+                            tarinfo[UpdateColNM[icolnm]].values[0]
+                        )
+                    elif (
+                        UpdateColNM[icolnm] == "cat"
+                        or UpdateColNM[icolnm] == "layer"
+                        or UpdateColNM[icolnm] == "path"
+                    ):
                         continue
                     else:
-                        sf[UpdateColNM[icolnm]] = float(tarinfo[UpdateColNM[icolnm]].values[0])
-                        
+                        sf[UpdateColNM[icolnm]] = float(
+                            tarinfo[UpdateColNM[icolnm]].values[0]
+                        )
+
             layer_cat.updateFeature(sf)
     if Input_Is_Feature_In_Mem:
         return layer_cat
     else:
         del layer_cat
-        return 
+        return
 
-def Remove_Unselected_Lake_Attribute_In_Finalcatinfo(Path_Finalcatinfo,Conn_Lake_Ids):
-    """ Functions will set lake id not in Conn_Lake_Ids to -1.2345 in attribute 
+
+def Remove_Unselected_Lake_Attribute_In_Finalcatinfo(Path_Finalcatinfo, Conn_Lake_Ids):
+    """Functions will set lake id not in Conn_Lake_Ids to -1.2345 in attribute
         table of Path_Finalcatinfo
     ----------
 
@@ -76,32 +112,34 @@ def Remove_Unselected_Lake_Attribute_In_Finalcatinfo(Path_Finalcatinfo,Conn_Lake
 
     Returns:
     -------
-        None, the attribute table of Path_shpfile will be updated 
+        None, the attribute table of Path_shpfile will be updated
     """
-    
-    layer_cat=QgsVectorLayer(Path_Finalcatinfo,"")
+
+    layer_cat = QgsVectorLayer(Path_Finalcatinfo, "")
     Attri_Name = layer_cat.fields().names()
     features = layer_cat.getFeatures()
     with edit(layer_cat):
         for sf in features:
-            sf_subid        = float(sf['HyLakeId'])
+            sf_subid = float(sf["HyLakeId"])
 
-            if sf_subid in Conn_Lake_Ids or float(sf['IsLake']) == 2:
+            if sf_subid in Conn_Lake_Ids or float(sf["IsLake"]) == 2:
                 continue
-            sf['HyLakeId']      = float(-1.2345)
-            sf['LakeVol']       = float(-1.2345)
-            sf['LakeArea']      = float(-1.2345)
-            sf['LakeDepth']     = float(-1.2345)
-            sf['Laketype']      = float(-1.2345)
-            sf['IsLake']        = float(-1.2345)
+            sf["HyLakeId"] = float(-1.2345)
+            sf["LakeVol"] = float(-1.2345)
+            sf["LakeArea"] = float(-1.2345)
+            sf["LakeDepth"] = float(-1.2345)
+            sf["Laketype"] = float(-1.2345)
+            sf["IsLake"] = float(-1.2345)
             layer_cat.updateFeature(sf)
     del layer_cat
     return
-    
-    
+
+
 #########
-def Add_centroid_to_feature(Path_feagure,centroidx_nm = '#',centroidy_nm='#',Input_Is_Feature_In_Mem = False):
-    """ Functions will add centorid x y to Path_feagure
+def Add_centroid_to_feature(
+    Path_feagure, centroidx_nm="#", centroidy_nm="#", Input_Is_Feature_In_Mem=False
+):
+    """Functions will add centorid x y to Path_feagure
     ----------
 
     Notes
@@ -109,12 +147,12 @@ def Add_centroid_to_feature(Path_feagure,centroidx_nm = '#',centroidy_nm='#',Inp
 
     Returns:
     -------
-        None, the attribute table of Path_shpfile will be updated 
+        None, the attribute table of Path_shpfile will be updated
     """
     if Input_Is_Feature_In_Mem:
         layer_cat = Path_feagure
     else:
-        layer_cat=QgsVectorLayer(Path_feagure,"")
+        layer_cat = QgsVectorLayer(Path_feagure, "")
     Attri_Name = layer_cat.fields().names()
     features = layer_cat.getFeatures()
     with edit(layer_cat):
@@ -128,8 +166,9 @@ def Add_centroid_to_feature(Path_feagure,centroidx_nm = '#',centroidy_nm='#',Inp
     else:
         del layer_cat
 
-def Selectfeatureattributes(processing,Input = '#',Output='#',Attri_NM = '#',Values = []):
-    """ Functions extract features from Input, based on values in column Attri_NM
+
+def Selectfeatureattributes(processing, Input="#", Output="#", Attri_NM="#", Values=[]):
+    """Functions extract features from Input, based on values in column Attri_NM
     ----------
 
     Notes
@@ -137,19 +176,23 @@ def Selectfeatureattributes(processing,Input = '#',Output='#',Attri_NM = '#',Val
 
     Returns:
     -------
-        None, the attribute table of Path_shpfile will be updated 
+        None, the attribute table of Path_shpfile will be updated
     """
-    exp =Attri_NM + '  IN  (  ' +  str(int(Values[0]))
-    for i in range(1,len(Values)):
-        exp = exp + " , "+str(int(Values[i]))
-    exp = exp + ')'
-    processing.run("native:extractbyexpression", {'INPUT':Input,'EXPRESSION':exp,'OUTPUT':Output})
+    exp = Attri_NM + "  IN  (  " + str(int(Values[0]))
+    for i in range(1, len(Values)):
+        exp = exp + " , " + str(int(Values[i]))
+    exp = exp + ")"
+    processing.run(
+        "native:extractbyexpression",
+        {"INPUT": Input, "EXPRESSION": exp, "OUTPUT": Output},
+    )
 
 
+def Copyfeature_to_another_shp_by_attribute(
+    Source_shp, Target_shp, Col_NM="SubId", Values=[-1], Attributes=[-1]
+):
 
-def Copyfeature_to_another_shp_by_attribute(Source_shp,Target_shp,Col_NM='SubId',Values=[-1],Attributes = [-1]):
-
-    """ Functions that will copy features in Source_shp to Target_shp 
+    """Functions that will copy features in Source_shp to Target_shp
     based on attribute values in Values
     ----------
 
@@ -158,22 +201,22 @@ def Copyfeature_to_another_shp_by_attribute(Source_shp,Target_shp,Col_NM='SubId'
 
     Returns:
     -------
-        None, the attribute table of Path_shpfile will be updated 
+        None, the attribute table of Path_shpfile will be updated
     """
-    
-    layer_src=QgsVectorLayer(Source_shp,"")
-    layer_trg=QgsVectorLayer(Target_shp,"")
+
+    layer_src = QgsVectorLayer(Source_shp, "")
+    layer_trg = QgsVectorLayer(Target_shp, "")
 
     src_features = layer_src.getFeatures()
 
     Selected_Features = []
     for sf in src_features:
-        #centroidxy = sf.geometry().centroid().asPoint()
+        # centroidxy = sf.geometry().centroid().asPoint()
         Select_value = sf[Col_NM]
         if Select_value in Values:
-            src_geometry =  sf.geometry()
+            src_geometry = sf.geometry()
             attribute = Attributes.loc[Attributes[Col_NM] == Select_value].values
-            temp_feature=QgsFeature()
+            temp_feature = QgsFeature()
             temp_feature.setGeometry(src_geometry)
             temp_feature.setAttributes(attribute.tolist()[0])
             Selected_Features.append(temp_feature)
@@ -184,12 +227,12 @@ def Copyfeature_to_another_shp_by_attribute(Source_shp,Target_shp,Col_NM='SubId'
     layer_trg.updateExtents()
     del layer_src
     del layer_trg
-    
-        
 
 
-def Add_New_SubId_To_Subregion_shpfile(processing,context,Layer,SubID_info = '#', OutputPath = '#',Region_ID = 1):
-    """ Asign new subbasin Id to each subbasins in each subregion
+def Add_New_SubId_To_Subregion_shpfile(
+    processing, context, Layer, SubID_info="#", OutputPath="#", Region_ID=1
+):
+    """Asign new subbasin Id to each subbasins in each subregion
     Parameters
     ----------
     processing                        : qgis object
@@ -213,34 +256,50 @@ def Add_New_SubId_To_Subregion_shpfile(processing,context,Layer,SubID_info = '#'
     -------
         None
     """
-            
-    qgis_vector_field_calculator(processing = processing, context = context,FORMULA =str(int(Region_ID)),FIELD_NAME = 'Region_ID',INPUT =Layer,OUTPUT =OutputPath)
-    
 
-    layer_new=QgsVectorLayer(OutputPath,"")
+    qgis_vector_field_calculator(
+        processing=processing,
+        context=context,
+        FORMULA=str(int(Region_ID)),
+        FIELD_NAME="Region_ID",
+        INPUT=Layer,
+        OUTPUT=OutputPath,
+    )
+
+    layer_new = QgsVectorLayer(OutputPath, "")
 
     features = layer_new.getFeatures()
     with edit(layer_new):
         for sf in features:
-            cSubId = int(sf['SubId'])
-            cDowSubId = int(sf['DowSubId'])
-            nSubId = SubID_info.loc[SubID_info['SubId'] == cSubId]['nSubId']
-            if len(SubID_info.loc[SubID_info['SubId'] == cDowSubId]) == 0:
+            cSubId = int(sf["SubId"])
+            cDowSubId = int(sf["DowSubId"])
+            nSubId = SubID_info.loc[SubID_info["SubId"] == cSubId]["nSubId"]
+            if len(SubID_info.loc[SubID_info["SubId"] == cDowSubId]) == 0:
                 nDowSubId = -1
             else:
-                nDowSubId = SubID_info.loc[SubID_info['SubId'] == cDowSubId]['nSubId']
-            nSeg_ID = SubID_info.loc[SubID_info['SubId'] == cSubId]['nSeg_ID']
-            sf['SubId'] = int(nSubId)
-            sf['DowSubId'] = int(nDowSubId)
-            sf['Seg_ID'] =   int(nSeg_ID)
+                nDowSubId = SubID_info.loc[SubID_info["SubId"] == cDowSubId]["nSubId"]
+            nSeg_ID = SubID_info.loc[SubID_info["SubId"] == cSubId]["nSeg_ID"]
+            sf["SubId"] = int(nSubId)
+            sf["DowSubId"] = int(nDowSubId)
+            sf["Seg_ID"] = int(nSeg_ID)
             layer_new.updateFeature(sf)
     del layer_new
     return
-    
-def qgis_vector_field_calculator(processing,context,FORMULA,INPUT,OUTPUT,FIELD_NAME,
-                                 FIELD_PRECISION = 0,FIELD_TYPE = 0,NEW_FIELD = True,
-                                 FIELD_LENGTH = 10):
-    """ qgis filed calcuator 
+
+
+def qgis_vector_field_calculator(
+    processing,
+    context,
+    FORMULA,
+    INPUT,
+    OUTPUT,
+    FIELD_NAME,
+    FIELD_PRECISION=0,
+    FIELD_TYPE=0,
+    NEW_FIELD=True,
+    FIELD_LENGTH=10,
+):
+    """qgis filed calcuator
     ----------
 
     Notes
@@ -248,117 +307,110 @@ def qgis_vector_field_calculator(processing,context,FORMULA,INPUT,OUTPUT,FIELD_N
 
     Returns:
     -------
-        None, 
-    """    
-    alg_params = {
-        'FIELD_LENGTH': FIELD_LENGTH,
-        'FIELD_NAME': FIELD_NAME,
-        'FIELD_PRECISION': FIELD_PRECISION,
-        'FIELD_TYPE': FIELD_TYPE,
-        'FORMULA':FORMULA, 
-        'INPUT': INPUT,
-        'NEW_FIELD': NEW_FIELD,
-        'OUTPUT':OUTPUT
-        }
-
-    out = processing.run('qgis:fieldcalculator', alg_params, context=context)
-    return out    
-
-
-
-def qgis_vector_dissolve(processing,context,INPUT,FIELD,OUTPUT,USING_GDAL_FUNCTION = False):
-    """ qgis dissolve input vector based on values in FIELD list
-    ----------
-
-    Notes
-    -------
-
-    Returns:
-    -------
-        None, 
-    """  
-    if USING_GDAL_FUNCTION:
-        out = processing.run("gdal:dissolve", {'INPUT':INPUT,'FIELD':FIELD,'OUTPUT':OUTPUT},context = context)
-    else:  
-        out = processing.run("native:dissolve", {'INPUT':INPUT,'FIELD':FIELD,'OUTPUT':OUTPUT},context = context)
-    return out 
-
-
-def qgis_vector_fix_geometries(processing,context,INPUT,OUTPUT):
-    """ qgis fixgeometries
-    ----------
-
-    Notes
-    -------
-
-    Returns:
-    -------
-        None, 
-    """    
-    out = processing.run("native:fixgeometries", {'INPUT':INPUT,'OUTPUT':OUTPUT})
-    return out 
-
-
-
-def qgis_vector_merge_vector_layers(processing,context,INPUT_Layer_List,OUTPUT):
-    """ qgis merge_vector_layers
-    ----------
-
-    Notes
-    -------
-
-    Returns:
-    -------
-        None, 
-    """    
-    out = processing.run("native:mergevectorlayers", {'LAYERS':INPUT_Layer_List,'OUTPUT':OUTPUT})
-    
-    return out 
-    
-    
-def qgis_vector_return_crs_id(processing,context,INPUT_Layer,Input_Is_Feature_In_Mem = True):
-    """ qgis return vector layer projection crs id 
-    ----------
-
-    Notes
-    -------
-
-    Returns:
-    -------
-        None, 
+        None,
     """
-    if Input_Is_Feature_In_Mem:   
-        out =INPUT_Layer.crs().authid()
+    alg_params = {
+        "FIELD_LENGTH": FIELD_LENGTH,
+        "FIELD_NAME": FIELD_NAME,
+        "FIELD_PRECISION": FIELD_PRECISION,
+        "FIELD_TYPE": FIELD_TYPE,
+        "FORMULA": FORMULA,
+        "INPUT": INPUT,
+        "NEW_FIELD": NEW_FIELD,
+        "OUTPUT": OUTPUT,
+    }
+
+    out = processing.run("qgis:fieldcalculator", alg_params, context=context)
+    return out
+
+
+def qgis_vector_dissolve(
+    processing, context, INPUT, FIELD, OUTPUT, USING_GDAL_FUNCTION=False
+):
+    """qgis dissolve input vector based on values in FIELD list
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None,
+    """
+    if USING_GDAL_FUNCTION:
+        out = processing.run(
+            "gdal:dissolve",
+            {"INPUT": INPUT, "FIELD": FIELD, "OUTPUT": OUTPUT},
+            context=context,
+        )
+    else:
+        out = processing.run(
+            "native:dissolve",
+            {"INPUT": INPUT, "FIELD": FIELD, "OUTPUT": OUTPUT},
+            context=context,
+        )
+    return out
+
+
+def qgis_vector_fix_geometries(processing, context, INPUT, OUTPUT):
+    """qgis fixgeometries
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None,
+    """
+    out = processing.run("native:fixgeometries", {"INPUT": INPUT, "OUTPUT": OUTPUT})
+    return out
+
+
+def qgis_vector_merge_vector_layers(processing, context, INPUT_Layer_List, OUTPUT):
+    """qgis merge_vector_layers
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None,
+    """
+    out = processing.run(
+        "native:mergevectorlayers", {"LAYERS": INPUT_Layer_List, "OUTPUT": OUTPUT}
+    )
+
+    return out
+
+
+def qgis_vector_return_crs_id(
+    processing, context, INPUT_Layer, Input_Is_Feature_In_Mem=True
+):
+    """qgis return vector layer projection crs id
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None,
+    """
+    if Input_Is_Feature_In_Mem:
+        out = INPUT_Layer.crs().authid()
     else:
         layer = QgsVectorLayer(INPUT_Layer, "")
-        out =layer.crs().authid()
-        
-    return out 
+        out = layer.crs().authid()
 
-
-def qgis_vector_add_polygon_attribute_to_points(processing,context,INPUT_Layer,POLYGONS,FIELDS,OUTPUT):
-    """ qgis return vector layer projection crs id 
-    ----------
-
-    Notes
-    -------
-
-    Returns:
-    -------
-        None, 
-    """
-    out = processing.run("saga:addpolygonattributestopoints", {'INPUT':INPUT_Layer,'POLYGONS':POLYGONS,'FIELDS':FIELDS,'OUTPUT':OUTPUT})
-        
     return out
-    
-    
 
 
-
-
-
-def qgis_vector_extract_by_attribute(processing,context,INPUT_Layer,FIELD,OPERATOR,VALUE,OUTPUT):
-    """ qgis extract vector by attribute 
+def qgis_vector_add_polygon_attribute_to_points(
+    processing, context, INPUT_Layer, POLYGONS, FIELDS, OUTPUT
+):
+    """qgis return vector layer projection crs id
     ----------
 
     Notes
@@ -366,56 +418,94 @@ def qgis_vector_extract_by_attribute(processing,context,INPUT_Layer,FIELD,OPERAT
 
     Returns:
     -------
-        None, 
+        None,
     """
-    out  = processing.run("native:extractbyattribute", {'INPUT':INPUT_Layer,'FIELD':FIELD,'OPERATOR':OPERATOR,'VALUE':VALUE,'OUTPUT':OUTPUT})
-        
-    return out 
+    out = processing.run(
+        "saga:addpolygonattributestopoints",
+        {
+            "INPUT": INPUT_Layer,
+            "POLYGONS": POLYGONS,
+            "FIELDS": FIELDS,
+            "OUTPUT": OUTPUT,
+        },
+    )
+
+    return out
 
 
-def qgis_vector_add_attributes(processing,context,INPUT_Layer,attribute_list):
-    """ qgis add attributes to vector  
+def qgis_vector_extract_by_attribute(
+    processing, context, INPUT_Layer, FIELD, OPERATOR, VALUE, OUTPUT
+):
+    """qgis extract vector by attribute
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None,
+    """
+    out = processing.run(
+        "native:extractbyattribute",
+        {
+            "INPUT": INPUT_Layer,
+            "FIELD": FIELD,
+            "OPERATOR": OPERATOR,
+            "VALUE": VALUE,
+            "OUTPUT": OUTPUT,
+        },
+    )
+
+    return out
+
+
+def qgis_vector_add_attributes(processing, context, INPUT_Layer, attribute_list):
+    """qgis add attributes to vector
     ----------
     Notes
     -------
 
     Returns:
     -------
-        None, 
-    """    
+        None,
+    """
     INPUT_Layer.dataProvider().addAttributes(attribute_list)
     INPUT_Layer.updateFields()
     INPUT_Layer.commitChanges()
     return INPUT_Layer
 
 
-def qgis_vector_get_attributes(processing,context,INPUT_Layer,attribute_NM):
-    """ qgis retrun attribute value of vector  
+def qgis_vector_get_attributes(processing, context, INPUT_Layer, attribute_NM):
+    """qgis retrun attribute value of vector
     ----------
     Notes
     -------
 
     Returns:
     -------
-        None, 
-    """    
-    if attribute_NM == 'count':
+        None,
+    """
+    if attribute_NM == "count":
         out = INPUT_Layer.featureCount()
-        return out 
-    elif attribute_NM == 'field_name':
+        return out
+    elif attribute_NM == "field_name":
         out = INPUT_Layer.fields().names()
-    elif attribute_NM == 'features':
+    elif attribute_NM == "features":
         out = INPUT_Layer.getFeatures()
-        return out 
+        return out
     else:
         print("wrong attribute name")
-        return -1         
-#### 
-    
-        
+        return -1
 
-def qgis_vector_union_two_layers(processing,context,INPUT,OVERLAY,OUTPUT,OVERLAY_FIELDS_PREFIX = ''):
-    """ qgis union two layers 
+
+####
+
+
+def qgis_vector_union_two_layers(
+    processing, context, INPUT, OVERLAY, OUTPUT, OVERLAY_FIELDS_PREFIX=""
+):
+    """qgis union two layers
     ----------
 
     Notes
@@ -423,101 +513,25 @@ def qgis_vector_union_two_layers(processing,context,INPUT,OVERLAY,OUTPUT,OVERLAY
 
     Returns:
     -------
-        None, 
+        None,
     """
-    
-    out = processing.run("native:union", {'INPUT':INPUT,'OVERLAY':OVERLAY,'OVERLAY_FIELDS_PREFIX':OVERLAY_FIELDS_PREFIX,'OUTPUT':OUTPUT},context = context)
-            
-    return out 
-    
-def qgis_vector_reproject_layers(processing,context,INPUT,TARGET_CRS,OUTPUT):
-    """ qgis function reproject vector layer 
-    ----------
 
-    Notes
-    -------
+    out = processing.run(
+        "native:union",
+        {
+            "INPUT": INPUT,
+            "OVERLAY": OVERLAY,
+            "OVERLAY_FIELDS_PREFIX": OVERLAY_FIELDS_PREFIX,
+            "OUTPUT": OUTPUT,
+        },
+        context=context,
+    )
 
-    Returns:
-    -------
-        None, 
-    """  
-    out = processing.run("native:reprojectlayer", {'INPUT':INPUT,'TARGET_CRS':QgsCoordinateReferenceSystem(TARGET_CRS),'OUTPUT':OUTPUT})
-    return out 
-
-
-
-def qgis_vector_buffer(processing,context,INPUT,Buffer_Distance,OUTPUT):
-    """ qgis function buffer vector layer with a buffer distance 
-    ----------
-
-    Notes
-    -------
-
-    Returns:
-    -------
-        None, 
-    """  
-    out = processing.run("native:buffer", {'INPUT':INPUT,'DISTANCE':Buffer_Distance,'SEGMENTS':5,'END_CAP_STYLE':0,'JOIN_STYLE':0,'MITER_LIMIT':2,'DISSOLVE':True,'OUTPUT':OUTPUT},context = context)
-    return out 
-    
-    
-
-def qgis_vector_ectract_by_location(processing,context,INPUT,INTERSECT,OUTPUT):
-    """ qgis function extract vector by location 
-    ----------
-
-    Notes
-    -------
-
-    Returns:
-    -------
-        None, 
-    """  
-    out = processing.run("native:extractbylocation", {'INPUT':INPUT,'PREDICATE':[6],'INTERSECT':INTERSECT,'OUTPUT':OUTPUT},context = context)
-    return out 
-
-
-
-
-def qgis_vector_polygon_stro_lines(processing,context,INPUT,OUTPUT):
-    """ qgis function to obtain polygon boundary lines  
-    ----------
-
-    Notes
-    -------
-
-    Returns:
-    -------
-        None, 
-    """  
-    out = processing.run("native:polygonstolines", {'INPUT':INPUT,'OUTPUT':OUTPUT},context = context)
-    return out 
-    
-    
-    
-
-
-
-def qgis_vector_clip(processing,context,INPUT,OVERLAY,OUTPUT):
-    """ qgis function reproject vector layer 
-    ----------
-
-    Notes
-    -------
-
-    Returns:
-    -------
-        None, 
-    """  
-    layer_clip = processing.run("native:clip", {'INPUT':INPUT,'OVERLAY':OVERLAY,'OUTPUT':OUTPUT})
-    
     return out
-    
 
-def qgis_vector_join_attribute_table(processing,context,INPUT1,FIELD1,INPUT2,FIELD2,OUTPUT,
-                                    FIELDS_TO_COPY =[],METHOD=1,DISCARD_NONMATCHING=False,
-                                    PREFIX = ''):
-    """ qgis function join attibute table 
+
+def qgis_vector_reproject_layers(processing, context, INPUT, TARGET_CRS, OUTPUT):
+    """qgis function reproject vector layer
     ----------
 
     Notes
@@ -525,23 +539,21 @@ def qgis_vector_join_attribute_table(processing,context,INPUT1,FIELD1,INPUT2,FIE
 
     Returns:
     -------
-    """    
-            
-
-    out =  processing.run("native:joinattributestable", {'INPUT':INPUT1,'FIELD':FIELD1,'INPUT_2':INPUT2,'FIELD_2':FIELD2,
-                    'FIELDS_TO_COPY':FIELDS_TO_COPY,'METHOD':METHOD,'DISCARD_NONMATCHING':DISCARD_NONMATCHING,'PREFIX':PREFIX,
-                    'OUTPUT':OUTPUT},context = context)
-#          processing.run("native:joinattributestable", {'INPUT':HRU_draft,'FIELD':Sub_ID,'INPUT_2':Path_Subbasin_Ply,'FIELD_2':Sub_ID,
-#                    'FIELDS_TO_COPY':[],'METHOD':1,'DISCARD_NONMATCHING':False,'PREFIX':'',
-#                    'OUTPUT':'memory:'},context = context)['OUTPUT']
-                    
-    return out             
-
-
+        None,
+    """
+    out = processing.run(
+        "native:reprojectlayer",
+        {
+            "INPUT": INPUT,
+            "TARGET_CRS": QgsCoordinateReferenceSystem(TARGET_CRS),
+            "OUTPUT": OUTPUT,
+        },
+    )
+    return out
 
 
-def qgis_vector_create_spatial_index(processing,context,INPUT):
-    """ qgis function create spatial index
+def qgis_vector_buffer(processing, context, INPUT, Buffer_Distance, OUTPUT):
+    """qgis function buffer vector layer with a buffer distance
     ----------
 
     Notes
@@ -549,15 +561,27 @@ def qgis_vector_create_spatial_index(processing,context,INPUT):
 
     Returns:
     -------
-        None, 
-    """  
-    out = processing.run("qgis:createspatialindex", {'INPUT':INPUT})
-    return out 
+        None,
+    """
+    out = processing.run(
+        "native:buffer",
+        {
+            "INPUT": INPUT,
+            "DISTANCE": Buffer_Distance,
+            "SEGMENTS": 5,
+            "END_CAP_STYLE": 0,
+            "JOIN_STYLE": 0,
+            "MITER_LIMIT": 2,
+            "DISSOLVE": True,
+            "OUTPUT": OUTPUT,
+        },
+        context=context,
+    )
+    return out
 
 
-
-def qgis_vector_read_vector(processing,context,INPUT):
-    """ qgis function read vector layer into memeory
+def qgis_vector_ectract_by_location(processing, context, INPUT, INTERSECT, OUTPUT):
+    """qgis function extract vector by location
     ----------
 
     Notes
@@ -565,16 +589,130 @@ def qgis_vector_read_vector(processing,context,INPUT):
 
     Returns:
     -------
-        None, 
-    """  
+        None,
+    """
+    out = processing.run(
+        "native:extractbylocation",
+        {"INPUT": INPUT, "PREDICATE": [6], "INTERSECT": INTERSECT, "OUTPUT": OUTPUT},
+        context=context,
+    )
+    return out
+
+
+def qgis_vector_polygon_stro_lines(processing, context, INPUT, OUTPUT):
+    """qgis function to obtain polygon boundary lines
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None,
+    """
+    out = processing.run(
+        "native:polygonstolines", {"INPUT": INPUT, "OUTPUT": OUTPUT}, context=context
+    )
+    return out
+
+
+def qgis_vector_clip(processing, context, INPUT, OVERLAY, OUTPUT):
+    """qgis function reproject vector layer
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None,
+    """
+    layer_clip = processing.run(
+        "native:clip", {"INPUT": INPUT, "OVERLAY": OVERLAY, "OUTPUT": OUTPUT}
+    )
+
+    return out
+
+
+def qgis_vector_join_attribute_table(
+    processing,
+    context,
+    INPUT1,
+    FIELD1,
+    INPUT2,
+    FIELD2,
+    OUTPUT,
+    FIELDS_TO_COPY=[],
+    METHOD=1,
+    DISCARD_NONMATCHING=False,
+    PREFIX="",
+):
+    """qgis function join attibute table
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+    """
+
+    out = processing.run(
+        "native:joinattributestable",
+        {
+            "INPUT": INPUT1,
+            "FIELD": FIELD1,
+            "INPUT_2": INPUT2,
+            "FIELD_2": FIELD2,
+            "FIELDS_TO_COPY": FIELDS_TO_COPY,
+            "METHOD": METHOD,
+            "DISCARD_NONMATCHING": DISCARD_NONMATCHING,
+            "PREFIX": PREFIX,
+            "OUTPUT": OUTPUT,
+        },
+        context=context,
+    )
+    #          processing.run("native:joinattributestable", {'INPUT':HRU_draft,'FIELD':Sub_ID,'INPUT_2':Path_Subbasin_Ply,'FIELD_2':Sub_ID,
+    #                    'FIELDS_TO_COPY':[],'METHOD':1,'DISCARD_NONMATCHING':False,'PREFIX':'',
+    #                    'OUTPUT':'memory:'},context = context)['OUTPUT']
+
+    return out
+
+
+def qgis_vector_create_spatial_index(processing, context, INPUT):
+    """qgis function create spatial index
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None,
+    """
+    out = processing.run("qgis:createspatialindex", {"INPUT": INPUT})
+    return out
+
+
+def qgis_vector_read_vector(processing, context, INPUT):
+    """qgis function read vector layer into memeory
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None,
+    """
     out = QgsVectorLayer(INPUT, "")
-    return out 
-    
-    
+    return out
 
 
-def Obtain_Attribute_Table(processing,context,input_layer,Input_Is_Feature_In_Mem = True):
-    """ Read QGIS vector layer attribute table
+def Obtain_Attribute_Table(
+    processing, context, input_layer, Input_Is_Feature_In_Mem=True
+):
+    """Read QGIS vector layer attribute table
 
     Parameters
     ----------
@@ -587,34 +725,35 @@ def Obtain_Attribute_Table(processing,context,input_layer,Input_Is_Feature_In_Me
     Attri_Tbl                  : Dataframe
        The attribute table in the input vector layer
     """
-    
+
     if Input_Is_Feature_In_Mem:
         vec_layer = input_layer
     else:
-        vec_layer  =QgsVectorLayer(input_layer, "")
-        
+        vec_layer = QgsVectorLayer(input_layer, "")
+
     N_new_features = vec_layer.featureCount()
     field_names = []
     for field in vec_layer.fields():
         field_names.append(field.name())
-    Attri_Tbl = pd.DataFrame(data = np.full((N_new_features,len(field_names)),np.nan),columns = field_names)
+    Attri_Tbl = pd.DataFrame(
+        data=np.full((N_new_features, len(field_names)), np.nan), columns=field_names
+    )
 
     src_features = vec_layer.getFeatures()
     i_sf = 0
     for sf in src_features:
         for field in vec_layer.fields():
             filednm = field.name()
-            Attri_Tbl.loc[Attri_Tbl.index[i_sf],filednm] = sf[filednm]
+            Attri_Tbl.loc[Attri_Tbl.index[i_sf], filednm] = sf[filednm]
         i_sf = i_sf + 1
     return Attri_Tbl
-    
-    
-    
-        
 
-def Clean_Attribute_Name(Input,FieldName_List,Input_Is_Feature_In_Mem = False,Col_NM_Max ='SubId'):
-    """ Function clean feature attribute table, all colnmun not in FieldName_List
-        will be removed 
+
+def Clean_Attribute_Name(
+    Input, FieldName_List, Input_Is_Feature_In_Mem=False, Col_NM_Max="SubId"
+):
+    """Function clean feature attribute table, all colnmun not in FieldName_List
+        will be removed
     ----------
 
     Notes
@@ -622,31 +761,33 @@ def Clean_Attribute_Name(Input,FieldName_List,Input_Is_Feature_In_Mem = False,Co
 
     Returns:
     -------
-        None, 
-    """  
-    
+        None,
+    """
+
     fieldnames = set(FieldName_List)
     if Input_Is_Feature_In_Mem:
-       layer_cat = Input
+        layer_cat = Input
     else:
-        layer_cat  =QgsVectorLayer(Input, "")
-        
-    field_ids  = []
+        layer_cat = QgsVectorLayer(Input, "")
+
+    field_ids = []
     for field in layer_cat.fields():
         if field.name() not in fieldnames:
             field_ids.append(layer_cat.dataProvider().fieldNameIndex(field.name()))
         if field.name() == Col_NM_Max:
-            max_subbasin_id = layer_cat.maximumValue(layer_cat.dataProvider().fieldNameIndex(field.name()))
-            
+            max_subbasin_id = layer_cat.maximumValue(
+                layer_cat.dataProvider().fieldNameIndex(field.name())
+            )
+
     layer_cat.dataProvider().deleteAttributes(field_ids)
     layer_cat.updateFields()
     layer_cat.commitChanges()
-    
+
     if Input_Is_Feature_In_Mem:
-       return layer_cat,max_subbasin_id
+        return layer_cat, max_subbasin_id
     else:
-       del layer_cat 
-       return max_subbasin_id
+        del layer_cat
+        return max_subbasin_id
+
 
 ########
-                    

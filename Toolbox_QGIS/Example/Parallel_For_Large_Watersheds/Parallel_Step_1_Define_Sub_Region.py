@@ -18,68 +18,82 @@
 #
 
 
-
 ###########################################################################################
 #
-# This is a python script to use BasinMaker to divide a large watershed domain into 
+# This is a python script to use BasinMaker to divide a large watershed domain into
 # several sub-regions
 #
 ###########################################################################################
 
 
-from ToolboxClass import LRRT
 import os
-import pandas as pd
-import tempfile
 import shutil
 import sys
+import tempfile
 import timeit
-import pandas as pd 
+
+import pandas as pd
 from simpledbf import Dbf5
 
-    
-############ Variable needs to be modified to run this example ######     
+from ToolboxClass import LRRT
 
-### Define a output folder where to store subregion information 
+############ Variable needs to be modified to run this example ######
+
+### Define a output folder where to store subregion information
 Outputfolder = "C:/Users/dustm/OneDrive - University of Waterloo/Documents/ProjectData/Petawawa/lake_of_woods/"
 
-### The BasinMaker folder 
+### The BasinMaker folder
 BasinMaker_Folder = "C:/Users/dustm/Documents/GitHub/RoutingTool"
 
 ########### Variable needs to be modified to run this example ######
 
 
+### Define derived folder
+DataBase_Folder = os.path.join(
+    BasinMaker_Folder,
+    "Toolbox_QGIS",
+    "tests",
+    "testdata",
+    "Required_data_to_start_from_dem",
+)
+Out_Sub_Reg_Dem_Folder = os.path.join(Outputfolder, "SubRegion_info")
 
-### Define derived folder 
-DataBase_Folder = os.path.join(BasinMaker_Folder,'Toolbox_QGIS','tests','testdata','Required_data_to_start_from_dem')
-Out_Sub_Reg_Dem_Folder = os.path.join(Outputfolder,'SubRegion_info')
-
-### Start timer 
+### Start timer
 start = timeit.default_timer()
 
-### Define input paths 
-na_hydem = os.path.join(DataBase_Folder,'DEM_big_merit.tif')#'HydroSHED15S.tif')#
-in_wd = os.path.join(DataBase_Folder,'Bkfullwidth_depth.shp')
-in_lake = os.path.join(DataBase_Folder,'HyLake.shp')
-in_obs = os.path.join(DataBase_Folder,'obs.shp')
-landuse = os.path.join(DataBase_Folder,'landuse.tif')
-landuseinfo = os.path.join(DataBase_Folder,'Landuse_info.csv')
+### Define input paths
+na_hydem = os.path.join(DataBase_Folder, "DEM_big_merit.tif")  #'HydroSHED15S.tif')#
+in_wd = os.path.join(DataBase_Folder, "Bkfullwidth_depth.shp")
+in_lake = os.path.join(DataBase_Folder, "HyLake.shp")
+in_obs = os.path.join(DataBase_Folder, "obs.shp")
+landuse = os.path.join(DataBase_Folder, "landuse.tif")
+landuseinfo = os.path.join(DataBase_Folder, "Landuse_info.csv")
 
 
-### Initialize the BasinMaker 
-RTtool=LRRT(dem_in = na_hydem, Lakefile = in_lake,
-            OutputFolder = Outputfolder,
-            Path_Sub_Reg_Out_Folder = Out_Sub_Reg_Dem_Folder,
-            Is_Sub_Region = -1
-            )
+### Initialize the BasinMaker
+RTtool = LRRT(
+    dem_in=na_hydem,
+    Lakefile=in_lake,
+    OutputFolder=Outputfolder,
+    Path_Sub_Reg_Out_Folder=Out_Sub_Reg_Dem_Folder,
+    Is_Sub_Region=-1,
+)
 ### Define Region of Interest
 RTtool.Generatmaskregion()
-### Define sub-region 
-RTtool.Generatesubdomain(Min_Num_Domain = 1,Max_Num_Domain = 1000000000,Initaial_Acc = 500000,Delta_Acc = 500000,max_memory=2048*8,Acc_Thresthold_stream=2000,CheckLakeArea = 10)
-### Generate subregion output and define routing structure between subregions 
-RTtool.Generatesubdomainmaskandinfo(Out_Sub_Reg_Dem_Folder = Out_Sub_Reg_Dem_Folder)
+### Define sub-region
+RTtool.Generatesubdomain(
+    Min_Num_Domain=1,
+    Max_Num_Domain=1000000000,
+    Initaial_Acc=500000,
+    Delta_Acc=500000,
+    max_memory=2048 * 8,
+    Acc_Thresthold_stream=2000,
+    CheckLakeArea=10,
+)
+### Generate subregion output and define routing structure between subregions
+RTtool.Generatesubdomainmaskandinfo(Out_Sub_Reg_Dem_Folder=Out_Sub_Reg_Dem_Folder)
 
 End = timeit.default_timer()
 
-print("use    ",start - End)
-## -510.85583060000005 for woods lake watershed  
+print("use    ", start - End)
+## -510.85583060000005 for woods lake watershed

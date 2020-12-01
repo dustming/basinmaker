@@ -1,42 +1,57 @@
+import copy
+import os
+import shutil
+import sqlite3
+import sys
+import tempfile
+from distutils.dir_util import copy_tree
+from shutil import copyfile
 
-from qgis.core import *
+import numpy as np
+import pandas as pd
 import qgis
+from AddlakesintoRoutingNetWork import Dirpoints_v3, check_lakecatchment
+from Generatecatinfo import (
+    Generatecatinfo,
+    Generatecatinfo_riv,
+    Streamorderanddrainagearea,
+    UpdateChannelinfo,
+    UpdateNonConnectedcatchmentinfo,
+    Writecatinfotodbf,
+    calculateChannaln,
+)
+from GetBasinoutlet import Defcat, Getbasinoutlet, Nextcell
 from qgis.analysis import QgsNativeAlgorithms
+from qgis.core import *
 from qgis.PyQt.QtCore import *
 from simpledbf import Dbf5
-import os
-import sys
-import numpy as np
-import shutil
-from shutil import copyfile
-from distutils.dir_util import copy_tree
-import tempfile
-import copy
-import pandas as pd
-import sqlite3
-from GetBasinoutlet import Getbasinoutlet,Nextcell,Defcat
-from Generatecatinfo import Generatecatinfo,Generatecatinfo_riv,calculateChannaln,Writecatinfotodbf,Streamorderanddrainagearea,UpdateChannelinfo,UpdateNonConnectedcatchmentinfo
-from AddlakesintoRoutingNetWork import Dirpoints_v3,check_lakecatchment
+
+from processing_functions_attribute_table import *
+from processing_functions_raster_array import *
 from processing_functions_raster_grass import *
+from processing_functions_raster_qgis import *
+from processing_functions_raven_model_io import *
 from processing_functions_vector_grass import *
 from processing_functions_vector_qgis import *
-from processing_functions_raster_qgis import *
-from processing_functions_attribute_table import *
-from processing_functions_raster_array import * 
 from utilities import *
-from processing_functions_raven_model_io import * 
+
 ##############################
 
 
-
-
-
 #######
-def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Path_Connect_Lake_ply = '#',
-                            Path_Non_Connect_Lake_ply = '#',Sub_ID='SubId',
-                            Sub_Lake_ID = 'HyLakeId',Lake_Id = 'Hylak_id'):
+def GeneratelandandlakeHRUS(
+    processing,
+    context,
+    OutputFolder,
+    Path_Subbasin_ply,
+    Path_Connect_Lake_ply="#",
+    Path_Non_Connect_Lake_ply="#",
+    Sub_ID="SubId",
+    Sub_Lake_ID="HyLakeId",
+    Lake_Id="Hylak_id",
+):
 
-    """ Overlay subbasin polygon and lake polygons
+    """Overlay subbasin polygon and lake polygons
 
     Function that will overlay subbasin polygon and lake polygon
 
@@ -100,87 +115,186 @@ def GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply,Pa
         ['HRULake_ID','HRU_IsLake',Sub_ID]       : list
             it is a string list
     """
-    
-    #Define output path
-    Path_finalcat_hru_out    = os.path.join(OutputFolder,"finalcat_hru_lake_info.shp")
-    
-    #Fix geometry errors in subbasin polygon 
-    Subfixgeo = qgis_vector_fix_geometries(processing,context,INPUT = Path_Subbasin_ply,OUTPUT = 'memory:')    
-     
-    #Create a file name list that will be strored in output attribute table 
-    fieldnames_list =['HRULake_ID','HRU_IsLake',Lake_Id,Sub_ID,Sub_Lake_ID] ### attribubte name in the need to be saved
+
+    # Define output path
+    Path_finalcat_hru_out = os.path.join(OutputFolder, "finalcat_hru_lake_info.shp")
+
+    # Fix geometry errors in subbasin polygon
+    Subfixgeo = qgis_vector_fix_geometries(
+        processing, context, INPUT=Path_Subbasin_ply, OUTPUT="memory:"
+    )
+
+    # Create a file name list that will be strored in output attribute table
+    fieldnames_list = [
+        "HRULake_ID",
+        "HRU_IsLake",
+        Lake_Id,
+        Sub_ID,
+        Sub_Lake_ID,
+    ]  ### attribubte name in the need to be saved
     fieldnames = set(fieldnames_list)
 
-    # if no lake polygon is provided, use subId as HRULake_ID. 
-    if Path_Connect_Lake_ply == '#' and Path_Non_Connect_Lake_ply == '#':
-        memresult_addlakeid = qgis_vector_field_calculator(processing = processing, context = context,FORMULA ='-1',FIELD_NAME = 'Hylak_id',INPUT =Subfixgeo['OUTPUT'],OUTPUT ='memory:')
-        memresult_addhruid = qgis_vector_field_calculator(processing = processing, context = context,FORMULA =' \"SubId\" ',FIELD_NAME = 'HRULake_ID',INPUT =memresult_addlakeid['OUTPUT'],OUTPUT ='memory:')
-        Sub_Lake_HRU = qgis_vector_field_calculator(processing = processing, context = context,FORMULA ='-1',FIELD_NAME = 'HRU_IsLake',INPUT =memresult_addhruid['OUTPUT'],OUTPUT ='memory:')        
+    # if no lake polygon is provided, use subId as HRULake_ID.
+    if Path_Connect_Lake_ply == "#" and Path_Non_Connect_Lake_ply == "#":
+        memresult_addlakeid = qgis_vector_field_calculator(
+            processing=processing,
+            context=context,
+            FORMULA="-1",
+            FIELD_NAME="Hylak_id",
+            INPUT=Subfixgeo["OUTPUT"],
+            OUTPUT="memory:",
+        )
+        memresult_addhruid = qgis_vector_field_calculator(
+            processing=processing,
+            context=context,
+            FORMULA=' "SubId" ',
+            FIELD_NAME="HRULake_ID",
+            INPUT=memresult_addlakeid["OUTPUT"],
+            OUTPUT="memory:",
+        )
+        Sub_Lake_HRU = qgis_vector_field_calculator(
+            processing=processing,
+            context=context,
+            FORMULA="-1",
+            FIELD_NAME="HRU_IsLake",
+            INPUT=memresult_addhruid["OUTPUT"],
+            OUTPUT="memory:",
+        )
         # remove column not in fieldnames
-        Sub_Lake_HRU,temp_out = Clean_Attribute_Name(Sub_Lake_HRU['OUTPUT'],fieldnames,Input_Is_Feature_In_Mem = True)        
-        crs_id = qgis_vector_return_crs_id(processing,context,Sub_Lake_HRU,Input_Is_Feature_In_Mem = True)
-        return Sub_Lake_HRU,crs_id,['HRULake_ID','HRU_IsLake',Sub_ID]
+        Sub_Lake_HRU, temp_out = Clean_Attribute_Name(
+            Sub_Lake_HRU["OUTPUT"], fieldnames, Input_Is_Feature_In_Mem=True
+        )
+        crs_id = qgis_vector_return_crs_id(
+            processing, context, Sub_Lake_HRU, Input_Is_Feature_In_Mem=True
+        )
+        return Sub_Lake_HRU, crs_id, ["HRULake_ID", "HRU_IsLake", Sub_ID]
 
-    # fix lake polygon  geometry 
-    if  Path_Connect_Lake_ply != '#':
-        ConLakefixgeo = qgis_vector_fix_geometries(processing,context,INPUT = Path_Connect_Lake_ply,OUTPUT = 'memory:')
-    # fix lake polygon geometry 
-    if  Path_Non_Connect_Lake_ply !='#':
-        NonConLakefixgeo = qgis_vector_fix_geometries(processing,context,INPUT = Path_Non_Connect_Lake_ply,OUTPUT = 'memory:')
-    
-    # Merge connected and non connected lake polygons first 
-    if Path_Connect_Lake_ply != '#' and Path_Non_Connect_Lake_ply != '#':
-        meme_Alllakeply = qgis_vector_merge_vector_layers(processing,context,INPUT_Layer_List = [ConLakefixgeo['OUTPUT'],NonConLakefixgeo['OUTPUT']],OUTPUT ='memory:')
-    elif Path_Connect_Lake_ply !='#' and Path_Non_Connect_Lake_ply == '#':
+    # fix lake polygon  geometry
+    if Path_Connect_Lake_ply != "#":
+        ConLakefixgeo = qgis_vector_fix_geometries(
+            processing, context, INPUT=Path_Connect_Lake_ply, OUTPUT="memory:"
+        )
+    # fix lake polygon geometry
+    if Path_Non_Connect_Lake_ply != "#":
+        NonConLakefixgeo = qgis_vector_fix_geometries(
+            processing, context, INPUT=Path_Non_Connect_Lake_ply, OUTPUT="memory:"
+        )
+
+    # Merge connected and non connected lake polygons first
+    if Path_Connect_Lake_ply != "#" and Path_Non_Connect_Lake_ply != "#":
+        meme_Alllakeply = qgis_vector_merge_vector_layers(
+            processing,
+            context,
+            INPUT_Layer_List=[ConLakefixgeo["OUTPUT"], NonConLakefixgeo["OUTPUT"]],
+            OUTPUT="memory:",
+        )
+    elif Path_Connect_Lake_ply != "#" and Path_Non_Connect_Lake_ply == "#":
         meme_Alllakeply = ConLakefixgeo
-    elif Path_Connect_Lake_ply =='#' and Path_Non_Connect_Lake_ply != '#':
+    elif Path_Connect_Lake_ply == "#" and Path_Non_Connect_Lake_ply != "#":
         meme_Alllakeply = NonConLakefixgeo
     else:
         print("should never happened......")
-    
-    # union merged polygon and subbasin polygon 
-    mem_sub_lake_union_temp = qgis_vector_union_two_layers(processing = processing,context = context,INPUT = Subfixgeo['OUTPUT'],OVERLAY = meme_Alllakeply['OUTPUT'],OUTPUT = 'memory:')['OUTPUT']
-    
-    # fix union geometry 
-    mem_sub_lake_union = qgis_vector_fix_geometries(processing,context,INPUT = mem_sub_lake_union_temp,OUTPUT = 'memory:')['OUTPUT']
-    
-    # add attribute 
-    layer_cat=mem_sub_lake_union
-    # obtain projection crs id 
-    SpRef_in = qgis_vector_return_crs_id(processing,context,layer_cat,Input_Is_Feature_In_Mem = True)   ### get Raster spatialReference id
-    
-    #add attribute to layer 
-    layer_cat = qgis_vector_add_attributes(processing,context,INPUT_Layer = layer_cat,attribute_list = [QgsField('HRULake_ID', QVariant.Int),QgsField('HRU_IsLake', QVariant.Int)])
-     
+
+    # union merged polygon and subbasin polygon
+    mem_sub_lake_union_temp = qgis_vector_union_two_layers(
+        processing=processing,
+        context=context,
+        INPUT=Subfixgeo["OUTPUT"],
+        OVERLAY=meme_Alllakeply["OUTPUT"],
+        OUTPUT="memory:",
+    )["OUTPUT"]
+
+    # fix union geometry
+    mem_sub_lake_union = qgis_vector_fix_geometries(
+        processing, context, INPUT=mem_sub_lake_union_temp, OUTPUT="memory:"
+    )["OUTPUT"]
+
+    # add attribute
+    layer_cat = mem_sub_lake_union
+    # obtain projection crs id
+    SpRef_in = qgis_vector_return_crs_id(
+        processing, context, layer_cat, Input_Is_Feature_In_Mem=True
+    )  ### get Raster spatialReference id
+
+    # add attribute to layer
+    layer_cat = qgis_vector_add_attributes(
+        processing,
+        context,
+        INPUT_Layer=layer_cat,
+        attribute_list=[
+            QgsField("HRULake_ID", QVariant.Int),
+            QgsField("HRU_IsLake", QVariant.Int),
+        ],
+    )
+
     # remove column not in fieldnames
-    layer_cat = qgis_vector_field_calculator(processing = processing, context = context,FORMULA =' @row_number',FIELD_NAME = 'HRU_ID_Temp',INPUT =layer_cat,OUTPUT ='memory:')['OUTPUT']
-    
+    layer_cat = qgis_vector_field_calculator(
+        processing=processing,
+        context=context,
+        FORMULA=" @row_number",
+        FIELD_NAME="HRU_ID_Temp",
+        INPUT=layer_cat,
+        OUTPUT="memory:",
+    )["OUTPUT"]
+
     # create HRU_lAKE_ID
-    
-    # obtain attribute table in vector 
-    Attri_table = Obtain_Attribute_Table(processing,context,layer_cat) 
-    # determine lake hru id    
+
+    # obtain attribute table in vector
+    Attri_table = Obtain_Attribute_Table(processing, context, layer_cat)
+    # determine lake hru id
     Attri_table = Determine_Lake_HRU_Id(Attri_table)
-    # copy determined lake hru id to vector 
-    layer_cat   = Copy_Pddataframe_to_shpfile(Path_shpfile = layer_cat,Pddataframe = Attri_table,link_col_nm_shp = 'HRU_ID_Temp'
-    ,link_col_nm_df = 'HRU_ID_Temp',UpdateColNM = ['HRU_IsLake','HRULake_ID','SubId','HyLakeId'],Input_Is_Feature_In_Mem = True)
-    # clean attribute table 
-    layer_cat,temp_not_used = Clean_Attribute_Name(layer_cat,fieldnames,Input_Is_Feature_In_Mem = True,Col_NM_Max ='SubId')      
-    
-    # dissolve and fix geometry export output     
-    mem_union_fix  = qgis_vector_fix_geometries(processing,context,INPUT = layer_cat,OUTPUT = 'memory:')['OUTPUT']
-    Sub_Lake_HRU1 = qgis_vector_dissolve(processing,context,INPUT = mem_union_fix,FIELD = ['HRULake_ID'],OUTPUT = os.path.join(tempfile.gettempdir(),str(np.random.randint(1, 10000 + 1))+'tempfile.shp'))['OUTPUT']
-    Sub_Lake_HRU2 = qgis_vector_dissolve(processing,context,INPUT = Sub_Lake_HRU1,FIELD = ['HRULake_ID'],OUTPUT = Path_finalcat_hru_out)
-    Sub_Lake_HRU = qgis_vector_dissolve(processing,context,INPUT = Sub_Lake_HRU1,FIELD = ['HRULake_ID'],OUTPUT = 'memory:')
+    # copy determined lake hru id to vector
+    layer_cat = Copy_Pddataframe_to_shpfile(
+        Path_shpfile=layer_cat,
+        Pddataframe=Attri_table,
+        link_col_nm_shp="HRU_ID_Temp",
+        link_col_nm_df="HRU_ID_Temp",
+        UpdateColNM=["HRU_IsLake", "HRULake_ID", "SubId", "HyLakeId"],
+        Input_Is_Feature_In_Mem=True,
+    )
+    # clean attribute table
+    layer_cat, temp_not_used = Clean_Attribute_Name(
+        layer_cat, fieldnames, Input_Is_Feature_In_Mem=True, Col_NM_Max="SubId"
+    )
+
+    # dissolve and fix geometry export output
+    mem_union_fix = qgis_vector_fix_geometries(
+        processing, context, INPUT=layer_cat, OUTPUT="memory:"
+    )["OUTPUT"]
+    Sub_Lake_HRU1 = qgis_vector_dissolve(
+        processing,
+        context,
+        INPUT=mem_union_fix,
+        FIELD=["HRULake_ID"],
+        OUTPUT=os.path.join(
+            tempfile.gettempdir(), str(np.random.randint(1, 10000 + 1)) + "tempfile.shp"
+        ),
+    )["OUTPUT"]
+    Sub_Lake_HRU2 = qgis_vector_dissolve(
+        processing,
+        context,
+        INPUT=Sub_Lake_HRU1,
+        FIELD=["HRULake_ID"],
+        OUTPUT=Path_finalcat_hru_out,
+    )
+    Sub_Lake_HRU = qgis_vector_dissolve(
+        processing, context, INPUT=Sub_Lake_HRU1, FIELD=["HRULake_ID"], OUTPUT="memory:"
+    )
 
     del layer_cat
-    crs_id = qgis_vector_return_crs_id(processing,context,Sub_Lake_HRU['OUTPUT'],Input_Is_Feature_In_Mem = True)
-    return Sub_Lake_HRU['OUTPUT'],crs_id,['HRULake_ID','HRU_IsLake',Sub_ID]
+    crs_id = qgis_vector_return_crs_id(
+        processing, context, Sub_Lake_HRU["OUTPUT"], Input_Is_Feature_In_Mem=True
+    )
+    return Sub_Lake_HRU["OUTPUT"], crs_id, ["HRULake_ID", "HRU_IsLake", Sub_ID]
+
+
 ############
 
-def Reproj_Clip_Dissolve_Simplify_Polygon(processing,context,layer_path,Project_crs,trg_crs,
-                                      Class_Col,Layer_clip):
-    """ Preprocess user provided polygons
+
+def Reproj_Clip_Dissolve_Simplify_Polygon(
+    processing, context, layer_path, Project_crs, trg_crs, Class_Col, Layer_clip
+):
+    """Preprocess user provided polygons
 
     Function that will reproject clip input polygon with subbasin polygon
     and will dissolve the input polygon based on their ID, such as landuse id
@@ -215,25 +329,42 @@ def Reproj_Clip_Dissolve_Simplify_Polygon(processing,context,layer_path,Project_
         layer_dis                  : qgis object
             it is a polygon after preprocess
     """
-    layer_proj =  qgis_vector_reproject_layers(processing,context,layer_path,trg_crs,'memory:')['OUTPUT']
-#    layer_proj = processing.run("native:reprojectlayer", {'INPUT':layer_path,'TARGET_CRS':QgsCoordinateReferenceSystem(trg_crs),'OUTPUT':'memory:'})['OUTPUT']
-    layer_fix  = qgis_vector_fix_geometries(processing,context,INPUT = layer_proj,OUTPUT = 'memory:')['OUTPUT']
-    layer_clip = qgis_vector_clip(processing,context,layer_fix,Layer_clip,'memory:')['OUTPUT'] 
-#    layer_clip = processing.run("native:clip", {'INPUT':layer_fix,'OVERLAY':Layer_clip,'OUTPUT':'memory:'})['OUTPUT']
-    layer_dis  = gis_vector_dissolve(processing,context,INPUT = layer_clip,FIELD = [Class_Col],OUTPUT = 'memory:')['OUTPUT']
-    layer_dis  = qgis_vector_create_spatial_index(processing,context,layer_dis)['OUTPUT']
-#    formular = 'area(transform($geometry, \'%s\',\'%s\'))' % (trg_crs,Project_crs)
-#    layer_area         = processing.run("qgis:fieldcalculator", {'INPUT':layer_landuse_fix,'FIELD_NAME':'Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formular,'OUTPUT':'memory:'})['OUTPUT']
-#    processing.run("qgis:fieldcalculator", {'INPUT':layer_landuse_fix,'FIELD_NAME':'Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formular,'OUTPUT':os.path.join(OutputFolder,'part3.shp')})
-#    formula = "\"Area\"< %s " % str(Eliminate_ply_size)
-#    layer_area.selectByExpression(formula)
-#    layer_eli_feature = processing.run("qgis:eliminateselectedpolygons", {'INPUT':layer_area,'MODE':0,'OUTPUT':'memory:'})['OUTPUT']
-#    processing.run("qgis:eliminateselectedpolygons", {'INPUT':layer_area,'MODE':0,'OUTPUT':os.path.join(OutputFolder,'part6.shp')})
+    layer_proj = qgis_vector_reproject_layers(
+        processing, context, layer_path, trg_crs, "memory:"
+    )["OUTPUT"]
+    #    layer_proj = processing.run("native:reprojectlayer", {'INPUT':layer_path,'TARGET_CRS':QgsCoordinateReferenceSystem(trg_crs),'OUTPUT':'memory:'})['OUTPUT']
+    layer_fix = qgis_vector_fix_geometries(
+        processing, context, INPUT=layer_proj, OUTPUT="memory:"
+    )["OUTPUT"]
+    layer_clip = qgis_vector_clip(
+        processing, context, layer_fix, Layer_clip, "memory:"
+    )["OUTPUT"]
+    #    layer_clip = processing.run("native:clip", {'INPUT':layer_fix,'OVERLAY':Layer_clip,'OUTPUT':'memory:'})['OUTPUT']
+    layer_dis = gis_vector_dissolve(
+        processing, context, INPUT=layer_clip, FIELD=[Class_Col], OUTPUT="memory:"
+    )["OUTPUT"]
+    layer_dis = qgis_vector_create_spatial_index(processing, context, layer_dis)[
+        "OUTPUT"
+    ]
+    #    formular = 'area(transform($geometry, \'%s\',\'%s\'))' % (trg_crs,Project_crs)
+    #    layer_area         = processing.run("qgis:fieldcalculator", {'INPUT':layer_landuse_fix,'FIELD_NAME':'Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formular,'OUTPUT':'memory:'})['OUTPUT']
+    #    processing.run("qgis:fieldcalculator", {'INPUT':layer_landuse_fix,'FIELD_NAME':'Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formular,'OUTPUT':os.path.join(OutputFolder,'part3.shp')})
+    #    formula = "\"Area\"< %s " % str(Eliminate_ply_size)
+    #    layer_area.selectByExpression(formula)
+    #    layer_eli_feature = processing.run("qgis:eliminateselectedpolygons", {'INPUT':layer_area,'MODE':0,'OUTPUT':'memory:'})['OUTPUT']
+    #    processing.run("qgis:eliminateselectedpolygons", {'INPUT':layer_area,'MODE':0,'OUTPUT':os.path.join(OutputFolder,'part6.shp')})
     return layer_dis
 
 
-def Union_Ply_Layers_And_Simplify(processing,context,Merge_layer_list,dissolve_filedname_list,fieldnames,OutputFolder):
-    """ Union input QGIS polygon layers
+def Union_Ply_Layers_And_Simplify(
+    processing,
+    context,
+    Merge_layer_list,
+    dissolve_filedname_list,
+    fieldnames,
+    OutputFolder,
+):
+    """Union input QGIS polygon layers
 
     Function will union polygon layers in Merge_layer_list
     dissove the union result based on field name in
@@ -264,39 +395,81 @@ def Union_Ply_Layers_And_Simplify(processing,context,Merge_layer_list,dissolve_f
     ##union polygons
     if len(Merge_layer_list) == 1:
         mem_union = Merge_layer_list[0]
-        mem_union_fix_ext  = qgis_vector_fix_geometries(processing,context,INPUT = mem_union,OUTPUT = 'memory:')['OUTPUT'] 
-#        mem_union_fix_ext  = processing.run("native:fixgeometries", {'INPUT':mem_union,'OUTPUT':'memory:'})['OUTPUT']
+        mem_union_fix_ext = qgis_vector_fix_geometries(
+            processing, context, INPUT=mem_union, OUTPUT="memory:"
+        )["OUTPUT"]
+    #        mem_union_fix_ext  = processing.run("native:fixgeometries", {'INPUT':mem_union,'OUTPUT':'memory:'})['OUTPUT']
     elif len(Merge_layer_list) > 1:
-        for i in range(0,len(Merge_layer_list)):
+        for i in range(0, len(Merge_layer_list)):
             if i == 0:
-                mem_union          = Merge_layer_list[i]
-                mem_union_fix_ext  = qgis_vector_fix_geometries(processing,context,INPUT = mem_union,OUTPUT = 'memory:')['OUTPUT']
-#                mem_union_fix_ext  = processing.run("native:fixgeometries", {'INPUT':mem_union,'OUTPUT':'memory:'})['OUTPUT']
-                mem_union_fix_ext  = qgis_vector_create_spatial_index(processing,context,mem_union_fix_ext)['OUTPUT']
+                mem_union = Merge_layer_list[i]
+                mem_union_fix_ext = qgis_vector_fix_geometries(
+                    processing, context, INPUT=mem_union, OUTPUT="memory:"
+                )["OUTPUT"]
+                #                mem_union_fix_ext  = processing.run("native:fixgeometries", {'INPUT':mem_union,'OUTPUT':'memory:'})['OUTPUT']
+                mem_union_fix_ext = qgis_vector_create_spatial_index(
+                    processing, context, mem_union_fix_ext
+                )["OUTPUT"]
             else:
                 mem_union_fix_temp = mem_union_fix_ext
                 del mem_union_fix_ext
-                mem_union      = qgis_vector_union_two_layers(processing,context,mem_union_fix_temp,Merge_layer_list[i],'memory:',OVERLAY_FIELDS_PREFIX = '')['OUTPUT']
-#                mem_union      = processing.run("native:union", {'INPUT':mem_union_fix_temp,'OVERLAY':Merge_layer_list[i],'OVERLAY_FIELDS_PREFIX':'','OUTPUT':'memory:'},context = context)['OUTPUT']
-#                mem_union      = processing.run("saga:polygonunion", {'A':mem_union_fix_temp,'B':Merge_layer_list[i],'SPLIT':True,'RESULT':'TEMPORARY_OUTPUT'},context = context)['RESULT']
-                mem_union_fix  = qgis_vector_fix_geometries(processing,context,INPUT = mem_union,OUTPUT = 'memory:')['OUTPUT']
+                mem_union = qgis_vector_union_two_layers(
+                    processing,
+                    context,
+                    mem_union_fix_temp,
+                    Merge_layer_list[i],
+                    "memory:",
+                    OVERLAY_FIELDS_PREFIX="",
+                )["OUTPUT"]
+                #                mem_union      = processing.run("native:union", {'INPUT':mem_union_fix_temp,'OVERLAY':Merge_layer_list[i],'OVERLAY_FIELDS_PREFIX':'','OUTPUT':'memory:'},context = context)['OUTPUT']
+                #                mem_union      = processing.run("saga:polygonunion", {'A':mem_union_fix_temp,'B':Merge_layer_list[i],'SPLIT':True,'RESULT':'TEMPORARY_OUTPUT'},context = context)['RESULT']
+                mem_union_fix = qgis_vector_fix_geometries(
+                    processing, context, INPUT=mem_union, OUTPUT="memory:"
+                )["OUTPUT"]
                 mem_union_fix_ext = mem_union_fix
-                mem_union_fix_ext  = qgis_vector_create_spatial_index(processing,context,mem_union_fix_ext)['OUTPUT']
+                mem_union_fix_ext = qgis_vector_create_spatial_index(
+                    processing, context, mem_union_fix_ext
+                )["OUTPUT"]
     else:
         print("No polygon needs to be overlaied.........should not happen ")
 
     ## remove non interested filed
-    mem_union_fix_ext,temp_out_notused = Clean_Attribute_Name(mem_union_fix_ext,fieldnames,Input_Is_Feature_In_Mem = True)
-    mem_union_dis  = qgis_vector_dissolve(processing,context,INPUT = mem_union_fix_ext,FIELD =dissolve_filedname_list,OUTPUT = 'memory:')['OUTPUT']
+    mem_union_fix_ext, temp_out_notused = Clean_Attribute_Name(
+        mem_union_fix_ext, fieldnames, Input_Is_Feature_In_Mem=True
+    )
+    mem_union_dis = qgis_vector_dissolve(
+        processing,
+        context,
+        INPUT=mem_union_fix_ext,
+        FIELD=dissolve_filedname_list,
+        OUTPUT="memory:",
+    )["OUTPUT"]
 
     return mem_union_dis
 
-def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,dissolve_filedname_list,
-                         Sub_ID,Landuse_ID,Soil_ID,Veg_ID,Other_Ply_ID_1,Other_Ply_ID_2,
-                         Landuse_info_data,Soil_info_data,
-                         Veg_info_data,DEM,Path_Subbasin_Ply,OutputFolder):
 
-    """ Generate attributes of each HRU
+def Define_HRU_Attributes(
+    processing,
+    context,
+    Project_crs,
+    trg_crs,
+    hru_layer,
+    dissolve_filedname_list,
+    Sub_ID,
+    Landuse_ID,
+    Soil_ID,
+    Veg_ID,
+    Other_Ply_ID_1,
+    Other_Ply_ID_2,
+    Landuse_info_data,
+    Soil_info_data,
+    Veg_info_data,
+    DEM,
+    Path_Subbasin_Ply,
+    OutputFolder,
+):
+
+    """Generate attributes of each HRU
 
     Function will generate attributes that are needed by Raven and
     other hydrological models for each HRU
@@ -394,74 +567,199 @@ def Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer,disso
         like RAVEN
     """
 
-
-
     ### calcuate area of each feature
-    formular    = 'area(transform($geometry, \'%s\',\'%s\'))' % (hru_layer.crs().authid(),Project_crs)
-#    print(formular)
-    layer_area    = qgis_vector_field_calculator(processing = processing, context = context,FORMULA =formular,FIELD_NAME = 'HRU_Area',INPUT =hru_layer,OUTPUT ='memory:')['OUTPUT']
-    layer_area_id = qgis_vector_field_calculator(processing = processing, context = context,FORMULA =' @row_number',FIELD_NAME = 'HRU_ID',INPUT =layer_area,OUTPUT ='memory:')['OUTPUT']
-    
+    formular = "area(transform($geometry, '%s','%s'))" % (
+        hru_layer.crs().authid(),
+        Project_crs,
+    )
+    #    print(formular)
+    layer_area = qgis_vector_field_calculator(
+        processing=processing,
+        context=context,
+        FORMULA=formular,
+        FIELD_NAME="HRU_Area",
+        INPUT=hru_layer,
+        OUTPUT="memory:",
+    )["OUTPUT"]
+    layer_area_id = qgis_vector_field_calculator(
+        processing=processing,
+        context=context,
+        FORMULA=" @row_number",
+        FIELD_NAME="HRU_ID",
+        INPUT=layer_area,
+        OUTPUT="memory:",
+    )["OUTPUT"]
+
     ### add attributes columns
-    attribute_list = [QgsField('LAND_USE_C', QVariant.String),
-                      QgsField('VEG_C', QVariant.String),
-                      QgsField('SOIL_PROF', QVariant.String),
-                      QgsField('HRU_CenX', QVariant.Double),
-                      QgsField('HRU_CenY', QVariant.Double)]
-                      
-    layer_area_id = qgis_vector_add_attributes(processing,context,INPUT_Layer = layer_area_id,attribute_list = attribute_list)
-    
-    
-    
+    attribute_list = [
+        QgsField("LAND_USE_C", QVariant.String),
+        QgsField("VEG_C", QVariant.String),
+        QgsField("SOIL_PROF", QVariant.String),
+        QgsField("HRU_CenX", QVariant.Double),
+        QgsField("HRU_CenY", QVariant.Double),
+    ]
+
+    layer_area_id = qgis_vector_add_attributes(
+        processing, context, INPUT_Layer=layer_area_id, attribute_list=attribute_list
+    )
+
     ### Determine HRU attribute HruID, LAND_USE_C,VEG_C,SOIL_PROF
-    Attri_table = Obtain_Attribute_Table(processing,context,layer_area_id)
-    Attri_table = Determine_HRU_Attributes(Attri_table,Sub_ID,Landuse_ID,Soil_ID,Veg_ID,Other_Ply_ID_1,Other_Ply_ID_2,
-                                           Landuse_info_data,Soil_info_data,Veg_info_data)
-    
-    layer_area_id   = Copy_Pddataframe_to_shpfile(Path_shpfile = layer_area_id,Pddataframe = Attri_table,link_col_nm_shp = 'HRU_ID'
-    ,link_col_nm_df = 'HRU_ID',UpdateColNM = [Sub_ID,Landuse_ID,Soil_ID,Veg_ID,Other_Ply_ID_1,Other_Ply_ID_2,'LAND_USE_C','SOIL_PROF','VEG_C'],Input_Is_Feature_In_Mem = True)
-    layer_area_id = Add_centroid_to_feature(Path_feagure = layer_area_id,centroidx_nm = 'HRU_CenX',centroidy_nm='HRU_CenY',Input_Is_Feature_In_Mem = True)
-     
+    Attri_table = Obtain_Attribute_Table(processing, context, layer_area_id)
+    Attri_table = Determine_HRU_Attributes(
+        Attri_table,
+        Sub_ID,
+        Landuse_ID,
+        Soil_ID,
+        Veg_ID,
+        Other_Ply_ID_1,
+        Other_Ply_ID_2,
+        Landuse_info_data,
+        Soil_info_data,
+        Veg_info_data,
+    )
+
+    layer_area_id = Copy_Pddataframe_to_shpfile(
+        Path_shpfile=layer_area_id,
+        Pddataframe=Attri_table,
+        link_col_nm_shp="HRU_ID",
+        link_col_nm_df="HRU_ID",
+        UpdateColNM=[
+            Sub_ID,
+            Landuse_ID,
+            Soil_ID,
+            Veg_ID,
+            Other_Ply_ID_1,
+            Other_Ply_ID_2,
+            "LAND_USE_C",
+            "SOIL_PROF",
+            "VEG_C",
+        ],
+        Input_Is_Feature_In_Mem=True,
+    )
+    layer_area_id = Add_centroid_to_feature(
+        Path_feagure=layer_area_id,
+        centroidx_nm="HRU_CenX",
+        centroidy_nm="HRU_CenY",
+        Input_Is_Feature_In_Mem=True,
+    )
+
     ### merge lake hru.
-    HRU_draft = qgis_vector_dissolve(processing,context,layer_area_id,dissolve_filedname_list,'memory:')['OUTPUT']
+    HRU_draft = qgis_vector_dissolve(
+        processing, context, layer_area_id, dissolve_filedname_list, "memory:"
+    )["OUTPUT"]
 
     ### add subbasin attribute back to hru polygons
-    
-    HRU_draft_sub_info = qgis_vector_join_attribute_table(processing,context,INPUT1 = HRU_draft,FIELD1 = Sub_ID,INPUT2 = Path_Subbasin_Ply,FIELD2 = Sub_ID,OUTPUT = 'memory:')['OUTPUT']
-    
-    if DEM != '#':
-        
-        HRU_draft_proj = qgis_vector_reproject_layers(processing,context,HRU_draft_sub_info,Project_crs,'memory:')['OUTPUT']
-        
-        DEM_proj   = qgis_raster_gdal_warpreproject(processing,Input = DEM,TARGET_CRS = Project_crs, Output = 'TEMPORARY_OUTPUT')['OUTPUT']
-        DEM_clip   = qgis_raster_clip_raster_by_mask(processing,Input = DEM_proj,MASK = HRU_draft_proj,TARGET_CRS = Project_crs, Output = 'TEMPORARY_OUTPUT')['OUTPUT']
-        DEM_slope  = qgis_raster_slope(processing,Input = DEM_clip, Output = 'TEMPORARY_OUTPUT')['OUTPUT']
-        DEM_aspect = qgis_raster_aspect(processing,Input = DEM_clip, Output = 'TEMPORARY_OUTPUT')['OUTPUT']
 
-        qgis_raster_zonal_statistics(processing,INPUT_RASTER = DEM_slope,INPUT_VECTOR = HRU_draft_proj,COLUMN_PREFIX = 'HRU_S_')
-        qgis_raster_zonal_statistics(processing,INPUT_RASTER = DEM_aspect,INPUT_VECTOR = HRU_draft_proj,COLUMN_PREFIX = 'HRU_A_')
-        qgis_raster_zonal_statistics(processing,INPUT_RASTER = DEM_clip,INPUT_VECTOR = HRU_draft_proj,COLUMN_PREFIX = 'HRU_E_')
-        
-        
-        HRU_draft_reproj = qgis_vector_reproject_layers(processing,context,INPUT = HRU_draft_proj,TARGET_CRS = trg_crs,OUTPUT = 'memory:')['OUTPUT']
+    HRU_draft_sub_info = qgis_vector_join_attribute_table(
+        processing,
+        context,
+        INPUT1=HRU_draft,
+        FIELD1=Sub_ID,
+        INPUT2=Path_Subbasin_Ply,
+        FIELD2=Sub_ID,
+        OUTPUT="memory:",
+    )["OUTPUT"]
+
+    if DEM != "#":
+
+        HRU_draft_proj = qgis_vector_reproject_layers(
+            processing, context, HRU_draft_sub_info, Project_crs, "memory:"
+        )["OUTPUT"]
+
+        DEM_proj = qgis_raster_gdal_warpreproject(
+            processing, Input=DEM, TARGET_CRS=Project_crs, Output="TEMPORARY_OUTPUT"
+        )["OUTPUT"]
+        DEM_clip = qgis_raster_clip_raster_by_mask(
+            processing,
+            Input=DEM_proj,
+            MASK=HRU_draft_proj,
+            TARGET_CRS=Project_crs,
+            Output="TEMPORARY_OUTPUT",
+        )["OUTPUT"]
+        DEM_slope = qgis_raster_slope(
+            processing, Input=DEM_clip, Output="TEMPORARY_OUTPUT"
+        )["OUTPUT"]
+        DEM_aspect = qgis_raster_aspect(
+            processing, Input=DEM_clip, Output="TEMPORARY_OUTPUT"
+        )["OUTPUT"]
+
+        qgis_raster_zonal_statistics(
+            processing,
+            INPUT_RASTER=DEM_slope,
+            INPUT_VECTOR=HRU_draft_proj,
+            COLUMN_PREFIX="HRU_S_",
+        )
+        qgis_raster_zonal_statistics(
+            processing,
+            INPUT_RASTER=DEM_aspect,
+            INPUT_VECTOR=HRU_draft_proj,
+            COLUMN_PREFIX="HRU_A_",
+        )
+        qgis_raster_zonal_statistics(
+            processing,
+            INPUT_RASTER=DEM_clip,
+            INPUT_VECTOR=HRU_draft_proj,
+            COLUMN_PREFIX="HRU_E_",
+        )
+
+        HRU_draft_reproj = qgis_vector_reproject_layers(
+            processing,
+            context,
+            INPUT=HRU_draft_proj,
+            TARGET_CRS=trg_crs,
+            OUTPUT="memory:",
+        )["OUTPUT"]
 
     else:
         ## if no dem provided hru slope will use subbasin slope aspect and elevation
-        formula = ' \"%s\" ' % 'BasSlope'
-        HRU_draft_sub_info_S = qgis_vector_field_calculator(processing = processing, context = context,FORMULA =formula,FIELD_NAME = 'HRU_S_mean',INPUT =HRU_draft_sub_info,OUTPUT ='memory:',FIELD_PRECISION = 3)['OUTPUT']
+        formula = ' "%s" ' % "BasSlope"
+        HRU_draft_sub_info_S = qgis_vector_field_calculator(
+            processing=processing,
+            context=context,
+            FORMULA=formula,
+            FIELD_NAME="HRU_S_mean",
+            INPUT=HRU_draft_sub_info,
+            OUTPUT="memory:",
+            FIELD_PRECISION=3,
+        )["OUTPUT"]
 
-        formula = ' \"%s\" ' % 'BasAspect'
-        HRU_draft_sub_info_A = qgis_vector_field_calculator(processing = processing, context = context,FORMULA =formula,FIELD_NAME = 'HRU_A_mean',INPUT =HRU_draft_sub_info_S,OUTPUT ='memory:',FIELD_PRECISION = 3)['OUTPUT']
+        formula = ' "%s" ' % "BasAspect"
+        HRU_draft_sub_info_A = qgis_vector_field_calculator(
+            processing=processing,
+            context=context,
+            FORMULA=formula,
+            FIELD_NAME="HRU_A_mean",
+            INPUT=HRU_draft_sub_info_S,
+            OUTPUT="memory:",
+            FIELD_PRECISION=3,
+        )["OUTPUT"]
 
-        formula = ' \"%s\" ' % 'MeanElev'
-        HRU_draft_sub_info_S = qgis_vector_field_calculator(processing = processing, context = context,FORMULA =formula,FIELD_NAME = 'HRU_E_mean',INPUT =HRU_draft_sub_info_A,OUTPUT ='memory:',FIELD_PRECISION = 3)['OUTPUT']        
+        formula = ' "%s" ' % "MeanElev"
+        HRU_draft_sub_info_S = qgis_vector_field_calculator(
+            processing=processing,
+            context=context,
+            FORMULA=formula,
+            FIELD_NAME="HRU_E_mean",
+            INPUT=HRU_draft_sub_info_A,
+            OUTPUT="memory:",
+            FIELD_PRECISION=3,
+        )["OUTPUT"]
 
         HRU_draft_reproj = HRU_draft_sub_info_S
 
     ### update HRU area
-    formular        = 'area(transform($geometry, \'%s\',\'%s\'))' % (trg_crs,Project_crs)
-    HRU_draf_final = qgis_vector_field_calculator(processing = processing, context = context,FORMULA =formular,FIELD_NAME = 'HRU_Area',INPUT =HRU_draft_reproj,OUTPUT ='memory:',NEW_FIELD=False,FIELD_PRECISION = 3)['OUTPUT']
-#    processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_reproj,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':False,'FORMULA':formular,'OUTPUT':os.path.join(OutputFolder,'hru_draft_final.shp')})
+    formular = "area(transform($geometry, '%s','%s'))" % (trg_crs, Project_crs)
+    HRU_draf_final = qgis_vector_field_calculator(
+        processing=processing,
+        context=context,
+        FORMULA=formular,
+        FIELD_NAME="HRU_Area",
+        INPUT=HRU_draft_reproj,
+        OUTPUT="memory:",
+        NEW_FIELD=False,
+        FIELD_PRECISION=3,
+    )["OUTPUT"]
+    #    processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_reproj,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':False,'FORMULA':formular,'OUTPUT':os.path.join(OutputFolder,'hru_draft_final.shp')})
 
     return HRU_draf_final
 
@@ -519,7 +817,7 @@ class LRRT:
         the temporary will be located at system temporary folder.
     Path_Sub_Reg_Out_Folder            : string (optional)
         It is a string to a folder, which cotains the subregion data.
-    Path_dir_in                        : string (optional) 
+    Path_dir_in                        : string (optional)
         It is a string to a flow direction dataset, has to be a flow
         direction generated by ArcGIS.
 
@@ -649,11 +947,21 @@ class LRRT:
 
     """
 
-    def __init__(self, dem_in = '#',WidDep = '#',Lakefile = '#',dir_in = '#',
-                                     Landuse = '#',Landuseinfo = '#',obspoint = '#',
-                                     OutputFolder = '#',TempOutFolder = '#',
-                                     Path_Sub_Reg_Out_Folder = '#',Is_Sub_Region = -1,
-                                     debug=False):
+    def __init__(
+        self,
+        dem_in="#",
+        WidDep="#",
+        Lakefile="#",
+        dir_in="#",
+        Landuse="#",
+        Landuseinfo="#",
+        obspoint="#",
+        OutputFolder="#",
+        TempOutFolder="#",
+        Path_Sub_Reg_Out_Folder="#",
+        Is_Sub_Region=-1,
+        debug=False,
+    ):
         self.Path_dem_in = dem_in
         self.Path_WiDep_in = WidDep
         self.Path_Lakefile_in = Lakefile
@@ -661,53 +969,70 @@ class LRRT:
         self.Path_Landuseinfo_in = Landuseinfo
         self.Path_obspoint_in = obspoint
         self.Path_dir_in = dir_in
-        self.Path_Sub_Reg_Out_Folder = '#'
+        self.Path_Sub_Reg_Out_Folder = "#"
         self.Debug = debug
-        self.Is_Sub_Region          = Is_Sub_Region
-        if Path_Sub_Reg_Out_Folder != '#':
+        self.Is_Sub_Region = Is_Sub_Region
+        if Path_Sub_Reg_Out_Folder != "#":
             if not os.path.exists(Path_Sub_Reg_Out_Folder):
                 os.makedirs(Path_Sub_Reg_Out_Folder)
-            self.Path_Sub_reg_outlets_r    = os.path.join(Path_Sub_Reg_Out_Folder,'Sub_Reg_Outlets_point_r.pack')
-            self.Path_Sub_reg_outlets_v    = os.path.join(Path_Sub_Reg_Out_Folder,'Sub_Reg_Outlets_point_v.pack')
-            self.Path_Sub_reg_grass_dir    = os.path.join(Path_Sub_Reg_Out_Folder,'dir_grass.pack')
-            self.Path_Sub_reg_arcgis_dir   = os.path.join(Path_Sub_Reg_Out_Folder,'dir_Arcgis.pack')
-            self.Path_Sub_reg_grass_acc    = os.path.join(Path_Sub_Reg_Out_Folder,'acc_grass.pack')
-            self.Path_Sub_reg_grass_str_r  = os.path.join(Path_Sub_Reg_Out_Folder,'Sub_Reg_str_grass_r.pack')
-            self.Path_Sub_reg_grass_str_v  = os.path.join(Path_Sub_Reg_Out_Folder,'Sub_Reg_str_grass_v.pack')
-            self.Path_Sub_reg_dem          = os.path.join(Path_Sub_Reg_Out_Folder,'Sub_Reg_dem.pack')
+            self.Path_Sub_reg_outlets_r = os.path.join(
+                Path_Sub_Reg_Out_Folder, "Sub_Reg_Outlets_point_r.pack"
+            )
+            self.Path_Sub_reg_outlets_v = os.path.join(
+                Path_Sub_Reg_Out_Folder, "Sub_Reg_Outlets_point_v.pack"
+            )
+            self.Path_Sub_reg_grass_dir = os.path.join(
+                Path_Sub_Reg_Out_Folder, "dir_grass.pack"
+            )
+            self.Path_Sub_reg_arcgis_dir = os.path.join(
+                Path_Sub_Reg_Out_Folder, "dir_Arcgis.pack"
+            )
+            self.Path_Sub_reg_grass_acc = os.path.join(
+                Path_Sub_Reg_Out_Folder, "acc_grass.pack"
+            )
+            self.Path_Sub_reg_grass_str_r = os.path.join(
+                Path_Sub_Reg_Out_Folder, "Sub_Reg_str_grass_r.pack"
+            )
+            self.Path_Sub_reg_grass_str_v = os.path.join(
+                Path_Sub_Reg_Out_Folder, "Sub_Reg_str_grass_v.pack"
+            )
+            self.Path_Sub_reg_dem = os.path.join(
+                Path_Sub_Reg_Out_Folder, "Sub_Reg_dem.pack"
+            )
 
-        if OutputFolder != '#':
+        if OutputFolder != "#":
             self.OutputFolder = OutputFolder
         else:
-            self.OutputFolder = os.path.join(tempfile.gettempdir(),str(np.random.randint(1, 10000 + 1)))
+            self.OutputFolder = os.path.join(
+                tempfile.gettempdir(), str(np.random.randint(1, 10000 + 1))
+            )
 
         if not os.path.exists(self.OutputFolder):
             os.makedirs(self.OutputFolder)
 
+        self.Raveinputsfolder = self.OutputFolder + "/" + "RavenInput/"
 
-        self.Raveinputsfolder = self.OutputFolder + '/'+'RavenInput/'
+        self.qgisPP = os.environ["QGISPrefixPath"]
+        self.RoutingToolPath = os.environ["RoutingToolFolder"]
 
-        self.qgisPP = os.environ['QGISPrefixPath']
-        self.RoutingToolPath = os.environ['RoutingToolFolder']
-
-        if TempOutFolder == '#':
-            self.tempFolder =tempfile.gettempdir()
+        if TempOutFolder == "#":
+            self.tempFolder = tempfile.gettempdir()
         else:
-            self.tempFolder =TempOutFolder
+            self.tempFolder = TempOutFolder
             if not os.path.exists(self.tempFolder):
                 os.makedirs(self.tempFolder)
-        self.grassdb =os.path.join(self.tempFolder, 'grassdata_toolbox')
+        self.grassdb = os.path.join(self.tempFolder, "grassdata_toolbox")
         if not os.path.exists(self.grassdb):
             os.makedirs(self.grassdb)
 
-        os.environ['GISDBASE'] = self.grassdb
+        os.environ["GISDBASE"] = self.grassdb
 
-        self.grass_location_geo = 'Geographic'
-        self.grass_location_geo_temp = 'Geographic_temp'
-        self.grass_location_geo_temp1 = 'Geographic_temp1'
-        self.grass_location_pro = 'Projected'
+        self.grass_location_geo = "Geographic"
+        self.grass_location_geo_temp = "Geographic_temp"
+        self.grass_location_geo_temp1 = "Geographic_temp1"
+        self.grass_location_pro = "Projected"
 
-        self.tempfolder = os.path.join(self.tempFolder, 'grassdata_toolbox_temp')
+        self.tempfolder = os.path.join(self.tempFolder, "grassdata_toolbox_temp")
 
         if not os.path.exists(self.tempfolder):
             os.makedirs(self.tempfolder)
@@ -718,45 +1043,104 @@ class LRRT:
         # if not os.path.exists(os.path.join(self.grassdb,self.grass_location_pro)):
         #        os.makedirs(os.path.join(self.grassdb,self.grass_location_pro))
 
-        self.FieldName_List_Product = ['SubId','HRU_IsLake','Landuse_ID','Soil_ID','Veg_ID','O_ID_1','O_ID_2',
-                                       'HRU_Area','HRU_ID','LAND_USE_C','VEG_C','SOIL_PROF','HRU_CenX','HRU_CenY','DowSubId',
-                                           'RivSlope','RivLength','BasSlope','BasAspect','BasArea','BkfWidth','BkfDepth','IsLake',
-                                        'HyLakeId','LakeVol','LakeDepth','LakeArea','Laketype','IsObs','MeanElev','FloodP_n',
-                                        'Q_Mean','Ch_n','DA','Strahler','Seg_ID','Seg_order','Max_DEM','Min_DEM','DA_Obs','DA_error',
-                                        'Obs_NM','SRC_obs', 'HRU_S_mean','HRU_A_mean','HRU_E_mean','centroid_x','centroid_y',
-                                        'Rivlen','area']
+        self.FieldName_List_Product = [
+            "SubId",
+            "HRU_IsLake",
+            "Landuse_ID",
+            "Soil_ID",
+            "Veg_ID",
+            "O_ID_1",
+            "O_ID_2",
+            "HRU_Area",
+            "HRU_ID",
+            "LAND_USE_C",
+            "VEG_C",
+            "SOIL_PROF",
+            "HRU_CenX",
+            "HRU_CenY",
+            "DowSubId",
+            "RivSlope",
+            "RivLength",
+            "BasSlope",
+            "BasAspect",
+            "BasArea",
+            "BkfWidth",
+            "BkfDepth",
+            "IsLake",
+            "HyLakeId",
+            "LakeVol",
+            "LakeDepth",
+            "LakeArea",
+            "Laketype",
+            "IsObs",
+            "MeanElev",
+            "FloodP_n",
+            "Q_Mean",
+            "Ch_n",
+            "DA",
+            "Strahler",
+            "Seg_ID",
+            "Seg_order",
+            "Max_DEM",
+            "Min_DEM",
+            "DA_Obs",
+            "DA_error",
+            "Obs_NM",
+            "SRC_obs",
+            "HRU_S_mean",
+            "HRU_A_mean",
+            "HRU_E_mean",
+            "centroid_x",
+            "centroid_y",
+            "Rivlen",
+            "area",
+        ]
 
         self.maximum_obs_id = 80000
-        self.sqlpath = os.path.join(self.grassdb,'Geographic','PERMANENT','sqlite','sqlite.db')
+        self.sqlpath = os.path.join(
+            self.grassdb, "Geographic", "PERMANENT", "sqlite", "sqlite.db"
+        )
         self.cellSize = -9.9999
-        self.SpRef_in = '#'
+        self.SpRef_in = "#"
         self.ncols = -9999
         self.nrows = -9999
-        self.Path_Maskply = '#'
-        self.Path_dem = os.path.join(self.tempfolder,'dem.tif')
-        self.Path_demproj = os.path.join(self.tempfolder,'dem_proj.tif')
-        self.Path_allLakeply = os.path.join(self.tempfolder,'Hylake.shp')
-        self.Path_allLakeply_Temp = os.path.join(self.tempfolder,'Hylake_fix_geom.shp')
-        self.Path_WidDepLine = os.path.join(self.tempfolder,'WidDep.shp')
-        if self.Path_obspoint_in != '#':
-            self.Path_ObsPoint = os.path.join(self.tempfolder,'obspoint.shp')
+        self.Path_Maskply = "#"
+        self.Path_dem = os.path.join(self.tempfolder, "dem.tif")
+        self.Path_demproj = os.path.join(self.tempfolder, "dem_proj.tif")
+        self.Path_allLakeply = os.path.join(self.tempfolder, "Hylake.shp")
+        self.Path_allLakeply_Temp = os.path.join(self.tempfolder, "Hylake_fix_geom.shp")
+        self.Path_WidDepLine = os.path.join(self.tempfolder, "WidDep.shp")
+        if self.Path_obspoint_in != "#":
+            self.Path_ObsPoint = os.path.join(self.tempfolder, "obspoint.shp")
         else:
-            self.Path_ObsPoint  = '#'
-        self.Path_Landuseinfo = os.path.join(self.tempfolder,'landuseinfo.csv')
-        self.Path_allLakeRas = os.path.join(self.tempfolder,'hylakegdal.tif')
-        self.Path_finalcatinfo_riv = os.path.join(self.tempfolder,'catinfo_riv.csv')
-        self.Path_NonCLakeinfo = os.path.join(self.tempfolder,'NonC_Lakeinfo.csv')
-        self.Path_NonCLakeinfo_cat = os.path.join(self.tempfolder,'NonC_Lakeinfo_cat.csv')
-        self.Path_finalcatinfo_cat = os.path.join(self.tempfolder,'catinfo_cat.csv')
-        self.Path_finalcatinfo = os.path.join(self.tempfolder,'catinfo.csv')
-        self.Path_finalcatinfo_riv_type = os.path.join(self.tempfolder,'catinfo_riv.csvt')
-        self.Path_finalcatinfo_type = os.path.join(self.tempfolder,'catinfo.csvt')
-        self.Path_alllakeinfoinfo = os.path.join(self.tempfolder,'hylake.csv')
-        self.Path_Maskply = os.path.join(self.tempfolder, 'HyMask2.shp')
+            self.Path_ObsPoint = "#"
+        self.Path_Landuseinfo = os.path.join(self.tempfolder, "landuseinfo.csv")
+        self.Path_allLakeRas = os.path.join(self.tempfolder, "hylakegdal.tif")
+        self.Path_finalcatinfo_riv = os.path.join(self.tempfolder, "catinfo_riv.csv")
+        self.Path_NonCLakeinfo = os.path.join(self.tempfolder, "NonC_Lakeinfo.csv")
+        self.Path_NonCLakeinfo_cat = os.path.join(
+            self.tempfolder, "NonC_Lakeinfo_cat.csv"
+        )
+        self.Path_finalcatinfo_cat = os.path.join(self.tempfolder, "catinfo_cat.csv")
+        self.Path_finalcatinfo = os.path.join(self.tempfolder, "catinfo.csv")
+        self.Path_finalcatinfo_riv_type = os.path.join(
+            self.tempfolder, "catinfo_riv.csvt"
+        )
+        self.Path_finalcatinfo_type = os.path.join(self.tempfolder, "catinfo.csvt")
+        self.Path_alllakeinfoinfo = os.path.join(self.tempfolder, "hylake.csv")
+        self.Path_Maskply = os.path.join(self.tempfolder, "HyMask2.shp")
         self.Remove_Str = []
-########################################################################################
-    def Generatmaskregion(self,OutletPoint = [-1,-1],Path_Sub_Polygon = '#',Buffer_Distance = 0.0,
-                          hyshdply = '#', OutHyID = -1 ,OutHyID2 = -1):
+
+    ########################################################################################
+    def Generatmaskregion(
+        self,
+        OutletPoint=[-1, -1],
+        Path_Sub_Polygon="#",
+        Buffer_Distance=0.0,
+        hyshdply="#",
+        OutHyID=-1,
+        OutHyID2=-1,
+    ):
         """Define processing extent
 
         Function that used to define processing spatial extent (PSE). The processing
@@ -822,278 +1206,509 @@ class LRRT:
 
         ### Set up QGIS enviroment
         QgsApplication.setPrefixPath(self.qgisPP, True)
-        Qgs = QgsApplication([],False)
+        Qgs = QgsApplication([], False)
         Qgs.initQgis()
-        from qgis import processing
         from processing.core.Processing import Processing
         from processing.tools import dataobjects
+        from qgis import processing
+
         feedback = QgsProcessingFeedback()
         Processing.initialize()
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
         context = dataobjects.createContext()
         context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
 
-        shutil.rmtree(self.grassdb,ignore_errors=True)
-        shutil.rmtree(self.tempfolder,ignore_errors=True)
+        shutil.rmtree(self.grassdb, ignore_errors=True)
+        shutil.rmtree(self.tempfolder, ignore_errors=True)
 
         if not os.path.exists(self.tempfolder):
-                os.makedirs(self.tempfolder)
-        
+            os.makedirs(self.tempfolder)
+
         # OutHyID > 0  means using hydrobasins product to define region of interest
-        # subbasins between two subbsin id in hydrobasin routing product will be 
+        # subbasins between two subbsin id in hydrobasin routing product will be
         # extracted
         if OutHyID > 0:
-             
-            r_dem_layer =  qgis_raster_read_raster(processing,self.Path_dem_in) ### load DEM raster as a  QGIS raster object to obtain attribute
-            self.cellSize,self.SpRef_in= qgis_raster_return_raster_properties(processing,r_dem_layer)  ### Get Raster cell size
-            
+
+            r_dem_layer = qgis_raster_read_raster(
+                processing, self.Path_dem_in
+            )  ### load DEM raster as a  QGIS raster object to obtain attribute
+            self.cellSize, self.SpRef_in = qgis_raster_return_raster_properties(
+                processing, r_dem_layer
+            )  ### Get Raster cell size
+
             hyshdinfo = Dbf_To_Dataframe(hyshdply)
-            routing_info = hyshdinfo[['HYBAS_ID','NEXT_DOWN']].astype('float').values
-            
+            routing_info = hyshdinfo[["HYBAS_ID", "NEXT_DOWN"]].astype("float").values
+
             # obtain sub id of subbasins between OutHyID and OutHyID2 in the routing network
-            HydroBasins = Return_SubIds_Between_Two_Subbasins_In_Rouing_Network(routing_info,OutHyID,OutHyID2)
-            
+            HydroBasins = Return_SubIds_Between_Two_Subbasins_In_Rouing_Network(
+                routing_info, OutHyID, OutHyID2
+            )
+
             # extract subbasins from hydrobasin product
-            Selectfeatureattributes(processing,Input = hyshdply,Output=os.path.join(self.tempfolder, 'HyMask.shp'),Attri_NM = 'HYBAS_ID',Values = HydroBasins)
+            Selectfeatureattributes(
+                processing,
+                Input=hyshdply,
+                Output=os.path.join(self.tempfolder, "HyMask.shp"),
+                Attri_NM="HYBAS_ID",
+                Values=HydroBasins,
+            )
 
             print("Mask Region:   Using buffered hydroBasin product polygons ")
 
-            # dissolve, buffer and reproject the extracted hydrobasin product             
-            qgis_vector_dissolve(processing,context,INPUT = os.path.join(self.tempfolder, 'HyMask.shp'),FIELD = 'MAIN_BAS',OUTPUT = os.path.join(self.tempfolder, 'HyMask1.shp'))
-            qgis_vector_buffer(processing,context,INPUT = os.path.join(self.tempfolder, 'HyMask1.shp'),Buffer_Distance = Buffer_Distance,OUTPUT = os.path.join(self.tempfolder, 'HyMask3.shp'))
-            qgis_vector_dissolve(processing,context,INPUT = os.path.join(self.tempfolder, 'HyMask3.shp'),FIELD = 'MAIN_BAS',OUTPUT = os.path.join(self.tempfolder, 'HyMask4.shp'))
-            qgis_vector_reproject_layers(processing,context,INPUT = os.path.join(self.tempfolder, 'HyMask4.shp'),TARGET_CRS = self.SpRef_in,OUTPUT = self.Path_Maskply)
-            
-            # clip raster layer with this mask 
-            qgis_raster_clip_raster_by_mask(processing,Input = self.Path_dem_in,MASK = self.Path_Maskply,TARGET_CRS = self.SpRef_in, Output = self.Path_dem)
-            
+            # dissolve, buffer and reproject the extracted hydrobasin product
+            qgis_vector_dissolve(
+                processing,
+                context,
+                INPUT=os.path.join(self.tempfolder, "HyMask.shp"),
+                FIELD="MAIN_BAS",
+                OUTPUT=os.path.join(self.tempfolder, "HyMask1.shp"),
+            )
+            qgis_vector_buffer(
+                processing,
+                context,
+                INPUT=os.path.join(self.tempfolder, "HyMask1.shp"),
+                Buffer_Distance=Buffer_Distance,
+                OUTPUT=os.path.join(self.tempfolder, "HyMask3.shp"),
+            )
+            qgis_vector_dissolve(
+                processing,
+                context,
+                INPUT=os.path.join(self.tempfolder, "HyMask3.shp"),
+                FIELD="MAIN_BAS",
+                OUTPUT=os.path.join(self.tempfolder, "HyMask4.shp"),
+            )
+            qgis_vector_reproject_layers(
+                processing,
+                context,
+                INPUT=os.path.join(self.tempfolder, "HyMask4.shp"),
+                TARGET_CRS=self.SpRef_in,
+                OUTPUT=self.Path_Maskply,
+            )
+
+            # clip raster layer with this mask
+            qgis_raster_clip_raster_by_mask(
+                processing,
+                Input=self.Path_dem_in,
+                MASK=self.Path_Maskply,
+                TARGET_CRS=self.SpRef_in,
+                Output=self.Path_dem,
+            )
+
             # use clipped DEM to great a grass work enviroment
             import grass.script as grass
-            from grass.script import array as garray
-            from grass.script import core as gcore
             import grass.script.setup as gsetup
+            from grass.pygrass.modules import Module
             from grass.pygrass.modules.shortcuts import general as g
             from grass.pygrass.modules.shortcuts import raster as r
-            from grass.pygrass.modules import Module
+            from grass.script import array as garray
+            from grass.script import core as gcore
             from grass_session import Session
-            
-            # open/create a grass location 
-            os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
+
+            # open/create a grass location
+            os.environ.update(
+                dict(
+                    GRASS_COMPRESS_NULLS="1", GRASS_COMPRESSOR="ZSTD", GRASS_VERBOSE="1"
+                )
+            )
             PERMANENT_temp = Session()
-            PERMANENT_temp.open(gisdb=self.grassdb, location=self.grass_location_geo_temp,create_opts='EPSG:4326')
-            
-            # import clipped dem to target location  
-            grass_raster_r_in_gdal(grass = grass,raster_path = self.Path_dem,output_nm = 'dem',location = self.grass_location_geo)
-#            grass.run_command("r.in.gdal", input = self.Path_dem, output = 'dem', overwrite = True,location =self.grass_location_geo)
+            PERMANENT_temp.open(
+                gisdb=self.grassdb,
+                location=self.grass_location_geo_temp,
+                create_opts="EPSG:4326",
+            )
+
+            # import clipped dem to target location
+            grass_raster_r_in_gdal(
+                grass=grass,
+                raster_path=self.Path_dem,
+                output_nm="dem",
+                location=self.grass_location_geo,
+            )
+            #            grass.run_command("r.in.gdal", input = self.Path_dem, output = 'dem', overwrite = True,location =self.grass_location_geo)
             PERMANENT_temp.close()
-            
+
             # Define mask and processing region for grass working enviroments
             PERMANENT = Session()
-            PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
-            
-            # define mask of current working enviroments 
-            grass_raster_r_mask(grass,'dem')
-            # define processing extent of the current working enviroment  
-            grass_raster_g_region(grass,'dem') 
+            PERMANENT.open(
+                gisdb=self.grassdb, location=self.grass_location_geo, create_opts=""
+            )
+
+            # define mask of current working enviroments
+            grass_raster_r_mask(grass, "dem")
+            # define processing extent of the current working enviroment
+            grass_raster_g_region(grass, "dem")
             PERMANENT.close()
 
         # This can be either 1 using provided dem as processing extent
-        #             or 2 provide a outlet point to extract a processing extent 
-        #                  from dem 
+        #             or 2 provide a outlet point to extract a processing extent
+        #                  from dem
         elif self.Is_Sub_Region < 0 and OutHyID <= 0:
-            
-            r_dem_layer =  qgis_raster_read_raster(processing,self.Path_dem_in) ### load DEM raster as a  QGIS raster object to obtain attribute
-            self.cellSize,self.SpRef_in= qgis_raster_return_raster_properties(processing,r_dem_layer)  ### Get Raster cell size
-           
-            # copy raster to another location for further processing         
-            qgis_raster_gdal_translate(processing,INPUT = self.Path_dem_in,OUTPUT = self.Path_dem,format='GTiff')
-    
+
+            r_dem_layer = qgis_raster_read_raster(
+                processing, self.Path_dem_in
+            )  ### load DEM raster as a  QGIS raster object to obtain attribute
+            self.cellSize, self.SpRef_in = qgis_raster_return_raster_properties(
+                processing, r_dem_layer
+            )  ### Get Raster cell size
+
+            # copy raster to another location for further processing
+            qgis_raster_gdal_translate(
+                processing, INPUT=self.Path_dem_in, OUTPUT=self.Path_dem, format="GTiff"
+            )
+
             import grass.script as grass
-            from grass.script import array as garray
             import grass.script.setup as gsetup
+            from grass.pygrass.modules import Module
             from grass.pygrass.modules.shortcuts import general as g
             from grass.pygrass.modules.shortcuts import raster as r
-            from grass.pygrass.modules import Module
+            from grass.script import array as garray
             from grass_session import Session
 
-            # outlet provided, using watershed boundary generated by dem and this 
-            # output to define mask and region of grass working enviroment 
-             
+            # outlet provided, using watershed boundary generated by dem and this
+            # output to define mask and region of grass working enviroment
+
             if OutletPoint[0] != -1:
-                print("Mask Region:   Using Watershed boundary of given pour points: ",OutletPoint)
-                
-                # create/open an grass working enviroment 
-                os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
+                print(
+                    "Mask Region:   Using Watershed boundary of given pour points: ",
+                    OutletPoint,
+                )
+
+                # create/open an grass working enviroment
+                os.environ.update(
+                    dict(
+                        GRASS_COMPRESS_NULLS="1",
+                        GRASS_COMPRESSOR="ZSTD",
+                        GRASS_VERBOSE="1",
+                    )
+                )
                 PERMANENT_Temp1 = Session()
-                PERMANENT_Temp1.open(gisdb=self.grassdb, location=self.grass_location_geo_temp1,create_opts='EPSG:4326')
-            
-                # import clipped dem to target location  
-                grass_raster_r_in_gdal(grass = grass,raster_path = self.Path_dem,output_nm = 'dem',location = self.grass_location_geo_temp)
-            
+                PERMANENT_Temp1.open(
+                    gisdb=self.grassdb,
+                    location=self.grass_location_geo_temp1,
+                    create_opts="EPSG:4326",
+                )
+
+                # import clipped dem to target location
+                grass_raster_r_in_gdal(
+                    grass=grass,
+                    raster_path=self.Path_dem,
+                    output_nm="dem",
+                    location=self.grass_location_geo_temp,
+                )
+
                 PERMANENT_Temp1.close()
-                
-                # open location where dem is loaded, generated watershed boundary in this location 
+
+                # open location where dem is loaded, generated watershed boundary in this location
                 PERMANENT_Temp = Session()
-                PERMANENT_Temp.open(gisdb=self.grassdb, location=self.grass_location_geo_temp,create_opts='')
+                PERMANENT_Temp.open(
+                    gisdb=self.grassdb,
+                    location=self.grass_location_geo_temp,
+                    create_opts="",
+                )
 
-                # define mask of current working enviroments 
-                grass_raster_r_mask(grass,'dem')
-                # define processing extent of the current working enviroment  
-                grass_raster_g_region(grass,'dem') 
+                # define mask of current working enviroments
+                grass_raster_r_mask(grass, "dem")
+                # define processing extent of the current working enviroment
+                grass_raster_g_region(grass, "dem")
 
-                # generate watrshed boundary for this outlet point 
-                
-                # define flow direction from dem 
-                grass_raster_r_watershed(grass,elevation = 'dem',drainage = 'dir_grass',accumulation = 'acc_grass2',flags = 'sa')
-                # generate watershed boundary 
-                grass_raster_r_water_outlet(grass,input_dir_nm = 'dir_grass',output_watshed_nm ='wat_mask' ,outlet_coordinates = OutletPoint)
-                # define mask with watershed boundary 
-                grass_raster_r_mask(grass,'wat_mask')
-                
-                # export generated mask to folder ouside grass work env in tif format 
-                grass_raster_r_out_gdal(grass,input_nm = 'MASK',output = os.path.join(self.tempfolder, 'Mask1.tif'),format= 'GTiff')
-                
-                # polygonize exported mask raster, buffer, and use it clip input dem 
-                qgis_raster_gdal_polygonize(processing,context,INPUT = os.path.join(self.tempfolder, 'Mask1.tif'),OUTPUT = os.path.join(self.tempfolder, 'HyMask.shp'))
-                qgis_vector_dissolve(processing,context,INPUT = os.path.join(self.tempfolder, 'HyMask.shp'),FIELD = 'DN',OUTPUT = os.path.join(self.tempfolder, 'HyMask1.shp'))
-                qgis_vector_buffer(processing,context,INPUT = os.path.join(self.tempfolder, 'HyMask1.shp'),Buffer_Distance = Buffer_Distance,OUTPUT = self.Path_Maskply)
-                # using saga function, becasue for some reason the gdal function did not reduce the extent of the raster, the raster still has the same 
-                # size, but the value out side of mask is set to null 
-                qgis_raster_saga_clip_raster_with_polygon(processing,context,Input =self.Path_dem ,MASK = self.Path_Maskply, Output = os.path.join(self.tempfolder, 'dem_mask.sdat'))
+                # generate watrshed boundary for this outlet point
 
-                
-                # load clipted dem raster to target location 
-                grass_raster_r_in_gdal(grass = grass,raster_path =  os.path.join(self.tempfolder, 'dem_mask.sdat'),output_nm = 'dem',location = self.grass_location_geo)
-                
+                # define flow direction from dem
+                grass_raster_r_watershed(
+                    grass,
+                    elevation="dem",
+                    drainage="dir_grass",
+                    accumulation="acc_grass2",
+                    flags="sa",
+                )
+                # generate watershed boundary
+                grass_raster_r_water_outlet(
+                    grass,
+                    input_dir_nm="dir_grass",
+                    output_watshed_nm="wat_mask",
+                    outlet_coordinates=OutletPoint,
+                )
+                # define mask with watershed boundary
+                grass_raster_r_mask(grass, "wat_mask")
+
+                # export generated mask to folder ouside grass work env in tif format
+                grass_raster_r_out_gdal(
+                    grass,
+                    input_nm="MASK",
+                    output=os.path.join(self.tempfolder, "Mask1.tif"),
+                    format="GTiff",
+                )
+
+                # polygonize exported mask raster, buffer, and use it clip input dem
+                qgis_raster_gdal_polygonize(
+                    processing,
+                    context,
+                    INPUT=os.path.join(self.tempfolder, "Mask1.tif"),
+                    OUTPUT=os.path.join(self.tempfolder, "HyMask.shp"),
+                )
+                qgis_vector_dissolve(
+                    processing,
+                    context,
+                    INPUT=os.path.join(self.tempfolder, "HyMask.shp"),
+                    FIELD="DN",
+                    OUTPUT=os.path.join(self.tempfolder, "HyMask1.shp"),
+                )
+                qgis_vector_buffer(
+                    processing,
+                    context,
+                    INPUT=os.path.join(self.tempfolder, "HyMask1.shp"),
+                    Buffer_Distance=Buffer_Distance,
+                    OUTPUT=self.Path_Maskply,
+                )
+                # using saga function, becasue for some reason the gdal function did not reduce the extent of the raster, the raster still has the same
+                # size, but the value out side of mask is set to null
+                qgis_raster_saga_clip_raster_with_polygon(
+                    processing,
+                    context,
+                    Input=self.Path_dem,
+                    MASK=self.Path_Maskply,
+                    Output=os.path.join(self.tempfolder, "dem_mask.sdat"),
+                )
+
+                # load clipted dem raster to target location
+                grass_raster_r_in_gdal(
+                    grass=grass,
+                    raster_path=os.path.join(self.tempfolder, "dem_mask.sdat"),
+                    output_nm="dem",
+                    location=self.grass_location_geo,
+                )
+
                 PERMANENT_Temp.close()
 
                 PERMANENT = Session()
-                PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
-                
-                # define mask of current working enviroments 
-                grass_raster_r_mask(grass,'dem')
-                # define processing extent of the current working enviroment  
-                grass_raster_g_region(grass,'dem')
+                PERMANENT.open(
+                    gisdb=self.grassdb, location=self.grass_location_geo, create_opts=""
+                )
 
+                # define mask of current working enviroments
+                grass_raster_r_mask(grass, "dem")
+                # define processing extent of the current working enviroment
+                grass_raster_g_region(grass, "dem")
 
-            ## the outlet coordinates is not provided, the extent of dem is used as mask and region 
+            ## the outlet coordinates is not provided, the extent of dem is used as mask and region
             else:
-                
+
                 print("Mask Region:   Using provided DEM : ")
-                
-                os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
-                PERMANENT = Session()
-                PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo_temp,create_opts='EPSG:4326')
 
-                # load dem raster to target location 
-                grass_raster_r_in_gdal(grass = grass,raster_path = self.Path_dem,output_nm = 'dem',location = self.grass_location_geo)                
+                os.environ.update(
+                    dict(
+                        GRASS_COMPRESS_NULLS="1",
+                        GRASS_COMPRESSOR="ZSTD",
+                        GRASS_VERBOSE="1",
+                    )
+                )
+                PERMANENT = Session()
+                PERMANENT.open(
+                    gisdb=self.grassdb,
+                    location=self.grass_location_geo_temp,
+                    create_opts="EPSG:4326",
+                )
+
+                # load dem raster to target location
+                grass_raster_r_in_gdal(
+                    grass=grass,
+                    raster_path=self.Path_dem,
+                    output_nm="dem",
+                    location=self.grass_location_geo,
+                )
                 PERMANENT.close()
 
                 PERMANENT = Session()
-                PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
+                PERMANENT.open(
+                    gisdb=self.grassdb, location=self.grass_location_geo, create_opts=""
+                )
 
-                # define mask of current working enviroments 
-                grass_raster_r_mask(grass,'dem')
-                # define processing extent of the current working enviroment  
-                grass_raster_g_region(grass,'dem')
+                # define mask of current working enviroments
+                grass_raster_r_mask(grass, "dem")
+                # define processing extent of the current working enviroment
+                grass_raster_g_region(grass, "dem")
 
-                # export generated mask to folder ouside grass work env in tif format 
-                grass_raster_r_out_gdal(grass,input_nm = 'MASK',output = os.path.join(self.tempfolder, 'Mask1.tif'),format= 'GTiff')
-                # polygonize exported mask raster, and polygonize and dissove it. 
-                qgis_raster_gdal_polygonize(processing,context,INPUT = os.path.join(self.tempfolder, 'Mask1.tif'),OUTPUT = os.path.join(self.tempfolder, 'HyMask.shp'))
+                # export generated mask to folder ouside grass work env in tif format
+                grass_raster_r_out_gdal(
+                    grass,
+                    input_nm="MASK",
+                    output=os.path.join(self.tempfolder, "Mask1.tif"),
+                    format="GTiff",
+                )
+                # polygonize exported mask raster, and polygonize and dissove it.
+                qgis_raster_gdal_polygonize(
+                    processing,
+                    context,
+                    INPUT=os.path.join(self.tempfolder, "Mask1.tif"),
+                    OUTPUT=os.path.join(self.tempfolder, "HyMask.shp"),
+                )
                 # qgis dissolve function for some reason not working here....
-                qgis_vector_dissolve(processing,context,INPUT = os.path.join(self.tempfolder, 'HyMask.shp'),FIELD = 'DN',OUTPUT = self.Path_Maskply,USING_GDAL_FUNCTION = True)
+                qgis_vector_dissolve(
+                    processing,
+                    context,
+                    INPUT=os.path.join(self.tempfolder, "HyMask.shp"),
+                    FIELD="DN",
+                    OUTPUT=self.Path_Maskply,
+                    USING_GDAL_FUNCTION=True,
+                )
                 PERMANENT.close()
-        
-        # the option here using pre generated mask for current subregion. 
-        # the precedure will load Sub_Region_Mask_ply, and dem 
-        # and then define mask and region for grass working env  
+
+        # the option here using pre generated mask for current subregion.
+        # the precedure will load Sub_Region_Mask_ply, and dem
+        # and then define mask and region for grass working env
         else:
             import grass.script as grass
-            from grass.script import array as garray
             import grass.script.setup as gsetup
+            from grass.pygrass.modules import Module
             from grass.pygrass.modules.shortcuts import general as g
             from grass.pygrass.modules.shortcuts import raster as r
-            from grass.pygrass.modules import Module
+            from grass.script import array as garray
             from grass_session import Session
+
             print("Mask Region:  Using subregion buffered mask : ")
-            os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
-            
-            # load subregion mask polygon to target grass location 
+            os.environ.update(
+                dict(
+                    GRASS_COMPRESS_NULLS="1", GRASS_COMPRESSOR="ZSTD", GRASS_VERBOSE="1"
+                )
+            )
+
+            # load subregion mask polygon to target grass location
             PERMANENT = Session()
-            PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo_temp,create_opts='EPSG:4326')
-            grass_raster_v_in_org(grass,input_path = Path_Sub_Polygon,output_vector_nm = 'Sub_Region_Mask_ply',location = self.grass_location_geo)
-#            grass.run_command("v.in.ogr", input = Path_Sub_Polygon,output = 'Sub_Region_Mask_ply', overwrite = True,location =self.grass_location_geo)
+            PERMANENT.open(
+                gisdb=self.grassdb,
+                location=self.grass_location_geo_temp,
+                create_opts="EPSG:4326",
+            )
+            grass_raster_v_in_org(
+                grass,
+                input_path=Path_Sub_Polygon,
+                output_vector_nm="Sub_Region_Mask_ply",
+                location=self.grass_location_geo,
+            )
+            #            grass.run_command("v.in.ogr", input = Path_Sub_Polygon,output = 'Sub_Region_Mask_ply', overwrite = True,location =self.grass_location_geo)
             PERMANENT.close()
-            
-            # unpack dem and generate mask with loaded vector 
-            
+
+            # unpack dem and generate mask with loaded vector
+
             PERMANENT = Session()
-            PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
-            
-            # unpack dem dataset 
-            grass_raster_r_unpack(grass, input = self.Path_Sub_reg_dem,output = 'dem_big')
+            PERMANENT.open(
+                gisdb=self.grassdb, location=self.grass_location_geo, create_opts=""
+            )
+
+            # unpack dem dataset
+            grass_raster_r_unpack(grass, input=self.Path_Sub_reg_dem, output="dem_big")
 
             ###Use polygon to define a smaller region
-            # use big dem define region first and then change it by vector mask  
-            grass_raster_g_region(grass,'dem_big')
-            # define mask of current working enviroments 
-            grass_raster_r_mask(grass,raster_nm = '#',vector_nm = 'Sub_Region_Mask_ply')
+            # use big dem define region first and then change it by vector mask
+            grass_raster_g_region(grass, "dem_big")
+            # define mask of current working enviroments
+            grass_raster_r_mask(grass, raster_nm="#", vector_nm="Sub_Region_Mask_ply")
             # define new region with this mask
-            grass_raster_g_region(grass,raster_nm = '#', zoom = 'MASK') 
-            
-            # using vector define mask and clip big raster dem 
-            grass_raster_r_mask(grass,raster_nm = '#',vector_nm = 'Sub_Region_Mask_ply')
-            grass_raster_r_mapcalc(grass,expression = "dem = dem_big")
-            
-            # using clipped dem to defing mask 
-            grass_raster_r_mask(grass,raster_nm = 'dem')
-            
-            # export dem and mask and generate mask polygon 
-            self.Path_dem_in = os.path.join(self.tempfolder, 'dem.tif')
-            self.Path_dem    = os.path.join(self.tempfolder, 'dem.tif')
-            grass_raster_r_out_gdal(grass,input_nm = 'MASK',output = os.path.join(self.tempfolder, 'Mask1.tif'),format= 'GTiff')
-            grass_raster_r_out_gdal(grass,input_nm = 'dem',output = os.path.join(self.tempfolder, 'dem.tif'),format= 'GTiff')
-            # polygonize exported mask raster, and polygonize and dissove it. 
-            qgis_raster_gdal_polygonize(processing,context,INPUT = os.path.join(self.tempfolder, 'Mask1.tif'),OUTPUT = os.path.join(self.tempfolder, 'HyMask.shp'))
+            grass_raster_g_region(grass, raster_nm="#", zoom="MASK")
+
+            # using vector define mask and clip big raster dem
+            grass_raster_r_mask(grass, raster_nm="#", vector_nm="Sub_Region_Mask_ply")
+            grass_raster_r_mapcalc(grass, expression="dem = dem_big")
+
+            # using clipped dem to defing mask
+            grass_raster_r_mask(grass, raster_nm="dem")
+
+            # export dem and mask and generate mask polygon
+            self.Path_dem_in = os.path.join(self.tempfolder, "dem.tif")
+            self.Path_dem = os.path.join(self.tempfolder, "dem.tif")
+            grass_raster_r_out_gdal(
+                grass,
+                input_nm="MASK",
+                output=os.path.join(self.tempfolder, "Mask1.tif"),
+                format="GTiff",
+            )
+            grass_raster_r_out_gdal(
+                grass,
+                input_nm="dem",
+                output=os.path.join(self.tempfolder, "dem.tif"),
+                format="GTiff",
+            )
+            # polygonize exported mask raster, and polygonize and dissove it.
+            qgis_raster_gdal_polygonize(
+                processing,
+                context,
+                INPUT=os.path.join(self.tempfolder, "Mask1.tif"),
+                OUTPUT=os.path.join(self.tempfolder, "HyMask.shp"),
+            )
             # qgis dissolve function for some reason not working here....
-            qgis_vector_dissolve(processing,context,INPUT = os.path.join(self.tempfolder, 'HyMask.shp'),FIELD = 'DN',OUTPUT = self.Path_Maskply,USING_GDAL_FUNCTION = True)
-            
+            qgis_vector_dissolve(
+                processing,
+                context,
+                INPUT=os.path.join(self.tempfolder, "HyMask.shp"),
+                FIELD="DN",
+                OUTPUT=self.Path_Maskply,
+                USING_GDAL_FUNCTION=True,
+            )
+
             PERMANENT.close()
 
         Qgs.exit()
 
         return
 
-
-    def Generatesubdomain(self,Min_Num_Domain = 9,Max_Num_Domain = 13,Initaial_Acc = 5000,Delta_Acc = 1000,Out_Sub_Reg_Dem_Folder = '#',
-                        ProjectNM = 'Sub_Reg',CheckLakeArea = 1,Acc_Thresthold_stream = 500,max_memory = 2048):
+    def Generatesubdomain(
+        self,
+        Min_Num_Domain=9,
+        Max_Num_Domain=13,
+        Initaial_Acc=5000,
+        Delta_Acc=1000,
+        Out_Sub_Reg_Dem_Folder="#",
+        ProjectNM="Sub_Reg",
+        CheckLakeArea=1,
+        Acc_Thresthold_stream=500,
+        max_memory=2048,
+    ):
 
         import grass.script as grass
-        from grass.script import array as garray
-        from grass.script import core as gcore
         import grass.script.setup as gsetup
+        from grass.pygrass.modules import Module
         from grass.pygrass.modules.shortcuts import general as g
         from grass.pygrass.modules.shortcuts import raster as r
-        from grass.pygrass.modules import Module
+        from grass.script import array as garray
+        from grass.script import core as gcore
         from grass_session import Session
 
         if not os.path.exists(Out_Sub_Reg_Dem_Folder):
-                os.makedirs(Out_Sub_Reg_Dem_Folder)
+            os.makedirs(Out_Sub_Reg_Dem_Folder)
 
         #### Determine Sub subregion without lake
-        os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
+        os.environ.update(
+            dict(GRASS_COMPRESS_NULLS="1", GRASS_COMPRESSOR="ZSTD", GRASS_VERBOSE="1")
+        )
         PERMANENT = Session()
-        PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
+        PERMANENT.open(
+            gisdb=self.grassdb, location=self.grass_location_geo, create_opts=""
+        )
         N_Basin = 0
-        Acc     = Initaial_Acc
+        Acc = Initaial_Acc
         print("##############################Loop for suitable ACC ")
         while N_Basin < Min_Num_Domain or N_Basin > Max_Num_Domain:
-            grass.run_command('r.watershed',elevation = 'dem',flags = 'sa', basin = 'testbasin',drainage = 'dir_grass_reg',accumulation = 'acc_grass_reg2',threshold = Acc,overwrite = True)
+            grass.run_command(
+                "r.watershed",
+                elevation="dem",
+                flags="sa",
+                basin="testbasin",
+                drainage="dir_grass_reg",
+                accumulation="acc_grass_reg2",
+                threshold=Acc,
+                overwrite=True,
+            )
             strtemp_array = garray.array(mapname="testbasin")
             N_Basin = np.unique(strtemp_array)
             N_Basin = len(N_Basin[N_Basin > 0])
-            print("Number of Subbasin:    ",N_Basin, "Acc  value:     ",Acc,"Change of ACC ", Delta_Acc)
+            print(
+                "Number of Subbasin:    ",
+                N_Basin,
+                "Acc  value:     ",
+                Acc,
+                "Change of ACC ",
+                Delta_Acc,
+            )
             if N_Basin > Max_Num_Domain:
                 Acc = Acc + Delta_Acc
             if N_Basin < Min_Num_Domain:
@@ -1102,48 +1717,99 @@ class LRRT:
 
         ##### Determine subregion with lake
         try:
-            self.Generateinputdata(Is_divid_region = 1)
+            self.Generateinputdata(Is_divid_region=1)
         except:
-            print("Check print infomation, some unknown error occured, may have no influence on result")
+            print(
+                "Check print infomation, some unknown error occured, may have no influence on result"
+            )
             pass
 
         try:
-            self.WatershedDiscretizationToolset(accthresold = Acc,Is_divid_region = 1,max_memroy = max_memory)
+            self.WatershedDiscretizationToolset(
+                accthresold=Acc, Is_divid_region=1, max_memroy=max_memory
+            )
         except:
-            print("Check print infomation, some unknown error occured, may have no influence on result")
+            print(
+                "Check print infomation, some unknown error occured, may have no influence on result"
+            )
             pass
 
         try:
-            self.AutomatedWatershedsandLakesFilterToolset(Thre_Lake_Area_Connect = CheckLakeArea,Thre_Lake_Area_nonConnect = -1,Is_divid_region=1,max_memroy = max_memory)
+            self.AutomatedWatershedsandLakesFilterToolset(
+                Thre_Lake_Area_Connect=CheckLakeArea,
+                Thre_Lake_Area_nonConnect=-1,
+                Is_divid_region=1,
+                max_memroy=max_memory,
+            )
         except:
-            print("Check print infomation, some unknown error occured, may have no influence on result")
+            print(
+                "Check print infomation, some unknown error occured, may have no influence on result"
+            )
             pass
 
         ####Determin river network for whole watersheds
         PERMANENT = Session()
-        PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
-        grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =Acc_Thresthold_stream,stream_raster = 'Sub_Reg_str_grass_r',
-                            stream_vector = 'Sub_Reg_str_grass_v',overwrite = True,memory = max_memory)
-
+        PERMANENT.open(
+            gisdb=self.grassdb, location=self.grass_location_geo, create_opts=""
+        )
+        grass.run_command(
+            "r.stream.extract",
+            elevation="dem",
+            accumulation="acc_grass",
+            threshold=Acc_Thresthold_stream,
+            stream_raster="Sub_Reg_str_grass_r",
+            stream_vector="Sub_Reg_str_grass_v",
+            overwrite=True,
+            memory=max_memory,
+        )
 
         #### export outputs
-        grass.run_command('r.pack',input = 'ndir_grass',output = self.Path_Sub_reg_grass_dir,overwrite = True)
-        grass.run_command('r.pack',input = 'ndir_Arcgis',output = self.Path_Sub_reg_arcgis_dir,overwrite = True)
-        grass.run_command('r.pack',input = 'acc_grass',output = self.Path_Sub_reg_grass_acc,overwrite = True)
-        grass.run_command('r.pack',input = 'dem',output = self.Path_Sub_reg_dem,overwrite = True)
-        grass.run_command('v.pack',input = 'Sub_Reg_str_grass_v',output = self.Path_Sub_reg_grass_str_v,overwrite = True)
-        grass.run_command('r.pack',input = 'Sub_Reg_str_grass_r',output = self.Path_Sub_reg_grass_str_r ,overwrite = True)
+        grass.run_command(
+            "r.pack",
+            input="ndir_grass",
+            output=self.Path_Sub_reg_grass_dir,
+            overwrite=True,
+        )
+        grass.run_command(
+            "r.pack",
+            input="ndir_Arcgis",
+            output=self.Path_Sub_reg_arcgis_dir,
+            overwrite=True,
+        )
+        grass.run_command(
+            "r.pack",
+            input="acc_grass",
+            output=self.Path_Sub_reg_grass_acc,
+            overwrite=True,
+        )
+        grass.run_command(
+            "r.pack", input="dem", output=self.Path_Sub_reg_dem, overwrite=True
+        )
+        grass.run_command(
+            "v.pack",
+            input="Sub_Reg_str_grass_v",
+            output=self.Path_Sub_reg_grass_str_v,
+            overwrite=True,
+        )
+        grass.run_command(
+            "r.pack",
+            input="Sub_Reg_str_grass_r",
+            output=self.Path_Sub_reg_grass_str_r,
+            overwrite=True,
+        )
         PERMANENT.close()
         return
 
-    def Generatesubdomainmaskandinfo(self,Out_Sub_Reg_Dem_Folder = '#',ProjectNM = 'Sub_Reg'):
+    def Generatesubdomainmaskandinfo(
+        self, Out_Sub_Reg_Dem_Folder="#", ProjectNM="Sub_Reg"
+    ):
         #### generate subbregion outlet points and subregion info table
         QgsApplication.setPrefixPath(self.qgisPP, True)
-        Qgs = QgsApplication([],False)
+        Qgs = QgsApplication([], False)
         Qgs.initQgis()
-        from qgis import processing
         from processing.core.Processing import Processing
         from processing.tools import dataobjects
+        from qgis import processing
 
         feedback = QgsProcessingFeedback()
         Processing.initialize()
@@ -1151,145 +1817,276 @@ class LRRT:
         context = dataobjects.createContext()
         context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
 
-
         import grass.script as grass
-        from grass.script import array as garray
-        from grass.script import core as gcore
         import grass.script.setup as gsetup
+        from grass.pygrass.modules import Module
         from grass.pygrass.modules.shortcuts import general as g
         from grass.pygrass.modules.shortcuts import raster as r
-        from grass.pygrass.modules import Module
+        from grass.script import array as garray
+        from grass.script import core as gcore
         from grass_session import Session
 
-
-
-
-        os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='-1'))
+        os.environ.update(
+            dict(GRASS_COMPRESS_NULLS="1", GRASS_COMPRESSOR="ZSTD", GRASS_VERBOSE="-1")
+        )
         PERMANENT = Session()
-        PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
-        grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
-        grass.run_command('r.null', map='finalcat',setnull=-9999)
+        PERMANENT.open(
+            gisdb=self.grassdb, location=self.grass_location_geo, create_opts=""
+        )
+        grass.run_command("r.mask", raster="dem", maskcats="*", overwrite=True)
+        grass.run_command("r.null", map="finalcat", setnull=-9999)
 
         strtemp_array = garray.array(mapname="finalcat")
-#        mask          = np.isin(sl_lake, Un_selectedlake_ids)
+        #        mask          = np.isin(sl_lake, Un_selectedlake_ids)
 
-        dir           = garray.array(mapname="ndir_Arcgis")
-        acc           = garray.array(mapname="acc_grass")
-        Cat_outlets   = copy.copy(strtemp_array)
-        Cat_outlets[:,:] = -9999
-        Cat_outlets_Down      = copy.copy(strtemp_array)
-        Cat_outlets_Down[:,:] = -9999
+        dir = garray.array(mapname="ndir_Arcgis")
+        acc = garray.array(mapname="acc_grass")
+        Cat_outlets = copy.copy(strtemp_array)
+        Cat_outlets[:, :] = -9999
+        Cat_outlets_Down = copy.copy(strtemp_array)
+        Cat_outlets_Down[:, :] = -9999
         ncols = int(strtemp_array.shape[1])
         nrows = int(strtemp_array.shape[0])
-        Basins        = np.unique(strtemp_array)
+        Basins = np.unique(strtemp_array)
 
-        Basins        = Basins[Basins > 0]
+        Basins = Basins[Basins > 0]
 
-        subregin_info=pd.DataFrame(np.full(len(Basins),-99999),columns = ['Sub_Reg_ID'])
+        subregin_info = pd.DataFrame(
+            np.full(len(Basins), -99999), columns=["Sub_Reg_ID"]
+        )
         subregin_info["Dow_Sub_Reg_Id"] = -9999
         subregin_info["ProjectNM"] = -9999
         subregin_info["Nun_Grids"] = -9999
         subregin_info["Ply_Name"] = -9999
         subregin_info["Max_ACC"] = -9999
-        for i in range(0,len(Basins)):
+        for i in range(0, len(Basins)):
             basinid = int(Basins[i])
-            grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
-            exp = 'dem_reg_'+str(basinid)+'= if(finalcat == '+str(basinid)+',dem, -9999)'
-            grass.run_command('r.mapcalc',expression = exp,overwrite = True)
-            grass.run_command("r.null", map = 'dem_reg_'+str(basinid), setnull = [-9999,0])
+            grass.run_command("r.mask", raster="dem", maskcats="*", overwrite=True)
+            exp = (
+                "dem_reg_"
+                + str(basinid)
+                + "= if(finalcat == "
+                + str(basinid)
+                + ",dem, -9999)"
+            )
+            grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+            grass.run_command(
+                "r.null", map="dem_reg_" + str(basinid), setnull=[-9999, 0]
+            )
 
             ####define mask
-            grass.run_command('r.mask'  , raster='dem_reg_'+str(basinid), maskcats = '*',overwrite = True)
-            grass.run_command('r.out.gdal', input = 'MASK',output = os.path.join(self.tempfolder, 'Mask1.tif'),format= 'GTiff',overwrite = True)
-            processing.run("gdal:polygonize", {'INPUT':os.path.join(self.tempfolder, 'Mask1.tif'),'BAND':1,'FIELD':'DN','EIGHT_CONNECTEDNESS':False,'EXTRA':'','OUTPUT':os.path.join(self.tempfolder, 'HyMask_region_'+ str(basinid)+'.shp')})
-            processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask_region_'+ str(basinid)+'.shp'),'FIELD':'DN','OUTPUT':os.path.join(self.tempfolder, 'HyMask_region_f'+ str(basinid)+'.shp')})
-            processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'HyMask_region_'+ str(basinid)+'.shp'),'FIELD':'DN','OUTPUT':os.path.join(Out_Sub_Reg_Dem_Folder, 'HyMask_region_'+ str(int(basinid+self.maximum_obs_id))+'_nobuffer.shp')})
-            processing.run("native:buffer", {'INPUT':os.path.join(self.tempfolder, 'HyMask_region_f'+ str(basinid)+'.shp'),'DISTANCE':0.005,'SEGMENTS':5,'END_CAP_STYLE':0,'JOIN_STYLE':0,'MITER_LIMIT':2,'DISSOLVE':True,'OUTPUT':os.path.join(Out_Sub_Reg_Dem_Folder, 'HyMask_region_'+ str(int(basinid+self.maximum_obs_id))+'.shp')})
+            grass.run_command(
+                "r.mask", raster="dem_reg_" + str(basinid), maskcats="*", overwrite=True
+            )
+            grass.run_command(
+                "r.out.gdal",
+                input="MASK",
+                output=os.path.join(self.tempfolder, "Mask1.tif"),
+                format="GTiff",
+                overwrite=True,
+            )
+            processing.run(
+                "gdal:polygonize",
+                {
+                    "INPUT": os.path.join(self.tempfolder, "Mask1.tif"),
+                    "BAND": 1,
+                    "FIELD": "DN",
+                    "EIGHT_CONNECTEDNESS": False,
+                    "EXTRA": "",
+                    "OUTPUT": os.path.join(
+                        self.tempfolder, "HyMask_region_" + str(basinid) + ".shp"
+                    ),
+                },
+            )
+            processing.run(
+                "gdal:dissolve",
+                {
+                    "INPUT": os.path.join(
+                        self.tempfolder, "HyMask_region_" + str(basinid) + ".shp"
+                    ),
+                    "FIELD": "DN",
+                    "OUTPUT": os.path.join(
+                        self.tempfolder, "HyMask_region_f" + str(basinid) + ".shp"
+                    ),
+                },
+            )
+            processing.run(
+                "gdal:dissolve",
+                {
+                    "INPUT": os.path.join(
+                        self.tempfolder, "HyMask_region_" + str(basinid) + ".shp"
+                    ),
+                    "FIELD": "DN",
+                    "OUTPUT": os.path.join(
+                        Out_Sub_Reg_Dem_Folder,
+                        "HyMask_region_"
+                        + str(int(basinid + self.maximum_obs_id))
+                        + "_nobuffer.shp",
+                    ),
+                },
+            )
+            processing.run(
+                "native:buffer",
+                {
+                    "INPUT": os.path.join(
+                        self.tempfolder, "HyMask_region_f" + str(basinid) + ".shp"
+                    ),
+                    "DISTANCE": 0.005,
+                    "SEGMENTS": 5,
+                    "END_CAP_STYLE": 0,
+                    "JOIN_STYLE": 0,
+                    "MITER_LIMIT": 2,
+                    "DISSOLVE": True,
+                    "OUTPUT": os.path.join(
+                        Out_Sub_Reg_Dem_Folder,
+                        "HyMask_region_"
+                        + str(int(basinid + self.maximum_obs_id))
+                        + ".shp",
+                    ),
+                },
+            )
 
+        grass.run_command("r.mask", raster="dem", maskcats="*", overwrite=True)
 
-        grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
-
-        for i in range(0,len(Basins)):
+        for i in range(0, len(Basins)):
             basinid = int(Basins[i])
             catmask = strtemp_array == basinid
-            catacc  = acc[catmask]
-            trow,tcol = Getbasinoutlet(basinid,strtemp_array,acc,dir,nrows,ncols)
+            catacc = acc[catmask]
+            trow, tcol = Getbasinoutlet(basinid, strtemp_array, acc, dir, nrows, ncols)
             k = 1
-            ttrow,ttcol = trow,tcol
+            ttrow, ttcol = trow, tcol
             dowsubreginid = -1
 
             while dowsubreginid < 0 and k < 20:
-                nrow,ncol = Nextcell(dir,ttrow,ttcol)### get the downstream catchment id
+                nrow, ncol = Nextcell(
+                    dir, ttrow, ttcol
+                )  ### get the downstream catchment id
                 if nrow < 0 or ncol < 0:
                     dowsubreginid = -1
-                    Cat_outlets[trow,tcol] = int(basinid + self.maximum_obs_id)  ### for outlet of watershed, use trow tcol
-                    break;
+                    Cat_outlets[trow, tcol] = int(
+                        basinid + self.maximum_obs_id
+                    )  ### for outlet of watershed, use trow tcol
+                    break
                 elif nrow >= nrows or ncol >= ncols:
                     dowsubreginid = -1
-                    Cat_outlets[trow,tcol] = int(basinid + self.maximum_obs_id)
-                    break;
-                elif strtemp_array[nrow,ncol] <= 0 or strtemp_array[nrow,ncol] == basinid:
+                    Cat_outlets[trow, tcol] = int(basinid + self.maximum_obs_id)
+                    break
+                elif (
+                    strtemp_array[nrow, ncol] <= 0
+                    or strtemp_array[nrow, ncol] == basinid
+                ):
                     dowsubreginid = -1
-                    Cat_outlets[trow,tcol] = int(basinid + self.maximum_obs_id)
+                    Cat_outlets[trow, tcol] = int(basinid + self.maximum_obs_id)
                 else:
-                    dowsubreginid = strtemp_array[nrow,ncol]
-                    Cat_outlets[ttrow,ttcol] = int(basinid + self.maximum_obs_id)
-                    Cat_outlets_Down[nrow,ncol] = int(basinid + self.maximum_obs_id)
+                    dowsubreginid = strtemp_array[nrow, ncol]
+                    Cat_outlets[ttrow, ttcol] = int(basinid + self.maximum_obs_id)
+                    Cat_outlets_Down[nrow, ncol] = int(basinid + self.maximum_obs_id)
                 k = k + 1
                 ttrow = nrow
                 ttcol = ncol
 
-            subregin_info.loc[i,"ProjectNM"]      = ProjectNM + '_'+str(int(basinid+self.maximum_obs_id))
-            subregin_info.loc[i,"Nun_Grids"]      = np.sum(catmask)
-            subregin_info.loc[i,"Ply_Name"]       = 'HyMask_region_'+ str(int(basinid+self.maximum_obs_id))+'.shp'
-            subregin_info.loc[i,"Max_ACC"]        = np.max(np.unique(catacc))
-            subregin_info.loc[i,"Dow_Sub_Reg_Id"] = int(dowsubreginid + self.maximum_obs_id)
-            subregin_info.loc[i,"Sub_Reg_ID"]     = int(basinid + self.maximum_obs_id)
-
+            subregin_info.loc[i, "ProjectNM"] = (
+                ProjectNM + "_" + str(int(basinid + self.maximum_obs_id))
+            )
+            subregin_info.loc[i, "Nun_Grids"] = np.sum(catmask)
+            subregin_info.loc[i, "Ply_Name"] = (
+                "HyMask_region_" + str(int(basinid + self.maximum_obs_id)) + ".shp"
+            )
+            subregin_info.loc[i, "Max_ACC"] = np.max(np.unique(catacc))
+            subregin_info.loc[i, "Dow_Sub_Reg_Id"] = int(
+                dowsubreginid + self.maximum_obs_id
+            )
+            subregin_info.loc[i, "Sub_Reg_ID"] = int(basinid + self.maximum_obs_id)
 
         ### remove subregion do not contribute to the outlet
         ## find watershed outlet subregion
-        outlet_reg_info  = subregin_info.loc[subregin_info['Dow_Sub_Reg_Id'] == self.maximum_obs_id-1]
-        outlet_reg_info  = outlet_reg_info.sort_values(by='Max_ACC', ascending=False)
-        outlet_reg_id    = outlet_reg_info['Sub_Reg_ID'].values[0]
+        outlet_reg_info = subregin_info.loc[
+            subregin_info["Dow_Sub_Reg_Id"] == self.maximum_obs_id - 1
+        ]
+        outlet_reg_info = outlet_reg_info.sort_values(by="Max_ACC", ascending=False)
+        outlet_reg_id = outlet_reg_info["Sub_Reg_ID"].values[0]
 
-        mask  = subregin_info['Dow_Sub_Reg_Id'] == self.maximum_obs_id-1
-        mask2 = np.logical_not(subregin_info['Sub_Reg_ID'] == outlet_reg_id)
-        del_row_mask = np.logical_and(mask2,mask)
+        mask = subregin_info["Dow_Sub_Reg_Id"] == self.maximum_obs_id - 1
+        mask2 = np.logical_not(subregin_info["Sub_Reg_ID"] == outlet_reg_id)
+        del_row_mask = np.logical_and(mask2, mask)
 
-        subregin_info = subregin_info.loc[np.logical_not(del_row_mask),:]
-#        subregin_info.drop(subregin_info.index[del_row_mask]) ###
-        subregin_info.to_csv(os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_reg_info.csv'),index = None, header=True)
-
+        subregin_info = subregin_info.loc[np.logical_not(del_row_mask), :]
+        #        subregin_info.drop(subregin_info.index[del_row_mask]) ###
+        subregin_info.to_csv(
+            os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_reg_info.csv"),
+            index=None,
+            header=True,
+        )
 
         ####### save outlet of each subregion
-        grass.run_command('r.mask'  , raster='dem', maskcats = '*',overwrite = True)
+        grass.run_command("r.mask", raster="dem", maskcats="*", overwrite=True)
         temparray = garray.array()
-        temparray[:,:] = Cat_outlets[:,:]
+        temparray[:, :] = Cat_outlets[:, :]
         temparray.write(mapname="Sub_Reg_Outlets", overwrite=True)
-        grass.run_command('r.mapcalc',expression = 'Sub_Reg_Outlets_1 = int(Sub_Reg_Outlets)',overwrite = True)
-        grass.run_command('r.null', map='Sub_Reg_Outlets_1',setnull=-9999)
+        grass.run_command(
+            "r.mapcalc",
+            expression="Sub_Reg_Outlets_1 = int(Sub_Reg_Outlets)",
+            overwrite=True,
+        )
+        grass.run_command("r.null", map="Sub_Reg_Outlets_1", setnull=-9999)
 
         temparray = garray.array()
-        temparray[:,:] = Cat_outlets_Down[:,:]
+        temparray[:, :] = Cat_outlets_Down[:, :]
         temparray.write(mapname="Sub_Reg_Outlets_Down", overwrite=True)
-        grass.run_command('r.mapcalc',expression = 'Sub_Reg_Outlets_Down_1 = int(Sub_Reg_Outlets_Down)',overwrite = True)
-        grass.run_command('r.null', map='Sub_Reg_Outlets_Down_1',setnull=-9999)
+        grass.run_command(
+            "r.mapcalc",
+            expression="Sub_Reg_Outlets_Down_1 = int(Sub_Reg_Outlets_Down)",
+            overwrite=True,
+        )
+        grass.run_command("r.null", map="Sub_Reg_Outlets_Down_1", setnull=-9999)
 
+        grass.run_command(
+            "r.to.vect",
+            input="Sub_Reg_Outlets_1",
+            output="Sub_Reg_Outlets_point",
+            type="point",
+            overwrite=True,
+        )
+        grass.run_command(
+            "v.out.ogr",
+            input="Sub_Reg_Outlets_point",
+            output=os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_Reg_Outlets.shp"),
+            format="ESRI_Shapefile",
+            overwrite=True,
+        )
+        grass.run_command(
+            "r.pack",
+            input="Sub_Reg_Outlets_1",
+            output=self.Path_Sub_reg_outlets_r,
+            overwrite=True,
+        )
+        grass.run_command(
+            "v.pack",
+            input="Sub_Reg_Outlets_point",
+            output=self.Path_Sub_reg_outlets_v,
+            overwrite=True,
+        )
 
-        grass.run_command('r.to.vect',  input = 'Sub_Reg_Outlets_1',output = 'Sub_Reg_Outlets_point', type ='point' ,overwrite = True)
-        grass.run_command('v.out.ogr', input = 'Sub_Reg_Outlets_point',output = os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_Reg_Outlets.shp"),format= 'ESRI_Shapefile',overwrite = True)
-        grass.run_command('r.pack',input = 'Sub_Reg_Outlets_1',    output =self.Path_Sub_reg_outlets_r,overwrite = True)
-        grass.run_command('v.pack',input = 'Sub_Reg_Outlets_point',output =self.Path_Sub_reg_outlets_v,overwrite = True)
-
-
-        grass.run_command('r.to.vect',  input = 'Sub_Reg_Outlets_Down_1',output = 'Sub_Reg_Outlets_Down_point', type ='point' ,overwrite = True)
-        grass.run_command('v.out.ogr', input = 'Sub_Reg_Outlets_Down_point',output = os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_Reg_Outlets_Down.shp"),format= 'ESRI_Shapefile',overwrite = True)
+        grass.run_command(
+            "r.to.vect",
+            input="Sub_Reg_Outlets_Down_1",
+            output="Sub_Reg_Outlets_Down_point",
+            type="point",
+            overwrite=True,
+        )
+        grass.run_command(
+            "v.out.ogr",
+            input="Sub_Reg_Outlets_Down_point",
+            output=os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_Reg_Outlets_Down.shp"),
+            format="ESRI_Shapefile",
+            overwrite=True,
+        )
 
         return
-##################################################################################################
 
-    def Generateinputdata(self, Is_divid_region = -1):
+    ##################################################################################################
+
+    def Generateinputdata(self, Is_divid_region=-1):
         """Preprocessing input dataset
 
         Function that used to project and clip input dataset such as
@@ -1348,188 +2145,345 @@ class LRRT:
         """
 
         QgsApplication.setPrefixPath(self.qgisPP, True)
-        Qgs = QgsApplication([],False)
+        Qgs = QgsApplication([], False)
         Qgs.initQgis()
-        from qgis import processing
         from processing.core.Processing import Processing
         from processing.tools import dataobjects
+        from qgis import processing
 
         feedback = QgsProcessingFeedback()
         Processing.initialize()
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
         context = dataobjects.createContext()
         context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
-        
+
         # defnne cellsize and projection again, in case the work did not run Generatmaskregion
-        r_dem_layer =  qgis_raster_read_raster(processing,self.Path_dem_in) ### load DEM raster as a  QGIS raster object to obtain attribute
-        self.cellSize,self.SpRef_in= qgis_raster_return_raster_properties(processing,r_dem_layer)  ### Get Raster cell size        
-        print("Working with a  sptail reference  :   " , r_dem_layer.crs().description(), "      ", self.SpRef_in )
-        print("The cell cize is   ",self.cellSize)
+        r_dem_layer = qgis_raster_read_raster(
+            processing, self.Path_dem_in
+        )  ### load DEM raster as a  QGIS raster object to obtain attribute
+        self.cellSize, self.SpRef_in = qgis_raster_return_raster_properties(
+            processing, r_dem_layer
+        )  ### Get Raster cell size
+        print(
+            "Working with a  sptail reference  :   ",
+            r_dem_layer.crs().description(),
+            "      ",
+            self.SpRef_in,
+        )
+        print("The cell cize is   ", self.cellSize)
         del r_dem_layer
-        
-        # copy two files to temporary folder, this will be used to load attribute 
-        # in csv file into attribute table of vector file in grass 
-        copyfile(os.path.join(self.RoutingToolPath,'catinfo_riv.csvt'),os.path.join(self.tempfolder,'catinfo_riv.csvt'))
-        copyfile(os.path.join(self.RoutingToolPath,'catinfo_riv.csvt'),os.path.join(self.tempfolder,'catinfo_cat.csvt'))
-        
-        
-        # load grass working location 
+
+        # copy two files to temporary folder, this will be used to load attribute
+        # in csv file into attribute table of vector file in grass
+        copyfile(
+            os.path.join(self.RoutingToolPath, "catinfo_riv.csvt"),
+            os.path.join(self.tempfolder, "catinfo_riv.csvt"),
+        )
+        copyfile(
+            os.path.join(self.RoutingToolPath, "catinfo_riv.csvt"),
+            os.path.join(self.tempfolder, "catinfo_cat.csvt"),
+        )
+
+        # load grass working location
         import grass.script as grass
-        from grass.script import array as garray
-        from grass.script import core as gcore
         import grass.script.setup as gsetup
+        from grass.pygrass.modules import Module
         from grass.pygrass.modules.shortcuts import general as g
         from grass.pygrass.modules.shortcuts import raster as r
-        from grass.pygrass.modules import Module
+        from grass.script import array as garray
+        from grass.script import core as gcore
         from grass_session import Session
 
-        os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
+        os.environ.update(
+            dict(GRASS_COMPRESS_NULLS="1", GRASS_COMPRESSOR="ZSTD", GRASS_VERBOSE="1")
+        )
         PERMANENT = Session()
-        PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
-        
-        # get dem array and get nrows and ncols of the domain 
-        strtemp_array = Return_Raster_As_Array_With_garray(garray,"dem")
+        PERMANENT.open(
+            gisdb=self.grassdb, location=self.grass_location_geo, create_opts=""
+        )
+
+        # get dem array and get nrows and ncols of the domain
+        strtemp_array = Return_Raster_As_Array_With_garray(garray, "dem")
         self.ncols = int(strtemp_array.shape[1])
         self.nrows = int(strtemp_array.shape[0])
         grsregion = gcore.region()
-        
-        # reproject lake polygon, and extract lake polygon for by polygon mask  
-        qgis_vector_reproject_layers(processing,context,INPUT = self.Path_Lakefile_in,TARGET_CRS = self.SpRef_in,OUTPUT = os.path.join(self.tempfolder,'Lake_project.shp'))
-        # lake polygon sometime has error in geometry 
+
+        # reproject lake polygon, and extract lake polygon for by polygon mask
+        qgis_vector_reproject_layers(
+            processing,
+            context,
+            INPUT=self.Path_Lakefile_in,
+            TARGET_CRS=self.SpRef_in,
+            OUTPUT=os.path.join(self.tempfolder, "Lake_project.shp"),
+        )
+        # lake polygon sometime has error in geometry
         try:
-            qgis_vector_ectract_by_location(processing,context,INPUT = os.path.join(self.tempfolder,'Lake_project.shp'),INTERSECT = self.Path_Maskply,OUTPUT = self.Path_allLakeply)
+            qgis_vector_ectract_by_location(
+                processing,
+                context,
+                INPUT=os.path.join(self.tempfolder, "Lake_project.shp"),
+                INTERSECT=self.Path_Maskply,
+                OUTPUT=self.Path_allLakeply,
+            )
         except:
             print("Need fix lake boundary geometry to speed up")
-            qgis_vector_fix_geometries(processing,context,INPUT = os.path.join(self.tempfolder,'Lake_project.shp'),OUTPUT = self.Path_allLakeply_Temp)
-            qgis_vector_ectract_by_location(processing,context,INPUT = self.Path_allLakeply_Temp,INTERSECT = self.Path_Maskply,OUTPUT = self.Path_allLakeply)
-        
-        # obtain lake boundary lines 
-        qgis_vector_polygon_stro_lines(processing,context,INPUT = self.Path_allLakeply,OUTPUT = os.path.join(self.tempfolder,'Hylake_boundary.shp'))
-        # load lake polygon and bound polyline into grass work env 
-        grass_raster_v_import(grass,input_path = self.Path_allLakeply,output_vector_nm = 'Hylake')
-        grass_raster_v_import(grass,input_path = os.path.join(self.tempfolder,'Hylake_boundary.shp'),output_vector_nm = 'Hylake_boundary')
-        # rasterize lake polygon and lake boundary polyline 
-        qgis_raster_gdal_rasterize(processing,context,INPUT = self.Path_allLakeply,Column_nm = 'Hylak_id',cellsize = self.cellSize,
-                                   w = grsregion['w'],s = grsregion['s'],e = grsregion['e'],n = grsregion['n'],OUTPUT = self.Path_allLakeRas)
-        qgis_raster_gdal_rasterize(processing,context,INPUT =  os.path.join(self.tempfolder,'Hylake_boundary.shp'),Column_nm = 'Hylak_id',cellsize = self.cellSize,
-                                   w = grsregion['w'],s = grsregion['s'],e = grsregion['e'],n = grsregion['n'],OUTPUT = os.path.join(self.tempfolder,'Hylake_boundary.tif'))
+            qgis_vector_fix_geometries(
+                processing,
+                context,
+                INPUT=os.path.join(self.tempfolder, "Lake_project.shp"),
+                OUTPUT=self.Path_allLakeply_Temp,
+            )
+            qgis_vector_ectract_by_location(
+                processing,
+                context,
+                INPUT=self.Path_allLakeply_Temp,
+                INTERSECT=self.Path_Maskply,
+                OUTPUT=self.Path_allLakeply,
+            )
 
-        # laod lake raster and lake boundary raster into grass env 
-        grass_raster_r_in_gdal(grass,raster_path = self.Path_allLakeRas,output_nm = 'alllakeraster_in')
-        grass_raster_r_mapcalc(grass,expression = 'alllake = int(alllakeraster_in)')
-        grass_raster_setnull(grass,raster_nm = 'alllake',null_values = [-9999],create_new_raster = False)
-        grass_raster_r_in_gdal(grass,raster_path =os.path.join(self.tempfolder,'Hylake_boundary.tif'),output_nm = 'Lake_Bound')
-        grass_raster_r_mapcalc(grass,expression = 'Lake_Bound = int(Lake_Bound)')
-        grass_raster_setnull(grass,raster_nm = 'Lake_Bound',null_values = [-9999],create_new_raster = False)
+        # obtain lake boundary lines
+        qgis_vector_polygon_stro_lines(
+            processing,
+            context,
+            INPUT=self.Path_allLakeply,
+            OUTPUT=os.path.join(self.tempfolder, "Hylake_boundary.shp"),
+        )
+        # load lake polygon and bound polyline into grass work env
+        grass_raster_v_import(
+            grass, input_path=self.Path_allLakeply, output_vector_nm="Hylake"
+        )
+        grass_raster_v_import(
+            grass,
+            input_path=os.path.join(self.tempfolder, "Hylake_boundary.shp"),
+            output_vector_nm="Hylake_boundary",
+        )
+        # rasterize lake polygon and lake boundary polyline
+        qgis_raster_gdal_rasterize(
+            processing,
+            context,
+            INPUT=self.Path_allLakeply,
+            Column_nm="Hylak_id",
+            cellsize=self.cellSize,
+            w=grsregion["w"],
+            s=grsregion["s"],
+            e=grsregion["e"],
+            n=grsregion["n"],
+            OUTPUT=self.Path_allLakeRas,
+        )
+        qgis_raster_gdal_rasterize(
+            processing,
+            context,
+            INPUT=os.path.join(self.tempfolder, "Hylake_boundary.shp"),
+            Column_nm="Hylak_id",
+            cellsize=self.cellSize,
+            w=grsregion["w"],
+            s=grsregion["s"],
+            e=grsregion["e"],
+            n=grsregion["n"],
+            OUTPUT=os.path.join(self.tempfolder, "Hylake_boundary.tif"),
+        )
 
-        
-        # generate flow accumulation dataset 
-        # 1, can be unpacked from subregion flow accumulation data 
-        # 2, can be drived from flwo direction data, if flow direction data is provided 
-        # 3, can be create from dem 
-        ####### 
-        
-        # load from subregion ddata   
-        if self.Is_Sub_Region >0: #### use inputs from whole watershed and
-            
-            #unpack subregion flow accumulation and flow direction data 
-            grass_raster_r_unpack(grass,input = self.Path_Sub_reg_arcgis_dir,output = 'dir_Arcgis1')
-            grass_raster_r_unpack(grass,input = self.Path_Sub_reg_grass_acc,output = 'grass_acc1')
-            grass_raster_r_mapcalc(grass,expression = "dir_Arcgis  = dir_Arcgis1")
-            # calcuate flow direction in grass format 
-            grass_raster_r_reclass(grass,input = 'dir_Arcgis',output = 'dir_grass',rules = os.path.join(self.RoutingToolPath,'Arcgis2GrassDIR.txt'))
-            grass_raster_r_mapcalc(grass,expression = "acc_grass  = grass_acc1")
-            grass_raster_r_mapcalc(grass,expression = "acc_grass2  = acc_grass")
-            
-        # not come from prepared subregion dataset 
-        # either from input flow direction or drived from dem 
+        # laod lake raster and lake boundary raster into grass env
+        grass_raster_r_in_gdal(
+            grass, raster_path=self.Path_allLakeRas, output_nm="alllakeraster_in"
+        )
+        grass_raster_r_mapcalc(grass, expression="alllake = int(alllakeraster_in)")
+        grass_raster_setnull(
+            grass, raster_nm="alllake", null_values=[-9999], create_new_raster=False
+        )
+        grass_raster_r_in_gdal(
+            grass,
+            raster_path=os.path.join(self.tempfolder, "Hylake_boundary.tif"),
+            output_nm="Lake_Bound",
+        )
+        grass_raster_r_mapcalc(grass, expression="Lake_Bound = int(Lake_Bound)")
+        grass_raster_setnull(
+            grass, raster_nm="Lake_Bound", null_values=[-9999], create_new_raster=False
+        )
+
+        # generate flow accumulation dataset
+        # 1, can be unpacked from subregion flow accumulation data
+        # 2, can be drived from flwo direction data, if flow direction data is provided
+        # 3, can be create from dem
+        #######
+
+        # load from subregion ddata
+        if self.Is_Sub_Region > 0:  #### use inputs from whole watershed and
+
+            # unpack subregion flow accumulation and flow direction data
+            grass_raster_r_unpack(
+                grass, input=self.Path_Sub_reg_arcgis_dir, output="dir_Arcgis1"
+            )
+            grass_raster_r_unpack(
+                grass, input=self.Path_Sub_reg_grass_acc, output="grass_acc1"
+            )
+            grass_raster_r_mapcalc(grass, expression="dir_Arcgis  = dir_Arcgis1")
+            # calcuate flow direction in grass format
+            grass_raster_r_reclass(
+                grass,
+                input="dir_Arcgis",
+                output="dir_grass",
+                rules=os.path.join(self.RoutingToolPath, "Arcgis2GrassDIR.txt"),
+            )
+            grass_raster_r_mapcalc(grass, expression="acc_grass  = grass_acc1")
+            grass_raster_r_mapcalc(grass, expression="acc_grass2  = acc_grass")
+
+        # not come from prepared subregion dataset
+        # either from input flow direction or drived from dem
         else:
-            # did not provide flow direction dataset, generated from dem 
-            if self.Path_dir_in == '#':
-                
-                # generate flow accumulation dataset from dem, ensure all acc value > 0 
-                grass_raster_r_watershed(grass,elevation = 'dem',drainage = 'dir_temp',accumulation = 'acc_grass2',flags = 'sa')
-                grass_raster_r_mapcalc(grass,expression = "acc_grass  = abs(acc_grass2@PERMANENT)")
-        
-            # the flow direction data is provided 
+            # did not provide flow direction dataset, generated from dem
+            if self.Path_dir_in == "#":
+
+                # generate flow accumulation dataset from dem, ensure all acc value > 0
+                grass_raster_r_watershed(
+                    grass,
+                    elevation="dem",
+                    drainage="dir_temp",
+                    accumulation="acc_grass2",
+                    flags="sa",
+                )
+                grass_raster_r_mapcalc(
+                    grass, expression="acc_grass  = abs(acc_grass2@PERMANENT)"
+                )
+
+            # the flow direction data is provided
             else:
-                print("#####################Using provided flow direction dataset####################")
-                # load flow dirction dataset 
-                grass_raster_r_in_gdal(grass,raster_path =self.Path_dir_in,output_nm = 'dir_in_ArcGis')
-                # reclassify it into grass flow direction data 
-                grass_raster_r_reclass(grass,input = 'dir_in_ArcGis',output = 'dir_in_Grass',rules = os.path.join(self.RoutingToolPath,'Arcgis2GrassDIR.txt'))
-                # calcuate flow accumulation from provided dir 
-                grass_raster_r_accumulate(grass,direction = 'dir_in_Grass',accumulation = 'acc_grass',flags = 'r')
-                
-        # if the toolbox is runing to divide domain into subregions, stop at here 
+                print(
+                    "#####################Using provided flow direction dataset####################"
+                )
+                # load flow dirction dataset
+                grass_raster_r_in_gdal(
+                    grass, raster_path=self.Path_dir_in, output_nm="dir_in_ArcGis"
+                )
+                # reclassify it into grass flow direction data
+                grass_raster_r_reclass(
+                    grass,
+                    input="dir_in_ArcGis",
+                    output="dir_in_Grass",
+                    rules=os.path.join(self.RoutingToolPath, "Arcgis2GrassDIR.txt"),
+                )
+                # calcuate flow accumulation from provided dir
+                grass_raster_r_accumulate(
+                    grass, direction="dir_in_Grass", accumulation="acc_grass", flags="r"
+                )
+
+        # if the toolbox is runing to divide domain into subregions, stop at here
         if Is_divid_region > 0:
-            print("********************Generate inputs dataset Done********************")
+            print(
+                "********************Generate inputs dataset Done********************"
+            )
             Qgs.exit()
             PERMANENT.close()
             return
 
-        
-        # if bankfull width and depth polyline is provided reproject and extact 
-        # by polygon mask 
-        if self.Path_WiDep_in != '#':
-            # reproject width and depth polyline, and extract width and depth polyline for by polygon mask  
-            qgis_vector_reproject_layers(processing,context,INPUT = self.Path_WiDep_in,TARGET_CRS = self.SpRef_in,OUTPUT = os.path.join(self.tempfolder,'WiDep_project.shp'))
-            qgis_vector_ectract_by_location(processing,context,INPUT = os.path.join(self.tempfolder,'WiDep_project.shp'),INTERSECT = self.Path_Maskply,OUTPUT = self.Path_WidDepLine)
-            # import extracted vector into grass working env 
-            grass_raster_v_import(grass,input_path = self.Path_WidDepLine,output_vector_nm = 'WidDep')
+        # if bankfull width and depth polyline is provided reproject and extact
+        # by polygon mask
+        if self.Path_WiDep_in != "#":
+            # reproject width and depth polyline, and extract width and depth polyline for by polygon mask
+            qgis_vector_reproject_layers(
+                processing,
+                context,
+                INPUT=self.Path_WiDep_in,
+                TARGET_CRS=self.SpRef_in,
+                OUTPUT=os.path.join(self.tempfolder, "WiDep_project.shp"),
+            )
+            qgis_vector_ectract_by_location(
+                processing,
+                context,
+                INPUT=os.path.join(self.tempfolder, "WiDep_project.shp"),
+                INTERSECT=self.Path_Maskply,
+                OUTPUT=self.Path_WidDepLine,
+            )
+            # import extracted vector into grass working env
+            grass_raster_v_import(
+                grass, input_path=self.Path_WidDepLine, output_vector_nm="WidDep"
+            )
 
-        
-        # if observation point shpfile is provided 
-        if self.Path_obspoint_in != '#':
-            qgis_vector_reproject_layers(processing,context,INPUT = self.Path_obspoint_in,TARGET_CRS = self.SpRef_in,OUTPUT = os.path.join(self.tempfolder,'Obspoint_project.shp'))
-            qgis_vector_ectract_by_location(processing,context,INPUT = os.path.join(self.tempfolder,'Obspoint_project.shp'),INTERSECT = self.Path_Maskply,OUTPUT = self.Path_ObsPoint)
+        # if observation point shpfile is provided
+        if self.Path_obspoint_in != "#":
+            qgis_vector_reproject_layers(
+                processing,
+                context,
+                INPUT=self.Path_obspoint_in,
+                TARGET_CRS=self.SpRef_in,
+                OUTPUT=os.path.join(self.tempfolder, "Obspoint_project.shp"),
+            )
+            qgis_vector_ectract_by_location(
+                processing,
+                context,
+                INPUT=os.path.join(self.tempfolder, "Obspoint_project.shp"),
+                INTERSECT=self.Path_Maskply,
+                OUTPUT=self.Path_ObsPoint,
+            )
 
-        # if landuse raster is provided 
-        if self.Path_Landuseinfo_in != '#':
-            # copy landuse manning look up table to working folder 
+        # if landuse raster is provided
+        if self.Path_Landuseinfo_in != "#":
+            # copy landuse manning look up table to working folder
             copyfile(self.Path_Landuseinfo_in, self.Path_Landuseinfo)
-            # viturally  landuse dataset 
-            grass_raster_r_external(grass,input = self.Path_Landuse_in,output = 'landuse_in')
-            # clip raster with mask in grass env 
-            grass_raster_r_clip(grass,input = 'landuse_in',output = 'landuse')
+            # viturally  landuse dataset
+            grass_raster_r_external(
+                grass, input=self.Path_Landuse_in, output="landuse_in"
+            )
+            # clip raster with mask in grass env
+            grass_raster_r_clip(grass, input="landuse_in", output="landuse")
             # reclass landuse to manning's coefficient value *1000
-            grass_raster_r_reclass(grass,input = 'landuse',output = 'landuse_Manning1',rules = self.Path_Landuseinfo)
-            # calcuate real manning's coefficient for each landuse grid 
-            grass_raster_r_mapcalc(grass,expression = "landuse_Manning = float(landuse_Manning1)/1000")
+            grass_raster_r_reclass(
+                grass,
+                input="landuse",
+                output="landuse_Manning1",
+                rules=self.Path_Landuseinfo,
+            )
+            # calcuate real manning's coefficient for each landuse grid
+            grass_raster_r_mapcalc(
+                grass, expression="landuse_Manning = float(landuse_Manning1)/1000"
+            )
 
         # if no landuse provided, create a raster with -9999.
         else:
-            grass_raster_create_raster_empty_raster(garray,raster_nm = "landuse_Manning")
+            grass_raster_create_raster_empty_raster(garray, raster_nm="landuse_Manning")
 
-        
         # if bankfull width and depth polyline is provided
-        if self.Path_WiDep_in != '#':
-            grass_raster_v_to_raster(grass,input = 'WidDep',output = 'width',column = 'WIDTH')
-            grass_raster_v_to_raster(grass,input = 'WidDep',output = 'depth',column = 'DEPTH')
-            grass_raster_v_to_raster(grass,input = 'WidDep',output = 'qmean',column = 'Q_Mean')
-            grass_raster_v_to_raster(grass,input = 'WidDep',output = 'up_area',column = 'UP_AREA')
-            grass_raster_v_to_raster(grass,input = 'WidDep',output = 'SubId_WidDep',column = 'HYBAS_ID')  
-        # if not exist create an exmpty raster               
+        if self.Path_WiDep_in != "#":
+            grass_raster_v_to_raster(
+                grass, input="WidDep", output="width", column="WIDTH"
+            )
+            grass_raster_v_to_raster(
+                grass, input="WidDep", output="depth", column="DEPTH"
+            )
+            grass_raster_v_to_raster(
+                grass, input="WidDep", output="qmean", column="Q_Mean"
+            )
+            grass_raster_v_to_raster(
+                grass, input="WidDep", output="up_area", column="UP_AREA"
+            )
+            grass_raster_v_to_raster(
+                grass, input="WidDep", output="SubId_WidDep", column="HYBAS_ID"
+            )
+        # if not exist create an exmpty raster
         else:
-            grass_raster_create_raster_empty_raster(garray,raster_nm = "width")
-            grass_raster_create_raster_empty_raster(garray,raster_nm = "depth")
-            grass_raster_create_raster_empty_raster(garray,raster_nm = "qmean")
-            grass_raster_create_raster_empty_raster(garray,raster_nm = "up_area")
-            grass_raster_create_raster_empty_raster(garray,raster_nm = "SubId_WidDep")
-        
-            
-        if self.Path_obspoint_in != '#':
-            grass_raster_v_import(grass,input_path = self.Path_ObsPoint,output_vector_nm = 'obspoint')
+            grass_raster_create_raster_empty_raster(garray, raster_nm="width")
+            grass_raster_create_raster_empty_raster(garray, raster_nm="depth")
+            grass_raster_create_raster_empty_raster(garray, raster_nm="qmean")
+            grass_raster_create_raster_empty_raster(garray, raster_nm="up_area")
+            grass_raster_create_raster_empty_raster(garray, raster_nm="SubId_WidDep")
+
+        if self.Path_obspoint_in != "#":
+            grass_raster_v_import(
+                grass, input_path=self.Path_ObsPoint, output_vector_nm="obspoint"
+            )
 
         print("********************Generate inputs dataset Done********************")
         Qgs.exit()
         PERMANENT.close()
         return
-#####################################################################################################
 
-####################################################################################################3
+    #####################################################################################################
 
-    def WatershedDiscretizationToolset(self,accthresold = 100,Is_divid_region = -1,max_memroy = 1024,Search_Radius = 100):
+    ####################################################################################################3
+
+    def WatershedDiscretizationToolset(
+        self, accthresold=100, Is_divid_region=-1, max_memroy=1024, Search_Radius=100
+    ):
         """Generate a subbasin delineation without considering lake
 
         Function that used to Generate a subbasin delineation and river
@@ -1592,128 +2546,259 @@ class LRRT:
         """
 
         import grass.script as grass
-        from grass.script import array as garray
-        from grass.script import core as gcore
         import grass.script.setup as gsetup
+        from grass.pygrass.modules import Module
         from grass.pygrass.modules.shortcuts import general as g
         from grass.pygrass.modules.shortcuts import raster as r
-        from grass.pygrass.modules import Module
+        from grass.script import array as garray
+        from grass.script import core as gcore
         from grass_session import Session
 
-        os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='2'))
+        os.environ.update(
+            dict(GRASS_COMPRESS_NULLS="1", GRASS_COMPRESSOR="ZSTD", GRASS_VERBOSE="2")
+        )
         PERMANENT = Session()
-        PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
+        PERMANENT.open(
+            gisdb=self.grassdb, location=self.grass_location_geo, create_opts=""
+        )
         con = sqlite3.connect(self.sqlpath)
         grsregion = gcore.region()
 
-       # first generate streams and determine flow direction
-       # four options exist here
-       # 1) flow direction and streams will derived from dem and flow accumulation data  
-       # 2) user has provide a flow direction data, and user provided flow direction data will be used 
-       # 3) if subregion flow direction and stream data is provided , then subregion flow direction and stream 
-       #    data is directly used. 
-       
-        # using predefined subregion stream network 
-        if self.Is_Sub_Region > 0:
-            # unpack  river network vector 
-            grass_raster_v_unpack(grass,input = self.Path_Sub_reg_grass_str_v,output = 'str_grass_v')
-            # unpack  river network raster 
-            grass_raster_r_unpack(grass,input = self.Path_Sub_reg_grass_str_r,output = 'str_grass_r1')
-            # clip river network with mask 
-            grass_raster_r_mapcalc(grass,expression = "str_grass_r = str_grass_r1") 
-            
-        # using flow direction data to define stream network 
-        elif self.Path_dir_in != '#':
-            # generate stream and flow direction 
-            grass_raster_r_stream_extract(grass,elevation = 'dem',accumulation = 'acc_grass',threshold = int(accthresold),
-                                          stream_raster = 'str_grass_r',stream_vector ='str_grass_v', direction = 'dir_grass',memory = max_memroy)
-            # change flow direction to provided flow direction dataset 
-            grass_raster_r_mapcalc(grass,expression = "dir_grass = dir_in_Grass")                                            
-            # create a arcgis flow direction 
-            grass_raster_r_reclass(grass,input = 'dir_grass',output = 'dir_Arcgis',rules = os.path.join(self.RoutingToolPath,'Grass2ArcgisDIR.txt')) 
-        
-        # using dem and flow accumulant threshold to define streams 
-        else:
-            # generate stream and flow direction 
-            grass_raster_r_stream_extract(grass,elevation = 'dem',accumulation = 'acc_grass',threshold = int(accthresold),
-                                          stream_raster = 'str_grass_r',stream_vector ='str_grass_v', direction = 'dir_grass',memory = max_memroy)
-            # create a arcgis flow direction 
-            grass_raster_r_reclass(grass,input = 'dir_grass',output = 'dir_Arcgis',rules = os.path.join(self.RoutingToolPath,'Grass2ArcgisDIR.txt'))                                           
+        # first generate streams and determine flow direction
+        # four options exist here
+        # 1) flow direction and streams will derived from dem and flow accumulation data
+        # 2) user has provide a flow direction data, and user provided flow direction data will be used
+        # 3) if subregion flow direction and stream data is provided , then subregion flow direction and stream
+        #    data is directly used.
 
-        
-        grass_raster_r_to_vect(grass,input = 'str_grass_r',output = 'str',type = 'line')
-            
+        # using predefined subregion stream network
+        if self.Is_Sub_Region > 0:
+            # unpack  river network vector
+            grass_raster_v_unpack(
+                grass, input=self.Path_Sub_reg_grass_str_v, output="str_grass_v"
+            )
+            # unpack  river network raster
+            grass_raster_r_unpack(
+                grass, input=self.Path_Sub_reg_grass_str_r, output="str_grass_r1"
+            )
+            # clip river network with mask
+            grass_raster_r_mapcalc(grass, expression="str_grass_r = str_grass_r1")
+
+        # using flow direction data to define stream network
+        elif self.Path_dir_in != "#":
+            # generate stream and flow direction
+            grass_raster_r_stream_extract(
+                grass,
+                elevation="dem",
+                accumulation="acc_grass",
+                threshold=int(accthresold),
+                stream_raster="str_grass_r",
+                stream_vector="str_grass_v",
+                direction="dir_grass",
+                memory=max_memroy,
+            )
+            # change flow direction to provided flow direction dataset
+            grass_raster_r_mapcalc(grass, expression="dir_grass = dir_in_Grass")
+            # create a arcgis flow direction
+            grass_raster_r_reclass(
+                grass,
+                input="dir_grass",
+                output="dir_Arcgis",
+                rules=os.path.join(self.RoutingToolPath, "Grass2ArcgisDIR.txt"),
+            )
+
+        # using dem and flow accumulant threshold to define streams
+        else:
+            # generate stream and flow direction
+            grass_raster_r_stream_extract(
+                grass,
+                elevation="dem",
+                accumulation="acc_grass",
+                threshold=int(accthresold),
+                stream_raster="str_grass_r",
+                stream_vector="str_grass_v",
+                direction="dir_grass",
+                memory=max_memroy,
+            )
+            # create a arcgis flow direction
+            grass_raster_r_reclass(
+                grass,
+                input="dir_grass",
+                output="dir_Arcgis",
+                rules=os.path.join(self.RoutingToolPath, "Grass2ArcgisDIR.txt"),
+            )
+
+        grass_raster_r_to_vect(grass, input="str_grass_r", output="str", type="line")
+
         # generate catchment without lakes based on 'str_grass_r'
-        grass_raster_r_stream_basins(grass,direction = 'dir_grass',stream = 'str_grass_r',basins = 'cat1',memory = max_memroy)
-        
-        # define routing structure for these catchment 
-        Routing_info = Generate_Routing_structure(grass,con,cat = 'cat1',acc = 'acc_grass',str='str_grass_r')
-        # 
+        grass_raster_r_stream_basins(
+            grass,
+            direction="dir_grass",
+            stream="str_grass_r",
+            basins="cat1",
+            memory=max_memroy,
+        )
+
+        # define routing structure for these catchment
+        Routing_info = Generate_Routing_structure(
+            grass, con, cat="cat1", acc="acc_grass", str="str_grass_r"
+        )
+        #
         Routing_info = Routing_info.fillna(-1)
-        
+
         # Define connected and non connected lakes and
-        # identify which str make certain lake have two outlet 
-        Remove_Str = DefineConnected_Non_Connected_Lakes(self,grass,con,garray,Routing_info,str_r = 'str_grass_r',Lake_r = 'alllake')
+        # identify which str make certain lake have two outlet
+        Remove_Str = DefineConnected_Non_Connected_Lakes(
+            self,
+            grass,
+            con,
+            garray,
+            Routing_info,
+            str_r="str_grass_r",
+            Lake_r="alllake",
+        )
         self.Remove_Str = Remove_Str
-        
-        # Define a mask to remove catchment that make lake has two outlet        
-        grass.run_command('g.copy',rast = ('cat1','cat_use_default_acc'),overwrite = True)
+
+        # Define a mask to remove catchment that make lake has two outlet
+        grass.run_command(
+            "g.copy", rast=("cat1", "cat_use_default_acc"), overwrite=True
+        )
         if len(Remove_Str) > 0:
-            grass.run_command('r.null',map='cat_use_default_acc', setnull = Remove_Str,overwrite = True)
-        
-        # if the function is called in a procedure to divide watershed into subregion 
-        # then return from here 
+            grass.run_command(
+                "r.null", map="cat_use_default_acc", setnull=Remove_Str, overwrite=True
+            )
+
+        # if the function is called in a procedure to divide watershed into subregion
+        # then return from here
         if Is_divid_region > 0:
             return
-        
+
         # export rasters for debug
         if self.Debug:
-            grass_raster_r_out_gdal(grass,input_nm = 'cat1',output = os.path.join(self.tempfolder,'cat1.tif'),format= 'GTiff')
-            grass_raster_r_out_gdal(grass,input_nm = 'str_grass_r',output = os.path.join(self.tempfolder,'str_grass_r.tif'),format= 'GTiff')
-            grass_raster_r_out_gdal(grass,input_nm = 'dir_Arcgis',output = os.path.join(self.tempfolder,'dir_Arcgis.tif'),format= 'GTiff')
-            grass_raster_r_out_gdal(grass,input_nm = 'acc_grass',output = os.path.join(self.tempfolder,'acc_grass.tif'),format= 'GTiff')
+            grass_raster_r_out_gdal(
+                grass,
+                input_nm="cat1",
+                output=os.path.join(self.tempfolder, "cat1.tif"),
+                format="GTiff",
+            )
+            grass_raster_r_out_gdal(
+                grass,
+                input_nm="str_grass_r",
+                output=os.path.join(self.tempfolder, "str_grass_r.tif"),
+                format="GTiff",
+            )
+            grass_raster_r_out_gdal(
+                grass,
+                input_nm="dir_Arcgis",
+                output=os.path.join(self.tempfolder, "dir_Arcgis.tif"),
+                format="GTiff",
+            )
+            grass_raster_r_out_gdal(
+                grass,
+                input_nm="acc_grass",
+                output=os.path.join(self.tempfolder, "acc_grass.tif"),
+                format="GTiff",
+            )
 
-        # if obervation file is provided, snap observation point to closet river 
-        # segment, and transfer it into raster 
-        if self.Path_obspoint_in != '#':
-            # snap input observation point to river network 
-            grass_raster_r_stream_snap(grass,input = 'obspoint',output = 'obspoint_snap',stream_rast = 'str_grass_r',accumulation = 'acc_grass',
-                                      radius = Search_Radius,memory = max_memroy)
-            
-            # obtain use Obs_ID as observation point raster value                       
-            grass_raster_v_to_raster(grass,input = 'obspoint_snap',output = 'obspoint_snap',column = '#',use = 'cat')
-            grass_raster_r_to_vect(grass, input = 'obspoint_snap' ,output = 'obspoint_snap_r2v',type = 'point',flags = 'v')
-            grass_raster_v_db_join(grass,map = 'obspoint_snap_r2v',column = 'cat',other_table = 'obspoint',other_column = 'cat')
-            grass_raster_v_to_raster(grass,input = 'obspoint_snap_r2v',output = 'obs1',column = 'Obs_ID',use = 'attr')
-       # if no obervation point is provided             
+        # if obervation file is provided, snap observation point to closet river
+        # segment, and transfer it into raster
+        if self.Path_obspoint_in != "#":
+            # snap input observation point to river network
+            grass_raster_r_stream_snap(
+                grass,
+                input="obspoint",
+                output="obspoint_snap",
+                stream_rast="str_grass_r",
+                accumulation="acc_grass",
+                radius=Search_Radius,
+                memory=max_memroy,
+            )
+
+            # obtain use Obs_ID as observation point raster value
+            grass_raster_v_to_raster(
+                grass,
+                input="obspoint_snap",
+                output="obspoint_snap",
+                column="#",
+                use="cat",
+            )
+            grass_raster_r_to_vect(
+                grass,
+                input="obspoint_snap",
+                output="obspoint_snap_r2v",
+                type="point",
+                flags="v",
+            )
+            grass_raster_v_db_join(
+                grass,
+                map="obspoint_snap_r2v",
+                column="cat",
+                other_table="obspoint",
+                other_column="cat",
+            )
+            grass_raster_v_to_raster(
+                grass,
+                input="obspoint_snap_r2v",
+                output="obs1",
+                column="Obs_ID",
+                use="attr",
+            )
+        # if no obervation point is provided
         else:
-            grass_raster_create_raster_empty_raster(garray,raster_nm = "obs1")
-        
-        # if toolbox using subregion dataset, then subregion outlet should also 
-        # be added into obs point raster 
-        
+            grass_raster_create_raster_empty_raster(garray, raster_nm="obs1")
+
+        # if toolbox using subregion dataset, then subregion outlet should also
+        # be added into obs point raster
+
         if self.Is_Sub_Region > 0:
-            # unpack subregion outlet point 
-            grass_raster_v_unpack(grass,input = self.Path_Sub_reg_outlets_v,output = 'Sub_reg_outlets_pt')
-            # convert it to raster 
-            grass_raster_v_to_raster(grass,input = 'Sub_reg_outlets_pt',output = 'Sub_reg_outlets',column = 'value',use = 'attr')
-            # added into observation raster point 
-            grass_raster_r_mapcalc(grass,expression = "obs = if(isnull(Sub_reg_outlets),obs1,Sub_reg_outlets)")
-            # set -9999 to null  
-            grass_raster_setnull(grass,raster_nm = 'obs',null_values = [-9999,0],create_new_raster = False,new_raster_nm = '#')
-             
-        # if not working with sub region data, then observation point only come form 
-        # user provided observation point     
+            # unpack subregion outlet point
+            grass_raster_v_unpack(
+                grass, input=self.Path_Sub_reg_outlets_v, output="Sub_reg_outlets_pt"
+            )
+            # convert it to raster
+            grass_raster_v_to_raster(
+                grass,
+                input="Sub_reg_outlets_pt",
+                output="Sub_reg_outlets",
+                column="value",
+                use="attr",
+            )
+            # added into observation raster point
+            grass_raster_r_mapcalc(
+                grass,
+                expression="obs = if(isnull(Sub_reg_outlets),obs1,Sub_reg_outlets)",
+            )
+            # set -9999 to null
+            grass_raster_setnull(
+                grass,
+                raster_nm="obs",
+                null_values=[-9999, 0],
+                create_new_raster=False,
+                new_raster_nm="#",
+            )
+
+        # if not working with sub region data, then observation point only come form
+        # user provided observation point
         else:
-            grass_raster_r_mapcalc(grass,expression = "obs = obs1")
-        print("********************Generate catchment without lake done********************")
+            grass_raster_r_mapcalc(grass, expression="obs = obs1")
+        print(
+            "********************Generate catchment without lake done********************"
+        )
         PERMANENT.close()
         return
-###########################################################################################3
 
-############################################################################################
-    def AutomatedWatershedsandLakesFilterToolset(self,Thre_Lake_Area_Connect = 0,Thre_Lake_Area_nonConnect = -1,MaximumLakegrids = 99999999999999,Pec_Grid_outlier = 1.0,Is_divid_region = -1,
-    max_memroy = 1024):
+    ###########################################################################################3
+
+    ############################################################################################
+    def AutomatedWatershedsandLakesFilterToolset(
+        self,
+        Thre_Lake_Area_Connect=0,
+        Thre_Lake_Area_nonConnect=-1,
+        MaximumLakegrids=99999999999999,
+        Pec_Grid_outlier=1.0,
+        Is_divid_region=-1,
+        max_memroy=1024,
+    ):
 
         """Add lake inflow and outflow points as new subabsin outlet
 
@@ -1782,244 +2867,489 @@ class LRRT:
 
         tempinfo = Dbf5(self.Path_allLakeply[:-3] + "dbf")
         allLakinfo = tempinfo.to_dataframe()
-        allLakinfo.to_csv(self.Path_alllakeinfoinfo,index = None, header=True)
+        allLakinfo.to_csv(self.Path_alllakeinfoinfo, index=None, header=True)
 
         import grass.script as grass
-        from grass.script import array as garray
         import grass.script.setup as gsetup
+        from grass.pygrass.modules import Module
         from grass.pygrass.modules.shortcuts import general as g
         from grass.pygrass.modules.shortcuts import raster as r
-        from grass.pygrass.modules import Module
+        from grass.script import array as garray
         from grass_session import Session
 
-        os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
+        os.environ.update(
+            dict(GRASS_COMPRESS_NULLS="1", GRASS_COMPRESSOR="ZSTD", GRASS_VERBOSE="1")
+        )
         PERMANENT = Session()
-        PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
+        PERMANENT.open(
+            gisdb=self.grassdb, location=self.grass_location_geo, create_opts=""
+        )
         con = sqlite3.connect(self.sqlpath)
 
-        VolThreshold =Thre_Lake_Area_Connect ### lake area thresthold for connected lakes
-        NonConLThres = Thre_Lake_Area_nonConnect ### lake area thresthold for non connected lakes
+        VolThreshold = (
+            Thre_Lake_Area_Connect  ### lake area thresthold for connected lakes
+        )
+        NonConLThres = (
+            Thre_Lake_Area_nonConnect  ### lake area thresthold for non connected lakes
+        )
         nlakegrids = MaximumLakegrids
 
         temparray = garray.array()
-        temparray[:,:] = -9999
-#        temparray.write(mapname="tempraster", overwrite=True)
+        temparray[:, :] = -9999
+        #        temparray.write(mapname="tempraster", overwrite=True)
         self.ncols = int(temparray.shape[1])
         self.nrows = int(temparray.shape[0])
-##### begin processing
+        ##### begin processing
 
-        blid  = 1000000    #### begining of new lake id
-        bcid  = 1          ## begining of new cat id of hydrosheds
-        bsid  = 2000000    ## begining of new cat id of in inflow of lakes
+        blid = 1000000  #### begining of new lake id
+        bcid = 1  ## begining of new cat id of hydrosheds
+        bsid = 2000000  ## begining of new cat id of in inflow of lakes
         blid2 = 3000000
-        boid  = 4000000
+        boid = 4000000
         Remove_Str = self.Remove_Str
         noncnlake_arr = garray.array(mapname="Nonconnect_Lake")
-        conlake_arr   = garray.array(mapname="Connect_Lake")
-        cat1_arr      = garray.array(mapname="cat1")
-        str_array     = garray.array(mapname="str_grass_r")
-        acc_array     = np.absolute(garray.array(mapname="acc_grass"))
-        dir_array     = garray.array(mapname="dir_Arcgis")
-        LakeBD_array  = garray.array(mapname="Lake_Bound")
+        conlake_arr = garray.array(mapname="Connect_Lake")
+        cat1_arr = garray.array(mapname="cat1")
+        str_array = garray.array(mapname="str_grass_r")
+        acc_array = np.absolute(garray.array(mapname="acc_grass"))
+        dir_array = garray.array(mapname="dir_Arcgis")
+        LakeBD_array = garray.array(mapname="Lake_Bound")
 
-        if self.Path_obspoint_in == '#':
-            obs_array     = temparray[:,:]
+        if self.Path_obspoint_in == "#":
+            obs_array = temparray[:, :]
         else:
-            obs_array     = garray.array(mapname="obs")
+            obs_array = garray.array(mapname="obs")
 
-###### generate selected lakes
-        Lakeid_lt_CL_Remove  = allLakinfo.loc[allLakinfo['Lake_area'] < Thre_Lake_Area_Connect]['Hylak_id'].values
-        Lakeid_lt_NCL_Remove = allLakinfo.loc[allLakinfo['Lake_area'] < Thre_Lake_Area_nonConnect]['Hylak_id'].values
+        ###### generate selected lakes
+        Lakeid_lt_CL_Remove = allLakinfo.loc[
+            allLakinfo["Lake_area"] < Thre_Lake_Area_Connect
+        ]["Hylak_id"].values
+        Lakeid_lt_NCL_Remove = allLakinfo.loc[
+            allLakinfo["Lake_area"] < Thre_Lake_Area_nonConnect
+        ]["Hylak_id"].values
         Lakeid_lt_All_Remove = Lakeid_lt_NCL_Remove + Lakeid_lt_CL_Remove
-        grass_raster_setnull(grass,'Connect_Lake',Lakeid_lt_CL_Remove.tolist(),True,'Select_Connected_lakes')
-        grass_raster_setnull(grass,'Nonconnect_Lake',Lakeid_lt_NCL_Remove.tolist(),True,'Select_Non_Connected_lakes')
-        grass_raster_setnull(grass,'alllake',Lakeid_lt_All_Remove.tolist(),True,'SelectedLakes')
+        grass_raster_setnull(
+            grass,
+            "Connect_Lake",
+            Lakeid_lt_CL_Remove.tolist(),
+            True,
+            "Select_Connected_lakes",
+        )
+        grass_raster_setnull(
+            grass,
+            "Nonconnect_Lake",
+            Lakeid_lt_NCL_Remove.tolist(),
+            True,
+            "Select_Non_Connected_lakes",
+        )
+        grass_raster_setnull(
+            grass, "alllake", Lakeid_lt_All_Remove.tolist(), True, "SelectedLakes"
+        )
 
-#         hylake1,Selected_Con_Lakes = selectlake2(conlake_arr,VolThreshold,allLakinfo) ### remove lakes with lake area smaller than the VolThreshold from connected lake raster
-#         if NonConLThres >= 0:
-#             Lake1, Selected_Non_Con_Lakes_ids = selectlake(hylake1,noncnlake_arr,NonConLThres,allLakinfo) ### remove lakes with lake area smaller than the NonConLThres from non-connected lake raster
-#         else:
-#             Lake1 = hylake1
-# 
-#         mask3 = hylake1 == 0
-#         hylake1[mask3]   = -9999
-# 
-#         temparray[:,:] = hylake1[:,:]
-#         temparray.write(mapname="Select_Connected_lakes", overwrite=True)
-#         grass.run_command('r.null', map='Select_Connected_lakes',setnull=-9999)
-# #        grass.run_command('r.out.gdal', input = 'Select_Connected_lakes',output = os.path.join(self.tempfolder,'Select_Connected_lakes.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
-# 
-#         Selectedlaeks = copy.deepcopy(Lake1)
-#         maks                = hylake1 > 0
-#         Selectedlaeks[maks] = -9999
-#         mask2 = Selectedlaeks == 0
-#         Selectedlaeks[mask2]   = -9999
-#         temparray[:,:] = Selectedlaeks[:,:]
-#         temparray.write(mapname="Select_Non_Connected_lakes", overwrite=True)
-#         grass.run_command('r.null', map='Select_Non_Connected_lakes',setnull=-9999)
-# #        grass.run_command('r.out.gdal', input = 'Select_Non_Connected_lakes',output = os.path.join(self.tempfolder,'Select_Non_Connected_lakes.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
-# 
-#         mask1 = Lake1 == 0
-#         Lake1[mask1]   = -9999
-#         temparray[:,:] = Lake1[:,:]
-#         temparray.write(mapname="SelectedLakes", overwrite=True)
-#         grass.run_command('r.null', map='SelectedLakes',setnull=-9999)
+        #         hylake1,Selected_Con_Lakes = selectlake2(conlake_arr,VolThreshold,allLakinfo) ### remove lakes with lake area smaller than the VolThreshold from connected lake raster
+        #         if NonConLThres >= 0:
+        #             Lake1, Selected_Non_Con_Lakes_ids = selectlake(hylake1,noncnlake_arr,NonConLThres,allLakinfo) ### remove lakes with lake area smaller than the NonConLThres from non-connected lake raster
+        #         else:
+        #             Lake1 = hylake1
+        #
+        #         mask3 = hylake1 == 0
+        #         hylake1[mask3]   = -9999
+        #
+        #         temparray[:,:] = hylake1[:,:]
+        #         temparray.write(mapname="Select_Connected_lakes", overwrite=True)
+        #         grass.run_command('r.null', map='Select_Connected_lakes',setnull=-9999)
+        # #        grass.run_command('r.out.gdal', input = 'Select_Connected_lakes',output = os.path.join(self.tempfolder,'Select_Connected_lakes.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
+        #
+        #         Selectedlaeks = copy.deepcopy(Lake1)
+        #         maks                = hylake1 > 0
+        #         Selectedlaeks[maks] = -9999
+        #         mask2 = Selectedlaeks == 0
+        #         Selectedlaeks[mask2]   = -9999
+        #         temparray[:,:] = Selectedlaeks[:,:]
+        #         temparray.write(mapname="Select_Non_Connected_lakes", overwrite=True)
+        #         grass.run_command('r.null', map='Select_Non_Connected_lakes',setnull=-9999)
+        # #        grass.run_command('r.out.gdal', input = 'Select_Non_Connected_lakes',output = os.path.join(self.tempfolder,'Select_Non_Connected_lakes.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
+        #
+        #         mask1 = Lake1 == 0
+        #         Lake1[mask1]   = -9999
+        #         temparray[:,:] = Lake1[:,:]
+        #         temparray.write(mapname="SelectedLakes", overwrite=True)
+        #         grass.run_command('r.null', map='SelectedLakes',setnull=-9999)
 
-        Lake1 = Return_Raster_As_Array_With_garray(garray,'SelectedLakes')
-        noncnlake_arr =  Return_Raster_As_Array_With_garray(garray,'Select_Non_Connected_lakes') 
-        
-####
-        Pourpoints,Lakemorestream,Str_new = GenerPourpoint(cat1_arr,Lake1,str_array,self.nrows,self.ncols,blid,bsid,bcid,acc_array,dir_array,Is_divid_region,Remove_Str)
-        temparray[:,:] = Pourpoints[:,:]
+        Lake1 = Return_Raster_As_Array_With_garray(garray, "SelectedLakes")
+        noncnlake_arr = Return_Raster_As_Array_With_garray(
+            garray, "Select_Non_Connected_lakes"
+        )
+
+        ####
+        Pourpoints, Lakemorestream, Str_new = GenerPourpoint(
+            cat1_arr,
+            Lake1,
+            str_array,
+            self.nrows,
+            self.ncols,
+            blid,
+            bsid,
+            bcid,
+            acc_array,
+            dir_array,
+            Is_divid_region,
+            Remove_Str,
+        )
+        temparray[:, :] = Pourpoints[:, :]
         temparray.write(mapname="Pourpoints_1", overwrite=True)
-        grass.run_command('r.null', map='Pourpoints_1',setnull=-9999)
-        grass.run_command('r.to.vect', input='Pourpoints_1',output='Pourpoints_1_F',type='point', overwrite = True)
-### cat2
-        grass.run_command('r.stream.basins',direction = 'dir_grass', points = 'Pourpoints_1_F', basins = 'cat2_t',overwrite = True,memory = max_memroy)
-        sqlstat="SELECT cat, value FROM Pourpoints_1_F"
+        grass.run_command("r.null", map="Pourpoints_1", setnull=-9999)
+        grass.run_command(
+            "r.to.vect",
+            input="Pourpoints_1",
+            output="Pourpoints_1_F",
+            type="point",
+            overwrite=True,
+        )
+        ### cat2
+        grass.run_command(
+            "r.stream.basins",
+            direction="dir_grass",
+            points="Pourpoints_1_F",
+            basins="cat2_t",
+            overwrite=True,
+            memory=max_memroy,
+        )
+        sqlstat = "SELECT cat, value FROM Pourpoints_1_F"
         df_P_1_F = pd.read_sql_query(sqlstat, con)
-        df_P_1_F.loc[len(df_P_1_F),'cat'] = '*'
-        df_P_1_F.loc[len(df_P_1_F)-1,'value'] = 'NULL'
-        df_P_1_F['eq'] = '='
-        df_P_1_F.to_csv(os.path.join(self.tempfolder,'rule_cat2.txt'),sep = ' ',columns = ['cat','eq','value'],header = False,index=False)
-        grass.run_command('r.reclass', input='cat2_t',output = 'cat2',rules =os.path.join(self.tempfolder,'rule_cat2.txt'), overwrite = True)
-#        grass.run_command('v.out.ogr', input = 'Pourpoints_1_F',output = os.path.join(self.tempfolder, "Pourpoints_1_F.shp"),format= 'ESRI_Shapefile',overwrite = True)
-#        grass.run_command('r.out.gdal', input = 'cat1',output = os.path.join(self.tempfolder,'cat1.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
-# cat3
-        cat2_array =  garray.array(mapname="cat2")
-#        temcat2    = copy.copy(cat2_array)
+        df_P_1_F.loc[len(df_P_1_F), "cat"] = "*"
+        df_P_1_F.loc[len(df_P_1_F) - 1, "value"] = "NULL"
+        df_P_1_F["eq"] = "="
+        df_P_1_F.to_csv(
+            os.path.join(self.tempfolder, "rule_cat2.txt"),
+            sep=" ",
+            columns=["cat", "eq", "value"],
+            header=False,
+            index=False,
+        )
+        grass.run_command(
+            "r.reclass",
+            input="cat2_t",
+            output="cat2",
+            rules=os.path.join(self.tempfolder, "rule_cat2.txt"),
+            overwrite=True,
+        )
+        #        grass.run_command('v.out.ogr', input = 'Pourpoints_1_F',output = os.path.join(self.tempfolder, "Pourpoints_1_F.shp"),format= 'ESRI_Shapefile',overwrite = True)
+        #        grass.run_command('r.out.gdal', input = 'cat1',output = os.path.join(self.tempfolder,'cat1.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
+        # cat3
+        cat2_array = garray.array(mapname="cat2")
+        #        temcat2    = copy.copy(cat2_array)
         # temcat,outlakeids =CE_mcat4lake(cat2_array,Lake1,acc_array,dir_array,bsid,self.nrows,self.ncols,Pourpoints)
         # temcat2 = CE_Lakeerror(acc_array,dir_array,Lake1,temcat,bsid,blid,boid,self.nrows,self.ncols,cat1_arr)
-#        temparray[:,:] = temcat2[:,:]
-#        temparray.write(mapname="cat3", overwrite=True)
-#        grass.run_command('r.null', map='cat3',setnull=-9999)
+        #        temparray[:,:] = temcat2[:,:]
+        #        temparray.write(mapname="cat3", overwrite=True)
+        #        grass.run_command('r.null', map='cat3',setnull=-9999)
 
-#        grass.run_command('r.out.gdal', input = 'cat3',output = os.path.join(self.tempfolder,'cat3.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
-#        grass.run_command('r.out.gdal', input = 'cat3',output = os.path.join(self.tempfolder,'cat3.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
+        #        grass.run_command('r.out.gdal', input = 'cat3',output = os.path.join(self.tempfolder,'cat3.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
+        #        grass.run_command('r.out.gdal', input = 'cat3',output = os.path.join(self.tempfolder,'cat3.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
 
-        nPourpoints = GenerateFinalPourpoints(acc_array,dir_array,Lake1,cat2_array,bsid,blid,boid,self.nrows,self.ncols,cat1_arr,obs_array,Is_divid_region)
-        temparray[:,:] = nPourpoints[:,:]
+        nPourpoints = GenerateFinalPourpoints(
+            acc_array,
+            dir_array,
+            Lake1,
+            cat2_array,
+            bsid,
+            blid,
+            boid,
+            self.nrows,
+            self.ncols,
+            cat1_arr,
+            obs_array,
+            Is_divid_region,
+        )
+        temparray[:, :] = nPourpoints[:, :]
         temparray.write(mapname="Pourpoints_2", overwrite=True)
-        grass.run_command('r.null', map='Pourpoints_2',setnull=-9999)
-        grass.run_command('r.to.vect', input='Pourpoints_2',output='Pourpoints_2_F',type='point', overwrite = True)
-#        grass.run_command('v.out.ogr', input = 'Pourpoints_2_F',output = os.path.join(self.tempfolder, "Pourpoints_2_F.shp"),format= 'ESRI_Shapefile',overwrite = True)
+        grass.run_command("r.null", map="Pourpoints_2", setnull=-9999)
+        grass.run_command(
+            "r.to.vect",
+            input="Pourpoints_2",
+            output="Pourpoints_2_F",
+            type="point",
+            overwrite=True,
+        )
+        #        grass.run_command('v.out.ogr', input = 'Pourpoints_2_F',output = os.path.join(self.tempfolder, "Pourpoints_2_F.shp"),format= 'ESRI_Shapefile',overwrite = True)
 
         ## with new pour points
-# cat 4
-        grass.run_command('r.stream.basins',direction = 'dir_grass', points = 'Pourpoints_2_F', basins = 'cat4_t',overwrite = True,memory = max_memroy)
-        sqlstat="SELECT cat, value FROM Pourpoints_2_F"
+        # cat 4
+        grass.run_command(
+            "r.stream.basins",
+            direction="dir_grass",
+            points="Pourpoints_2_F",
+            basins="cat4_t",
+            overwrite=True,
+            memory=max_memroy,
+        )
+        sqlstat = "SELECT cat, value FROM Pourpoints_2_F"
         df_P_1_F = pd.read_sql_query(sqlstat, con)
-        df_P_1_F.loc[len(df_P_1_F),'cat'] = '*'
-        df_P_1_F.loc[len(df_P_1_F)-1,'value'] = 'NULL'
-        df_P_1_F['eq'] = '='
-        df_P_1_F.to_csv(os.path.join(self.tempfolder,'rule_cat4.txt'),sep = ' ',columns = ['cat','eq','value'],header = False,index=False)
-        grass.run_command('r.reclass', input='cat4_t',output = 'cat4',rules =os.path.join(self.tempfolder,'rule_cat4.txt'), overwrite = True)
-        cat4_array =  garray.array(mapname="cat4")
-#        grass.run_command('r.out.gdal', input = 'cat4',output = os.path.join(self.tempfolder,'cat4.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
+        df_P_1_F.loc[len(df_P_1_F), "cat"] = "*"
+        df_P_1_F.loc[len(df_P_1_F) - 1, "value"] = "NULL"
+        df_P_1_F["eq"] = "="
+        df_P_1_F.to_csv(
+            os.path.join(self.tempfolder, "rule_cat4.txt"),
+            sep=" ",
+            columns=["cat", "eq", "value"],
+            header=False,
+            index=False,
+        )
+        grass.run_command(
+            "r.reclass",
+            input="cat4_t",
+            output="cat4",
+            rules=os.path.join(self.tempfolder, "rule_cat4.txt"),
+            overwrite=True,
+        )
+        cat4_array = garray.array(mapname="cat4")
+        #        grass.run_command('r.out.gdal', input = 'cat4',output = os.path.join(self.tempfolder,'cat4.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
         start = timeit.default_timer()
-        outlakeids,chandir,ndir,BD_problem= check_lakecatchment(cat4_array,Lake1,acc_array,dir_array,bsid,self.nrows,self.ncols,LakeBD_array,nlakegrids,str_array,dir_array,Pec_Grid_outlier,MaximumLakegrids,Lakemorestream)
+        outlakeids, chandir, ndir, BD_problem = check_lakecatchment(
+            cat4_array,
+            Lake1,
+            acc_array,
+            dir_array,
+            bsid,
+            self.nrows,
+            self.ncols,
+            LakeBD_array,
+            nlakegrids,
+            str_array,
+            dir_array,
+            Pec_Grid_outlier,
+            MaximumLakegrids,
+            Lakemorestream,
+        )
         End = timeit.default_timer()
-        print('Total time needs to adjust flow direction for lakes are ',End - start )
-        
+        print("Total time needs to adjust flow direction for lakes are ", End - start)
+
         if self.Debug:
-            temparray[:,:] = chandir[:,:]
+            temparray[:, :] = chandir[:, :]
             temparray.write(mapname="chandir", overwrite=True)
-            grass.run_command('r.null', map='chandir',setnull=-9999)
-            grass.run_command('r.out.gdal', input = 'chandir',output = os.path.join(self.tempfolder,'chandir.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
+            grass.run_command("r.null", map="chandir", setnull=-9999)
+            grass.run_command(
+                "r.out.gdal",
+                input="chandir",
+                output=os.path.join(self.tempfolder, "chandir.tif"),
+                format="GTiff",
+                overwrite=True,
+                quiet="Ture",
+            )
 
         if self.Debug:
-            temparray[:,:] = BD_problem[:,:]
+            temparray[:, :] = BD_problem[:, :]
             temparray.write(mapname="BD_problem", overwrite=True)
-            grass.run_command('r.null', map='BD_problem',setnull=-9999)
-            grass.run_command('r.out.gdal', input = 'BD_problem',output = os.path.join(self.tempfolder,'BD_problem.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
+            grass.run_command("r.null", map="BD_problem", setnull=-9999)
+            grass.run_command(
+                "r.out.gdal",
+                input="BD_problem",
+                output=os.path.join(self.tempfolder, "BD_problem.tif"),
+                format="GTiff",
+                overwrite=True,
+                quiet="Ture",
+            )
 
-
-        temparray[:,:] = ndir[:,:]
+        temparray[:, :] = ndir[:, :]
         temparray.write(mapname="ndir_Arcgis", overwrite=True)
-        grass.run_command('r.null', map='ndir_Arcgis',setnull=-9999)
-        grass.run_command('r.reclass', input='ndir_Arcgis',output = 'ndir_grass',rules =os.path.join(self.RoutingToolPath,'Arcgis2GrassDIR.txt'),overwrite = True)
-# cat5
-        grass.run_command('r.stream.basins',direction = 'ndir_grass', points = 'Pourpoints_2_F', basins = 'cat5_t',overwrite = True,memory = max_memroy)
-        sqlstat="SELECT cat, value FROM Pourpoints_2_F"
+        grass.run_command("r.null", map="ndir_Arcgis", setnull=-9999)
+        grass.run_command(
+            "r.reclass",
+            input="ndir_Arcgis",
+            output="ndir_grass",
+            rules=os.path.join(self.RoutingToolPath, "Arcgis2GrassDIR.txt"),
+            overwrite=True,
+        )
+        # cat5
+        grass.run_command(
+            "r.stream.basins",
+            direction="ndir_grass",
+            points="Pourpoints_2_F",
+            basins="cat5_t",
+            overwrite=True,
+            memory=max_memroy,
+        )
+        sqlstat = "SELECT cat, value FROM Pourpoints_2_F"
         df_P_2_F = pd.read_sql_query(sqlstat, con)
-        df_P_2_F.loc[len(df_P_2_F),'cat'] = '*'
-        df_P_2_F.loc[len(df_P_2_F)-1,'value'] = 'NULL'
-        df_P_2_F['eq'] = '='
-        df_P_2_F.to_csv(os.path.join(self.tempfolder,'rule_cat5.txt'),sep = ' ',columns = ['cat','eq','value'],header = False,index=False)
-        grass.run_command('r.reclass', input='cat5_t',output = 'cat5',rules =os.path.join(self.tempfolder,'rule_cat5.txt'), overwrite = True)
+        df_P_2_F.loc[len(df_P_2_F), "cat"] = "*"
+        df_P_2_F.loc[len(df_P_2_F) - 1, "value"] = "NULL"
+        df_P_2_F["eq"] = "="
+        df_P_2_F.to_csv(
+            os.path.join(self.tempfolder, "rule_cat5.txt"),
+            sep=" ",
+            columns=["cat", "eq", "value"],
+            header=False,
+            index=False,
+        )
+        grass.run_command(
+            "r.reclass",
+            input="cat5_t",
+            output="cat5",
+            rules=os.path.join(self.tempfolder, "rule_cat5.txt"),
+            overwrite=True,
+        )
         if self.Debug:
-            grass.run_command('r.out.gdal', input = 'cat5',output = os.path.join(self.tempfolder,'cat5.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
-        cat5_array =  garray.array(mapname="cat5")
+            grass.run_command(
+                "r.out.gdal",
+                input="cat5",
+                output=os.path.join(self.tempfolder, "cat5.tif"),
+                format="GTiff",
+                overwrite=True,
+                quiet="Ture",
+            )
+        cat5_array = garray.array(mapname="cat5")
         rowcols = np.argwhere(cat5_array == 0)
-        cat5_array[rowcols[:,0],rowcols[:,1]] = -9999
+        cat5_array[rowcols[:, 0], rowcols[:, 1]] = -9999
 
-
-        finalcat,Non_con_lake_cat = CE_mcat4lake2(cat5_array,Lake1,acc_array,dir_array,bsid,self.nrows,self.ncols,nPourpoints,noncnlake_arr,str_array)
-        temparray[:,:] = finalcat[:,:]
+        finalcat, Non_con_lake_cat = CE_mcat4lake2(
+            cat5_array,
+            Lake1,
+            acc_array,
+            dir_array,
+            bsid,
+            self.nrows,
+            self.ncols,
+            nPourpoints,
+            noncnlake_arr,
+            str_array,
+        )
+        temparray[:, :] = finalcat[:, :]
         temparray.write(mapname="finalcat", overwrite=True)
-        grass.run_command('r.null', map='finalcat',setnull=-9999)
-        grass.run_command('r.to.vect', input='finalcat',output='finalcat_F1',type='area', overwrite = True)
+        grass.run_command("r.null", map="finalcat", setnull=-9999)
+        grass.run_command(
+            "r.to.vect",
+            input="finalcat",
+            output="finalcat_F1",
+            type="area",
+            overwrite=True,
+        )
 
         if Is_divid_region > 0:
-            print("********************Add lake into routing structure done ********************")
+            print(
+                "********************Add lake into routing structure done ********************"
+            )
             return
         if self.Debug:
-            grass.run_command('r.out.gdal', input = 'finalcat',output = os.path.join(self.tempfolder,'finalcat.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
-        temparray[:,:] = Non_con_lake_cat[:,:]
+            grass.run_command(
+                "r.out.gdal",
+                input="finalcat",
+                output=os.path.join(self.tempfolder, "finalcat.tif"),
+                format="GTiff",
+                overwrite=True,
+                quiet="Ture",
+            )
+        temparray[:, :] = Non_con_lake_cat[:, :]
         temparray.write(mapname="Non_con_lake_cat", overwrite=True)
-        grass.run_command('r.null', map='Non_con_lake_cat',setnull=-9999)
-        
-        grass.run_command('r.to.vect', input='SelectedLakes',output='SelectedLakes_F',type='area', overwrite = True)
-        grass.run_command('r.to.vect', input='SelectedLakes',output='SelectedLakes_F',type='area', overwrite = True)
-####   dissolve final catchment polygons
-#        grass.run_command('v.db.addcolumn', map= 'finalcat_F1', columns = "Gridcode VARCHAR(40)")
-#        grass.run_command('v.db.update', map= 'finalcat_F1', column = "Gridcode",qcol = 'value')
-#    grass.run_command('v.reclass', input= 'finalcat_F1', column = "Gridcode",output = 'finalcat_F',overwrite = True)
-#        grass.run_command('v.dissolve', input= 'finalcat_F1', column = "Gridcode",output = 'finalcat_F',overwrite = True)
-#    grass.run_command('v.select',ainput = 'str',binput = 'finalcat_F',output = 'str_finalcat',overwrite = True)
-#        grass.run_command('v.overlay',ainput = 'str',binput = 'finalcat_F1',operator = 'and',output = 'str_finalcat',overwrite = True)
-#        grass.run_command('v.out.ogr', input = 'str_finalcat',output = os.path.join(self.tempfolder,'str_finalcat.shp'),format= 'ESRI_Shapefile',overwrite = True)
-#        grass.run_command('v.out.ogr', input = 'finalcat_F1',output = os.path.join(self.tempfolder,'finalcat_F1.shp'),format= 'ESRI_Shapefile',overwrite = True)
-#        grass.run_command('v.out.ogr', input = 'str',output = os.path.join(self.tempfolder,'str.shp'),format= 'ESRI_Shapefile',overwrite = True)
-        
-#        grass.run_command('v.out.ogr', input = 'str_finalcat',output = os.path.join(self.tempfolder,'str_finalcat.shp'),format= 'ESRI_Shapefile',overwrite = True)
-#    grass.run_command('v.db.join', map= 'SelectedLakes_F',column = 'value', other_table = 'result',other_column ='SubId', overwrite = True)
+        grass.run_command("r.null", map="Non_con_lake_cat", setnull=-9999)
 
+        grass.run_command(
+            "r.to.vect",
+            input="SelectedLakes",
+            output="SelectedLakes_F",
+            type="area",
+            overwrite=True,
+        )
+        grass.run_command(
+            "r.to.vect",
+            input="SelectedLakes",
+            output="SelectedLakes_F",
+            type="area",
+            overwrite=True,
+        )
+        ####   dissolve final catchment polygons
+        #        grass.run_command('v.db.addcolumn', map= 'finalcat_F1', columns = "Gridcode VARCHAR(40)")
+        #        grass.run_command('v.db.update', map= 'finalcat_F1', column = "Gridcode",qcol = 'value')
+        #    grass.run_command('v.reclass', input= 'finalcat_F1', column = "Gridcode",output = 'finalcat_F',overwrite = True)
+        #        grass.run_command('v.dissolve', input= 'finalcat_F1', column = "Gridcode",output = 'finalcat_F',overwrite = True)
+        #    grass.run_command('v.select',ainput = 'str',binput = 'finalcat_F',output = 'str_finalcat',overwrite = True)
+        #        grass.run_command('v.overlay',ainput = 'str',binput = 'finalcat_F1',operator = 'and',output = 'str_finalcat',overwrite = True)
+        #        grass.run_command('v.out.ogr', input = 'str_finalcat',output = os.path.join(self.tempfolder,'str_finalcat.shp'),format= 'ESRI_Shapefile',overwrite = True)
+        #        grass.run_command('v.out.ogr', input = 'finalcat_F1',output = os.path.join(self.tempfolder,'finalcat_F1.shp'),format= 'ESRI_Shapefile',overwrite = True)
+        #        grass.run_command('v.out.ogr', input = 'str',output = os.path.join(self.tempfolder,'str.shp'),format= 'ESRI_Shapefile',overwrite = True)
 
-#############################################################################################################################################
-#        Define routing network with lakes before merge connected lakes, and define nonconnecte lake catchments
-############################################################################################################################################3
-         
-        temparray[:,:] = Str_new[:,:]
+        #        grass.run_command('v.out.ogr', input = 'str_finalcat',output = os.path.join(self.tempfolder,'str_finalcat.shp'),format= 'ESRI_Shapefile',overwrite = True)
+        #    grass.run_command('v.db.join', map= 'SelectedLakes_F',column = 'value', other_table = 'result',other_column ='SubId', overwrite = True)
+
+        #############################################################################################################################################
+        #        Define routing network with lakes before merge connected lakes, and define nonconnecte lake catchments
+        ############################################################################################################################################3
+
+        temparray[:, :] = Str_new[:, :]
         temparray.write(mapname="Str_new", overwrite=True)
-        grass.run_command('r.null',map='Str_new', setnull = [-9999,0],overwrite = True)
-        grass.run_command('r.cross', input=["Str_new","finalcat"],output='nstr_seg_t', flags = 'z',overwrite = True)
+        grass.run_command("r.null", map="Str_new", setnull=[-9999, 0], overwrite=True)
+        grass.run_command(
+            "r.cross",
+            input=["Str_new", "finalcat"],
+            output="nstr_seg_t",
+            flags="z",
+            overwrite=True,
+        )
 
-        grass.run_command('r.mapcalc',expression = 'nstr_seg = int(nstr_seg_t) + 1',overwrite = True)
+        grass.run_command(
+            "r.mapcalc", expression="nstr_seg = int(nstr_seg_t) + 1", overwrite=True
+        )
         if self.Debug:
-            grass.run_command('r.out.gdal', input = 'nstr_seg',output =os.path.join(self.tempfolder,'nstr_seg.tif'),format= 'GTiff',overwrite = True)
+            grass.run_command(
+                "r.out.gdal",
+                input="nstr_seg",
+                output=os.path.join(self.tempfolder, "nstr_seg.tif"),
+                format="GTiff",
+                overwrite=True,
+            )
 
         ### Generate new catchment based on new stream
-        grass.run_command('r.stream.basins',direction = 'ndir_grass', stream = 'nstr_seg', basins = 'Net_cat_connect_lake',overwrite = True)
-        
-        Nstr_IDS,temp = Generate_stats_list_from_grass_raster(grass,mode = 1,input_a = 'Net_cat_connect_lake')
-        
-        nstrid_max = max(Nstr_IDS)
-        grass.run_command('r.null', map='Non_con_lake_cat',setnull=[-9999,0])
-        grass.run_command('r.mapcalc',expression = 'Non_con_lake_cat_t2 = int(Non_con_lake_cat) + ' + str(int(nstrid_max +10)),overwrite = True)
-        grass.run_command('r.mapcalc',expression = 'Net_cat = if(isnull(Non_con_lake_cat_t2),Net_cat_connect_lake,Non_con_lake_cat_t2)',overwrite = True)
-        
-        if self.Debug:
-            grass.run_command('r.out.gdal', input = 'Net_cat',output =os.path.join(self.tempfolder,'Net_cat_test.tif'),format= 'GTiff',overwrite = True)
+        grass.run_command(
+            "r.stream.basins",
+            direction="ndir_grass",
+            stream="nstr_seg",
+            basins="Net_cat_connect_lake",
+            overwrite=True,
+        )
 
-        print("********************Add lake into routing structure done ********************")
+        Nstr_IDS, temp = Generate_stats_list_from_grass_raster(
+            grass, mode=1, input_a="Net_cat_connect_lake"
+        )
+
+        nstrid_max = max(Nstr_IDS)
+        grass.run_command("r.null", map="Non_con_lake_cat", setnull=[-9999, 0])
+        grass.run_command(
+            "r.mapcalc",
+            expression="Non_con_lake_cat_t2 = int(Non_con_lake_cat) + "
+            + str(int(nstrid_max + 10)),
+            overwrite=True,
+        )
+        grass.run_command(
+            "r.mapcalc",
+            expression="Net_cat = if(isnull(Non_con_lake_cat_t2),Net_cat_connect_lake,Non_con_lake_cat_t2)",
+            overwrite=True,
+        )
+
+        if self.Debug:
+            grass.run_command(
+                "r.out.gdal",
+                input="Net_cat",
+                output=os.path.join(self.tempfolder, "Net_cat_test.tif"),
+                format="GTiff",
+                overwrite=True,
+            )
+
+        print(
+            "********************Add lake into routing structure done ********************"
+        )
         con.close()
         PERMANENT.close()
 
         return
 
-############################################################################3
-    def RoutingNetworkTopologyUpdateToolset_riv(self,projection = 'EPSG:3573',max_manning_n = 0.15,min_manning_n = 0.01,Outlet_Obs_ID = -1):
+    ############################################################################3
+    def RoutingNetworkTopologyUpdateToolset_riv(
+        self,
+        projection="EPSG:3573",
+        max_manning_n=0.15,
+        min_manning_n=0.01,
+        Outlet_Obs_ID=-1,
+    ):
         """Calculate hydrological paramters
 
         Calculate hydrological paramters for each subbasin generated by
@@ -2073,19 +3403,19 @@ class LRRT:
         """
 
         import grass.script as grass
-        from grass.script import array as garray
         import grass.script.setup as gsetup
+        from grass.pygrass.modules import Module
         from grass.pygrass.modules.shortcuts import general as g
         from grass.pygrass.modules.shortcuts import raster as r
-        from grass.pygrass.modules import Module
+        from grass.script import array as garray
         from grass_session import Session
 
         QgsApplication.setPrefixPath(self.qgisPP, True)
-        Qgs = QgsApplication([],False)
+        Qgs = QgsApplication([], False)
         Qgs.initQgis()
-        from qgis import processing
         from processing.core.Processing import Processing
         from processing.tools import dataobjects
+        from qgis import processing
 
         feedback = QgsProcessingFeedback()
         Processing.initialize()
@@ -2093,217 +3423,499 @@ class LRRT:
         context = dataobjects.createContext()
         context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
 
-
-        os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
+        os.environ.update(
+            dict(GRASS_COMPRESS_NULLS="1", GRASS_COMPRESSOR="ZSTD", GRASS_VERBOSE="1")
+        )
         PERMANENT = Session()
-        PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
+        PERMANENT.open(
+            gisdb=self.grassdb, location=self.grass_location_geo, create_opts=""
+        )
 
         con = sqlite3.connect(self.sqlpath)
 
-
-#        grass.run_command('r.out.gdal', input = 'Net_cat',output =os.path.join(self.tempfolder,'Net_cat.tif'),format= 'GTiff',overwrite = True)
-        grass.run_command('r.to.vect', input='Net_cat',output='Net_cat_F1',type='area', overwrite = True)    ## save to vector
-        grass.run_command('v.db.addcolumn', map= 'Net_cat_F1', columns = "GC_str VARCHAR(40)")
-        grass.run_command('v.db.addcolumn', map= 'Net_cat_F1', columns = "Area_m double")
-        grass.run_command('v.db.update', map= 'Net_cat_F1', column = "GC_str",qcol = 'value')
-        grass.run_command('v.dissolve', input= 'Net_cat_F1', column = "GC_str",output = 'Net_cat_F',overwrite = True) ### dissolve based on gridcode
-#        grass.run_command('v.out.ogr', input = 'Net_cat_F',output = os.path.join(self.tempfolder,'Net_cat_F.shp'),format= 'ESRI_Shapefile',overwrite = True)
-        grass.run_command('v.db.addcolumn', map= 'Net_cat_F', columns = "Gridcode INT")
-        grass.run_command('v.db.update', map= 'Net_cat_F', column = "Gridcode",qcol = 'GC_str')
-
+        #        grass.run_command('r.out.gdal', input = 'Net_cat',output =os.path.join(self.tempfolder,'Net_cat.tif'),format= 'GTiff',overwrite = True)
+        grass.run_command(
+            "r.to.vect",
+            input="Net_cat",
+            output="Net_cat_F1",
+            type="area",
+            overwrite=True,
+        )  ## save to vector
+        grass.run_command(
+            "v.db.addcolumn", map="Net_cat_F1", columns="GC_str VARCHAR(40)"
+        )
+        grass.run_command("v.db.addcolumn", map="Net_cat_F1", columns="Area_m double")
+        grass.run_command(
+            "v.db.update", map="Net_cat_F1", column="GC_str", qcol="value"
+        )
+        grass.run_command(
+            "v.dissolve",
+            input="Net_cat_F1",
+            column="GC_str",
+            output="Net_cat_F",
+            overwrite=True,
+        )  ### dissolve based on gridcode
+        #        grass.run_command('v.out.ogr', input = 'Net_cat_F',output = os.path.join(self.tempfolder,'Net_cat_F.shp'),format= 'ESRI_Shapefile',overwrite = True)
+        grass.run_command("v.db.addcolumn", map="Net_cat_F", columns="Gridcode INT")
+        grass.run_command(
+            "v.db.update", map="Net_cat_F", column="Gridcode", qcol="GC_str"
+        )
 
         # create a river network shpfile that have river segment based on   'Net_cat_F.shp'
-#        grass.run_command('r.mapcalc',expression = 'str1 = if(isnull(str_grass_r),null(),1)',overwrite = True) ## a rive
-#        grass.run_command('r.to.vect',  input = 'str1',output = 'str1', type ='line' ,overwrite = True)
+        #        grass.run_command('r.mapcalc',expression = 'str1 = if(isnull(str_grass_r),null(),1)',overwrite = True) ## a rive
+        #        grass.run_command('r.to.vect',  input = 'str1',output = 'str1', type ='line' ,overwrite = True)
 
         ## obtain a stream vector, segmentation based on new catchment polygon
-        grass.run_command('v.overlay',ainput = 'str_grass_v',alayer = 2, atype = 'line', binput = 'Net_cat_F',operator = 'and',output = 'nstr_nfinalcat',overwrite = True)
-        grass.run_command('v.out.ogr', input = 'nstr_nfinalcat',output = os.path.join(self.tempfolder,'nstr_nfinalcat.shp'),format= 'ESRI_Shapefile',overwrite = True)
-        processing.run('gdal:dissolve', {'INPUT':os.path.join(self.tempfolder, 'nstr_nfinalcat.shp'),'FIELD':'b_GC_str','OUTPUT':os.path.join(self.tempfolder, "nstr_nfinalcat_F.shp")})
-        grass.run_command("v.import", input =os.path.join(self.tempfolder, "nstr_nfinalcat_F.shp"), output = 'nstr_nfinalcat_F', overwrite = True)
+        grass.run_command(
+            "v.overlay",
+            ainput="str_grass_v",
+            alayer=2,
+            atype="line",
+            binput="Net_cat_F",
+            operator="and",
+            output="nstr_nfinalcat",
+            overwrite=True,
+        )
+        grass.run_command(
+            "v.out.ogr",
+            input="nstr_nfinalcat",
+            output=os.path.join(self.tempfolder, "nstr_nfinalcat.shp"),
+            format="ESRI_Shapefile",
+            overwrite=True,
+        )
+        processing.run(
+            "gdal:dissolve",
+            {
+                "INPUT": os.path.join(self.tempfolder, "nstr_nfinalcat.shp"),
+                "FIELD": "b_GC_str",
+                "OUTPUT": os.path.join(self.tempfolder, "nstr_nfinalcat_F.shp"),
+            },
+        )
+        grass.run_command(
+            "v.import",
+            input=os.path.join(self.tempfolder, "nstr_nfinalcat_F.shp"),
+            output="nstr_nfinalcat_F",
+            overwrite=True,
+        )
 
-
-
-        grass.run_command('v.db.addcolumn', map= 'nstr_nfinalcat_F', columns = "Gridcode INT")
-        grass.run_command('v.db.addcolumn', map= 'nstr_nfinalcat_F', columns = "Length_m double")
-        grass.run_command('v.db.update', map= 'nstr_nfinalcat_F', column = "Gridcode",qcol = 'b_GC_str')
-        grass.run_command('v.db.dropcolumn', map= 'nstr_nfinalcat_F', columns = ['b_GC_str'])
-        grass.run_command('r.out.gdal', input = 'dem',output =os.path.join(self.tempfolder,'dem_par.tif'),format= 'GTiff',overwrite = True)
-        grass.run_command('r.mapcalc',expression = 'finalcat_int = int(finalcat)',overwrite = True)
-        grass.run_command('r.stats.zonal',base='finalcat_int',cover='Select_Connected_lakes', method='max', output='Connect_Lake_Cat_w_Lake_ID',overwrite = True)
+        grass.run_command(
+            "v.db.addcolumn", map="nstr_nfinalcat_F", columns="Gridcode INT"
+        )
+        grass.run_command(
+            "v.db.addcolumn", map="nstr_nfinalcat_F", columns="Length_m double"
+        )
+        grass.run_command(
+            "v.db.update", map="nstr_nfinalcat_F", column="Gridcode", qcol="b_GC_str"
+        )
+        grass.run_command(
+            "v.db.dropcolumn", map="nstr_nfinalcat_F", columns=["b_GC_str"]
+        )
+        grass.run_command(
+            "r.out.gdal",
+            input="dem",
+            output=os.path.join(self.tempfolder, "dem_par.tif"),
+            format="GTiff",
+            overwrite=True,
+        )
+        grass.run_command(
+            "r.mapcalc", expression="finalcat_int = int(finalcat)", overwrite=True
+        )
+        grass.run_command(
+            "r.stats.zonal",
+            base="finalcat_int",
+            cover="Select_Connected_lakes",
+            method="max",
+            output="Connect_Lake_Cat_w_Lake_ID",
+            overwrite=True,
+        )
         PERMANENT.close()
-
-
 
         ### Calulate catchment area slope river length under projected coordinates system.
 
-
-        os.system('gdalwarp ' + "\"" + os.path.join(self.tempfolder,'dem_par.tif') +"\""+ "    "+ "\""+self.Path_demproj+"\""+ ' -t_srs  ' + "\""+projection+"\"")
+        os.system(
+            "gdalwarp "
+            + '"'
+            + os.path.join(self.tempfolder, "dem_par.tif")
+            + '"'
+            + "    "
+            + '"'
+            + self.Path_demproj
+            + '"'
+            + " -t_srs  "
+            + '"'
+            + projection
+            + '"'
+        )
 
         project = Session()
-        project.open(gisdb=self.grassdb, location=self.grass_location_pro,create_opts=projection)
-        grass.run_command("r.import", input = self.Path_demproj, output = 'dem_proj', overwrite = True)
-        grass.run_command('g.region', raster='dem_proj')
-        grass.run_command('v.proj', location=self.grass_location_geo,mapset = 'PERMANENT', input = 'nstr_nfinalcat_F',overwrite = True)
-        grass.run_command('v.proj', location=self.grass_location_geo,mapset = 'PERMANENT', input = 'Net_cat_F',overwrite = True)
+        project.open(
+            gisdb=self.grassdb, location=self.grass_location_pro, create_opts=projection
+        )
+        grass.run_command(
+            "r.import", input=self.Path_demproj, output="dem_proj", overwrite=True
+        )
+        grass.run_command("g.region", raster="dem_proj")
+        grass.run_command(
+            "v.proj",
+            location=self.grass_location_geo,
+            mapset="PERMANENT",
+            input="nstr_nfinalcat_F",
+            overwrite=True,
+        )
+        grass.run_command(
+            "v.proj",
+            location=self.grass_location_geo,
+            mapset="PERMANENT",
+            input="Net_cat_F",
+            overwrite=True,
+        )
         # grass.run_command('v.proj', location=self.grass_location_geo,mapset = 'PERMANENT', input = 'Non_con_lake_cat_1',overwrite = True)
-        grass.run_command('v.to.db', map= 'Net_cat_F',option = 'area',columns = "Area_m", units = 'meters',overwrite = True)
-        grass.run_command('v.to.db', map= 'nstr_nfinalcat_F',option = 'length', columns = "Length_m",units = 'meters',overwrite = True)
+        grass.run_command(
+            "v.to.db",
+            map="Net_cat_F",
+            option="area",
+            columns="Area_m",
+            units="meters",
+            overwrite=True,
+        )
+        grass.run_command(
+            "v.to.db",
+            map="nstr_nfinalcat_F",
+            option="length",
+            columns="Length_m",
+            units="meters",
+            overwrite=True,
+        )
         # grass.run_command('v.to.db', map = 'Non_con_lake_cat_1',option = 'area',columns = "Area_m", units = 'meters',overwrite = True)
 
-        grass.run_command('r.slope.aspect', elevation= 'dem_proj',slope = 'slope',aspect = 'aspect',precision = 'DCELL',overwrite = True)
-#        grass.run_command('r.mapcalc',expression = 'tanslopedegree = tan(slope) ',overwrite = True)
-        
-        ### calcuate averaged DEM in each subbasin 
-        grass.run_command('v.rast.stats',map = 'Net_cat_F',raster='dem_proj',column_prefix = 'd', method ='average')
-        ### calcuate averaged slope and aspect of each subbasin 
-        grass.run_command('v.rast.stats',map = 'Net_cat_F',raster='slope',column_prefix = 's', method ='average')
-        grass.run_command('v.rast.stats',map = 'Net_cat_F',raster='aspect',column_prefix = 'a', method ='average')
-        ### calcuate minimum and maximum dem along the channel  
-        grass.run_command('v.rast.stats',map = 'nstr_nfinalcat_F',raster='dem_proj',column_prefix = 'd', method =['minimum', 'maximum'])
-        
+        grass.run_command(
+            "r.slope.aspect",
+            elevation="dem_proj",
+            slope="slope",
+            aspect="aspect",
+            precision="DCELL",
+            overwrite=True,
+        )
+        #        grass.run_command('r.mapcalc',expression = 'tanslopedegree = tan(slope) ',overwrite = True)
+
+        ### calcuate averaged DEM in each subbasin
+        grass.run_command(
+            "v.rast.stats",
+            map="Net_cat_F",
+            raster="dem_proj",
+            column_prefix="d",
+            method="average",
+        )
+        ### calcuate averaged slope and aspect of each subbasin
+        grass.run_command(
+            "v.rast.stats",
+            map="Net_cat_F",
+            raster="slope",
+            column_prefix="s",
+            method="average",
+        )
+        grass.run_command(
+            "v.rast.stats",
+            map="Net_cat_F",
+            raster="aspect",
+            column_prefix="a",
+            method="average",
+        )
+        ### calcuate minimum and maximum dem along the channel
+        grass.run_command(
+            "v.rast.stats",
+            map="nstr_nfinalcat_F",
+            raster="dem_proj",
+            column_prefix="d",
+            method=["minimum", "maximum"],
+        )
+
         project.close()
 
         PERMANENT = Session()
-        PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
-        grass.run_command('g.region', raster='dem')
-        grass.run_command('v.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'nstr_nfinalcat_F',overwrite = True)
-        grass.run_command('v.proj', location=self.grass_location_pro,mapset = 'PERMANENT', input = 'Net_cat_F',overwrite = True)
-        
-        ### add averaged manning coefficent along the river network into river attribut table 
-        grass.run_command('v.rast.stats',map = 'nstr_nfinalcat_F',raster='landuse_Manning',column_prefix = 'mn', method =['average'])
-        grass.run_command('v.rast.stats', map='nstr_nfinalcat_F', raster='Select_Connected_lakes',column_prefix='cl',method =['maximum']) 
-#        grass.run_command('v.rast.stats', map='nstr_nfinalcat_F', raster='Select_Non_Connected_lakes',column_prefix='nl',method =['maximum']) 
+        PERMANENT.open(
+            gisdb=self.grassdb, location=self.grass_location_geo, create_opts=""
+        )
+        grass.run_command("g.region", raster="dem")
+        grass.run_command(
+            "v.proj",
+            location=self.grass_location_pro,
+            mapset="PERMANENT",
+            input="nstr_nfinalcat_F",
+            overwrite=True,
+        )
+        grass.run_command(
+            "v.proj",
+            location=self.grass_location_pro,
+            mapset="PERMANENT",
+            input="Net_cat_F",
+            overwrite=True,
+        )
+
+        ### add averaged manning coefficent along the river network into river attribut table
+        grass.run_command(
+            "v.rast.stats",
+            map="nstr_nfinalcat_F",
+            raster="landuse_Manning",
+            column_prefix="mn",
+            method=["average"],
+        )
+        grass.run_command(
+            "v.rast.stats",
+            map="nstr_nfinalcat_F",
+            raster="Select_Connected_lakes",
+            column_prefix="cl",
+            method=["maximum"],
+        )
+        #        grass.run_command('v.rast.stats', map='nstr_nfinalcat_F', raster='Select_Non_Connected_lakes',column_prefix='nl',method =['maximum'])
 
         ### define routing structure, using cat may make subbasin drainge to wrong catchments   cat_use_default_acc
-        grass.run_command('r.mapcalc',expression = 'ndir_grass2 = if(dir_grass ==ndir_grass,dir_grass,ndir_grass)',overwrite = True)
-        grass.run_command('r.accumulate',direction = 'ndir_grass2', accumulation = 'acc_grass_CatOL', overwrite = True)
-        grass.run_command('r.mapcalc',expression = 'acc_grass_CatOL2 = if(isnull(cat_use_default_acc),acc_grass_CatOL,acc_grass)',overwrite = True)
-        
-        Routing_temp = Generate_Routing_structure(grass,con,cat = 'Net_cat',acc = 'acc_grass_CatOL2',Name = 'Final',str = 'nstr_seg')
-        ###       
-        ### add averaged lake id to each catchment outlet 
+        grass.run_command(
+            "r.mapcalc",
+            expression="ndir_grass2 = if(dir_grass ==ndir_grass,dir_grass,ndir_grass)",
+            overwrite=True,
+        )
+        grass.run_command(
+            "r.accumulate",
+            direction="ndir_grass2",
+            accumulation="acc_grass_CatOL",
+            overwrite=True,
+        )
+        grass.run_command(
+            "r.mapcalc",
+            expression="acc_grass_CatOL2 = if(isnull(cat_use_default_acc),acc_grass_CatOL,acc_grass)",
+            overwrite=True,
+        )
 
-        ### observation id to outlet  
-        grass.run_command('v.what.rast', map='Final_OL_v', raster='obs',column='ObsId')
-        grass.run_command('v.what.rast', map='Final_OL_v', raster='Select_Non_Connected_lakes',column='ncl')
-        grass.run_command('v.what.rast', map='Final_OL_v', raster='Connect_Lake_Cat_w_Lake_ID',column='cl')  
-        
+        Routing_temp = Generate_Routing_structure(
+            grass,
+            con,
+            cat="Net_cat",
+            acc="acc_grass_CatOL2",
+            Name="Final",
+            str="nstr_seg",
+        )
+        ###
+        ### add averaged lake id to each catchment outlet
+
+        ### observation id to outlet
+        grass.run_command("v.what.rast", map="Final_OL_v", raster="obs", column="ObsId")
+        grass.run_command(
+            "v.what.rast",
+            map="Final_OL_v",
+            raster="Select_Non_Connected_lakes",
+            column="ncl",
+        )
+        grass.run_command(
+            "v.what.rast",
+            map="Final_OL_v",
+            raster="Connect_Lake_Cat_w_Lake_ID",
+            column="cl",
+        )
+
         ### Add attributes to each catchments
         # read raster arrays
         if self.Debug:
-            grass.run_command('v.out.ogr', input = 'Final_OL_v',output = os.path.join(self.tempfolder,'Final_OL_v.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
-            grass.run_command('v.out.ogr', input = 'Final_IL_v',output = os.path.join(self.tempfolder,'Final_IL_v.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
-            grass.run_command('r.out.gdal', input = 'acc_grass_CatOL',output =os.path.join(self.tempfolder,'acc_grass_CatOL.tif'),format= 'GTiff',overwrite = True)
-            grass.run_command('r.out.gdal', input = 'acc_grass_CatOL2',output =os.path.join(self.tempfolder,'acc_grass_CatOL2.tif'),format= 'GTiff',overwrite = True)
-            grass.run_command('r.out.gdal', input = 'cat_use_default_acc',output =os.path.join(self.tempfolder,'cat_use_default_acc.tif'),format= 'GTiff',overwrite = True)
+            grass.run_command(
+                "v.out.ogr",
+                input="Final_OL_v",
+                output=os.path.join(self.tempfolder, "Final_OL_v.shp"),
+                format="ESRI_Shapefile",
+                overwrite=True,
+                quiet="Ture",
+            )
+            grass.run_command(
+                "v.out.ogr",
+                input="Final_IL_v",
+                output=os.path.join(self.tempfolder, "Final_IL_v.shp"),
+                format="ESRI_Shapefile",
+                overwrite=True,
+                quiet="Ture",
+            )
+            grass.run_command(
+                "r.out.gdal",
+                input="acc_grass_CatOL",
+                output=os.path.join(self.tempfolder, "acc_grass_CatOL.tif"),
+                format="GTiff",
+                overwrite=True,
+            )
+            grass.run_command(
+                "r.out.gdal",
+                input="acc_grass_CatOL2",
+                output=os.path.join(self.tempfolder, "acc_grass_CatOL2.tif"),
+                format="GTiff",
+                overwrite=True,
+            )
+            grass.run_command(
+                "r.out.gdal",
+                input="cat_use_default_acc",
+                output=os.path.join(self.tempfolder, "cat_use_default_acc.tif"),
+                format="GTiff",
+                overwrite=True,
+            )
 
         width_array = garray.array(mapname="width")
         depth_array = garray.array(mapname="depth")
         nstr_seg_array = garray.array(mapname="nstr_seg")
         acc_array = np.absolute(garray.array(mapname="acc_grass"))
-        dir_array = garray.array(mapname="ndir_Arcgis")#ndir_Arcgis
+        dir_array = garray.array(mapname="ndir_Arcgis")  # ndir_Arcgis
         Q_mean_array = garray.array(mapname="qmean")
         Netcat_array = garray.array(mapname="Net_cat")
         SubId_WidDep_array = garray.array(mapname="SubId_WidDep")
 
-        self.ncols        = int(nstr_seg_array.shape[1])                  # obtain rows and cols
-        self.nrows        = int(nstr_seg_array.shape[0])
+        self.ncols = int(nstr_seg_array.shape[1])  # obtain rows and cols
+        self.nrows = int(nstr_seg_array.shape[0])
 
         ## read landuse and lake infomation data
         tempinfo = Dbf5(self.Path_allLakeply[:-3] + "dbf")
         allLakinfo = tempinfo.to_dataframe()
-#        landuseinfo = pd.read_csv(self.Path_Landuseinfo,sep=",",low_memory=False)
-        ### read length and maximum and minimum dem along channel 
-        sqlstat="SELECT Gridcode, Length_m, d_minimum, d_maximum, mn_average,cl_maximum FROM nstr_nfinalcat_F"
+        #        landuseinfo = pd.read_csv(self.Path_Landuseinfo,sep=",",low_memory=False)
+        ### read length and maximum and minimum dem along channel
+        sqlstat = "SELECT Gridcode, Length_m, d_minimum, d_maximum, mn_average,cl_maximum FROM nstr_nfinalcat_F"
         rivleninfo = pd.read_sql_query(sqlstat, con)
-        ### read catchment  
-        sqlstat="SELECT Gridcode, Area_m,d_average,s_average,a_average FROM Net_cat_F"
+        ### read catchment
+        sqlstat = "SELECT Gridcode, Area_m,d_average,s_average,a_average FROM Net_cat_F"
         catareainfo = pd.read_sql_query(sqlstat, con)
-        
-        ### read catchment  
-        sqlstat="SELECT SubId, DowSubId,ObsId,ncl,cl,ILSubIdmax,ILSubIdmin FROM Final_OL_v"
+
+        ### read catchment
+        sqlstat = (
+            "SELECT SubId, DowSubId,ObsId,ncl,cl,ILSubIdmax,ILSubIdmin FROM Final_OL_v"
+        )
         Outletinfo = pd.read_sql_query(sqlstat, con)
 
-
-        if self.Path_WiDep_in != '#':
-            sqlstat="SELECT HYBAS_ID, NEXT_DOWN, UP_AREA, Q_Mean, WIDTH, DEPTH FROM WidDep"
+        if self.Path_WiDep_in != "#":
+            sqlstat = (
+                "SELECT HYBAS_ID, NEXT_DOWN, UP_AREA, Q_Mean, WIDTH, DEPTH FROM WidDep"
+            )
             WidDep_info = pd.read_sql_query(sqlstat, con)
         else:
-            temparray = np.full((3,6),-9999.00000)
-            WidDep_info = pd.DataFrame(temparray, columns = ['HYBAS_ID', 'NEXT_DOWN', 'UP_AREA', 'Q_Mean', 'WIDTH', 'DEPTH'])
+            temparray = np.full((3, 6), -9999.00000)
+            WidDep_info = pd.DataFrame(
+                temparray,
+                columns=[
+                    "HYBAS_ID",
+                    "NEXT_DOWN",
+                    "UP_AREA",
+                    "Q_Mean",
+                    "WIDTH",
+                    "DEPTH",
+                ],
+            )
 
-        if self.Path_obspoint_in != '#':
-            sqlstat="SELECT Obs_ID, DA_obs, STATION_NU, SRC_obs FROM obspoint"
+        if self.Path_obspoint_in != "#":
+            sqlstat = "SELECT Obs_ID, DA_obs, STATION_NU, SRC_obs FROM obspoint"
             obsinfo = pd.read_sql_query(sqlstat, con)
-            obsinfo['Obs_ID'] = obsinfo['Obs_ID'].astype(float)
+            obsinfo["Obs_ID"] = obsinfo["Obs_ID"].astype(float)
         else:
-            temparray = np.full((3,4),-9999.00000)
-            obsinfo = pd.DataFrame(temparray, columns = ['Obs_ID', 'DA_obs', 'STATION_NU', 'SRC_obs'])
+            temparray = np.full((3, 4), -9999.00000)
+            obsinfo = pd.DataFrame(
+                temparray, columns=["Obs_ID", "DA_obs", "STATION_NU", "SRC_obs"]
+            )
 
         ######  All catchment with a river segments
         Riv_Cat_IDS = np.unique(nstr_seg_array)
         Riv_Cat_IDS = Riv_Cat_IDS > 0
-        allcatid    = np.unique(Netcat_array)
+        allcatid = np.unique(Netcat_array)
         allcatid = allcatid[allcatid > 0]
         Outletinfo = Outletinfo.fillna(-9999)
-        obsinfo    = obsinfo.fillna(-9999)
-        rivleninfo    = rivleninfo.astype(float).fillna(-9999)
-        catareainfo    = catareainfo.astype(float).fillna(-9999)
-        
-        catinfo2 = np.full((len(Outletinfo),31),-9999.00000)
-        catinfodf = pd.DataFrame(catinfo2, columns = ['SubId', "DowSubId",'RivSlope','RivLength','BasSlope','BasAspect','BasArea',
-                            'BkfWidth','BkfDepth','IsLake','HyLakeId','LakeVol','LakeDepth',
-                             'LakeArea','Laketype','IsObs','MeanElev','FloodP_n','Q_Mean','Ch_n','DA','Strahler','Seg_ID','Seg_order'
-                             ,'Max_DEM','Min_DEM','DA_Obs','DA_error','Obs_NM','SRC_obs','NonLDArea'])
-        catinfodf['Obs_NM']   =catinfodf['Obs_NM'].astype(str)
-        catinfodf['SRC_obs']  =catinfodf['SRC_obs'].astype(str)
-        catinfo = Generatecatinfo_riv(catinfodf,allLakinfo,rivleninfo,catareainfo,obsinfo,Outletinfo)
-        routing_info         = catinfo[['SubId','DowSubId']].astype('float').values
-#        print(routing_info)
-#        print(catinfo)
+        obsinfo = obsinfo.fillna(-9999)
+        rivleninfo = rivleninfo.astype(float).fillna(-9999)
+        catareainfo = catareainfo.astype(float).fillna(-9999)
+
+        catinfo2 = np.full((len(Outletinfo), 31), -9999.00000)
+        catinfodf = pd.DataFrame(
+            catinfo2,
+            columns=[
+                "SubId",
+                "DowSubId",
+                "RivSlope",
+                "RivLength",
+                "BasSlope",
+                "BasAspect",
+                "BasArea",
+                "BkfWidth",
+                "BkfDepth",
+                "IsLake",
+                "HyLakeId",
+                "LakeVol",
+                "LakeDepth",
+                "LakeArea",
+                "Laketype",
+                "IsObs",
+                "MeanElev",
+                "FloodP_n",
+                "Q_Mean",
+                "Ch_n",
+                "DA",
+                "Strahler",
+                "Seg_ID",
+                "Seg_order",
+                "Max_DEM",
+                "Min_DEM",
+                "DA_Obs",
+                "DA_error",
+                "Obs_NM",
+                "SRC_obs",
+                "NonLDArea",
+            ],
+        )
+        catinfodf["Obs_NM"] = catinfodf["Obs_NM"].astype(str)
+        catinfodf["SRC_obs"] = catinfodf["SRC_obs"].astype(str)
+        catinfo = Generatecatinfo_riv(
+            catinfodf, allLakinfo, rivleninfo, catareainfo, obsinfo, Outletinfo
+        )
+        routing_info = catinfo[["SubId", "DowSubId"]].astype("float").values
+        #        print(routing_info)
+        #        print(catinfo)
 
         ##find subbasins only drainage to the subregion outlet id
         ## remove subbasins drainage to other subregion outlet id
         if self.Is_Sub_Region > 0:
 
             #### read subregion outlet points raster
-            Sub_reg_outlets     = garray.array(mapname="Sub_reg_outlets")
+            Sub_reg_outlets = garray.array(mapname="Sub_reg_outlets")
             #### obtain subregion outlet ids
             Sub_reg_outlets_ids = np.unique(Sub_reg_outlets)
             Sub_reg_outlets_ids = Sub_reg_outlets_ids[Sub_reg_outlets_ids > 0]
             #### Find all obervation id that is subregion outlet
-            reg_outlet_info     = catinfo.loc[catinfo['IsObs'].isin(Sub_reg_outlets_ids)]
+            reg_outlet_info = catinfo.loc[catinfo["IsObs"].isin(Sub_reg_outlets_ids)]
 
             #### Define outlet ID
             outletid = -1
             if Outlet_Obs_ID > 0:
-                outletID_info = catinfo.loc[catinfo['IsObs'] == Outlet_Obs_ID]
+                outletID_info = catinfo.loc[catinfo["IsObs"] == Outlet_Obs_ID]
                 if len(outletID_info) > 0:
-                    outletid = outletID_info['SubId'].values[0]
+                    outletid = outletID_info["SubId"].values[0]
                 else:
-                    print("No Outlet id is founded for subregion   ",Outlet_Obs_ID)
+                    print("No Outlet id is founded for subregion   ", Outlet_Obs_ID)
                     return
             else:
-                print("To use subregion, the Subregion Id MUST provided as Outlet_Obs_ID")
+                print(
+                    "To use subregion, the Subregion Id MUST provided as Outlet_Obs_ID"
+                )
                 return
 
             ### find all subregion drainge to this outlet id
-            HydroBasins1   = Defcat(routing_info,outletid)
+            HydroBasins1 = Defcat(routing_info, outletid)
 
             ### if there is other subregion outlet included in current sturcture
             ### remove subbasins drainge to them
 
             if len(reg_outlet_info) >= 2:  ### has upstream regin outlet s
                 ### remove subbains drainage to upstream regin outlet s
-                for i in range(0,len(reg_outlet_info)):
-                    upregid               =reg_outlet_info['SubId'].values[i]
+                for i in range(0, len(reg_outlet_info)):
+                    upregid = reg_outlet_info["SubId"].values[i]
                     ### the subregion ouetlet not within the target domain neglect
-                    if upregid == outletid or np.sum(np.in1d(HydroBasins1, upregid)) < 1:
+                    if (
+                        upregid == outletid
+                        or np.sum(np.in1d(HydroBasins1, upregid)) < 1
+                    ):
                         continue
-                    HydroBasins_remove   = Defcat(routing_info,upregid)
-                    mask                 = np.in1d(HydroBasins1, HydroBasins_remove)  ### exluced ids that belongs to main river stream
-                    HydroBasins1         = HydroBasins1[np.logical_not(mask)]
+                    HydroBasins_remove = Defcat(routing_info, upregid)
+                    mask = np.in1d(
+                        HydroBasins1, HydroBasins_remove
+                    )  ### exluced ids that belongs to main river stream
+                    HydroBasins1 = HydroBasins1[np.logical_not(mask)]
 
             HydroBasins = HydroBasins1
 
@@ -2311,136 +3923,299 @@ class LRRT:
         elif Outlet_Obs_ID > 0:
             outletid = -1
             if Outlet_Obs_ID > 0:
-                outletID_info = catinfo.loc[catinfo['IsObs'] == Outlet_Obs_ID]
+                outletID_info = catinfo.loc[catinfo["IsObs"] == Outlet_Obs_ID]
                 if len(outletID_info) > 0:
-                    outletid = outletID_info['SubId'].values[0]
+                    outletid = outletID_info["SubId"].values[0]
                     ##find upsteam catchment id
-                    HydroBasins  = Defcat(routing_info,outletid)
+                    HydroBasins = Defcat(routing_info, outletid)
                 else:
-                    HydroBasins  =  catinfo['SubId'].values
+                    HydroBasins = catinfo["SubId"].values
         #### do not need to
         else:
-            HydroBasins = catinfo['SubId'].values
-
+            HydroBasins = catinfo["SubId"].values
 
         ### remove non interesed subbasin s
-#        catinfo = catinfo.loc[catinfo['SubId'].isin(HydroBasins)].copy()
+        #        catinfo = catinfo.loc[catinfo['SubId'].isin(HydroBasins)].copy()
 
         catinfo = Streamorderanddrainagearea(catinfo)
 
-        catinfo['Seg_Slope'] = -1.2345
-        catinfo['Seg_n'] = -1.2345
-        catinfo['Reg_Slope'] = -1.2345
-        catinfo['Reg_n'] = -1.2345
+        catinfo["Seg_Slope"] = -1.2345
+        catinfo["Seg_n"] = -1.2345
+        catinfo["Reg_Slope"] = -1.2345
+        catinfo["Reg_n"] = -1.2345
         Min_DA_for_func_Q_DA = 99999999999
-        catinfo = UpdateChannelinfo(catinfo,allcatid,Netcat_array,SubId_WidDep_array,WidDep_info,Min_DA_for_func_Q_DA,max_manning_n,min_manning_n)
+        catinfo = UpdateChannelinfo(
+            catinfo,
+            allcatid,
+            Netcat_array,
+            SubId_WidDep_array,
+            WidDep_info,
+            Min_DA_for_func_Q_DA,
+            max_manning_n,
+            min_manning_n,
+        )
         catinfo = UpdateNonConnectedcatchmentinfo(catinfo)
         ########None connected lake catchments
 
-
-
-        catinfo.to_csv(self.Path_finalcatinfo_riv, index = None, header=True)
-
+        catinfo.to_csv(self.Path_finalcatinfo_riv, index=None, header=True)
 
         ### add lake info to selected laeks
-        grass.run_command('db.in.ogr', input=self.Path_alllakeinfoinfo,output = 'alllakeinfo',overwrite = True)
-        grass.run_command('v.db.join', map= 'SelectedLakes_F',column = 'value', other_table = 'alllakeinfo',other_column ='Hylak_id', overwrite = True)
-
+        grass.run_command(
+            "db.in.ogr",
+            input=self.Path_alllakeinfoinfo,
+            output="alllakeinfo",
+            overwrite=True,
+        )
+        grass.run_command(
+            "v.db.join",
+            map="SelectedLakes_F",
+            column="value",
+            other_table="alllakeinfo",
+            other_column="Hylak_id",
+            overwrite=True,
+        )
 
         ### add catchment info to all river segment
-        grass.run_command('db.in.ogr', input=self.Path_finalcatinfo_riv,output = 'result_riv',overwrite = True)
-        grass.run_command('v.db.join', map= 'nstr_nfinalcat_F',column = 'Gridcode', other_table = 'result_riv',other_column ='SubId', overwrite = True)
-        grass.run_command('v.db.dropcolumn', map= 'nstr_nfinalcat_F', columns = ['Length_m','Gridcode'])
-        grass.run_command('v.out.ogr', input = 'nstr_nfinalcat_F',output = os.path.join(self.tempfolder,'finalriv_info1.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
+        grass.run_command(
+            "db.in.ogr",
+            input=self.Path_finalcatinfo_riv,
+            output="result_riv",
+            overwrite=True,
+        )
+        grass.run_command(
+            "v.db.join",
+            map="nstr_nfinalcat_F",
+            column="Gridcode",
+            other_table="result_riv",
+            other_column="SubId",
+            overwrite=True,
+        )
+        grass.run_command(
+            "v.db.dropcolumn", map="nstr_nfinalcat_F", columns=["Length_m", "Gridcode"]
+        )
+        grass.run_command(
+            "v.out.ogr",
+            input="nstr_nfinalcat_F",
+            output=os.path.join(self.tempfolder, "finalriv_info1.shp"),
+            format="ESRI_Shapefile",
+            overwrite=True,
+            quiet="Ture",
+        )
 
-        grass.run_command('v.db.join', map= 'Net_cat_F',column = 'Gridcode', other_table = 'result_riv',other_column ='SubId', overwrite = True)
-        grass.run_command('v.db.dropcolumn', map= 'Net_cat_F', columns = ['Area_m','Gridcode','GC_str'])
-        grass.run_command('v.out.ogr', input = 'Net_cat_F',output = os.path.join(self.tempfolder,'finalriv_catinfo1.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
+        grass.run_command(
+            "v.db.join",
+            map="Net_cat_F",
+            column="Gridcode",
+            other_table="result_riv",
+            other_column="SubId",
+            overwrite=True,
+        )
+        grass.run_command(
+            "v.db.dropcolumn", map="Net_cat_F", columns=["Area_m", "Gridcode", "GC_str"]
+        )
+        grass.run_command(
+            "v.out.ogr",
+            input="Net_cat_F",
+            output=os.path.join(self.tempfolder, "finalriv_catinfo1.shp"),
+            format="ESRI_Shapefile",
+            overwrite=True,
+            quiet="Ture",
+        )
 
-
-        processing.run("native:dissolve", {'INPUT':os.path.join(self.tempfolder,'finalriv_catinfo1.shp'),'FIELD':['SubId'],'OUTPUT':os.path.join(self.tempfolder,'finalriv_catinfo_dis.shp')},context = context)
-        processing.run("native:dissolve", {'INPUT':os.path.join(self.tempfolder,'finalriv_info1.shp'),'FIELD':['SubId'],'OUTPUT':os.path.join(self.tempfolder,'finalriv_info_dis.shp')},context = context)
-
-
+        processing.run(
+            "native:dissolve",
+            {
+                "INPUT": os.path.join(self.tempfolder, "finalriv_catinfo1.shp"),
+                "FIELD": ["SubId"],
+                "OUTPUT": os.path.join(self.tempfolder, "finalriv_catinfo_dis.shp"),
+            },
+            context=context,
+        )
+        processing.run(
+            "native:dissolve",
+            {
+                "INPUT": os.path.join(self.tempfolder, "finalriv_info1.shp"),
+                "FIELD": ["SubId"],
+                "OUTPUT": os.path.join(self.tempfolder, "finalriv_info_dis.shp"),
+            },
+            context=context,
+        )
 
         ### extract region of interest
-        Selectfeatureattributes(processing,Input = os.path.join(self.tempfolder,'finalriv_catinfo_dis.shp'),Output=os.path.join(self.tempfolder,'finalriv_catinfo_dis_sel.shp'),Attri_NM = 'SubId',Values = HydroBasins)
-        Selectfeatureattributes(processing,Input = os.path.join(self.tempfolder,'finalriv_info_dis.shp'),Output=os.path.join(self.tempfolder,'finalriv_info_dis_sel.shp'),Attri_NM = 'SubId',Values = HydroBasins)
+        Selectfeatureattributes(
+            processing,
+            Input=os.path.join(self.tempfolder, "finalriv_catinfo_dis.shp"),
+            Output=os.path.join(self.tempfolder, "finalriv_catinfo_dis_sel.shp"),
+            Attri_NM="SubId",
+            Values=HydroBasins,
+        )
+        Selectfeatureattributes(
+            processing,
+            Input=os.path.join(self.tempfolder, "finalriv_info_dis.shp"),
+            Output=os.path.join(self.tempfolder, "finalriv_info_dis_sel.shp"),
+            Attri_NM="SubId",
+            Values=HydroBasins,
+        )
 
-
-
-        processing.run("native:centroids", {'INPUT':os.path.join(self.tempfolder,'finalriv_catinfo_dis_sel.shp'),'ALL_PARTS':False,'OUTPUT':os.path.join(self.tempfolder,'Centerpoints.shp')},context = context)
-        processing.run("native:addxyfields", {'INPUT':os.path.join(self.tempfolder,'Centerpoints.shp'),'CRS':QgsCoordinateReferenceSystem(self.SpRef_in),'OUTPUT':os.path.join(self.tempfolder,'ctwithxy.shp')},context = context)
-        processing.run("native:joinattributestable",{'INPUT':os.path.join(self.tempfolder,'finalriv_catinfo_dis_sel.shp'),'FIELD':'SubId','INPUT_2':os.path.join(self.tempfolder,'ctwithxy.shp'),'FIELD_2':'SubId',
-                          'FIELDS_TO_COPY':['x','y'],'METHOD':0,'DISCARD_NONMATCHING':False,'PREFIX':'centroid_','OUTPUT':os.path.join(self.OutputFolder,'finalriv_info_ply.shp')},context = context)
-        processing.run("native:joinattributestable",{'INPUT':os.path.join(self.tempfolder,'finalriv_info_dis_sel.shp'),'FIELD':'SubId','INPUT_2':os.path.join(self.tempfolder,'ctwithxy.shp'),'FIELD_2':'SubId',
-                          'FIELDS_TO_COPY':['x','y'],'METHOD':0,'DISCARD_NONMATCHING':False,'PREFIX':'centroid_','OUTPUT':os.path.join(self.OutputFolder,'finalriv_info.shp')},context = context)
-
+        processing.run(
+            "native:centroids",
+            {
+                "INPUT": os.path.join(self.tempfolder, "finalriv_catinfo_dis_sel.shp"),
+                "ALL_PARTS": False,
+                "OUTPUT": os.path.join(self.tempfolder, "Centerpoints.shp"),
+            },
+            context=context,
+        )
+        processing.run(
+            "native:addxyfields",
+            {
+                "INPUT": os.path.join(self.tempfolder, "Centerpoints.shp"),
+                "CRS": QgsCoordinateReferenceSystem(self.SpRef_in),
+                "OUTPUT": os.path.join(self.tempfolder, "ctwithxy.shp"),
+            },
+            context=context,
+        )
+        processing.run(
+            "native:joinattributestable",
+            {
+                "INPUT": os.path.join(self.tempfolder, "finalriv_catinfo_dis_sel.shp"),
+                "FIELD": "SubId",
+                "INPUT_2": os.path.join(self.tempfolder, "ctwithxy.shp"),
+                "FIELD_2": "SubId",
+                "FIELDS_TO_COPY": ["x", "y"],
+                "METHOD": 0,
+                "DISCARD_NONMATCHING": False,
+                "PREFIX": "centroid_",
+                "OUTPUT": os.path.join(self.OutputFolder, "finalriv_info_ply.shp"),
+            },
+            context=context,
+        )
+        processing.run(
+            "native:joinattributestable",
+            {
+                "INPUT": os.path.join(self.tempfolder, "finalriv_info_dis_sel.shp"),
+                "FIELD": "SubId",
+                "INPUT_2": os.path.join(self.tempfolder, "ctwithxy.shp"),
+                "FIELD_2": "SubId",
+                "FIELDS_TO_COPY": ["x", "y"],
+                "METHOD": 0,
+                "DISCARD_NONMATCHING": False,
+                "PREFIX": "centroid_",
+                "OUTPUT": os.path.join(self.OutputFolder, "finalriv_info.shp"),
+            },
+            context=context,
+        )
 
         ##### export  lakes
 
-        Path_final_riv = os.path.join(self.tempfolder,'finalriv_catinfo_dis_sel.shp')
+        Path_final_riv = os.path.join(self.tempfolder, "finalriv_catinfo_dis_sel.shp")
         hyinfocsv = Path_final_riv[:-3] + "dbf"
         tempinfo = Dbf5(hyinfocsv)
-        hyshdinfo2 = tempinfo.to_dataframe().drop_duplicates('SubId', keep='first')
+        hyshdinfo2 = tempinfo.to_dataframe().drop_duplicates("SubId", keep="first")
 
-        NonCL_Lakeids = hyshdinfo2.loc[hyshdinfo2['IsLake'] == 2]['HyLakeId'].values
+        NonCL_Lakeids = hyshdinfo2.loc[hyshdinfo2["IsLake"] == 2]["HyLakeId"].values
         NonCL_Lakeids = np.unique(NonCL_Lakeids)
         NonCL_Lakeids = NonCL_Lakeids[NonCL_Lakeids > 0]
 
         if len(NonCL_Lakeids) > 0:
-            exp ='Hylak_id' + '  IN  (  ' +  str(int(NonCL_Lakeids[0]))
-            for i in range(1,len(NonCL_Lakeids)):
-                exp = exp + " , "+str(int(NonCL_Lakeids[i]))
-            exp = exp + ')'
-            processing.run("native:extractbyexpression", {'INPUT':self.Path_allLakeply,'EXPRESSION':exp,'OUTPUT':os.path.join(self.OutputFolder, 'Non_Con_Lake_Ply.shp')})
-
+            exp = "Hylak_id" + "  IN  (  " + str(int(NonCL_Lakeids[0]))
+            for i in range(1, len(NonCL_Lakeids)):
+                exp = exp + " , " + str(int(NonCL_Lakeids[i]))
+            exp = exp + ")"
+            processing.run(
+                "native:extractbyexpression",
+                {
+                    "INPUT": self.Path_allLakeply,
+                    "EXPRESSION": exp,
+                    "OUTPUT": os.path.join(self.OutputFolder, "Non_Con_Lake_Ply.shp"),
+                },
+            )
 
         ### Non_Connected Lakes
-        CL_Lakeids =  hyshdinfo2.loc[hyshdinfo2['IsLake'] == 1]['HyLakeId'].values
+        CL_Lakeids = hyshdinfo2.loc[hyshdinfo2["IsLake"] == 1]["HyLakeId"].values
         CL_Lakeids = np.unique(CL_Lakeids)
         CL_Lakeids = CL_Lakeids[CL_Lakeids > 0]
-        if(len(CL_Lakeids)) > 0:
-            exp ='Hylak_id' + '  IN  (  ' +  str(int(CL_Lakeids[0]))
-            for i in range(1,len(CL_Lakeids)):
-                exp = exp + " , "+str(int(CL_Lakeids[i]))
-            exp = exp + ')'
-            processing.run("native:extractbyexpression", {'INPUT':self.Path_allLakeply,'EXPRESSION':exp,'OUTPUT':os.path.join(self.OutputFolder, 'Con_Lake_Ply.shp')})
+        if (len(CL_Lakeids)) > 0:
+            exp = "Hylak_id" + "  IN  (  " + str(int(CL_Lakeids[0]))
+            for i in range(1, len(CL_Lakeids)):
+                exp = exp + " , " + str(int(CL_Lakeids[i]))
+            exp = exp + ")"
+            processing.run(
+                "native:extractbyexpression",
+                {
+                    "INPUT": self.Path_allLakeply,
+                    "EXPRESSION": exp,
+                    "OUTPUT": os.path.join(self.OutputFolder, "Con_Lake_Ply.shp"),
+                },
+            )
 
-        if self.Path_obspoint_in != '#':
-            grass.run_command('v.out.ogr', input = 'obspoint',output = os.path.join(self.OutputFolder,'obspoint_inputs.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
-            grass.run_command('v.out.ogr', input = 'obspoint_snap_r2v',output = os.path.join(self.OutputFolder,'obspoint_snap.shp'),format= 'ESRI_Shapefile',overwrite = True,quiet = 'Ture')
-        Clean_Attribute_Name(os.path.join(self.OutputFolder,'finalriv_info.shp'),   self.FieldName_List_Product)
-        Clean_Attribute_Name(os.path.join(self.OutputFolder,'finalriv_info_ply.shp'), self.FieldName_List_Product)
+        if self.Path_obspoint_in != "#":
+            grass.run_command(
+                "v.out.ogr",
+                input="obspoint",
+                output=os.path.join(self.OutputFolder, "obspoint_inputs.shp"),
+                format="ESRI_Shapefile",
+                overwrite=True,
+                quiet="Ture",
+            )
+            grass.run_command(
+                "v.out.ogr",
+                input="obspoint_snap_r2v",
+                output=os.path.join(self.OutputFolder, "obspoint_snap.shp"),
+                format="ESRI_Shapefile",
+                overwrite=True,
+                quiet="Ture",
+            )
+        Clean_Attribute_Name(
+            os.path.join(self.OutputFolder, "finalriv_info.shp"),
+            self.FieldName_List_Product,
+        )
+        Clean_Attribute_Name(
+            os.path.join(self.OutputFolder, "finalriv_info_ply.shp"),
+            self.FieldName_List_Product,
+        )
 
         print("********************Add routing parameters done ********************")
         PERMANENT.close()
         Qgs.exit()
         return
 
-###########################################################################3
+    ###########################################################################3
     def Output_Clean(self):
 
         import grass.script as grass
-        from grass.script import array as garray
         import grass.script.setup as gsetup
+        from grass.pygrass.modules import Module
         from grass.pygrass.modules.shortcuts import general as g
         from grass.pygrass.modules.shortcuts import raster as r
-        from grass.pygrass.modules import Module
+        from grass.script import array as garray
         from grass_session import Session
 
-        shutil.rmtree(self.grassdb,ignore_errors=True)
-        shutil.rmtree(self.tempfolder,ignore_errors=True)
+        shutil.rmtree(self.grassdb, ignore_errors=True)
+        shutil.rmtree(self.tempfolder, ignore_errors=True)
 
-
-    def GenerateRavenInput(self,Path_final_hru_info = '#'
-                          ,lenThres = 1,iscalmanningn = -1,Startyear = -1,EndYear = -1
-                          ,CA_HYDAT = '#',WarmUp = 0,Template_Folder = '#'
-                          ,Lake_As_Gauge = False, WriteObsrvt = False
-                          ,DownLoadObsData = True,Model_Name = 'test',Old_Product = False
-                          ,SubBasinGroup_NM_Channel=['Allsubbasins'],SubBasinGroup_Length_Channel = [-1]
-                          ,SubBasinGroup_NM_Lake=['AllLakesubbasins'],SubBasinGroup_Area_Lake = [-1],
-                          OutputFolder = '#',Forcing_Input_File = '#'):
+    def GenerateRavenInput(
+        self,
+        Path_final_hru_info="#",
+        lenThres=1,
+        iscalmanningn=-1,
+        Startyear=-1,
+        EndYear=-1,
+        CA_HYDAT="#",
+        WarmUp=0,
+        Template_Folder="#",
+        Lake_As_Gauge=False,
+        WriteObsrvt=False,
+        DownLoadObsData=True,
+        Model_Name="test",
+        Old_Product=False,
+        SubBasinGroup_NM_Channel=["Allsubbasins"],
+        SubBasinGroup_Length_Channel=[-1],
+        SubBasinGroup_NM_Lake=["AllLakesubbasins"],
+        SubBasinGroup_Area_Lake=[-1],
+        OutputFolder="#",
+        Forcing_Input_File="#",
+    ):
 
         """Generate Raven input files.
 
@@ -2592,20 +4367,18 @@ class LRRT:
 
         """
 
-
-
-        Raveinputsfolder = os.path.join(OutputFolder,'RavenInput')
-        Obs_Folder       = os.path.join(Raveinputsfolder,'obs')
+        Raveinputsfolder = os.path.join(OutputFolder, "RavenInput")
+        Obs_Folder = os.path.join(Raveinputsfolder, "obs")
 
         if not os.path.exists(OutputFolder):
             os.makedirs(OutputFolder)
 
-        shutil.rmtree(Raveinputsfolder,ignore_errors=True)
+        shutil.rmtree(Raveinputsfolder, ignore_errors=True)
 
         ### check if there is a model input template provided
-        if Template_Folder != '#':
+        if Template_Folder != "#":
             fromDirectory = Template_Folder
-            toDirectory   = Raveinputsfolder
+            toDirectory = Raveinputsfolder
             copy_tree(fromDirectory, toDirectory)
 
         if not os.path.exists(Raveinputsfolder):
@@ -2613,46 +4386,84 @@ class LRRT:
         if not os.path.exists(Obs_Folder):
             os.makedirs(Obs_Folder)
 
-        if Forcing_Input_File != '#':
+        if Forcing_Input_File != "#":
             fromDirectory = Forcing_Input_File
-            toDirectory   = os.path.join(Raveinputsfolder,'GriddedForcings2.txt')
+            toDirectory = os.path.join(Raveinputsfolder, "GriddedForcings2.txt")
             copyfile(fromDirectory, toDirectory)
 
         finalcatchpath = Path_final_hru_info
 
-        tempinfo = Dbf5(finalcatchpath[:-3] + "dbf")#np.genfromtxt(hyinfocsv,delimiter=',')
+        tempinfo = Dbf5(
+            finalcatchpath[:-3] + "dbf"
+        )  # np.genfromtxt(hyinfocsv,delimiter=',')
         ncatinfo = tempinfo.to_dataframe()
-        ncatinfo2 = ncatinfo.drop_duplicates('HRU_ID', keep='first')
-        ncatinfo2 = ncatinfo2.loc[(ncatinfo2['HRU_ID'] > 0) & (ncatinfo2['SubId'] > 0)]
+        ncatinfo2 = ncatinfo.drop_duplicates("HRU_ID", keep="first")
+        ncatinfo2 = ncatinfo2.loc[(ncatinfo2["HRU_ID"] > 0) & (ncatinfo2["SubId"] > 0)]
         if Old_Product == True:
-            ncatinfo2['RivLength'] = ncatinfo2['Rivlen'].values
-#            ncatinfo2['RivSlope'] = ncatinfo2['Rivlen'].values
-#            ncatinfo2['RivLength'] = ncatinfo2['Rivlen'].values
-#            ncatinfo2['RivLength'] = ncatinfo2['Rivlen'].values
-#            ncatinfo2['RivLength'] = ncatinfo2['Rivlen'].values
-        Channel_rvp_file_path,Channel_rvp_string,Model_rvh_file_path,Model_rvh_string,Model_rvp_file_path,Model_rvp_string_modify = Generate_Raven_Channel_rvp_rvh_String(ncatinfo2,Raveinputsfolder,lenThres,
-                                                                                                                                                                     iscalmanningn,Lake_As_Gauge,Model_Name,
-                                                                                                                                                                     SubBasinGroup_NM_Lake,SubBasinGroup_Area_Lake,
-                                                                                                                                                                     SubBasinGroup_NM_Channel,SubBasinGroup_Length_Channel)
-        WriteStringToFile(Channel_rvp_string,Channel_rvp_file_path,"w")
-        WriteStringToFile(Model_rvh_string,Model_rvh_file_path,"w")
-        WriteStringToFile(Model_rvp_string_modify,Model_rvp_file_path,"a")
+            ncatinfo2["RivLength"] = ncatinfo2["Rivlen"].values
+        #            ncatinfo2['RivSlope'] = ncatinfo2['Rivlen'].values
+        #            ncatinfo2['RivLength'] = ncatinfo2['Rivlen'].values
+        #            ncatinfo2['RivLength'] = ncatinfo2['Rivlen'].values
+        #            ncatinfo2['RivLength'] = ncatinfo2['Rivlen'].values
+        (
+            Channel_rvp_file_path,
+            Channel_rvp_string,
+            Model_rvh_file_path,
+            Model_rvh_string,
+            Model_rvp_file_path,
+            Model_rvp_string_modify,
+        ) = Generate_Raven_Channel_rvp_rvh_String(
+            ncatinfo2,
+            Raveinputsfolder,
+            lenThres,
+            iscalmanningn,
+            Lake_As_Gauge,
+            Model_Name,
+            SubBasinGroup_NM_Lake,
+            SubBasinGroup_Area_Lake,
+            SubBasinGroup_NM_Channel,
+            SubBasinGroup_Length_Channel,
+        )
+        WriteStringToFile(Channel_rvp_string, Channel_rvp_file_path, "w")
+        WriteStringToFile(Model_rvh_string, Model_rvh_file_path, "w")
+        WriteStringToFile(Model_rvp_string_modify, Model_rvp_file_path, "a")
 
-        Lake_rvh_string,Lake_rvh_file_path = Generate_Raven_Lake_rvh_String(ncatinfo2,Raveinputsfolder,Model_Name)
-        WriteStringToFile(Lake_rvh_string,Lake_rvh_file_path,"w")
+        Lake_rvh_string, Lake_rvh_file_path = Generate_Raven_Lake_rvh_String(
+            ncatinfo2, Raveinputsfolder, Model_Name
+        )
+        WriteStringToFile(Lake_rvh_string, Lake_rvh_file_path, "w")
 
         if WriteObsrvt > 0:
-            obs_rvt_file_path_gauge_list,obs_rvt_file_string_gauge_list,Model_rvt_file_path,Model_rvt_file_string_modify_gauge_list,obsnms = Generate_Raven_Obs_rvt_String(ncatinfo2,Raveinputsfolder,Obs_Folder,
-                                                                                                                                                                           Startyear + WarmUp,EndYear,CA_HYDAT,
-                                                                                                                                                                           DownLoadObsData,
-                                                                                                                                                                           Model_Name)
-            for i in range(0,len(obs_rvt_file_path_gauge_list)):
-                WriteStringToFile(obs_rvt_file_string_gauge_list[i],obs_rvt_file_path_gauge_list[i],"w")
-                WriteStringToFile(Model_rvt_file_string_modify_gauge_list[i],Model_rvt_file_path,"a")
-            obsnms.to_csv(os.path.join(Obs_Folder,'obsinfo.csv'))
+            (
+                obs_rvt_file_path_gauge_list,
+                obs_rvt_file_string_gauge_list,
+                Model_rvt_file_path,
+                Model_rvt_file_string_modify_gauge_list,
+                obsnms,
+            ) = Generate_Raven_Obs_rvt_String(
+                ncatinfo2,
+                Raveinputsfolder,
+                Obs_Folder,
+                Startyear + WarmUp,
+                EndYear,
+                CA_HYDAT,
+                DownLoadObsData,
+                Model_Name,
+            )
+            for i in range(0, len(obs_rvt_file_path_gauge_list)):
+                WriteStringToFile(
+                    obs_rvt_file_string_gauge_list[i],
+                    obs_rvt_file_path_gauge_list[i],
+                    "w",
+                )
+                WriteStringToFile(
+                    Model_rvt_file_string_modify_gauge_list[i], Model_rvt_file_path, "a"
+                )
+            obsnms.to_csv(os.path.join(Obs_Folder, "obsinfo.csv"))
 
-
-    def Locate_subid_needsbyuser(self,Path_Points = '#', Gauge_NMS = '#',Path_products='#'):
+    def Locate_subid_needsbyuser(
+        self, Path_Points="#", Gauge_NMS="#", Path_products="#"
+    ):
         """Get Subbasin Ids
 
         Function that used to obtain subbasin ID of certain gauge.
@@ -2697,49 +4508,70 @@ class LRRT:
 
         # obtain subbasin ID based on either points or guage names
         QgsApplication.setPrefixPath(self.qgisPP, True)
-        Qgs = QgsApplication([],False)
+        Qgs = QgsApplication([], False)
         Qgs.initQgis()
-        from qgis import processing
         from processing.core.Processing import Processing
-                
         from processing.tools import dataobjects
+        from qgis import processing
+
         feedback = QgsProcessingFeedback()
         Processing.initialize()
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
         context = dataobjects.createContext()
         context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
-        
-        SubId_Selected = -1
-        if Gauge_NMS[0] != '#':
-            hyinfocsv  = Path_products[:-3] + "dbf"
-            tempinfo   = Dbf5(hyinfocsv)
-            hyshdinfo2 = tempinfo.to_dataframe().drop_duplicates('SubId', keep='first')
-            hyshdinfo2 = hyshdinfo2.loc[hyshdinfo2['Obs_NM'] != '-9999.0']
-            hyshdinfo2 = hyshdinfo2.loc[hyshdinfo2['Obs_NM'].isin(Gauge_NMS)]
-            hyshdinfo2 = hyshdinfo2[['Obs_NM','SubId']]
-#            hyshdinfo2.to_csv(os.path.join(self.OutputFolder,'SubIds_Selected.csv'),sep=',', index = None)
-            SubId_Selected = hyshdinfo2['SubId'].values
 
-        if Path_Points != '#':
-            vector_layer = qgis_vector_read_vector(processing,context,Path_products)
-            SpRef_in     = qgis_vector_return_crs_id(processing,context,vector_layer)
-            
-            qgis_vector_reproject_layers(processing,context,INPUT = Path_Points,TARGET_CRS = SpRef_in,OUTPUT = os.path.join(self.tempfolder,'Obspoint_project2.shp'))
-            
-            qgis_vector_add_polygon_attribute_to_points(processing,context,INPUT_Layer = os.path.join(self.tempfolder,'Obspoint_project2.shp'),POLYGONS = Path_products,FIELDS = 'SubId',OUTPUT = os.path.join(self.tempfolder,'Sub_Selected_by_Points.shp'))
-            
-            hyshdinfo2 = Dbf_To_Dataframe(os.path.join(self.tempfolder,'Sub_Selected_by_Points.shp'))
-            SubId_Selected = hyshdinfo2['SubId'].values
+        SubId_Selected = -1
+        if Gauge_NMS[0] != "#":
+            hyinfocsv = Path_products[:-3] + "dbf"
+            tempinfo = Dbf5(hyinfocsv)
+            hyshdinfo2 = tempinfo.to_dataframe().drop_duplicates("SubId", keep="first")
+            hyshdinfo2 = hyshdinfo2.loc[hyshdinfo2["Obs_NM"] != "-9999.0"]
+            hyshdinfo2 = hyshdinfo2.loc[hyshdinfo2["Obs_NM"].isin(Gauge_NMS)]
+            hyshdinfo2 = hyshdinfo2[["Obs_NM", "SubId"]]
+            #            hyshdinfo2.to_csv(os.path.join(self.OutputFolder,'SubIds_Selected.csv'),sep=',', index = None)
+            SubId_Selected = hyshdinfo2["SubId"].values
+
+        if Path_Points != "#":
+            vector_layer = qgis_vector_read_vector(processing, context, Path_products)
+            SpRef_in = qgis_vector_return_crs_id(processing, context, vector_layer)
+
+            qgis_vector_reproject_layers(
+                processing,
+                context,
+                INPUT=Path_Points,
+                TARGET_CRS=SpRef_in,
+                OUTPUT=os.path.join(self.tempfolder, "Obspoint_project2.shp"),
+            )
+
+            qgis_vector_add_polygon_attribute_to_points(
+                processing,
+                context,
+                INPUT_Layer=os.path.join(self.tempfolder, "Obspoint_project2.shp"),
+                POLYGONS=Path_products,
+                FIELDS="SubId",
+                OUTPUT=os.path.join(self.tempfolder, "Sub_Selected_by_Points.shp"),
+            )
+
+            hyshdinfo2 = Dbf_To_Dataframe(
+                os.path.join(self.tempfolder, "Sub_Selected_by_Points.shp")
+            )
+            SubId_Selected = hyshdinfo2["SubId"].values
             SubId_Selected = SubId_Selected[SubId_Selected > 0]
 
         Qgs.exit()
 
         return SubId_Selected
 
-    def Select_Routing_product_based_SubId(self,OutputFolder,Path_Catchment_Polygon = '#',Path_River_Polyline = '#',
-                                           Path_Con_Lake_ply = '#',Path_NonCon_Lake_ply='#',
-                                           mostdownid = -1,mostupstreamid = -1,
-                                           ):
+    def Select_Routing_product_based_SubId(
+        self,
+        OutputFolder,
+        Path_Catchment_Polygon="#",
+        Path_River_Polyline="#",
+        Path_Con_Lake_ply="#",
+        Path_NonCon_Lake_ply="#",
+        mostdownid=-1,
+        mostupstreamid=-1,
+    ):
         """Extract region of interest based on provided Subid
 
         Function that used to obtain the region of interest from routing
@@ -2790,74 +4622,112 @@ class LRRT:
         """
 
         QgsApplication.setPrefixPath(self.qgisPP, True)
-        Qgs = QgsApplication([],False)
+        Qgs = QgsApplication([], False)
         Qgs.initQgis()
-        from qgis import processing
         from processing.core.Processing import Processing
+        from qgis import processing
+
         feedback = QgsProcessingFeedback()
         Processing.initialize()
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
 
-        sub_colnm  = 'SubId'
-        down_colnm = 'DowSubId'
+        sub_colnm = "SubId"
+        down_colnm = "DowSubId"
         ##3
-        hyshdinfo2 = Dbf_To_Dataframe(Path_Catchment_Polygon).drop_duplicates(sub_colnm, keep='first')
-        hyshdinfo =  hyshdinfo2[[sub_colnm,down_colnm]].astype('int32').values
-
+        hyshdinfo2 = Dbf_To_Dataframe(Path_Catchment_Polygon).drop_duplicates(
+            sub_colnm, keep="first"
+        )
+        hyshdinfo = hyshdinfo2[[sub_colnm, down_colnm]].astype("int32").values
 
         ### Loop for each downstream id
-        OutHyID  = mostdownid
+        OutHyID = mostdownid
         OutHyID2 = mostupstreamid
 
         if not os.path.exists(OutputFolder):
             os.makedirs(OutputFolder)
 
             ## find all subid control by this subid
-        HydroBasins1 = Defcat(hyshdinfo,OutHyID) ### return fid of polygons that needs to be select
+        HydroBasins1 = Defcat(
+            hyshdinfo, OutHyID
+        )  ### return fid of polygons that needs to be select
         if OutHyID2 > 0:
-            HydroBasins2 = Defcat(hyshdinfo,OutHyID2)
+            HydroBasins2 = Defcat(hyshdinfo, OutHyID2)
             ###  exculde the Ids in HydroBasins2 from HydroBasins1
             for i in range(len(HydroBasins2)):
-                rows =np.argwhere(HydroBasins1 == HydroBasins2[i])
+                rows = np.argwhere(HydroBasins1 == HydroBasins2[i])
                 HydroBasins1 = np.delete(HydroBasins1, rows)
             HydroBasins = HydroBasins1
         else:
             HydroBasins = HydroBasins1
 
+        Outputfilename_cat = os.path.join(
+            OutputFolder, os.path.basename(Path_Catchment_Polygon)
+        )
+        Selectfeatureattributes(
+            processing,
+            Input=Path_Catchment_Polygon,
+            Output=Outputfilename_cat,
+            Attri_NM="SubId",
+            Values=HydroBasins,
+        )
+        if Path_River_Polyline != "#":
+            Outputfilename_cat_riv = os.path.join(
+                OutputFolder, os.path.basename(Path_River_Polyline)
+            )
+            Selectfeatureattributes(
+                processing,
+                Input=Path_River_Polyline,
+                Output=Outputfilename_cat_riv,
+                Attri_NM="SubId",
+                Values=HydroBasins,
+            )
 
-        Outputfilename_cat = os.path.join(OutputFolder,os.path.basename(Path_Catchment_Polygon))
-        Selectfeatureattributes(processing,Input = Path_Catchment_Polygon,Output=Outputfilename_cat,Attri_NM = 'SubId',Values = HydroBasins)
-        if Path_River_Polyline != '#':
-            Outputfilename_cat_riv = os.path.join(OutputFolder,os.path.basename(Path_River_Polyline))
-            Selectfeatureattributes(processing,Input = Path_River_Polyline,Output=Outputfilename_cat_riv,Attri_NM = 'SubId',Values = HydroBasins)
-
-        finalcat_csv     = Outputfilename_cat[:-3] + "dbf"
-        finalcat_info    = Dbf5(finalcat_csv)
-        finalcat_info    = finalcat_info.to_dataframe().drop_duplicates('SubId', keep='first')
+        finalcat_csv = Outputfilename_cat[:-3] + "dbf"
+        finalcat_info = Dbf5(finalcat_csv)
+        finalcat_info = finalcat_info.to_dataframe().drop_duplicates(
+            "SubId", keep="first"
+        )
 
         #### extract lakes
 
-        Connect_Lake_info = finalcat_info.loc[finalcat_info['IsLake'] == 1]
-        Connect_Lakeids  = np.unique(Connect_Lake_info['HyLakeId'].values)
-        Connect_Lakeids  = Connect_Lakeids[Connect_Lakeids > 0]
+        Connect_Lake_info = finalcat_info.loc[finalcat_info["IsLake"] == 1]
+        Connect_Lakeids = np.unique(Connect_Lake_info["HyLakeId"].values)
+        Connect_Lakeids = Connect_Lakeids[Connect_Lakeids > 0]
 
-        NConnect_Lake_info = finalcat_info.loc[finalcat_info['IsLake'] == 2]
-        NonCL_Lakeids  = np.unique(NConnect_Lake_info['HyLakeId'].values)
-        NonCL_Lakeids  = NonCL_Lakeids[NonCL_Lakeids > 0]
+        NConnect_Lake_info = finalcat_info.loc[finalcat_info["IsLake"] == 2]
+        NonCL_Lakeids = np.unique(NConnect_Lake_info["HyLakeId"].values)
+        NonCL_Lakeids = NonCL_Lakeids[NonCL_Lakeids > 0]
 
-        if len(Connect_Lakeids) > 0 and Path_Con_Lake_ply != '#':
-            Selectfeatureattributes(processing,Input = Path_Con_Lake_ply,Output=os.path.join(OutputFolder,os.path.basename(Path_Con_Lake_ply)),Attri_NM = 'Hylak_id',Values = Connect_Lakeids)
-        if len(NonCL_Lakeids) > 0 and Path_NonCon_Lake_ply != '#':
-            Selectfeatureattributes(processing,Input = Path_NonCon_Lake_ply,Output=os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply)),Attri_NM = 'Hylak_id',Values = NonCL_Lakeids)
+        if len(Connect_Lakeids) > 0 and Path_Con_Lake_ply != "#":
+            Selectfeatureattributes(
+                processing,
+                Input=Path_Con_Lake_ply,
+                Output=os.path.join(OutputFolder, os.path.basename(Path_Con_Lake_ply)),
+                Attri_NM="Hylak_id",
+                Values=Connect_Lakeids,
+            )
+        if len(NonCL_Lakeids) > 0 and Path_NonCon_Lake_ply != "#":
+            Selectfeatureattributes(
+                processing,
+                Input=Path_NonCon_Lake_ply,
+                Output=os.path.join(
+                    OutputFolder, os.path.basename(Path_NonCon_Lake_ply)
+                ),
+                Attri_NM="Hylak_id",
+                Values=NonCL_Lakeids,
+            )
 
         Qgs.exit()
 
-    def Customize_Routing_Topology(self,Path_final_riv_ply = '#',
-                                   Path_final_riv = '#',
-                                   Path_Con_Lake_ply='#',
-                                   Path_NonCon_Lake_ply='#',
-                                   Area_Min = -1,
-                                   OutputFolder = '#'):
+    def Customize_Routing_Topology(
+        self,
+        Path_final_riv_ply="#",
+        Path_final_riv="#",
+        Path_Con_Lake_ply="#",
+        Path_NonCon_Lake_ply="#",
+        Area_Min=-1,
+        OutputFolder="#",
+    ):
         """Simplify the routing product by drainage area
 
         Function that used to simplify the routing product by
@@ -2917,59 +4787,94 @@ class LRRT:
         """
         #### generate river catchments based on minmum area.
         QgsApplication.setPrefixPath(self.qgisPP, True)
-        Qgs = QgsApplication([],False)
+        Qgs = QgsApplication([], False)
         Qgs.initQgis()
-        from qgis import processing
         from processing.core.Processing import Processing
         from processing.tools import dataobjects
+        from qgis import processing
+
         feedback = QgsProcessingFeedback()
         Processing.initialize()
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
         context = dataobjects.createContext()
         context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
 
-        sub_colnm='SubId'
-        down_colnm='DowSubId'
-        DA_colnm = 'DA'
-        SegID_colnm = 'Seg_ID'
-        
-        # overall procedure, 
-        # 1. first get product attribute table 
-        # 2. determine which features needs to be merged together to increage 
-        #    drainage area of the sub basin, for example sub a, b c needs to be merged 
-        # 3. in the attribute table, change sub a b c 's content to a, assuming sub b and c drainge to a.  
-        # 4. copy modified attribute table to shafiles 
-        # 5. dissolve based on subid amd finished 
+        sub_colnm = "SubId"
+        down_colnm = "DowSubId"
+        DA_colnm = "DA"
+        SegID_colnm = "Seg_ID"
+
         # overall procedure,
-        
+        # 1. first get product attribute table
+        # 2. determine which features needs to be merged together to increage
+        #    drainage area of the sub basin, for example sub a, b c needs to be merged
+        # 3. in the attribute table, change sub a b c 's content to a, assuming sub b and c drainge to a.
+        # 4. copy modified attribute table to shafiles
+        # 5. dissolve based on subid amd finished
+        # overall procedure,
+
         # read attribute table, and
         Path_final_rviply = Path_final_riv_ply
-        Path_final_riv    = Path_final_riv
-        Path_Conl_ply     = Path_Con_Lake_ply
+        Path_final_riv = Path_final_riv
+        Path_Conl_ply = Path_Con_Lake_ply
         Path_Non_ConL_ply = Path_NonCon_Lake_ply
-        
-        finalriv_info = Dbf_To_Dataframe(Path_final_rviply).drop_duplicates(sub_colnm, keep='first')
-        Conn_Lakes_ply = Dbf_To_Dataframe(Path_Conl_ply).drop_duplicates('Hylak_id', keep='first')
-        
-        # change attribute table 
-        mapoldnew_info,Selected_riv_ids,Connected_Lake_Mainriv,Old_Non_Connect_LakeIds,Conn_To_NonConlakeids= Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(finalriv_info,Conn_Lakes_ply,Area_Min)
-        
+
+        finalriv_info = Dbf_To_Dataframe(Path_final_rviply).drop_duplicates(
+            sub_colnm, keep="first"
+        )
+        Conn_Lakes_ply = Dbf_To_Dataframe(Path_Conl_ply).drop_duplicates(
+            "Hylak_id", keep="first"
+        )
+
+        # change attribute table
+        (
+            mapoldnew_info,
+            Selected_riv_ids,
+            Connected_Lake_Mainriv,
+            Old_Non_Connect_LakeIds,
+            Conn_To_NonConlakeids,
+        ) = Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
+            finalriv_info, Conn_Lakes_ply, Area_Min
+        )
+
         # remove river polyline
-        Path_Temp_final_rviply = os.path.join(self.tempfolder,'temp1_finalriv_ply.shp')
-        Path_Temp_final_rvi    = os.path.join(self.tempfolder,'temp1_finalriv.shp')
-        Selectfeatureattributes(processing,Input = Path_final_riv    ,Output=Path_Temp_final_rvi    ,Attri_NM = 'SubId',Values = Selected_riv_ids)
-        qgis_vector_dissolve(processing,context,INPUT = Path_final_rviply,FIELD = ['SubId'],OUTPUT = Path_Temp_final_rviply)
-         
-        # update topology of new attribute table 
+        Path_Temp_final_rviply = os.path.join(self.tempfolder, "temp1_finalriv_ply.shp")
+        Path_Temp_final_rvi = os.path.join(self.tempfolder, "temp1_finalriv.shp")
+        Selectfeatureattributes(
+            processing,
+            Input=Path_final_riv,
+            Output=Path_Temp_final_rvi,
+            Attri_NM="SubId",
+            Values=Selected_riv_ids,
+        )
+        qgis_vector_dissolve(
+            processing,
+            context,
+            INPUT=Path_final_rviply,
+            FIELD=["SubId"],
+            OUTPUT=Path_Temp_final_rviply,
+        )
+
+        # update topology of new attribute table
         UpdateTopology(mapoldnew_info)
         mapoldnew_info = UpdateNonConnectedcatchmentinfo(mapoldnew_info)
-        
-        # copy new attribute table to subbasin polyline and polygon  
-        Copy_Pddataframe_to_shpfile(Path_Temp_final_rviply,mapoldnew_info,link_col_nm_shp = 'SubId'
-                                    ,link_col_nm_df = 'Old_SubId',UpdateColNM = ['#'])
-        Copy_Pddataframe_to_shpfile(Path_Temp_final_rvi,mapoldnew_info,link_col_nm_shp = 'SubId'
-                                    ,link_col_nm_df = 'Old_SubId',UpdateColNM = ['#'])
-                                    
+
+        # copy new attribute table to subbasin polyline and polygon
+        Copy_Pddataframe_to_shpfile(
+            Path_Temp_final_rviply,
+            mapoldnew_info,
+            link_col_nm_shp="SubId",
+            link_col_nm_df="Old_SubId",
+            UpdateColNM=["#"],
+        )
+        Copy_Pddataframe_to_shpfile(
+            Path_Temp_final_rvi,
+            mapoldnew_info,
+            link_col_nm_shp="SubId",
+            link_col_nm_df="Old_SubId",
+            UpdateColNM=["#"],
+        )
+
         # create output folder
         outputfolder_subid = OutputFolder
         if not os.path.exists(outputfolder_subid):
@@ -2977,40 +4882,78 @@ class LRRT:
 
         # export lake polygons
 
-        Selectfeatureattributes(processing,Input =Path_Conl_ply ,Output=os.path.join(outputfolder_subid,os.path.basename(Path_Conl_ply)),Attri_NM = 'Hylak_id',Values = Connected_Lake_Mainriv)
-        Selectfeatureattributes(processing,Input =Path_Non_ConL_ply ,Output=os.path.join(outputfolder_subid,os.path.basename(Path_Non_ConL_ply)),Attri_NM = 'Hylak_id',Values = Old_Non_Connect_LakeIds)
+        Selectfeatureattributes(
+            processing,
+            Input=Path_Conl_ply,
+            Output=os.path.join(outputfolder_subid, os.path.basename(Path_Conl_ply)),
+            Attri_NM="Hylak_id",
+            Values=Connected_Lake_Mainriv,
+        )
+        Selectfeatureattributes(
+            processing,
+            Input=Path_Non_ConL_ply,
+            Output=os.path.join(
+                outputfolder_subid, os.path.basename(Path_Non_ConL_ply)
+            ),
+            Attri_NM="Hylak_id",
+            Values=Old_Non_Connect_LakeIds,
+        )
 
-        # Copy connected lakes that are transfered into non-connected lake to non connected lake polygon 
-        Copyfeature_to_another_shp_by_attribute(Source_shp = Path_Conl_ply,Target_shp =os.path.join(outputfolder_subid,os.path.basename(Path_Non_ConL_ply)),Col_NM='Hylak_id',Values=Conn_To_NonConlakeids,Attributes = Conn_Lakes_ply)
+        # Copy connected lakes that are transfered into non-connected lake to non connected lake polygon
+        Copyfeature_to_another_shp_by_attribute(
+            Source_shp=Path_Conl_ply,
+            Target_shp=os.path.join(
+                outputfolder_subid, os.path.basename(Path_Non_ConL_ply)
+            ),
+            Col_NM="Hylak_id",
+            Values=Conn_To_NonConlakeids,
+            Attributes=Conn_Lakes_ply,
+        )
 
-        
-        # dissolve subbasin polygon based on new subbasin id 
-        Path_out_final_rviply = os.path.join(outputfolder_subid,os.path.basename(Path_final_riv_ply))
-        Path_out_final_rvi    = os.path.join(outputfolder_subid,os.path.basename(Path_final_riv))
-        
-        qgis_vector_dissolve(processing,context,INPUT = Path_Temp_final_rviply,FIELD = ['SubId'],OUTPUT = Path_out_final_rviply)
-        qgis_vector_dissolve(processing,context,INPUT = Path_Temp_final_rvi,FIELD = ['SubId'],OUTPUT = Path_out_final_rvi)
-                
-        # clean attribute table and done 
-        Clean_Attribute_Name(Path_out_final_rviply,   self.FieldName_List_Product)
-        Clean_Attribute_Name(Path_out_final_rvi   , self.FieldName_List_Product)
+        # dissolve subbasin polygon based on new subbasin id
+        Path_out_final_rviply = os.path.join(
+            outputfolder_subid, os.path.basename(Path_final_riv_ply)
+        )
+        Path_out_final_rvi = os.path.join(
+            outputfolder_subid, os.path.basename(Path_final_riv)
+        )
+
+        qgis_vector_dissolve(
+            processing,
+            context,
+            INPUT=Path_Temp_final_rviply,
+            FIELD=["SubId"],
+            OUTPUT=Path_out_final_rviply,
+        )
+        qgis_vector_dissolve(
+            processing,
+            context,
+            INPUT=Path_Temp_final_rvi,
+            FIELD=["SubId"],
+            OUTPUT=Path_out_final_rvi,
+        )
+
+        # clean attribute table and done
+        Clean_Attribute_Name(Path_out_final_rviply, self.FieldName_List_Product)
+        Clean_Attribute_Name(Path_out_final_rvi, self.FieldName_List_Product)
 
         Qgs.exit()
 
         ######################################################################
 
-
-
-###########################################################################3
-    def SelectLakes(self,Path_final_riv_ply = '#',
-                         Path_final_riv = '#',
-                         Path_Con_Lake_ply='#',
-                         Path_NonCon_Lake_ply='#',
-                         Thres_Area_Conn_Lakes = -1,
-                         Thres_Area_Non_Conn_Lakes = -1,
-                         Selection_Method = 'ByArea',
-                         Selected_Lake_List_in=[],
-                         OutputFolder = '#'):
+    ###########################################################################3
+    def SelectLakes(
+        self,
+        Path_final_riv_ply="#",
+        Path_final_riv="#",
+        Path_Con_Lake_ply="#",
+        Path_NonCon_Lake_ply="#",
+        Thres_Area_Conn_Lakes=-1,
+        Thres_Area_Non_Conn_Lakes=-1,
+        Selection_Method="ByArea",
+        Selected_Lake_List_in=[],
+        OutputFolder="#",
+    ):
         """Simplify the routing product by lake area
 
         Function that used to simplify the routing product by user
@@ -3080,76 +5023,156 @@ class LRRT:
 
         """
         QgsApplication.setPrefixPath(self.qgisPP, True)
-        Qgs = QgsApplication([],False)
+        Qgs = QgsApplication([], False)
         Qgs.initQgis()
-        from qgis import processing
         from processing.core.Processing import Processing
         from processing.tools import dataobjects
+        from qgis import processing
+
         feedback = QgsProcessingFeedback()
         Processing.initialize()
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
         context = dataobjects.createContext()
         context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
 
-
         if not os.path.exists(OutputFolder):
             os.makedirs(OutputFolder)
 
-        ### read attribute table 
+        ### read attribute table
         finalcat_info = Dbf_To_Dataframe(Path_final_riv_ply)
-        
-        ### Obtain selected lake's attribute info  
-        Selected_Non_ConnLakes,Selected_ConnLakes,Un_Selected_ConnLakes_info,Un_Selected_Non_ConnL_info = Return_Selected_Lakes_Attribute_Table_And_Id(finalcat_info,Thres_Area_Conn_Lakes,Thres_Area_Non_Conn_Lakes,Selection_Method,Selected_Lake_List_in)
-        
-        ### Extract lake polygons 
+
+        ### Obtain selected lake's attribute info
+        (
+            Selected_Non_ConnLakes,
+            Selected_ConnLakes,
+            Un_Selected_ConnLakes_info,
+            Un_Selected_Non_ConnL_info,
+        ) = Return_Selected_Lakes_Attribute_Table_And_Id(
+            finalcat_info,
+            Thres_Area_Conn_Lakes,
+            Thres_Area_Non_Conn_Lakes,
+            Selection_Method,
+            Selected_Lake_List_in,
+        )
+
+        ### Extract lake polygons
         if len(Selected_Non_ConnLakes) > 0:
-            Selectfeatureattributes(processing,Input = Path_NonCon_Lake_ply,Output=os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply)),Attri_NM = 'Hylak_id',Values = Selected_Non_ConnLakes)
+            Selectfeatureattributes(
+                processing,
+                Input=Path_NonCon_Lake_ply,
+                Output=os.path.join(
+                    OutputFolder, os.path.basename(Path_NonCon_Lake_ply)
+                ),
+                Attri_NM="Hylak_id",
+                Values=Selected_Non_ConnLakes,
+            )
         if len(Selected_ConnLakes) > 0:
-            Selectfeatureattributes(processing,Input = Path_Con_Lake_ply ,Output=os.path.join(OutputFolder,os.path.basename(Path_Con_Lake_ply)),Attri_NM = 'Hylak_id',Values = Selected_ConnLakes)
+            Selectfeatureattributes(
+                processing,
+                Input=Path_Con_Lake_ply,
+                Output=os.path.join(OutputFolder, os.path.basename(Path_Con_Lake_ply)),
+                Attri_NM="Hylak_id",
+                Values=Selected_ConnLakes,
+            )
 
         print("####################################### Obtain selected Lake IDs done")
 
-        ### create a copy of shapfiles in temp folder 
-        Path_Temp_final_rviply = os.path.join(self.tempfolder,'temp_finalriv_ply_selectlake.shp')
-        Path_Temp_final_rvi    = os.path.join(self.tempfolder,'temp_finalriv_selectlake.shp')
-        qgis_vector_dissolve(processing,context,INPUT = Path_final_riv,FIELD = ['SubId'],OUTPUT = Path_Temp_final_rvi)
-        qgis_vector_dissolve(processing,context,INPUT = Path_final_riv_ply,FIELD = ['SubId'],OUTPUT = Path_Temp_final_rviply)
-        
-        # change lake related attribute for un selected connected lake catchment to -1.2345 
-        Remove_Unselected_Lake_Attribute_In_Finalcatinfo(Path_Temp_final_rviply,Selected_ConnLakes) ### remove lake attributes
-        Remove_Unselected_Lake_Attribute_In_Finalcatinfo(Path_Temp_final_rvi,Selected_ConnLakes)
-   
-       
-        # Modify attribute table to merge un selected lake catchment if needed 
+        ### create a copy of shapfiles in temp folder
+        Path_Temp_final_rviply = os.path.join(
+            self.tempfolder, "temp_finalriv_ply_selectlake.shp"
+        )
+        Path_Temp_final_rvi = os.path.join(
+            self.tempfolder, "temp_finalriv_selectlake.shp"
+        )
+        qgis_vector_dissolve(
+            processing,
+            context,
+            INPUT=Path_final_riv,
+            FIELD=["SubId"],
+            OUTPUT=Path_Temp_final_rvi,
+        )
+        qgis_vector_dissolve(
+            processing,
+            context,
+            INPUT=Path_final_riv_ply,
+            FIELD=["SubId"],
+            OUTPUT=Path_Temp_final_rviply,
+        )
+
+        # change lake related attribute for un selected connected lake catchment to -1.2345
+        Remove_Unselected_Lake_Attribute_In_Finalcatinfo(
+            Path_Temp_final_rviply, Selected_ConnLakes
+        )  ### remove lake attributes
+        Remove_Unselected_Lake_Attribute_In_Finalcatinfo(
+            Path_Temp_final_rvi, Selected_ConnLakes
+        )
+
+        # Modify attribute table to merge un selected lake catchment if needed
         finalcat_info_temp = Dbf_To_Dataframe(Path_Temp_final_rviply)
-        # change attributes for catchment due to remove of connected lakes 
-        mapoldnew_info = Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_CL(finalcat_info_temp,Un_Selected_ConnLakes_info)
-        # change attribute for catchment due to remove of non connected lakes 
-        mapoldnew_info = Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_NCL(mapoldnew_info,finalcat_info_temp,Un_Selected_Non_ConnL_info)
-        
-        # update topology for new attribute table 
-        UpdateTopology(mapoldnew_info,UpdateStreamorder = -1)
+        # change attributes for catchment due to remove of connected lakes
+        mapoldnew_info = (
+            Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_CL(
+                finalcat_info_temp, Un_Selected_ConnLakes_info
+            )
+        )
+        # change attribute for catchment due to remove of non connected lakes
+        mapoldnew_info = (
+            Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_NCL(
+                mapoldnew_info, finalcat_info_temp, Un_Selected_Non_ConnL_info
+            )
+        )
+
+        # update topology for new attribute table
+        UpdateTopology(mapoldnew_info, UpdateStreamorder=-1)
         mapoldnew_info = UpdateNonConnectedcatchmentinfo(mapoldnew_info)
-        
+
         # copy new attribute table to shpfiles
-        Copy_Pddataframe_to_shpfile(Path_Temp_final_rviply,mapoldnew_info,link_col_nm_shp = 'SubId'
-                                    ,link_col_nm_df = 'Old_SubId',UpdateColNM = ['#'])
-        Copy_Pddataframe_to_shpfile(Path_Temp_final_rvi,mapoldnew_info,link_col_nm_shp = 'SubId'
-                                    ,link_col_nm_df = 'Old_SubId',UpdateColNM = ['#'])
-        
-        # disslove line and polygon based on new subid                                 
-        qgis_vector_dissolve(processing,context,INPUT = Path_Temp_final_rvi,FIELD = ['SubId'],OUTPUT = os.path.join(OutputFolder,os.path.basename(Path_final_riv)))
-        qgis_vector_dissolve(processing,context,INPUT = Path_Temp_final_rviply,FIELD = ['SubId'],OUTPUT = os.path.join(OutputFolder,os.path.basename(Path_final_riv_ply)))
+        Copy_Pddataframe_to_shpfile(
+            Path_Temp_final_rviply,
+            mapoldnew_info,
+            link_col_nm_shp="SubId",
+            link_col_nm_df="Old_SubId",
+            UpdateColNM=["#"],
+        )
+        Copy_Pddataframe_to_shpfile(
+            Path_Temp_final_rvi,
+            mapoldnew_info,
+            link_col_nm_shp="SubId",
+            link_col_nm_df="Old_SubId",
+            UpdateColNM=["#"],
+        )
 
+        # disslove line and polygon based on new subid
+        qgis_vector_dissolve(
+            processing,
+            context,
+            INPUT=Path_Temp_final_rvi,
+            FIELD=["SubId"],
+            OUTPUT=os.path.join(OutputFolder, os.path.basename(Path_final_riv)),
+        )
+        qgis_vector_dissolve(
+            processing,
+            context,
+            INPUT=Path_Temp_final_rviply,
+            FIELD=["SubId"],
+            OUTPUT=os.path.join(OutputFolder, os.path.basename(Path_final_riv_ply)),
+        )
 
-        # clean attribute table 
-        Clean_Attribute_Name(os.path.join(OutputFolder,os.path.basename(Path_final_riv)),   self.FieldName_List_Product)
-        Clean_Attribute_Name(os.path.join(OutputFolder,os.path.basename(Path_final_riv_ply))   , self.FieldName_List_Product)
+        # clean attribute table
+        Clean_Attribute_Name(
+            os.path.join(OutputFolder, os.path.basename(Path_final_riv)),
+            self.FieldName_List_Product,
+        )
+        Clean_Attribute_Name(
+            os.path.join(OutputFolder, os.path.basename(Path_final_riv_ply)),
+            self.FieldName_List_Product,
+        )
 
         return
 
-
-    def Define_Final_Catchment(self,OutputFolder,Path_final_rivply = '#',Path_final_riv = '#'):
+    def Define_Final_Catchment(
+        self, OutputFolder, Path_final_rivply="#", Path_final_riv="#"
+    ):
         """Define final lake river routing structure
 
         Generate the final lake river routing structure by merging subbasin
@@ -3196,65 +5219,110 @@ class LRRT:
         """
 
         QgsApplication.setPrefixPath(self.qgisPP, True)
-        Qgs = QgsApplication([],False)
+        Qgs = QgsApplication([], False)
         Qgs.initQgis()
-        from qgis import processing
         from processing.core.Processing import Processing
         from processing.tools import dataobjects
+        from qgis import processing
+
         feedback = QgsProcessingFeedback()
         Processing.initialize()
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
         context = dataobjects.createContext()
         context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
-        
-        
-        sub_colnm = 'SubId'
+
+        sub_colnm = "SubId"
         Path_final_rviply = Path_final_rivply
-        Path_final_riv    = Path_final_riv
+        Path_final_riv = Path_final_riv
 
         if not os.path.exists(OutputFolder):
             os.makedirs(OutputFolder)
 
-
-        ### create a copy of shapfiles in temp folder 
-        Path_Temp_final_rviply = os.path.join(self.tempfolder,'temp_finalriv_ply'+ str(np.random.randint(1, 10000 + 1)) +'.shp')
-        Path_Temp_final_rvi    = os.path.join(self.tempfolder,'temp_finalriv'+  str(np.random.randint(1, 10000 + 1)) +'.shp')
-        qgis_vector_dissolve(processing,context,INPUT = Path_final_rviply,FIELD = ['SubId'],OUTPUT = Path_Temp_final_rviply)
-        qgis_vector_dissolve(processing,context,INPUT = Path_final_riv,FIELD = ['SubId'],OUTPUT = Path_Temp_final_rvi)
+        ### create a copy of shapfiles in temp folder
+        Path_Temp_final_rviply = os.path.join(
+            self.tempfolder,
+            "temp_finalriv_ply" + str(np.random.randint(1, 10000 + 1)) + ".shp",
+        )
+        Path_Temp_final_rvi = os.path.join(
+            self.tempfolder,
+            "temp_finalriv" + str(np.random.randint(1, 10000 + 1)) + ".shp",
+        )
+        qgis_vector_dissolve(
+            processing,
+            context,
+            INPUT=Path_final_rviply,
+            FIELD=["SubId"],
+            OUTPUT=Path_Temp_final_rviply,
+        )
+        qgis_vector_dissolve(
+            processing,
+            context,
+            INPUT=Path_final_riv,
+            FIELD=["SubId"],
+            OUTPUT=Path_Temp_final_rvi,
+        )
 
         ### read riv ply info
-        ### read attribute table 
-        finalrivply_info = Dbf_To_Dataframe(Path_Temp_final_rviply).drop_duplicates('SubId', keep='first')
-        
-        # change attribute table for lake covered catchments, 
-        mapoldnew_info = Change_Attribute_Values_For_Catchments_Covered_By_Same_Lake(finalrivply_info)
-        
-        # update topology for new attribute table 
-        UpdateTopology(mapoldnew_info,UpdateStreamorder = -1)
-        
-        # copy new attribute table to shpfile 
-        Copy_Pddataframe_to_shpfile(Path_Temp_final_rviply,mapoldnew_info,link_col_nm_shp = 'SubId'
-                                    ,link_col_nm_df = 'Old_SubId',UpdateColNM = ['#'])
-        Copy_Pddataframe_to_shpfile(Path_Temp_final_rvi,mapoldnew_info,link_col_nm_shp = 'SubId'
-                                    ,link_col_nm_df = 'Old_SubId',UpdateColNM = ['#'])
+        ### read attribute table
+        finalrivply_info = Dbf_To_Dataframe(Path_Temp_final_rviply).drop_duplicates(
+            "SubId", keep="first"
+        )
 
-        
-        # dissolve shpfile based on new subid 
-        Path_final_rviply = os.path.join(OutputFolder,'finalcat_info.shp')
-        Path_final_rvi    = os.path.join(OutputFolder,'finalcat_info_riv.shp')
-        qgis_vector_dissolve(processing,context,INPUT = Path_Temp_final_rvi,FIELD = ['SubId'],OUTPUT = Path_final_rvi)
-        qgis_vector_dissolve(processing,context,INPUT = Path_Temp_final_rviply,FIELD = ['SubId'],OUTPUT = Path_final_rviply)
-        
-        # clean attribute table of shpfile 
-        Clean_Attribute_Name(Path_final_rvi,   self.FieldName_List_Product)
+        # change attribute table for lake covered catchments,
+        mapoldnew_info = Change_Attribute_Values_For_Catchments_Covered_By_Same_Lake(
+            finalrivply_info
+        )
+
+        # update topology for new attribute table
+        UpdateTopology(mapoldnew_info, UpdateStreamorder=-1)
+
+        # copy new attribute table to shpfile
+        Copy_Pddataframe_to_shpfile(
+            Path_Temp_final_rviply,
+            mapoldnew_info,
+            link_col_nm_shp="SubId",
+            link_col_nm_df="Old_SubId",
+            UpdateColNM=["#"],
+        )
+        Copy_Pddataframe_to_shpfile(
+            Path_Temp_final_rvi,
+            mapoldnew_info,
+            link_col_nm_shp="SubId",
+            link_col_nm_df="Old_SubId",
+            UpdateColNM=["#"],
+        )
+
+        # dissolve shpfile based on new subid
+        Path_final_rviply = os.path.join(OutputFolder, "finalcat_info.shp")
+        Path_final_rvi = os.path.join(OutputFolder, "finalcat_info_riv.shp")
+        qgis_vector_dissolve(
+            processing,
+            context,
+            INPUT=Path_Temp_final_rvi,
+            FIELD=["SubId"],
+            OUTPUT=Path_final_rvi,
+        )
+        qgis_vector_dissolve(
+            processing,
+            context,
+            INPUT=Path_Temp_final_rviply,
+            FIELD=["SubId"],
+            OUTPUT=Path_final_rviply,
+        )
+
+        # clean attribute table of shpfile
+        Clean_Attribute_Name(Path_final_rvi, self.FieldName_List_Product)
         Clean_Attribute_Name(Path_final_rviply, self.FieldName_List_Product)
-         
-        # add centroid to new drived polygons 
-        Add_centroid_to_feature(Path_final_rviply,'centroid_x','centroid_y')
 
+        # add centroid to new drived polygons
+        Add_centroid_to_feature(Path_final_rviply, "centroid_x", "centroid_y")
 
-    def PlotHydrography_Raven(self,Path_rvt_Folder = '#',Path_Hydrographs_output_file=['#'],Scenario_NM = ['#','#']):
-
+    def PlotHydrography_Raven(
+        self,
+        Path_rvt_Folder="#",
+        Path_Hydrographs_output_file=["#"],
+        Scenario_NM=["#", "#"],
+    ):
 
         Obs_rvt_NMS = []
         ###obtain obs rvt file name
@@ -3262,42 +5330,41 @@ class LRRT:
             if file.endswith(".rvt"):
                 Obs_rvt_NMS.append(file)
 
-
         Obs_subids = []
-        for i in range(0,len(Obs_rvt_NMS)):
+        for i in range(0, len(Obs_rvt_NMS)):
             ###find subID
-            obs_nm =  Obs_rvt_NMS[i]
-            ifilepath = os.path.join(Path_rvt_Folder,obs_nm)
+            obs_nm = Obs_rvt_NMS[i]
+            ifilepath = os.path.join(Path_rvt_Folder, obs_nm)
             f = open(ifilepath, "r")
 
             for line in f:
                 firstline_info = line.split()
-                if firstline_info[0] == ':ObservationData':
-                    obssubid  = firstline_info[2]
+                if firstline_info[0] == ":ObservationData":
+                    obssubid = firstline_info[2]
                     break  ### only read first line
                 else:
-                    obssubid  = '#'
-                    break     ### only read first line
+                    obssubid = "#"
+                    break  ### only read first line
 
             Obs_subids.append(obssubid)
             ## this is not a observation rvt file
-            if obssubid =='#':
+            if obssubid == "#":
                 continue
             ####assign column name in the hydrography.csv
 
-            colnm_obs = 'sub'+obssubid+' (observed) [m3/s]'
-            colnm_sim = 'sub'+obssubid+' [m3/s]'
-            colnm_Date = 'date'
-            colnm_hr   = 'hour'
+            colnm_obs = "sub" + obssubid + " (observed) [m3/s]"
+            colnm_sim = "sub" + obssubid + " [m3/s]"
+            colnm_Date = "date"
+            colnm_hr = "hour"
 
             ##obtain data from all provided hydrograpy csv output files each hydrograpy csv need has a coorespond scenario name
             Initial_data_frame = 1
             readed_data_correc = 1
-            for j in range(0,len(Path_Hydrographs_output_file)):
+            for j in range(0, len(Path_Hydrographs_output_file)):
 
                 Path_Hydrographs_output_file_j = Path_Hydrographs_output_file[j]
 
-                i_simresult = pd.read_csv(Path_Hydrographs_output_file[0],sep=',')
+                i_simresult = pd.read_csv(Path_Hydrographs_output_file[0], sep=",")
                 colnames = i_simresult.columns
 
                 ## check if obs name exist in the hydrograpy csv output files
@@ -3305,10 +5372,12 @@ class LRRT:
 
                     ## Initial lize the reaed in data frame
                     if Initial_data_frame == 1:
-                        Readed_Data = i_simresult[[colnm_Date,colnm_hr]]
-                        Readed_Data['Obs']  = i_simresult[colnm_obs]
+                        Readed_Data = i_simresult[[colnm_Date, colnm_hr]]
+                        Readed_Data["Obs"] = i_simresult[colnm_obs]
                         Readed_Data[Scenario_NM[j]] = i_simresult[colnm_sim]
-                        Readed_Data['Date'] = pd.to_datetime(i_simresult[colnm_Date] + ' ' + i_simresult[colnm_hr])
+                        Readed_Data["Date"] = pd.to_datetime(
+                            i_simresult[colnm_Date] + " " + i_simresult[colnm_hr]
+                        )
                         Initial_data_frame = -1
                     else:
                         Readed_Data[Scenario_NM[j]] = i_simresult[colnm_sim].values
@@ -3319,24 +5388,42 @@ class LRRT:
             if readed_data_correc == -1:
                 continue
 
+            Readed_Data = Readed_Data.drop(columns=[colnm_Date, colnm_hr])
+            Readed_Data = Readed_Data.set_index("Date")
 
-            Readed_Data = Readed_Data.drop(columns=[colnm_Date,colnm_hr])
-            Readed_Data = Readed_Data.set_index('Date')
+            Readed_Data = Readed_Data.resample("D").sum()
+            Readed_Data["ModelTime"] = Readed_Data.index.strftime("%m-%d-%Y")
+            plotGuagelineobs(
+                Scenario_NM,
+                Readed_Data,
+                os.path.join(self.OutputFolder, obs_nm + ".pdf"),
+            )
 
-            Readed_Data = Readed_Data.resample('D').sum()
-            Readed_Data['ModelTime'] = Readed_Data.index.strftime('%m-%d-%Y')
-            plotGuagelineobs(Scenario_NM,Readed_Data,os.path.join(self.OutputFolder,obs_nm + '.pdf'))
-
-    def GenerateHRUS(self,Path_Subbasin_Ply,Landuse_info,Soil_info,Veg_info,
-                     Sub_Lake_ID = 'HyLakeId',Sub_ID='SubId',
-                     Path_Connect_Lake_ply = '#',Path_Non_Connect_Lake_ply = '#', Lake_Id = 'Hylak_id',
-                     Path_Landuse_Ply = '#',Landuse_ID = 'Landuse_ID',
-                     Path_Soil_Ply = '#',Soil_ID = 'Soil_ID',
-                     Path_Veg_Ply = '#',Veg_ID = 'Veg_ID',
-                     Path_Other_Ply_1='#', Other_Ply_ID_1='O_ID_1',
-                     Path_Other_Ply_2='#', Other_Ply_ID_2='O_ID_2',
-                     DEM = '#',Project_crs = 'EPSG:3573',
-                     OutputFolder = '#'):
+    def GenerateHRUS(
+        self,
+        Path_Subbasin_Ply,
+        Landuse_info,
+        Soil_info,
+        Veg_info,
+        Sub_Lake_ID="HyLakeId",
+        Sub_ID="SubId",
+        Path_Connect_Lake_ply="#",
+        Path_Non_Connect_Lake_ply="#",
+        Lake_Id="Hylak_id",
+        Path_Landuse_Ply="#",
+        Landuse_ID="Landuse_ID",
+        Path_Soil_Ply="#",
+        Soil_ID="Soil_ID",
+        Path_Veg_Ply="#",
+        Veg_ID="Veg_ID",
+        Path_Other_Ply_1="#",
+        Other_Ply_ID_1="O_ID_1",
+        Path_Other_Ply_2="#",
+        Other_Ply_ID_2="O_ID_2",
+        DEM="#",
+        Project_crs="EPSG:3573",
+        OutputFolder="#",
+    ):
 
         """Generate HRU polygons and their attributes needed by hydrological model
 
@@ -3493,11 +5580,12 @@ class LRRT:
 
         """
         QgsApplication.setPrefixPath(self.qgisPP, True)
-        Qgs = QgsApplication([],False)
+        Qgs = QgsApplication([], False)
         Qgs.initQgis()
-        from qgis import processing
         from processing.core.Processing import Processing
         from processing.tools import dataobjects
+        from qgis import processing
+
         feedback = QgsProcessingFeedback()
         Processing.initialize()
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
@@ -3508,56 +5596,132 @@ class LRRT:
             os.makedirs(OutputFolder)
 
         Merge_layer_list = []
-        output_hru_shp = os.path.join(OutputFolder,'finalcat_hru_info.shp')
+        output_hru_shp = os.path.join(OutputFolder, "finalcat_hru_info.shp")
         ### First overlay the subbasin layer with lake polygon, the new unique id will be 'HRULake_ID'
 
+        Sub_Lake_HRU_Layer, trg_crs, fieldnames_list = GeneratelandandlakeHRUS(
+            processing,
+            context,
+            OutputFolder,
+            Path_Subbasin_ply=Path_Subbasin_Ply,
+            Path_Connect_Lake_ply=Path_Connect_Lake_ply,
+            Path_Non_Connect_Lake_ply=Path_Non_Connect_Lake_ply,
+            Sub_ID=Sub_ID,
+            Sub_Lake_ID=Sub_Lake_ID,
+            Lake_Id=Lake_Id,
+        )
 
-        Sub_Lake_HRU_Layer,trg_crs,fieldnames_list = GeneratelandandlakeHRUS(processing,context,OutputFolder,Path_Subbasin_ply = Path_Subbasin_Ply,Path_Connect_Lake_ply = Path_Connect_Lake_ply,
-                                                                             Path_Non_Connect_Lake_ply = Path_Non_Connect_Lake_ply,Sub_ID=Sub_ID,Sub_Lake_ID = Sub_Lake_ID,Lake_Id = Lake_Id)
-
-        fieldnames_list.extend([Landuse_ID,Soil_ID,Veg_ID,'LAND_USE_C','VEG_C','SOIL_PROF','HRU_Slope','HRU_Area','HRU_Aspect'])
-        dissolve_filedname_list = ['HRULake_ID']
+        fieldnames_list.extend(
+            [
+                Landuse_ID,
+                Soil_ID,
+                Veg_ID,
+                "LAND_USE_C",
+                "VEG_C",
+                "SOIL_PROF",
+                "HRU_Slope",
+                "HRU_Area",
+                "HRU_Aspect",
+            ]
+        )
+        dissolve_filedname_list = ["HRULake_ID"]
         Merge_layer_list.append(Sub_Lake_HRU_Layer)
 
         #### check which data will be inlucded to determine HRU
-        if Path_Landuse_Ply != '#':
-            layer_landuse_dis = Reproj_Clip_Dissolve_Simplify_Polygon(processing,context,Path_Landuse_Ply,Project_crs,trg_crs,Landuse_ID,Sub_Lake_HRU_Layer)
-            layer_landuse_dis  = qgis_vector_create_spatial_index(processing,context,layer_landuse_dis)['OUTPUT']
+        if Path_Landuse_Ply != "#":
+            layer_landuse_dis = Reproj_Clip_Dissolve_Simplify_Polygon(
+                processing,
+                context,
+                Path_Landuse_Ply,
+                Project_crs,
+                trg_crs,
+                Landuse_ID,
+                Sub_Lake_HRU_Layer,
+            )
+            layer_landuse_dis = qgis_vector_create_spatial_index(
+                processing, context, layer_landuse_dis
+            )["OUTPUT"]
             Merge_layer_list.append(layer_landuse_dis)
             dissolve_filedname_list.append(Landuse_ID)
 
-        if Path_Soil_Ply != '#':
-            layer_soil_dis = Reproj_Clip_Dissolve_Simplify_Polygon(processing,context,Path_Soil_Ply,Project_crs,trg_crs,Soil_ID,Sub_Lake_HRU_Layer)
-            layer_soil_dis  = qgis_vector_create_spatial_index(processing,context,layer_soil_dis)['OUTPUT']
+        if Path_Soil_Ply != "#":
+            layer_soil_dis = Reproj_Clip_Dissolve_Simplify_Polygon(
+                processing,
+                context,
+                Path_Soil_Ply,
+                Project_crs,
+                trg_crs,
+                Soil_ID,
+                Sub_Lake_HRU_Layer,
+            )
+            layer_soil_dis = qgis_vector_create_spatial_index(
+                processing, context, layer_soil_dis
+            )["OUTPUT"]
             Merge_layer_list.append(layer_soil_dis)
             dissolve_filedname_list.append(Soil_ID)
 
-        if Path_Veg_Ply != '#':
-            layer_veg_dis = Reproj_Clip_Dissolve_Simplify_Polygon(processing,context,Path_Veg_Ply,Project_crs,trg_crs,Veg_ID,Sub_Lake_HRU_Layer)
-            layer_veg_dis  = qgis_vector_create_spatial_index(processing,context,layer_veg_dis)['OUTPUT']
+        if Path_Veg_Ply != "#":
+            layer_veg_dis = Reproj_Clip_Dissolve_Simplify_Polygon(
+                processing,
+                context,
+                Path_Veg_Ply,
+                Project_crs,
+                trg_crs,
+                Veg_ID,
+                Sub_Lake_HRU_Layer,
+            )
+            layer_veg_dis = qgis_vector_create_spatial_index(
+                processing, context, layer_veg_dis
+            )["OUTPUT"]
             Merge_layer_list.append(layer_veg_dis)
             dissolve_filedname_list.append(Veg_ID)
 
-        if Path_Other_Ply_1 != '#':
-            layer_other_1_dis = Reproj_Clip_Dissolve_Simplify_Polygon(processing,context,Path_Other_Ply_1,Project_crs,trg_crs,Other_Ply_ID_1,Sub_Lake_HRU_Layer)
-            layer_other_1_dis  = qgis_vector_create_spatial_index(processing,context,layer_other_1_dis)['OUTPUT']
+        if Path_Other_Ply_1 != "#":
+            layer_other_1_dis = Reproj_Clip_Dissolve_Simplify_Polygon(
+                processing,
+                context,
+                Path_Other_Ply_1,
+                Project_crs,
+                trg_crs,
+                Other_Ply_ID_1,
+                Sub_Lake_HRU_Layer,
+            )
+            layer_other_1_dis = qgis_vector_create_spatial_index(
+                processing, context, layer_other_1_dis
+            )["OUTPUT"]
             Merge_layer_list.append(layer_other_1_dis)
             fieldnames_list.append(Other_Ply_ID_1)
             dissolve_filedname_list.append(Other_Ply_ID_1)
 
-        if Path_Other_Ply_2 != '#':
-            layer_other_2_dis = Reproj_Clip_Dissolve_Simplify_Polygon(processing,context,Path_Other_Ply_2,Project_crs,trg_crs,Other_Ply_ID_2,Sub_Lake_HRU_Layer)
-            layer_other_2_dis  = qgis_vector_create_spatial_index(processing,context,layer_other_2_dis)['OUTPUT']
+        if Path_Other_Ply_2 != "#":
+            layer_other_2_dis = Reproj_Clip_Dissolve_Simplify_Polygon(
+                processing,
+                context,
+                Path_Other_Ply_2,
+                Project_crs,
+                trg_crs,
+                Other_Ply_ID_2,
+                Sub_Lake_HRU_Layer,
+            )
+            layer_other_2_dis = qgis_vector_create_spatial_index(
+                processing, context, layer_other_2_dis
+            )["OUTPUT"]
             Merge_layer_list.append(layer_other_2_dis)
             fieldnames_list.append(Other_Ply_ID_2)
             dissolve_filedname_list.append(Other_Ply_ID_2)
-
 
         fieldnames = set(fieldnames_list)
 
         print("begin union")
         #### uniion polygons in the Merge_layer_list
-        mem_union = Union_Ply_Layers_And_Simplify(processing,context,Merge_layer_list,dissolve_filedname_list,fieldnames,OutputFolder)
+        mem_union = Union_Ply_Layers_And_Simplify(
+            processing,
+            context,
+            Merge_layer_list,
+            dissolve_filedname_list,
+            fieldnames,
+            OutputFolder,
+        )
 
         #####
 
@@ -3565,108 +5729,186 @@ class LRRT:
         Soil_info_data = pd.read_csv(Soil_info)
         Veg_info_data = pd.read_csv(Veg_info)
 
-
-
-        if Path_Landuse_Ply == '#': ### landuse polygon is not provided, landused id the same is IS lake 1 is lake -1 non land
-            formula = '- \"%s\" ' % 'HRU_IsLake'
-            mem_union_landuse = qgis_vector_field_calculator(processing = processing, context = context,INPUT =mem_union, FIELD_NAME = Landuse_ID, FORMULA =formula,FIELD_PRECISION = 3,OUTPUT ='memory:')['OUTPUT']
-#            mem_union_landuse = processing.run("qgis:fieldcalculator", {'INPUT':mem_union,'FIELD_NAME':Landuse_ID,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
+        if (
+            Path_Landuse_Ply == "#"
+        ):  ### landuse polygon is not provided, landused id the same is IS lake 1 is lake -1 non land
+            formula = '- "%s" ' % "HRU_IsLake"
+            mem_union_landuse = qgis_vector_field_calculator(
+                processing=processing,
+                context=context,
+                INPUT=mem_union,
+                FIELD_NAME=Landuse_ID,
+                FORMULA=formula,
+                FIELD_PRECISION=3,
+                OUTPUT="memory:",
+            )["OUTPUT"]
+        #            mem_union_landuse = processing.run("qgis:fieldcalculator", {'INPUT':mem_union,'FIELD_NAME':Landuse_ID,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
         else:
             mem_union_landuse = mem_union
 
-        if Path_Soil_Ply == '#': #if soil is not provied, it the value will be the same as land use
-            formula = ' \"%s\" ' % Landuse_ID
-            mem_union_soil = qgis_vector_field_calculator(processing = processing, context = context,INPUT =mem_union_landuse, FIELD_NAME = Soil_ID, FORMULA =formula,FIELD_PRECISION = 3,OUTPUT ='memory:')['OUTPUT']
-#            mem_union_soil = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_landuse,'FIELD_NAME':Soil_ID,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
+        if (
+            Path_Soil_Ply == "#"
+        ):  # if soil is not provied, it the value will be the same as land use
+            formula = ' "%s" ' % Landuse_ID
+            mem_union_soil = qgis_vector_field_calculator(
+                processing=processing,
+                context=context,
+                INPUT=mem_union_landuse,
+                FIELD_NAME=Soil_ID,
+                FORMULA=formula,
+                FIELD_PRECISION=3,
+                OUTPUT="memory:",
+            )["OUTPUT"]
+        #            mem_union_soil = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_landuse,'FIELD_NAME':Soil_ID,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
         else:
-            mem_union_soil  = mem_union_landuse
+            mem_union_soil = mem_union_landuse
 
-        if Path_Veg_Ply == '#':  ### if no vegetation polygon is provide vegetation will be the same as landuse
-            formula = ' \"%s\" ' % Landuse_ID
-            mem_union_veg = qgis_vector_field_calculator(processing = processing, context = context,INPUT =mem_union_soil, FIELD_NAME = Veg_ID, FORMULA =formula,FIELD_PRECISION = 3,OUTPUT ='memory:')['OUTPUT']
-#            mem_union_veg = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_soil,'FIELD_NAME':Veg_ID,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
+        if (
+            Path_Veg_Ply == "#"
+        ):  ### if no vegetation polygon is provide vegetation will be the same as landuse
+            formula = ' "%s" ' % Landuse_ID
+            mem_union_veg = qgis_vector_field_calculator(
+                processing=processing,
+                context=context,
+                INPUT=mem_union_soil,
+                FIELD_NAME=Veg_ID,
+                FORMULA=formula,
+                FIELD_PRECISION=3,
+                OUTPUT="memory:",
+            )["OUTPUT"]
+        #            mem_union_veg = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_soil,'FIELD_NAME':Veg_ID,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
         else:
             mem_union_veg = mem_union_soil
 
-        if Path_Other_Ply_1 == '#':  ### if no vegetation polygon is provide vegetation will be the same as landuse
-            formula = '- \"%s\" ' % 'HRU_IsLake'
-            mem_union_o1 = qgis_vector_field_calculator(processing = processing, context = context,INPUT =mem_union_veg, FIELD_NAME = Other_Ply_ID_1, FORMULA =formula,FIELD_PRECISION = 3,OUTPUT ='memory:')['OUTPUT']
-#            mem_union_o1 = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_veg,'FIELD_NAME':Other_Ply_ID_1,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
+        if (
+            Path_Other_Ply_1 == "#"
+        ):  ### if no vegetation polygon is provide vegetation will be the same as landuse
+            formula = '- "%s" ' % "HRU_IsLake"
+            mem_union_o1 = qgis_vector_field_calculator(
+                processing=processing,
+                context=context,
+                INPUT=mem_union_veg,
+                FIELD_NAME=Other_Ply_ID_1,
+                FORMULA=formula,
+                FIELD_PRECISION=3,
+                OUTPUT="memory:",
+            )["OUTPUT"]
+        #            mem_union_o1 = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_veg,'FIELD_NAME':Other_Ply_ID_1,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
         else:
             mem_union_o1 = mem_union_veg
 
-        if Path_Other_Ply_2 == '#':  ### if no vegetation polygon is provide vegetation will be the same as landuse
-            formula = '- \"%s\" ' % 'HRU_IsLake'
-            mem_union_o2 = qgis_vector_field_calculator(processing = processing, context = context,INPUT =mem_union_o1, FIELD_NAME = Other_Ply_ID_2, FORMULA =formula,FIELD_PRECISION = 3,OUTPUT ='memory:')['OUTPUT']
-#            mem_union_o2 = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_o1,'FIELD_NAME':Other_Ply_ID_2,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
+        if (
+            Path_Other_Ply_2 == "#"
+        ):  ### if no vegetation polygon is provide vegetation will be the same as landuse
+            formula = '- "%s" ' % "HRU_IsLake"
+            mem_union_o2 = qgis_vector_field_calculator(
+                processing=processing,
+                context=context,
+                INPUT=mem_union_o1,
+                FIELD_NAME=Other_Ply_ID_2,
+                FORMULA=formula,
+                FIELD_PRECISION=3,
+                OUTPUT="memory:",
+            )["OUTPUT"]
+        #            mem_union_o2 = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_o1,'FIELD_NAME':Other_Ply_ID_2,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
         else:
             mem_union_o2 = mem_union_o1
 
+        hru_layer_draft = mem_union_o2
+        #        hru_layer_draft = processing.run("native:reprojectlayer", {'INPUT':mem_union_o2,'TARGET_CRS':QgsCoordinateReferenceSystem('EPSG:4326'),'OUTPUT':'memory:'})['OUTPUT']
 
-        hru_layer_draft  = mem_union_o2
-#        hru_layer_draft = processing.run("native:reprojectlayer", {'INPUT':mem_union_o2,'TARGET_CRS':QgsCoordinateReferenceSystem('EPSG:4326'),'OUTPUT':'memory:'})['OUTPUT']
+        HRU_draf_final = Define_HRU_Attributes(
+            processing,
+            context,
+            Project_crs,
+            trg_crs,
+            hru_layer_draft,
+            dissolve_filedname_list,
+            Sub_ID,
+            Landuse_ID,
+            Soil_ID,
+            Veg_ID,
+            Other_Ply_ID_1,
+            Other_Ply_ID_2,
+            Landuse_info_data,
+            Soil_info_data,
+            Veg_info_data,
+            DEM,
+            Path_Subbasin_Ply,
+            OutputFolder,
+        )
 
-        HRU_draf_final = Define_HRU_Attributes(processing,context,Project_crs,trg_crs,hru_layer_draft,dissolve_filedname_list,
-                                               Sub_ID,Landuse_ID,Soil_ID,Veg_ID,Other_Ply_ID_1,Other_Ply_ID_2,
-                                               Landuse_info_data,Soil_info_data,
-                                               Veg_info_data,DEM,Path_Subbasin_Ply,OutputFolder)
+        qgis_vector_field_calculator(
+            processing=processing,
+            context=context,
+            INPUT=HRU_draf_final,
+            FIELD_NAME="HRU_ID",
+            FORMULA=" @row_number",
+            FIELD_PRECISION=0,
+            NEW_FIELD=False,
+            OUTPUT=output_hru_shp,
+        )
 
-        
-        qgis_vector_field_calculator(processing = processing, context = context,INPUT =HRU_draf_final, FIELD_NAME = 'HRU_ID', FORMULA =' @row_number',FIELD_PRECISION = 0,NEW_FIELD=False,OUTPUT =output_hru_shp)
-        
-#        processing.run("qgis:fieldcalculator", {'INPUT':HRU_draf_final,'FIELD_NAME':'HRU_ID','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':0,'NEW_FIELD':False,'FORMULA':' @row_number','OUTPUT':output_hru_shp})
+        #        processing.run("qgis:fieldcalculator", {'INPUT':HRU_draf_final,'FIELD_NAME':'HRU_ID','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':0,'NEW_FIELD':False,'FORMULA':' @row_number','OUTPUT':output_hru_shp})
 
-        Clean_Attribute_Name(output_hru_shp ,self.FieldName_List_Product)
-        del Sub_Lake_HRU_Layer,mem_union
+        Clean_Attribute_Name(output_hru_shp, self.FieldName_List_Product)
+        del Sub_Lake_HRU_Layer, mem_union
         Qgs.exit()
 
+    def Lake_Statistics(self, Path_Finalcat_info="#", Output_Folder="#"):
 
+        hyinfocsv = Path_Finalcat_info[:-3] + "dbf"
+        tempinfo = Dbf5(hyinfocsv)
+        finalcat_info = tempinfo.to_dataframe().drop_duplicates("SubId", keep="first")
+        AllLake_info = finalcat_info.loc[finalcat_info["IsLake"] > 0]
+        CL_info = finalcat_info.loc[finalcat_info["IsLake"] == 1]
+        NCL_info = finalcat_info.loc[finalcat_info["IsLake"] == 2]
 
-    def Lake_Statistics(self,Path_Finalcat_info = '#',Output_Folder = '#'):
+        Lake_area_All = np.sum(AllLake_info["LakeArea"].values)
+        Lake_area_CL = np.sum(CL_info["LakeArea"].values)
+        Lake_area_NCL = np.sum(NCL_info["LakeArea"].values)
 
-        hyinfocsv         = Path_Finalcat_info[:-3] + "dbf"
-        tempinfo          = Dbf5(hyinfocsv)
-        finalcat_info     = tempinfo.to_dataframe().drop_duplicates('SubId', keep='first')
-        AllLake_info      = finalcat_info.loc[finalcat_info['IsLake'] > 0]
-        CL_info           = finalcat_info.loc[finalcat_info['IsLake'] == 1]
-        NCL_info          = finalcat_info.loc[finalcat_info['IsLake'] == 2]
+        Lake_DA_All = np.sum(AllLake_info["DA"].values) / 1000 / 1000
+        Lake_DA_CL = np.sum(CL_info["DA"].values) / 1000 / 1000
+        Lake_DA_NCL = np.sum(NCL_info["DA"].values) / 1000 / 1000
 
-        Lake_area_All     = np.sum(AllLake_info['LakeArea'].values)
-        Lake_area_CL      = np.sum(CL_info['LakeArea'].values)
-        Lake_area_NCL     = np.sum(NCL_info['LakeArea'].values)
+        Lake_Vol_All = np.sum(AllLake_info["LakeVol"].values)
+        Lake_Vol_CL = np.sum(CL_info["LakeVol"].values)
+        Lake_Vol_NCL = np.sum(NCL_info["LakeVol"].values)
 
-        Lake_DA_All       = np.sum(AllLake_info['DA'].values)/1000/1000
-        Lake_DA_CL        = np.sum(CL_info['DA'].values)/1000/1000
-        Lake_DA_NCL       = np.sum(NCL_info['DA'].values)/1000/1000
+        data = np.full((3, 4), np.nan)
 
-        Lake_Vol_All      = np.sum(AllLake_info['LakeVol'].values)
-        Lake_Vol_CL       = np.sum(CL_info['LakeVol'].values)
-        Lake_Vol_NCL      = np.sum(NCL_info['LakeVol'].values)
+        Lake_stats = pd.DataFrame(
+            data=data,
+            index=["LakeArea", "DA", "LakeVol"],
+            columns=["AllLakes", "CL", "NCL", "NCL_PCT"],
+        )
 
-        data = np.full((3,4),np.nan)
+        Lake_stats.loc["LakeArea", "AllLakes"] = Lake_area_All
+        Lake_stats.loc["LakeArea", "CL"] = Lake_area_CL
+        Lake_stats.loc["LakeArea", "NCL"] = Lake_area_NCL
+        Lake_stats.loc["LakeArea", "NCL_PCT"] = Lake_area_NCL / Lake_area_All
 
-        Lake_stats = pd.DataFrame(data = data, index = ['LakeArea','DA','LakeVol'],columns = ['AllLakes','CL','NCL','NCL_PCT'])
+        Lake_stats.loc["DA", "AllLakes"] = Lake_DA_All
+        Lake_stats.loc["DA", "CL"] = Lake_DA_CL
+        Lake_stats.loc["DA", "NCL"] = Lake_DA_NCL
+        Lake_stats.loc["DA", "NCL_PCT"] = Lake_DA_NCL / Lake_DA_All
 
-        Lake_stats.loc['LakeArea','AllLakes'] = Lake_area_All
-        Lake_stats.loc['LakeArea','CL'] = Lake_area_CL
-        Lake_stats.loc['LakeArea','NCL'] = Lake_area_NCL
-        Lake_stats.loc['LakeArea','NCL_PCT'] = Lake_area_NCL/Lake_area_All
+        Lake_stats.loc["LakeVol", "AllLakes"] = Lake_Vol_All
+        Lake_stats.loc["LakeVol", "CL"] = Lake_Vol_CL
+        Lake_stats.loc["LakeVol", "NCL"] = Lake_Vol_NCL
+        Lake_stats.loc["LakeVol", "NCL_PCT"] = Lake_Vol_NCL / Lake_Vol_All
 
-        Lake_stats.loc['DA','AllLakes'] = Lake_DA_All
-        Lake_stats.loc['DA','CL'] = Lake_DA_CL
-        Lake_stats.loc['DA','NCL'] = Lake_DA_NCL
-        Lake_stats.loc['DA','NCL_PCT'] = Lake_DA_NCL/Lake_DA_All
+        Lake_stats.to_csv(os.path.join(Output_Folder, "Lake_stats.csv"))
 
-        Lake_stats.loc['LakeVol','AllLakes'] = Lake_Vol_All
-        Lake_stats.loc['LakeVol','CL'] = Lake_Vol_CL
-        Lake_stats.loc['LakeVol','NCL'] = Lake_Vol_NCL
-        Lake_stats.loc['LakeVol','NCL_PCT'] = Lake_Vol_NCL/Lake_Vol_All
-
-        Lake_stats.to_csv(os.path.join(Output_Folder,'Lake_stats.csv'))
-
-
-
-    def Combine_Sub_Region_Results(self,Sub_Region_info = '#',Sub_Region_OutputFolder = '#', OutputFolder = '#',Path_Down_Stream_Points= '#',Is_Final_Result = True):
+    def Combine_Sub_Region_Results(
+        self,
+        Sub_Region_info="#",
+        Sub_Region_OutputFolder="#",
+        OutputFolder="#",
+        Path_Down_Stream_Points="#",
+        Is_Final_Result=True,
+    ):
         """Combine subregion watershed delineation results
 
         It is a function that will combine watershed delineation results
@@ -3712,13 +5954,13 @@ class LRRT:
 
         """
 
-
         QgsApplication.setPrefixPath(self.qgisPP, True)
-        Qgs = QgsApplication([],False)
+        Qgs = QgsApplication([], False)
         Qgs.initQgis()
-        from qgis import processing
         from processing.core.Processing import Processing
         from processing.tools import dataobjects
+        from qgis import processing
+
         feedback = QgsProcessingFeedback()
         Processing.initialize()
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
@@ -3728,161 +5970,384 @@ class LRRT:
         if not os.path.exists(OutputFolder):
             os.makedirs(OutputFolder)
 
-        Paths_Finalcat_ply      = []
-        Paths_Finalcat_line     = []
-        Paths_Finalriv_ply      = []
-        Paths_Finalriv_line     = []
-        Paths_Con_Lake_ply      = []
+        Paths_Finalcat_ply = []
+        Paths_Finalcat_line = []
+        Paths_Finalriv_ply = []
+        Paths_Finalriv_line = []
+        Paths_Con_Lake_ply = []
         Paths_None_Con_Lake_ply = []
-        Paths_obs_point         = []
+        Paths_obs_point = []
 
         Path_Outlet_Down_point = Path_Down_Stream_Points
 
         ### add new attribte
         ### find outlet subregion id
-        outlet_subregion_id = Sub_Region_info.loc[Sub_Region_info['Dow_Sub_Reg_Id']== self.maximum_obs_id - 1]['Sub_Reg_ID'].values[0]
-        routing_info      = Sub_Region_info[['Sub_Reg_ID','Dow_Sub_Reg_Id']].astype('float').values
-        Subregion_to_outlet  = Defcat(routing_info,outlet_subregion_id)
+        outlet_subregion_id = Sub_Region_info.loc[
+            Sub_Region_info["Dow_Sub_Reg_Id"] == self.maximum_obs_id - 1
+        ]["Sub_Reg_ID"].values[0]
+        routing_info = (
+            Sub_Region_info[["Sub_Reg_ID", "Dow_Sub_Reg_Id"]].astype("float").values
+        )
+        Subregion_to_outlet = Defcat(routing_info, outlet_subregion_id)
 
         ###remove subregions do not drainge to outlet subregion
-        Sub_Region_info    = Sub_Region_info.loc[Sub_Region_info['Sub_Reg_ID'].isin(Subregion_to_outlet)].copy()
-        routing_info      = Sub_Region_info[['Sub_Reg_ID','Dow_Sub_Reg_Id']].astype('float').values
+        Sub_Region_info = Sub_Region_info.loc[
+            Sub_Region_info["Sub_Reg_ID"].isin(Subregion_to_outlet)
+        ].copy()
+        routing_info = (
+            Sub_Region_info[["Sub_Reg_ID", "Dow_Sub_Reg_Id"]].astype("float").values
+        )
 
-        Sub_Region_info['N_Up_SubRegion'] = np.nan
-        Sub_Region_info['Outlet_SubId'] = np.nan
+        Sub_Region_info["N_Up_SubRegion"] = np.nan
+        Sub_Region_info["Outlet_SubId"] = np.nan
 
         subid_strat_iregion = 1
         seg_id_strat_iregion = 1
-        for i in range(0,len(Sub_Region_info)):
-            isubregion = Sub_Region_info['Sub_Reg_ID'].values[i]
-            ProjectNM  = Sub_Region_info['ProjectNM'].values[i]
-            SubFolder  = os.path.join(Sub_Region_OutputFolder,ProjectNM)
+        for i in range(0, len(Sub_Region_info)):
+            isubregion = Sub_Region_info["Sub_Reg_ID"].values[i]
+            ProjectNM = Sub_Region_info["ProjectNM"].values[i]
+            SubFolder = os.path.join(Sub_Region_OutputFolder, ProjectNM)
 
             ### define path of the output file in this sub region
-            Path_Finalcat_ply      = os.path.join(SubFolder,'finalcat_info.shp')
-            Path_Finalcat_line     = os.path.join(SubFolder,'finalcat_info_riv.shp')
-            Path_Finalriv_ply      = os.path.join(SubFolder,'finalriv_info_ply.shp')
-            Path_Finalriv_line     = os.path.join(SubFolder,'finalriv_info.shp')
-            Path_Con_Lake_ply      = os.path.join(SubFolder,'Con_Lake_Ply.shp')
-            Path_None_Con_Lake_ply = os.path.join(SubFolder,'Non_Con_Lake_Ply.shp')
-            Path_obs_point         = os.path.join(SubFolder,'obspoint.shp')
+            Path_Finalcat_ply = os.path.join(SubFolder, "finalcat_info.shp")
+            Path_Finalcat_line = os.path.join(SubFolder, "finalcat_info_riv.shp")
+            Path_Finalriv_ply = os.path.join(SubFolder, "finalriv_info_ply.shp")
+            Path_Finalriv_line = os.path.join(SubFolder, "finalriv_info.shp")
+            Path_Con_Lake_ply = os.path.join(SubFolder, "Con_Lake_Ply.shp")
+            Path_None_Con_Lake_ply = os.path.join(SubFolder, "Non_Con_Lake_Ply.shp")
+            Path_obs_point = os.path.join(SubFolder, "obspoint.shp")
 
             ### product do not exist
-            if os.path.exists(Path_Finalcat_ply) != 1:   ### this sub region did not generate outputs
+            if (
+                os.path.exists(Path_Finalcat_ply) != 1
+            ):  ### this sub region did not generate outputs
                 continue
-            
-            ### For each subregion, add new subid to each polygon files, and append result file in the merge list 
+
+            ### For each subregion, add new subid to each polygon files, and append result file in the merge list
             if Is_Final_Result == True:
 
-                SubID_info = Dbf_To_Dataframe(Path_Finalcat_ply).drop_duplicates(subset=['SubId'], keep='first')[['SubId','DowSubId','Seg_ID']].copy()
+                SubID_info = (
+                    Dbf_To_Dataframe(Path_Finalcat_ply)
+                    .drop_duplicates(subset=["SubId"], keep="first")[
+                        ["SubId", "DowSubId", "Seg_ID"]
+                    ]
+                    .copy()
+                )
                 SubID_info = SubID_info.reset_index()
-                SubID_info['nSubId'] = SubID_info.index + subid_strat_iregion
-                SubID_info['nSeg_ID'] = SubID_info['Seg_ID'] + seg_id_strat_iregion
+                SubID_info["nSubId"] = SubID_info.index + subid_strat_iregion
+                SubID_info["nSeg_ID"] = SubID_info["Seg_ID"] + seg_id_strat_iregion
 
-                layer_cat=QgsVectorLayer(Path_Finalcat_ply,"")
-                Add_New_SubId_To_Subregion_shpfile(processing,context,layer_cat,
-                                          OutputPath = os.path.join(self.tempfolder,'finalcat_info_Region_'+str(isubregion)+'addatrri.shp'),
-                                          Region_ID = isubregion,SubID_info = SubID_info)
-                Paths_Finalcat_ply.append(os.path.join(self.tempfolder,'finalcat_info_Region_'+str(isubregion)+'addatrri.shp'))
+                layer_cat = QgsVectorLayer(Path_Finalcat_ply, "")
+                Add_New_SubId_To_Subregion_shpfile(
+                    processing,
+                    context,
+                    layer_cat,
+                    OutputPath=os.path.join(
+                        self.tempfolder,
+                        "finalcat_info_Region_" + str(isubregion) + "addatrri.shp",
+                    ),
+                    Region_ID=isubregion,
+                    SubID_info=SubID_info,
+                )
+                Paths_Finalcat_ply.append(
+                    os.path.join(
+                        self.tempfolder,
+                        "finalcat_info_Region_" + str(isubregion) + "addatrri.shp",
+                    )
+                )
                 del layer_cat
 
-                layer_cat=QgsVectorLayer(Path_Finalcat_line,"")
-                Add_New_SubId_To_Subregion_shpfile(processing,context,layer_cat,
-                                          OutputPath = os.path.join(self.tempfolder,'finalcat_info_riv_Region_'+str(isubregion)+'addatrri.shp'),
-                                          Region_ID = isubregion,SubID_info = SubID_info)
-                Paths_Finalcat_line.append(os.path.join(self.tempfolder,'finalcat_info_riv_Region_'+str(isubregion)+'addatrri.shp'))
+                layer_cat = QgsVectorLayer(Path_Finalcat_line, "")
+                Add_New_SubId_To_Subregion_shpfile(
+                    processing,
+                    context,
+                    layer_cat,
+                    OutputPath=os.path.join(
+                        self.tempfolder,
+                        "finalcat_info_riv_Region_" + str(isubregion) + "addatrri.shp",
+                    ),
+                    Region_ID=isubregion,
+                    SubID_info=SubID_info,
+                )
+                Paths_Finalcat_line.append(
+                    os.path.join(
+                        self.tempfolder,
+                        "finalcat_info_riv_Region_" + str(isubregion) + "addatrri.shp",
+                    )
+                )
                 del layer_cat
 
             else:
-                SubID_info = Dbf_To_Dataframe(Path_Finalriv_ply).drop_duplicates(subset=['SubId'], keep='first')[['SubId','DowSubId','Seg_ID']].copy()
+                SubID_info = (
+                    Dbf_To_Dataframe(Path_Finalriv_ply)
+                    .drop_duplicates(subset=["SubId"], keep="first")[
+                        ["SubId", "DowSubId", "Seg_ID"]
+                    ]
+                    .copy()
+                )
                 SubID_info = SubID_info.reset_index()
-                SubID_info['nSubId'] = SubID_info.index + subid_strat_iregion
-                SubID_info['nSeg_ID'] = SubID_info['Seg_ID'] + seg_id_strat_iregion
+                SubID_info["nSubId"] = SubID_info.index + subid_strat_iregion
+                SubID_info["nSeg_ID"] = SubID_info["Seg_ID"] + seg_id_strat_iregion
 
-                layer_cat=QgsVectorLayer(Path_Finalriv_ply,"")
-                Add_New_SubId_To_Subregion_shpfile(processing,context,layer_cat,
-                                          OutputPath = os.path.join(self.tempfolder,'finalriv_info_ply_Region_'+str(isubregion)+'addatrri.shp'),
-                                          Region_ID = isubregion,SubID_info = SubID_info)
-                Paths_Finalriv_ply.append(os.path.join(self.tempfolder,'finalriv_info_ply_Region_'+str(isubregion)+'addatrri.shp'))
+                layer_cat = QgsVectorLayer(Path_Finalriv_ply, "")
+                Add_New_SubId_To_Subregion_shpfile(
+                    processing,
+                    context,
+                    layer_cat,
+                    OutputPath=os.path.join(
+                        self.tempfolder,
+                        "finalriv_info_ply_Region_" + str(isubregion) + "addatrri.shp",
+                    ),
+                    Region_ID=isubregion,
+                    SubID_info=SubID_info,
+                )
+                Paths_Finalriv_ply.append(
+                    os.path.join(
+                        self.tempfolder,
+                        "finalriv_info_ply_Region_" + str(isubregion) + "addatrri.shp",
+                    )
+                )
                 del layer_cat
 
-                layer_cat=QgsVectorLayer(Path_Finalriv_line,"")
-                Add_New_SubId_To_Subregion_shpfile(processing,context,layer_cat,
-                                          OutputPath = os.path.join(self.tempfolder,'finalriv_info_Region_'+str(isubregion)+'addatrri.shp'),
-                                          Region_ID = isubregion,SubID_info = SubID_info)
-                Paths_Finalriv_line.append(os.path.join(self.tempfolder,'finalriv_info_Region_'+str(isubregion)+'addatrri.shp'))
+                layer_cat = QgsVectorLayer(Path_Finalriv_line, "")
+                Add_New_SubId_To_Subregion_shpfile(
+                    processing,
+                    context,
+                    layer_cat,
+                    OutputPath=os.path.join(
+                        self.tempfolder,
+                        "finalriv_info_Region_" + str(isubregion) + "addatrri.shp",
+                    ),
+                    Region_ID=isubregion,
+                    SubID_info=SubID_info,
+                )
+                Paths_Finalriv_line.append(
+                    os.path.join(
+                        self.tempfolder,
+                        "finalriv_info_Region_" + str(isubregion) + "addatrri.shp",
+                    )
+                )
                 del layer_cat
- 
+
             if os.path.exists(Path_Con_Lake_ply) == 1:
                 Paths_Con_Lake_ply.append(Path_Con_Lake_ply)
             if os.path.exists(Path_None_Con_Lake_ply) == 1:
                 Paths_None_Con_Lake_ply.append(Path_None_Con_Lake_ply)
             if os.path.exists(Path_obs_point) == 1:
                 Paths_obs_point.append(Path_obs_point)
-            print('Subregion ID is ',isubregion,'    the start new subid is    ', subid_strat_iregion, ' The end of subid is ', min(SubID_info['nSubId']) )
+            print(
+                "Subregion ID is ",
+                isubregion,
+                "    the start new subid is    ",
+                subid_strat_iregion,
+                " The end of subid is ",
+                min(SubID_info["nSubId"]),
+            )
 
-            subid_strat_iregion  = max(SubID_info['nSubId']) + 10
-            seg_id_strat_iregion = max(SubID_info['nSeg_ID']) + 10
-        
-        # merge connected lake polygons 
-        if(len(Paths_Con_Lake_ply) > 0):
-            qgis_vector_merge_vector_layers(processing,context,INPUT_Layer_List = Paths_Con_Lake_ply,OUTPUT =os.path.join(OutputFolder,'Con_Lake_Ply.shp'))
-        
-        # merge non connected lake polygon 
-        if(len(Paths_None_Con_Lake_ply) > 0):
-            qgis_vector_merge_vector_layers(processing,context,INPUT_Layer_List = Paths_None_Con_Lake_ply,OUTPUT =os.path.join(OutputFolder,'Non_Con_Lake_Ply.shp'))
-        
-        # merge observation points 
-        if(len(Paths_obs_point) > 0):
-            qgis_vector_merge_vector_layers(processing,context,INPUT_Layer_List = Paths_obs_point,OUTPUT =os.path.join(OutputFolder,'obspoint.shp'))            
+            subid_strat_iregion = max(SubID_info["nSubId"]) + 10
+            seg_id_strat_iregion = max(SubID_info["nSeg_ID"]) + 10
 
-        # merge catchment polygon and polyline layers, and update their attirbutes 
+        # merge connected lake polygons
+        if len(Paths_Con_Lake_ply) > 0:
+            qgis_vector_merge_vector_layers(
+                processing,
+                context,
+                INPUT_Layer_List=Paths_Con_Lake_ply,
+                OUTPUT=os.path.join(OutputFolder, "Con_Lake_Ply.shp"),
+            )
+
+        # merge non connected lake polygon
+        if len(Paths_None_Con_Lake_ply) > 0:
+            qgis_vector_merge_vector_layers(
+                processing,
+                context,
+                INPUT_Layer_List=Paths_None_Con_Lake_ply,
+                OUTPUT=os.path.join(OutputFolder, "Non_Con_Lake_Ply.shp"),
+            )
+
+        # merge observation points
+        if len(Paths_obs_point) > 0:
+            qgis_vector_merge_vector_layers(
+                processing,
+                context,
+                INPUT_Layer_List=Paths_obs_point,
+                OUTPUT=os.path.join(OutputFolder, "obspoint.shp"),
+            )
+
+        # merge catchment polygon and polyline layers, and update their attirbutes
         if Is_Final_Result == 1:
-        #### Obtain downstream # id:
-            qgis_vector_merge_vector_layers(processing,context,INPUT_Layer_List = Paths_Finalcat_ply,OUTPUT =os.path.join(self.tempfolder,'finalcat_info.shp'))
-            qgis_vector_merge_vector_layers(processing,context,INPUT_Layer_List = Paths_Finalcat_line,OUTPUT =os.path.join(self.tempfolder,'finalcat_info_riv.shp'))            
-#            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalcat_ply,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalcat_info.shp')})
-#            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalcat_line,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalcat_info_riv.shp')})
-            processing.run("qgis:joinattributesbylocation", {'INPUT':Path_Outlet_Down_point,'JOIN':os.path.join(self.tempfolder,'finalcat_info.shp'),'PREDICATE':[5],'JOIN_FIELDS':[],'METHOD':1,'DISCARD_NONMATCHING':True,'PREFIX':'','OUTPUT':os.path.join(self.tempfolder,'Down_Sub_ID.shp')},context = context)
+            #### Obtain downstream # id:
+            qgis_vector_merge_vector_layers(
+                processing,
+                context,
+                INPUT_Layer_List=Paths_Finalcat_ply,
+                OUTPUT=os.path.join(self.tempfolder, "finalcat_info.shp"),
+            )
+            qgis_vector_merge_vector_layers(
+                processing,
+                context,
+                INPUT_Layer_List=Paths_Finalcat_line,
+                OUTPUT=os.path.join(self.tempfolder, "finalcat_info_riv.shp"),
+            )
+            #            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalcat_ply,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalcat_info.shp')})
+            #            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalcat_line,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalcat_info_riv.shp')})
+            processing.run(
+                "qgis:joinattributesbylocation",
+                {
+                    "INPUT": Path_Outlet_Down_point,
+                    "JOIN": os.path.join(self.tempfolder, "finalcat_info.shp"),
+                    "PREDICATE": [5],
+                    "JOIN_FIELDS": [],
+                    "METHOD": 1,
+                    "DISCARD_NONMATCHING": True,
+                    "PREFIX": "",
+                    "OUTPUT": os.path.join(self.tempfolder, "Down_Sub_ID.shp"),
+                },
+                context=context,
+            )
 
-            AllCatinfo = Dbf_To_Dataframe(os.path.join(self.tempfolder,'finalcat_info.shp')).drop_duplicates('SubId', keep='first').copy()
-            DownCatinfo = Dbf_To_Dataframe(os.path.join(self.tempfolder,'Down_Sub_ID.shp')).drop_duplicates('SubId', keep='first').copy()
+            AllCatinfo = (
+                Dbf_To_Dataframe(os.path.join(self.tempfolder, "finalcat_info.shp"))
+                .drop_duplicates("SubId", keep="first")
+                .copy()
+            )
+            DownCatinfo = (
+                Dbf_To_Dataframe(os.path.join(self.tempfolder, "Down_Sub_ID.shp"))
+                .drop_duplicates("SubId", keep="first")
+                .copy()
+            )
 
-            AllCatinfo,Sub_Region_info = Connect_SubRegion_Update_DownSubId(AllCatinfo,DownCatinfo,Sub_Region_info)
-            AllCatinfo = Update_DA_Strahler_For_Combined_Result(AllCatinfo,Sub_Region_info)
+            AllCatinfo, Sub_Region_info = Connect_SubRegion_Update_DownSubId(
+                AllCatinfo, DownCatinfo, Sub_Region_info
+            )
+            AllCatinfo = Update_DA_Strahler_For_Combined_Result(
+                AllCatinfo, Sub_Region_info
+            )
 
-            Copy_Pddataframe_to_shpfile(os.path.join(self.tempfolder,'finalcat_info.shp'),AllCatinfo,UpdateColNM=['DowSubId','DA','Strahler'])
-            Copy_Pddataframe_to_shpfile(os.path.join(self.tempfolder,'finalcat_info_riv.shp'),AllCatinfo,UpdateColNM=['DowSubId','DA','Strahler'])
+            Copy_Pddataframe_to_shpfile(
+                os.path.join(self.tempfolder, "finalcat_info.shp"),
+                AllCatinfo,
+                UpdateColNM=["DowSubId", "DA", "Strahler"],
+            )
+            Copy_Pddataframe_to_shpfile(
+                os.path.join(self.tempfolder, "finalcat_info_riv.shp"),
+                AllCatinfo,
+                UpdateColNM=["DowSubId", "DA", "Strahler"],
+            )
 
-            processing.run("native:dissolve", {'INPUT':os.path.join(self.tempfolder,'finalcat_info.shp'),'FIELD':['SubId'],'OUTPUT':os.path.join(OutputFolder,'finalcat_info.shp')},context = context)
-            processing.run("native:dissolve", {'INPUT':os.path.join(self.tempfolder,'finalcat_info_riv.shp'),'FIELD':['SubId'],'OUTPUT':os.path.join(OutputFolder,'finalcat_info_riv.shp')},context = context)
+            processing.run(
+                "native:dissolve",
+                {
+                    "INPUT": os.path.join(self.tempfolder, "finalcat_info.shp"),
+                    "FIELD": ["SubId"],
+                    "OUTPUT": os.path.join(OutputFolder, "finalcat_info.shp"),
+                },
+                context=context,
+            )
+            processing.run(
+                "native:dissolve",
+                {
+                    "INPUT": os.path.join(self.tempfolder, "finalcat_info_riv.shp"),
+                    "FIELD": ["SubId"],
+                    "OUTPUT": os.path.join(OutputFolder, "finalcat_info_riv.shp"),
+                },
+                context=context,
+            )
 
         else:
-            qgis_vector_merge_vector_layers(processing,context,INPUT_Layer_List = Paths_Finalriv_ply,OUTPUT =os.path.join(self.tempfolder,'finalriv_info_ply.shp'))
-            qgis_vector_merge_vector_layers(processing,context,INPUT_Layer_List = Paths_Finalriv_line,OUTPUT =os.path.join(self.tempfolder,'finalriv_info.shp'))            
+            qgis_vector_merge_vector_layers(
+                processing,
+                context,
+                INPUT_Layer_List=Paths_Finalriv_ply,
+                OUTPUT=os.path.join(self.tempfolder, "finalriv_info_ply.shp"),
+            )
+            qgis_vector_merge_vector_layers(
+                processing,
+                context,
+                INPUT_Layer_List=Paths_Finalriv_line,
+                OUTPUT=os.path.join(self.tempfolder, "finalriv_info.shp"),
+            )
 
-#            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalriv_ply,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalriv_info_ply.shp')})
-#            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalriv_line,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalriv_info.shp')})
-            processing.run("qgis:joinattributesbylocation", {'INPUT':Path_Outlet_Down_point,'JOIN':os.path.join(self.tempfolder,'finalriv_info_ply.shp'),'PREDICATE':[5],'JOIN_FIELDS':[],'METHOD':1,'DISCARD_NONMATCHING':True,'PREFIX':'','OUTPUT':os.path.join(self.tempfolder,'Down_Sub_ID.shp')},context = context)
+            #            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalriv_ply,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalriv_info_ply.shp')})
+            #            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalriv_line,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalriv_info.shp')})
+            processing.run(
+                "qgis:joinattributesbylocation",
+                {
+                    "INPUT": Path_Outlet_Down_point,
+                    "JOIN": os.path.join(self.tempfolder, "finalriv_info_ply.shp"),
+                    "PREDICATE": [5],
+                    "JOIN_FIELDS": [],
+                    "METHOD": 1,
+                    "DISCARD_NONMATCHING": True,
+                    "PREFIX": "",
+                    "OUTPUT": os.path.join(self.tempfolder, "Down_Sub_ID.shp"),
+                },
+                context=context,
+            )
 
-            AllCatinfo = Dbf_To_Dataframe(os.path.join(self.tempfolder,'finalriv_info_ply.shp')).drop_duplicates('SubId', keep='first').copy()
-            DownCatinfo = Dbf_To_Dataframe(os.path.join(self.tempfolder,'Down_Sub_ID.shp')).drop_duplicates('SubId', keep='first').copy()
+            AllCatinfo = (
+                Dbf_To_Dataframe(os.path.join(self.tempfolder, "finalriv_info_ply.shp"))
+                .drop_duplicates("SubId", keep="first")
+                .copy()
+            )
+            DownCatinfo = (
+                Dbf_To_Dataframe(os.path.join(self.tempfolder, "Down_Sub_ID.shp"))
+                .drop_duplicates("SubId", keep="first")
+                .copy()
+            )
 
-            AllCatinfo,Sub_Region_info = Connect_SubRegion_Update_DownSubId(AllCatinfo,DownCatinfo,Sub_Region_info)
-            AllCatinfo = Update_DA_Strahler_For_Combined_Result(AllCatinfo,Sub_Region_info)
+            AllCatinfo, Sub_Region_info = Connect_SubRegion_Update_DownSubId(
+                AllCatinfo, DownCatinfo, Sub_Region_info
+            )
+            AllCatinfo = Update_DA_Strahler_For_Combined_Result(
+                AllCatinfo, Sub_Region_info
+            )
 
-            Copy_Pddataframe_to_shpfile(os.path.join(self.tempfolder,'finalriv_info_ply.shp'),AllCatinfo,link_col_nm = 'SubId',UpdateColNM=['DowSubId','DA','Strahler'])
-            Copy_Pddataframe_to_shpfile(os.path.join(self.tempfolder,'finalriv_info.shp'),AllCatinfo,link_col_nm = 'SubId',UpdateColNM=['DowSubId','DA','Strahler'])
+            Copy_Pddataframe_to_shpfile(
+                os.path.join(self.tempfolder, "finalriv_info_ply.shp"),
+                AllCatinfo,
+                link_col_nm="SubId",
+                UpdateColNM=["DowSubId", "DA", "Strahler"],
+            )
+            Copy_Pddataframe_to_shpfile(
+                os.path.join(self.tempfolder, "finalriv_info.shp"),
+                AllCatinfo,
+                link_col_nm="SubId",
+                UpdateColNM=["DowSubId", "DA", "Strahler"],
+            )
 
-            processing.run("native:dissolve", {'INPUT':os.path.join(self.tempfolder,'finalriv_info_ply.shp'),'FIELD':['SubId'],'OUTPUT':os.path.join(OutputFolder,'finalriv_info_ply.shp')},context = context)
-            processing.run("native:dissolve", {'INPUT':os.path.join(self.tempfolder,'finalriv_info.shp'),'FIELD':['SubId'],'OUTPUT':os.path.join(OutputFolder,'finalriv_info.shp')},context = context)
+            processing.run(
+                "native:dissolve",
+                {
+                    "INPUT": os.path.join(self.tempfolder, "finalriv_info_ply.shp"),
+                    "FIELD": ["SubId"],
+                    "OUTPUT": os.path.join(OutputFolder, "finalriv_info_ply.shp"),
+                },
+                context=context,
+            )
+            processing.run(
+                "native:dissolve",
+                {
+                    "INPUT": os.path.join(self.tempfolder, "finalriv_info.shp"),
+                    "FIELD": ["SubId"],
+                    "OUTPUT": os.path.join(OutputFolder, "finalriv_info.shp"),
+                },
+                context=context,
+            )
 
-    def Generate_Grid_Poly_From_NetCDF(self,NetCDF_Path = '#',Output_Folder = '#',
-                                       Coor_x_NM = 'lon',Coor_y_NM = 'lat',
-                                       Is_Rotated_Grid = 1,R_Coor_x_NM = 'rlon',
-                                       R_Coor_y_NM = 'rlat',SpatialRef = 'EPSG:4326',
-                                       x_add = -360,
-                                       y_add = 0):
+    def Generate_Grid_Poly_From_NetCDF(
+        self,
+        NetCDF_Path="#",
+        Output_Folder="#",
+        Coor_x_NM="lon",
+        Coor_y_NM="lat",
+        Is_Rotated_Grid=1,
+        R_Coor_x_NM="rlon",
+        R_Coor_y_NM="rlat",
+        SpatialRef="EPSG:4326",
+        x_add=-360,
+        y_add=0,
+    ):
 
         """Generate Grid polygon from NetCDF file
 
@@ -3933,11 +6398,12 @@ class LRRT:
         """
 
         QgsApplication.setPrefixPath(self.qgisPP, True)
-        Qgs = QgsApplication([],False)
+        Qgs = QgsApplication([], False)
         Qgs.initQgis()
-        from qgis import processing
         from processing.core.Processing import Processing
         from processing.tools import dataobjects
+        from qgis import processing
+
         feedback = QgsProcessingFeedback()
         Processing.initialize()
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
@@ -3945,8 +6411,10 @@ class LRRT:
         context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
         from netCDF4 import Dataset
 
-        ncfile =  NetCDF_Path
-        dsin2 =  Dataset(ncfile,'r') # sample structure of in nc file converted from fst
+        ncfile = NetCDF_Path
+        dsin2 = Dataset(
+            ncfile, "r"
+        )  # sample structure of in nc file converted from fst
 
         if Is_Rotated_Grid > 0:
             ncols = len(dsin2.variables[R_Coor_x_NM][:])  ### from 0 to (ncols-1).
@@ -3955,110 +6423,155 @@ class LRRT:
             ncols = len(dsin2.variables[Coor_x_NM][:])  ### from 0 to (ncols-1).
             nrows = len(dsin2.variables[Coor_y_NM][:])
 
-        latlonrow = np.full((nrows*ncols,5),-9999.99999)
-        latlonrow = np.full((nrows*ncols,5),-9999.99999)
+        latlonrow = np.full((nrows * ncols, 5), -9999.99999)
+        latlonrow = np.full((nrows * ncols, 5), -9999.99999)
 
         ### Create a point layer, each point will be the nc grids
-        cmds ="Point?crs=%s&field=FGID:integer&field=Row:integer&field=Col:integer&field=Gridlon:double&field=Gridlat:double&index=yes" % SpatialRef
-        Point_Nc_Grid = QgsVectorLayer(cmds, "NC Grid Points",  "memory")
+        cmds = (
+            "Point?crs=%s&field=FGID:integer&field=Row:integer&field=Col:integer&field=Gridlon:double&field=Gridlat:double&index=yes"
+            % SpatialRef
+        )
+        Point_Nc_Grid = QgsVectorLayer(cmds, "NC Grid Points", "memory")
         DP_Nc_Point = Point_Nc_Grid.dataProvider()
         Point_Nc_Grid.startEditing()
 
         ### create polygon layter
-        cmds ="Polygon?crs=%s&field=FGID:integer&field=Row:integer&field=Col:integer&field=Gridlon:double&field=Gridlat:double&index=yes" % SpatialRef
-        Polygon_Nc_Grid = QgsVectorLayer(cmds, "NC Grid polygons",  "memory")
+        cmds = (
+            "Polygon?crs=%s&field=FGID:integer&field=Row:integer&field=Col:integer&field=Gridlon:double&field=Gridlat:double&index=yes"
+            % SpatialRef
+        )
+        Polygon_Nc_Grid = QgsVectorLayer(cmds, "NC Grid polygons", "memory")
         DP_Nc_ply = Polygon_Nc_Grid.dataProvider()
         Polygon_Nc_Grid.startEditing()
 
-
-        for i in range(0,nrows):
-            for j in range(0,ncols):
-                k = i*ncols + j
+        for i in range(0, nrows):
+            for j in range(0, ncols):
+                k = i * ncols + j
 
                 Point_Fea = QgsFeature()
 
                 if Is_Rotated_Grid < 0:
-                    latlonrow[k,0] = k
-                    latlonrow[k,1] = i   ### irow
-                    latlonrow[k,2] = j  ###col
-                    latlonrow[k,3] = dsin2.variables[Coor_x_NM][j] + x_add## lon
-                    latlonrow[k,4] = dsin2.variables[Coor_y_NM][i]  ## lat
+                    latlonrow[k, 0] = k
+                    latlonrow[k, 1] = i  ### irow
+                    latlonrow[k, 2] = j  ###col
+                    latlonrow[k, 3] = dsin2.variables[Coor_x_NM][j] + x_add  ## lon
+                    latlonrow[k, 4] = dsin2.variables[Coor_y_NM][i]  ## lat
 
                 else:
-                    latlonrow[k,0] = k
-                    latlonrow[k,1] = i   ### irow
-                    latlonrow[k,2] = j  ###col
-                    latlonrow[k,3] = dsin2.variables[Coor_x_NM][i,j] + x_add ## lon
-                    latlonrow[k,4] = dsin2.variables[Coor_y_NM][i,j]   ## lat
+                    latlonrow[k, 0] = k
+                    latlonrow[k, 1] = i  ### irow
+                    latlonrow[k, 2] = j  ###col
+                    latlonrow[k, 3] = dsin2.variables[Coor_x_NM][i, j] + x_add  ## lon
+                    latlonrow[k, 4] = dsin2.variables[Coor_y_NM][i, j]  ## lat
 
                 #### create point for each grid in Net CDF
-                NC_Grid_Point  = QgsGeometry.fromPointXY(QgsPointXY(latlonrow[k,3],latlonrow[k,4]))
+                NC_Grid_Point = QgsGeometry.fromPointXY(
+                    QgsPointXY(latlonrow[k, 3], latlonrow[k, 4])
+                )
                 Point_Fea.setGeometry(NC_Grid_Point)
-                Point_Fea.setAttributes(latlonrow[k,:].tolist())
+                Point_Fea.setAttributes(latlonrow[k, :].tolist())
                 DP_Nc_Point.addFeature(Point_Fea)
 
                 ### Create a polygon that the current grid is in the center of the polygon
 
-
                 ### find mid point in row direction
                 Polygon_Fea = QgsFeature()
 
-                if j != 0 :
+                if j != 0:
                     if Is_Rotated_Grid < 0:  ## left x
-                        x1 = latlonrow[k,3] - 0.5*( latlonrow[k,3] - (dsin2.variables[Coor_x_NM][j-1]   + x_add) )
+                        x1 = latlonrow[k, 3] - 0.5 * (
+                            latlonrow[k, 3]
+                            - (dsin2.variables[Coor_x_NM][j - 1] + x_add)
+                        )
                     else:
-                        x1 = latlonrow[k,3] - 0.5*( latlonrow[k,3] - (dsin2.variables[Coor_x_NM][i,j-1] + x_add) )
+                        x1 = latlonrow[k, 3] - 0.5 * (
+                            latlonrow[k, 3]
+                            - (dsin2.variables[Coor_x_NM][i, j - 1] + x_add)
+                        )
                 else:
                     if Is_Rotated_Grid < 0:
-                        x1 = latlonrow[k,3] - 0.5*(-latlonrow[k,3] + (dsin2.variables[Coor_x_NM][j+1]   + x_add) )
+                        x1 = latlonrow[k, 3] - 0.5 * (
+                            -latlonrow[k, 3]
+                            + (dsin2.variables[Coor_x_NM][j + 1] + x_add)
+                        )
                     else:
-                        x1 = latlonrow[k,3] - 0.5*(-latlonrow[k,3] + (dsin2.variables[Coor_x_NM][i,j+1] + x_add) )
+                        x1 = latlonrow[k, 3] - 0.5 * (
+                            -latlonrow[k, 3]
+                            + (dsin2.variables[Coor_x_NM][i, j + 1] + x_add)
+                        )
 
-                if j != ncols -1 :   ###  right x
+                if j != ncols - 1:  ###  right x
                     if Is_Rotated_Grid < 0:
-                        x2 = latlonrow[k,3] + 0.5*(-latlonrow[k,3] + (dsin2.variables[Coor_x_NM][j+1]   + x_add) )
+                        x2 = latlonrow[k, 3] + 0.5 * (
+                            -latlonrow[k, 3]
+                            + (dsin2.variables[Coor_x_NM][j + 1] + x_add)
+                        )
                     else:
-                        x2 = latlonrow[k,3] + 0.5*(-latlonrow[k,3] + (dsin2.variables[Coor_x_NM][i,j+1] + x_add) )
+                        x2 = latlonrow[k, 3] + 0.5 * (
+                            -latlonrow[k, 3]
+                            + (dsin2.variables[Coor_x_NM][i, j + 1] + x_add)
+                        )
                 else:
                     if Is_Rotated_Grid < 0:
-                        x2 = latlonrow[k,3] + 0.5*( latlonrow[k,3] - (dsin2.variables[Coor_x_NM][j-1]   + x_add) )
+                        x2 = latlonrow[k, 3] + 0.5 * (
+                            latlonrow[k, 3]
+                            - (dsin2.variables[Coor_x_NM][j - 1] + x_add)
+                        )
                     else:
-                        x2 = latlonrow[k,3] + 0.5*( latlonrow[k,3] - (dsin2.variables[Coor_x_NM][i,j-1] + x_add) )
+                        x2 = latlonrow[k, 3] + 0.5 * (
+                            latlonrow[k, 3]
+                            - (dsin2.variables[Coor_x_NM][i, j - 1] + x_add)
+                        )
 
-                if i != nrows - 1: ## lower y
+                if i != nrows - 1:  ## lower y
                     if Is_Rotated_Grid < 0:
-                        y1 = latlonrow[k,4] + 0.5*(-latlonrow[k,4] + dsin2.variables[Coor_y_NM][i+1] )
+                        y1 = latlonrow[k, 4] + 0.5 * (
+                            -latlonrow[k, 4] + dsin2.variables[Coor_y_NM][i + 1]
+                        )
                     else:
-                        y1 = latlonrow[k,4] + 0.5*(-latlonrow[k,4] + dsin2.variables[Coor_y_NM][i+1,j] )
+                        y1 = latlonrow[k, 4] + 0.5 * (
+                            -latlonrow[k, 4] + dsin2.variables[Coor_y_NM][i + 1, j]
+                        )
                 else:
                     if Is_Rotated_Grid < 0:
-                        y1 = latlonrow[k,4] + 0.5*( latlonrow[k,4] - dsin2.variables[Coor_y_NM][i-1] )
+                        y1 = latlonrow[k, 4] + 0.5 * (
+                            latlonrow[k, 4] - dsin2.variables[Coor_y_NM][i - 1]
+                        )
                     else:
-                        y1 = latlonrow[k,4] + 0.5*( latlonrow[k,4] - dsin2.variables[Coor_y_NM][i-1,j] )
+                        y1 = latlonrow[k, 4] + 0.5 * (
+                            latlonrow[k, 4] - dsin2.variables[Coor_y_NM][i - 1, j]
+                        )
 
-
-                if i != 0: ## upper y
+                if i != 0:  ## upper y
                     if Is_Rotated_Grid < 0:
-                        y2 = latlonrow[k,4] - 0.5*( latlonrow[k,4] - dsin2.variables[Coor_y_NM][i-1] )
+                        y2 = latlonrow[k, 4] - 0.5 * (
+                            latlonrow[k, 4] - dsin2.variables[Coor_y_NM][i - 1]
+                        )
                     else:
-                        y2 = latlonrow[k,4] - 0.5*( latlonrow[k,4] - dsin2.variables[Coor_y_NM][i-1,j] )
+                        y2 = latlonrow[k, 4] - 0.5 * (
+                            latlonrow[k, 4] - dsin2.variables[Coor_y_NM][i - 1, j]
+                        )
                 else:
                     if Is_Rotated_Grid < 0:
-                        y2 = latlonrow[k,4] - 0.5*(-latlonrow[k,4] + dsin2.variables[Coor_y_NM][i+1] )
+                        y2 = latlonrow[k, 4] - 0.5 * (
+                            -latlonrow[k, 4] + dsin2.variables[Coor_y_NM][i + 1]
+                        )
                     else:
-                        y2 = latlonrow[k,4] - 0.5*(-latlonrow[k,4] + dsin2.variables[Coor_y_NM][i+1,j] )
+                        y2 = latlonrow[k, 4] - 0.5 * (
+                            -latlonrow[k, 4] + dsin2.variables[Coor_y_NM][i + 1, j]
+                        )
 
-                Point_1  = QgsPointXY(x1,y1)  ## lower left
-                Point_2  = QgsPointXY(x1,y2)
-                Point_3  = QgsPointXY(x2,y2)
-                Point_4  = QgsPointXY(x2,y1)
+                Point_1 = QgsPointXY(x1, y1)  ## lower left
+                Point_2 = QgsPointXY(x1, y2)
+                Point_3 = QgsPointXY(x2, y2)
+                Point_4 = QgsPointXY(x2, y1)
 
-                gPolygon = QgsGeometry.fromPolygonXY([[Point_1,Point_2,Point_3,Point_4]])
+                gPolygon = QgsGeometry.fromPolygonXY(
+                    [[Point_1, Point_2, Point_3, Point_4]]
+                )
                 Polygon_Fea.setGeometry(gPolygon)
-                Polygon_Fea.setAttributes(latlonrow[k,:].tolist())
+                Polygon_Fea.setAttributes(latlonrow[k, :].tolist())
                 DP_Nc_ply.addFeature(Polygon_Fea)
-
-
 
         Point_Nc_Grid.commitChanges()
         Point_Nc_Grid.updateExtents()
@@ -4066,15 +6579,35 @@ class LRRT:
         Polygon_Nc_Grid.commitChanges()
         Polygon_Nc_Grid.updateExtents()
 
+        pdlatlonrow = pd.DataFrame(
+            latlonrow, columns=["FGID", "Row", "Col", "Gridlon", "Gridlat"]
+        )
+        pdlatlonrow.to_csv(
+            os.path.join(Output_Folder, "Gridcorr.csv"), sep=",", index=False
+        )
 
-        pdlatlonrow = pd.DataFrame(latlonrow,columns=['FGID','Row','Col','Gridlon','Gridlat'])
-        pdlatlonrow.to_csv(os.path.join(Output_Folder ,"Gridcorr.csv"), sep = ',',index = False)
+        QgsVectorFileWriter.writeAsVectorFormat(
+            layer=Point_Nc_Grid,
+            fileName=os.path.join(Output_Folder, "Nc_Grids.shp"),
+            fileEncoding="UTF-8",
+            destCRS=QgsCoordinateReferenceSystem(SpatialRef),
+            driverName="ESRI Shapefile",
+        )
+        QgsVectorFileWriter.writeAsVectorFormat(
+            layer=Polygon_Nc_Grid,
+            fileName=os.path.join(Output_Folder, "Gridncply.shp"),
+            fileEncoding="UTF-8",
+            destCRS=QgsCoordinateReferenceSystem(SpatialRef),
+            driverName="ESRI Shapefile",
+        )
 
-
-        QgsVectorFileWriter.writeAsVectorFormat(layer = Point_Nc_Grid,fileName = os.path.join(Output_Folder,"Nc_Grids.shp"),fileEncoding = "UTF-8",destCRS = QgsCoordinateReferenceSystem(SpatialRef),driverName="ESRI Shapefile")
-        QgsVectorFileWriter.writeAsVectorFormat(layer = Polygon_Nc_Grid,fileName = os.path.join(Output_Folder,"Gridncply.shp"),fileEncoding = "UTF-8",destCRS = QgsCoordinateReferenceSystem(SpatialRef),driverName="ESRI Shapefile")
-
-    def Area_Weighted_Mapping_Between_Two_Polygons(self,Target_Ply_Path ='#',Mapping_Ply_Path = '#',Col_NM = 'HRU_ID',Output_Folder = '#'):
+    def Area_Weighted_Mapping_Between_Two_Polygons(
+        self,
+        Target_Ply_Path="#",
+        Mapping_Ply_Path="#",
+        Col_NM="HRU_ID",
+        Output_Folder="#",
+    ):
 
         """Generate Grid polygon from NetCDF file
 
@@ -4107,92 +6640,163 @@ class LRRT:
         """
 
         QgsApplication.setPrefixPath(self.qgisPP, True)
-        Qgs = QgsApplication([],False)
+        Qgs = QgsApplication([], False)
         Qgs.initQgis()
-        from qgis import processing
         from processing.core.Processing import Processing
         from processing.tools import dataobjects
+        from qgis import processing
+
         feedback = QgsProcessingFeedback()
         Processing.initialize()
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
         context = dataobjects.createContext()
         context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
 
-        Path_finalcat_hru_temp          = os.path.join(self.tempfolder,str(np.random.randint(1, 10000 + 1)) + "finalcat_freferen.shp")
-        Path_finalcat_hru_temp2          = os.path.join(self.tempfolder,str(np.random.randint(1, 10000 + 1))+ "finalcat_freferen2.shp")
-        Path_finalcat_hru_temp_dissolve = os.path.join(self.tempfolder,str(np.random.randint(1, 10000 + 1)) + "finalcat_freferen_dissolve.shp")
-        Path_finalcat_hru_temp_dissolve_area = os.path.join(Output_Folder,"Overlay_Polygons.shp")
-
+        Path_finalcat_hru_temp = os.path.join(
+            self.tempfolder,
+            str(np.random.randint(1, 10000 + 1)) + "finalcat_freferen.shp",
+        )
+        Path_finalcat_hru_temp2 = os.path.join(
+            self.tempfolder,
+            str(np.random.randint(1, 10000 + 1)) + "finalcat_freferen2.shp",
+        )
+        Path_finalcat_hru_temp_dissolve = os.path.join(
+            self.tempfolder,
+            str(np.random.randint(1, 10000 + 1)) + "finalcat_freferen_dissolve.shp",
+        )
+        Path_finalcat_hru_temp_dissolve_area = os.path.join(
+            Output_Folder, "Overlay_Polygons.shp"
+        )
 
         ### create overlay betweeo two polygon and calcuate area of each new polygon in the overlay
-        qgis_vector_union_two_layers(processing = processing,context = context,INPUT = Target_Ply_Path,OVERLAY = Mapping_Ply_Path,OVERLAY_FIELDS_PREFIX='Map_',OUTPUT =Path_finalcat_hru_temp2)['OUTPUT']
-        
-        processing.run("native:extractbyattribute", {'INPUT':Path_finalcat_hru_temp,'FIELD':'HRU_ID','OPERATOR':2,'VALUE':'0','OUTPUT':Path_finalcat_hru_temp2})
-        processing.run("native:dissolve", {'INPUT':Path_finalcat_hru_temp2,'FIELD':['HRU_ID','Map_FGID'],'OUTPUT':Path_finalcat_hru_temp_dissolve},context = context)
-        qgis_vector_field_calculator(processing = processing, context = context,FORMULA ='area(transform($geometry, \'EPSG:4326\',\'EPSG:3573\'))',FIELD_NAME = 's_area',INPUT =Path_finalcat_hru_temp_dissolve,OUTPUT =Path_finalcat_hru_temp_dissolve_area,FIELD_PRECISION = 3)['OUTPUT']
-#        processing.run("qgis:fieldcalculator", {'INPUT':Path_finalcat_hru_temp_dissolve,'FIELD_NAME':'s_area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'area(transform($geometry, \'EPSG:4326\',\'EPSG:3573\'))','OUTPUT':Path_finalcat_hru_temp_dissolve_area})
+        qgis_vector_union_two_layers(
+            processing=processing,
+            context=context,
+            INPUT=Target_Ply_Path,
+            OVERLAY=Mapping_Ply_Path,
+            OVERLAY_FIELDS_PREFIX="Map_",
+            OUTPUT=Path_finalcat_hru_temp2,
+        )["OUTPUT"]
+
+        processing.run(
+            "native:extractbyattribute",
+            {
+                "INPUT": Path_finalcat_hru_temp,
+                "FIELD": "HRU_ID",
+                "OPERATOR": 2,
+                "VALUE": "0",
+                "OUTPUT": Path_finalcat_hru_temp2,
+            },
+        )
+        processing.run(
+            "native:dissolve",
+            {
+                "INPUT": Path_finalcat_hru_temp2,
+                "FIELD": ["HRU_ID", "Map_FGID"],
+                "OUTPUT": Path_finalcat_hru_temp_dissolve,
+            },
+            context=context,
+        )
+        qgis_vector_field_calculator(
+            processing=processing,
+            context=context,
+            FORMULA="area(transform($geometry, 'EPSG:4326','EPSG:3573'))",
+            FIELD_NAME="s_area",
+            INPUT=Path_finalcat_hru_temp_dissolve,
+            OUTPUT=Path_finalcat_hru_temp_dissolve_area,
+            FIELD_PRECISION=3,
+        )["OUTPUT"]
+        #        processing.run("qgis:fieldcalculator", {'INPUT':Path_finalcat_hru_temp_dissolve,'FIELD_NAME':'s_area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'area(transform($geometry, \'EPSG:4326\',\'EPSG:3573\'))','OUTPUT':Path_finalcat_hru_temp_dissolve_area})
 
         ### calculate the area weight of the mapping polygon to target polygon
 
-        dbf1 = Dbf5(Mapping_Ply_Path[:-3]+'dbf')
+        dbf1 = Dbf5(Mapping_Ply_Path[:-3] + "dbf")
         Forcinfo = dbf1.to_dataframe()
-        Avafgid = Forcinfo['FGID'].values
-
+        Avafgid = Forcinfo["FGID"].values
 
         dbf2 = Dbf5(Path_finalcat_hru_temp_dissolve_area[:-3] + "dbf")
         Mapforcing = dbf2.to_dataframe()
-        Mapforcing = Mapforcing.loc[Mapforcing[Col_NM] > 0] ### remove
+        Mapforcing = Mapforcing.loc[Mapforcing[Col_NM] > 0]  ### remove
 
-####
-        hruids  = Mapforcing['HRU_ID'].values
-        hruids  = np.unique(hruids)
-#    Lakeids = np.unique(Lakeids)
-        ogridforc = open(os.path.join(Output_Folder,"GriddedForcings2.txt"),"w")
-        ogridforc.write(":GridWeights" +"\n")
-        ogridforc.write("   #      " +"\n")
-        ogridforc.write("   # [# HRUs]"+"\n")
+        ####
+        hruids = Mapforcing["HRU_ID"].values
+        hruids = np.unique(hruids)
+        #    Lakeids = np.unique(Lakeids)
+        ogridforc = open(os.path.join(Output_Folder, "GriddedForcings2.txt"), "w")
+        ogridforc.write(":GridWeights" + "\n")
+        ogridforc.write("   #      " + "\n")
+        ogridforc.write("   # [# HRUs]" + "\n")
         sNhru = len(hruids)
 
-        ogridforc.write("   :NumberHRUs       "+ str(sNhru) + "\n")
-        sNcell = (max(Forcinfo['Row'].values)+1) * (max(Forcinfo['Col'].values)+1)
-        ogridforc.write("   :NumberGridCells  "+str(sNcell)+"\n")
-        ogridforc.write("   #            "+"\n")
-        ogridforc.write("   # [HRU ID] [Cell #] [w_kl]"+"\n")
+        ogridforc.write("   :NumberHRUs       " + str(sNhru) + "\n")
+        sNcell = (max(Forcinfo["Row"].values) + 1) * (max(Forcinfo["Col"].values) + 1)
+        ogridforc.write("   :NumberGridCells  " + str(sNcell) + "\n")
+        ogridforc.write("   #            " + "\n")
+        ogridforc.write("   # [HRU ID] [Cell #] [w_kl]" + "\n")
 
         for i in range(len(hruids)):
             hruid = hruids[i]
-            cats = Mapforcing.loc[Mapforcing['HRU_ID'] == hruid]
-            cats = cats[cats['Map_FGID'].isin(Avafgid)]
+            cats = Mapforcing.loc[Mapforcing["HRU_ID"] == hruid]
+            cats = cats[cats["Map_FGID"].isin(Avafgid)]
 
             if len(cats) <= 0:
-                cats = Mapforcing.loc[Mapforcing['HRU_ID'] == hruid]
+                cats = Mapforcing.loc[Mapforcing["HRU_ID"] == hruid]
                 print("Following Grid has to be inluded:.......")
-                print(cats['Map_FGID'])
-            tarea = sum(cats['s_area'].values)
-            fids = cats['Map_FGID'].values
+                print(cats["Map_FGID"])
+            tarea = sum(cats["s_area"].values)
+            fids = cats["Map_FGID"].values
             fids = np.unique(fids)
             sumwt = 0.0
-            for j in range(0,len(fids)):
-                scat = cats[cats['Map_FGID'] == fids[j]]
+            for j in range(0, len(fids)):
+                scat = cats[cats["Map_FGID"] == fids[j]]
                 if j < len(fids) - 1:
-                    sarea = sum(scat['s_area'].values)
-                    wt = float(sarea)/float(tarea)
+                    sarea = sum(scat["s_area"].values)
+                    wt = float(sarea) / float(tarea)
                     sumwt = sumwt + wt
                 else:
-                    wt = 1- sumwt
+                    wt = 1 - sumwt
 
-                if(len(scat['Map_Row'].values) > 1):  ## should be 1
-                    print(str(catid)+"error: 1 hru, 1 grid, produce muti polygon need to be merged ")
-                    Strcellid = str(int(scat['Map_Row'].values[0] * (max(Forcinfo['Col'].values) + 1 +misscol) + scat['Map_Col'].values[0])) + "      "
+                if len(scat["Map_Row"].values) > 1:  ## should be 1
+                    print(
+                        str(catid)
+                        + "error: 1 hru, 1 grid, produce muti polygon need to be merged "
+                    )
+                    Strcellid = (
+                        str(
+                            int(
+                                scat["Map_Row"].values[0]
+                                * (max(Forcinfo["Col"].values) + 1 + misscol)
+                                + scat["Map_Col"].values[0]
+                            )
+                        )
+                        + "      "
+                    )
                 else:
-                    Strcellid = str(int(scat['Map_Row'].values * (max(Forcinfo['Col'].values) + 1) + scat['Map_Col'].values)) + "      "
+                    Strcellid = (
+                        str(
+                            int(
+                                scat["Map_Row"].values
+                                * (max(Forcinfo["Col"].values) + 1)
+                                + scat["Map_Col"].values
+                            )
+                        )
+                        + "      "
+                    )
 
-                ogridforc.write("    "+str(int(hruid)) + "     "+Strcellid+'      '+str(wt) +"\n")
-#        arcpy.AddMessage(cats)
+                ogridforc.write(
+                    "    "
+                    + str(int(hruid))
+                    + "     "
+                    + Strcellid
+                    + "      "
+                    + str(wt)
+                    + "\n"
+                )
+        #        arcpy.AddMessage(cats)
         ogridforc.write(":EndGridWeights")
         ogridforc.close()
         ########
-        #/* example of calcuate grid index
+        # /* example of calcuate grid index
         #           0    1    2    3    4
         #       0    0    1    2    3    4
         #       1    5    6    7    8    9
@@ -4205,4 +6809,5 @@ class LRRT:
         ##################################333
         ######################################################
         ###################################################################################33
+
     ####################################################################################################################################3

@@ -1,5 +1,7 @@
+import os
+
 from simpledbf import Dbf5
-import os 
+
 
 def Dbf_To_Dataframe(file_path):
     """Transfer an input dbf file to dataframe
@@ -19,43 +21,43 @@ def Dbf_To_Dataframe(file_path):
     return dataframe
 
 
-def WriteStringToFile(Out_String,File_Path,WriteMethod):
+def WriteStringToFile(Out_String, File_Path, WriteMethod):
     """Write String to a file
-    
+
     Function that used to write Out_String to a file located at the File_Path.
 
-    Parameters 
+    Parameters
     ----------
     Out_String            : string
         The string that will be writed to the file located at File_Path
     File_Path             : string
-        Path and filename of file that will be modified or created                            
+        Path and filename of file that will be modified or created
     WriteMethod           : {'a','w'}
         If WriteMethod = "w", a new file will be created at the File_Path
-        If WriteMethod = "a", the Out_String will be added to exist file  
-                                          
+        If WriteMethod = "a", the Out_String will be added to exist file
+
     Notes
-    ------    
-        The file located at the File_Path will be modified or created  
+    ------
+        The file located at the File_Path will be modified or created
 
     Returns
     -------
-        None 
-   
+        None
+
     Examples
     --------
     >>> from WriteRavenInputs import WriteStringToFile
     >>> Out_String = 'sometest at line 1\n some test at line 2\n some test at line 3\n'
     >>> File_Path  = 'C:/Path_to_the_Flie_with_file_name'
     >>> WriteStringToFile(Out_String = Out_String,File_Path = File_Path,WriteMethod = 'w')
-    
+
     """
-    
-    if os.path.exists(File_Path): ### if file exist, we can either modify or overwrite it 
-        with open(File_Path,WriteMethod) as f:
+
+    if os.path.exists(
+        File_Path
+    ):  ### if file exist, we can either modify or overwrite it
+        with open(File_Path, WriteMethod) as f:
             f.write(Out_String)
-    else: ## create a new file anyway, since file did not exist 
-        with open(File_Path,'w') as f:
-            f.write(Out_String)    
-        
-        
+    else:  ## create a new file anyway, since file did not exist
+        with open(File_Path, "w") as f:
+            f.write(Out_String)

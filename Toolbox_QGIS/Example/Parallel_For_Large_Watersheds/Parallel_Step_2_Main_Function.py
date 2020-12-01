@@ -18,53 +18,60 @@
 #
 
 
-
 ###########################################################################################
 #
-# This is a python script to use BasinMaker to call another script which will define 
-# routing structure for each subregion in Parallel way 
+# This is a python script to use BasinMaker to call another script which will define
+# routing structure for each subregion in Parallel way
 #
 ###########################################################################################
 
 
 def Generaterouting_subregion(i):
-	os.system("python Parallel_Step_2_Script_For_Each_Sub_Region.py  " + str(i))
+    os.system("python Parallel_Step_2_Script_For_Each_Sub_Region.py  " + str(i))
 
 
-import time
-from joblib import Parallel, delayed
 import os
-import pandas as pd
+import time
 import timeit
 
+import pandas as pd
+from joblib import Parallel, delayed
 
-############ Variable needs to be modified to run this example ######     
+############ Variable needs to be modified to run this example ######
 
-### Define a output folder where to store subregion information 
+### Define a output folder where to store subregion information
 Outputfolder = "C:/Users/dustm/OneDrive - University of Waterloo/Documents/ProjectData/Petawawa/lake_of_woods/"
 
-### The BasinMaker folder 
+### The BasinMaker folder
 BasinMaker_Folder = "C:/Users/dustm/Documents/GitHub/RoutingTool"
 
-### Define number of processors 
+### Define number of processors
 ncores = 4
 ########### Variable needs to be modified to run this example ######
 
 
-### Define derived folder 
-DataBase_Folder = os.path.join(BasinMaker_Folder,'Toolbox_QGIS','tests','testdata','Required_data_to_start_from_dem')
-Out_Sub_Reg_Dem_Folder = os.path.join(Outputfolder,'SubRegion_info')
+### Define derived folder
+DataBase_Folder = os.path.join(
+    BasinMaker_Folder,
+    "Toolbox_QGIS",
+    "tests",
+    "testdata",
+    "Required_data_to_start_from_dem",
+)
+Out_Sub_Reg_Dem_Folder = os.path.join(Outputfolder, "SubRegion_info")
 
 
-### Start timer 
+### Start timer
 start = timeit.default_timer()
 
-### Read sub-region information 
-SubReg_info_main = pd.read_csv(os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_reg_info.csv'))
-arg_instances = range(0,len(SubReg_info_main))
-### run watershed delineation for each subregion 
-Parallel(n_jobs=ncores, verbose=1, backend="threading")(delayed(Generaterouting_subregion)(i) for i in arg_instances)
+### Read sub-region information
+SubReg_info_main = pd.read_csv(os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_reg_info.csv"))
+arg_instances = range(0, len(SubReg_info_main))
+### run watershed delineation for each subregion
+Parallel(n_jobs=ncores, verbose=1, backend="threading")(
+    delayed(Generaterouting_subregion)(i) for i in arg_instances
+)
 End = timeit.default_timer()
 
-print("use    ",start - End)
+print("use    ", start - End)
 ##  3372.4267685 sec
