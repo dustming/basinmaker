@@ -1289,9 +1289,7 @@ class LRRT:
 
         return
 ##################################################################################################
-#### functions to preprocess data, Output:
-##  self.Path_dem,self.cellSize,self.SpRef_in
-##
+
     def Generateinputdata(self, Is_divid_region = -1):
         """Preprocessing input dataset
 
@@ -1362,17 +1360,21 @@ class LRRT:
         QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
         context = dataobjects.createContext()
         context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
-
-        r_dem_layer = QgsRasterLayer(self.Path_dem_in, "") ### load DEM raster as a  QGIS raster object to obtain attribute
-        self.cellSize = float(r_dem_layer.rasterUnitsPerPixelX())  ### Get Raster cell size
-        self.SpRef_in = r_dem_layer.crs().authid()   ### get Raster spatialReference id
+        
+        # defnne cellsize and projection again, in case the work did not run Generatmaskregion
+        r_dem_layer =  qgis_raster_read_raster(processing,self.Path_dem_in) ### load DEM raster as a  QGIS raster object to obtain attribute
+        self.cellSize,self.SpRef_in= qgis_raster_return_raster_properties(processing,r_dem_layer)  ### Get Raster cell size        
         print("Working with a  sptail reference  :   " , r_dem_layer.crs().description(), "      ", self.SpRef_in )
         print("The cell cize is   ",self.cellSize)
-
         del r_dem_layer
+        
+        # copy two files to temporary folder, this will be used to load attribute 
+        # in csv file into attribute table of vector file in grass 
         copyfile(os.path.join(self.RoutingToolPath,'catinfo_riv.csvt'),os.path.join(self.tempfolder,'catinfo_riv.csvt'))
         copyfile(os.path.join(self.RoutingToolPath,'catinfo_riv.csvt'),os.path.join(self.tempfolder,'catinfo_cat.csvt'))
-###### set up GRASS environment for translate vector to rasters and clip rasters
+        
+        
+        # load grass working location 
         import grass.script as grass
         from grass.script import array as garray
         from grass.script import core as gcore
@@ -1382,116 +1384,143 @@ class LRRT:
         from grass.pygrass.modules import Module
         from grass_session import Session
 
-
         os.environ.update(dict(GRASS_COMPRESS_NULLS='1',GRASS_COMPRESSOR='ZSTD',GRASS_VERBOSE='1'))
         PERMANENT = Session()
         PERMANENT.open(gisdb=self.grassdb, location=self.grass_location_geo,create_opts='')
-
-        strtemp_array = garray.array(mapname="dem")
+        
+        # get dem array and get nrows and ncols of the domain 
+        strtemp_array = Return_Raster_As_Array_With_garray(garray,"dem")
         self.ncols = int(strtemp_array.shape[1])
         self.nrows = int(strtemp_array.shape[0])
         grsregion = gcore.region()
-        ### process vector data, clip and import
-        processing.run("native:reprojectlayer", {'INPUT':self.Path_Lakefile_in,'TARGET_CRS':QgsCoordinateReferenceSystem(self.SpRef_in),'OUTPUT':os.path.join(self.tempfolder,'Lake_project.shp')})
+        
+        # reproject lake polygon, and extract lake polygon for by polygon mask  
+        qgis_vector_reproject_layers(processing,context,INPUT = self.Path_Lakefile_in,TARGET_CRS = self.SpRef_in,OUTPUT = os.path.join(self.tempfolder,'Lake_project.shp'))
+        # lake polygon sometime has error in geometry 
         try:
-            processing.run("native:extractbylocation", {'INPUT':os.path.join(self.tempfolder,'Lake_project.shp'),'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_allLakeply},context = context)
+            qgis_vector_ectract_by_location(processing,context,INPUT = os.path.join(self.tempfolder,'Lake_project.shp'),INTERSECT = self.Path_Maskply,OUTPUT = self.Path_allLakeply)
         except:
             print("Need fix lake boundary geometry to speed up")
             qgis_vector_fix_geometries(processing,context,INPUT = os.path.join(self.tempfolder,'Lake_project.shp'),OUTPUT = self.Path_allLakeply_Temp)
-#            processing.run("native:fixgeometries", {'INPUT':os.path.join(self.tempfolder,'Lake_project.shp'),'OUTPUT':self.Path_allLakeply_Temp})
-            processing.run("native:extractbylocation", {'INPUT':self.Path_allLakeply_Temp,'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_allLakeply},context = context)
-        processing.run("native:polygonstolines", {'INPUT':self.Path_allLakeply,'OUTPUT':os.path.join(self.tempfolder,'Hylake_boundary.shp')},context = context)
-        grass.run_command("v.import", input = self.Path_allLakeply, output = 'Hylake', overwrite = True)
-        grass.run_command("v.import", input = os.path.join(self.tempfolder,'Hylake_boundary.shp'), output = 'Hylake_boundary', overwrite = True)
-        os.system('gdal_rasterize -at -of GTiff -a_nodata -9999 -a Hylak_id -tr  '+ str(self.cellSize) + "  " +str(self.cellSize)+'  -te   '+ str(grsregion['w'])+"   " +str(grsregion['s'])+"   " +str(grsregion['e'])+"   " +str(grsregion['n'])+"   " + "\"" +  self.Path_allLakeply +"\""+ "    "+ "\""+self.Path_allLakeRas+"\"")
-        os.system('gdal_rasterize -at -of GTiff -a_nodata -9999 -a Hylak_id -tr  '+ str(self.cellSize) + "  " +str(self.cellSize)+'  -te   '+ str(grsregion['w'])+"   " +str(grsregion['s'])+"   " +str(grsregion['e'])+"   " +str(grsregion['n'])+"   " + "\"" +  os.path.join(self.tempfolder,'Hylake_boundary.shp') +"\""+ "    "+ "\""+os.path.join(self.tempfolder,'Hylake_boundary.tif')+"\"")
-        grass.run_command("r.in.gdal", input = self.Path_allLakeRas, output = 'alllakeraster_in', overwrite = True)
-        grass.run_command('r.mapcalc',expression = 'alllake = int(alllakeraster_in)',overwrite = True)
-        grass.run_command("r.null", map = 'alllake', setnull = -9999)
-        grass.run_command("r.in.gdal", input = os.path.join(self.tempfolder,'Hylake_boundary.tif'), output = 'Lake_Bound', overwrite = True)
-        grass.run_command('r.mapcalc',expression = 'Lake_Bound = int(Lake_Bound)',overwrite = True)
-        grass.run_command("r.null", map = 'Lake_Bound', setnull = -9999)
+            qgis_vector_ectract_by_location(processing,context,INPUT = self.Path_allLakeply_Temp,INTERSECT = self.Path_Maskply,OUTPUT = self.Path_allLakeply)
         
-        print(self.Path_dir_in,self.Is_Sub_Region) 
-        if self.Is_Sub_Region >0: #### use inputs from whole watershed and
-            ### import data for the whole watershed
-            grass.run_command('r.unpack', input = self.Path_Sub_reg_arcgis_dir, output = 'dir_Arcgis1',overwrite = True)
-            grass.run_command('r.unpack', input = self.Path_Sub_reg_grass_acc, output = 'grass_acc1',overwrite = True)
-            ### clip them to currnet sub region extent
-            grass.run_command('r.mapcalc',expression = "dir_Arcgis  = dir_Arcgis1",overwrite = True)
-            grass.run_command('r.reclass', input='dir_Arcgis',output = 'dir_grass',rules =os.path.join(self.RoutingToolPath,'Arcgis2GrassDIR.txt'),overwrite = True)
-            grass.run_command('r.mapcalc',expression = "acc_grass   = grass_acc1",overwrite = True)
-            grass.run_command('r.mapcalc',expression = "acc_grass2   = acc_grass",overwrite = True)
+        # obtain lake boundary lines 
+        qgis_vector_polygon_stro_lines(processing,context,INPUT = self.Path_allLakeply,OUTPUT = os.path.join(self.tempfolder,'Hylake_boundary.shp'))
+        # load lake polygon and bound polyline into grass work env 
+        grass_raster_v_import(grass,input_path = self.Path_allLakeply,output_vector_nm = 'Hylake')
+        grass_raster_v_import(grass,input_path = os.path.join(self.tempfolder,'Hylake_boundary.shp'),output_vector_nm = 'Hylake_boundary')
+        # rasterize lake polygon and lake boundary polyline 
+        qgis_raster_gdal_rasterize(processing,context,INPUT = self.Path_allLakeply,Column_nm = 'Hylak_id',cellsize = self.cellSize,
+                                   w = grsregion['w'],s = grsregion['s'],e = grsregion['e'],n = grsregion['n'],OUTPUT = self.Path_allLakeRas)
+        qgis_raster_gdal_rasterize(processing,context,INPUT =  os.path.join(self.tempfolder,'Hylake_boundary.shp'),Column_nm = 'Hylak_id',cellsize = self.cellSize,
+                                   w = grsregion['w'],s = grsregion['s'],e = grsregion['e'],n = grsregion['n'],OUTPUT = os.path.join(self.tempfolder,'Hylake_boundary.tif'))
 
+        # laod lake raster and lake boundary raster into grass env 
+        grass_raster_r_in_gdal(grass,raster_path = self.Path_allLakeRas,output_nm = 'alllakeraster_in')
+        grass_raster_r_mapcalc(grass,expression = 'alllake = int(alllakeraster_in)')
+        grass_raster_setnull(grass,raster_nm = 'alllake',null_values = [-9999],create_new_raster = False)
+        grass_raster_r_in_gdal(grass,raster_path =os.path.join(self.tempfolder,'Hylake_boundary.tif'),output_nm = 'Lake_Bound')
+        grass_raster_r_mapcalc(grass,expression = 'Lake_Bound = int(Lake_Bound)')
+        grass_raster_setnull(grass,raster_nm = 'Lake_Bound',null_values = [-9999],create_new_raster = False)
+
+        
+        # generate flow accumulation dataset 
+        # 1, can be unpacked from subregion flow accumulation data 
+        # 2, can be drived from flwo direction data, if flow direction data is provided 
+        # 3, can be create from dem 
+        ####### 
+        
+        # load from subregion ddata   
+        if self.Is_Sub_Region >0: #### use inputs from whole watershed and
+            
+            #unpack subregion flow accumulation and flow direction data 
+            grass_raster_r_unpack(grass,input = self.Path_Sub_reg_arcgis_dir,output = 'dir_Arcgis1')
+            grass_raster_r_unpack(grass,input = self.Path_Sub_reg_grass_acc,output = 'grass_acc1')
+            grass_raster_r_mapcalc(grass,expression = "dir_Arcgis  = dir_Arcgis1")
+            # calcuate flow direction in grass format 
+            grass_raster_r_reclass(grass,input = 'dir_Arcgis',output = 'dir_grass',rules = os.path.join(self.RoutingToolPath,'Arcgis2GrassDIR.txt'))
+            grass_raster_r_mapcalc(grass,expression = "acc_grass  = grass_acc1")
+            grass_raster_r_mapcalc(grass,expression = "acc_grass2  = acc_grass")
+            
+        # not come from prepared subregion dataset 
+        # either from input flow direction or drived from dem 
         else:
+            # did not provide flow direction dataset, generated from dem 
             if self.Path_dir_in == '#':
-                grass.run_command('r.watershed',elevation = 'dem', accumulation = 'acc_grass2',flags = 'sa', overwrite = True)
-                grass.run_command('r.mapcalc',expression = "acc_grass = abs(acc_grass2@PERMANENT)",overwrite = True)
+                
+                # generate flow accumulation dataset from dem, ensure all acc value > 0 
+                grass_raster_r_watershed(grass,elevation = 'dem',drainage = 'dir_temp',accumulation = 'acc_grass2',flags = 'sa')
+                grass_raster_r_mapcalc(grass,expression = "acc_grass  = abs(acc_grass2@PERMANENT)")
+        
+            # the flow direction data is provided 
             else:
                 print("#####################Using provided flow direction dataset####################")
-                grass.run_command("r.import", input = self.Path_dir_in, output = 'dir_in_ArcGis', overwrite = True)
-                grass.run_command('r.reclass', input='dir_in_ArcGis',output = 'dir_in_Grass',rules = os.path.join(self.RoutingToolPath,'Arcgis2GrassDIR.txt'), overwrite = True)
-                grass.run_command('r.accumulate',direction = 'dir_in_Grass', accumulation = 'acc_grass', flags = 'r',overwrite = True)
-
+                # load flow dirction dataset 
+                grass_raster_r_in_gdal(grass,raster_path =self.Path_dir_in,output_nm = 'dir_in_ArcGis')
+                # reclassify it into grass flow direction data 
+                grass_raster_r_reclass(grass,input = 'dir_in_ArcGis',output = 'dir_in_Grass',rules = os.path.join(self.RoutingToolPath,'Arcgis2GrassDIR.txt'))
+                # calcuate flow accumulation from provided dir 
+                grass_raster_r_accumulate(grass,direction = 'dir_in_Grass',accumulation = 'acc_grass',flags = 'r')
+                
+        # if the toolbox is runing to divide domain into subregions, stop at here 
         if Is_divid_region > 0:
             print("********************Generate inputs dataset Done********************")
             Qgs.exit()
             PERMANENT.close()
             return
 
-
-#        print(self.Path_WiDep_in)
+        
+        # if bankfull width and depth polyline is provided reproject and extact 
+        # by polygon mask 
         if self.Path_WiDep_in != '#':
-            processing.run("native:reprojectlayer", {'INPUT':self.Path_WiDep_in,'TARGET_CRS':QgsCoordinateReferenceSystem(self.SpRef_in),'OUTPUT':os.path.join(self.tempfolder,'WiDep_project.shp')})
-            processing.run("native:extractbylocation", {'INPUT':os.path.join(self.tempfolder,'WiDep_project.shp'),'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_WidDepLine},context = context)
-            grass.run_command("v.import", input = self.Path_WidDepLine, output = 'WidDep', overwrite = True)
+            # reproject width and depth polyline, and extract width and depth polyline for by polygon mask  
+            qgis_vector_reproject_layers(processing,context,INPUT = self.Path_WiDep_in,TARGET_CRS = self.SpRef_in,OUTPUT = os.path.join(self.tempfolder,'WiDep_project.shp'))
+            qgis_vector_ectract_by_location(processing,context,INPUT = os.path.join(self.tempfolder,'WiDep_project.shp'),INTERSECT = self.Path_Maskply,OUTPUT = self.Path_WidDepLine)
+            # import extracted vector into grass working env 
+            grass_raster_v_import(grass,input_path = self.Path_WidDepLine,output_vector_nm = 'WidDep')
 
+        
+        # if observation point shpfile is provided 
         if self.Path_obspoint_in != '#':
-            processing.run("native:reprojectlayer", {'INPUT':self.Path_obspoint_in,'TARGET_CRS':QgsCoordinateReferenceSystem(self.SpRef_in),'OUTPUT':os.path.join(self.tempfolder,'Obspoint_project.shp')})
-            processing.run("native:extractbylocation", {'INPUT':os.path.join(self.tempfolder,'Obspoint_project.shp'),'PREDICATE':[6],'INTERSECT':self.Path_Maskply,'OUTPUT':self.Path_ObsPoint},context = context)
-        # processing.run("native:clip", {'INPUT':self.Path_Lakefile_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_allLakeply},context = context)
-        # processing.run("native:clip", {'INPUT':self.Path_WiDep_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_WidDepLine},context = context)
-        # processing.run("native:clip", {'INPUT':self.Path_obspoint_in,'OVERLAY':self.Path_Maskply,'OUTPUT':self.Path_ObsPoint},context = context)
+            qgis_vector_reproject_layers(processing,context,INPUT = self.Path_obspoint_in,TARGET_CRS = self.SpRef_in,OUTPUT = os.path.join(self.tempfolder,'Obspoint_project.shp'))
+            qgis_vector_ectract_by_location(processing,context,INPUT = os.path.join(self.tempfolder,'Obspoint_project.shp'),INTERSECT = self.Path_Maskply,OUTPUT = self.Path_ObsPoint)
 
-
+        # if landuse raster is provided 
         if self.Path_Landuseinfo_in != '#':
+            # copy landuse manning look up table to working folder 
             copyfile(self.Path_Landuseinfo_in, self.Path_Landuseinfo)
-            grass.run_command("r.external", input = self.Path_Landuse_in, output = 'landuse_in', overwrite = True)
-            grass.run_command("r.clip", input = 'landuse_in', output = 'landuse', overwrite = True)
-            grass.run_command('r.reclass', input='landuse',output = 'landuse_Manning1',rules =self.Path_Landuseinfo,overwrite = True)
-            grass.run_command('r.mapcalc',expression = "landuse_Manning = float(landuse_Manning1)/1000",overwrite = True)
+            # viturally  landuse dataset 
+            grass_raster_r_external(grass,input = self.Path_Landuse_in,output = 'landuse_in')
+            # clip raster with mask in grass env 
+            grass_raster_r_clip(grass,input = 'landuse_in',output = 'landuse')
+            # reclass landuse to manning's coefficient value *1000
+            grass_raster_r_reclass(grass,input = 'landuse',output = 'landuse_Manning1',rules = self.Path_Landuseinfo)
+            # calcuate real manning's coefficient for each landuse grid 
+            grass_raster_r_mapcalc(grass,expression = "landuse_Manning = float(landuse_Manning1)/1000")
+
+        # if no landuse provided, create a raster with -9999.
         else:
-            kk = pd.DataFrame(columns=['RasterV', 'MannV'],index=range(0,1))
-            kk.loc[0,'RasterV'] = -9999
-            kk.loc[0,'MannV'] = 0.035
-            kk.to_csv(self.Path_Landuseinfo,sep=",")
-            temparray = garray.array()
-            temparray[:,:] = -9999
-            temparray.write(mapname="landuse_Manning", overwrite=True)
+            grass_raster_create_raster_empty_raster(garray,raster_nm = "landuse_Manning")
 
-
-
-
-        ### change lake vector to lake raster.... with -at option
-        ### rasterize other vectors UP_AREA
-
+        
+        # if bankfull width and depth polyline is provided
         if self.Path_WiDep_in != '#':
-            grass.run_command('v.to.rast',input = 'WidDep',output = 'width',use = 'attr',attribute_column = 'WIDTH',overwrite = True)
-            grass.run_command('v.to.rast',input = 'WidDep',output = 'depth',use = 'attr',attribute_column = 'DEPTH',overwrite = True)
-            grass.run_command('v.to.rast',input = 'WidDep',output = 'qmean',use = 'attr',attribute_column = 'Q_Mean',overwrite = True)
-            grass.run_command('v.to.rast',input = 'WidDep',output = 'up_area',use = 'attr',attribute_column = 'UP_AREA',overwrite = True)
-            grass.run_command('v.to.rast',input = 'WidDep',output = 'SubId_WidDep',use = 'attr',attribute_column = 'HYBAS_ID',overwrite = True)
+            grass_raster_v_to_raster(grass,input = 'WidDep',output = 'width',column = 'WIDTH')
+            grass_raster_v_to_raster(grass,input = 'WidDep',output = 'depth',column = 'DEPTH')
+            grass_raster_v_to_raster(grass,input = 'WidDep',output = 'qmean',column = 'Q_Mean')
+            grass_raster_v_to_raster(grass,input = 'WidDep',output = 'up_area',column = 'UP_AREA')
+            grass_raster_v_to_raster(grass,input = 'WidDep',output = 'SubId_WidDep',column = 'HYBAS_ID')  
+        # if not exist create an exmpty raster               
         else:
-            temparray = garray.array()
-            temparray[:,:] = -9999
-            temparray.write(mapname="width", overwrite=True)
-            temparray.write(mapname="depth", overwrite=True)
-            temparray.write(mapname="qmean", overwrite=True)
-            temparray.write(mapname="up_area", overwrite=True)
-            temparray.write(mapname="SubId_WidDep", overwrite=True)
-
+            grass_raster_create_raster_empty_raster(garray,raster_nm = "width")
+            grass_raster_create_raster_empty_raster(garray,raster_nm = "depth")
+            grass_raster_create_raster_empty_raster(garray,raster_nm = "qmean")
+            grass_raster_create_raster_empty_raster(garray,raster_nm = "up_area")
+            grass_raster_create_raster_empty_raster(garray,raster_nm = "SubId_WidDep")
+        
+            
         if self.Path_obspoint_in != '#':
-            grass.run_command("v.import", input = self.Path_ObsPoint, output = 'obspoint', overwrite = True)
+            grass_raster_v_import(grass,input_path = self.Path_ObsPoint,output_vector_nm = 'obspoint')
 
         print("********************Generate inputs dataset Done********************")
         Qgs.exit()

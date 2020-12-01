@@ -1,7 +1,7 @@
 import copy 
 from grass.script import array as garray
 ####
-def grass_raster_setnull(grass,raster_nm,null_values,create_new_raster,new_raster_nm):
+def grass_raster_setnull(grass,raster_nm,null_values,create_new_raster,new_raster_nm = '#'):
     
     if create_new_raster:
         grass_raster_copy(grass,raster_nm,new_raster_nm)
@@ -10,7 +10,7 @@ def grass_raster_setnull(grass,raster_nm,null_values,create_new_raster,new_raste
         grass.run_command('r.null', map=raster_nm,setnull=null_values)
 
 #####
-
+        
 def grass_raster_copy(grass,raster_nm_in,raster_nm_new):
     grass.run_command('g.copy',rast = (raster_nm_in,raster_nm_new),overwrite = True)
     
@@ -59,7 +59,7 @@ def Return_Raster_As_Array_With_garray(garray_f,raster_mn):
     return Array    
     
     
-def grass_raster_r_in_gdal(grass,raster_path,output_nm,location):
+def grass_raster_r_in_gdal(grass,raster_path,output_nm,location = '#'):
     """ import dem to target location 
     Parameters
     ----------    
@@ -68,8 +68,56 @@ def grass_raster_r_in_gdal(grass,raster_path,output_nm,location):
     -------
        
     """      
-    grass.run_command("r.in.gdal", input = raster_path, output = output_nm, overwrite = True,location =location)
+    if location != '#':
+        grass.run_command("r.in.gdal", input = raster_path, output = output_nm, overwrite = True,location =location)
+    else:
+        grass.run_command("r.in.gdal", input = raster_path, output = output_nm, overwrite = True)
 ###    
+
+
+
+
+def grass_raster_r_accumulate(grass,direction,accumulation,flags):
+    """ calculate flow accumulation from flow direction dataset 
+    Parameters
+    ----------    
+        
+    Returns:
+    -------
+       
+    """      
+    grass.run_command('r.accumulate',direction = direction, accumulation = accumulation, flags = flags,overwrite = True)
+
+###
+
+
+
+def grass_raster_r_external(grass,input,output):
+    """ calculate flow accumulation from flow direction dataset 
+    Parameters
+    ----------    
+        
+    Returns:
+    -------
+       
+    """      
+    grass.run_command("r.external", input = input, output = output)
+
+###
+
+def grass_raster_r_clip(grass,input,output):
+    """ clip raster with mask in grass env 
+    Parameters
+    ----------    
+        
+    Returns:
+    -------
+       
+    """      
+    grass.run_command("r.clip", input = input, output = output, overwrite = True)
+
+###
+
 
 def grass_raster_r_mask(grass,raster_nm,vector_nm = '#'):
     """ define grass working mask for current location 
@@ -115,6 +163,21 @@ def grass_raster_r_unpack(grass,input,output):
 ### 
 
 
+
+def grass_raster_r_reclass(grass,input,output,rules):
+    """ reclassify grass raster dataset  
+    Parameters
+    ----------    
+        
+    Returns:
+    -------
+       
+    """      
+    grass.run_command('r.reclass', input=input,output = output,rules =rules,overwrite = True)
+    
+### 
+
+
 def grass_raster_r_watershed(grass,elevation,drainage,accumulation,flags):
     """ generate watershed from dem,output includes flow accumulation
         and flow direction  
@@ -142,6 +205,42 @@ def grass_raster_r_mapcalc(grass,expression):
     grass.run_command('r.mapcalc',expression = expression,overwrite = True)
     
 ### 
+
+def grass_raster_create_raster_empty_raster(garray,raster_nm):
+    """ grass create a raster with -9999 in current location 
+    Parameters
+    ----------    
+        
+    Returns:
+    -------
+       
+    """      
+    temparray = garray.array()
+    temparray[:,:] = -9999
+    temparray.write(mapname=raster_nm, overwrite=True)
+    
+### 
+
+
+
+def grass_raster_v_to_raster(grass,input,output,column):
+    """ grass create a raster with -9999 in current location 
+    Parameters
+    ----------    
+        
+    Returns:
+    -------
+       
+    """      
+    grass.run_command('v.to.rast',input = input,output = output,use = 'attr',attribute_column = column,overwrite = True)
+    
+### 
+
+
+
+
+
+
 
 
 def grass_raster_r_water_outlet(grass,input_dir_nm,output_watshed_nm,outlet_coordinates):

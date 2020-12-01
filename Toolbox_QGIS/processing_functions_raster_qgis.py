@@ -4,6 +4,7 @@ from qgis.analysis import QgsNativeAlgorithms
 from qgis.PyQt.QtCore import *
 import pandas as pd 
 import numpy as np 
+import os 
 
 
 def qgis_raster_gdal_warpreproject(processing,Input,TARGET_CRS, Output):
@@ -180,4 +181,21 @@ def qgis_raster_gdal_polygonize(processing,context,INPUT,OUTPUT):
 
     return out
     
-        
+
+def qgis_raster_gdal_rasterize(processing,context,INPUT,Column_nm,cellsize,w,s,e,n,OUTPUT):
+    """ qgis gdal function polygonize rater to polygon 
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, 
+    """  
+    cmd = 'gdal_rasterize -at -of GTiff -a_nodata -9999 -a '+ Column_nm +' -tr  '+ str(cellsize) + "  " +str(cellsize)+'  -te   '+ str(w)+"   " +str(s)+"   " +str(e)+"   " +str(n)+"   " + "\"" +  INPUT +"\""+ "    "+ "\""+OUTPUT+"\""
+    os.system(cmd)
+    return 
+    
+#os.system('gdal_rasterize -at -of GTiff -a_nodata -9999 -a Hylak_id -tr  '+ str(self.cellSize) + "  " +str(self.cellSize)+'  -te   '+ str(grsregion['w'])+"   " +str(grsregion['s'])+"   " +str(grsregion['e'])+"   " +str(grsregion['n'])+"   " + "\"" +  self.Path_allLakeply +"\""+ "    "+ "\""+self.Path_allLakeRas+"\"")
+

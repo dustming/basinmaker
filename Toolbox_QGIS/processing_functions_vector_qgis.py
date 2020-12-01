@@ -462,9 +462,39 @@ def qgis_vector_buffer(processing,context,INPUT,Buffer_Distance,OUTPUT):
     
     
 
+def qgis_vector_ectract_by_location(processing,context,INPUT,INTERSECT,OUTPUT):
+    """ qgis function extract vector by location 
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, 
+    """  
+    out = processing.run("native:extractbylocation", {'INPUT':INPUT,'PREDICATE':[6],'INTERSECT':INTERSECT,'OUTPUT':OUTPUT},context = context)
+    return out 
 
 
 
+
+def qgis_vector_polygon_stro_lines(processing,context,INPUT,OUTPUT):
+    """ qgis function to obtain polygon boundary lines  
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, 
+    """  
+    out = processing.run("native:polygonstolines", {'INPUT':INPUT,'OUTPUT':OUTPUT},context = context)
+    return out 
+    
+    
+    
 
 
 
