@@ -734,7 +734,7 @@ def Determine_Lake_HRU_Id(Attribute_Table):
             print(Attribute_Table.loc[i,:])
             continue 
         ### find the subid of lakelakeid_sf
-        tar_info = Attri_table.loc[(Attri_table[Lake_Id]==lakelakeid_sf) & (Attri_table['HRU_IsLake'] > 0)]
+        tar_info = Attribute_Table.loc[(Attribute_Table[Lake_Id]==lakelakeid_sf) & (Attribute_Table['HRU_IsLake'] > 0)]
         
         Attribute_Table.loc[i,Sub_ID] = tar_info[Sub_ID].values[0]
         Attribute_Table.loc[i,'HRU_IsLake']  = tar_info['HRU_IsLake'].values[0]
