@@ -332,7 +332,6 @@ def Reproj_Clip_Dissolve_Simplify_Polygon(
     layer_proj = qgis_vector_reproject_layers(
         processing, context, layer_path, trg_crs, "memory:"
     )["OUTPUT"]
-    #    layer_proj = processing.run("native:reprojectlayer", {'INPUT':layer_path,'TARGET_CRS':QgsCoordinateReferenceSystem(trg_crs),'OUTPUT':'memory:'})['OUTPUT']
     layer_fix = qgis_vector_fix_geometries(
         processing, context, INPUT=layer_proj, OUTPUT="memory:"
     )["OUTPUT"]
@@ -346,13 +345,6 @@ def Reproj_Clip_Dissolve_Simplify_Polygon(
     layer_dis = qgis_vector_create_spatial_index(processing, context, layer_dis)[
         "OUTPUT"
     ]
-    #    formular = 'area(transform($geometry, \'%s\',\'%s\'))' % (trg_crs,Project_crs)
-    #    layer_area         = processing.run("qgis:fieldcalculator", {'INPUT':layer_landuse_fix,'FIELD_NAME':'Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formular,'OUTPUT':'memory:'})['OUTPUT']
-    #    processing.run("qgis:fieldcalculator", {'INPUT':layer_landuse_fix,'FIELD_NAME':'Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formular,'OUTPUT':os.path.join(OutputFolder,'part3.shp')})
-    #    formula = "\"Area\"< %s " % str(Eliminate_ply_size)
-    #    layer_area.selectByExpression(formula)
-    #    layer_eli_feature = processing.run("qgis:eliminateselectedpolygons", {'INPUT':layer_area,'MODE':0,'OUTPUT':'memory:'})['OUTPUT']
-    #    processing.run("qgis:eliminateselectedpolygons", {'INPUT':layer_area,'MODE':0,'OUTPUT':os.path.join(OutputFolder,'part6.shp')})
     return layer_dis
 
 
@@ -398,7 +390,6 @@ def Union_Ply_Layers_And_Simplify(
         mem_union_fix_ext = qgis_vector_fix_geometries(
             processing, context, INPUT=mem_union, OUTPUT="memory:"
         )["OUTPUT"]
-    #        mem_union_fix_ext  = processing.run("native:fixgeometries", {'INPUT':mem_union,'OUTPUT':'memory:'})['OUTPUT']
     elif len(Merge_layer_list) > 1:
         for i in range(0, len(Merge_layer_list)):
             if i == 0:
@@ -406,7 +397,6 @@ def Union_Ply_Layers_And_Simplify(
                 mem_union_fix_ext = qgis_vector_fix_geometries(
                     processing, context, INPUT=mem_union, OUTPUT="memory:"
                 )["OUTPUT"]
-                #                mem_union_fix_ext  = processing.run("native:fixgeometries", {'INPUT':mem_union,'OUTPUT':'memory:'})['OUTPUT']
                 mem_union_fix_ext = qgis_vector_create_spatial_index(
                     processing, context, mem_union_fix_ext
                 )["OUTPUT"]
@@ -421,8 +411,6 @@ def Union_Ply_Layers_And_Simplify(
                     "memory:",
                     OVERLAY_FIELDS_PREFIX="",
                 )["OUTPUT"]
-                #                mem_union      = processing.run("native:union", {'INPUT':mem_union_fix_temp,'OVERLAY':Merge_layer_list[i],'OVERLAY_FIELDS_PREFIX':'','OUTPUT':'memory:'},context = context)['OUTPUT']
-                #                mem_union      = processing.run("saga:polygonunion", {'A':mem_union_fix_temp,'B':Merge_layer_list[i],'SPLIT':True,'RESULT':'TEMPORARY_OUTPUT'},context = context)['RESULT']
                 mem_union_fix = qgis_vector_fix_geometries(
                     processing, context, INPUT=mem_union, OUTPUT="memory:"
                 )["OUTPUT"]
@@ -572,7 +560,6 @@ def Define_HRU_Attributes(
         hru_layer.crs().authid(),
         Project_crs,
     )
-    #    print(formular)
     layer_area = qgis_vector_field_calculator(
         processing=processing,
         context=context,
@@ -711,7 +698,8 @@ def Define_HRU_Attributes(
         )["OUTPUT"]
 
     else:
-        ## if no dem provided hru slope will use subbasin slope aspect and elevation
+        ## if no dem provided hru slope will use subbasin slope aspect
+        ## and elevation
         formula = ' "%s" ' % "BasSlope"
         HRU_draft_sub_info_S = qgis_vector_field_calculator(
             processing=processing,
@@ -759,7 +747,6 @@ def Define_HRU_Attributes(
         NEW_FIELD=False,
         FIELD_PRECISION=3,
     )["OUTPUT"]
-    #    processing.run("qgis:fieldcalculator", {'INPUT':HRU_draft_reproj,'FIELD_NAME':'HRU_Area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':False,'FORMULA':formular,'OUTPUT':os.path.join(OutputFolder,'hru_draft_final.shp')})
 
     return HRU_draf_final
 
@@ -1036,12 +1023,6 @@ class LRRT:
 
         if not os.path.exists(self.tempfolder):
             os.makedirs(self.tempfolder)
-        #
-        # if not os.path.exists(os.path.join(self.grassdb,self.grass_location_geo_temp)):
-        #        os.makedirs(os.path.join(self.grassdb,self.grass_location_geo_temp))
-        #
-        # if not os.path.exists(os.path.join(self.grassdb,self.grass_location_pro)):
-        #        os.makedirs(os.path.join(self.grassdb,self.grass_location_pro))
 
         self.FieldName_List_Product = [
             "SubId",
@@ -1131,7 +1112,6 @@ class LRRT:
         self.Path_Maskply = os.path.join(self.tempfolder, "HyMask2.shp")
         self.Remove_Str = []
 
-    ########################################################################################
     def Generatmaskregion(
         self,
         OutletPoint=[-1, -1],
@@ -1239,7 +1219,8 @@ class LRRT:
             hyshdinfo = Dbf_To_Dataframe(hyshdply)
             routing_info = hyshdinfo[["HYBAS_ID", "NEXT_DOWN"]].astype("float").values
 
-            # obtain sub id of subbasins between OutHyID and OutHyID2 in the routing network
+            # obtain sub id of subbasins between OutHyID and OutHyID2 in the routing
+            # network
             HydroBasins = Return_SubIds_Between_Two_Subbasins_In_Rouing_Network(
                 routing_info, OutHyID, OutHyID2
             )
@@ -1324,7 +1305,6 @@ class LRRT:
                 output_nm="dem",
                 location=self.grass_location_geo,
             )
-            #            grass.run_command("r.in.gdal", input = self.Path_dem, output = 'dem', overwrite = True,location =self.grass_location_geo)
             PERMANENT_temp.close()
 
             # Define mask and processing region for grass working enviroments
@@ -1490,7 +1470,8 @@ class LRRT:
                 # define processing extent of the current working enviroment
                 grass_raster_g_region(grass, "dem")
 
-            ## the outlet coordinates is not provided, the extent of dem is used as mask and region
+            ## the outlet coordinates is not provided, the extent of dem is used
+            #  as mask and region
             else:
 
                 print("Mask Region:   Using provided DEM : ")
@@ -1528,7 +1509,8 @@ class LRRT:
                 # define processing extent of the current working enviroment
                 grass_raster_g_region(grass, "dem")
 
-                # export generated mask to folder ouside grass work env in tif format
+                # export generated mask to folder ouside grass work env in
+                # tif format
                 grass_raster_r_out_gdal(
                     grass,
                     input_nm="MASK",
@@ -1585,7 +1567,6 @@ class LRRT:
                 output_vector_nm="Sub_Region_Mask_ply",
                 location=self.grass_location_geo,
             )
-            #            grass.run_command("v.in.ogr", input = Path_Sub_Polygon,output = 'Sub_Region_Mask_ply', overwrite = True,location =self.grass_location_geo)
             PERMANENT.close()
 
             # unpack dem and generate mask with loaded vector
@@ -1956,11 +1937,9 @@ class LRRT:
             k = 1
             ttrow, ttcol = trow, tcol
             dowsubreginid = -1
-
+            ### get the downstream catchment id
             while dowsubreginid < 0 and k < 20:
-                nrow, ncol = Nextcell(
-                    dir, ttrow, ttcol
-                )  ### get the downstream catchment id
+                nrow, ncol = Nextcell(dir, ttrow, ttcol)
                 if nrow < 0 or ncol < 0:
                     dowsubreginid = -1
                     Cat_outlets[trow, tcol] = int(
@@ -2011,7 +1990,6 @@ class LRRT:
         del_row_mask = np.logical_and(mask2, mask)
 
         subregin_info = subregin_info.loc[np.logical_not(del_row_mask), :]
-        #        subregin_info.drop(subregin_info.index[del_row_mask]) ###
         subregin_info.to_csv(
             os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_reg_info.csv"),
             index=None,
@@ -2084,7 +2062,7 @@ class LRRT:
 
         return
 
-    ##################################################################################################
+    ############################################################################
 
     def Generateinputdata(self, Is_divid_region=-1):
         """Preprocessing input dataset
@@ -2157,7 +2135,8 @@ class LRRT:
         context = dataobjects.createContext()
         context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
 
-        # defnne cellsize and projection again, in case the work did not run Generatmaskregion
+        # defnne cellsize and projection again, in case the work did not run
+        # Generatmaskregion
         r_dem_layer = qgis_raster_read_raster(
             processing, self.Path_dem_in
         )  ### load DEM raster as a  QGIS raster object to obtain attribute
@@ -2348,9 +2327,7 @@ class LRRT:
 
             # the flow direction data is provided
             else:
-                print(
-                    "#####################Using provided flow direction dataset####################"
-                )
+                print("########Using provided flow direction dataset#############")
                 # load flow dirction dataset
                 grass_raster_r_in_gdal(
                     grass, raster_path=self.Path_dir_in, output_nm="dir_in_ArcGis"
@@ -2369,9 +2346,7 @@ class LRRT:
 
         # if the toolbox is runing to divide domain into subregions, stop at here
         if Is_divid_region > 0:
-            print(
-                "********************Generate inputs dataset Done********************"
-            )
+            print("****************Generate inputs dataset Done******************")
             Qgs.exit()
             PERMANENT.close()
             return
@@ -2379,7 +2354,8 @@ class LRRT:
         # if bankfull width and depth polyline is provided reproject and extact
         # by polygon mask
         if self.Path_WiDep_in != "#":
-            # reproject width and depth polyline, and extract width and depth polyline for by polygon mask
+            # reproject width and depth polyline, and extract width and depth
+            # polyline for by polygon mask
             qgis_vector_reproject_layers(
                 processing,
                 context,
@@ -2566,10 +2542,12 @@ class LRRT:
 
         # first generate streams and determine flow direction
         # four options exist here
-        # 1) flow direction and streams will derived from dem and flow accumulation data
-        # 2) user has provide a flow direction data, and user provided flow direction data will be used
-        # 3) if subregion flow direction and stream data is provided , then subregion flow direction and stream
-        #    data is directly used.
+        # 1) flow direction and streams will derived from dem and flow accumulation
+        #    data
+        # 2) user has provide a flow direction data, and user provided flow
+        #    direction data will be used
+        # 3) if subregion flow direction and stream data is provided , then
+        #    subregion flow direction and stream data is directly used.
 
         # using predefined subregion stream network
         if self.Is_Sub_Region > 0:
@@ -2787,9 +2765,9 @@ class LRRT:
         PERMANENT.close()
         return
 
-    ###########################################################################################3
+    ###########################################################################
 
-    ############################################################################################
+    ###########################################################################
     def AutomatedWatershedsandLakesFilterToolset(
         self,
         Thre_Lake_Area_Connect=0,
@@ -2946,36 +2924,6 @@ class LRRT:
             grass, "alllake", Lakeid_lt_All_Remove.tolist(), True, "SelectedLakes"
         )
 
-        #         hylake1,Selected_Con_Lakes = selectlake2(conlake_arr,VolThreshold,allLakinfo) ### remove lakes with lake area smaller than the VolThreshold from connected lake raster
-        #         if NonConLThres >= 0:
-        #             Lake1, Selected_Non_Con_Lakes_ids = selectlake(hylake1,noncnlake_arr,NonConLThres,allLakinfo) ### remove lakes with lake area smaller than the NonConLThres from non-connected lake raster
-        #         else:
-        #             Lake1 = hylake1
-        #
-        #         mask3 = hylake1 == 0
-        #         hylake1[mask3]   = -9999
-        #
-        #         temparray[:,:] = hylake1[:,:]
-        #         temparray.write(mapname="Select_Connected_lakes", overwrite=True)
-        #         grass.run_command('r.null', map='Select_Connected_lakes',setnull=-9999)
-        # #        grass.run_command('r.out.gdal', input = 'Select_Connected_lakes',output = os.path.join(self.tempfolder,'Select_Connected_lakes.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
-        #
-        #         Selectedlaeks = copy.deepcopy(Lake1)
-        #         maks                = hylake1 > 0
-        #         Selectedlaeks[maks] = -9999
-        #         mask2 = Selectedlaeks == 0
-        #         Selectedlaeks[mask2]   = -9999
-        #         temparray[:,:] = Selectedlaeks[:,:]
-        #         temparray.write(mapname="Select_Non_Connected_lakes", overwrite=True)
-        #         grass.run_command('r.null', map='Select_Non_Connected_lakes',setnull=-9999)
-        # #        grass.run_command('r.out.gdal', input = 'Select_Non_Connected_lakes',output = os.path.join(self.tempfolder,'Select_Non_Connected_lakes.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
-        #
-        #         mask1 = Lake1 == 0
-        #         Lake1[mask1]   = -9999
-        #         temparray[:,:] = Lake1[:,:]
-        #         temparray.write(mapname="SelectedLakes", overwrite=True)
-        #         grass.run_command('r.null', map='SelectedLakes',setnull=-9999)
-
         Lake1 = Return_Raster_As_Array_With_garray(garray, "SelectedLakes")
         noncnlake_arr = Return_Raster_As_Array_With_garray(
             garray, "Select_Non_Connected_lakes"
@@ -3034,19 +2982,8 @@ class LRRT:
             rules=os.path.join(self.tempfolder, "rule_cat2.txt"),
             overwrite=True,
         )
-        #        grass.run_command('v.out.ogr', input = 'Pourpoints_1_F',output = os.path.join(self.tempfolder, "Pourpoints_1_F.shp"),format= 'ESRI_Shapefile',overwrite = True)
-        #        grass.run_command('r.out.gdal', input = 'cat1',output = os.path.join(self.tempfolder,'cat1.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
-        # cat3
-        cat2_array = garray.array(mapname="cat2")
-        #        temcat2    = copy.copy(cat2_array)
-        # temcat,outlakeids =CE_mcat4lake(cat2_array,Lake1,acc_array,dir_array,bsid,self.nrows,self.ncols,Pourpoints)
-        # temcat2 = CE_Lakeerror(acc_array,dir_array,Lake1,temcat,bsid,blid,boid,self.nrows,self.ncols,cat1_arr)
-        #        temparray[:,:] = temcat2[:,:]
-        #        temparray.write(mapname="cat3", overwrite=True)
-        #        grass.run_command('r.null', map='cat3',setnull=-9999)
 
-        #        grass.run_command('r.out.gdal', input = 'cat3',output = os.path.join(self.tempfolder,'cat3.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
-        #        grass.run_command('r.out.gdal', input = 'cat3',output = os.path.join(self.tempfolder,'cat3.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
+        cat2_array = garray.array(mapname="cat2")
 
         nPourpoints = GenerateFinalPourpoints(
             acc_array,
@@ -3072,10 +3009,7 @@ class LRRT:
             type="point",
             overwrite=True,
         )
-        #        grass.run_command('v.out.ogr', input = 'Pourpoints_2_F',output = os.path.join(self.tempfolder, "Pourpoints_2_F.shp"),format= 'ESRI_Shapefile',overwrite = True)
 
-        ## with new pour points
-        # cat 4
         grass.run_command(
             "r.stream.basins",
             direction="dir_grass",
@@ -3104,7 +3038,7 @@ class LRRT:
             overwrite=True,
         )
         cat4_array = garray.array(mapname="cat4")
-        #        grass.run_command('r.out.gdal', input = 'cat4',output = os.path.join(self.tempfolder,'cat4.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
+
         start = timeit.default_timer()
         outlakeids, chandir, ndir, BD_problem = check_lakecatchment(
             cat4_array,
@@ -3257,23 +3191,6 @@ class LRRT:
             type="area",
             overwrite=True,
         )
-        ####   dissolve final catchment polygons
-        #        grass.run_command('v.db.addcolumn', map= 'finalcat_F1', columns = "Gridcode VARCHAR(40)")
-        #        grass.run_command('v.db.update', map= 'finalcat_F1', column = "Gridcode",qcol = 'value')
-        #    grass.run_command('v.reclass', input= 'finalcat_F1', column = "Gridcode",output = 'finalcat_F',overwrite = True)
-        #        grass.run_command('v.dissolve', input= 'finalcat_F1', column = "Gridcode",output = 'finalcat_F',overwrite = True)
-        #    grass.run_command('v.select',ainput = 'str',binput = 'finalcat_F',output = 'str_finalcat',overwrite = True)
-        #        grass.run_command('v.overlay',ainput = 'str',binput = 'finalcat_F1',operator = 'and',output = 'str_finalcat',overwrite = True)
-        #        grass.run_command('v.out.ogr', input = 'str_finalcat',output = os.path.join(self.tempfolder,'str_finalcat.shp'),format= 'ESRI_Shapefile',overwrite = True)
-        #        grass.run_command('v.out.ogr', input = 'finalcat_F1',output = os.path.join(self.tempfolder,'finalcat_F1.shp'),format= 'ESRI_Shapefile',overwrite = True)
-        #        grass.run_command('v.out.ogr', input = 'str',output = os.path.join(self.tempfolder,'str.shp'),format= 'ESRI_Shapefile',overwrite = True)
-
-        #        grass.run_command('v.out.ogr', input = 'str_finalcat',output = os.path.join(self.tempfolder,'str_finalcat.shp'),format= 'ESRI_Shapefile',overwrite = True)
-        #    grass.run_command('v.db.join', map= 'SelectedLakes_F',column = 'value', other_table = 'result',other_column ='SubId', overwrite = True)
-
-        #############################################################################################################################################
-        #        Define routing network with lakes before merge connected lakes, and define nonconnecte lake catchments
-        ############################################################################################################################################3
 
         temparray[:, :] = Str_new[:, :]
         temparray.write(mapname="Str_new", overwrite=True)
@@ -3433,14 +3350,14 @@ class LRRT:
 
         con = sqlite3.connect(self.sqlpath)
 
-        #        grass.run_command('r.out.gdal', input = 'Net_cat',output =os.path.join(self.tempfolder,'Net_cat.tif'),format= 'GTiff',overwrite = True)
+        ## save to vector
         grass.run_command(
             "r.to.vect",
             input="Net_cat",
             output="Net_cat_F1",
             type="area",
             overwrite=True,
-        )  ## save to vector
+        )
         grass.run_command(
             "v.db.addcolumn", map="Net_cat_F1", columns="GC_str VARCHAR(40)"
         )
@@ -3448,22 +3365,19 @@ class LRRT:
         grass.run_command(
             "v.db.update", map="Net_cat_F1", column="GC_str", qcol="value"
         )
+        # dissolve based on gridcode
         grass.run_command(
             "v.dissolve",
             input="Net_cat_F1",
             column="GC_str",
             output="Net_cat_F",
             overwrite=True,
-        )  ### dissolve based on gridcode
-        #        grass.run_command('v.out.ogr', input = 'Net_cat_F',output = os.path.join(self.tempfolder,'Net_cat_F.shp'),format= 'ESRI_Shapefile',overwrite = True)
+        )
+
         grass.run_command("v.db.addcolumn", map="Net_cat_F", columns="Gridcode INT")
         grass.run_command(
             "v.db.update", map="Net_cat_F", column="Gridcode", qcol="GC_str"
         )
-
-        # create a river network shpfile that have river segment based on   'Net_cat_F.shp'
-        #        grass.run_command('r.mapcalc',expression = 'str1 = if(isnull(str_grass_r),null(),1)',overwrite = True) ## a rive
-        #        grass.run_command('r.to.vect',  input = 'str1',output = 'str1', type ='line' ,overwrite = True)
 
         ## obtain a stream vector, segmentation based on new catchment polygon
         grass.run_command(
@@ -3569,7 +3483,7 @@ class LRRT:
             input="Net_cat_F",
             overwrite=True,
         )
-        # grass.run_command('v.proj', location=self.grass_location_geo,mapset = 'PERMANENT', input = 'Non_con_lake_cat_1',overwrite = True)
+
         grass.run_command(
             "v.to.db",
             map="Net_cat_F",
@@ -3586,7 +3500,6 @@ class LRRT:
             units="meters",
             overwrite=True,
         )
-        # grass.run_command('v.to.db', map = 'Non_con_lake_cat_1',option = 'area',columns = "Area_m", units = 'meters',overwrite = True)
 
         grass.run_command(
             "r.slope.aspect",
@@ -3596,7 +3509,6 @@ class LRRT:
             precision="DCELL",
             overwrite=True,
         )
-        #        grass.run_command('r.mapcalc',expression = 'tanslopedegree = tan(slope) ',overwrite = True)
 
         ### calcuate averaged DEM in each subbasin
         grass.run_command(
@@ -3865,10 +3777,8 @@ class LRRT:
             catinfodf, allLakinfo, rivleninfo, catareainfo, obsinfo, Outletinfo
         )
         routing_info = catinfo[["SubId", "DowSubId"]].astype("float").values
-        #        print(routing_info)
-        #        print(catinfo)
 
-        ##find subbasins only drainage to the subregion outlet id
+        ## find subbasins only drainage to the subregion outlet id
         ## remove subbasins drainage to other subregion outlet id
         if self.Is_Sub_Region > 0:
 
@@ -3935,7 +3845,6 @@ class LRRT:
             HydroBasins = catinfo["SubId"].values
 
         ### remove non interesed subbasin s
-        #        catinfo = catinfo.loc[catinfo['SubId'].isin(HydroBasins)].copy()
 
         catinfo = Streamorderanddrainagearea(catinfo)
 
@@ -4393,9 +4302,7 @@ class LRRT:
 
         finalcatchpath = Path_final_hru_info
 
-        tempinfo = Dbf5(
-            finalcatchpath[:-3] + "dbf"
-        )  # np.genfromtxt(hyinfocsv,delimiter=',')
+        tempinfo = Dbf5(finalcatchpath[:-3] + "dbf")
         ncatinfo = tempinfo.to_dataframe()
         ncatinfo2 = ncatinfo.drop_duplicates("HRU_ID", keep="first")
         ncatinfo2 = ncatinfo2.loc[(ncatinfo2["HRU_ID"] > 0) & (ncatinfo2["SubId"] > 0)]
@@ -4646,10 +4553,8 @@ class LRRT:
         if not os.path.exists(OutputFolder):
             os.makedirs(OutputFolder)
 
-            ## find all subid control by this subid
-        HydroBasins1 = Defcat(
-            hyshdinfo, OutHyID
-        )  ### return fid of polygons that needs to be select
+        ## find all subid control by this subid
+        HydroBasins1 = Defcat(hyshdinfo, OutHyID)
         if OutHyID2 > 0:
             HydroBasins2 = Defcat(hyshdinfo, OutHyID2)
             ###  exculde the Ids in HydroBasins2 from HydroBasins1
@@ -4899,7 +4804,8 @@ class LRRT:
             Values=Old_Non_Connect_LakeIds,
         )
 
-        # Copy connected lakes that are transfered into non-connected lake to non connected lake polygon
+        # Copy connected lakes that are transfered into non-connected
+        # lake to non connected lake polygon
         Copyfeature_to_another_shp_by_attribute(
             Source_shp=Path_Conl_ply,
             Target_shp=os.path.join(
@@ -4939,9 +4845,9 @@ class LRRT:
 
         Qgs.exit()
 
-        ######################################################################
+    ######################################################################
 
-    ###########################################################################3
+    ######################################################################
     def SelectLakes(
         self,
         Path_final_riv_ply="#",
@@ -5075,7 +4981,7 @@ class LRRT:
                 Values=Selected_ConnLakes,
             )
 
-        print("####################################### Obtain selected Lake IDs done")
+        print(" Obtain selected Lake IDs done")
 
         ### create a copy of shapfiles in temp folder
         Path_Temp_final_rviply = os.path.join(
@@ -5099,10 +5005,12 @@ class LRRT:
             OUTPUT=Path_Temp_final_rviply,
         )
 
-        # change lake related attribute for un selected connected lake catchment to -1.2345
+        # change lake related attribute for un selected connected lake
+        # catchment to -1.2345
         Remove_Unselected_Lake_Attribute_In_Finalcatinfo(
             Path_Temp_final_rviply, Selected_ConnLakes
-        )  ### remove lake attributes
+        )
+        # remove lake attributes
         Remove_Unselected_Lake_Attribute_In_Finalcatinfo(
             Path_Temp_final_rvi, Selected_ConnLakes
         )
@@ -5597,7 +5505,8 @@ class LRRT:
 
         Merge_layer_list = []
         output_hru_shp = os.path.join(OutputFolder, "finalcat_hru_info.shp")
-        ### First overlay the subbasin layer with lake polygon, the new unique id will be 'HRULake_ID'
+        ### First overlay the subbasin layer with lake polygon, the new unique
+        # id will be 'HRULake_ID'
 
         Sub_Lake_HRU_Layer, trg_crs, fieldnames_list = GeneratelandandlakeHRUS(
             processing,
@@ -5729,9 +5638,8 @@ class LRRT:
         Soil_info_data = pd.read_csv(Soil_info)
         Veg_info_data = pd.read_csv(Veg_info)
 
-        if (
-            Path_Landuse_Ply == "#"
-        ):  ### landuse polygon is not provided, landused id the same is IS lake 1 is lake -1 non land
+        # landuse polygon is not provided,landused id the same as IS_lake
+        if Path_Landuse_Ply == "#":
             formula = '- "%s" ' % "HRU_IsLake"
             mem_union_landuse = qgis_vector_field_calculator(
                 processing=processing,
@@ -5742,13 +5650,10 @@ class LRRT:
                 FIELD_PRECISION=3,
                 OUTPUT="memory:",
             )["OUTPUT"]
-        #            mem_union_landuse = processing.run("qgis:fieldcalculator", {'INPUT':mem_union,'FIELD_NAME':Landuse_ID,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
         else:
             mem_union_landuse = mem_union
-
-        if (
-            Path_Soil_Ply == "#"
-        ):  # if soil is not provied, it the value will be the same as land use
+        # if soil is not provied, it the value,will be the same as land use
+        if Path_Soil_Ply == "#":
             formula = ' "%s" ' % Landuse_ID
             mem_union_soil = qgis_vector_field_calculator(
                 processing=processing,
@@ -5759,13 +5664,10 @@ class LRRT:
                 FIELD_PRECISION=3,
                 OUTPUT="memory:",
             )["OUTPUT"]
-        #            mem_union_soil = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_landuse,'FIELD_NAME':Soil_ID,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
         else:
             mem_union_soil = mem_union_landuse
-
-        if (
-            Path_Veg_Ply == "#"
-        ):  ### if no vegetation polygon is provide vegetation will be the same as landuse
+        # if no vegetation polygon is provide vegetation, will be the same as landuse
+        if Path_Veg_Ply == "#":
             formula = ' "%s" ' % Landuse_ID
             mem_union_veg = qgis_vector_field_calculator(
                 processing=processing,
@@ -5776,13 +5678,9 @@ class LRRT:
                 FIELD_PRECISION=3,
                 OUTPUT="memory:",
             )["OUTPUT"]
-        #            mem_union_veg = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_soil,'FIELD_NAME':Veg_ID,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
         else:
             mem_union_veg = mem_union_soil
-
-        if (
-            Path_Other_Ply_1 == "#"
-        ):  ### if no vegetation polygon is provide vegetation will be the same as landuse
+        if Path_Other_Ply_1 == "#":
             formula = '- "%s" ' % "HRU_IsLake"
             mem_union_o1 = qgis_vector_field_calculator(
                 processing=processing,
@@ -5793,13 +5691,9 @@ class LRRT:
                 FIELD_PRECISION=3,
                 OUTPUT="memory:",
             )["OUTPUT"]
-        #            mem_union_o1 = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_veg,'FIELD_NAME':Other_Ply_ID_1,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
         else:
             mem_union_o1 = mem_union_veg
-
-        if (
-            Path_Other_Ply_2 == "#"
-        ):  ### if no vegetation polygon is provide vegetation will be the same as landuse
+        if Path_Other_Ply_2 == "#":
             formula = '- "%s" ' % "HRU_IsLake"
             mem_union_o2 = qgis_vector_field_calculator(
                 processing=processing,
@@ -5810,12 +5704,10 @@ class LRRT:
                 FIELD_PRECISION=3,
                 OUTPUT="memory:",
             )["OUTPUT"]
-        #            mem_union_o2 = processing.run("qgis:fieldcalculator", {'INPUT':mem_union_o1,'FIELD_NAME':Other_Ply_ID_2,'FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':formula,'OUTPUT':'memory:'})['OUTPUT']
         else:
             mem_union_o2 = mem_union_o1
 
         hru_layer_draft = mem_union_o2
-        #        hru_layer_draft = processing.run("native:reprojectlayer", {'INPUT':mem_union_o2,'TARGET_CRS':QgsCoordinateReferenceSystem('EPSG:4326'),'OUTPUT':'memory:'})['OUTPUT']
 
         HRU_draf_final = Define_HRU_Attributes(
             processing,
@@ -5848,8 +5740,6 @@ class LRRT:
             NEW_FIELD=False,
             OUTPUT=output_hru_shp,
         )
-
-        #        processing.run("qgis:fieldcalculator", {'INPUT':HRU_draf_final,'FIELD_NAME':'HRU_ID','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':0,'NEW_FIELD':False,'FORMULA':' @row_number','OUTPUT':output_hru_shp})
 
         Clean_Attribute_Name(output_hru_shp, self.FieldName_List_Product)
         del Sub_Lake_HRU_Layer, mem_union
@@ -6023,7 +5913,8 @@ class LRRT:
             ):  ### this sub region did not generate outputs
                 continue
 
-            ### For each subregion, add new subid to each polygon files, and append result file in the merge list
+            ### For each subregion, add new subid to each polygon files,
+            ### and append result file in the merge list
             if Is_Final_Result == True:
 
                 SubID_info = (
@@ -6189,8 +6080,6 @@ class LRRT:
                 INPUT_Layer_List=Paths_Finalcat_line,
                 OUTPUT=os.path.join(self.tempfolder, "finalcat_info_riv.shp"),
             )
-            #            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalcat_ply,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalcat_info.shp')})
-            #            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalcat_line,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalcat_info_riv.shp')})
             processing.run(
                 "qgis:joinattributesbylocation",
                 {
@@ -6268,8 +6157,6 @@ class LRRT:
                 OUTPUT=os.path.join(self.tempfolder, "finalriv_info.shp"),
             )
 
-            #            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalriv_ply,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalriv_info_ply.shp')})
-            #            processing.run("native:mergevectorlayers", {'LAYERS':Paths_Finalriv_line,'CRS':None,'OUTPUT':os.path.join(self.tempfolder,'finalriv_info.shp')})
             processing.run(
                 "qgis:joinattributesbylocation",
                 {
@@ -6472,7 +6359,8 @@ class LRRT:
                 Point_Fea.setAttributes(latlonrow[k, :].tolist())
                 DP_Nc_Point.addFeature(Point_Fea)
 
-                ### Create a polygon that the current grid is in the center of the polygon
+                ### Create a polygon that the current grid is in the center
+                ###  of the polygon
 
                 ### find mid point in row direction
                 Polygon_Fea = QgsFeature()
@@ -6668,7 +6556,8 @@ class LRRT:
             Output_Folder, "Overlay_Polygons.shp"
         )
 
-        ### create overlay betweeo two polygon and calcuate area of each new polygon in the overlay
+        ### create overlay betweeo two polygon and calcuate area of
+        ### each new polygon in the overlay
         qgis_vector_union_two_layers(
             processing=processing,
             context=context,
@@ -6706,7 +6595,6 @@ class LRRT:
             OUTPUT=Path_finalcat_hru_temp_dissolve_area,
             FIELD_PRECISION=3,
         )["OUTPUT"]
-        #        processing.run("qgis:fieldcalculator", {'INPUT':Path_finalcat_hru_temp_dissolve,'FIELD_NAME':'s_area','FIELD_TYPE':0,'FIELD_LENGTH':10,'FIELD_PRECISION':3,'NEW_FIELD':True,'FORMULA':'area(transform($geometry, \'EPSG:4326\',\'EPSG:3573\'))','OUTPUT':Path_finalcat_hru_temp_dissolve_area})
 
         ### calculate the area weight of the mapping polygon to target polygon
 
@@ -6806,8 +6694,3 @@ class LRRT:
         #   should be calaulated by row*(max(colnums)+1) + colnum.
         #   for example row =2, col=0, index = 2*(4+1)+0 = 10
         #   for example row 3, col 3, index = 3*(4+1)+3 = 18
-        ##################################333
-        ######################################################
-        ###################################################################################33
-
-    ####################################################################################################################################3
