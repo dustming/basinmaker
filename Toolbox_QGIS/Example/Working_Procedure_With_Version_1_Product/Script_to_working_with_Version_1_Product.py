@@ -12,19 +12,18 @@ HRU_Folder = os.path.join('../../tests/testdata','HRU')
     
 
 ###Folder where the output will be generated 
-Output_Folder = os.path.join('../../tests/testdata','test11')
+Output_Folder = Routing_Product_Folder #os.path.join('../../tests/testdata','test11')
     
 RTtool=LRRT()
 
 
 # Generate HRU without considering lakes, 1 subbasin is 1 hru 
-# If want to define lake hru just change 
-# Path_Connect_Lake_ply = '#' to 
-# Path_Connect_Lake_ply = os.path.join(Routing_Product_Folder,'Con_Lake_Ply.shp')
-# 
+# Connected lake polygon comes form hydrolake, needs to be extracted first 
+# it is not provied in routing product 
+#
 RTtool.GenerateHRUS(OutputFolder = Output_Folder,
                     Path_Subbasin_Ply =  os.path.join(Routing_Product_Folder,'finalcat_info.shp'),
-     				Path_Connect_Lake_ply = '#', #os.path.join(Routing_Product_Folder,'Con_Lake_Ply.shp'),
+     				Path_Connect_Lake_ply = os.path.join(Routing_Product_Folder,'Con_Lake_Ply.shp'),
 					Path_Non_Connect_Lake_ply = '#',
                     Path_Landuse_Ply = '#',Landuse_ID = 'Landuse_ID',
                     Path_Soil_Ply = '#',Soil_ID = 'Soil_ID',

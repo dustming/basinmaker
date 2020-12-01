@@ -718,7 +718,7 @@ class LRRT:
         # if not os.path.exists(os.path.join(self.grassdb,self.grass_location_pro)):
         #        os.makedirs(os.path.join(self.grassdb,self.grass_location_pro))
 
-        self.FieldName_List_Product = ['SubId','HRULake_ID','HRU_IsLake','Landuse_ID','Soil_ID','Veg_ID','O_ID_1','O_ID_2',
+        self.FieldName_List_Product = ['SubId','HRU_IsLake','Landuse_ID','Soil_ID','Veg_ID','O_ID_1','O_ID_2',
                                        'HRU_Area','HRU_ID','LAND_USE_C','VEG_C','SOIL_PROF','HRU_CenX','HRU_CenY','DowSubId',
                                            'RivSlope','RivLength','BasSlope','BasAspect','BasArea','BkfWidth','BkfDepth','IsLake',
                                         'HyLakeId','LakeVol','LakeDepth','LakeArea','Laketype','IsObs','MeanElev','FloodP_n',
