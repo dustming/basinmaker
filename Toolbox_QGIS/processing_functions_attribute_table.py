@@ -1274,3 +1274,86 @@ def Return_SubIds_Between_Two_Subbasins_In_Rouing_Network(routing_info,subid_dow
         HydroBasins = HydroBasins1
         
     return  HydroBasins  
+
+
+
+def Check_If_Lake_Have_Multi_OutLet(CL_Id,Str_Id,Routing_info):
+    
+    ### create a emppty array to store lake id with multi outlet 
+    Lakes_WIth_Multi_Outlet = []
+    Remove_Str = []
+    #### combine lake id and coresponding str id into two dim array 
+    CL_Str = np.column_stack((CL_Id, Str_Id))
+    #### obtain unique str id 
+    Str_Id_unique = np.unique(np.array(Str_Id))
+    #### obtain unique lake ids 
+    CL_Id_unique = np.unique(np.array(CL_Id))
+    
+    #### add maxacc of each str to CL_str 
+    Acc_Str_CL = np.full((len(CL_Str),1),np.nan)
+    for i in range(0,len(Str_Id_unique)):
+        strid  = Str_Id_unique[i]
+        maxacc = Routing_info.loc[Routing_info['SubId'] ==strid]['MaxAcc_cat'].values[0]
+        Acc_Str_CL[CL_Str[:,1] == strid] = maxacc
+    CL_Str = np.append(CL_Str, Acc_Str_CL, axis=1)
+    
+    ### sort CL_str based on max acc of 
+    CL_Str = CL_Str[CL_Str[:,2].argsort()]
+    
+    
+    ### routing info 
+    routing_info_only      = Routing_info[['SubId','DowSubId']].astype('int').values
+#    print(routing_info_only)
+    ### check if lakes have multi outlet 
+    for i in range(0,len(CL_Id_unique)):
+        ### got lake id 
+        lake_id = CL_Id_unique[i]
+        ### got all str overlaied by this lake id 
+        i_CL_Str = CL_Str[CL_Str[:,0] == lake_id]
+        
+        ### lake is overlaied by one str, so must only have one lake outlet 
+        if len(i_CL_Str) <= 1:
+            continue 
+        
+        ### len(i_CL_Str)>1 
+        ### check if all str covered by this lake will drainage to the str with 
+        ### maximum acc. if it is ture than lake has only one outelt,
+        ### if not the lake have multi outlet
+        
+        ###obtain str id with max acc among strs covered by the lake 
+        str_max_acc = i_CL_Str[len(i_CL_Str) - 1,1]
+#        print(str_max_acc,len(routing_info_only),"#################")
+        ### obtain all upstream str id of max acc str 
+        str_to_str_max_acc  = Defcat(routing_info_only,str_max_acc)
+        
+        if len(str_to_str_max_acc) <= 1: 
+            str_to_str_max_acc  = Defcat(routing_info_only,i_CL_Str[len(i_CL_Str) - 2,1])
+        ### create a mask for i_CL_Str[:,1], it will be true for in positon 
+        ### where it's value in str_to_str_max_acc
+        mask = np.isin(i_CL_Str[:,1],str_to_str_max_acc)
+        #### not all element in i_CL_Str[:,1] exist in str_to_str_max_acc
+        #### the lake have muli outlet 
+
+        Remove_Str_i = []
+        
+        ### if not all str drainage to outlet str 
+        if len(mask[mask == True]) < len(i_CL_Str[:,1]):
+            ### obtain strids of str not drainage to outlet str 
+            str_notflowto_lakeoutlet = i_CL_Str[np.logical_not(mask),1]
+            ### loop for strids of str not drainage to outlet str
+            for istr in range(0,len(str_notflowto_lakeoutlet)):
+                ### get i str id 
+                strid =  str_notflowto_lakeoutlet[istr]
+                ### check  streams drainage to current str
+#                upstrs  = Defcat(routing_info_only,strid)
+                #### no upstream str, ### remove str instead remove lake 
+#                if len(upstrs) == 1:
+                Remove_Str_i.append(strid)
+            
+            if len(Remove_Str_i) == len(str_notflowto_lakeoutlet):
+                Remove_Str = Remove_Str + Remove_Str_i
+            else:
+                Lakes_WIth_Multi_Outlet.append(lake_id)
+    return Lakes_WIth_Multi_Outlet,Remove_Str
+    
+    

@@ -14,9 +14,9 @@ import tempfile
 import copy
 import pandas as pd
 import sqlite3
-from GetBasinoutlet import Getbasinoutlet,Nextcell,Defcat,Generate_Routing_structure
+from GetBasinoutlet import Getbasinoutlet,Nextcell,Defcat
 from Generatecatinfo import Generatecatinfo,Generatecatinfo_riv,calculateChannaln,Writecatinfotodbf,Streamorderanddrainagearea,UpdateChannelinfo,UpdateNonConnectedcatchmentinfo
-from AddlakesintoRoutingNetWork import Dirpoints_v3,check_lakecatchment,DefineConnected_Non_Connected_Lakes,Generate_stats_list_from_grass_raster
+from AddlakesintoRoutingNetWork import Dirpoints_v3,check_lakecatchment
 from processing_functions_raster_grass import *
 from processing_functions_vector_grass import *
 from processing_functions_vector_qgis import *
@@ -1606,75 +1606,106 @@ class LRRT:
         con = sqlite3.connect(self.sqlpath)
         grsregion = gcore.region()
 
-        #### if subregion oulet is inlcuded , use minmum acc of subregion outlet.
-
-
-        if Is_divid_region > 0:
-            grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold =accthresold,stream_raster = 'str_grass_r',
-                              direction = 'dir_grass',stream_length = 1000,overwrite = True, memory = max_memroy)
-            grass.run_command('r.reclass', input='dir_grass',output = 'dir_Arcgis',rules = os.path.join(self.RoutingToolPath,'Grass2ArcgisDIR.txt'), overwrite = True)
-        else:
-            if self.Is_Sub_Region > 0:
-                ### use stream predefined stream segments of whole watershed
-                grass.run_command('v.unpack', input = self.Path_Sub_reg_grass_str_v, output = 'str_grass_v',overwrite = True)
-                grass.run_command('r.unpack', input = self.Path_Sub_reg_grass_str_r, output = 'str_grass_r1',overwrite = True)
-                grass.run_command('r.mapcalc',expression = "str_grass_r = str_grass_r1",overwrite = True)
-            else:
-                if self.Path_dir_in != '#':
-                    grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold = int(accthresold),stream_raster = 'str_grass_r',
-                                     stream_vector = 'str_grass_v',overwrite = True,memory = max_memroy)                
-                    grass.run_command('r.mapcalc',expression = "dir_grass = dir_in_Grass",overwrite = True)
-                else: 
-                    
-                    grass.run_command('r.stream.extract',elevation = 'dem',accumulation = 'acc_grass',threshold = int(accthresold),stream_raster = 'str_grass_r',
-                                     stream_vector = 'str_grass_v',direction = 'dir_grass',overwrite = True,memory = max_memroy)                        
-                grass.run_command('r.reclass', input='dir_grass',output = 'dir_Arcgis',rules = os.path.join(self.RoutingToolPath,'Grass2ArcgisDIR.txt'), overwrite = True)
-
-        grass.run_command('r.to.vect',  input = 'str_grass_r',output = 'str', type ='line' ,overwrite = True)
-        ##### generate catchment without lakes based on 'str_grass_r'
-        grass.run_command('r.stream.basins',direction = 'dir_grass', stream = 'str_grass_r', basins = 'cat1',overwrite = True,memory = max_memroy)
+       # first generate streams and determine flow direction
+       # four options exist here
+       # 1) flow direction and streams will derived from dem and flow accumulation data  
+       # 2) user has provide a flow direction data, and user provided flow direction data will be used 
+       # 3) if subregion flow direction and stream data is provided , then subregion flow direction and stream 
+       #    data is directly used. 
+       
+        # using predefined subregion stream network 
+        if self.Is_Sub_Region > 0:
+            # unpack  river network vector 
+            grass_raster_v_unpack(grass,input = self.Path_Sub_reg_grass_str_v,output = 'str_grass_v')
+            # unpack  river network raster 
+            grass_raster_r_unpack(grass,input = self.Path_Sub_reg_grass_str_r,output = 'str_grass_r1')
+            # clip river network with mask 
+            grass_raster_r_mapcalc(grass,expression = "str_grass_r = str_grass_r1") 
+            
+        # using flow direction data to define stream network 
+        elif self.Path_dir_in != '#':
+            # generate stream and flow direction 
+            grass_raster_r_stream_extract(grass,elevation = 'dem',accumulation = 'acc_grass',threshold = int(accthresold),
+                                          stream_raster = 'str_grass_r',stream_vector ='str_grass_v', direction = 'dir_grass',memory = max_memroy)
+            # change flow direction to provided flow direction dataset 
+            grass_raster_r_mapcalc(grass,expression = "dir_grass = dir_in_Grass")                                            
+            # create a arcgis flow direction 
+            grass_raster_r_reclass(grass,input = 'dir_grass',output = 'dir_Arcgis',rules = os.path.join(self.RoutingToolPath,'Grass2ArcgisDIR.txt')) 
         
+        # using dem and flow accumulant threshold to define streams 
+        else:
+            # generate stream and flow direction 
+            grass_raster_r_stream_extract(grass,elevation = 'dem',accumulation = 'acc_grass',threshold = int(accthresold),
+                                          stream_raster = 'str_grass_r',stream_vector ='str_grass_v', direction = 'dir_grass',memory = max_memroy)
+            # create a arcgis flow direction 
+            grass_raster_r_reclass(grass,input = 'dir_grass',output = 'dir_Arcgis',rules = os.path.join(self.RoutingToolPath,'Grass2ArcgisDIR.txt'))                                           
+
+        
+        grass_raster_r_to_vect(grass,input = 'str_grass_r',output = 'str',type = 'line')
+            
+        # generate catchment without lakes based on 'str_grass_r'
+        grass_raster_r_stream_basins(grass,direction = 'dir_grass',stream = 'str_grass_r',basins = 'cat1',memory = max_memroy)
+        
+        # define routing structure for these catchment 
         Routing_info = Generate_Routing_structure(grass,con,cat = 'cat1',acc = 'acc_grass',str='str_grass_r')
+        # 
         Routing_info = Routing_info.fillna(-1)
-        ################ check connected lakes  and non connected lakes
+        
+        # Define connected and non connected lakes and
+        # identify which str make certain lake have two outlet 
         Remove_Str = DefineConnected_Non_Connected_Lakes(self,grass,con,garray,Routing_info,str_r = 'str_grass_r',Lake_r = 'alllake')
         self.Remove_Str = Remove_Str
+        
+        # Define a mask to remove catchment that make lake has two outlet        
         grass.run_command('g.copy',rast = ('cat1','cat_use_default_acc'),overwrite = True)
         if len(Remove_Str) > 0:
             grass.run_command('r.null',map='cat_use_default_acc', setnull = Remove_Str,overwrite = True)
         
+        # if the function is called in a procedure to divide watershed into subregion 
+        # then return from here 
         if Is_divid_region > 0:
             return
         
-        if self.Debug:  
-            grass.run_command('r.out.gdal', input = 'cat1',output = os.path.join(self.tempfolder,'cat1.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
-            grass.run_command('r.out.gdal', input = 'str_grass_r',output = os.path.join(self.tempfolder,'str_grass_r.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
-            grass.run_command('r.out.gdal', input = 'dir_Arcgis',output = os.path.join(self.tempfolder,'dir_Arcgis.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
-            grass.run_command('r.out.gdal', input = 'acc_grass',output = os.path.join(self.tempfolder,'acc_grass.tif'),format= 'GTiff',overwrite = True,quiet = 'Ture')
+        # export rasters for debug
+        if self.Debug:
+            grass_raster_r_out_gdal(grass,input_nm = 'cat1',output = os.path.join(self.tempfolder,'cat1.tif'),format= 'GTiff')
+            grass_raster_r_out_gdal(grass,input_nm = 'str_grass_r',output = os.path.join(self.tempfolder,'str_grass_r.tif'),format= 'GTiff')
+            grass_raster_r_out_gdal(grass,input_nm = 'dir_Arcgis',output = os.path.join(self.tempfolder,'dir_Arcgis.tif'),format= 'GTiff')
+            grass_raster_r_out_gdal(grass,input_nm = 'acc_grass',output = os.path.join(self.tempfolder,'acc_grass.tif'),format= 'GTiff')
 
-
-        #####
+        # if obervation file is provided, snap observation point to closet river 
+        # segment, and transfer it into raster 
         if self.Path_obspoint_in != '#':
-            grass.run_command('r.stream.snap', input = 'obspoint',output = 'obspoint_snap',stream_rast = 'str_grass_r', accumulation = 'acc_grass', radius = Search_Radius, overwrite = True,quiet = 'Ture', memory = max_memroy)
-            grass.run_command('v.to.rast',input = 'obspoint_snap',output = 'obspoint_snap',use = 'cat', overwrite = True)
-            grass.run_command('r.to.vect',  input = 'obspoint_snap',output = 'obspoint_snap_r2v', type ='point', flags = 'v', overwrite = True)
-            grass.run_command('v.db.join', map= 'obspoint_snap_r2v',column = 'cat', other_table = 'obspoint',other_column ='cat', overwrite = True)
-            grass.run_command('v.to.rast',input = 'obspoint_snap_r2v',output = 'obs1',use = 'attr',attribute_column = 'Obs_ID',overwrite = True)
+            # snap input observation point to river network 
+            grass_raster_r_stream_snap(grass,input = 'obspoint',output = 'obspoint_snap',stream_rast = 'str_grass_r',accumulation = 'acc_grass',
+                                      radius = Search_Radius,memory = max_memroy)
+            
+            # obtain use Obs_ID as observation point raster value                       
+            grass_raster_v_to_raster(grass,input = 'obspoint_snap',output = 'obspoint_snap',column = '#',use = 'cat')
+            grass_raster_r_to_vect(grass, input = 'obspoint_snap' ,output = 'obspoint_snap_r2v',type = 'point',flags = 'v')
+            grass_raster_v_db_join(grass,map = 'obspoint_snap_r2v',column = 'cat',other_table = 'obspoint',other_column = 'cat')
+            grass_raster_v_to_raster(grass,input = 'obspoint_snap_r2v',output = 'obs1',column = 'Obs_ID',use = 'attr')
+       # if no obervation point is provided             
         else:
-            temparray = garray.array()
-            temparray[:,:] = -9999
-            temparray.write(mapname="obs1", overwrite=True)
-
+            grass_raster_create_raster_empty_raster(garray,raster_nm = "obs1")
+        
+        # if toolbox using subregion dataset, then subregion outlet should also 
+        # be added into obs point raster 
+        
         if self.Is_Sub_Region > 0:
-            ### load subregion outlet id
-            grass.run_command('v.unpack', input = self.Path_Sub_reg_outlets_v, output = 'Sub_reg_outlets_pt',overwrite = True)
-            grass.run_command('v.to.rast',input = 'Sub_reg_outlets_pt',output = 'Sub_reg_outlets',use = 'attr',attribute_column = 'value',overwrite = True)
-            ### combine both as observation datasets
-            grass.run_command('r.mapcalc',expression = "obs = if(isnull(Sub_reg_outlets),obs1,Sub_reg_outlets)",overwrite = True)
-            grass.run_command("r.null", map = 'obs', setnull = [-9999,0])
+            # unpack subregion outlet point 
+            grass_raster_v_unpack(grass,input = self.Path_Sub_reg_outlets_v,output = 'Sub_reg_outlets_pt')
+            # convert it to raster 
+            grass_raster_v_to_raster(grass,input = 'Sub_reg_outlets_pt',output = 'Sub_reg_outlets',column = 'value',use = 'attr')
+            # added into observation raster point 
+            grass_raster_r_mapcalc(grass,expression = "obs = if(isnull(Sub_reg_outlets),obs1,Sub_reg_outlets)")
+            # set -9999 to null  
+            grass_raster_setnull(grass,raster_nm = 'obs',null_values = [-9999,0],create_new_raster = False,new_raster_nm = '#')
+             
+        # if not working with sub region data, then observation point only come form 
+        # user provided observation point     
         else:
-            grass.run_command('r.mapcalc',expression = "obs = obs1",overwrite = True)
-
+            grass_raster_r_mapcalc(grass,expression = "obs = obs1")
         print("********************Generate catchment without lake done********************")
         PERMANENT.close()
         return
