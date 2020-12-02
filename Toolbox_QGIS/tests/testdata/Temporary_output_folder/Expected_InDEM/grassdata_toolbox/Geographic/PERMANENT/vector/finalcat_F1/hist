@@ -1,3 +1,0 @@
-COMMAND: r.to.vect --overwrite input="finalcat" output="finalcat_F1" type="area" column="value"
-GISDBASE: ./testdata\Temporary_output_folder\Expected_InDEM\grassdata_toolbox
-LOCATION: Geographic MAPSET: PERMANENT USER: m43han DATE: Mon Oct 26 15:49:18 2020

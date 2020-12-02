@@ -1,3 +1,0 @@
-COMMAND: v.overlay --overwrite ainput="str_grass_v" alayer="2" atype="line" binput="Net_cat_F" blayer="1" btype="area" operator="and" output="nstr_nfinalcat" olayer="1,0,0" snap=1e-8
-GISDBASE: ./testdata\Temporary_output_folder\Expected_InDEM\grassdata_toolbox
-LOCATION: Geographic MAPSET: PERMANENT USER: m43han DATE: Mon Oct 26 15:54:45 2020
