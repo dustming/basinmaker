@@ -133,7 +133,7 @@ def grass_raster_r_stream_extract(
 ###
 
 
-def grass_raster_r_stream_basins(grass, direction, stream, basins, memory, points="#"):
+def grass_raster_r_stream_basins(grass, direction, stream, basins, memory):
     """generate catchemnt for each river segment in stream raster
     Parameters
     ----------
@@ -142,80 +142,13 @@ def grass_raster_r_stream_basins(grass, direction, stream, basins, memory, point
     -------
 
     """
-    if points == "#":
-        grass.run_command(
-            "r.stream.basins",
-            direction=direction,
-            stream=stream,
-            basins=basins,
-            overwrite=True,
-            memory=memory,
-        )
-    else:
-        grass.run_command(
-            "r.stream.basins",
-            direction=direction,
-            points=points,
-            basins=basins,
-            overwrite=True,
-            memory=memory,
-        )
-
-
-def grass_export_array_as_raster(grass, array_tempate, array, raster_name, folder_path):
-    array_tempate[:, :] = array[:, :]
-    temparray.write(mapname=raster_name, overwrite=True)
-    grass.run_command("r.null", map=raster_name, setnull=[-9999, 0])
     grass.run_command(
-        "r.out.gdal",
-        input=raster_name,
-        output=os.path.join(folder_path, raster_name),
-        format="GTiff",
+        "r.stream.basins",
+        direction=direction,
+        stream=stream,
+        basins=basins,
         overwrite=True,
-        quiet="Ture",
-    )
-
-
-def grass_raster_delineate_watershed_with_point_array(
-    grass, garray, pourpoints, output_nm, direction, max_memroy
-):
-    """generate catchemnt for each river segment in stream raster
-    Parameters
-    ----------
-
-    Returns:
-    -------
-
-    """
-    temparray = garray.array()
-    temparray[:, :] = -9999
-
-    temparray[:, :] = pourpoints[:, :]
-    grass_raster_create_raster_from_array(raster_nm=output_nm + "_pt", array=temparray)
-    grass_raster_setnull(
-        grass,
-        raster_nm=output_nm + "_pt",
-        null_values=[-9999, 0],
-        create_new_raster=False,
-    )
-    exp = "%s = int(%s)" % (output_nm + "_pt", output_nm + "_pt")
-    grass_raster_r_mapcalc(grass, expression=exp)
-    grass_raster_r_to_vect(
-        grass,
-        input=output_nm + "_pt",
-        output=output_nm + "_pt",
-        type="point",
-        flags="v",
-    )
-
-    # using pourpoints generate updated subbasins
-    grass_raster_r_stream_basins(
-        grass=grass,
-        direction="dir_grass",
-        stream="#",
-        basins=output_nm,
-        memory=max_memroy,
-        points=output_nm + "_pt",
+        memory=memory,
     )
 
 
@@ -434,18 +367,6 @@ def grass_raster_create_raster_empty_raster(garray, raster_nm):
     temparray = garray.array()
     temparray[:, :] = -9999
     temparray.write(mapname=raster_nm, overwrite=True)
-
-
-def grass_raster_create_raster_from_array(raster_nm, array):
-    """grass create a raster with input array
-    Parameters
-    ----------
-
-    Returns:
-    -------
-
-    """
-    array.write(mapname=raster_nm, overwrite=True)
 
 
 ###

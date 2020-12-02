@@ -6,7 +6,6 @@ import sys
 import tempfile
 from distutils.dir_util import copy_tree
 from shutil import copyfile
-import timeit
 
 import numpy as np
 import pandas as pd
@@ -2760,7 +2759,9 @@ class LRRT:
         # user provided observation point
         else:
             grass_raster_r_mapcalc(grass, expression="obs = obs1")
-        print("Generate catchment without lake done")
+        print(
+            "********************Generate catchment without lake done********************"
+        )
         PERMANENT.close()
         return
 
@@ -2863,20 +2864,21 @@ class LRRT:
         )
         con = sqlite3.connect(self.sqlpath)
 
-        # maximum # of lake grids can be modified
-        # lakes with lake grids needs to be modified
-        # will be excaped
+        VolThreshold = (
+            Thre_Lake_Area_Connect  ### lake area thresthold for connected lakes
+        )
+        NonConLThres = (
+            Thre_Lake_Area_nonConnect  ### lake area thresthold for non connected lakes
+        )
         nlakegrids = MaximumLakegrids
 
-        # obtain # of rows and cols in raster again,
-        # in case toolbox start from this function
         temparray = garray.array()
         temparray[:, :] = -9999
+        #        temparray.write(mapname="tempraster", overwrite=True)
         self.ncols = int(temparray.shape[1])
         self.nrows = int(temparray.shape[0])
         ##### begin processing
 
-        # define some constant and read in arrays
         blid = 1000000  #### begining of new lake id
         bcid = 1  ## begining of new cat id of hydrosheds
         bsid = 2000000  ## begining of new cat id of in inflow of lakes
@@ -2896,7 +2898,7 @@ class LRRT:
         else:
             obs_array = garray.array(mapname="obs")
 
-        # First, generate selected lakes
+        ###### generate selected lakes
         Lakeid_lt_CL_Remove = allLakinfo.loc[
             allLakinfo["Lake_area"] < Thre_Lake_Area_Connect
         ]["Hylak_id"].values
@@ -2927,9 +2929,7 @@ class LRRT:
             garray, "Select_Non_Connected_lakes"
         )
 
-        # generate pourpoints includes catchment outelt, lake's inlet and
-        # outlet. the outlet of catchment that covered by lakes
-        # are removed
+        ####
         Pourpoints, Lakemorestream, Str_new = GenerPourpoint(
             cat1_arr,
             Lake1,
@@ -2944,20 +2944,47 @@ class LRRT:
             Is_divid_region,
             Remove_Str,
         )
-
-        # convert generated pourpoints raster to vector
-        grass_raster_delineate_watershed_with_point_array(
-            grass,
-            garray,
-            pourpoints=Pourpoints[:, :],
-            output_nm="cat2",
+        temparray[:, :] = Pourpoints[:, :]
+        temparray.write(mapname="Pourpoints_1", overwrite=True)
+        grass.run_command("r.null", map="Pourpoints_1", setnull=-9999)
+        grass.run_command(
+            "r.to.vect",
+            input="Pourpoints_1",
+            output="Pourpoints_1_F",
+            type="point",
+            overwrite=True,
+        )
+        ### cat2
+        grass.run_command(
+            "r.stream.basins",
             direction="dir_grass",
-            max_memroy=max_memroy,
+            points="Pourpoints_1_F",
+            basins="cat2_t",
+            overwrite=True,
+            memory=max_memroy,
+        )
+        sqlstat = "SELECT cat, value FROM Pourpoints_1_F"
+        df_P_1_F = pd.read_sql_query(sqlstat, con)
+        df_P_1_F.loc[len(df_P_1_F), "cat"] = "*"
+        df_P_1_F.loc[len(df_P_1_F) - 1, "value"] = "NULL"
+        df_P_1_F["eq"] = "="
+        df_P_1_F.to_csv(
+            os.path.join(self.tempfolder, "rule_cat2.txt"),
+            sep=" ",
+            columns=["cat", "eq", "value"],
+            header=False,
+            index=False,
+        )
+        grass.run_command(
+            "r.reclass",
+            input="cat2_t",
+            output="cat2",
+            rules=os.path.join(self.tempfolder, "rule_cat2.txt"),
+            overwrite=True,
         )
 
-        # re-oder pourpoints and add observation point
-        # as pour point
         cat2_array = garray.array(mapname="cat2")
+
         nPourpoints = GenerateFinalPourpoints(
             acc_array,
             dir_array,
@@ -2972,19 +2999,46 @@ class LRRT:
             obs_array,
             Is_divid_region,
         )
-
-        grass_raster_delineate_watershed_with_point_array(
-            grass,
-            garray,
-            pourpoints=nPourpoints[:, :],
-            output_nm="cat4",
-            direction="dir_grass",
-            max_memroy=max_memroy,
+        temparray[:, :] = nPourpoints[:, :]
+        temparray.write(mapname="Pourpoints_2", overwrite=True)
+        grass.run_command("r.null", map="Pourpoints_2", setnull=-9999)
+        grass.run_command(
+            "r.to.vect",
+            input="Pourpoints_2",
+            output="Pourpoints_2_F",
+            type="point",
+            overwrite=True,
         )
 
+        grass.run_command(
+            "r.stream.basins",
+            direction="dir_grass",
+            points="Pourpoints_2_F",
+            basins="cat4_t",
+            overwrite=True,
+            memory=max_memroy,
+        )
+        sqlstat = "SELECT cat, value FROM Pourpoints_2_F"
+        df_P_1_F = pd.read_sql_query(sqlstat, con)
+        df_P_1_F.loc[len(df_P_1_F), "cat"] = "*"
+        df_P_1_F.loc[len(df_P_1_F) - 1, "value"] = "NULL"
+        df_P_1_F["eq"] = "="
+        df_P_1_F.to_csv(
+            os.path.join(self.tempfolder, "rule_cat4.txt"),
+            sep=" ",
+            columns=["cat", "eq", "value"],
+            header=False,
+            index=False,
+        )
+        grass.run_command(
+            "r.reclass",
+            input="cat4_t",
+            output="cat4",
+            rules=os.path.join(self.tempfolder, "rule_cat4.txt"),
+            overwrite=True,
+        )
         cat4_array = garray.array(mapname="cat4")
 
-        # adjust lake boundary flow direction
         start = timeit.default_timer()
         outlakeids, chandir, ndir, BD_problem = check_lakecatchment(
             cat4_array,
@@ -3006,52 +3060,78 @@ class LRRT:
         print("Total time needs to adjust flow direction for lakes are ", End - start)
 
         if self.Debug:
-            grass_export_array_as_raster(
-                grass,
-                array_tempate=temparray,
-                array=chandir,
-                raster_name="chandir",
-                folder_path=self.tempfolder,
+            temparray[:, :] = chandir[:, :]
+            temparray.write(mapname="chandir", overwrite=True)
+            grass.run_command("r.null", map="chandir", setnull=-9999)
+            grass.run_command(
+                "r.out.gdal",
+                input="chandir",
+                output=os.path.join(self.tempfolder, "chandir.tif"),
+                format="GTiff",
+                overwrite=True,
+                quiet="Ture",
             )
 
         if self.Debug:
-            grass_export_array_as_raster(
-                grass,
-                array_tempate=temparray,
-                array=BD_problem,
-                raster_name="BD_problem",
-                folder_path=self.tempfolder,
+            temparray[:, :] = BD_problem[:, :]
+            temparray.write(mapname="BD_problem", overwrite=True)
+            grass.run_command("r.null", map="BD_problem", setnull=-9999)
+            grass.run_command(
+                "r.out.gdal",
+                input="BD_problem",
+                output=os.path.join(self.tempfolder, "BD_problem.tif"),
+                format="GTiff",
+                overwrite=True,
+                quiet="Ture",
             )
 
         temparray[:, :] = ndir[:, :]
-        grass_raster_create_raster_from_array(raster_nm="ndir_Arcgis", array=temparray)
-
-        grass_raster_setnull(grass, "ndir_Arcgis", [0, -9999], False, "#")
-
-        grass_raster_r_reclass(
-            grass=grass,
+        temparray.write(mapname="ndir_Arcgis", overwrite=True)
+        grass.run_command("r.null", map="ndir_Arcgis", setnull=-9999)
+        grass.run_command(
+            "r.reclass",
             input="ndir_Arcgis",
             output="ndir_grass",
             rules=os.path.join(self.RoutingToolPath, "Arcgis2GrassDIR.txt"),
+            overwrite=True,
         )
-
-        grass_raster_delineate_watershed_with_point_array(
-            grass,
-            garray,
-            pourpoints=nPourpoints[:, :],
-            output_nm="cat5",
+        # cat5
+        grass.run_command(
+            "r.stream.basins",
             direction="ndir_grass",
-            max_memroy=max_memroy,
+            points="Pourpoints_2_F",
+            basins="cat5_t",
+            overwrite=True,
+            memory=max_memroy,
         )
-
+        sqlstat = "SELECT cat, value FROM Pourpoints_2_F"
+        df_P_2_F = pd.read_sql_query(sqlstat, con)
+        df_P_2_F.loc[len(df_P_2_F), "cat"] = "*"
+        df_P_2_F.loc[len(df_P_2_F) - 1, "value"] = "NULL"
+        df_P_2_F["eq"] = "="
+        df_P_2_F.to_csv(
+            os.path.join(self.tempfolder, "rule_cat5.txt"),
+            sep=" ",
+            columns=["cat", "eq", "value"],
+            header=False,
+            index=False,
+        )
+        grass.run_command(
+            "r.reclass",
+            input="cat5_t",
+            output="cat5",
+            rules=os.path.join(self.tempfolder, "rule_cat5.txt"),
+            overwrite=True,
+        )
         if self.Debug:
-            grass_raster_r_out_gdal(
-                grass=grass,
-                input_nm="cat5",
+            grass.run_command(
+                "r.out.gdal",
+                input="cat5",
                 output=os.path.join(self.tempfolder, "cat5.tif"),
                 format="GTiff",
+                overwrite=True,
+                quiet="Ture",
             )
-
         cat5_array = garray.array(mapname="cat5")
         rowcols = np.argwhere(cat5_array == 0)
         cat5_array[rowcols[:, 0], rowcols[:, 1]] = -9999
@@ -3080,7 +3160,9 @@ class LRRT:
         )
 
         if Is_divid_region > 0:
-            print("Add lake into routing structure done ")
+            print(
+                "********************Add lake into routing structure done ********************"
+            )
             return
         if self.Debug:
             grass.run_command(
@@ -3169,7 +3251,9 @@ class LRRT:
                 overwrite=True,
             )
 
-        print("Add lake into routing structure done")
+        print(
+            "********************Add lake into routing structure done ********************"
+        )
         con.close()
         PERMANENT.close()
 
