@@ -21,11 +21,8 @@ class BasinMakerQGIS:
 
         # define drived values
         # create folders
-        if not os.path.exists(self.path_output_folder):
-            os.makedirs(self.path_output_folder)
-
-        if not os.path.exists(self.path_working_folder):
-            os.makedirs(self.path_working_folder)
+        os.makedirs(self.path_output_folder,exists_ok = False)
+        os.makedirs(self.path_working_folder,exists_ok = False)
 
         # obtain qgis prefix path
         self.qgispp = os.environ["QGISPrefixPath"]
@@ -51,11 +48,10 @@ class BasinMakerQGIS:
             self.grassdb, "main_working_location", "PERMANENT", "sqlite", "sqlite.db"
         )
 
-
         # define constants
 
         # field names in the attribute table
-        self.fieldnamelist = [
+        self.field_names = [
             "SubId",
             "HRU_IsLake",
             "Landuse_ID",
@@ -109,9 +105,9 @@ class BasinMakerQGIS:
         ]
 
         # default channel manning's coefficient
-        self.default_chn = 0.035
+        DEFAULT_CHN = 0.035
         # minimum channel slope
-        self.min_riv_slp = 0.00001
+        MIN_RIV_SLP = 0.00001 
 
         # default pre processed and well prepared spatial data name
 
@@ -151,4 +147,4 @@ class BasinMakerQGIS:
         # number of rows in processing extent
         self.nrows = -9999
         # a list indicate potential wrong river reaches
-        self.Remove_Str = []
+        self.remove_str = []
