@@ -1,3 +1,6 @@
+import os
+from extent.projectextent import define_project_extent
+
 class BasinMakerQGIS:
 
     """
@@ -18,11 +21,14 @@ class BasinMakerQGIS:
         path_output_folder,
         path_working_folder,
     ):
-
+        
         # define drived values
         # create folders
-        os.makedirs(self.path_output_folder,exists_ok = False)
-        os.makedirs(self.path_working_folder,exists_ok = False)
+        self.path_output_folder = path_output_folder
+        self.path_working_folder = path_working_folder
+        
+        os.makedirs(self.path_output_folder, exist_ok  = True)
+        os.makedirs(self.path_working_folder, exist_ok = True)
 
         # obtain qgis prefix path
         self.qgispp = os.environ["QGISPrefixPath"]
@@ -39,9 +45,6 @@ class BasinMakerQGIS:
 
         # define grass location names
         self.grass_location_geo = "main_working_location"
-        self.grass_location_geo_temp = "temporary_location1"
-        self.grass_location_geo_temp1 = "temporary_location2"
-        self.grass_location_pro = "project_crs_location"
 
         # grass sql databse folder
         self.sqlpath = os.path.join(
@@ -107,7 +110,7 @@ class BasinMakerQGIS:
         # default channel manning's coefficient
         DEFAULT_CHN = 0.035
         # minimum channel slope
-        MIN_RIV_SLP = 0.00001 
+        MIN_RIV_SLP = 0.00001
 
         # default pre processed and well prepared spatial data name
 
@@ -148,3 +151,103 @@ class BasinMakerQGIS:
         self.nrows = -9999
         # a list indicate potential wrong river reaches
         self.remove_str = []
+
+    # first modulized methods
+    def define_project_extent_method(
+        self,
+        mode,
+        path_dem_in,
+        outlet_pt=[-1, -1],
+        path_extent_ply="#",
+        buffer_distance=0.0,
+        hybasin_ply="#",
+        down_hybasin_id=-1,
+        up_hybasin_id=-1,
+    ):
+
+        """Define processing extent
+
+        Function that used to define project processing spatial extent (PSE).
+        The processing spatial extent is a region where Toolbox will work in. Toolbox
+        will not process grids or features outside the processing spatial extent.
+        Several options is available here. 1) The PSE can be defined as the extent of
+        input DEM. 2)The PSE can be defined using Hybasin product and a hydrobasin
+        ID. All subbasin drainage to that hydrobasin ID will be extracted. And
+        the extent of the extracted polygon will be used as PSE. 3)The PSE
+        can be defined using DEM and an point coordinates. the drainage area
+        contribute to that point coordinate will be used as boundary polygon. 4)
+        The PSE can be defined using
+
+        Parameters
+        ----------
+        mode                              : string (required)
+            It is a string indicate which method to define project processing
+            spatial extent
+            'using_dem'            : the extent of input dem will be used
+            'using_hybasin'        : the extent will be defined using hydrobasin
+                                     product
+            'using_outlet_pt'      : the extent will be defined with provided outlet
+                                     point
+            'using_provided_ply'   : the extent will be defined by provided polygon
+        path_dem_in                      : string (required)
+            It is the path to input dem
+        outlet_pt                        : list (optional)
+            It is list that indicate the outlet coordinates of the
+            region of interest. If it is provided, the PSE
+            will be defined as the drainage area controlled by this point.
+        path_extent_ply                  : string (optional)
+            It is the path of a subregion polygon. It is only used when the Region
+            of interest is very large and the resolution of the dem is very high.
+            toolbox will first divide the whole region into several small subregions.
+            And then using devided subregion polygon as PSE.
+        buffer_distance                  : float (optional)
+            It is a float number to increase the extent of the PSE
+            obtained from Hydrobasins. It is needed when input DEM is not from
+            HydroSHEDS. Then the extent of the watershed will be different
+            with PSE defined by HydroBASINS.
+        hybasin_ply                      : string (optional)
+            It is a path to hydrobasin routing product, If it is provided, the
+            PSE will be based on the OutHyID and OutHyID2 and
+            this HydroBASINS routing product.
+        down_hybasin_id                  : int (optional)
+            It is a HydroBASINS subbasin ID, which should be the ID of the most
+            downstream subbasin in the region of interest.
+        up_hybasin_id                    : int (optional)
+            It is a HydroBASINS subbasin ID, which should be the ID of the most
+            upstream subbasin in the region of interest, normally do not needed.
+        Notes
+        -------
+        Outputs are following files
+
+        MASK                   : raster
+            it is a mask raster stored in grass database, which indicate
+            the PSE. The grass database is located at
+            os.path.join(grassdb, grass_location)
+        dem                   : raster
+            it is a dem raster stored in grass database, which is
+            has the same extent with MASK. The grass database is located at
+            os.path.join(grassdb, grass_location)
+
+        Returns:
+        -------
+           None
+
+        Examples
+        -------
+        """
+
+        define_project_extent(
+            grassdb=self.grassdb,
+            grass_location=self.grass_location_geo,
+            qgis_prefix_path=self.qgispp,
+            mode=mode,
+            path_dem_in=path_dem_in,
+            outlet_pt=outlet_pt,
+            path_extent_ply=path_extent_ply,
+            buffer_distance=buffer_distance,
+            hybasin_ply=hybasin_ply,
+            down_hybasin_id=down_hybasin_id,
+            up_hybasin_id=up_hybasin_id,
+            mask=self.mask,
+            dem=self.dem,
+        )
