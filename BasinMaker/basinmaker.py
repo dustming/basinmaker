@@ -1,6 +1,7 @@
 import os
 from extent.projectextent import define_project_extent
 
+
 class BasinMakerQGIS:
 
     """
@@ -21,14 +22,14 @@ class BasinMakerQGIS:
         path_output_folder,
         path_working_folder,
     ):
-        
+
         # define drived values
         # create folders
         self.path_output_folder = path_output_folder
         self.path_working_folder = path_working_folder
-        
-        os.makedirs(self.path_output_folder, exist_ok  = True)
-        os.makedirs(self.path_working_folder, exist_ok = True)
+
+        os.makedirs(self.path_output_folder, exist_ok=True)
+        os.makedirs(self.path_working_folder, exist_ok=True)
 
         # obtain qgis prefix path
         self.qgispp = os.environ["QGISPrefixPath"]

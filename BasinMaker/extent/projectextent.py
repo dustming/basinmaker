@@ -1,4 +1,5 @@
 from extent.usingdem import define_project_extent_using_dem
+from extent.usingoutletpoint import define_project_extent_using_outlet_point
 
 
 def define_project_extent(
@@ -114,8 +115,8 @@ def define_project_extent(
 
     if mode == "using_provided_ply":
         assert (
-            outlet_pt[0] != "-1"
-        ), "outlet_pt needs to be define processing extent with mode = using_outlet_pt"
+            path_extent_ply != "#"
+        ), "path_extent_ply needs to be defined when mode = using_provided_ply"
 
     if mode == "using_dem":
         define_project_extent_using_dem(
@@ -125,4 +126,16 @@ def define_project_extent(
             path_dem_in,
             mask=mask,
             dem=dem,
+        )
+
+    if mode == "using_outlet_pt":
+        define_project_extent_using_outlet_point(
+            grassdb,
+            grass_location,
+            qgis_prefix_path,
+            path_dem_in,
+            outlet_pt,
+            buffer_distance=buffer_distance,
+            mask="MASK",
+            dem="dem",
         )
