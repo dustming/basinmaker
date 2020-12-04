@@ -1,5 +1,6 @@
 from extent.usingdem import define_project_extent_using_dem
 from extent.usingoutletpoint import define_project_extent_using_outlet_point
+from extent.usinginputply import define_project_extent_using_input_polygon
 
 
 def define_project_extent(
@@ -28,7 +29,7 @@ def define_project_extent(
     the extent of the extracted polygon will be used as PSE. 3)The PSE
     can be defined using DEM and an point coordinates. the drainage area
     contribute to that point coordinate will be used as boundary polygon. 4)
-    The PSE can be defined using
+    The PSE can be defined using input polygon
 
     Parameters
     ----------
@@ -136,6 +137,17 @@ def define_project_extent(
             path_dem_in,
             outlet_pt,
             buffer_distance=buffer_distance,
+            mask="MASK",
+            dem="dem",
+        )
+
+    if mode == "using_provided_ply":
+        define_project_extent_using_input_polygon(
+            grassdb,
+            grass_location,
+            qgis_prefix_path,
+            path_dem_in,
+            path_extent_ply,
             mask="MASK",
             dem="dem",
         )
