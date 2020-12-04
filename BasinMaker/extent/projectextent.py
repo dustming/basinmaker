@@ -1,6 +1,7 @@
 from extent.usingdem import define_project_extent_using_dem
 from extent.usingoutletpoint import define_project_extent_using_outlet_point
 from extent.usinginputply import define_project_extent_using_input_polygon
+from extent.usinghybasinply import define_project_extent_using_hybasin_ply
 
 
 def define_project_extent(
@@ -148,6 +149,20 @@ def define_project_extent(
             qgis_prefix_path,
             path_dem_in,
             path_extent_ply,
+            mask="MASK",
+            dem="dem",
+        )
+
+    if mode == "using_hybasin":
+        define_project_extent_using_hybasin_ply(
+            grassdb,
+            grass_location,
+            qgis_prefix_path,
+            path_dem_in,
+            buffer_distance=buffer_distance,
+            hybasin_ply=hybasin_ply,
+            down_hybasin_id=down_hybasin_id,
+            up_hybasin_id=up_hybasin_id,
             mask="MASK",
             dem="dem",
         )
