@@ -5,7 +5,7 @@ SET GRASS_ROOT=C:\QGIS310\apps\grass\grass78
 SET GISBASE=C:\QGIS310\apps\grass\grass78
 SET QGISPrefixPath=C:\QGIS310\apps\qgis
 SET GRASSBIN=C:\QGIS310\bin\grass78.bat
-SET RoutingToolFolder=C:\Users\dustm\Documents\GitHub\RoutingTool\Toolbox_QGIS
+SET RoutingToolFolder=C:\Users\dustm\Documents\GitHub\basinmaker\BasinMaker
 
 @echo off
 call %OSGEO4W_ROOT%\bin\o4w_env.bat

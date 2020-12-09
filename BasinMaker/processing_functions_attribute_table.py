@@ -1130,6 +1130,15 @@ def Determine_HRU_Attributes(
             Attri_table.loc[i, "SOIL_PROF"] = Soil_info_data.loc[
                 Soil_info_data[Soil_ID] == int(Soil_ID_num), "SOIL_PROF"
             ].values[0]
+    Attri_table["facters"] = (
+        Attri_table["HRULake_ID"].astype(str)
+        + Attri_table[Landuse_ID].astype(str)
+        + Attri_table[Soil_ID].astype(str)
+        + Attri_table[Veg_ID].astype(str)
+        + Attri_table[Other_Ply_ID_1].astype(str)
+        + Attri_table[Other_Ply_ID_2].astype(str)
+    )
+    Attri_table["HRU_ID_New"] = pd.factorize(Attri_table["facters"])[0]
     return Attri_table
 
 

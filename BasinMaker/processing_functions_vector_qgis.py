@@ -631,7 +631,7 @@ def qgis_vector_clip(processing, context, INPUT, OVERLAY, OUTPUT):
         "native:clip", {"INPUT": INPUT, "OVERLAY": OVERLAY, "OUTPUT": OUTPUT}
     )
 
-    return out
+    return layer_clip
 
 
 def qgis_vector_join_attribute_table(

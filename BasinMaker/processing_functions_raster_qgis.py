@@ -80,6 +80,33 @@ def qgis_raster_clip_raster_by_mask(processing, Input, MASK, TARGET_CRS, Output)
     return out
 
 
+def qgis_raster_clip_raster_by_extent(processing, Input, PROJWIN, Output):
+    """Functions clip raster by extent
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, the attribute table of Path_shpfile will be updated
+    """
+    out = processing.run(
+        "gdal:cliprasterbyextent",
+        {
+            "INPUT": Input,
+            "PROJWIN": PROJWIN,
+            "NODATA": None,
+            "OPTIONS": "",
+            "DATA_TYPE": 0,
+            "EXTRA": "",
+            "OUTPUT": Output,
+        },
+    )
+
+    return out
+
+
 def qgis_raster_saga_clip_raster_with_polygon(processing, context, Input, MASK, Output):
     """Functions clip raster by mask,
     ----------
