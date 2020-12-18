@@ -1,5 +1,4 @@
 import os
-from extent.projectextent import define_project_extent
 
 
 class BasinMakerQGIS:
@@ -236,7 +235,8 @@ class BasinMakerQGIS:
         Examples
         -------
         """
-
+        
+        from extent.projectextent import define_project_extent
         define_project_extent(
             grassdb=self.grassdb,
             grass_location=self.grass_location_geo,
@@ -251,4 +251,5 @@ class BasinMakerQGIS:
             up_hybasin_id=up_hybasin_id,
             mask=self.mask,
             dem=self.dem,
+            gis_platform = 'qgis',
         )

@@ -1,8 +1,3 @@
-from extent.usingdem import define_project_extent_using_dem
-from extent.usingoutletpoint import define_project_extent_using_outlet_point
-from extent.usinginputply import define_project_extent_using_input_polygon
-from extent.usinghybasinply import define_project_extent_using_hybasin_ply
-
 
 def define_project_extent(
     grassdb,
@@ -18,6 +13,7 @@ def define_project_extent(
     up_hybasin_id=-1,
     mask="MASK",
     dem="dem",
+    gis_platform="qgis",
 ):
     """Define processing extent
 
@@ -101,6 +97,11 @@ def define_project_extent(
     Examples
     -------
     """
+    if gis_platform == "qgis":
+        from extent.usingdemqgis import define_project_extent_using_dem
+        from extent.usingoutletpointqgis import define_project_extent_using_outlet_point
+        from extent.usinginputplyqgis import define_project_extent_using_input_polygon
+        from extent.usinghybasinplyqgis import define_project_extent_using_hybasin_ply       
 
     if mode == "using_hybasin":
         assert (
