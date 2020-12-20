@@ -159,7 +159,7 @@ def define_project_extent_using_hybasin_ply(
         Input=path_dem_in,
         MASK=os.path.join(grassdb, mask + ".shp"),
         TARGET_CRS=SpRef_in,
-        Output=os.path.join(grassdb, dem + ".tif"),
+        Output=os.path.join(grassdb, mask + ".tif"),
     )
 
     # use clipped DEM to great a grass work enviroment
@@ -186,7 +186,7 @@ def define_project_extent_using_hybasin_ply(
     # import clipped dem to target location
     grass_raster_r_in_gdal(
         grass=grass,
-        raster_path=os.path.join(grassdb, dem + ".tif"),
+        raster_path=os.path.join(grassdb, mask + ".tif"),
         output_nm=dem,
         location=grass_location,
     )

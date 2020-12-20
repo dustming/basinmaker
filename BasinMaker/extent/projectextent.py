@@ -1,8 +1,5 @@
 
 def define_project_extent(
-    grassdb,
-    grass_location,
-    qgis_prefix_path,
     mode,
     path_dem_in,
     outlet_pt=[-1, -1],
@@ -13,6 +10,9 @@ def define_project_extent(
     up_hybasin_id=-1,
     mask="MASK",
     dem="dem",
+    grassdb = '#',
+    grass_location = '#',
+    qgis_prefix_path = '#',
     gis_platform="qgis",
 ):
     """Define processing extent
@@ -98,6 +98,9 @@ def define_project_extent(
     -------
     """
     if gis_platform == "qgis":
+        assert (grassdb != "#"), "grass database folder is needed, when gis_platform = qgis"
+        assert (grass_location != "#"), "grass location name is needed, when gis_platform = qgis"
+        assert (qgis_prefix_path != "#"), "qgis prefix path is needed, when gis_platform = qgis"
         from extent.usingdemqgis import define_project_extent_using_dem
         from extent.usingoutletpointqgis import define_project_extent_using_outlet_point
         from extent.usinginputplyqgis import define_project_extent_using_input_polygon
