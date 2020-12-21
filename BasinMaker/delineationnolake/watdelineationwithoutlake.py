@@ -32,7 +32,9 @@ def watershed_delineation_without_lake(
             qgis_prefix_path != "#"
         ), "qgis prefix path is needed, when gis_platform = qgis"
         from delineation.watusingdemqgis import delineate_watershed_no_lake_using_dem
-
+        from delineation.watusingfdrqgis import delineate_watershed_no_lake_using_fdr
+        from delineation.watusingsubregionddata import delineate_watershed_no_lake_using_subregion_data
+        
     if mode == "dem":
         assert dem != "#", "The name of dem is needed to delineate watershed from dem"
         assert (
@@ -61,13 +63,50 @@ def watershed_delineation_without_lake(
             subreg_str_v_path != "#"
         ), "subregion stream vector is neeeded to delineate watershed for current subregion "
 
-    if mode == "dem":
+    if mode == "usingdem":
         delineate_watershed_no_lake_using_dem(
             grassdb,
             grass_location,
             qgis_prefix_path,
             mask,
             dem,
+            acc_thresold,
+            fdr_arcgis,
+            fdr_grass,
+            str_r,
+            str_v,
+            acc,
+            cat_no_lake,
+            max_memroy,
+        )
+
+    if mode == "usingfdr":
+        delineate_watershed_no_lake_using_fdr(
+            grassdb,
+            grass_location,
+            qgis_prefix_path,
+            mask,
+            fdr_path,
+            acc_thresold,
+            fdr_arcgis,
+            fdr_grass,
+            str_r,
+            str_v,
+            acc,
+            cat_no_lake,
+            max_memroy,
+        )
+        
+    if mode == "usingssubregiondata":
+        delineate_watershed_no_lake_using_subregion_data(
+            grassdb,
+            grass_location,
+            qgis_prefix_path,
+            mask,
+            subreg_fdr_path,
+            subreg_acc_path,
+            subreg_str_v_path,
+            subreg_str_r_path,
             acc_thresold,
             fdr_arcgis,
             fdr_grass,
