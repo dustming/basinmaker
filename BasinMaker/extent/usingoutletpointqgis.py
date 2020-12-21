@@ -206,7 +206,7 @@ def define_project_extent_using_outlet_point(
     grass_raster_r_mask(grass, dem)
     # define processing extent of the current working enviroment
     grass_raster_g_region(grass, dem)
-    
+
     grass_raster_r_out_gdal(
         grass,
         input_nm=mask,

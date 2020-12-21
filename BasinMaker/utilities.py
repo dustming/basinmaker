@@ -61,3 +61,36 @@ def WriteStringToFile(Out_String, File_Path, WriteMethod):
     else:  ## create a new file anyway, since file did not exist
         with open(File_Path, "w") as f:
             f.write(Out_String)
+
+
+def write_grass_and_arcgis_fdr_rules(grassdb):
+
+    Strlist = [
+        "1 = 128",
+        "2 = 64",
+        "3 = 32",
+        "4 = 16",
+        "5 = 8",
+        "6 = 4",
+        "7 = 2",
+        "8 = 1",
+        "* = NULL",
+    ]
+    Str = "\n".join(Strlist)
+    WriteStringToFile(Str, os.path.join(grassdb, "Grass2ArcgisDIR.txt"), "w")
+
+    Strlist = [
+        "1 = 8",
+        "2 = 7",
+        "4 = 6",
+        "8 = 5",
+        "16 = 4",
+        "32 = 3",
+        "64 = 2",
+        "128	= 1",
+        "* = NUL",
+    ]
+    Str = "\n".join(Strlist)
+    WriteStringToFile(Str, os.path.join(grassdb, "Arcgis2GrassDIR.txt"), "w")
+
+    return
