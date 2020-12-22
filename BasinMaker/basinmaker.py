@@ -408,3 +408,41 @@ class BasinMakerQGIS:
             qgis_prefix_path=self.qgispp,
             gis_platform="qgis",
         )
+
+
+    def watershed_delineation_with_lakes_method(
+        self,
+        path_lakefile_in="#",
+        lake_attributes=[],
+        path_obsfile_in = '#',
+        obs_attributes=[],
+        mode="#",
+        max_memroy=1024 * 4,
+        gis_platform="qgis",
+    ):
+        from addlakeandobs.addlakeandobsintowatershed import (
+            add_lakes_and_obs_into_existing_watershed_delineation,
+        )
+
+        add_lakes_and_obs_into_existing_watershed_delineation(
+            mode,
+            mask=self.mask,
+            dem=self.dem,
+            path_lakefile_in=path_lakefile_in,
+            lake_attributes=lake_attributes,
+            path_obsfile_in = path_lakefile_in,
+            obs_attributes=obs_attributes,
+            fdr_arcgis=self.fdr_arcgis,
+            fdr_grass=self.fdr_grass,
+            str_r=self.str_r,
+            str_v=self.str_v,
+            acc=self.acc,
+            cat_no_lake=self.cat_no_lake,
+            max_memroy=max_memroy,
+            grassdb=self.grassdb,
+            grass_location=self.grass_location_geo,
+            qgis_prefix_path=self.qgispp,
+            gis_platform="qgis",
+        )
+        
+        
