@@ -382,7 +382,7 @@ class BasinMakerQGIS:
         max_memroy=1024 * 4,
         gis_platform="qgis",
     ):
-        from delineation.watdelineationwithoutlake import (
+        from delineationnolake.watdelineationwithoutlake import (
             watershed_delineation_without_lake,
         )
 

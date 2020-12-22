@@ -20,15 +20,9 @@ basinmaker.define_project_extent_method(
     mode="using_dem", path_dem_in=os.path.join(datafolder, "DEM_samll_merit.tif")
 )
 
-basinmaker.preprocessing_inputs_method(
-    path_lakefile_in = os.path.join(datafolder, "HyLake.shp"),
-    lake_attributes = ['Hylak_id','Lake_type','Lake_area','Vol_total','Depth_avg'],
-    gis_platform = 'qgis',
-)
-
 basinmaker.watershed_delineation_without_lake_method(
     acc_thresold=200,
-    mode="dem",
+    mode="usingdem",
     max_memroy=1024 * 4,
     gis_platform="qgis",
 )

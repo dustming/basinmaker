@@ -31,11 +31,11 @@ def watershed_delineation_without_lake(
         assert (
             qgis_prefix_path != "#"
         ), "qgis prefix path is needed, when gis_platform = qgis"
-        from delineation.watusingdemqgis import delineate_watershed_no_lake_using_dem
-        from delineation.watusingfdrqgis import delineate_watershed_no_lake_using_fdr
-        from delineation.watusingsubregionddata import delineate_watershed_no_lake_using_subregion_data
+        from delineationnolake.watusingdemqgis import delineate_watershed_no_lake_using_dem
+        from delineationnolake.watusingfdrqgis import delineate_watershed_no_lake_using_fdr
+        from delineationnolake.watusingsubregionddata import delineate_watershed_no_lake_using_subregion_data
         
-    if mode == "dem":
+    if mode == "usingdem":
         assert dem != "#", "The name of dem is needed to delineate watershed from dem"
         assert (
             acc_thresold > 0
