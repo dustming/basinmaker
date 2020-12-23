@@ -1,7 +1,6 @@
 def watershed_delineation_without_lake(
     mode,
-    mask="MASK",
-    dem="dem",
+    input_geo_names,
     acc_thresold=-1,
     fdr_path="#",
     subreg_fdr_path="#",
@@ -20,7 +19,9 @@ def watershed_delineation_without_lake(
     qgis_prefix_path="#",
     gis_platform="qgis",
 ):
-
+    mask = input_geo_names['mask']
+    dem = input_geo_names['dem']
+    
     if gis_platform == "qgis":
         assert (
             grassdb != "#"

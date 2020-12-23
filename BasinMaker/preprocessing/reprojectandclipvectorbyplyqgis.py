@@ -65,7 +65,7 @@ def reproject_clip_vectors_by_polygon(
             context,
             INPUT=os.path.join(grassdb, ply_name + "_project.shp"),
             INTERSECT=mask,
-            OUTPUT=os.path.join(grassdb, ply_name + "_clipped.shp"),
+            OUTPUT=os.path.join(grassdb, ply_name + ".shp"),
         )
     except:
         print("Need fix lake boundary geometry to speed up")
@@ -80,5 +80,5 @@ def reproject_clip_vectors_by_polygon(
             context,
             INPUT=os.path.join(grassdb, ply_name + "_fixgeo.shp"),
             INTERSECT=mask,
-            OUTPUT=os.path.join(grassdb, ply_name + "_clipped.shp"),
+            OUTPUT=os.path.join(grassdb, ply_name + ".shp"),
         )

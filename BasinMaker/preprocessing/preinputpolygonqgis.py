@@ -38,7 +38,7 @@ def preprocessing_input_polygon(
             grass_location,
             qgis_prefix_path,
             mask,
-            vector_path=os.path.join(grassdb, ply_name + "_clipped.shp"),
+            vector_path=os.path.join(grassdb, ply_name + ".shp"),
             attribue_name=attribute_names[i],
             raster_name=raster_names[i],
         )
