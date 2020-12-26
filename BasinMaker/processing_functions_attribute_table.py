@@ -1807,6 +1807,7 @@ def return_non_lake_inflow_segs_and_segs_within_lakes(riv_lake_id,str_id,riv_lak
     ## and segs between outlet and inlet segs 
     
     non_lake_inflow_segs = []
+    str_id_lake_inlfow = []
     str_id_within_lakes = []
     for i in range(0,len(cl_id_unique)):
         # obtain current lakeid 
@@ -1827,11 +1828,13 @@ def return_non_lake_inflow_segs_and_segs_within_lakes(riv_lake_id,str_id,riv_lak
                # there is some str drainge to this str,
                # so this lake-riv seg is not the lake inflow segment 
                non_lake_inflow_segs.append(int(riv_lake_il[j,0]))
+            else:
+               str_id_lake_inlfow.append(int(riv_lake_il[j,1]))
             # excpet str of the lake outlet, all outlet of str that covered by the lake      
             if str_id_cl_j != outlet_str:
                 str_id_within_lakes.append(int(riv_lake_il[j,1]))
             
-    return str_id_within_lakes,non_lake_inflow_segs
+    return str_id_within_lakes,non_lake_inflow_segs,str_id_lake_inlfow
     
 def Check_If_Lake_Have_Multi_OutLet(CL_Id, Str_Id, Routing_info):
 

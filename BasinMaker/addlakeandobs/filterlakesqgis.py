@@ -30,9 +30,7 @@ def select_lakes_by_area_r(
     Lakeid_lt_NCL_Remove = alllakinfo.loc[
         alllakinfo["Lake_area"] < threshold_non_con_lake
     ]["Hylak_id"].values
-    
-    Lakeid_lt_All_Remove = Lakeid_lt_NCL_Remove + Lakeid_lt_CL_Remove
-    
+        
     grass_raster_setnull(
         grass,
         connected_lake,
@@ -47,9 +45,10 @@ def select_lakes_by_area_r(
         True,
         sl_non_connected_lake,
     )
-    grass_raster_setnull(
-        grass, lakes, Lakeid_lt_All_Remove.tolist(), True, sl_lakes
-    )
+
+    exp = "%s = if(isnull('%s'),int(%s),int(%s))" % (sl_lakes,sl_connected_lake,sl_non_connected_lake,sl_connected_lake)
+    grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+
 
     grass_raster_setnull(
         grass, str_connected_lake, Lakeid_lt_CL_Remove.tolist(), True, sl_str_connected_lake

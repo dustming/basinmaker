@@ -41,17 +41,17 @@ def add_lakes_into_existing_watershed_delineation(
     dem = input_geo_names['dem']
                     
     #prepropessing lakes inputs 
-    # preprocessing_lake_polygon(
-    #     path_lakefile_in=path_lakefile_in,
-    #     lake_attributes=lake_attributes,
-    #     mask=mask,
-    #     grassdb=grassdb,
-    #     grass_location=grass_location,
-    #     qgis_prefix_path=qgis_prefix_path,
-    #     gis_platform="qgis",
-    #     lake_name=alllake,
-    #     lake_boundary_name = lake_boundary
-    # )
+    preprocessing_lake_polygon(
+        path_lakefile_in=path_lakefile_in,
+        lake_attributes=lake_attributes,
+        mask=mask,
+        grassdb=grassdb,
+        grass_location=grass_location,
+        qgis_prefix_path=qgis_prefix_path,
+        gis_platform="qgis",
+        lake_name=alllake,
+        lake_boundary_name = lake_boundary
+    )
     
     import grass.script as grass
     import grass.script.setup as gsetup
@@ -72,41 +72,41 @@ def add_lakes_into_existing_watershed_delineation(
         grassdb, grass_location, "PERMANENT", "sqlite", "sqlite.db"
     ))
     
-    # write_grass_and_arcgis_fdr_rules(grassdb)
-    # exp = "%s = int(%s)"%(alllake,alllake)
-    # grass_raster_r_mapcalc(grass, exp)
-    # exp = "%s = int(%s)"%(lake_boundary,lake_boundary)
-    # grass_raster_r_mapcalc(grass, exp)
+    write_grass_and_arcgis_fdr_rules(grassdb)
+    exp = "%s = int(%s)"%(alllake,alllake)
+    grass_raster_r_mapcalc(grass, exp)
+    exp = "%s = int(%s)"%(lake_boundary,lake_boundary)
+    grass_raster_r_mapcalc(grass, exp)
     
 
-    # Define connected and non connected lakes and
-    # identify which str make certain lake have two outlet
-    # define_connected_and_non_connected_lake_type(
-    #     grass,
-    #     con,
-    #     garray,
-    #     str_r=str_r,
-    #     lake=alllake,
-    #     connected_lake = connected_lake,
-    #     non_connected_lake = non_connected_lake,
-    #     str_connected_lake = str_connected_lake,
-    # )
-    # 
-    # select_lakes_by_area_r(
-    #     grass=grass,
-    #     con=con,
-    #     lake_v_path = os.path.join(grassdb,alllake + ".shp"),
-    #     threshold_con_lake = 1,
-    #     threshold_non_con_lake = 1,
-    #     lakes = alllake,
-    #     connected_lake = connected_lake,
-    #     non_connected_lake = non_connected_lake,
-    #     str_connected_lake = str_connected_lake,
-    #     sl_connected_lake = sl_connected_lake,
-    #     sl_non_connected_lake = sl_non_connected_lake,
-    #     sl_lakes = sl_lakes,
-    #     sl_str_connected_lake = sl_str_connected_lake,
-    # )
+    #Define connected and non connected lakes and
+    #identify which str make certain lake have two outlet
+    define_connected_and_non_connected_lake_type(
+        grass,
+        con,
+        garray,
+        str_r=str_r,
+        lake=alllake,
+        connected_lake = connected_lake,
+        non_connected_lake = non_connected_lake,
+        str_connected_lake = str_connected_lake,
+    )
+    
+    select_lakes_by_area_r(
+        grass=grass,
+        con=con,
+        lake_v_path = os.path.join(grassdb,alllake + ".shp"),
+        threshold_con_lake = 1,
+        threshold_non_con_lake = 0,
+        lakes = alllake,
+        connected_lake = connected_lake,
+        non_connected_lake = non_connected_lake,
+        str_connected_lake = str_connected_lake,
+        sl_connected_lake = sl_connected_lake,
+        sl_non_connected_lake = sl_non_connected_lake,
+        sl_lakes = sl_lakes,
+        sl_str_connected_lake = sl_str_connected_lake,
+    )
     
     define_pour_points_with_lakes(
         grass = grass,

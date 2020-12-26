@@ -77,7 +77,7 @@ def define_pour_points_with_lakes(
     str_start_pt_lakeid = pd.read_sql_query(sqlstat, con)
     str_start_pt_lakeid = str_start_pt_lakeid.fillna(-1)
 
-    str_id_within_lakes,non_lake_inflow_segs = return_non_lake_inflow_segs_and_segs_within_lakes(riv_lake_id,str_id,riv_lake_id2,cl_id,routing_info,str_start_pt_lakeid)
+    str_id_within_lakes,non_lake_inflow_segs,str_id_lake_inlfow = return_non_lake_inflow_segs_and_segs_within_lakes(riv_lake_id,str_id,riv_lake_id2,cl_id,routing_info,str_start_pt_lakeid)
 
     # remove cat outlet that within the lake 
     grass.run_command("g.copy", rast=("cat1_OL", "cat1_OL_outlake"), overwrite=True)
@@ -92,21 +92,75 @@ def define_pour_points_with_lakes(
     )    
     
     ## find lake inflow points from inflow segments 
+
+    # get all str that are lake inflow str  
+    all_river_ids, temp = generate_stats_list_from_grass_raster(
+        grass, mode=1, input_a=str_r
+    )
+    str_id_non_lake_inlfow = [x for x in all_river_ids if x not in str_id_lake_inlfow]
+    grass.run_command("g.copy", rast=(str_r, "lake_inflow_str"), overwrite=True)
+    grass.run_command(
+        "r.null", map="lake_inflow_str", setnull=str_id_non_lake_inlfow, overwrite=True
+    )
+        
+    #find the lake inlet point within the lake 
+
+    grass.run_command(
+        "r.stats.zonal",
+        base="unique_lake_str_inflow",
+        cover="cat1_acc_riv",
+        method="min",
+        output="lake_inflow_seg_minacc",
+        overwrite=True,
+    )
+    ### Find the grid that equal to the max acc, thus this is the outlet grids
+    exp = "'%s' =if(%s == int('%s'),%s,null())" % (
+        "lake_inflow_IL",
+        "cat1_acc_riv",
+        "lake_inflow_seg_minacc",
+        "unique_lake_str_inflow",
+    )
+    grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+         
+    #extent the inflow seg to lake outside 
+    grass.run_command(
+        "r.grow",
+        input="lake_inflow_IL",
+        output="lake_inflow_IL_grow",
+        radius=1.5,
+        overwrite=True,
+    )
     
-    # extent the inflow seg to lake outside 
-    # grass.run_command(
-    #     "r.grow",
-    #     input="unique_lake_str_inflow",
-    #     output="unique_lake_str_inflow_grow",
-    #     radius=1.5,
-    #     overwrite=True,
-    # )
-    # 
-    # # set non river cells to non 
-    # exp = "%s = if(isnull('%s'),null(),%s)" % ("extented_lake_inflow_seg","cat1_acc_riv", "unique_lake_str_inflow_grow")
-    # grass.run_command("r.mapcalc", expression=exp, overwrite=True)
-    # 
-    # 
+    # set non river cells to non 
+    exp = "%s = if(isnull('%s'),null(),int(%s))" % ("extented_lake_inflow_seg","lake_inflow_str", "lake_inflow_IL_grow")
+    grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+    
+    
+    grass.run_command(
+        "r.stats.zonal",
+        base="extented_lake_inflow_seg",
+        cover="cat1_acc_riv",
+        method="min",
+        output="extented_lake_inflow_seg_minacc",
+        overwrite=True,
+    )
+    ### Find the grid that equal to the max acc, thus this is the outlet grids
+    exp = "'%s' =if(%s == int('%s'),%s,null())" % (
+        "lake_inflow_pt",
+        "cat1_acc_riv",
+        "extented_lake_inflow_seg_minacc",
+        "extented_lake_inflow_seg",
+    )
+    grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+        
+    #### create a unique id for overlaied lake and river
+    grass.run_command(
+        "r.cross",
+        input=["lake_inflow_pt", "cat1_OL_outlake","pourpoints_sl_lakes"],
+        output=lake_pourpoints,
+        overwrite=True,
+    ) 
+        
     
     
         
