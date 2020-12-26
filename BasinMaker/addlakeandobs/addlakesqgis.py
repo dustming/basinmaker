@@ -9,6 +9,7 @@ import sqlite3
 from addlakeandobs.definelaketypeqgis import define_connected_and_non_connected_lake_type
 from addlakeandobs.filterlakesqgis import select_lakes_by_area_r
 from addlakeandobs.pourpoints import define_pour_points_with_lakes
+from addlakeandobs.modifyfdr import modify_lakes_flow_direction
 
 def add_lakes_into_existing_watershed_delineation(
     grassdb,
@@ -28,6 +29,10 @@ def add_lakes_into_existing_watershed_delineation(
     sl_non_connected_lake = 'sl_nonconnect_lake', 
     sl_lakes = 'selected_lakes' ,
     sl_str_connected_lake = 'str_sl_connected_lake',
+    nfdr_arcgis = 'narcgis_fdr',
+    nfdr_grass = 'ngrass_fdr',
+    cat_add_lake = 'cat_add_lake',
+    lake_pourpoints = 'lake_pourpoints',
     max_memroy = 1024*4,
 ):
 
@@ -108,7 +113,7 @@ def add_lakes_into_existing_watershed_delineation(
         sl_str_connected_lake = sl_str_connected_lake,
     )
     
-    define_pour_points_with_lakes(
+    lake_new_cat_ids = define_pour_points_with_lakes(
         grass = grass,
         con = con,
         garray=garray,
@@ -118,10 +123,67 @@ def add_lakes_into_existing_watershed_delineation(
         sl_connected_lake = sl_connected_lake, 
         sl_str_connected_lake = sl_str_connected_lake,
         acc =acc,
-        lake_pourpoints = "lake_pourpoints",
-    )    
+        lake_pourpoints = lake_pourpoints,
+    )
+    
+    grass.run_command(
+        "r.stream.basins",
+        direction=fdr_grass,
+        points=lake_pourpoints,
+        basins="cat_add_lake_old_fdr",
+        overwrite=True,
+        memory=max_memroy,
+    )   
+    
+      
+    cat_withlake_array = garray.array(mapname="cat_add_lake_old_fdr")
+    fdr_arcgis_array = garray.array(mapname=fdr_arcgis)
+    str_r_array = garray.array(mapname=str_r)
+    sl_lakes_array = garray.array(mapname=sl_lakes)
+    acc_array = garray.array(mapname=acc)
+    ncols = int(cat_withlake_array.shape[1])
+    nrows = int(cat_withlake_array.shape[0])
+    lake_boundary_array = garray.array(mapname=lake_boundary)
+    
+    maximumLakegrids = 1000000000
+    pec_grid_outlier = 1
+    un_modify_fdr_lakeids = []
+    outlakeids, chandir, ndir, bd_problem = modify_lakes_flow_direction(
+        cat_withlake_array,
+        sl_lakes_array,
+        acc_array,
+        fdr_arcgis_array,
+        str_r_array,
+        nrows,
+        ncols,
+        lake_boundary_array,
+        pec_grid_outlier,
+        maximumLakegrids,
+        un_modify_fdr_lakeids,
+    )
+    
+    temparray = garray.array()
 
-
-
+    temparray[:, :] = ndir[:, :]
+    temparray.write(mapname=nfdr_arcgis, overwrite=True)
+    grass.run_command("r.null", map=nfdr_arcgis, setnull=-9999)
+    grass.run_command(
+        "r.reclass",
+        input=nfdr_arcgis,
+        output=nfdr_grass,
+        rules=os.path.join(grassdb, "Arcgis2GrassDIR.txt"),
+        overwrite=True,
+    )
+    # cat5
+    grass.run_command(
+        "r.stream.basins",
+        direction=nfdr_grass,
+        points=lake_pourpoints,
+        basins=cat_add_lake,
+        overwrite=True,
+        memory=max_memroy,
+    )
+  
+                        
     PERMANENT.close()
-    return
+    return lake_new_cat_ids

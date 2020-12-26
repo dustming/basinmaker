@@ -87,8 +87,8 @@ def write_grass_and_arcgis_fdr_rules(grassdb):
         "16 = 4",
         "32 = 3",
         "64 = 2",
-        "128	= 1",
-        "* = NUL",
+        "128 = 1",
+        "* = NULL",
     ]
     Str = "\n".join(Strlist)
     WriteStringToFile(Str, os.path.join(grassdb, "Arcgis2GrassDIR.txt"), "w")

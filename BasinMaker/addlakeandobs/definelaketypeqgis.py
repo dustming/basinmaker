@@ -34,7 +34,7 @@ def define_connected_and_non_connected_lake_type(
     exp = "%s = if(isnull('%s'),%s,null())" % (connected_lake,non_connected_lake, lake)
     grass.run_command("r.mapcalc", expression=exp, overwrite=True)
 
-    return 
+    return
 
 
 

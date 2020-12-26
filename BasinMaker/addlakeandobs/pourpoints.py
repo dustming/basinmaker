@@ -161,8 +161,21 @@ def define_pour_points_with_lakes(
         overwrite=True,
     ) 
         
+    grass.run_command(
+        "r.to.vect",
+        input=lake_pourpoints,
+        output=lake_pourpoints,
+        type="point",
+        overwrite=True,
+    )    
     
+    ##### obtain lake id and correspond catchment id 
+    lake_id, cat_id = generate_stats_list_from_grass_raster(
+        grass, mode=2, input_a="pourpoints_sl_lakes", input_b=lake_pourpoints
+    )
     
-        
+    lake_new_cat_ids = np.column_stack((lake_id, cat_id))
+    
+    return lake_new_cat_ids        
     
     

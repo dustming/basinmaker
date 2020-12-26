@@ -15,12 +15,17 @@ def add_lakes_and_obs_into_existing_watershed_delineation(
     sl_non_connected_lake = 'sl_nonconnect_lake', 
     sl_lakes = 'selected_lakes' ,
     sl_str_connected_lake = 'str_sl_connected_lake',
+    nfdr_arcgis = 'narcgis_fdr',
+    nfdr_grass = 'ngrass_fdr',
     max_memroy=1024 * 4,
     grassdb="#",
     grass_location="#",
     qgis_prefix_path="#",
     gis_platform="qgis",
 ):    
+    cat_add_lake = 'cat_add_lake'
+    lake_pourpoints = 'lake_pourpoints'
+    
     if gis_platform == "qgis":
         assert (
             grassdb != "#"
@@ -34,7 +39,7 @@ def add_lakes_and_obs_into_existing_watershed_delineation(
         from addlakeandobs.addlakesqgis import add_lakes_into_existing_watershed_delineation
         
     if path_lakefile_in != '#':
-        add_lakes_into_existing_watershed_delineation(
+        lake_new_cat_ids = add_lakes_into_existing_watershed_delineation(
             grassdb,
             grass_location,
             qgis_prefix_path,
@@ -52,6 +57,10 @@ def add_lakes_and_obs_into_existing_watershed_delineation(
             sl_non_connected_lake = sl_non_connected_lake, 
             sl_lakes = sl_lakes ,
             sl_str_connected_lake = sl_str_connected_lake,
+            nfdr_arcgis = nfdr_arcgis,
+            nfdr_grass = nfdr_grass,
+            cat_add_lake = cat_add_lake,
+            lake_pourpoints = lake_pourpoints,
             max_memroy = max_memroy,
         )
 
