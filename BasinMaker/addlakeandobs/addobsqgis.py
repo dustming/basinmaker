@@ -65,6 +65,37 @@ def add_obs_into_existing_watershed_delineation(
         grassdb, grass_location, "PERMANENT", "sqlite", "sqlite.db"
     ))
     
+    
+    # obtain maximum current cat id 
+    if path_lakefile_in == '#':
+        catids,temp = generate_stats_list_from_grass_raster(
+            grass, mode=1, input_a=lake_pourpoints, input_b=lake_pourpoints
+        )
+        maxcatid = max(catids)
+    else: 
+        # find catchment without lake outlets 
+        grass.run_command(
+            "r.stats.zonal",
+            base=cat_no_lake,
+            cover=acc,
+            method="max",
+            output="catnolake_maxacc",
+            overwrite=True,
+        )
+        ### Find the grid that equal to the max acc, thus this is the outlet grids
+        exp = "'%s' =if(%s == int('%s'),%s,null())" % (
+            "catnolake_OL",
+            acc,
+            "catnolake_maxacc",
+            cat_no_lake,
+        )
+        grass.run_command("r.mapcalc", expression=exp, overwrite=True)   
+
+        catids,temp = generate_stats_list_from_grass_raster(
+            grass, mode=1, input_a="catnolake_OL"
+        )
+        maxcatid = max(catids)
+    
     # snap obs points
     grass_raster_r_stream_snap(
         grass,
@@ -98,11 +129,15 @@ def add_obs_into_existing_watershed_delineation(
         other_table=obsname+'t1',
         other_column="cat",
     )
+    exp = obs_attributes[0]+"n int"
+    grass.run_command("v.db.addcolumn", map=obsname+"_snap_r2v", columns=obs_attributes[0]+"n int")
+    grass.run_command("v.db.update", map=obsname+"_snap_r2v", column=obs_attributes[0]+"n", qcol=obs_attributes[0] + " + "+str(int(maxcatid) + 1))
+    
     grass_raster_v_to_raster(
         grass,
         input=obsname+"_snap_r2v",
         output=obsname+"1",
-        column="Obs_ID",
+        column=obs_attributes[0]+"n",
         use="attr",
     )
     
@@ -174,24 +209,6 @@ def add_obs_into_existing_watershed_delineation(
         
             
     else: 
-        # find catchment without lake outlets 
-        grass.run_command(
-            "r.stats.zonal",
-            base=cat_no_lake,
-            cover=acc,
-            method="max",
-            output="catnolake_maxacc",
-            overwrite=True,
-        )
-        ### Find the grid that equal to the max acc, thus this is the outlet grids
-        exp = "'%s' =if(%s == int('%s'),%s,null())" % (
-            "catnolake_OL",
-            acc,
-            "catnolake_maxacc",
-            cat_no_lake,
-        )
-        grass.run_command("r.mapcalc", expression=exp, overwrite=True)     
-        
         # combine obsoutlets and outlet from cat no lake 
         exp = "'%s' =if(isnull(%s),null(),%s)" % (
             pourpoints_add_obs,

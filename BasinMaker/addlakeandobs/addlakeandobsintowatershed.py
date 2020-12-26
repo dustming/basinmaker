@@ -19,6 +19,8 @@ def add_lakes_and_obs_into_existing_watershed_delineation(
     sl_str_connected_lake = 'str_sl_connected_lake',
     nfdr_arcgis = 'nfdr_arcgis',
     nfdr_grass = 'nfdr_grass',
+    catchment_without_merging_lakes = 'catchment_without_merging_lakes',
+    river_without_merging_lakes = 'river_without_merging_lakes',
     max_memroy=1024 * 4,
     grassdb="#",
     grass_location="#",
@@ -27,7 +29,7 @@ def add_lakes_and_obs_into_existing_watershed_delineation(
 ):    
     cat_add_lake = 'cat_add_lake'
     lake_pourpoints = 'lake_pourpoints'
-    lake_new_cat_ids = []
+    pourpoints_add_obs ='pourpoints_add_obs'
     if gis_platform == "qgis":
         assert (
             grassdb != "#"
@@ -40,6 +42,7 @@ def add_lakes_and_obs_into_existing_watershed_delineation(
         ), "qgis prefix path is needed, when gis_platform = qgis"
         from addlakeandobs.addlakesqgis import add_lakes_into_existing_watershed_delineation
         from addlakeandobs.addobsqgis import add_obs_into_existing_watershed_delineation
+        from addlakeandobs.definecatrivqgis import define_cat_and_riv_without_merge_lake_cats
     if path_lakefile_in != '#':
         add_lakes_into_existing_watershed_delineation(
             grassdb,
@@ -81,7 +84,21 @@ def add_lakes_and_obs_into_existing_watershed_delineation(
             obsname = 'obs',
             pourpoints_add_obs ='pourpoints_add_obs', 
         )        
-
+    else:
+        pourpoints_add_obs = lake_pourpoints
+    
+    define_cat_and_riv_without_merge_lake_cats(
+        grassdb = grassdb,
+        grass_location = grass_location,
+        qgis_prefix_path = qgis_prefix_path,
+        input_geo_names = input_geo_names,
+        path_lakefile_in = path_lakefile_in,
+        pourpoints_add_obs = pourpoints_add_obs,
+        catchment_without_merging_lakes = catchment_without_merging_lakes,
+        river_without_merging_lakes = river_without_merging_lakes,
+        max_memroy = max_memroy)   
+    
+    
 
 
 
