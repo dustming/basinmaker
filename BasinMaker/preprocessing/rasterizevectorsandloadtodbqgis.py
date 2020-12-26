@@ -81,5 +81,9 @@ def rasterize_vectors_and_load_to_db(
     grass_raster_setnull(
         grass, raster_nm=raster_name, null_values=[-9999], create_new_raster=False
     )
+    
+    grass_raster_v_import(
+        grass, input_path=vector_path, output_vector_nm=raster_name
+    )
     Qgs.exit()
     PERMANENT.close()

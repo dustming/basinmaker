@@ -113,7 +113,7 @@ def add_lakes_into_existing_watershed_delineation(
         sl_str_connected_lake = sl_str_connected_lake,
     )
     
-    lake_new_cat_ids = define_pour_points_with_lakes(
+    define_pour_points_with_lakes(
         grass = grass,
         con = con,
         garray=garray,
@@ -186,4 +186,4 @@ def add_lakes_into_existing_watershed_delineation(
   
                         
     PERMANENT.close()
-    return lake_new_cat_ids
+    return

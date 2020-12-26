@@ -120,7 +120,7 @@ class BasinMakerQGIS:
         'str_connected_lake':'str_connected_lake','sl_nonconnect_lake':'sl_nonconnect_lake',
         'sl_connected_lake':'sl_connected_lake','str_sl_connected_lake':'str_sl_connected_lake',
         'obspoint':'obspoint','flood_n':'flood_n','bk_wd':'bk_wd','lake_boundary':'lake_boundary'
-        }
+        ,'nfdr_arcgis':'nfdr_arcgis','nfdr_grass':'nfdr_grass'}
         # name of the result attribute table data type in grass format
         self.attribte_type = "attribute_type.csvt"
 
@@ -294,7 +294,7 @@ class BasinMakerQGIS:
             input_geo_names = self.geofilenames,
             path_lakefile_in=path_lakefile_in,
             lake_attributes=lake_attributes,
-            path_obsfile_in = path_lakefile_in,
+            path_obsfile_in = path_obsfile_in,
             obs_attributes=obs_attributes,
             threshold_con_lake = 0,
             threshold_non_con_lake = 0,            
@@ -306,7 +306,9 @@ class BasinMakerQGIS:
             sl_connected_lake = self.geofilenames['sl_connected_lake'],  
             sl_non_connected_lake = self.geofilenames['sl_nonconnect_lake'], 
             sl_lakes = self.geofilenames['selected_lakes'], 
-            sl_str_connected_lake = self.geofilenames['str_sl_connected_lake'],  
+            sl_str_connected_lake = self.geofilenames['str_sl_connected_lake'],
+            nfdr_arcgis = self.geofilenames['nfdr_arcgis'],
+            nfdr_grass = self.geofilenames['nfdr_grass'],  
             max_memroy=max_memroy,
             grassdb=self.grassdb,
             grass_location=self.grass_location_geo,
