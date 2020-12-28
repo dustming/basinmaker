@@ -39,20 +39,17 @@ def delineate_watershed_no_lake_using_fdr(
 
     write_grass_and_arcgis_fdr_rules(grassdb)
 
-
-    grass_raster_r_in_gdal(
-        grass, raster_path=fdr_path, output_nm='fdr_arcgis_temp'
-    )
+    grass_raster_r_in_gdal(grass, raster_path=fdr_path, output_nm="fdr_arcgis_temp")
     # reclassify it into grass flow direction data
     grass_raster_r_reclass(
         grass,
-        input='fdr_arcgis_temp',
-        output='fdr_grass_temp',
+        input="fdr_arcgis_temp",
+        output="fdr_grass_temp",
         rules=os.path.join(grassdb, "Arcgis2GrassDIR.txt"),
     )
     # calcuate flow accumulation from provided dir
     grass_raster_r_accumulate(
-        grass, direction='fdr_grass_temp', accumulation=acc, flags="r"
+        grass, direction="fdr_grass_temp", accumulation=acc, flags="r"
     )
 
     grass_raster_r_stream_extract(

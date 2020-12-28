@@ -42,13 +42,9 @@ def delineate_watershed_no_lake_using_subregion_data(
     write_grass_and_arcgis_fdr_rules(grassdb)
 
     # unpack subregion flow accumulation and flow direction data
-    grass_raster_r_unpack(
-        grass, input=subreg_fdr_path, output="dir_Arcgis1"
-    )
-    grass_raster_r_unpack(
-        grass, input=subreg_acc_path, output="grass_acc1"
-    )
-    exp = "%s  = dir_Arcgis1" %(fdr_arcgis)
+    grass_raster_r_unpack(grass, input=subreg_fdr_path, output="dir_Arcgis1")
+    grass_raster_r_unpack(grass, input=subreg_acc_path, output="grass_acc1")
+    exp = "%s  = dir_Arcgis1" % (fdr_arcgis)
     grass_raster_r_mapcalc(grass, expression=exp)
     # calcuate flow direction in grass format
     grass_raster_r_reclass(
@@ -57,24 +53,16 @@ def delineate_watershed_no_lake_using_subregion_data(
         output=fdr_grass,
         rules=os.path.join(grassdb, "Arcgis2GrassDIR.txt"),
     )
-    exp = "%s  = grass_acc1"%(acc)
+    exp = "%s  = grass_acc1" % (acc)
     grass_raster_r_mapcalc(grass, expression="acc_grass  = grass_acc1")
-            
-            
+
     # unpack  river network vector
-    grass_raster_v_unpack(
-        grass, input=subreg_str_v_path, output="str_grass_v"
-    )
+    grass_raster_v_unpack(grass, input=subreg_str_v_path, output="str_grass_v")
     # unpack  river network raster
-    grass_raster_r_unpack(
-        grass, input=subreg_str_r_path, output="str_grass_r1"
-    )
+    grass_raster_r_unpack(grass, input=subreg_str_r_path, output="str_grass_r1")
     # clip river network with mask
-    exp = "%s = str_grass_r1" %(str_r)
+    exp = "%s = str_grass_r1" % (str_r)
     grass_raster_r_mapcalc(grass, expression=exp)
-
-            
-
 
     grass_raster_r_stream_basins(
         grass,

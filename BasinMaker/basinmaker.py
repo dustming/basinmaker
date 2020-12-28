@@ -113,14 +113,34 @@ class BasinMakerQGIS:
         MIN_RIV_SLP = 0.00001
 
         # default pre processed and well prepared spatial data name
-        self.geofilenames= {'dem': 'dem', 'mask': 'MASK', 'dem_proj': 'dem_proj',
-        'fdr_grass':'fdr_grass','fdr_arcgis':'fdr_arcgis','acc':'acc',
-        'str_r':'str_r','str_v':'str_v','cat_no_lake':'cat_no_lake','all_lakes':'all_lakes',
-        'selected_lakes':'selected_lakes','connect_lake':'connect_lake','nonconnect_lake':'nonconnect_lake',
-        'str_connected_lake':'str_connected_lake','sl_nonconnect_lake':'sl_nonconnect_lake',
-        'sl_connected_lake':'sl_connected_lake','str_sl_connected_lake':'str_sl_connected_lake',
-        'obspoint':'obspoint','flood_n':'flood_n','bk_wd':'bk_wd','lake_boundary':'lake_boundary'
-        ,'nfdr_arcgis':'nfdr_arcgis','nfdr_grass':'nfdr_grass'}
+        self.geofilenames = {
+            "dem": "dem",
+            "mask": "MASK",
+            "dem_proj": "dem_proj",
+            "fdr_grass": "fdr_grass",
+            "fdr_arcgis": "fdr_arcgis",
+            "acc": "acc",
+            "str_r": "str_r",
+            "str_v": "str_v",
+            "cat_no_lake": "cat_no_lake",
+            "all_lakes": "all_lakes",
+            "selected_lakes": "selected_lakes",
+            "connect_lake": "connect_lake",
+            "nonconnect_lake": "nonconnect_lake",
+            "str_connected_lake": "str_connected_lake",
+            "sl_nonconnect_lake": "sl_nonconnect_lake",
+            "sl_connected_lake": "sl_connected_lake",
+            "str_sl_connected_lake": "str_sl_connected_lake",
+            "obspoint": "obspoint",
+            "flood_n": "flood_n",
+            "bk_wd": "bk_wd",
+            "lake_boundary": "lake_boundary",
+            "nfdr_arcgis": "nfdr_arcgis",
+            "nfdr_grass": "nfdr_grass",
+            "catchment_without_merging_lakes": "catchment_without_merging_lakes",
+            "river_without_merging_lakes": "river_without_merging_lakes",
+            "cat_use_default_acc": "cat_use_default_acc",
+        }
         # name of the result attribute table data type in grass format
         self.attribte_type = "attribute_type.csvt"
 
@@ -236,11 +256,10 @@ class BasinMakerQGIS:
             hybasin_ply=hybasin_ply,
             down_hybasin_id=down_hybasin_id,
             up_hybasin_id=up_hybasin_id,
-            mask=self.geofilenames['mask'],
-            dem=self.geofilenames['dem'],
-            gis_platform="qgis",
+            mask=self.geofilenames["mask"],
+            dem=self.geofilenames["dem"],
+            gis_platform=gis_platform,
         )
-
 
     def watershed_delineation_without_lake_method(
         self,
@@ -255,32 +274,31 @@ class BasinMakerQGIS:
 
         watershed_delineation_without_lake(
             mode,
-            input_geo_names = self.geofilenames,
+            input_geo_names=self.geofilenames,
             acc_thresold=acc_thresold,
             fdr_path="#",
             subreg_fdr_path="#",
             subreg_acc_path="#",
             subreg_str_r_path="#",
             subreg_str_v_path="#",
-            fdr_arcgis=self.geofilenames['fdr_arcgis'],
-            fdr_grass=self.geofilenames['fdr_grass'],
-            str_r=self.geofilenames['str_r'],
-            str_v=self.geofilenames['str_v'],
-            acc=self.geofilenames['acc'],
-            cat_no_lake=self.geofilenames['cat_no_lake'],
+            fdr_arcgis=self.geofilenames["fdr_arcgis"],
+            fdr_grass=self.geofilenames["fdr_grass"],
+            str_r=self.geofilenames["str_r"],
+            str_v=self.geofilenames["str_v"],
+            acc=self.geofilenames["acc"],
+            cat_no_lake=self.geofilenames["cat_no_lake"],
             max_memroy=max_memroy,
             grassdb=self.grassdb,
             grass_location=self.grass_location_geo,
             qgis_prefix_path=self.qgispp,
-            gis_platform="qgis",
+            gis_platform=gis_platform,
         )
-
 
     def watershed_delineation_with_lakes_method(
         self,
         path_lakefile_in="#",
         lake_attributes=[],
-        path_obsfile_in = '#',
+        path_obsfile_in="#",
         obs_attributes=[],
         mode="#",
         max_memroy=1024 * 4,
@@ -291,29 +309,53 @@ class BasinMakerQGIS:
         )
 
         add_lakes_and_obs_into_existing_watershed_delineation(
-            input_geo_names = self.geofilenames,
+            input_geo_names=self.geofilenames,
             path_lakefile_in=path_lakefile_in,
             lake_attributes=lake_attributes,
-            path_obsfile_in = path_obsfile_in,
+            path_obsfile_in=path_obsfile_in,
             obs_attributes=obs_attributes,
-            threshold_con_lake = 0,
-            threshold_non_con_lake = 0,            
-            alllake = self.geofilenames['all_lakes'],
-            lake_boundary = self.geofilenames['lake_boundary'],
-            connected_lake = self.geofilenames['connect_lake'] ,
-            non_connected_lake = self.geofilenames['nonconnect_lake'],
-            str_connected_lake = self.geofilenames['str_connected_lake'],
-            sl_connected_lake = self.geofilenames['sl_connected_lake'],  
-            sl_non_connected_lake = self.geofilenames['sl_nonconnect_lake'], 
-            sl_lakes = self.geofilenames['selected_lakes'], 
-            sl_str_connected_lake = self.geofilenames['str_sl_connected_lake'],
-            nfdr_arcgis = self.geofilenames['nfdr_arcgis'],
-            nfdr_grass = self.geofilenames['nfdr_grass'],  
+            threshold_con_lake=0,
+            threshold_non_con_lake=0,
+            alllake=self.geofilenames["all_lakes"],
+            lake_boundary=self.geofilenames["lake_boundary"],
+            connected_lake=self.geofilenames["connect_lake"],
+            non_connected_lake=self.geofilenames["nonconnect_lake"],
+            str_connected_lake=self.geofilenames["str_connected_lake"],
+            sl_connected_lake=self.geofilenames["sl_connected_lake"],
+            sl_non_connected_lake=self.geofilenames["sl_nonconnect_lake"],
+            sl_lakes=self.geofilenames["selected_lakes"],
+            sl_str_connected_lake=self.geofilenames["str_sl_connected_lake"],
+            nfdr_arcgis=self.geofilenames["nfdr_arcgis"],
+            nfdr_grass=self.geofilenames["nfdr_grass"],
             max_memroy=max_memroy,
             grassdb=self.grassdb,
             grass_location=self.grass_location_geo,
             qgis_prefix_path=self.qgispp,
-            gis_platform="qgis",
+            gis_platform=gis_platform,
         )
-        
-        
+
+    def add_attributes_to_catchments_method(
+        self,
+        path_bkfwidthdepth="#",
+        bkfwd_attributes=[],
+        path_landuse="#",
+        path_landuse_info="#",
+        gis_platform="qgis",
+        path_lake_ply="#",
+    ):
+        from addattributes.addattributestocatchments import add_attributes_to_catchments
+
+        add_attributes_to_catchments(
+            input_geo_names=self.geofilenames,
+            path_bkfwidthdepth=path_bkfwidthdepth,
+            bkfwd_attributes=bkfwd_attributes,
+            path_landuse=path_landuse,
+            path_landuse_info=path_landuse_info,
+            out_cat_name=self.geofilenames["catchment_without_merging_lakes"],
+            out_riv_name=self.geofilenames["river_without_merging_lakes"],
+            grassdb=self.grassdb,
+            grass_location=self.grass_location_geo,
+            qgis_prefix_path=self.qgispp,
+            gis_platform=gis_platform,
+            path_lake_ply=path_lake_ply,
+        )

@@ -10,8 +10,8 @@ def preprocessing_lake_polygon(
     grass_location="#",
     qgis_prefix_path="#",
     gis_platform="qgis",
-    lake_name='alllake',
-    lake_boundary_name = 'lake_boundary',
+    lake_name="alllake",
+    lake_boundary_name="lake_boundary",
 ):
 
     if gis_platform == "qgis":
@@ -43,20 +43,20 @@ def preprocessing_lake_polygon(
             attribute_names=[lake_attributes[0]],
             raster_names=[lake_name],
         )
-        
+
         # obtain lake boundary lines
         obtain_polygon_boundary(
             grassdb=grassdb,
             qgis_prefix_path=qgis_prefix_path,
-            ply_path=os.path.join(grassdb, lake_name+".shp"),
-            output=os.path.join(grassdb, lake_boundary_name+".shp"),
+            ply_path=os.path.join(grassdb, lake_name + ".shp"),
+            output=os.path.join(grassdb, lake_boundary_name + ".shp"),
         )
         rasterize_vectors_and_load_to_db(
             grassdb,
             grass_location,
             qgis_prefix_path,
             mask,
-            vector_path=os.path.join(grassdb, lake_boundary_name+".shp"),
+            vector_path=os.path.join(grassdb, lake_boundary_name + ".shp"),
             attribue_name=lake_attributes[0],
             raster_name=lake_boundary_name,
         )

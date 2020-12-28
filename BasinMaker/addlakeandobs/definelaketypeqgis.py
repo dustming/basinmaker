@@ -6,19 +6,20 @@ from processing_functions_vector_qgis import *
 from utilities import *
 import sqlite3
 
+
 def define_connected_and_non_connected_lake_type(
     grass,
     con,
     garray,
     str_r="str_grass_r",
     lake="alllake",
-    connected_lake = "connect_lake",
-    non_connected_lake  = "nonconnect_lake",
-    str_connected_lake = "str_connected_lake",
+    connected_lake="connect_lake",
+    non_connected_lake="nonconnect_lake",
+    str_connected_lake="str_connected_lake",
 ):
 
     #### overlay str and lakes
-    exp = "%s = if(isnull('%s'),null(),%s)" % (str_connected_lake,str_r, lake)
+    exp = "%s = if(isnull('%s'),null(),%s)" % (str_connected_lake, str_r, lake)
     grass.run_command("r.mapcalc", expression=exp, overwrite=True)
 
     ### obtain connected lake ids
@@ -31,11 +32,10 @@ def define_connected_and_non_connected_lake_type(
         "r.null", map=non_connected_lake, setnull=Connect_Lake_Ids, overwrite=True
     )
     #### create potential connected lake raster
-    exp = "%s = if(isnull('%s'),%s,null())" % (connected_lake,non_connected_lake, lake)
+    exp = "%s = if(isnull('%s'),%s,null())" % (connected_lake, non_connected_lake, lake)
     grass.run_command("r.mapcalc", expression=exp, overwrite=True)
 
     return
-
 
 
 def generate_stats_list_from_grass_raster(
@@ -61,5 +61,3 @@ def generate_stats_list_from_grass_raster(
     p.wait()
 
     return list_a, list_b
-    
-    

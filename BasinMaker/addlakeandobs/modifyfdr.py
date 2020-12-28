@@ -2,7 +2,8 @@ import copy
 import os
 
 import numpy as np
- 
+
+
 def modify_lakes_flow_direction(
     cat3,
     lake,
@@ -199,7 +200,6 @@ def modify_lakes_flow_direction(
     #        print(lakeid,arclakeid,len(nlake),len(lrowcol),float(len(nlake)/len(lrowcol)))
     outlakeids = outlakeids[outlakeids[:, 0] > 0]
     return outlakeids, changed_ndir, ndir, BD_problem
-
 
 
 def changeflowdirectionofedgegrids(
@@ -446,5 +446,3 @@ def Dirpoints_v3(
             ip = ip + 1
     #    arcpy.AddMessage(goodpoint[goodpoint[:,0]>0,])
     return ndir, goodpoint, ip, changed_ndir
-
-

@@ -24,7 +24,7 @@ basinmaker.define_project_extent_method(
 )
 
 basinmaker.watershed_delineation_without_lake_method(
-    acc_thresold=200,
+    acc_thresold=1000,
     mode="usingdem",
     max_memroy=1024 * 4,
     gis_platform="qgis",
@@ -39,3 +39,13 @@ basinmaker.watershed_delineation_with_lakes_method(
     max_memroy=1024 * 4,
     gis_platform="qgis",
 )
+
+basinmaker.add_attributes_to_catchments_method(
+    path_bkfwidthdepth=os.path.join(datafolder, "Bkfullwidth_depth.shp"),
+    bkfwd_attributes=["WIDTH", "DEPTH", "Q_Mean"],
+    path_landuse=os.path.join(datafolder, "landuse.tif"),
+    path_landuse_info=os.path.join(datafolder, "Landuse_info.csv"),
+    path_lake_ply = os.path.join(path_working_folder, "grassdb","all_lakes.shp"),
+    gis_platform="qgis",
+)
+# basinmaker.add_attributes_to_catchments_method()

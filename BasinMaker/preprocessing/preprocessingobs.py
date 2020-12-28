@@ -9,7 +9,7 @@ def preprocessing_obs_point(
     grass_location="#",
     qgis_prefix_path="#",
     gis_platform="qgis",
-    obsname='obs',
+    obsname="obs",
 ):
 
     if gis_platform == "qgis":
@@ -41,5 +41,3 @@ def preprocessing_obs_point(
             attribute_names=[obs_attributes[0]],
             raster_names=[obsname],
         )
-        
-
