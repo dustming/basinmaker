@@ -198,5 +198,30 @@ def add_lakes_into_existing_watershed_delineation(
     print("following str are corrected to make one lake one outlet")
     print(Remove_Str)
 
+    grass.run_command(
+        "v.out.ogr",
+        input="cat1_OL_outlake",
+        output=os.path.join(grassdb, "cat1_OL_outlake.shp"),
+        format="ESRI_Shapefile",
+        overwrite=True,
+        quiet="Ture",
+    )
+    grass.run_command(
+        "v.out.ogr",
+        input="pourpoints_sl_lakes",
+        output=os.path.join(grassdb, "pourpoints_sl_lakes.shp"),
+        format="ESRI_Shapefile",
+        overwrite=True,
+        quiet="Ture",
+    )
+    grass.run_command(
+        "v.out.ogr",
+        input="lake_inflow_pt",
+        output=os.path.join(grassdb, "lake_inflow_pt.shp"),
+        format="ESRI_Shapefile",
+        overwrite=True,
+        quiet="Ture",
+    )
+
     PERMANENT.close()
     return

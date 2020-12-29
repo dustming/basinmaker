@@ -1823,8 +1823,21 @@ def return_non_lake_inflow_segs_and_segs_within_lakes(
             routing_info["SubId"].isin(riv_lake_il[:, 1])
         ]
         # if lake only overlay with one str, skip
+        # this river is lake infow str and lake outflow str
         if len(riv_lake_il) == 1:
+            str_id_cl_j = riv_lake_il[0, 1]
+            # the river can not start within the lake
+            if (
+                str_start_pt_lakeid.loc[str_start_pt_lakeid["IL_SubId"] == str_id_cl_j][
+                    "sl_cl_id"
+                ].values[0]
+                != cl_id
+            ):
+                str_id_lake_inlfow.append(int(riv_lake_il[0, 1]))
+            else:
+                non_lake_inflow_segs.append(int(riv_lake_il[0, 0]))
             continue
+
         for j in range(0, len(riv_lake_il)):
             str_id_cl_j = riv_lake_il[j, 1]
             # check if there is any upstream river id in the str covered by the lake and there is some upstream

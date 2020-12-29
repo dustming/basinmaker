@@ -46,6 +46,39 @@ def add_attributes_to_catchments(
         "SRC_obs",
     ]
 
+    coltypes = [
+        "Integer",
+        "Integer",
+        "Real",
+        "Real",
+        "Real",
+        "Real",
+        "Real",
+        "Real",
+        "Real",
+        "Integer",
+        "Integer",
+        "Real",
+        "Real",
+        "Real",
+        "Integer",
+        "Integer",
+        "Real",
+        "Real",
+        "Real",
+        "Real",
+        "Real",
+        "Integer",
+        "Integer",
+        "Integer",
+        "Real",
+        "Real",
+        "Real",
+        "Real",
+        "Character",
+        "Character",
+    ]
+
     if path_lake_ply != "#":
         dem = input_geo_names["dem"]
         mask = input_geo_names["mask"]
@@ -84,6 +117,14 @@ def add_attributes_to_catchments(
             calculate_basic_attributes,
         )
         from addattributes.addlakeattributesqgis import add_lake_attributes
+        from addattributes.adddaandstreamorder import streamorderanddrainagearea
+        from addattributes.addnclcatchmentsinfo import (
+            update_non_connected_catchment_info,
+        )
+        from addattributes.joinpandastoattributesqgis import (
+            join_pandas_table_to_vector_attributes,
+        )
+        from addattributes.exportoutputsqgis import export_files_to_output_folder
 
         attr_template = create_catchments_attributes_template_table(
             grassdb=grassdb,
@@ -118,3 +159,41 @@ def add_attributes_to_catchments(
                 path_lake_ply=path_lake_ply,
                 catinfo=attr_basic,
             )
+        else:
+            attr_lake = attr_basic
+
+        attr_da = streamorderanddrainagearea(attr_lake)
+
+        attr_ncl = update_non_connected_catchment_info(attr_da)
+
+        join_pandas_table_to_vector_attributes(
+            grassdb=grassdb,
+            grass_location=grass_location,
+            qgis_prefix_path=qgis_prefix_path,
+            vector_name="nstr_nfinalcat_F",
+            pd_table=attr_ncl,
+            column_types=coltypes,
+            columns_names=columns,
+        )
+
+        join_pandas_table_to_vector_attributes(
+            grassdb=grassdb,
+            grass_location=grass_location,
+            qgis_prefix_path=qgis_prefix_path,
+            vector_name="Net_cat_F",
+            pd_table=attr_ncl,
+            column_types=coltypes,
+            columns_names=columns,
+        )
+
+        export_files_to_output_folder(
+            grassdb=grassdb,
+            grass_location=grass_location,
+            qgis_prefix_path=qgis_prefix_path,
+            input_riv="nstr_nfinalcat_F",
+            input_cat="Net_cat_F",
+            output_riv=out_riv_name,
+            output_cat=out_cat_name,
+            input_lake_path=path_lake_ply,
+            selected_basin_ids=[],
+        )

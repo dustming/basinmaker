@@ -194,6 +194,31 @@ def define_pour_points_with_lakes(
         flags="v",
     )
 
+    grass.run_command(
+        "r.to.vect",
+        input="lake_inflow_pt",
+        output="lake_inflow_pt",
+        type="point",
+        overwrite=True,
+        flags="v",
+    )
+    grass.run_command(
+        "r.to.vect",
+        input="cat1_OL_outlake",
+        output="cat1_OL_outlake",
+        type="point",
+        overwrite=True,
+        flags="v",
+    )
+    grass.run_command(
+        "r.to.vect",
+        input="pourpoints_sl_lakes",
+        output="pourpoints_sl_lakes",
+        type="point",
+        overwrite=True,
+        flags="v",
+    )
+
     #
     ##### obtain lake id and coresponding overlaied str id
     CL_Id, Str_Id = generate_stats_list_from_grass_raster(
