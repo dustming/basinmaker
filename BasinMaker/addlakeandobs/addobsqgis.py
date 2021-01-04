@@ -68,7 +68,7 @@ def add_obs_into_existing_watershed_delineation(
     # obtain maximum current cat id
     if path_lakefile_in == "#":
         catids, temp = generate_stats_list_from_grass_raster(
-            grass, mode=1, input_a=lake_pourpoints, input_b=lake_pourpoints
+            grass, mode=1, input_a=lake_pourpoints
         )
         maxcatid = max(catids)
     else:
@@ -137,6 +137,14 @@ def add_obs_into_existing_watershed_delineation(
         map=obsname + "_snap_r2v",
         column=obs_attributes[0] + "n",
         qcol=obs_attributes[0] + " + " + str(int(maxcatid) + 1),
+    )
+
+    grass.run_command(
+        "v.out.ogr",
+        input=obsname + "_snap_r2v",
+        output=os.path.join(grassdb, obsname + "_snap.shp"),
+        format="ESRI_Shapefile",
+        overwrite=True,
     )
 
     grass_raster_v_to_raster(

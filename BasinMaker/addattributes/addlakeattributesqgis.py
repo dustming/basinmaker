@@ -70,6 +70,7 @@ def add_lake_attributes(
 
     for i in range(0, len(outletinfo)):
         catid = outletinfo["SubId"].values[i]
+        catrow = catinfo["SubId"] == catid
 
         CL_LakeId_Outlet = outletinfo["cl"].values[i]
         ### catchment can be an connect lake catchment only when outlet of this catchment is
@@ -83,21 +84,21 @@ def add_lake_attributes(
         #        print(CL_LakeId,NCL_LakeId)
         ### add lake info
         if CL_LakeId > 0 and NCL_LakeId < 0:
-            catinfo.loc[i, "IsLake"] = 1
+            catinfo.loc[catrow, "IsLake"] = 1
             slakeinfo = lakeinfo.loc[lakeinfo["Hylak_id"] == CL_LakeId]
-            catinfo.loc[i, "HyLakeId"] = CL_LakeId
-            catinfo.loc[i, "LakeVol"] = slakeinfo.iloc[0]["Vol_total"]
-            catinfo.loc[i, "LakeArea"] = slakeinfo.iloc[0]["Lake_area"]
-            catinfo.loc[i, "LakeDepth"] = slakeinfo.iloc[0]["Depth_avg"]
-            catinfo.loc[i, "Laketype"] = slakeinfo.iloc[0]["Lake_type"]
+            catinfo.loc[catrow, "HyLakeId"] = CL_LakeId
+            catinfo.loc[catrow, "LakeVol"] = slakeinfo.iloc[0]["Vol_total"]
+            catinfo.loc[catrow, "LakeArea"] = slakeinfo.iloc[0]["Lake_area"]
+            catinfo.loc[catrow, "LakeDepth"] = slakeinfo.iloc[0]["Depth_avg"]
+            catinfo.loc[catrow, "Laketype"] = slakeinfo.iloc[0]["Lake_type"]
         if NCL_LakeId > 0 and CL_LakeId < 0:
-            catinfo.loc[i, "IsLake"] = 2
+            catinfo.loc[catrow, "IsLake"] = 2
             slakeinfo = lakeinfo.loc[lakeinfo["Hylak_id"] == NCL_LakeId]
-            catinfo.loc[i, "HyLakeId"] = NCL_LakeId
-            catinfo.loc[i, "LakeVol"] = slakeinfo.iloc[0]["Vol_total"]
-            catinfo.loc[i, "LakeArea"] = slakeinfo.iloc[0]["Lake_area"]
-            catinfo.loc[i, "LakeDepth"] = slakeinfo.iloc[0]["Depth_avg"]
-            catinfo.loc[i, "Laketype"] = slakeinfo.iloc[0]["Lake_type"]
+            catinfo.loc[catrow, "HyLakeId"] = NCL_LakeId
+            catinfo.loc[catrow, "LakeVol"] = slakeinfo.iloc[0]["Vol_total"]
+            catinfo.loc[catrow, "LakeArea"] = slakeinfo.iloc[0]["Lake_area"]
+            catinfo.loc[catrow, "LakeDepth"] = slakeinfo.iloc[0]["Depth_avg"]
+            catinfo.loc[catrow, "Laketype"] = slakeinfo.iloc[0]["Lake_type"]
 
     PERMANENT.close()
     return catinfo

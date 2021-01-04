@@ -342,6 +342,9 @@ class BasinMakerQGIS:
         path_landuse_info="#",
         gis_platform="qgis",
         path_lake_ply="#",
+        obs_v="obs_snap_r2v",
+        obs_r="obs",
+        obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
     ):
         from addattributes.addattributestocatchments import add_attributes_to_catchments
 
@@ -358,4 +361,7 @@ class BasinMakerQGIS:
             qgis_prefix_path=self.qgispp,
             gis_platform=gis_platform,
             path_lake_ply=path_lake_ply,
+            obs_v="obs_snap_r2v",
+            obs_r="obs",
+            obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
         )

@@ -12,6 +12,9 @@ def add_attributes_to_catchments(
     qgis_prefix_path="#",
     gis_platform="qgis",
     projection="EPSG:3573",
+    obs_v="obs_snap_r2v",
+    obs_r="obs",
+    obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
 ):
     columns = [
         "SubId",
@@ -125,6 +128,7 @@ def add_attributes_to_catchments(
             join_pandas_table_to_vector_attributes,
         )
         from addattributes.exportoutputsqgis import export_files_to_output_folder
+        from addattributes.addgaugeattributesqgis import add_gauge_attributes
 
         attr_template = create_catchments_attributes_template_table(
             grassdb=grassdb,
@@ -162,7 +166,21 @@ def add_attributes_to_catchments(
         else:
             attr_lake = attr_basic
 
-        attr_da = streamorderanddrainagearea(attr_lake)
+        if obs_r != "#":
+            attr_obs = add_gauge_attributes(
+                grassdb=grassdb,
+                grass_location=grass_location,
+                qgis_prefix_path=qgis_prefix_path,
+                pourpoints="Final_OL_v",
+                obs_v="obs_snap_r2v",
+                obs_r="obs",
+                obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
+                catinfo=attr_lake,
+            )
+        else:
+            attr_obs = attr_lake
+
+        attr_da = streamorderanddrainagearea(attr_obs)
 
         attr_ncl = update_non_connected_catchment_info(attr_da)
 
