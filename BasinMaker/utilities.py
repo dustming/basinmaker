@@ -94,3 +94,12 @@ def write_grass_and_arcgis_fdr_rules(grassdb):
     WriteStringToFile(Str, os.path.join(grassdb, "Arcgis2GrassDIR.txt"), "w")
 
     return
+
+
+def write_grass_reclass_rule_from_table(table, output_path):
+    Strlist = []
+    for i in range(0, len(table)):
+        Strlist.append(str(table[i, 0]) + " = " + str(table[i, 1]))
+    Strlist.append("* = NULL")
+    Str = "\n".join(Strlist)
+    WriteStringToFile(Str, output_path, "w")

@@ -129,6 +129,7 @@ def add_attributes_to_catchments(
         )
         from addattributes.exportoutputsqgis import export_files_to_output_folder
         from addattributes.addgaugeattributesqgis import add_gauge_attributes
+        from addattributes.calfloodmanningnqgis import calculate_flood_plain_manning_n
 
         attr_template = create_catchments_attributes_template_table(
             grassdb=grassdb,
@@ -180,7 +181,20 @@ def add_attributes_to_catchments(
         else:
             attr_obs = attr_lake
 
-        attr_da = streamorderanddrainagearea(attr_obs)
+        if path_landuse != "#":
+            attr_landuse = calculate_flood_plain_manning_n(
+                grassdb=grassdb,
+                grass_location=grass_location,
+                qgis_prefix_path=qgis_prefix_path,
+                catinfo=attr_obs,
+                path_landuse=path_landuse,
+                path_landuse_info=path_landuse_info,
+                riv_seg = "nstr_nfinalcat_F",
+            )
+        else:
+            attr_landuse = attr_obs
+
+        attr_da = streamorderanddrainagearea(attr_landuse)
 
         attr_ncl = update_non_connected_catchment_info(attr_da)
 

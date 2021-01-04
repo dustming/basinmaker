@@ -29,8 +29,8 @@ basinmaker = BasinMakerQGIS(
 #     max_memroy=1024 * 4,
 #     gis_platform="qgis",
 # )
-
-
+#
+#
 # basinmaker.watershed_delineation_with_lakes_method(
 #     path_lakefile_in=os.path.join(datafolder, "HyLake.shp"),
 #     lake_attributes=["Hylak_id", "Lake_type", "Lake_area", "Vol_total", "Depth_avg"],
@@ -44,7 +44,7 @@ basinmaker.add_attributes_to_catchments_method(
     path_bkfwidthdepth=os.path.join(datafolder, "Bkfullwidth_depth.shp"),
     bkfwd_attributes=["WIDTH", "DEPTH", "Q_Mean"],
     path_landuse=os.path.join(datafolder, "landuse.tif"),
-    path_landuse_info=os.path.join(datafolder, "Landuse_info.csv"),
+    path_landuse_info=os.path.join(datafolder, "Landuse_info3.csv"),
     path_lake_ply=os.path.join(path_working_folder, "grassdb", "all_lakes.shp"),
     gis_platform="qgis",
     obs_v="obs_snap_r2v",
