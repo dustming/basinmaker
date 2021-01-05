@@ -50,5 +50,8 @@ basinmaker.add_attributes_to_catchments_method(
     obs_v="obs_snap_r2v",
     obs_r="obs",
     obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
+    outlet_obs_id=1,
+    path_sub_reg_outlets_v="#",
+    output_folder = path_output_folder,
 )
 # basinmaker.add_attributes_to_catchments_method()

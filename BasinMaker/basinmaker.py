@@ -345,6 +345,9 @@ class BasinMakerQGIS:
         obs_v="obs_snap_r2v",
         obs_r="obs",
         obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
+        outlet_obs_id=1,
+        path_sub_reg_outlets_v="#",
+        output_folder = '#'
     ):
         from addattributes.addattributestocatchments import add_attributes_to_catchments
 
@@ -364,4 +367,7 @@ class BasinMakerQGIS:
             obs_v="obs_snap_r2v",
             obs_r="obs",
             obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
+            outlet_obs_id=outlet_obs_id,
+            path_sub_reg_outlets_v=path_sub_reg_outlets_v,
+            output_folder = output_folder,
         )

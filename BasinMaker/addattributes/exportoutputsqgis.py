@@ -13,7 +13,7 @@ def export_files_to_output_folder(
     output_riv,
     output_cat,
     input_lake_path,
-    selected_basin_ids,
+    output_folder,
 ):
 
     QgsApplication.setPrefixPath(qgis_prefix_path, True)
@@ -49,7 +49,40 @@ def export_files_to_output_folder(
     )
 
     subinfo = Dbf_To_Dataframe(os.path.join(grassdb, input_cat + "_dis.shp"))
+    
+    
+    layer_cat = QgsVectorLayer(os.path.join(grassdb, input_cat + "_dis.shp"), "")
+    # add attribute to layer
+    layer_cat = qgis_vector_add_attributes(
+        processing,
+        context,
+        INPUT_Layer=layer_cat,
+        attribute_list=[
+            QgsField("centroid_x", QVariant.Double),
+            QgsField("centroid_y", QVariant.Double),
+        ],
+    )
+    
+    Selectfeatureattributes(
+        processing,
+        Input=layer_cat,
+        Output=os.path.join(output_folder, output_cat + ".shp"),
+        Attri_NM="SubId",
+        Values=subinfo[subinfo['SubId'] > 0]['SubId'].values,
+    )
+    Selectfeatureattributes(
+        processing,
+        Input=os.path.join(grassdb, input_riv + "_dis.shp"),
+        Output=os.path.join(output_folder, output_riv + ".shp"),
+        Attri_NM="SubId",
+        Values=subinfo[subinfo['SubId'] > 0]['SubId'].values,
+    )
 
+        
+    Add_centroid_to_feature(os.path.join(output_folder, output_cat + ".shp"), "centroid_x", "centroid_y")
+    
+    subinfo = Dbf_To_Dataframe(os.path.join(output_folder, output_cat + ".shp"))
+    
     if input_lake_path != "#":
         cl_lakeids = subinfo.loc[subinfo["IsLake"] == 1]["HyLakeId"].values
         ncl_lakeids = subinfo.loc[subinfo["IsLake"] == 2]["HyLakeId"].values
@@ -57,14 +90,14 @@ def export_files_to_output_folder(
         Selectfeatureattributes(
             processing,
             Input=input_lake_path,
-            Output=os.path.join(grassdb, "sl_connected_lake.shp"),
+            Output=os.path.join(output_folder, "sl_connected_lake.shp"),
             Attri_NM="Hylak_id",
             Values=cl_lakeids,
         )
         Selectfeatureattributes(
             processing,
             Input=input_lake_path,
-            Output=os.path.join(grassdb, "sl_non_connected_lake.shp"),
+            Output=os.path.join(output_folder, "sl_non_connected_lake.shp"),
             Attri_NM="Hylak_id",
             Values=ncl_lakeids,
         )
