@@ -1,0 +1,125 @@
+from processing_functions_raster_array import *
+from processing_functions_raster_grass import *
+from processing_functions_raster_qgis import *
+from processing_functions_vector_grass import *
+from processing_functions_vector_qgis import *
+from utilities import *
+import sqlite3
+from scipy.optimize import curve_fit
+from preprocessing.reprojectandclipvectorbyplyqgis import (
+    reproject_clip_vectors_by_polygon,
+)
+from addattributes.calculateqda import *
+
+
+def calculate_bankfull_width_depth_from_polyline(
+    grassdb,
+    grass_location,
+    qgis_prefix_path,
+    path_bkfwidthdepth,
+    bkfwd_attributes,
+    catchments,
+    catinfo,
+    mask,
+    k_in=-1,
+    c_in=-1,
+):
+    default_slope = 0.000012345
+    min_manning_n = 0.01
+    max_manning_n = 0.15
+    reproject_clip_vectors_by_polygon(
+        grassdb=grassdb,
+        grass_location=grass_location,
+        qgis_prefix_path=qgis_prefix_path,
+        mask=os.path.join(grassdb, mask + ".shp"),
+        path_polygon=path_bkfwidthdepth,
+        ply_name="bkf_width_depth",
+    )
+
+    if k_in == -1 and c_in == -1:
+        bkf_width_depth = Dbf_To_Dataframe(
+            os.path.join(grassdb, "bkf_width_depth" + ".shp")
+        )
+        da_q = bkf_width_depth[[bkfwd_attributes[3], bkfwd_attributes[2]]].values
+        k, c = return_k_and_c_in_q_da_relationship(da_q)
+    else:
+        k = k_in
+        c = c_in
+
+    import grass.script as grass
+    import grass.script.setup as gsetup
+    from grass.pygrass.modules import Module
+    from grass.pygrass.modules.shortcuts import general as g
+    from grass.pygrass.modules.shortcuts import raster as r
+    from grass.script import array as garray
+    from grass.script import core as gcore
+    from grass_session import Session
+
+    os.environ.update(
+        dict(GRASS_COMPRESS_NULLS="1", GRASS_COMPRESSOR="ZSTD", GRASS_VERBOSE="1")
+    )
+    PERMANENT = Session()
+    PERMANENT.open(gisdb=grassdb, location=grass_location, create_opts="")
+
+    con = sqlite3.connect(
+        os.path.join(grassdb, grass_location, "PERMANENT", "sqlite", "sqlite.db")
+    )
+    for i in range(0, len(catinfo)):
+        da = catinfo["DA"].values[i] / 1000 / 1000  # m2 to km2
+        catid = catinfo["SubId"].values[i]
+        if k > 0:
+            q = func_Q_DA(da, k, c)
+            catinfo.loc[i, "BkfWidth"] = 7.2 * q ** 0.5
+            catinfo.loc[i, "BkfDepth"] = 0.27 * q ** 0.3
+            catinfo.loc[i, "Q_Mean"] = q
+
+    # adjust channel parameters
+
+    catinfo_riv = catinfo.loc[catinfo["IsLake"] < 2]
+    Seg_IDS = catinfo_riv["Seg_ID"].values
+    Seg_IDS = np.unique(Seg_IDS)
+
+    for iseg in range(0, len(Seg_IDS)):
+        i_seg_id = Seg_IDS[iseg]
+        i_seg_info = catinfo_riv[catinfo_riv["Seg_ID"] == i_seg_id]
+        max_elve_seg = np.max(i_seg_info["Max_DEM"].values)
+        min_elve_seg = np.max(i_seg_info["Min_DEM"].values)
+        length_seg = np.sum(i_seg_info["RivLength"].values)
+        qmean_seg = np.average(i_seg_info["Q_Mean"].values)
+        width_seg = np.average(i_seg_info["BkfWidth"].values)
+        depth_Seg = np.average(i_seg_info["BkfDepth"].values)
+        slope_seg = (max_elve_seg - min_elve_seg) / length_seg
+        if slope_seg < 0.000000001:
+            slope_seg = default_slope  #### Needs to update later
+
+        n_seg = calculateChannaln(width_seg, depth_Seg, qmean_seg, slope_seg)
+
+        for i in range(0, len(i_seg_info)):
+            subid = i_seg_info["SubId"].values[i]
+            max_elve_rch = i_seg_info["Max_DEM"].values[i]
+            min_elve_rch = i_seg_info["Min_DEM"].values[i]
+            length_rch = i_seg_info["RivLength"].values[i]
+            qmean_rch = i_seg_info["Q_Mean"].values[i]
+            width_rch = i_seg_info["BkfWidth"].values[i]
+            depth_rch = i_seg_info["BkfDepth"].values[i]
+            slope_rch = (max_elve_seg - min_elve_seg) / length_rch
+
+            if slope_rch < 0.000000001:
+                slope_rch = slope_seg
+
+            n_rch = calculateChannaln(width_rch, depth_rch, qmean_rch, slope_rch)
+
+            if n_rch < min_manning_n or n_rch > max_manning_n:
+                if n_seg < min_manning_n or n_seg > max_manning_n:
+                    if n_rch < min_manning_n:
+                        n_rch = min_manning_n
+                    else:
+                        n_rch = max_manning_n
+                else:
+                    n_rch = n_seg
+
+            catinfo.loc[catinfo["SubId"] == subid, "RivSlope"] = slope_rch
+            catinfo.loc[catinfo["SubId"] == subid, "Ch_n"] = n_rch
+
+    PERMANENT.close()
+    return catinfo

@@ -7,6 +7,7 @@ from utilities import *
 import sqlite3
 import pandas as pd
 
+
 def calculate_flood_plain_manning_n(
     grassdb,
     grass_location,
@@ -14,7 +15,7 @@ def calculate_flood_plain_manning_n(
     catinfo,
     path_landuse="#",
     path_landuse_info="#",
-    riv_seg='#'
+    riv_seg="#",
 ):
 
     import grass.script as grass
@@ -37,7 +38,7 @@ def calculate_flood_plain_manning_n(
     )
 
     # read lanning's n and landuse type table
-    landuse_and_n_table =pd.read_csv(path_landuse_info,sep=',')
+    landuse_and_n_table = pd.read_csv(path_landuse_info, sep=",")
 
     write_grass_reclass_rule_from_table(
         landuse_and_n_table.values, os.path.join(grassdb, "landuse_manning_rules.csv")
@@ -58,7 +59,7 @@ def calculate_flood_plain_manning_n(
     grass_raster_r_mapcalc(
         grass, expression="landuse_Manning = float(landuse_Manning1)/1000"
     )
-    
+
     ### add averaged manning coefficent along the river network into river attribut table
     grass.run_command(
         "v.rast.stats",
@@ -77,7 +78,6 @@ def calculate_flood_plain_manning_n(
         catid = rivleninfo["Gridcode"].values[i]
         catrow = catinfo["SubId"] == catid
         catinfo.loc[catrow, "FloodP_n"] = rivleninfo["mn_average"].values[i]
-            
+
     PERMANENT.close()
     return catinfo
-

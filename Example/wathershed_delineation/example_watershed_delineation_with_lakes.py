@@ -42,7 +42,7 @@ basinmaker = BasinMakerQGIS(
 
 basinmaker.add_attributes_to_catchments_method(
     path_bkfwidthdepth=os.path.join(datafolder, "Bkfullwidth_depth.shp"),
-    bkfwd_attributes=["WIDTH", "DEPTH", "Q_Mean"],
+    bkfwd_attributes=["WIDTH", "DEPTH", "Q_Mean", "UP_AREA"],
     path_landuse=os.path.join(datafolder, "landuse.tif"),
     path_landuse_info=os.path.join(datafolder, "Landuse_info3.csv"),
     path_lake_ply=os.path.join(path_working_folder, "grassdb", "all_lakes.shp"),

@@ -130,6 +130,9 @@ def add_attributes_to_catchments(
         from addattributes.exportoutputsqgis import export_files_to_output_folder
         from addattributes.addgaugeattributesqgis import add_gauge_attributes
         from addattributes.calfloodmanningnqgis import calculate_flood_plain_manning_n
+        from addattributes.calbkfwidthdepthqgis import (
+            calculate_bankfull_width_depth_from_polyline,
+        )
 
         attr_template = create_catchments_attributes_template_table(
             grassdb=grassdb,
@@ -189,14 +192,28 @@ def add_attributes_to_catchments(
                 catinfo=attr_obs,
                 path_landuse=path_landuse,
                 path_landuse_info=path_landuse_info,
-                riv_seg = "nstr_nfinalcat_F",
+                riv_seg="nstr_nfinalcat_F",
             )
         else:
             attr_landuse = attr_obs
 
         attr_da = streamorderanddrainagearea(attr_landuse)
 
-        attr_ncl = update_non_connected_catchment_info(attr_da)
+        if path_bkfwidthdepth != "#":
+            attr_bkf = calculate_bankfull_width_depth_from_polyline(
+                grassdb=grassdb,
+                grass_location=grass_location,
+                qgis_prefix_path=qgis_prefix_path,
+                path_bkfwidthdepth=path_bkfwidthdepth,
+                bkfwd_attributes=bkfwd_attributes,
+                catchments=catchments,
+                catinfo=attr_da,
+                mask=mask,
+            )
+        else:
+            attr_bkf = attr_landuse
+
+        attr_ncl = update_non_connected_catchment_info(attr_bkf)
 
         join_pandas_table_to_vector_attributes(
             grassdb=grassdb,

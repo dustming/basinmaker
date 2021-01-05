@@ -185,7 +185,7 @@ def grass_raster_r_external(grass, input, output):
     -------
 
     """
-    grass.run_command("r.external", input=input, output=output,overwrite=True)
+    grass.run_command("r.external", input=input, output=output, overwrite=True)
 
 
 ###
