@@ -13,6 +13,7 @@ def export_files_to_output_folder(
     output_riv,
     output_cat,
     input_lake_path,
+    obs_v,
     output_folder,
 ):
 
@@ -101,5 +102,12 @@ def export_files_to_output_folder(
             Attri_NM="Hylak_id",
             Values=ncl_lakeids,
         )
-
+    if obs_v != '#':
+        Selectfeatureattributes(
+            processing,
+            Input=os.path.join(grassdb,obs_v+".shp"),
+            Output=os.path.join(output_folder, "obs_gauges.shp"),
+            Attri_NM="Obs_ID",
+            Values=subinfo.loc[subinfo["IsObs"] > 0]["IsObs"].values,
+        )        
     return

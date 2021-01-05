@@ -142,7 +142,7 @@ def add_obs_into_existing_watershed_delineation(
     grass.run_command(
         "v.out.ogr",
         input=obsname + "_snap_r2v",
-        output=os.path.join(grassdb, obsname + "_snap.shp"),
+        output=os.path.join(grassdb, obsname + "_snap_r2v.shp"),
         format="ESRI_Shapefile",
         overwrite=True,
     )

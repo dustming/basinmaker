@@ -226,7 +226,7 @@ def add_attributes_to_catchments(
                 mask=mask,
             )
         else:
-            attr_bkf = attr_landuse
+            attr_bkf = attr_da
         
         attr_ncl = update_non_connected_catchment_info(attr_bkf)
         
@@ -259,5 +259,6 @@ def add_attributes_to_catchments(
             output_riv=out_riv_name,
             output_cat=out_cat_name,
             input_lake_path=path_lake_ply,
-            output_folder = output_folder
+            obs_v="obs_snap_r2v",
+            output_folder = output_folder,
         )
