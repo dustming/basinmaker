@@ -141,21 +141,6 @@ class BasinMakerQGIS:
             "river_without_merging_lakes": "river_without_merging_lakes",
             "cat_use_default_acc": "cat_use_default_acc",
         }
-        # name of the result attribute table data type in grass format
-        self.attribte_type = "attribute_type.csvt"
-
-        # variable needs to be calcuated later
-
-        # raster cellsize
-        self.cellsize = -9.9999
-        # input crs projection id
-        self.crs_in = "#"
-        # numboer of columns in processing extent
-        self.ncols = -9999
-        # number of rows in processing extent
-        self.nrows = -9999
-        # a list indicate potential wrong river reaches
-        self.remove_str = []
 
     # first modulized methods
     def define_project_extent_method(
