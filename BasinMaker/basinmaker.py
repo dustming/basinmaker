@@ -347,7 +347,7 @@ class BasinMakerQGIS:
         obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
         outlet_obs_id=1,
         path_sub_reg_outlets_v="#",
-        output_folder = '#'
+        output_folder="#",
     ):
         from addattributes.addattributestocatchments import add_attributes_to_catchments
 
@@ -369,5 +369,24 @@ class BasinMakerQGIS:
             obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
             outlet_obs_id=outlet_obs_id,
             path_sub_reg_outlets_v=path_sub_reg_outlets_v,
-            output_folder = output_folder,
+            output_folder=output_folder,
+        )
+
+    def combine_catchments_covered_by_the_same_lake_method(
+        self,
+        OutputFolder="#",
+        Path_final_rivply="#",
+        Path_final_riv="#",
+        gis_platform="qgis",
+    ):
+        from postprocessing.postprocessingfunctions import (
+            combine_catchments_covered_by_the_same_lake,
+        )
+
+        combine_catchments_covered_by_the_same_lake(
+            OutputFolder=OutputFolder,
+            Path_final_rivply=Path_final_rivply,
+            Path_final_riv=Path_final_riv,
+            qgis_prefix_path=self.qgispp,
+            gis_platform=gis_platform,
         )

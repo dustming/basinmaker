@@ -1,3 +1,6 @@
+from utilities import *
+
+
 def add_attributes_to_catchments(
     input_geo_names,
     path_bkfwidthdepth="#",
@@ -17,73 +20,11 @@ def add_attributes_to_catchments(
     obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
     outlet_obs_id=1,
     path_sub_reg_outlets_v="#",
-    output_folder = '#'
+    output_folder="#",
 ):
-    columns = [
-        "SubId",
-        "DowSubId",
-        "RivSlope",
-        "RivLength",
-        "BasSlope",
-        "BasAspect",
-        "BasArea",
-        "BkfWidth",
-        "BkfDepth",
-        "IsLake",
-        "HyLakeId",
-        "LakeVol",
-        "LakeDepth",
-        "LakeArea",
-        "Laketype",
-        "IsObs",
-        "MeanElev",
-        "FloodP_n",
-        "Q_Mean",
-        "Ch_n",
-        "DA",
-        "Strahler",
-        "Seg_ID",
-        "Seg_order",
-        "Max_DEM",
-        "Min_DEM",
-        "DA_Obs",
-        "DA_error",
-        "Obs_NM",
-        "SRC_obs",
-    ]
 
-    coltypes = [
-        "Integer",
-        "Integer",
-        "Real",
-        "Real",
-        "Real",
-        "Real",
-        "Real",
-        "Real",
-        "Real",
-        "Integer",
-        "Integer",
-        "Real",
-        "Real",
-        "Real",
-        "Integer",
-        "Integer",
-        "Real",
-        "Real",
-        "Real",
-        "Real",
-        "Real",
-        "Integer",
-        "Integer",
-        "Integer",
-        "Real",
-        "Real",
-        "Real",
-        "Real",
-        "Character",
-        "Character",
-    ]
+    columns = COLUMN_NAMES_CONSTANT
+    coltypes = COLUMN_TYPES_CONSTANT
 
     if path_lake_ply != "#":
         dem = input_geo_names["dem"]
@@ -146,7 +87,7 @@ def add_attributes_to_catchments(
             columns=columns,
             catchments=catchments,
         )
-        
+
         attr_basic = calculate_basic_attributes(
             grassdb=grassdb,
             grass_location=grass_location,
@@ -161,7 +102,7 @@ def add_attributes_to_catchments(
             projection=projection,
             catinfo=attr_template,
         )
-        
+
         if path_lake_ply != "#":
             attr_lake = add_lake_attributes(
                 grassdb=grassdb,
@@ -175,7 +116,7 @@ def add_attributes_to_catchments(
             )
         else:
             attr_lake = attr_basic
-        
+
         if obs_r != "#":
             attr_obs = add_gauge_attributes(
                 grassdb=grassdb,
@@ -189,7 +130,7 @@ def add_attributes_to_catchments(
             )
         else:
             attr_obs = attr_lake
-        
+
         if outlet_obs_id > 0:
             attr_select = return_interest_catchments_info(
                 catinfo=attr_obs,
@@ -198,7 +139,7 @@ def add_attributes_to_catchments(
             )
         else:
             attr_select = attr_obs
-        
+
         if path_landuse != "#":
             attr_landuse = calculate_flood_plain_manning_n(
                 grassdb=grassdb,
@@ -211,9 +152,9 @@ def add_attributes_to_catchments(
             )
         else:
             attr_landuse = attr_select
-        
+
         attr_da = streamorderanddrainagearea(attr_landuse)
-        
+
         if path_bkfwidthdepth != "#":
             attr_bkf = calculate_bankfull_width_depth_from_polyline(
                 grassdb=grassdb,
@@ -227,9 +168,9 @@ def add_attributes_to_catchments(
             )
         else:
             attr_bkf = attr_da
-        
+
         attr_ncl = update_non_connected_catchment_info(attr_bkf)
-        
+
         join_pandas_table_to_vector_attributes(
             grassdb=grassdb,
             grass_location=grass_location,
@@ -239,7 +180,7 @@ def add_attributes_to_catchments(
             column_types=coltypes,
             columns_names=columns,
         )
-        
+
         join_pandas_table_to_vector_attributes(
             grassdb=grassdb,
             grass_location=grass_location,
@@ -260,5 +201,5 @@ def add_attributes_to_catchments(
             output_cat=out_cat_name,
             input_lake_path=path_lake_ply,
             obs_v="obs_snap_r2v",
-            output_folder = output_folder,
+            output_folder=output_folder,
         )

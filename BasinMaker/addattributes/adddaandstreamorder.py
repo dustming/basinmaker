@@ -170,3 +170,66 @@ def streamorderanddrainagearea(catinfoall):
     catinfoall.loc[mask, "DA"] = catinfo["DA"].values
 
     return catinfoall
+
+
+def update_topology(mapoldnew_info, UpdateStreamorder=1, UpdateSubId=1):
+    """Functions will update subid,downsubid, calcuate stream order and
+        update drainage area in the attribute table mapoldnew_info
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        mapoldnew_info
+    """
+
+    idx = mapoldnew_info.index
+
+    if UpdateSubId > 0:
+        for i in range(0, len(idx)):
+            nsubid = mapoldnew_info.loc[idx[i], "nsubid"]
+            subid = mapoldnew_info.loc[idx[i], "SubId"]
+            odownsubid = mapoldnew_info.loc[idx[i], "DowSubId"]
+
+            donsubidinfo = mapoldnew_info.loc[
+                mapoldnew_info["SubId"] == odownsubid
+            ].copy()
+
+            if len(donsubidinfo) > 0:
+                mapoldnew_info.loc[idx[i], "ndownsubid"] = donsubidinfo[
+                    "nsubid"
+                ].values[0]
+            else:
+                mapoldnew_info.loc[idx[i], "ndownsubid"] = -1
+
+        mapoldnew_info["Old_SubId"] = mapoldnew_info["SubId"].values
+        mapoldnew_info["Old_DowSubId"] = mapoldnew_info["DowSubId"].values
+        mapoldnew_info["SubId"] = mapoldnew_info["nsubid"].values
+
+        mapoldnew_info["DowSubId"] = mapoldnew_info["ndownsubid"].values
+
+    if UpdateStreamorder < 0:
+        return mapoldnew_info
+
+    mapoldnew_info_unique = mapoldnew_info.drop_duplicates("SubId", keep="first")
+
+    mapoldnew_info_unique = Streamorderanddrainagearea(mapoldnew_info_unique)
+
+    for i in range(0, len(mapoldnew_info_unique)):
+        isubid = mapoldnew_info_unique["SubId"].values[i]
+        mapoldnew_info.loc[
+            mapoldnew_info["SubId"] == isubid, "Strahler"
+        ] = mapoldnew_info_unique["Strahler"].values[i]
+        mapoldnew_info.loc[
+            mapoldnew_info["SubId"] == isubid, "Seg_ID"
+        ] = mapoldnew_info_unique["Seg_ID"].values[i]
+        mapoldnew_info.loc[
+            mapoldnew_info["SubId"] == isubid, "Seg_order"
+        ] = mapoldnew_info_unique["Seg_order"].values[i]
+        mapoldnew_info.loc[
+            mapoldnew_info["SubId"] == isubid, "DA"
+        ] = mapoldnew_info_unique["DA"].values[i]
+
+    return mapoldnew_info

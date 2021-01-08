@@ -50,8 +50,7 @@ def export_files_to_output_folder(
     )
 
     subinfo = Dbf_To_Dataframe(os.path.join(grassdb, input_cat + "_dis.shp"))
-    
-    
+
     layer_cat = QgsVectorLayer(os.path.join(grassdb, input_cat + "_dis.shp"), "")
     # add attribute to layer
     layer_cat = qgis_vector_add_attributes(
@@ -63,27 +62,28 @@ def export_files_to_output_folder(
             QgsField("centroid_y", QVariant.Double),
         ],
     )
-    
+
     Selectfeatureattributes(
         processing,
         Input=layer_cat,
         Output=os.path.join(output_folder, output_cat + ".shp"),
         Attri_NM="SubId",
-        Values=subinfo[subinfo['SubId'] > 0]['SubId'].values,
+        Values=subinfo[subinfo["SubId"] > 0]["SubId"].values,
     )
     Selectfeatureattributes(
         processing,
         Input=os.path.join(grassdb, input_riv + "_dis.shp"),
         Output=os.path.join(output_folder, output_riv + ".shp"),
         Attri_NM="SubId",
-        Values=subinfo[subinfo['SubId'] > 0]['SubId'].values,
+        Values=subinfo[subinfo["SubId"] > 0]["SubId"].values,
     )
 
-        
-    Add_centroid_to_feature(os.path.join(output_folder, output_cat + ".shp"), "centroid_x", "centroid_y")
-    
+    Add_centroid_to_feature(
+        os.path.join(output_folder, output_cat + ".shp"), "centroid_x", "centroid_y"
+    )
+
     subinfo = Dbf_To_Dataframe(os.path.join(output_folder, output_cat + ".shp"))
-    
+
     if input_lake_path != "#":
         cl_lakeids = subinfo.loc[subinfo["IsLake"] == 1]["HyLakeId"].values
         ncl_lakeids = subinfo.loc[subinfo["IsLake"] == 2]["HyLakeId"].values
@@ -102,12 +102,20 @@ def export_files_to_output_folder(
             Attri_NM="Hylak_id",
             Values=ncl_lakeids,
         )
-    if obs_v != '#':
+    if obs_v != "#":
         Selectfeatureattributes(
             processing,
-            Input=os.path.join(grassdb,obs_v+".shp"),
+            Input=os.path.join(grassdb, obs_v + ".shp"),
             Output=os.path.join(output_folder, "obs_gauges.shp"),
             Attri_NM="Obs_ID",
             Values=subinfo.loc[subinfo["IsObs"] > 0]["IsObs"].values,
-        )        
+        )
+
+    Clean_Attribute_Name(
+        os.path.join(output_folder, output_cat + ".shp"), COLUMN_NAMES_CONSTANT
+    )
+    Clean_Attribute_Name(
+        os.path.join(output_folder, output_riv + ".shp"), COLUMN_NAMES_CONSTANT
+    )
+
     return

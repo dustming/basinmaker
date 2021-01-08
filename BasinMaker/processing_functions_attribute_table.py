@@ -1945,3 +1945,45 @@ def Check_If_Lake_Have_Multi_OutLet(CL_Id, Str_Id, Routing_info):
             Lakes_WIth_Multi_Outlet.append(lake_id)
 
     return Lakes_WIth_Multi_Outlet, Remove_Str
+
+
+def change_attribute_values_for_catchments_covered_by_same_lake(finalrivply_info):
+    """Change attributes for catchments that covered by the same lake.
+    ----------
+
+    Notes
+    -------
+        For example, lake 'la' covering catchment a,b,c. the lake outlet catchment
+        is a. then this function will change attribute of b and c to a.
+    Returns:
+    -------
+        None,
+    """
+
+    sub_colnm = "SubId"
+    mapoldnew_info = finalrivply_info.copy(deep=True)
+    mapoldnew_info["nsubid"] = mapoldnew_info["SubId"].values
+    AllConnectLakeIDS = finalrivply_info["HyLakeId"].values
+    AllConnectLakeIDS = AllConnectLakeIDS[AllConnectLakeIDS > 0]
+    AllConnectLakeIDS = np.unique(AllConnectLakeIDS)
+
+    ### process connected lakes  merge polygons
+    for i in range(0, len(AllConnectLakeIDS)):
+        lakeid = AllConnectLakeIDS[i]
+        Lakesub_info = finalrivply_info.loc[finalrivply_info["HyLakeId"] == lakeid]
+        Lakesub_info = Lakesub_info.sort_values(["DA"], ascending=(False))
+        tsubid = Lakesub_info[sub_colnm].values[
+            0
+        ]  ### outlet subbasin id with highest acc
+        lakesubids = Lakesub_info[sub_colnm].values
+        if len(lakesubids) > 1:  ## only for connected lakes
+            mapoldnew_info = New_SubId_To_Dissolve(
+                subid=tsubid,
+                catchmentinfo=finalrivply_info,
+                mapoldnew_info=mapoldnew_info,
+                ismodifids=1,
+                modifiidin=lakesubids,
+                mainriv=finalrivply_info,
+                Islake=1,
+            )
+    return mapoldnew_info

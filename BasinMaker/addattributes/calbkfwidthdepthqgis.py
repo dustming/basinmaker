@@ -64,11 +64,11 @@ def calculate_bankfull_width_depth_from_polyline(
     con = sqlite3.connect(
         os.path.join(grassdb, grass_location, "PERMANENT", "sqlite", "sqlite.db")
     )
-    idx = catinfo.index 
+    idx = catinfo.index
     for i in range(0, len(idx)):
         idx_i = idx[i]
-        da = catinfo.loc[idx_i,"DA"] / 1000 / 1000  # m2 to km2
-        catid = catinfo.loc[idx_i,"SubId"]
+        da = catinfo.loc[idx_i, "DA"] / 1000 / 1000  # m2 to km2
+        catid = catinfo.loc[idx_i, "SubId"]
         if k > 0:
             q = func_Q_DA(da, k, c)
             catinfo.loc[idx_i, "BkfWidth"] = 7.2 * q ** 0.5
