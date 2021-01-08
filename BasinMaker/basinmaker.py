@@ -210,7 +210,7 @@ class BasinMakerQGIS:
         -------
         Outputs are following files
 
-        MASK                   : raster
+        mask                   : raster
             it is a mask raster stored in grass database, which indicate
             the PSE. The grass database is located at
             os.path.join(grassdb, grass_location)
@@ -252,7 +252,77 @@ class BasinMakerQGIS:
         mode="#",
         max_memroy=1024 * 4,
         gis_platform="qgis",
+        subreg_fdr_path="#",
+        subreg_acc_path="#",
+        subreg_str_r_path="#",
+        subreg_str_v_path="#",
+        fdr_path='#'
     ):
+        """Generate a subbasin delineation without considering lake
+
+        Function that used to Generate a subbasin delineation and river
+        network using user provied flow accumulation thresthold
+        without considering lake.
+
+        Parameters
+        ----------
+        accthresold       : float
+            It is the flow accumulation thresthold, used to determine
+            subbsains and river network. Increasing of accthresold will
+            increase the size of generated subbasins, reduce the number
+            subbasins and reduce the number of generated stream segments
+        mode              : string (required)
+            It is a string indicate which dataset will be used to delineate
+            watershed.
+            'usingdem'             : dem is used for delineation 
+            'usingfdr'             : flow direction data is used for delineation 
+            'usingsubreg'          : predefined subregion inputs is used for 
+                                     delineation 
+        max_memroy        : integer
+            It is the maximum memeory that allow to be used.
+        gis_platform      : string 
+            It is a string indicate with gis platform is used: 
+            'qgis'                : the basinmaker is running within QGIS
+            'arcgis'              : the basinmaker is running within ArcGIS
+        subreg_fdr_path   : string
+            It is a string indicate path of subregion flow direction dataset
+        subreg_acc_path   : string
+            It is a string indicate path of subregion flow accumlation dataset
+        subreg_str_r_path : string
+            It is a string indicate path of subregion stream raster flow 
+            direction dataset
+        subreg_str_v_path : string
+            It is a string indicate path of subregion stream vector datasets
+        fdr_path          : string
+            It is a string indicate path of flow direction dataset 
+                                      
+        Notes
+        -------
+        Outputs are following files
+
+        fdr_grass              : raster
+            it is a raster represent flow direction dataset, which is
+            using 1 - 8 to represent different directions
+        fdr_arcgis             : raster
+            it is a raster represent flow direction dataset, which is
+            using 1,2,4,...64,128 to represent different directions
+        str_v                  : vector
+            it is a river network in vector format
+        str_r                  : raster
+            it is a river network in raster format
+        cat_no_lake            : raster
+             it is the raster represent the delineated subbasins without
+             considering lakes
+        acc                    : raster
+             it is the raster represent the flow accumulation 
+                          
+        Returns:
+        -------
+           None
+
+        Examples
+        -------
+        """
         from delineationnolake.watdelineationwithoutlake import (
             watershed_delineation_without_lake,
         )
@@ -261,11 +331,11 @@ class BasinMakerQGIS:
             mode,
             input_geo_names=self.geofilenames,
             acc_thresold=acc_thresold,
-            fdr_path="#",
-            subreg_fdr_path="#",
-            subreg_acc_path="#",
-            subreg_str_r_path="#",
-            subreg_str_v_path="#",
+            fdr_path=fdr_path,
+            subreg_fdr_path=subreg_fdr_path,
+            subreg_acc_path=subreg_acc_path,
+            subreg_str_r_path=subreg_str_r_path,
+            subreg_str_v_path=subreg_str_v_path,
             fdr_arcgis=self.geofilenames["fdr_arcgis"],
             fdr_grass=self.geofilenames["fdr_grass"],
             str_r=self.geofilenames["str_r"],
@@ -278,6 +348,7 @@ class BasinMakerQGIS:
             qgis_prefix_path=self.qgispp,
             gis_platform=gis_platform,
         )
+
 
     def watershed_delineation_with_lakes_method(
         self,
