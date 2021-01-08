@@ -4,6 +4,83 @@ import numpy as np
 import pandas as pd
 
 
+def update_non_connected_catchment_info(catinfo):
+    routing_info = catinfo[["SubId", "DowSubId"]].astype("float").values
+    catinfo_non_connected = catinfo.loc[catinfo["IsLake"] == 2].copy()
+
+    catids_nc = catinfo_non_connected["SubId"].copy()
+
+    catinfo.loc[
+        catinfo["SubId"].isin(catids_nc), "RivLength"
+    ] = 0.0  ## no reiver length since not connected.
+
+    for i in range(0, len(catinfo_non_connected)):
+        c_subid = catinfo_non_connected["SubId"].values[i]
+        d_subid = catinfo_non_connected["DowSubId"].values[i]
+        d_sub_info = catinfo.loc[catinfo["SubId"] == d_subid].copy()
+
+        lc_subid = d_subid
+
+        Upstreamcats = defcat(routing_info, c_subid)  ### alll subuds
+
+        Up_cat_info = catinfo.loc[catinfo["SubId"].isin(Upstreamcats)].copy()
+
+        DA = sum(Up_cat_info["BasArea"].values)
+
+        catinfo.loc[catinfo["SubId"] == c_subid, "DA"] = DA
+
+        if len(d_sub_info) < 1:
+            continue
+
+        ## add nonconnected lake catchment area to downsubbasin drinage area
+        #        if d_sub_info['IsLake'].values[0]  != 2:
+        #            catinfo.loc[catinfo['SubId'] == d_subid,'DA'] = d_sub_info['DA'].values[0] + DA
+
+        while d_sub_info["IsLake"].values[0] == 2:
+
+            lc_subid_info = catinfo.loc[catinfo["SubId"] == lc_subid].copy()
+            d_subid = lc_subid_info["DowSubId"].values[0]
+            d_sub_info = catinfo.loc[catinfo["SubId"] == d_subid].copy()
+            if len(d_sub_info) < 1:
+                lc_subid = -1
+                break
+            lc_subid = d_subid
+
+        if lc_subid == -1:
+            continue
+
+        catinfo.loc[catinfo["SubId"] == c_subid, "RivSlope"] = d_sub_info[
+            "RivSlope"
+        ].values[0]
+        catinfo.loc[catinfo["SubId"] == c_subid, "Ch_n"] = d_sub_info["Ch_n"].values[0]
+        catinfo.loc[catinfo["SubId"] == c_subid, "Q_Mean"] = d_sub_info[
+            "Q_Mean"
+        ].values[0]
+        catinfo.loc[catinfo["SubId"] == c_subid, "BkfWidth"] = d_sub_info[
+            "BkfWidth"
+        ].values[0]
+        catinfo.loc[catinfo["SubId"] == c_subid, "BkfDepth"] = d_sub_info[
+            "BkfDepth"
+        ].values[0]
+        catinfo.loc[catinfo["SubId"] == c_subid, "Strahler"] = d_sub_info[
+            "Strahler"
+        ].values[0]
+        catinfo.loc[catinfo["SubId"] == c_subid, "Seg_ID"] = d_sub_info[
+            "Seg_ID"
+        ].values[0]
+        catinfo.loc[catinfo["SubId"] == c_subid, "Seg_order"] = d_sub_info[
+            "Seg_order"
+        ].values[0]
+        catinfo.loc[catinfo["SubId"] == c_subid, "Max_DEM"] = d_sub_info[
+            "Max_DEM"
+        ].values[0]
+        catinfo.loc[catinfo["SubId"] == c_subid, "Min_DEM"] = d_sub_info[
+            "Min_DEM"
+        ].values[0]
+
+    return catinfo
+
+
 def Calculate_Longest_flowpath(mainriv_merg_info):
     mainriv_merg_info_sort = mainriv_merg_info.sort_values(["DA"], ascending=(False))
     #    print(mainriv_merg_info_sort[['SubId','DowSubId','DA','Strahler','RivLength']])
@@ -470,6 +547,48 @@ def Streamorderanddrainagearea(catinfoall):
                     - catinfoall["DA_Obs"].values[i]
                 ) / catinfoall["DA_Obs"].values[i]
     return catinfoall
+
+
+def defcat(out, outletid):
+    """Functions will return upstream ids in out taht drainage
+        to outletid
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        Shedid
+    """
+    otsheds = np.full((1, 1), outletid)
+    Shedid = np.full((len(out) + 1, 1), -99999999999)
+    psid = 0
+    rout = copy.copy(out)
+    while len(otsheds) > 0:
+        noutshd = np.full((len(out) + 1, 1), -99999999999)
+        poshdid = 0
+        #        print("################################################a")
+        for i in range(0, len(otsheds)):
+            #            print(otsheds)
+            #            print(psid,outletid)
+            Shedid[psid] = otsheds[i]
+            #            print(Shedid[psid],otsheds[i])
+            #            print("##################################################b")
+            psid = psid + 1
+            irow = np.argwhere(rout[:, 1] == otsheds[i]).astype(int)
+            #            print(len(irow))
+            for j in range(0, len(irow)):
+                #### if the catchment id already processed skip
+                if rout[irow[j], 0] in Shedid:
+                    continue
+                noutshd[poshdid] = rout[irow[j], 0]
+                poshdid = poshdid + 1
+        noutshd = np.unique(noutshd)
+        otsheds = noutshd[noutshd >= 0]
+    Shedid = np.unique(Shedid)
+    Shedid = Shedid[Shedid >= 0]
+    return Shedid
 
 
 def Defcat(out, outletid):
