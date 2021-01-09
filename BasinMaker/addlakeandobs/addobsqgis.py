@@ -14,7 +14,6 @@ def add_obs_into_existing_watershed_delineation(
     qgis_prefix_path,
     input_geo_names,
     path_obsfile_in,
-    path_lakefile_in,
     obs_attributes=[],
     search_radius=100,
     pourpoints_with_lakes="#",
@@ -70,35 +69,12 @@ def add_obs_into_existing_watershed_delineation(
     )
 
     # obtain maximum current cat id
-    if path_lakefile_in == "#":
-        catids, temp = generate_stats_list_from_grass_raster(
-            grass, mode=1, input_a=pourpoints_with_lakes
-        )
-        maxcatid = max(catids)
-    else:
-        # find catchment without lake outlets
-        grass.run_command(
-            "r.stats.zonal",
-            base=cat_no_lake,
-            cover=acc,
-            method="max",
-            output="catnolake_maxacc",
-            overwrite=True,
-        )
-        ### Find the grid that equal to the max acc, thus this is the outlet grids
-        exp = "'%s' =if(%s == int('%s'),%s,null())" % (
-            "catnolake_OL",
-            acc,
-            "catnolake_maxacc",
-            cat_no_lake,
-        )
-        grass.run_command("r.mapcalc", expression=exp, overwrite=True)
 
-        catids, temp = generate_stats_list_from_grass_raster(
-            grass, mode=1, input_a="catnolake_OL"
-        )
-        maxcatid = max(catids)
+    catids, temp = generate_stats_list_from_grass_raster(
+        grass, mode=1, input_a=pourpoints_with_lakes
+    )
 
+    maxcatid = max(catids)
     # snap obs points
     grass_raster_r_stream_snap(
         grass,
@@ -194,7 +170,7 @@ def add_obs_into_existing_watershed_delineation(
     ####
 
     # remove obs point located in lake catchments
-    if path_lakefile_in != "#":
+    if lake_outflow_pourpoints != "#":
 
         ##### obtain lake id and correspond catchment id
         lake_id, cat_id = generate_stats_list_from_grass_raster(
@@ -230,9 +206,9 @@ def add_obs_into_existing_watershed_delineation(
         # combine obsoutlets and outlet from cat no lake
         exp = "'%s' =if(isnull(%s),null(),%s)" % (
             pourpoints_add_obs,
-            "catnolake_OL",
+            pourpoints_with_lakes,
             obsname,
-            "catnolake_OL",
+            pourpoints_with_lakes,
         )
         grass.run_command("r.mapcalc", expression=exp, overwrite=True)
 

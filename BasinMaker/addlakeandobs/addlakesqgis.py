@@ -23,11 +23,6 @@ def add_lakes_into_existing_watershed_delineation(
     lake_attributes,
     threshold_con_lake,
     threshold_non_con_lake,
-    alllake="all_lakes",
-    lake_boundary="lake_boundary",
-    connected_lake="connect_lake",
-    non_connected_lake="nonconnect_lake",
-    str_connected_lake="str_connected_lake",
     sl_connected_lake="sl_connected_lake",
     sl_non_connected_lake="sl_nonconnect_lake",
     sl_lakes="selected_lakes",
@@ -55,8 +50,43 @@ def add_lakes_into_existing_watershed_delineation(
     lake_inflow_pourpoints = Internal_Constant_Names["lake_inflow_pourpoints"]
     catchment_pourpoints_outside_lake = Internal_Constant_Names["catchment_pourpoints_outside_lake"]
     cat_add_lake_old_fdr =  Internal_Constant_Names["cat_add_lake_old_fdr"]
-    
+    str_connected_lake = Internal_Constant_Names["str_connected_lake"]
+    sl_str_connected_lake = Internal_Constant_Names["str_sl_connected_lake"]
+    alllake = Internal_Constant_Names["all_lakes"]
+    lake_boundary = Internal_Constant_Names["lake_boundary"]
+    connected_lake = Internal_Constant_Names["connect_lake"]
+    non_connected_lake = Internal_Constant_Names["nonconnect_lake"]    
+
+
     # prepropessing lakes inputs
+    if path_lakefile_in == '#':
+        import grass.script as grass
+        import grass.script.setup as gsetup
+        from grass.pygrass.modules import Module
+        from grass.pygrass.modules.shortcuts import general as g
+        from grass.pygrass.modules.shortcuts import raster as r
+        from grass.script import array as garray
+        from grass.script import core as gcore
+        from grass_session import Session
+
+        os.environ.update(
+            dict(GRASS_COMPRESS_NULLS="1", GRASS_COMPRESSOR="ZSTD", GRASS_VERBOSE="1")
+        )
+        PERMANENT = Session()
+        PERMANENT.open(gisdb=grassdb, location=grass_location, create_opts="")
+
+        con = sqlite3.connect(
+            os.path.join(grassdb, grass_location, "PERMANENT", "sqlite", "sqlite.db")
+        )   
+            
+        routing_info = generate_routing_info_of_catchments(
+            grass, con, cat=cat_no_lake, acc=acc, str=str_r, Name="cat1"
+        )
+        grass.run_command("g.copy", rast=("cat1_OL", pourpoints_with_lakes), overwrite=True)
+
+        return 
+
+
     preprocessing_lake_polygon(
         path_lakefile_in=path_lakefile_in,
         lake_attributes=lake_attributes,

@@ -466,6 +466,8 @@ class BasinMakerQGIS:
             ],
             snapped_obs_points=self.geofilenames["snapped_obs_points"],
             cat_use_default_acc=self.geofilenames["cat_use_default_acc"],
+            nfdr_arcgis = self.geofilenames["nfdr_arcgis"],
+            nfdr_grass = self.geofilenames["nfdr_grass"],
             max_memroy=max_memroy,
             grassdb=self.grassdb,
             grass_location=self.grass_location_geo,
