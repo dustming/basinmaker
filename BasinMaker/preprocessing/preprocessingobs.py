@@ -1,6 +1,5 @@
 import os
 
-
 def preprocessing_obs_point(
     mask,
     path_obsin_in="#",
@@ -29,7 +28,7 @@ def preprocessing_obs_point(
         from preprocessing.rasterizevectorsandloadtodbqgis import (
             rasterize_vectors_and_load_to_db,
         )
-        from processing_functions_vector_grass import grass_raster_v_import
+        from func.grassgis import grass_raster_v_import
 
         preprocessing_input_polygon(
             grassdb=grassdb,

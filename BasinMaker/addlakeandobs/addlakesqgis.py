@@ -1,9 +1,8 @@
-from processing_functions_raster_array import *
-from processing_functions_raster_grass import *
-from processing_functions_raster_qgis import *
-from processing_functions_vector_grass import *
-from processing_functions_vector_qgis import *
-from utilities import *
+from func.grassgis import *
+from func.qgis import *
+from func.pdtable import *
+from func.rarray import *
+from utilities.utilities import *
 from preprocessing.preprocessinglakeply import preprocessing_lake_polygon
 import sqlite3
 from addlakeandobs.definelaketypeqgis import (
@@ -48,7 +47,6 @@ def add_lakes_into_existing_watershed_delineation(
     cat_no_lake = input_geo_names["cat_no_lake"]
     mask = input_geo_names["mask"]
     dem = input_geo_names["dem"]
-
     # prepropessing lakes inputs
     preprocessing_lake_polygon(
         path_lakefile_in=path_lakefile_in,

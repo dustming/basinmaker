@@ -1,5 +1,5 @@
 def watershed_delineation_without_lake(
-    acc_thresold=-1,
+    acc_thresold,
     mode,
     input_geo_names,
     max_memroy=1024 * 4,

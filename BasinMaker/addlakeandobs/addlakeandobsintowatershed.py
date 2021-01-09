@@ -8,19 +8,12 @@ def add_lakes_and_obs_into_existing_watershed_delineation(
     threshold_con_lake=0,
     threshold_non_con_lake=0,
     search_radius=100,
-    alllake="all_lakes",
-    lake_boundary="lake_boundary",
-    connected_lake="connect_lake",
-    non_connected_lake="nonconnect_lake",
-    str_connected_lake="str_connected_lake",
     sl_connected_lake="sl_connected_lake",
     sl_non_connected_lake="sl_nonconnect_lake",
     sl_lakes="selected_lakes",
-    sl_str_connected_lake="str_sl_connected_lake",
-    nfdr_arcgis="nfdr_arcgis",
-    nfdr_grass="nfdr_grass",
     catchment_without_merging_lakes="catchment_without_merging_lakes",
     river_without_merging_lakes="river_without_merging_lakes",
+    snapped_obs_points = 'snapped_obs_points',
     max_memroy=1024 * 4,
     grassdb="#",
     grass_location="#",
@@ -30,6 +23,16 @@ def add_lakes_and_obs_into_existing_watershed_delineation(
     cat_add_lake = "cat_add_lake"
     lake_pourpoints = "lake_pourpoints"
     pourpoints_add_obs = "pourpoints_add_obs"
+    alllake="all_lakes"
+    lake_boundary="lake_boundary"
+    connected_lake="connect_lake"
+    non_connected_lake="nonconnect_lake"
+    str_connected_lake="str_connected_lake"
+    sl_str_connected_lake="str_sl_connected_lake"
+    nfdr_arcgis="nfdr_arcgis"
+    nfdr_grass="nfdr_grass"
+    pourpoints_add_obs="pourpoints_add_obs"
+    
     if gis_platform == "qgis":
         assert (
             grassdb != "#"
@@ -86,7 +89,7 @@ def add_lakes_and_obs_into_existing_watershed_delineation(
             path_sub_reg_outlets_v=path_sub_reg_outlets_v,
             max_memroy=1024 * 4,
             obsname="obs",
-            pourpoints_add_obs="pourpoints_add_obs",
+            pourpoints_add_obs=pourpoints_add_obs,
         )
     else:
         pourpoints_add_obs = lake_pourpoints
