@@ -900,5 +900,3 @@ def grass_raster_v_db_join(grass, map, column, other_table, other_column):
 
 
 ###
-
-

@@ -18,7 +18,11 @@ def define_pour_points_with_lakes(
     sl_connected_lake="sl_connected_lake",
     sl_str_connected_lake="sl_str_connected_lake",
     acc="acc",
-    lake_pourpoints="lake_pourpoints",
+    pourpoints_with_lakes= "pourpoints_with_lakes",
+    lake_inflow_pourpoints = "lake_inflow_pourpoints",
+    lake_outflow_pourpoints = "lake_outflow_pourpoints",
+    catchment_pourpoints_outside_lake = "catchment_pourpoints_outside_lake",
+
 ):
 
     # define catchment pourpoints and routing info
@@ -37,7 +41,7 @@ def define_pour_points_with_lakes(
         overwrite=True,
     )
     exp = "'%s' =if(%s == int('%s'),%s,null())" % (
-        "pourpoints_sl_lakes",
+        lake_outflow_pourpoints,
         acc,
         "sl_lakes_maxacc",
         sl_lakes,
@@ -91,9 +95,9 @@ def define_pour_points_with_lakes(
     )
 
     # remove cat outlet that within the lake
-    grass.run_command("g.copy", rast=("cat1_OL", "cat1_OL_outlake"), overwrite=True)
+    grass.run_command("g.copy", rast=("cat1_OL", catchment_pourpoints_outside_lake), overwrite=True)
     grass.run_command(
-        "r.null", map="cat1_OL_outlake", setnull=str_id_within_lakes, overwrite=True
+        "r.null", map=catchment_pourpoints_outside_lake, setnull=str_id_within_lakes, overwrite=True
     )
 
     # remove non lake inflow river segment
@@ -165,7 +169,7 @@ def define_pour_points_with_lakes(
     )
     ### Find the grid that equal to the max acc, thus this is the outlet grids
     exp = "'%s' =if(%s == int('%s'),%s,null())" % (
-        "lake_inflow_pt",
+        lake_inflow_pourpoints,
         "cat1_acc_riv",
         "extented_lake_inflow_seg_minacc",
         "extented_lake_inflow_seg",
@@ -175,18 +179,18 @@ def define_pour_points_with_lakes(
     #### create a unique id for overlaied lake and river
     grass.run_command(
         "r.cross",
-        input=["lake_inflow_pt", "cat1_OL_outlake", "pourpoints_sl_lakes"],
-        output=lake_pourpoints,
+        input=[lake_inflow_pourpoints, catchment_pourpoints_outside_lake, lake_outflow_pourpoints],
+        output=pourpoints_with_lakes,
         overwrite=True,
     )
 
-    exp = "%s = %s + 1" % (lake_pourpoints, lake_pourpoints)
+    exp = "%s = %s + 1" % (pourpoints_with_lakes, pourpoints_with_lakes)
     grass.run_command("r.mapcalc", expression=exp, overwrite=True)
 
     grass.run_command(
         "r.to.vect",
-        input=lake_pourpoints,
-        output=lake_pourpoints,
+        input=pourpoints_with_lakes,
+        output=pourpoints_with_lakes,
         type="point",
         overwrite=True,
         flags="v",
@@ -194,24 +198,24 @@ def define_pour_points_with_lakes(
 
     grass.run_command(
         "r.to.vect",
-        input="lake_inflow_pt",
-        output="lake_inflow_pt",
+        input=lake_inflow_pourpoints,
+        output=lake_inflow_pourpoints,
         type="point",
         overwrite=True,
         flags="v",
     )
     grass.run_command(
         "r.to.vect",
-        input="cat1_OL_outlake",
-        output="cat1_OL_outlake",
+        input=catchment_pourpoints_outside_lake,
+        output=catchment_pourpoints_outside_lake,
         type="point",
         overwrite=True,
         flags="v",
     )
     grass.run_command(
         "r.to.vect",
-        input="pourpoints_sl_lakes",
-        output="pourpoints_sl_lakes",
+        input=lake_outflow_pourpoints,
+        output=lake_outflow_pourpoints,
         type="point",
         overwrite=True,
         flags="v",

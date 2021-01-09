@@ -1,5 +1,6 @@
 import os
 
+
 def preprocessing_obs_point(
     mask,
     path_obsin_in="#",

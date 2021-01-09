@@ -35,11 +35,11 @@ def watershed_delineation_without_lake(
     mode              : string (required)
         It is a string indicate which dataset will be used to delineate
         watershed.
-        'usingdem'             : dem is used for delineation 
-        'usingfdr'             : flow direction data is used for delineation 
-        'usingsubreg'          : predefined subregion inputs is used for 
-    input_geo_names    : dict 
-        it is a dictionary that list the required input file names,should at 
+        'usingdem'             : dem is used for delineation
+        'usingfdr'             : flow direction data is used for delineation
+        'usingsubreg'          : predefined subregion inputs is used for
+    input_geo_names    : dict
+        it is a dictionary that list the required input file names,should at
         least indicate the name of following items:
 
         mask                   : raster
@@ -51,29 +51,29 @@ def watershed_delineation_without_lake(
             has the same extent with MASK. The grass database is located at
             os.path.join(grassdb, grass_location)
     max_memroy        : integer
-        It is the maximum memeory that allow to be used.         
+        It is the maximum memeory that allow to be used.
     grassdb           : path (required)
         It is a path to project grass database folder
     grass_location    : string (required)
         It is a string of grass location name
     qgis_prefix_path  : string (required)
         It is a string of qgis prefix path
-    gis_platform      : string 
-        It is a string indicate with gis platform is used: 
+    gis_platform      : string
+        It is a string indicate with gis platform is used:
         'qgis'                : the basinmaker is running within QGIS
         'arcgis'              : the basinmaker is running within ArcGIS
     fdr_path          : string
-        It is a string indicate path of flow direction dataset  
+        It is a string indicate path of flow direction dataset
     subreg_fdr_path   : string
         It is a string indicate path of subregion flow direction dataset
     subreg_acc_path   : string
         It is a string indicate path of subregion flow accumlation dataset
     subreg_str_r_path : string
-        It is a string indicate path of subregion stream raster flow 
+        It is a string indicate path of subregion stream raster flow
         direction dataset
     subreg_str_v_path : string
         It is a string indicate path of subregion stream vector datasets
-        
+
     Notes
     -------
     Outputs are following files
@@ -92,8 +92,8 @@ def watershed_delineation_without_lake(
          it is the raster represent the delineated subbasins without
          considering lakes
     acc                    : raster
-         it is the raster represent the flow accumulation 
-                      
+         it is the raster represent the flow accumulation
+
     Returns:
     -------
        None

@@ -3,7 +3,7 @@ from func.qgis import *
 from func.pdtable import *
 from func.rarray import *
 from utilities.utilities import *
-import os 
+import os
 from preprocessing.reprojectandclipvectorbyplyqgis import (
     reproject_clip_vectors_by_polygon,
 )

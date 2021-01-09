@@ -22,13 +22,13 @@ basinmaker = BasinMakerQGIS(
 #     outlet_pt=[-91.977, 48.25],
 #     buffer_distance=0.03,
 # )
-
-basinmaker.watershed_delineation_without_lake_method(
-    acc_thresold=500,
-    mode="usingdem",
-    max_memroy=1024 * 4,
-    gis_platform="qgis",
-)
+#
+# basinmaker.watershed_delineation_without_lake_method(
+#     acc_thresold=500,
+#     mode="usingdem",
+#     max_memroy=1024 * 4,
+#     gis_platform="qgis",
+# )
 
 
 basinmaker.watershed_delineation_add_lake_control_points(
@@ -54,7 +54,7 @@ basinmaker.watershed_delineation_add_lake_control_points(
 #     path_sub_reg_outlets_v="#",
 #     output_folder=path_output_folder,
 # )
-# 
+#
 # basinmaker.combine_catchments_covered_by_the_same_lake_method(
 #     OutputFolder=path_output_folder,
 #     Path_final_rivply=os.path.join(

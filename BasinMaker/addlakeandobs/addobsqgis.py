@@ -17,11 +17,13 @@ def add_obs_into_existing_watershed_delineation(
     path_lakefile_in,
     obs_attributes=[],
     search_radius=100,
-    lake_pourpoints="#",
+    pourpoints_with_lakes="#",
+    lake_outflow_pourpoints = '#',
+    cat_add_lake = '#',
     path_sub_reg_outlets_v="#",
     max_memroy=1024 * 4,
-    obsname="obs",
     pourpoints_add_obs="pourpoints_add_obs",
+    snapped_obs_points="snapped_obs_points",
 ):
 
     fdr_arcgis = input_geo_names["fdr_arcgis"]
@@ -32,6 +34,9 @@ def add_obs_into_existing_watershed_delineation(
     cat_no_lake = input_geo_names["cat_no_lake"]
     mask = input_geo_names["mask"]
     dem = input_geo_names["dem"]
+
+    # define internal file names
+    obsname = Internal_Constant_Names["obs"]
 
     # prepropessing lakes inputs
     preprocessing_obs_point(
@@ -67,7 +72,7 @@ def add_obs_into_existing_watershed_delineation(
     # obtain maximum current cat id
     if path_lakefile_in == "#":
         catids, temp = generate_stats_list_from_grass_raster(
-            grass, mode=1, input_a=lake_pourpoints
+            grass, mode=1, input_a=pourpoints_with_lakes
         )
         maxcatid = max(catids)
     else:
@@ -109,46 +114,46 @@ def add_obs_into_existing_watershed_delineation(
     grass_raster_v_to_raster(
         grass,
         input=obsname + "_snap",
-        output=obsname + "_snap",
+        output=snapped_obs_points,
         column="#",
         use="cat",
     )
     grass_raster_r_to_vect(
         grass,
-        input=obsname + "_snap",
-        output=obsname + "_snap_r2v",
+        input=snapped_obs_points,
+        output=snapped_obs_points,
         type="point",
         flags="v",
     )
     grass_raster_v_db_join(
         grass,
-        map=obsname + "_snap_r2v",
+        map=snapped_obs_points,
         column="cat",
         other_table=obsname + "t1",
         other_column="cat",
     )
     exp = obs_attributes[0] + "n int"
     grass.run_command(
-        "v.db.addcolumn", map=obsname + "_snap_r2v", columns=obs_attributes[0] + "n int"
+        "v.db.addcolumn", map=snapped_obs_points, columns=obs_attributes[0] + "n int"
     )
     grass.run_command(
         "v.db.update",
-        map=obsname + "_snap_r2v",
+        map=snapped_obs_points,
         column=obs_attributes[0] + "n",
         qcol=obs_attributes[0] + " + " + str(int(maxcatid) + 1),
     )
 
     grass.run_command(
         "v.out.ogr",
-        input=obsname + "_snap_r2v",
-        output=os.path.join(grassdb, obsname + "_snap_r2v.shp"),
+        input=snapped_obs_points,
+        output=os.path.join(grassdb, snapped_obs_points + ".shp"),
         format="ESRI_Shapefile",
         overwrite=True,
     )
 
     grass_raster_v_to_raster(
         grass,
-        input=obsname + "_snap_r2v",
+        input=snapped_obs_points,
         output=obsname + "1",
         column=obs_attributes[0] + "n",
         use="attr",
@@ -193,14 +198,14 @@ def add_obs_into_existing_watershed_delineation(
 
         ##### obtain lake id and correspond catchment id
         lake_id, cat_id = generate_stats_list_from_grass_raster(
-            grass, mode=2, input_a="pourpoints_sl_lakes", input_b=lake_pourpoints
+            grass, mode=2, input_a=lake_outflow_pourpoints, input_b=pourpoints_with_lakes
         )
 
         lake_new_cat_ids = np.column_stack((lake_id, cat_id))
 
         # remove obs that located within the lake catchments
         obsid, cat_add_lake_id = generate_stats_list_from_grass_raster(
-            grass, mode=2, input_a=obsname, input_b=lake_pourpoints
+            grass, mode=2, input_a=obsname, input_b=cat_add_lake
         )
         lakecat_obs = np.column_stack((cat_add_lake_id, obsid))
         obsinlake_mask = np.isin(lakecat_obs[:, 0], lake_new_cat_ids[:, 1])
@@ -215,9 +220,9 @@ def add_obs_into_existing_watershed_delineation(
         # combine obsoutlets and outlet from cat no lake
         exp = "'%s' =if(isnull(%s),%s,%s)" % (
             pourpoints_add_obs,
-            lake_pourpoints,
+            pourpoints_with_lakes,
             obsname,
-            lake_pourpoints,
+            pourpoints_with_lakes,
         )
         grass.run_command("r.mapcalc", expression=exp, overwrite=True)
 

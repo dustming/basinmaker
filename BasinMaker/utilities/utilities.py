@@ -2,6 +2,30 @@ import os
 
 from simpledbf import Dbf5
 
+# define internal file names
+Internal_Constant_Names = {
+    "cat_add_lake_old_fdr": "cat_add_lake_old_fdr",
+    "cat_add_lake": "cat_add_lake",
+    "pourpoints_add_obs": "pourpoints_add_obs",
+    "all_lakes": "all_lakes",
+    "lake_boundary": "lake_boundary",
+    "connect_lake": "connect_lake",
+    "nonconnect_lake": "nonconnect_lake",
+    "str_connected_lake": "str_connected_lake",
+    "str_sl_connected_lake": "str_sl_connected_lake",
+    "nfdr_arcgis": "nfdr_arcgis",
+    "nfdr_grass": "nfdr_grass",
+    "pourpoints_add_obs": "pourpoints_add_obs",
+    "obs": "obs",
+    "pourpoints_with_lakes":"pourpoints_with_lakes",
+    "lake_inflow_pourpoints":"lake_inflow_pourpoints",
+    "lake_outflow_pourpoints":"lake_outflow_pourpoints",
+    "catchment_pourpoints_outside_lake":"catchment_pourpoints_outside_lake",
+    "cat_use_default_acc":"cat_use_default_acc",
+}
+
+
+####
 COLUMN_NAMES_CONSTANT = [
     "SubId",
     "DowSubId",
