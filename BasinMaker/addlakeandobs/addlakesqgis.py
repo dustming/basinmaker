@@ -83,6 +83,7 @@ def add_lakes_into_existing_watershed_delineation(
             grass, con, cat=cat_no_lake, acc=acc, str=str_r, Name="cat1"
         )
         grass.run_command("g.copy", rast=("cat1_OL", pourpoints_with_lakes), overwrite=True)
+        grass.run_command("g.copy", rast=(fdr_grass, nfdr_grass), overwrite=True)
 
         return 
 

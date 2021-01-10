@@ -1,7 +1,10 @@
-from utilities import *
 import pandas as pd
 import numpy as np
-from processing_functions_vector_qgis import *
+from func.grassgis import *
+from func.qgis import *
+from func.pdtable import *
+from func.rarray import *
+from utilities.utilities import *
 
 
 def export_files_to_output_folder(
@@ -13,7 +16,7 @@ def export_files_to_output_folder(
     output_riv,
     output_cat,
     input_lake_path,
-    obs_v,
+    snapped_obs_points,
     output_folder,
 ):
 
@@ -87,25 +90,27 @@ def export_files_to_output_folder(
     if input_lake_path != "#":
         cl_lakeids = subinfo.loc[subinfo["IsLake"] == 1]["HyLakeId"].values
         ncl_lakeids = subinfo.loc[subinfo["IsLake"] == 2]["HyLakeId"].values
-
+        
+        if len(cl_lakeids) > 0:
+            Selectfeatureattributes(
+                processing,
+                Input=input_lake_path,
+                Output=os.path.join(output_folder, "sl_connected_lake.shp"),
+                Attri_NM="Hylak_id",
+                Values=cl_lakeids,
+            )
+        if len(ncl_lakeids) > 0:
+            Selectfeatureattributes(
+                processing,
+                Input=input_lake_path,
+                Output=os.path.join(output_folder, "sl_non_connected_lake.shp"),
+                Attri_NM="Hylak_id",
+                Values=ncl_lakeids,
+            )
+    if snapped_obs_points != "#" and len(subinfo.loc[subinfo["IsObs"] > 0]["IsObs"].values) > 0:
         Selectfeatureattributes(
             processing,
-            Input=input_lake_path,
-            Output=os.path.join(output_folder, "sl_connected_lake.shp"),
-            Attri_NM="Hylak_id",
-            Values=cl_lakeids,
-        )
-        Selectfeatureattributes(
-            processing,
-            Input=input_lake_path,
-            Output=os.path.join(output_folder, "sl_non_connected_lake.shp"),
-            Attri_NM="Hylak_id",
-            Values=ncl_lakeids,
-        )
-    if obs_v != "#":
-        Selectfeatureattributes(
-            processing,
-            Input=os.path.join(grassdb, obs_v + ".shp"),
+            Input=os.path.join(grassdb, snapped_obs_points + ".shp"),
             Output=os.path.join(output_folder, "obs_gauges.shp"),
             Attri_NM="Obs_ID",
             Values=subinfo.loc[subinfo["IsObs"] > 0]["IsObs"].values,

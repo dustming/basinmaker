@@ -1,9 +1,8 @@
-from processing_functions_raster_array import *
-from processing_functions_raster_grass import *
-from processing_functions_raster_qgis import *
-from processing_functions_vector_grass import *
-from processing_functions_vector_qgis import *
-from utilities import *
+from func.grassgis import *
+from func.qgis import *
+from func.pdtable import *
+from func.rarray import *
+from utilities.utilities import *
 import sqlite3
 from addlakeandobs.definelaketypeqgis import generate_stats_list_from_grass_raster
 from addlakeandobs.defineroutinginfoqgis import generate_routing_info_of_catchments

@@ -94,6 +94,8 @@ def add_lakes_and_obs_into_existing_watershed_delineation(
         grass_location=grass_location,
         qgis_prefix_path=qgis_prefix_path,
         input_geo_names=input_geo_names,
+        nfdr_grass = nfdr_grass,
+        sl_non_connected_lake = sl_non_connected_lake,
         path_lakefile_in=path_lakefile_in,
         pourpoints_add_obs=pourpoints_add_obs,
         catchment_without_merging_lakes=catchment_without_merging_lakes,

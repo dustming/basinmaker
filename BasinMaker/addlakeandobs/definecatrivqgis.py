@@ -19,6 +19,8 @@ def define_cat_and_riv_without_merge_lake_cats(
     grass_location,
     qgis_prefix_path,
     input_geo_names,
+    nfdr_grass,
+    sl_non_connected_lake,
     path_lakefile_in,
     pourpoints_add_obs,
     catchment_without_merging_lakes="catchment_without_merging_lakes",
@@ -33,8 +35,6 @@ def define_cat_and_riv_without_merge_lake_cats(
     acc = input_geo_names["acc"]
     mask = input_geo_names["mask"]
     dem = input_geo_names["dem"]
-    nfdr_grass = input_geo_names["nfdr_grass"]
-    non_connected_lake = input_geo_names["nonconnect_lake"]
 
     import grass.script as grass
     import grass.script.setup as gsetup
@@ -79,7 +79,7 @@ def define_cat_and_riv_without_merge_lake_cats(
         non_connected_lakeids, temp = generate_stats_list_from_grass_raster(
             grass,
             mode=1,
-            input_a=non_connected_lake,
+            input_a=sl_non_connected_lake,
         )
         non_cl_lake_catid = lakecat_ids[
             np.isin(lakecat_ids[:, 0], np.array(non_connected_lakeids)), 1

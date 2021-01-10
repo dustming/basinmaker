@@ -1,9 +1,8 @@
-from processing_functions_raster_array import *
-from processing_functions_raster_grass import *
-from processing_functions_raster_qgis import *
-from processing_functions_vector_grass import *
-from processing_functions_vector_qgis import *
-from utilities import *
+from func.grassgis import *
+from func.qgis import *
+from func.pdtable import *
+from func.rarray import *
+from utilities.utilities import *
 import sqlite3
 
 
@@ -13,8 +12,7 @@ def add_gauge_attributes(
     qgis_prefix_path,
     catinfo,
     pourpoints="Final_OL_v",
-    obs_v="obs_snap_r2v",
-    obs_r="obs",
+    snapped_obs_points = "#",
     obs_attributes=[],
 ):
 
@@ -37,13 +35,13 @@ def add_gauge_attributes(
         os.path.join(grassdb, grass_location, "PERMANENT", "sqlite", "sqlite.db")
     )
 
-    grass.run_command("v.what.rast", map=pourpoints, raster=obs_r, column="obsid_pour")
+    grass.run_command("v.what.rast", map=pourpoints, raster=snapped_obs_points, column="obsid_pour")
 
     grass_raster_v_db_join(
         grass,
         map=pourpoints,
         column="obsid_pour",
-        other_table=obs_v,
+        other_table=snapped_obs_points,
         other_column=obs_attributes[0] + "n",
     )
 

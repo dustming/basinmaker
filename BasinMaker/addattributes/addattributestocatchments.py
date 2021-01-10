@@ -1,4 +1,4 @@
-from utilities import *
+from utilities.utilities import *
 
 
 def add_attributes_to_catchments(
@@ -8,6 +8,7 @@ def add_attributes_to_catchments(
     path_landuse="#",
     path_landuse_info="#",
     path_lake_ply="#",
+    snapped_obs_points = '#',
     out_cat_name="catchment_without_merging_lakes",
     out_riv_name="river_without_merging_lakes",
     grassdb="#",
@@ -15,8 +16,6 @@ def add_attributes_to_catchments(
     qgis_prefix_path="#",
     gis_platform="qgis",
     projection="EPSG:3573",
-    obs_v="obs_snap_r2v",
-    obs_r="obs",
     obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
     outlet_obs_id=1,
     path_sub_reg_outlets_v="#",
@@ -26,27 +25,17 @@ def add_attributes_to_catchments(
     columns = COLUMN_NAMES_CONSTANT
     coltypes = COLUMN_TYPES_CONSTANT
 
-    if path_lake_ply != "#":
-        dem = input_geo_names["dem"]
-        mask = input_geo_names["mask"]
-        fdr = input_geo_names["nfdr_grass"]
-        acc = input_geo_names["acc"]
-        cat_use_default_acc = input_geo_names["cat_use_default_acc"]
-        river_r = input_geo_names["river_without_merging_lakes"]
-        river_v = input_geo_names["str_v"]
-        catchments = input_geo_names["catchment_without_merging_lakes"]
-        sl_connected_lake = input_geo_names["sl_connected_lake"]
-        sl_non_connected_lake = input_geo_names["sl_nonconnect_lake"]
-    else:
-        dem = input_geo_names["dem"]
-        mask = input_geo_names["mask"]
-        fdr = input_geo_names["fdr_grass"]
-        acc = input_geo_names["acc"]
-        cat_use_default_acc = input_geo_names["cat_no_lake"]
-        river_r = input_geo_names["str_r"]
-        river_v = input_geo_names["str_v"]
-        catchments = input_geo_names["cat_no_lake"]
-
+    dem = input_geo_names["dem"]
+    mask = input_geo_names["mask"]
+    fdr = input_geo_names["nfdr_grass"]
+    acc = input_geo_names["acc"]
+    cat_use_default_acc = input_geo_names["cat_use_default_acc"]
+    river_r = input_geo_names["river_without_merging_lakes"]
+    river_v = input_geo_names["str_v"]
+    catchments = input_geo_names["catchment_without_merging_lakes"]
+    sl_connected_lake = input_geo_names["sl_connected_lake"]
+    sl_non_connected_lake = input_geo_names["sl_nonconnect_lake"]
+    
     if gis_platform == "qgis":
         assert (
             grassdb != "#"
@@ -87,7 +76,7 @@ def add_attributes_to_catchments(
             columns=columns,
             catchments=catchments,
         )
-
+        
         attr_basic = calculate_basic_attributes(
             grassdb=grassdb,
             grass_location=grass_location,
@@ -102,7 +91,7 @@ def add_attributes_to_catchments(
             projection=projection,
             catinfo=attr_template,
         )
-
+        
         if path_lake_ply != "#":
             attr_lake = add_lake_attributes(
                 grassdb=grassdb,
@@ -116,21 +105,20 @@ def add_attributes_to_catchments(
             )
         else:
             attr_lake = attr_basic
-
-        if obs_r != "#":
+        
+        if snapped_obs_points != "#":
             attr_obs = add_gauge_attributes(
                 grassdb=grassdb,
                 grass_location=grass_location,
                 qgis_prefix_path=qgis_prefix_path,
                 pourpoints="Final_OL_v",
-                obs_v="obs_snap_r2v",
-                obs_r="obs",
-                obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
+                snapped_obs_points=snapped_obs_points,
+                obs_attributes=obs_attributes,
                 catinfo=attr_lake,
             )
         else:
             attr_obs = attr_lake
-
+        
         if outlet_obs_id > 0:
             attr_select = return_interest_catchments_info(
                 catinfo=attr_obs,
@@ -139,7 +127,7 @@ def add_attributes_to_catchments(
             )
         else:
             attr_select = attr_obs
-
+        
         if path_landuse != "#":
             attr_landuse = calculate_flood_plain_manning_n(
                 grassdb=grassdb,
@@ -152,9 +140,9 @@ def add_attributes_to_catchments(
             )
         else:
             attr_landuse = attr_select
-
+        
         attr_da = streamorderanddrainagearea(attr_landuse)
-
+        
         if path_bkfwidthdepth != "#":
             attr_bkf = calculate_bankfull_width_depth_from_polyline(
                 grassdb=grassdb,
@@ -168,9 +156,9 @@ def add_attributes_to_catchments(
             )
         else:
             attr_bkf = attr_da
-
+        
         attr_ncl = update_non_connected_catchment_info(attr_bkf)
-
+        
         join_pandas_table_to_vector_attributes(
             grassdb=grassdb,
             grass_location=grass_location,
@@ -180,7 +168,7 @@ def add_attributes_to_catchments(
             column_types=coltypes,
             columns_names=columns,
         )
-
+        
         join_pandas_table_to_vector_attributes(
             grassdb=grassdb,
             grass_location=grass_location,
@@ -200,6 +188,6 @@ def add_attributes_to_catchments(
             output_riv=out_riv_name,
             output_cat=out_cat_name,
             input_lake_path=path_lake_ply,
-            obs_v="obs_snap_r2v",
+            snapped_obs_points=snapped_obs_points,
             output_folder=output_folder,
         )

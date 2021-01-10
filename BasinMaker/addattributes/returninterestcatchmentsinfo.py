@@ -1,7 +1,11 @@
 import numpy as np
 import pandas as pd
 import copy
-from utilities import *
+from func.grassgis import *
+from func.qgis import *
+from func.pdtable import *
+from func.rarray import *
+from utilities.utilities import *
 from addattributes.adddaandstreamorder import defcat
 
 

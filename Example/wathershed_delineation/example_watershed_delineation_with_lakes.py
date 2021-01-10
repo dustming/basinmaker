@@ -40,20 +40,19 @@ basinmaker.watershed_delineation_add_lake_control_points(
     gis_platform="qgis",
 )
 
-# basinmaker.add_attributes_to_catchments_method(
-#     path_bkfwidthdepth=os.path.join(datafolder, "Bkfullwidth_depth.shp"),
-#     bkfwd_attributes=["WIDTH", "DEPTH", "Q_Mean", "UP_AREA"],
-#     path_landuse=os.path.join(datafolder, "landuse.tif"),
-#     path_landuse_info=os.path.join(datafolder, "Landuse_info3.csv"),
-#     path_lake_ply=os.path.join(path_working_folder, "grassdb", "all_lakes.shp"),
-#     gis_platform="qgis",
-#     obs_v="obs_snap_r2v",
-#     obs_r="obs",
-#     obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
-#     outlet_obs_id=1,
-#     path_sub_reg_outlets_v="#",
-#     output_folder=path_output_folder,
-# )
+basinmaker.add_attributes_to_catchments_method(
+    path_bkfwidthdepth=os.path.join(datafolder, "Bkfullwidth_depth.shp"),
+    bkfwd_attributes=["WIDTH", "DEPTH", "Q_Mean", "UP_AREA"],
+    path_landuse=os.path.join(datafolder, "landuse.tif"),
+    path_landuse_info=os.path.join(datafolder, "Landuse_info3.csv"),
+    path_lake_ply=os.path.join(path_working_folder, "grassdb", "all_lakes.shp"),
+    snapped_obs_points = 'snapped_obs_points',
+    gis_platform="qgis",
+    obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
+    outlet_obs_id=1,
+    path_sub_reg_outlets_v="#",
+    output_folder=path_output_folder,
+)
 #
 # basinmaker.combine_catchments_covered_by_the_same_lake_method(
 #     OutputFolder=path_output_folder,
