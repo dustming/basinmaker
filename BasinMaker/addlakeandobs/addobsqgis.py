@@ -16,9 +16,6 @@ def add_obs_into_existing_watershed_delineation(
     path_obsfile_in,
     obs_attributes=[],
     search_radius=100,
-    pourpoints_with_lakes="#",
-    lake_outflow_pourpoints = '#',
-    cat_add_lake = '#',
     path_sub_reg_outlets_v="#",
     max_memroy=1024 * 4,
     pourpoints_add_obs="pourpoints_add_obs",
@@ -33,6 +30,9 @@ def add_obs_into_existing_watershed_delineation(
     cat_no_lake = input_geo_names["cat_no_lake"]
     mask = input_geo_names["mask"]
     dem = input_geo_names["dem"]
+    pourpoints_with_lakes = input_geo_names["pourpoints_with_lakes"]
+    lake_outflow_pourpoints = input_geo_names["lake_outflow_pourpoints"]
+    cat_add_lake = input_geo_names["cat_add_lake"]
 
     # define internal file names
     obsname = Internal_Constant_Names["obs"]
@@ -174,7 +174,10 @@ def add_obs_into_existing_watershed_delineation(
 
         ##### obtain lake id and correspond catchment id
         lake_id, cat_id = generate_stats_list_from_grass_raster(
-            grass, mode=2, input_a=lake_outflow_pourpoints, input_b=pourpoints_with_lakes
+            grass,
+            mode=2,
+            input_a=lake_outflow_pourpoints,
+            input_b=pourpoints_with_lakes,
         )
 
         lake_new_cat_ids = np.column_stack((lake_id, cat_id))

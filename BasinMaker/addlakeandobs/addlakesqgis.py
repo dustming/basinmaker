@@ -32,10 +32,10 @@ def add_lakes_into_existing_watershed_delineation(
     cat_add_lake="cat_add_lake",
     pourpoints_with_lakes="pourpoints_with_lakes",
     cat_use_default_acc="cat_use_default_acc",
-    lake_outflow_pourpoints ='lake_outflow_pourpoints',
+    lake_outflow_pourpoints="lake_outflow_pourpoints",
     max_memroy=1024 * 4,
 ):
-    # define required input files names 
+    # define required input files names
     fdr_arcgis = input_geo_names["fdr_arcgis"]
     fdr_grass = input_geo_names["fdr_grass"]
     str_r = input_geo_names["str_r"]
@@ -44,22 +44,23 @@ def add_lakes_into_existing_watershed_delineation(
     cat_no_lake = input_geo_names["cat_no_lake"]
     mask = input_geo_names["mask"]
     dem = input_geo_names["dem"]
-    
+
     # define internal file names
     cat_use_default_acc = Internal_Constant_Names["cat_use_default_acc"]
     lake_inflow_pourpoints = Internal_Constant_Names["lake_inflow_pourpoints"]
-    catchment_pourpoints_outside_lake = Internal_Constant_Names["catchment_pourpoints_outside_lake"]
-    cat_add_lake_old_fdr =  Internal_Constant_Names["cat_add_lake_old_fdr"]
+    catchment_pourpoints_outside_lake = Internal_Constant_Names[
+        "catchment_pourpoints_outside_lake"
+    ]
+    cat_add_lake_old_fdr = Internal_Constant_Names["cat_add_lake_old_fdr"]
     str_connected_lake = Internal_Constant_Names["str_connected_lake"]
     sl_str_connected_lake = Internal_Constant_Names["str_sl_connected_lake"]
     alllake = Internal_Constant_Names["all_lakes"]
     lake_boundary = Internal_Constant_Names["lake_boundary"]
     connected_lake = Internal_Constant_Names["connect_lake"]
-    non_connected_lake = Internal_Constant_Names["nonconnect_lake"]    
-
+    non_connected_lake = Internal_Constant_Names["nonconnect_lake"]
 
     # prepropessing lakes inputs
-    if path_lakefile_in == '#':
+    if path_lakefile_in == "#":
         import grass.script as grass
         import grass.script.setup as gsetup
         from grass.pygrass.modules import Module
@@ -77,16 +78,17 @@ def add_lakes_into_existing_watershed_delineation(
 
         con = sqlite3.connect(
             os.path.join(grassdb, grass_location, "PERMANENT", "sqlite", "sqlite.db")
-        )   
-            
+        )
+
         routing_info = generate_routing_info_of_catchments(
             grass, con, cat=cat_no_lake, acc=acc, str=str_r, Name="cat1"
         )
-        grass.run_command("g.copy", rast=("cat1_OL", pourpoints_with_lakes), overwrite=True)
+        grass.run_command(
+            "g.copy", rast=("cat1_OL", pourpoints_with_lakes), overwrite=True
+        )
         grass.run_command("g.copy", rast=(fdr_grass, nfdr_grass), overwrite=True)
 
-        return 
-
+        return
 
     preprocessing_lake_polygon(
         path_lakefile_in=path_lakefile_in,
@@ -165,9 +167,9 @@ def add_lakes_into_existing_watershed_delineation(
         sl_str_connected_lake=sl_str_connected_lake,
         acc=acc,
         pourpoints_with_lakes=pourpoints_with_lakes,
-        lake_inflow_pourpoints = lake_inflow_pourpoints,
-        lake_outflow_pourpoints = lake_outflow_pourpoints,
-        catchment_pourpoints_outside_lake = catchment_pourpoints_outside_lake,
+        lake_inflow_pourpoints=lake_inflow_pourpoints,
+        lake_outflow_pourpoints=lake_outflow_pourpoints,
+        catchment_pourpoints_outside_lake=catchment_pourpoints_outside_lake,
     )
 
     grass.run_command(
@@ -240,7 +242,7 @@ def add_lakes_into_existing_watershed_delineation(
     grass.run_command(
         "v.out.ogr",
         input=catchment_pourpoints_outside_lake,
-        output=os.path.join(grassdb, catchment_pourpoints_outside_lake+".shp"),
+        output=os.path.join(grassdb, catchment_pourpoints_outside_lake + ".shp"),
         format="ESRI_Shapefile",
         overwrite=True,
         quiet="Ture",
@@ -248,16 +250,16 @@ def add_lakes_into_existing_watershed_delineation(
     grass.run_command(
         "v.out.ogr",
         input=pourpoints_with_lakes,
-        output=os.path.join(grassdb, pourpoints_with_lakes+".shp"),
+        output=os.path.join(grassdb, pourpoints_with_lakes + ".shp"),
         format="ESRI_Shapefile",
         overwrite=True,
         quiet="Ture",
     )
-    
+
     grass.run_command(
         "v.out.ogr",
         input=lake_outflow_pourpoints,
-        output=os.path.join(grassdb, lake_outflow_pourpoints+".shp"),
+        output=os.path.join(grassdb, lake_outflow_pourpoints + ".shp"),
         format="ESRI_Shapefile",
         overwrite=True,
         quiet="Ture",
@@ -265,7 +267,7 @@ def add_lakes_into_existing_watershed_delineation(
     grass.run_command(
         "v.out.ogr",
         input=lake_inflow_pourpoints,
-        output=os.path.join(grassdb, lake_inflow_pourpoints+".shp"),
+        output=os.path.join(grassdb, lake_inflow_pourpoints + ".shp"),
         format="ESRI_Shapefile",
         overwrite=True,
         quiet="Ture",

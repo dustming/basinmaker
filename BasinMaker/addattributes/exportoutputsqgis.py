@@ -11,14 +11,15 @@ def export_files_to_output_folder(
     grassdb,
     grass_location,
     qgis_prefix_path,
-    input_riv,
-    input_cat,
+    input_geo_names,
     output_riv,
     output_cat,
     input_lake_path,
-    snapped_obs_points,
     output_folder,
 ):
+    cat_riv_info = input_geo_names["cat_riv_info"]
+    cat_ply_info = input_geo_names["cat_ply_info"]
+    snapped_obs_points = input_geo_names["snapped_obs_points"]
 
     QgsApplication.setPrefixPath(qgis_prefix_path, True)
     Qgs = QgsApplication([], False)
@@ -36,25 +37,25 @@ def export_files_to_output_folder(
     processing.run(
         "native:dissolve",
         {
-            "INPUT": os.path.join(grassdb, input_riv + ".shp"),
+            "INPUT": os.path.join(grassdb, cat_riv_info + ".shp"),
             "FIELD": ["SubId"],
-            "OUTPUT": os.path.join(grassdb, input_riv + "_dis.shp"),
+            "OUTPUT": os.path.join(grassdb, cat_riv_info + "_dis.shp"),
         },
         context=context,
     )
     processing.run(
         "native:dissolve",
         {
-            "INPUT": os.path.join(grassdb, input_cat + ".shp"),
+            "INPUT": os.path.join(grassdb, cat_ply_info + ".shp"),
             "FIELD": ["SubId"],
-            "OUTPUT": os.path.join(grassdb, input_cat + "_dis.shp"),
+            "OUTPUT": os.path.join(grassdb, cat_ply_info + "_dis.shp"),
         },
         context=context,
     )
 
-    subinfo = Dbf_To_Dataframe(os.path.join(grassdb, input_cat + "_dis.shp"))
+    subinfo = Dbf_To_Dataframe(os.path.join(grassdb, cat_ply_info + "_dis.shp"))
 
-    layer_cat = QgsVectorLayer(os.path.join(grassdb, input_cat + "_dis.shp"), "")
+    layer_cat = QgsVectorLayer(os.path.join(grassdb, cat_ply_info + "_dis.shp"), "")
     # add attribute to layer
     layer_cat = qgis_vector_add_attributes(
         processing,
@@ -75,7 +76,7 @@ def export_files_to_output_folder(
     )
     Selectfeatureattributes(
         processing,
-        Input=os.path.join(grassdb, input_riv + "_dis.shp"),
+        Input=os.path.join(grassdb, cat_riv_info + "_dis.shp"),
         Output=os.path.join(output_folder, output_riv + ".shp"),
         Attri_NM="SubId",
         Values=subinfo[subinfo["SubId"] > 0]["SubId"].values,
@@ -90,7 +91,7 @@ def export_files_to_output_folder(
     if input_lake_path != "#":
         cl_lakeids = subinfo.loc[subinfo["IsLake"] == 1]["HyLakeId"].values
         ncl_lakeids = subinfo.loc[subinfo["IsLake"] == 2]["HyLakeId"].values
-        
+
         if len(cl_lakeids) > 0:
             Selectfeatureattributes(
                 processing,
@@ -107,7 +108,10 @@ def export_files_to_output_folder(
                 Attri_NM="Hylak_id",
                 Values=ncl_lakeids,
             )
-    if snapped_obs_points != "#" and len(subinfo.loc[subinfo["IsObs"] > 0]["IsObs"].values) > 0:
+    if (
+        snapped_obs_points != "#"
+        and len(subinfo.loc[subinfo["IsObs"] > 0]["IsObs"].values) > 0
+    ):
         Selectfeatureattributes(
             processing,
             Input=os.path.join(grassdb, snapped_obs_points + ".shp"),

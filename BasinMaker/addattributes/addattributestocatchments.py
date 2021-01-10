@@ -8,7 +8,7 @@ def add_attributes_to_catchments(
     path_landuse="#",
     path_landuse_info="#",
     path_lake_ply="#",
-    snapped_obs_points = '#',
+    snapped_obs_points="#",
     out_cat_name="catchment_without_merging_lakes",
     out_riv_name="river_without_merging_lakes",
     grassdb="#",
@@ -25,17 +25,11 @@ def add_attributes_to_catchments(
     columns = COLUMN_NAMES_CONSTANT
     coltypes = COLUMN_TYPES_CONSTANT
 
-    dem = input_geo_names["dem"]
-    mask = input_geo_names["mask"]
-    fdr = input_geo_names["nfdr_grass"]
-    acc = input_geo_names["acc"]
-    cat_use_default_acc = input_geo_names["cat_use_default_acc"]
-    river_r = input_geo_names["river_without_merging_lakes"]
-    river_v = input_geo_names["str_v"]
-    catchments = input_geo_names["catchment_without_merging_lakes"]
-    sl_connected_lake = input_geo_names["sl_connected_lake"]
-    sl_non_connected_lake = input_geo_names["sl_nonconnect_lake"]
-    
+    # local geo file names
+    cat_ply_info = Internal_Constant_Names["cat_ply_info"]
+    cat_riv_info = Internal_Constant_Names["cat_riv_info"]
+    outlet_pt_info = Internal_Constant_Names["outlet_pt_info"]
+
     if gis_platform == "qgis":
         assert (
             grassdb != "#"
@@ -74,51 +68,48 @@ def add_attributes_to_catchments(
             grassdb=grassdb,
             grass_location=grass_location,
             columns=columns,
-            catchments=catchments,
+            input_geo_names=input_geo_names,
         )
-        
+
         attr_basic = calculate_basic_attributes(
             grassdb=grassdb,
             grass_location=grass_location,
             qgis_prefix_path=qgis_prefix_path,
-            catchments=catchments,
-            river_r=river_r,
-            river_v=river_v,
-            dem=dem,
-            fdr=fdr,
-            acc=acc,
-            cat_use_default_acc=cat_use_default_acc,
+            input_geo_names=input_geo_names,
             projection=projection,
             catinfo=attr_template,
+            cat_ply_info=cat_ply_info,
+            cat_riv_info=cat_riv_info,
+            outlet_pt_info=outlet_pt_info,
         )
-        
+        input_geo_names["cat_ply_info"] = cat_ply_info
+        input_geo_names["cat_riv_info"] = cat_riv_info
+        input_geo_names["outlet_pt_info"] = outlet_pt_info
+
         if path_lake_ply != "#":
             attr_lake = add_lake_attributes(
                 grassdb=grassdb,
                 grass_location=grass_location,
                 qgis_prefix_path=qgis_prefix_path,
-                sl_connected_lake=sl_connected_lake,
-                sl_non_connected_lake=sl_non_connected_lake,
-                catchments=catchments,
+                input_geo_names=input_geo_names,
                 path_lake_ply=path_lake_ply,
                 catinfo=attr_basic,
             )
         else:
             attr_lake = attr_basic
-        
+
         if snapped_obs_points != "#":
             attr_obs = add_gauge_attributes(
                 grassdb=grassdb,
                 grass_location=grass_location,
                 qgis_prefix_path=qgis_prefix_path,
-                pourpoints="Final_OL_v",
-                snapped_obs_points=snapped_obs_points,
+                input_geo_names=input_geo_names,
                 obs_attributes=obs_attributes,
                 catinfo=attr_lake,
             )
         else:
             attr_obs = attr_lake
-        
+
         if outlet_obs_id > 0:
             attr_select = return_interest_catchments_info(
                 catinfo=attr_obs,
@@ -127,22 +118,22 @@ def add_attributes_to_catchments(
             )
         else:
             attr_select = attr_obs
-        
+
         if path_landuse != "#":
             attr_landuse = calculate_flood_plain_manning_n(
                 grassdb=grassdb,
                 grass_location=grass_location,
                 qgis_prefix_path=qgis_prefix_path,
                 catinfo=attr_select,
+                input_geo_names=input_geo_names,
                 path_landuse=path_landuse,
                 path_landuse_info=path_landuse_info,
-                riv_seg="nstr_nfinalcat_F",
             )
         else:
             attr_landuse = attr_select
-        
+
         attr_da = streamorderanddrainagearea(attr_landuse)
-        
+
         if path_bkfwidthdepth != "#":
             attr_bkf = calculate_bankfull_width_depth_from_polyline(
                 grassdb=grassdb,
@@ -150,30 +141,29 @@ def add_attributes_to_catchments(
                 qgis_prefix_path=qgis_prefix_path,
                 path_bkfwidthdepth=path_bkfwidthdepth,
                 bkfwd_attributes=bkfwd_attributes,
-                catchments=catchments,
                 catinfo=attr_da,
-                mask=mask,
+                input_geo_names=input_geo_names,
             )
         else:
             attr_bkf = attr_da
-        
+
         attr_ncl = update_non_connected_catchment_info(attr_bkf)
-        
+
         join_pandas_table_to_vector_attributes(
             grassdb=grassdb,
             grass_location=grass_location,
             qgis_prefix_path=qgis_prefix_path,
-            vector_name="nstr_nfinalcat_F",
+            vector_name=cat_ply_info,
             pd_table=attr_ncl,
             column_types=coltypes,
             columns_names=columns,
         )
-        
+
         join_pandas_table_to_vector_attributes(
             grassdb=grassdb,
             grass_location=grass_location,
             qgis_prefix_path=qgis_prefix_path,
-            vector_name="Net_cat_F",
+            vector_name=cat_riv_info,
             pd_table=attr_ncl,
             column_types=coltypes,
             columns_names=columns,
@@ -183,11 +173,9 @@ def add_attributes_to_catchments(
             grassdb=grassdb,
             grass_location=grass_location,
             qgis_prefix_path=qgis_prefix_path,
-            input_riv="nstr_nfinalcat_F",
-            input_cat="Net_cat_F",
+            input_geo_names=input_geo_names,
             output_riv=out_riv_name,
             output_cat=out_cat_name,
             input_lake_path=path_lake_ply,
-            snapped_obs_points=snapped_obs_points,
             output_folder=output_folder,
         )

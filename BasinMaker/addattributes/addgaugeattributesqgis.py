@@ -11,10 +11,12 @@ def add_gauge_attributes(
     grass_location,
     qgis_prefix_path,
     catinfo,
-    pourpoints="Final_OL_v",
-    snapped_obs_points = "#",
+    input_geo_names,
     obs_attributes=[],
 ):
+
+    outlet_pt_info = input_geo_names["outlet_pt_info"]
+    snapped_obs_points = input_geo_names["snapped_obs_points"]
 
     import grass.script as grass
     import grass.script.setup as gsetup
@@ -35,22 +37,28 @@ def add_gauge_attributes(
         os.path.join(grassdb, grass_location, "PERMANENT", "sqlite", "sqlite.db")
     )
 
-    grass.run_command("v.what.rast", map=pourpoints, raster=snapped_obs_points, column="obsid_pour")
+    grass.run_command(
+        "v.what.rast",
+        map=outlet_pt_info,
+        raster=snapped_obs_points,
+        column="obsid_pour",
+    )
 
     grass_raster_v_db_join(
         grass,
-        map=pourpoints,
+        map=outlet_pt_info,
         column="obsid_pour",
         other_table=snapped_obs_points,
         other_column=obs_attributes[0] + "n",
     )
 
     ### read catchment
-    sqlstat = "SELECT SubId,%s,%s,%s,%s FROM Final_OL_v" % (
+    sqlstat = "SELECT SubId,%s,%s,%s,%s FROM %s" % (
         obs_attributes[0],
         obs_attributes[1],
         obs_attributes[2],
         obs_attributes[3],
+        outlet_pt_info,
     )
     outletinfo = pd.read_sql_query(sqlstat, con)
     outletinfo = outletinfo.fillna(-9999)

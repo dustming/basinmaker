@@ -46,7 +46,7 @@ basinmaker.add_attributes_to_catchments_method(
     path_landuse=os.path.join(datafolder, "landuse.tif"),
     path_landuse_info=os.path.join(datafolder, "Landuse_info3.csv"),
     path_lake_ply=os.path.join(path_working_folder, "grassdb", "all_lakes.shp"),
-    snapped_obs_points = 'snapped_obs_points',
+    snapped_obs_points="snapped_obs_points",
     gis_platform="qgis",
     obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
     outlet_obs_id=1,

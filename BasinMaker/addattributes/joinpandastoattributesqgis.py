@@ -61,12 +61,3 @@ def join_pandas_table_to_vector_attributes(
         overwrite=True,
         quiet="Ture",
     )
-
-    grass.run_command(
-        "v.out.ogr",
-        input="Final_OL_v",
-        output=os.path.join(grassdb, "Final_OL_v.shp"),
-        format="ESRI_Shapefile",
-        overwrite=True,
-        quiet="Ture",
-    )

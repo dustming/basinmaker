@@ -12,16 +12,21 @@ def calculate_basic_attributes(
     grassdb,
     grass_location,
     qgis_prefix_path,
-    catchments,
-    river_r,
-    river_v,
-    dem,
-    fdr,
-    acc,
-    cat_use_default_acc,
+    input_geo_names,
     projection,
     catinfo,
+    cat_ply_info,
+    cat_riv_info,
+    outlet_pt_info,
 ):
+
+    catchments = input_geo_names["catchment_without_merging_lakes"]
+    river_r = input_geo_names["river_without_merging_lakes"]
+    river_v = input_geo_names["str_v"]
+    dem = input_geo_names["dem"]
+    fdr = input_geo_names["nfdr_grass"]
+    acc = input_geo_names["acc"]
+    cat_use_default_acc = input_geo_names["cat_use_default_acc"]
 
     import grass.script as grass
     import grass.script.setup as gsetup
@@ -62,24 +67,30 @@ def calculate_basic_attributes(
     grass.run_command(
         "r.to.vect",
         input=catchments,
-        output="Net_cat_F1",
+        output=cat_ply_info + "t1",
         type="area",
         overwrite=True,
     )
-    grass.run_command("v.db.addcolumn", map="Net_cat_F1", columns="GC_str VARCHAR(40)")
-    grass.run_command("v.db.addcolumn", map="Net_cat_F1", columns="Area_m double")
-    grass.run_command("v.db.update", map="Net_cat_F1", column="GC_str", qcol="value")
+    grass.run_command(
+        "v.db.addcolumn", map=cat_ply_info + "t1", columns="GC_str VARCHAR(40)"
+    )
+    grass.run_command(
+        "v.db.addcolumn", map=cat_ply_info + "t1", columns="Area_m double"
+    )
+    grass.run_command(
+        "v.db.update", map=cat_ply_info + "t1", column="GC_str", qcol="value"
+    )
     # dissolve based on gridcode
     grass.run_command(
         "v.dissolve",
-        input="Net_cat_F1",
+        input=cat_ply_info + "t1",
         column="GC_str",
-        output="Net_cat_F",
+        output=cat_ply_info,
         overwrite=True,
     )
 
-    grass.run_command("v.db.addcolumn", map="Net_cat_F", columns="Gridcode INT")
-    grass.run_command("v.db.update", map="Net_cat_F", column="Gridcode", qcol="GC_str")
+    grass.run_command("v.db.addcolumn", map=cat_ply_info, columns="Gridcode INT")
+    grass.run_command("v.db.update", map=cat_ply_info, column="Gridcode", qcol="GC_str")
 
     ## obtain a stream vector, segmentation based on new catchment polygon
     grass.run_command(
@@ -87,41 +98,39 @@ def calculate_basic_attributes(
         ainput=river_v,
         alayer=2,
         atype="line",
-        binput="Net_cat_F",
+        binput=cat_ply_info,
         operator="and",
-        output="nstr_nfinalcat",
+        output=cat_riv_info + "t1",
         overwrite=True,
     )
     grass.run_command(
         "v.out.ogr",
-        input="nstr_nfinalcat",
-        output=os.path.join(grassdb, "nstr_nfinalcat.shp"),
+        input=cat_riv_info + "t1",
+        output=os.path.join(grassdb, cat_riv_info + "t1" + ".shp"),
         format="ESRI_Shapefile",
         overwrite=True,
     )
     processing.run(
         "gdal:dissolve",
         {
-            "INPUT": os.path.join(grassdb, "nstr_nfinalcat.shp"),
+            "INPUT": os.path.join(grassdb, cat_riv_info + "t1" + ".shp"),
             "FIELD": "b_GC_str",
-            "OUTPUT": os.path.join(grassdb, "nstr_nfinalcat_F.shp"),
+            "OUTPUT": os.path.join(grassdb, cat_riv_info + ".shp"),
         },
     )
     grass.run_command(
         "v.import",
-        input=os.path.join(grassdb, "nstr_nfinalcat_F.shp"),
-        output="nstr_nfinalcat_F",
+        input=os.path.join(grassdb, cat_riv_info + ".shp"),
+        output=cat_riv_info,
         overwrite=True,
     )
 
-    grass.run_command("v.db.addcolumn", map="nstr_nfinalcat_F", columns="Gridcode INT")
+    grass.run_command("v.db.addcolumn", map=cat_riv_info, columns="Gridcode INT")
+    grass.run_command("v.db.addcolumn", map=cat_riv_info, columns="Length_m double")
     grass.run_command(
-        "v.db.addcolumn", map="nstr_nfinalcat_F", columns="Length_m double"
+        "v.db.update", map=cat_riv_info, column="Gridcode", qcol="b_GC_str"
     )
-    grass.run_command(
-        "v.db.update", map="nstr_nfinalcat_F", column="Gridcode", qcol="b_GC_str"
-    )
-    grass.run_command("v.db.dropcolumn", map="nstr_nfinalcat_F", columns=["b_GC_str"])
+    grass.run_command("v.db.dropcolumn", map=cat_riv_info, columns=["b_GC_str"])
 
     grass.run_command(
         "r.out.gdal",
@@ -164,20 +173,20 @@ def calculate_basic_attributes(
         "v.proj",
         location=grass_location,
         mapset="PERMANENT",
-        input="nstr_nfinalcat_F",
+        input=cat_riv_info,
         overwrite=True,
     )
     grass.run_command(
         "v.proj",
         location=grass_location,
         mapset="PERMANENT",
-        input="Net_cat_F",
+        input=cat_ply_info,
         overwrite=True,
     )
 
     grass.run_command(
         "v.to.db",
-        map="Net_cat_F",
+        map=cat_ply_info,
         option="area",
         columns="Area_m",
         units="meters",
@@ -185,7 +194,7 @@ def calculate_basic_attributes(
     )
     grass.run_command(
         "v.to.db",
-        map="nstr_nfinalcat_F",
+        map=cat_riv_info,
         option="length",
         columns="Length_m",
         units="meters",
@@ -204,7 +213,7 @@ def calculate_basic_attributes(
     ### calcuate averaged DEM in each subbasin
     grass.run_command(
         "v.rast.stats",
-        map="Net_cat_F",
+        map=cat_ply_info,
         raster="dem_proj",
         column_prefix="d",
         method="average",
@@ -212,14 +221,14 @@ def calculate_basic_attributes(
     ### calcuate averaged slope and aspect of each subbasin
     grass.run_command(
         "v.rast.stats",
-        map="Net_cat_F",
+        map=cat_ply_info,
         raster="slope",
         column_prefix="s",
         method="average",
     )
     grass.run_command(
         "v.rast.stats",
-        map="Net_cat_F",
+        map=cat_ply_info,
         raster="aspect",
         column_prefix="a",
         method="average",
@@ -227,7 +236,7 @@ def calculate_basic_attributes(
     ### calcuate minimum and maximum dem along the channel
     grass.run_command(
         "v.rast.stats",
-        map="nstr_nfinalcat_F",
+        map=cat_riv_info,
         raster="dem_proj",
         column_prefix="d",
         method=["minimum", "maximum"],
@@ -242,14 +251,14 @@ def calculate_basic_attributes(
         "v.proj",
         location=grass_location + "_proj",
         mapset="PERMANENT",
-        input="nstr_nfinalcat_F",
+        input=cat_riv_info,
         overwrite=True,
     )
     grass.run_command(
         "v.proj",
         location=grass_location + "_proj",
         mapset="PERMANENT",
-        input="Net_cat_F",
+        input=cat_ply_info,
         overwrite=True,
     )
 
@@ -289,16 +298,27 @@ def calculate_basic_attributes(
         str=river_r,
     )
 
+    grass.run_command("g.copy", vector=("Final_OL_v", outlet_pt_info), overwrite=True)
     ### update dataframe
+    grass.run_command(
+        "v.out.ogr",
+        input=outlet_pt_info,
+        output=os.path.join(grassdb, outlet_pt_info + ".shp"),
+        format="ESRI_Shapefile",
+        overwrite=True,
+        quiet="Ture",
+    )
 
-    sqlstat = "SELECT Gridcode, Length_m, d_minimum, d_maximum FROM nstr_nfinalcat_F"
+    sqlstat = "SELECT Gridcode, Length_m, d_minimum, d_maximum FROM %s" % (cat_riv_info)
     leninfo = pd.read_sql_query(sqlstat, con)
     ### read catchment
-    sqlstat = "SELECT Gridcode, Area_m,d_average,s_average,a_average FROM Net_cat_F"
+    sqlstat = "SELECT Gridcode, Area_m,d_average,s_average,a_average FROM %s" % (
+        cat_ply_info
+    )
     areainfo = pd.read_sql_query(sqlstat, con)
 
     ### read catchment
-    sqlstat = "SELECT SubId, DowSubId,ILSubIdmax,ILSubIdmin FROM Final_OL_v"
+    sqlstat = "SELECT SubId, DowSubId,ILSubIdmax,ILSubIdmin FROM %s" % (outlet_pt_info)
     outletinfo = pd.read_sql_query(sqlstat, con)
 
     outletinfo = outletinfo.fillna(-9999)

@@ -17,11 +17,14 @@ Internal_Constant_Names = {
     "nfdr_grass": "nfdr_grass",
     "pourpoints_add_obs": "pourpoints_add_obs",
     "obs": "obs",
-    "pourpoints_with_lakes":"pourpoints_with_lakes",
-    "lake_inflow_pourpoints":"lake_inflow_pourpoints",
-    "lake_outflow_pourpoints":"lake_outflow_pourpoints",
-    "catchment_pourpoints_outside_lake":"catchment_pourpoints_outside_lake",
-    "cat_use_default_acc":"cat_use_default_acc",
+    "pourpoints_with_lakes": "pourpoints_with_lakes",
+    "lake_inflow_pourpoints": "lake_inflow_pourpoints",
+    "lake_outflow_pourpoints": "lake_outflow_pourpoints",
+    "catchment_pourpoints_outside_lake": "catchment_pourpoints_outside_lake",
+    "cat_use_default_acc": "cat_use_default_acc",
+    "cat_ply_info": "cat_ply_info",
+    "cat_riv_info": "cat_riv_info",
+    "outlet_pt_info": "outlet_pt_info",
 }
 
 

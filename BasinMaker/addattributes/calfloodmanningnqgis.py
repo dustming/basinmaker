@@ -12,10 +12,12 @@ def calculate_flood_plain_manning_n(
     grass_location,
     qgis_prefix_path,
     catinfo,
+    input_geo_names,
     path_landuse="#",
     path_landuse_info="#",
-    riv_seg="#",
 ):
+
+    cat_riv_info = input_geo_names["cat_riv_info"]
 
     import grass.script as grass
     import grass.script.setup as gsetup
@@ -62,14 +64,14 @@ def calculate_flood_plain_manning_n(
     ### add averaged manning coefficent along the river network into river attribut table
     grass.run_command(
         "v.rast.stats",
-        map="nstr_nfinalcat_F",
+        map=cat_riv_info,
         raster="landuse_Manning",
         column_prefix="mn",
         method=["average"],
     )
 
     ### read length and maximum and minimum dem along channel
-    sqlstat = "SELECT Gridcode,mn_average FROM nstr_nfinalcat_F"
+    sqlstat = "SELECT Gridcode,mn_average FROM %s" % (cat_riv_info)
     rivleninfo = pd.read_sql_query(sqlstat, con)
     rivleninfo = rivleninfo.fillna(-9999)
 

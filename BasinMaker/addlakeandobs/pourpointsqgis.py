@@ -18,11 +18,10 @@ def define_pour_points_with_lakes(
     sl_connected_lake="sl_connected_lake",
     sl_str_connected_lake="sl_str_connected_lake",
     acc="acc",
-    pourpoints_with_lakes= "pourpoints_with_lakes",
-    lake_inflow_pourpoints = "lake_inflow_pourpoints",
-    lake_outflow_pourpoints = "lake_outflow_pourpoints",
-    catchment_pourpoints_outside_lake = "catchment_pourpoints_outside_lake",
-
+    pourpoints_with_lakes="pourpoints_with_lakes",
+    lake_inflow_pourpoints="lake_inflow_pourpoints",
+    lake_outflow_pourpoints="lake_outflow_pourpoints",
+    catchment_pourpoints_outside_lake="catchment_pourpoints_outside_lake",
 ):
 
     # define catchment pourpoints and routing info
@@ -95,9 +94,14 @@ def define_pour_points_with_lakes(
     )
 
     # remove cat outlet that within the lake
-    grass.run_command("g.copy", rast=("cat1_OL", catchment_pourpoints_outside_lake), overwrite=True)
     grass.run_command(
-        "r.null", map=catchment_pourpoints_outside_lake, setnull=str_id_within_lakes, overwrite=True
+        "g.copy", rast=("cat1_OL", catchment_pourpoints_outside_lake), overwrite=True
+    )
+    grass.run_command(
+        "r.null",
+        map=catchment_pourpoints_outside_lake,
+        setnull=str_id_within_lakes,
+        overwrite=True,
     )
 
     # remove non lake inflow river segment
@@ -179,7 +183,11 @@ def define_pour_points_with_lakes(
     #### create a unique id for overlaied lake and river
     grass.run_command(
         "r.cross",
-        input=[lake_inflow_pourpoints, catchment_pourpoints_outside_lake, lake_outflow_pourpoints],
+        input=[
+            lake_inflow_pourpoints,
+            catchment_pourpoints_outside_lake,
+            lake_outflow_pourpoints,
+        ],
         output=pourpoints_with_lakes,
         overwrite=True,
     )

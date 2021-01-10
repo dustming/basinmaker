@@ -18,8 +18,8 @@ def add_lakes_and_obs_into_existing_watershed_delineation(
     river_without_merging_lakes="river_without_merging_lakes",
     snapped_obs_points="#",
     cat_use_default_acc="#",
-    nfdr_arcgis = "#",
-    nfdr_grass = "#",
+    nfdr_arcgis="#",
+    nfdr_grass="#",
     max_memroy=1024 * 4,
     grassdb="#",
     grass_location="#",
@@ -31,7 +31,7 @@ def add_lakes_and_obs_into_existing_watershed_delineation(
     pourpoints_with_lakes = Internal_Constant_Names["pourpoints_with_lakes"]
     pourpoints_add_obs = Internal_Constant_Names["pourpoints_add_obs"]
     lake_outflow_pourpoints = Internal_Constant_Names["lake_outflow_pourpoints"]
-    
+
     if gis_platform == "qgis":
         assert (
             grassdb != "#"
@@ -66,9 +66,16 @@ def add_lakes_and_obs_into_existing_watershed_delineation(
         cat_add_lake=cat_add_lake,
         pourpoints_with_lakes=pourpoints_with_lakes,
         cat_use_default_acc=cat_use_default_acc,
-        lake_outflow_pourpoints = lake_outflow_pourpoints,
+        lake_outflow_pourpoints=lake_outflow_pourpoints,
         max_memroy=max_memroy,
     )
+    ## add variable into input geo names
+    input_geo_names["cat_add_lake"] = cat_add_lake
+    input_geo_names["pourpoints_with_lakes"] = pourpoints_with_lakes
+    input_geo_names["lake_outflow_pourpoints"] = lake_outflow_pourpoints
+    input_geo_names["sl_non_connected_lake"] = sl_non_connected_lake
+    input_geo_names["nfdr_grass"] = nfdr_grass
+
     if path_obsfile_in != "#":
         add_obs_into_existing_watershed_delineation(
             grassdb=grassdb,
@@ -78,9 +85,6 @@ def add_lakes_and_obs_into_existing_watershed_delineation(
             path_obsfile_in=path_obsfile_in,
             obs_attributes=obs_attributes,
             search_radius=search_radius,
-            pourpoints_with_lakes=pourpoints_with_lakes,
-            lake_outflow_pourpoints = lake_outflow_pourpoints,
-            cat_add_lake = cat_add_lake,
             path_sub_reg_outlets_v=path_sub_reg_outlets_v,
             max_memroy=max_memroy,
             pourpoints_add_obs=pourpoints_add_obs,
@@ -89,15 +93,14 @@ def add_lakes_and_obs_into_existing_watershed_delineation(
     else:
         pourpoints_add_obs = pourpoints_with_lakes
 
+    input_geo_names["pourpoints_add_obs"] = pourpoints_add_obs
+
     define_cat_and_riv_without_merge_lake_cats(
         grassdb=grassdb,
         grass_location=grass_location,
         qgis_prefix_path=qgis_prefix_path,
         input_geo_names=input_geo_names,
-        nfdr_grass = nfdr_grass,
-        sl_non_connected_lake = sl_non_connected_lake,
         path_lakefile_in=path_lakefile_in,
-        pourpoints_add_obs=pourpoints_add_obs,
         catchment_without_merging_lakes=catchment_without_merging_lakes,
         river_without_merging_lakes=river_without_merging_lakes,
         max_memroy=max_memroy,

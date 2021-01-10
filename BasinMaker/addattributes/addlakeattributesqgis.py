@@ -12,12 +12,14 @@ def add_lake_attributes(
     grassdb,
     grass_location,
     qgis_prefix_path,
-    sl_connected_lake,
-    sl_non_connected_lake,
-    catchments,
+    input_geo_names,
     path_lake_ply,
     catinfo,
 ):
+    catchments = input_geo_names["catchment_without_merging_lakes"]
+    sl_connected_lake = input_geo_names["sl_connected_lake"]
+    sl_non_connected_lake = input_geo_names["sl_nonconnect_lake"]
+    outlet_pt_info = input_geo_names["outlet_pt_info"]
 
     import grass.script as grass
     import grass.script.setup as gsetup
@@ -49,20 +51,20 @@ def add_lake_attributes(
 
     grass.run_command(
         "v.what.rast",
-        map="Final_OL_v",
+        map=outlet_pt_info,
         raster=sl_non_connected_lake,
         column="ncl",
     )
 
     grass.run_command(
         "v.what.rast",
-        map="Final_OL_v",
+        map=outlet_pt_info,
         raster="Connect_Lake_Cat_w_Lake_ID",
         column="cl",
     )
 
     ### read catchment
-    sqlstat = "SELECT SubId,ncl,cl FROM Final_OL_v"
+    sqlstat = "SELECT SubId,ncl,cl FROM %s" % (outlet_pt_info)
     outletinfo = pd.read_sql_query(sqlstat, con)
     outletinfo = outletinfo.fillna(-9999)
     lakeinfo = Dbf_To_Dataframe(path_lake_ply)

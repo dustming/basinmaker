@@ -10,10 +10,11 @@ from addlakeandobs.definelaketypeqgis import generate_stats_list_from_grass_rast
 def create_catchments_attributes_template_table(
     grassdb,
     grass_location,
-    catchments,
+    input_geo_names,
     columns,
 ):
 
+    catchments = input_geo_names["catchment_without_merging_lakes"]
     import grass.script as grass
     import grass.script.setup as gsetup
     from grass.pygrass.modules import Module

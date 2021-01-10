@@ -17,12 +17,13 @@ def calculate_bankfull_width_depth_from_polyline(
     qgis_prefix_path,
     path_bkfwidthdepth,
     bkfwd_attributes,
-    catchments,
     catinfo,
-    mask,
+    input_geo_names,
     k_in=-1,
     c_in=-1,
 ):
+    mask = input_geo_names["mask"]
+
     default_slope = 0.000012345
     min_manning_n = 0.01
     max_manning_n = 0.15
