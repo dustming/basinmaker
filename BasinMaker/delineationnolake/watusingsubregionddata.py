@@ -9,7 +9,7 @@ def delineate_watershed_no_lake_using_subregion_data(
     grassdb,
     grass_location,
     qgis_prefix_path,
-    mask,
+    input_geo_names,
     subreg_fdr_path,
     subreg_acc_path,
     subreg_str_v_path,
@@ -22,6 +22,7 @@ def delineate_watershed_no_lake_using_subregion_data(
     cat_no_lake,
     max_memroy,
 ):
+    mask = input_geo_names["mask"]
 
     import grass.script as grass
     import grass.script.setup as gsetup

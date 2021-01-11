@@ -9,7 +9,7 @@ def delineate_watershed_no_lake_using_fdr(
     grassdb,
     grass_location,
     qgis_prefix_path,
-    mask,
+    input_geo_names,
     fdr_path,
     acc_thresold,
     fdr_arcgis,
@@ -20,7 +20,8 @@ def delineate_watershed_no_lake_using_fdr(
     cat_no_lake,
     max_memroy,
 ):
-
+    mask = input_geo_names["mask"]
+    
     import grass.script as grass
     import grass.script.setup as gsetup
     from grass.pygrass.modules import Module

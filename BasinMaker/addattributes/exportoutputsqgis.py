@@ -14,13 +14,13 @@ def export_files_to_output_folder(
     input_geo_names,
     output_riv,
     output_cat,
-    input_lake_path,
     output_folder,
 ):
     cat_riv_info = input_geo_names["cat_riv_info"]
     cat_ply_info = input_geo_names["cat_ply_info"]
     snapped_obs_points = input_geo_names["snapped_obs_points"]
-
+    all_lakes = input_geo_names["all_lakes"]
+    
     QgsApplication.setPrefixPath(qgis_prefix_path, True)
     Qgs = QgsApplication([], False)
     Qgs.initQgis()
@@ -87,15 +87,15 @@ def export_files_to_output_folder(
     )
 
     subinfo = Dbf_To_Dataframe(os.path.join(output_folder, output_cat + ".shp"))
-
-    if input_lake_path != "#":
+        
+    if os.path.exists(os.path.join(grassdb,all_lakes+'.shp')):
         cl_lakeids = subinfo.loc[subinfo["IsLake"] == 1]["HyLakeId"].values
         ncl_lakeids = subinfo.loc[subinfo["IsLake"] == 2]["HyLakeId"].values
 
         if len(cl_lakeids) > 0:
             Selectfeatureattributes(
                 processing,
-                Input=input_lake_path,
+                Input=os.path.join(grassdb,all_lakes+'.shp'),
                 Output=os.path.join(output_folder, "sl_connected_lake.shp"),
                 Attri_NM="Hylak_id",
                 Values=cl_lakeids,
@@ -103,15 +103,14 @@ def export_files_to_output_folder(
         if len(ncl_lakeids) > 0:
             Selectfeatureattributes(
                 processing,
-                Input=input_lake_path,
+                Input=os.path.join(grassdb,all_lakes+'.shp'),
                 Output=os.path.join(output_folder, "sl_non_connected_lake.shp"),
                 Attri_NM="Hylak_id",
                 Values=ncl_lakeids,
             )
-    if (
-        snapped_obs_points != "#"
-        and len(subinfo.loc[subinfo["IsObs"] > 0]["IsObs"].values) > 0
-    ):
+            
+    if os.path.exists(os.path.join(grassdb,snapped_obs_points+'.shp')) and len(subinfo.loc[subinfo["IsObs"] > 0]["IsObs"].values) > 0:
+
         Selectfeatureattributes(
             processing,
             Input=os.path.join(grassdb, snapped_obs_points + ".shp"),

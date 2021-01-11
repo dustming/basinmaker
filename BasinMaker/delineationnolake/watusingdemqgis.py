@@ -9,8 +9,7 @@ def delineate_watershed_no_lake_using_dem(
     grassdb,
     grass_location,
     qgis_prefix_path,
-    mask,
-    dem,
+    input_geo_names,
     acc_thresold,
     fdr_arcgis,
     fdr_grass,
@@ -21,6 +20,9 @@ def delineate_watershed_no_lake_using_dem(
     max_memroy,
 ):
 
+    mask = input_geo_names["mask"]
+    dem = input_geo_names["dem"]
+    
     import grass.script as grass
     import grass.script.setup as gsetup
     from grass.pygrass.modules import Module

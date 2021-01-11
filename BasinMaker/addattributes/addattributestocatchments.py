@@ -7,8 +7,6 @@ def add_attributes_to_catchments(
     bkfwd_attributes=[],
     path_landuse="#",
     path_landuse_info="#",
-    path_lake_ply="#",
-    snapped_obs_points="#",
     out_cat_name="catchment_without_merging_lakes",
     out_riv_name="river_without_merging_lakes",
     grassdb="#",
@@ -16,7 +14,8 @@ def add_attributes_to_catchments(
     qgis_prefix_path="#",
     gis_platform="qgis",
     projection="EPSG:3573",
-    obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
+    obs_attributes=[],
+    lake_attributes=[],
     outlet_obs_id=1,
     path_sub_reg_outlets_v="#",
     output_folder="#",
@@ -86,19 +85,18 @@ def add_attributes_to_catchments(
         input_geo_names["cat_riv_info"] = cat_riv_info
         input_geo_names["outlet_pt_info"] = outlet_pt_info
 
-        if path_lake_ply != "#":
+        if len(lake_attributes) > 0:
             attr_lake = add_lake_attributes(
                 grassdb=grassdb,
                 grass_location=grass_location,
                 qgis_prefix_path=qgis_prefix_path,
                 input_geo_names=input_geo_names,
-                path_lake_ply=path_lake_ply,
                 catinfo=attr_basic,
             )
         else:
             attr_lake = attr_basic
 
-        if snapped_obs_points != "#":
+        if len(obs_attributes) > 0:
             attr_obs = add_gauge_attributes(
                 grassdb=grassdb,
                 grass_location=grass_location,
@@ -176,6 +174,5 @@ def add_attributes_to_catchments(
             input_geo_names=input_geo_names,
             output_riv=out_riv_name,
             output_cat=out_cat_name,
-            input_lake_path=path_lake_ply,
             output_folder=output_folder,
         )

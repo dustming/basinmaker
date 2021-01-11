@@ -102,9 +102,6 @@ def watershed_delineation_without_lake(
     -------
     """
 
-    mask = input_geo_names["mask"]
-    dem = input_geo_names["dem"]
-
     if gis_platform == "qgis":
         assert (
             grassdb != "#"
@@ -126,7 +123,6 @@ def watershed_delineation_without_lake(
         )
 
     if mode == "usingdem":
-        assert dem != "#", "The name of dem is needed to delineate watershed from dem"
         assert (
             acc_thresold > 0
         ), "the flow accumulation thresthold is needed to delineate watershed from dem"
@@ -155,54 +151,53 @@ def watershed_delineation_without_lake(
 
     if mode == "usingdem":
         delineate_watershed_no_lake_using_dem(
-            grassdb,
-            grass_location,
-            qgis_prefix_path,
-            mask,
-            dem,
-            acc_thresold,
-            fdr_arcgis,
-            fdr_grass,
-            str_r,
-            str_v,
-            acc,
-            cat_no_lake,
-            max_memroy,
+            grassdb=grassdb,
+            grass_location=grass_location,
+            qgis_prefix_path=qgis_prefix_path,
+            input_geo_names=input_geo_names,
+            acc_thresold=acc_thresold,
+            fdr_arcgis=fdr_arcgis,
+            fdr_grass=fdr_grass,
+            str_r=str_r,
+            str_v=str_v,
+            acc=acc,
+            cat_no_lake=cat_no_lake,
+            max_memroy=max_memroy,
         )
 
     if mode == "usingfdr":
         delineate_watershed_no_lake_using_fdr(
-            grassdb,
-            grass_location,
-            qgis_prefix_path,
-            mask,
-            fdr_path,
-            acc_thresold,
-            fdr_arcgis,
-            fdr_grass,
-            str_r,
-            str_v,
-            acc,
-            cat_no_lake,
-            max_memroy,
+            grassdb=grassdb,
+            grass_location=grass_location,
+            qgis_prefix_path=qgis_prefix_path,
+            input_geo_names=input_geo_names,
+            fdr_path=fdr_path,
+            acc_thresold=acc_thresold,
+            fdr_arcgis=fdr_arcgis,
+            fdr_grass=fdr_grass,
+            str_r=str_r,
+            str_v=str_v,
+            acc=acc,
+            cat_no_lake=cat_no_lake,
+            max_memroy=max_memroy,
         )
 
     if mode == "usingsubreg":
         delineate_watershed_no_lake_using_subregion_data(
-            grassdb,
-            grass_location,
-            qgis_prefix_path,
-            mask,
-            subreg_fdr_path,
-            subreg_acc_path,
-            subreg_str_v_path,
-            subreg_str_r_path,
-            acc_thresold,
-            fdr_arcgis,
-            fdr_grass,
-            str_r,
-            str_v,
-            acc,
-            cat_no_lake,
-            max_memroy,
+            grassdb=grassdb,
+            grass_location=grass_location,
+            qgis_prefix_path=qgis_prefix_path,
+            input_geo_names=input_geo_names,
+            subreg_fdr_path=subreg_fdr_path,
+            subreg_acc_path=subreg_acc_path,
+            subreg_str_v_path=subreg_str_v_path,
+            subreg_str_r_path=subreg_str_r_path,
+            acc_thresold=acc_thresold,
+            fdr_arcgis=fdr_arcgis,
+            fdr_grass=fdr_grass,
+            str_r=str_r,
+            str_v=str_v,
+            acc=acc,
+            cat_no_lake=cat_no_lake,
+            max_memroy=max_memroy,
         )

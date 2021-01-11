@@ -35,6 +35,7 @@ def define_cat_and_riv_without_merge_lake_cats(
     nfdr_grass = input_geo_names["nfdr_grass"]
     sl_non_connected_lake = input_geo_names["sl_non_connected_lake"]
     pourpoints_add_obs = input_geo_names["pourpoints_add_obs"]
+    lake_outflow_pourpoints = input_geo_names["lake_outflow_pourpoints"]
 
     import grass.script as grass
     import grass.script.setup as gsetup
@@ -71,7 +72,7 @@ def define_cat_and_riv_without_merge_lake_cats(
         )
         # find non connected lake catchments
         lakeid, catid = generate_stats_list_from_grass_raster(
-            grass, mode=2, input_a="pourpoints_sl_lakes", input_b="define_cat_and_riv_1"
+            grass, mode=2, input_a=lake_outflow_pourpoints, input_b="define_cat_and_riv_1"
         )
         lakecat_ids = np.column_stack((lakeid, catid))
 
@@ -81,6 +82,7 @@ def define_cat_and_riv_without_merge_lake_cats(
             mode=1,
             input_a=sl_non_connected_lake,
         )
+        
         non_cl_lake_catid = lakecat_ids[
             np.isin(lakecat_ids[:, 0], np.array(non_connected_lakeids)), 1
         ]
@@ -95,7 +97,7 @@ def define_cat_and_riv_without_merge_lake_cats(
         not_non_cl_lake_catids = all_catids[
             np.logical_not(np.isin(all_catids, non_cl_lake_catid))
         ]
-
+        
         grass.run_command(
             "g.copy", rast=("define_cat_and_riv_1", "non_cl_lake_cat"), overwrite=True
         )
