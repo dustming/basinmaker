@@ -1,4 +1,5 @@
 from utilities.utilities import *
+from func.pdtable import *
 
 
 def add_attributes_to_catchments(
@@ -46,10 +47,6 @@ def add_attributes_to_catchments(
             calculate_basic_attributes,
         )
         from addattributes.addlakeattributesqgis import add_lake_attributes
-        from addattributes.adddaandstreamorder import streamorderanddrainagearea
-        from addattributes.addnclcatchmentsinfo import (
-            update_non_connected_catchment_info,
-        )
         from addattributes.joinpandastoattributesqgis import (
             join_pandas_table_to_vector_attributes,
         )
@@ -58,9 +55,6 @@ def add_attributes_to_catchments(
         from addattributes.calfloodmanningnqgis import calculate_flood_plain_manning_n
         from addattributes.calbkfwidthdepthqgis import (
             calculate_bankfull_width_depth_from_polyline,
-        )
-        from addattributes.returninterestcatchmentsinfo import (
-            return_interest_catchments_info,
         )
 
         attr_template = create_catchments_attributes_template_table(

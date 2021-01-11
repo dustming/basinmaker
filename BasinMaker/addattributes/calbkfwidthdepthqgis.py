@@ -8,7 +8,6 @@ from scipy.optimize import curve_fit
 from preprocessing.reprojectandclipvectorbyplyqgis import (
     reproject_clip_vectors_by_polygon,
 )
-from addattributes.calculateqda import *
 
 
 def calculate_bankfull_width_depth_from_polyline(

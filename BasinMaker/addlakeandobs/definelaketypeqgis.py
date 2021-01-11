@@ -35,28 +35,3 @@ def define_connected_and_non_connected_lake_type(
     grass.run_command("r.mapcalc", expression=exp, overwrite=True)
 
     return
-
-
-def generate_stats_list_from_grass_raster(
-    grass, mode=1, input_a="P_Connect_Lake", input_b="str_grass_r", method="max"
-):
-
-    list_a = []
-    list_b = []
-    if mode == 1:
-        p = grass.pipe_command("r.category", map=input_a, separator=" ", quiet=True)
-    elif mode == 2:
-        p = grass.pipe_command(
-            "r.stats", input=[input_a, input_b], flags="n", quiet=True
-        )
-    else:
-        print("error mode opton did not exist")
-
-    for line in p.stdout:
-        line_str = line.decode("utf8").rstrip("\r\n").split(" ")
-        list_a.append(int(line_str[0]))
-        if mode != 1:
-            list_b.append(int(line_str[1]))
-    p.wait()
-
-    return list_a, list_b

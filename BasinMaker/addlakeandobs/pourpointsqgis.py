@@ -4,8 +4,6 @@ from func.pdtable import *
 from func.rarray import *
 from utilities.utilities import *
 import sqlite3
-from addlakeandobs.defineroutinginfoqgis import generate_routing_info_of_catchments
-from addlakeandobs.definelaketypeqgis import generate_stats_list_from_grass_raster
 
 
 def define_pour_points_with_lakes(

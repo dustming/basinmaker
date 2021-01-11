@@ -11,7 +11,6 @@ from addlakeandobs.definelaketypeqgis import (
 from addlakeandobs.filterlakesqgis import select_lakes_by_area_r
 from addlakeandobs.pourpointsqgis import define_pour_points_with_lakes
 from addlakeandobs.modifyfdr import modify_lakes_flow_direction
-from addlakeandobs.definelaketypeqgis import generate_stats_list_from_grass_raster
 
 
 def add_lakes_into_existing_watershed_delineation(

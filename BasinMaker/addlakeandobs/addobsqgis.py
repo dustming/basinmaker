@@ -5,7 +5,6 @@ from func.rarray import *
 from utilities.utilities import *
 import sqlite3
 from preprocessing.preprocessingobs import preprocessing_obs_point
-from addlakeandobs.definelaketypeqgis import generate_stats_list_from_grass_raster
 
 
 def add_obs_into_existing_watershed_delineation(
