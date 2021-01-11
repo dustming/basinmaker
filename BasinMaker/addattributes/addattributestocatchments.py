@@ -85,6 +85,7 @@ def add_attributes_to_catchments(
                 grass_location=grass_location,
                 qgis_prefix_path=qgis_prefix_path,
                 input_geo_names=input_geo_names,
+                lake_attributes = lake_attributes,
                 catinfo=attr_basic,
             )
         else:
