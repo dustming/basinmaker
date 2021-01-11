@@ -298,14 +298,6 @@ def calculate_basic_attributes(
 
     grass.run_command("g.copy", vector=("Final_OL_v", outlet_pt_info), overwrite=True)
     ### update dataframe
-    grass.run_command(
-        "v.out.ogr",
-        input=outlet_pt_info,
-        output=os.path.join(grassdb, outlet_pt_info + ".shp"),
-        format="ESRI_Shapefile",
-        overwrite=True,
-        quiet="Ture",
-    )
 
     sqlstat = "SELECT Gridcode, Length_m, d_minimum, d_maximum FROM %s" % (cat_riv_info)
     leninfo = pd.read_sql_query(sqlstat, con)

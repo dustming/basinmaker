@@ -43,15 +43,24 @@ def add_gauge_attributes(
         raster=snapped_obs_points,
         column="obsid_pour",
     )
-
+    
     grass_raster_v_db_join(
         grass,
         map=outlet_pt_info,
         column="obsid_pour",
         other_table=snapped_obs_points,
-        other_column=obs_attributes[0] + "n",
+        other_column="cat",
     )
 
+    grass.run_command(
+        "v.out.ogr",
+        input=outlet_pt_info,
+        output=os.path.join(grassdb, outlet_pt_info + ".shp"),
+        format="ESRI_Shapefile",
+        overwrite=True,
+        quiet="Ture",
+    )
+    
     ### read catchment
     sqlstat = "SELECT SubId,%s,%s,%s,%s FROM %s" % (
         obs_attributes[0],
