@@ -609,6 +609,50 @@ class BasinMakerQGIS:
         Path_final_riv="#",
         gis_platform="qgis",
     ):
+        """Define final lake river routing structure
+
+        Generate the final lake river routing structure by merging subbasin
+        polygons that are covered by the same lake.
+        The input are the catchment polygons and river segements
+        before merging for lakes. The input files can be output of
+        any of following functions:
+        SelectLakes, Select_Routing_product_based_SubId,
+        Customize_Routing_Topology,RoutingNetworkTopologyUpdateToolset_riv
+        The result is the final catchment polygon that ready to be used for
+        hydrological modeling
+
+        Parameters
+        ----------
+        OutputFolder                   : string
+            Folder name that stores generated extracted routing product
+        Path_final_riv_ply             : string
+            Path to the catchment polygon which is the routing product
+            before merging lakes catchments and need to be processed before
+            used. It is the input for simplify the routing product based
+            on lake area or drianage area.
+            routing product and can be directly used.
+        Path_final_riv                 : string
+            Path to the river polyline which is the routing product
+            before merging lakes catchments and need to be processed before
+            used. It is the input for simplify the routing product based
+            on lake area or drianage area.
+
+        Notes
+        -------
+        This function has no return values, instead will generate following
+        files. They are catchment polygons and river polylines that can be
+        used for hydrological modeling.
+        os.path.join(OutputFolder,'finalcat_info.shp')
+        os.path.join(OutputFolder,'finalcat_info_riv.shp')
+
+        Returns:
+        -------
+        None
+
+        Examples
+        -------
+
+        """
         from postprocessing.postprocessingfunctions import (
             combine_catchments_covered_by_the_same_lake,
         )
@@ -634,6 +678,74 @@ class BasinMakerQGIS:
         OutputFolder="#",
         gis_platform="qgis",
     ):
+        """Simplify the routing product by lake area
+
+        Function that used to simplify the routing product by user
+        provided lake area thresthold.
+        The input catchment polygons is the routing product before
+        merging for lakes. It is provided with the routing product.
+        The result is the simplified catchment polygons. But
+        result from this fuction still not merging catchment
+        covering by the same lake. Thus, The result generated
+        from this tools need further processed by
+        Define_Final_Catchment, or can be further processed by
+        Customize_Routing_Topology
+
+        Parameters
+        ----------
+
+        Path_final_riv_ply             : string
+            Path to the catchment polygon which is the routing product
+            before merging lakes catchments and need to be processed before
+            used. It is the input for simplify the routing product based
+            on lake area or drianage area.
+        Path_final_riv                 : string
+            Path to the river polyline which is the routing product
+            before merging lakes catchments and need to be processed before
+            used. It is the input for simplify the routing product based
+            on lake area or drianage area.
+        Path_Con_Lake_ply              : string
+            Path to a connected lake polygon. Connected lakes are lakes that
+            are connected by Path_final_riv.
+        Path_NonCon_Lake_ply           : string
+            Path to a non connected lake polygon. Connected lakes are lakes
+            that are not connected by Path_final_riv.
+        Thres_Area_Conn_Lakes          : float (optional)
+            It is the lake area threshold for connated lakes, in km2
+        Thres_Area_Non_Conn_Lakes      : float (optional)
+            It is the lake area threshold for non connated lakes, in km2
+        Selection_Method               : string
+            It is a string indicate lake selection methods
+            "ByArea" means lake in the routing product will be selected based
+            on two lake area thresthold Thres_Area_Conn_Lakes and
+            Thres_Area_Non_Conn_Lakes
+            "ByLakelist" means lake in the routing product will be selected
+            based on user provided hydrolake id, in Selected_Lake_List_in
+        Selected_Lake_List_in          : list
+            A list of lake ids that will be keeped in the routing product.
+            Lakes not in the list will be removed from routing product.
+        OutputFolder                   : string
+            Folder name that stores generated extracted routing product
+
+        Notes
+        -------
+        This function has no return values, instead will generate following
+        files. The output tpye will be the same as inputs, but the routing
+        network will be simplified by removing lakes.
+
+        os.path.join(OutputFolder,os.path.basename(Path_final_riv_ply))
+        os.path.join(OutputFolder,os.path.basename(Path_final_riv))
+        os.path.join(OutputFolder,os.path.basename(Path_Con_Lake_ply))
+        os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply))
+
+        Returns:
+        -------
+        None
+
+        Examples
+        -------
+
+        """
         from postprocessing.postprocessingfunctions import (
             simplify_routing_structure_by_filter_lakes,
         )
@@ -663,6 +775,63 @@ class BasinMakerQGIS:
         gis_platform="qgis",
         qgis_prefix_path="#",
     ):
+        """Simplify the routing product by drainage area
+
+        Function that used to simplify the routing product by
+        using user provided minimum subbasin drainage area.
+        The input catchment polygons are routing product before
+        merging for lakes. It is provided with routing product.
+        The result is the simplified catchment polygons. But
+        result from this fuction still not merging catchment
+        covering by the same lake. Thus, The result generated
+        from this tools need further processed by
+        Define_Final_Catchment, or can be further processed by
+        SelectLakes
+
+        Parameters
+        ----------
+
+        Path_final_riv_ply             : string
+            Path to the catchment polygon which is the routing product
+            before merging lakes catchments and need to be processed before
+            used. It is the input for simplify the routing product based
+            on lake area or drianage area.
+        Path_final_riv                 : string
+            Path to the river polyline which is the routing product
+            before merging lakes catchments and need to be processed before
+            used. It is the input for simplify the routing product based
+            on lake area or drianage area.
+        Path_Con_Lake_ply              : string
+            Path to a connected lake polygon. Connected lakes are lakes that
+            are connected by Path_final_riv.
+        Path_NonCon_Lake_ply           : string
+            Path to a non connected lake polygon. Connected lakes are lakes
+            that are not connected by Path_final_riv.
+        Area_Min                       : float
+            The minimum drainage area of each catchment in km2
+        OutputFolder                   : string
+            Folder name that stores generated simplified routing product
+
+        Notes
+        -------
+        This function has no return values, instead will generate following
+        files. The output tpye will be the same as inputs, but the routing
+        network will be simplified by increase subbasin size, reduce
+        number of subbasins and number of river segments.
+
+        os.path.join(OutputFolder,os.path.basename(Path_final_riv_ply))
+        os.path.join(OutputFolder,os.path.basename(Path_final_riv))
+        os.path.join(OutputFolder,os.path.basename(Path_Con_Lake_ply))
+        os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply))
+
+        Returns:
+        -------
+        None
+
+        Examples
+        -------
+
+        """
         from postprocessing.postprocessingfunctions import (
             simplify_routing_structure_by_drainage_area,
         )
@@ -676,4 +845,286 @@ class BasinMakerQGIS:
             OutputFolder=OutputFolder,
             gis_platform=gis_platform,
             qgis_prefix_path=self.qgispp,
+        )
+
+    def select_part_of_routing_product_methods(
+        self,
+        Path_Points = '#',
+        Gauge_NMS = '#',
+        OutputFolder = '#',
+        Path_Catchment_Polygon="#",
+        Path_River_Polyline="#",
+        Path_Con_Lake_ply="#",
+        Path_NonCon_Lake_ply="#",
+        qgis_prefix_path="#",
+        gis_platform = 'qgis',
+    ):
+        """Extract region of interest based on provided pourpoints or gauge name
+
+        Parameters
+        ----------
+        Path_Points                    : string (Optional)
+            It is the path of the point shapefile. If the point shapefile is
+            provided. The function will return subids of those catchment
+            polygons that includes these point in the point shapefile
+        Gauge_NMS                      : list
+            Name of the streamflow gauges, such as ['09PC019'], if the gauge
+            name is provided, the subbasin ID that contain this gauge will be
+            returned
+        OutputFolder                   : string
+            Folder path that stores extracted routing product
+        Path_Catchment_Polygon         : string
+            Path to the catchment polygon
+        Path_River_Polyline            : string (optional)
+            Path to the river polyline
+        Path_Con_Lake_ply              : string (optional)
+            Path to a connected lake polygon. Connected lakes are lakes that
+            are connected by Path_final_cat_riv or Path_final_riv.
+        Path_NonCon_Lake_ply           : string (optional)
+            Path to a non connected lake polygon. Connected lakes are lakes
+            that are not connected by Path_final_cat_riv or Path_final_riv.
+
+
+        Notes
+        -------
+        This function has no return values, instead following fiels will be
+        generated. The output files have are same as inputs expect the extent
+        are different.
+
+        os.path.join(OutputFolder,os.path.basename(Path_Catchment_Polygon))
+        os.path.join(OutputFolder,os.path.basename(Path_River_Polyline))
+        os.path.join(OutputFolder,os.path.basename(Path_Con_Lake_ply))
+        os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply))
+
+        Returns:
+        -------
+        None
+
+        Examples
+        -------
+
+        """
+        from postprocessing.postprocessingfunctions import (
+            select_part_of_routing_product,
+        )
+        select_part_of_routing_product(
+            Path_Points=Path_Points,
+            Gauge_NMS=Gauge_NMS,
+            OutputFolder=OutputFolder,
+            Path_Catchment_Polygon=Path_Catchment_Polygon,
+            Path_River_Polyline=Path_River_Polyline,
+            Path_Con_Lake_ply=Path_Con_Lake_ply,
+            Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,
+            qgis_prefix_path=qgis_prefix_path,
+            gis_platform = gis_platform,
+        )
+        
+    def generate_hrus_methods(
+        self,
+        Path_Subbasin_Ply,
+        Landuse_info,
+        Soil_info,
+        Veg_info,
+        Sub_Lake_ID="HyLakeId",
+        Sub_ID="SubId",
+        Path_Connect_Lake_ply="#",
+        Path_Non_Connect_Lake_ply="#",
+        Lake_Id="Hylak_id",
+        Path_Landuse_Ply="#",
+        Landuse_ID="Landuse_ID",
+        Path_Soil_Ply="#",
+        Soil_ID="Soil_ID",
+        Path_Veg_Ply="#",
+        Veg_ID="Veg_ID",
+        Path_Other_Ply_1="#",
+        Other_Ply_ID_1="O_ID_1",
+        Path_Other_Ply_2="#",
+        Other_Ply_ID_2="O_ID_2",
+        DEM="#",
+        Project_crs="EPSG:3573",
+        OutputFolder="#",
+        qgis_prefix_path='#',
+        gis_platform='qgis',
+    ):
+        """Generate HRU polygons and their attributes needed by hydrological model
+
+        Function that be used to overlay: subbasin polygon, lake polygon (optional)
+        , Land use polygon (optional), soil type polygon(optional),
+        vegetation polygon (optional), and two other user defined polygons
+        (optional).
+        Non-lake HRU polygons in a subbasin is defined by an unique
+        combination of all user provided datasets.
+        A lake HRU polygon is defined the same as the provided lake polygon.
+        All value of landuse and Veg polygon covered by lake will
+        be changed to 1, indicating it is a covered by lake.
+        All value of the soil polygon covered by the lake will be change to
+        the soil id of the polygon covered by the lake with largest area.
+
+        Parameters
+        ----------
+        Path_Subbasin_Ply                 : string
+            It is the path of the subbasin polygon, which is generated by
+            toolbox. if not generated by toolbox, the attribute table should
+            including following attribute.
+            ##############Subbasin related attributes###########################
+            SubID           - integer, The subbasin Id
+            DowSubId        - integer, The downstream subbasin ID of this
+                                       subbasin
+            IsLake          - integer, If the subbasin is a lake / reservior
+                                       subbasin. 1 yes, <0, no
+            IsObs           - integer, If the subbasin contains a observation
+                                       gauge. 1 yes, < 0 no.
+            RivLength       - float,   The length of the river in current
+                                       subbasin in m
+            RivSlope        - float,   The slope of the river path in
+                                       current subbasin, in m/m
+            FloodP_n        - float,   Flood plain manning's coefficient, in -
+            Ch_n            - float,   main channel manning's coefficient, in -
+            BkfWidth        - float,   the bankfull width of the main channel
+                                       in m
+            BkfDepth        - float,   the bankfull depth of the main channel
+                                       in m
+            HyLakeId        - integer, the lake id
+            LakeVol         - float,   the Volume of the lake in km3
+            LakeDepth       - float,   the average depth of the lake m
+            LakeArea        - float,   the area of the lake in m2
+        Landuse_info                      : string
+            Path to a csv file that contains landuse information, including
+            following attributes:
+            Landuse_ID (can be any string)  - integer, the landuse ID in the
+                                                       landuse polygon
+            LAND_USE_C                      - string,  the landuse class name
+                                                       for each landuse Type
+        Soil_info                        : string
+            Path to a csv file that contains soil information, including
+            following attributes:
+            Soil_ID (can be any string)     - integer, the Soil ID in the
+                                                       soil polygon
+            SOIL_PROF                       - string,  the Soil profile name
+                                                       for each soil type
+        Veg_info                         : string
+            Path to a csv file that contains vegetation information, including
+            following attributes:
+            Veg_ID (can be any string)      - integer, the vegetation ID in the
+                                                       vegetation polygon
+            VEG_C                           - string,  the vegetation class name
+                                                       for each vegetation Type
+        Sub_Lake_ID                      : string (optional)
+            The column name of the lake id in the subbasin polygon
+        Sub_ID                           : string (optional)
+            The column name of the subbasin id in the subbasin polygon
+        Path_Connect_Lake_ply            : string (Optional)
+            Path to the connected lake's polygon
+        Path_Non_Connect_Lake_ply        : string (Optional)
+            Path to the non connected lake's polygon
+        Lake_Id                          : string (Optional)
+            The the column name in lake polygon indicate the lake ID.
+        Path_Landuse_Ply                 : string (Optional)
+            Path to the landuse polygon. when Path_Landuse_Ply is not
+            provided. The Landuse ID in Landuse_info should be
+            1: land, -1: lake
+        Landuse_ID                       : string (Optional)
+            the the column name in landuse polygon and Landuse_info csv
+            indicate the landuse ID. when Path_Landuse_Ply is not
+            provided. The Landuse ID should be
+            1: land, -1: lake.
+        Path_Soil_Ply                    : string (Optional)
+            Path to the soil polygon. when soil polygon is not
+            provided. The Soil ID in Soil_info should be the same
+            as Landuse ID.
+        Soil_ID                          : string (Optional)
+            the the column name in soil polygon and soil_info csv
+            indicate the soil ID. when soil polygon is not
+            provided. The Soil ID in Soil_info should be the same
+            as Landuse ID.
+        Path_Veg_Ply                     : string (Optional)
+            Path to the vegetation polygon. when Veg polygon is not
+            provided. The Veg ID in Veg_info should be the same
+            as Landuse ID.
+        Veg_ID                           : string (Optional)
+            the the column name in vegetation polygon and veg_info csv
+            indicate the vegetation ID. when Veg polygon is not
+            provided. The Veg ID in Veg_info should be the same
+            as Landuse ID.
+        Path_Other_Ply_1                 : string (Optional)
+            Path to the other polygon that will be used to define HRU,
+            such as elevation band, or aspect.
+        Other_Ply_ID_1                   : string (Optional)
+            the the column name in Other_Ply_1 polygon
+            indicate the landuse ID.
+        Path_Other_Ply_2                 : string (Optional)
+            Path to the other polygon that will be used to define HRU,
+            such as elevation band, or aspect.
+        Other_Ply_ID_2                   : string (Optional)
+            the the column name in Other_Ply_2 polygon
+            indicate the landuse ID.
+        DEM                              : string (optional)
+            the path to a raster elevation dataset, that will be used to
+            calcuate average apspect, elevation and slope within each HRU.
+            if no data is provided, basin average value will be used for
+            each HRU.
+        Project_crs                      : string
+            the EPSG code of a projected coodinate system that will be used to
+            calcuate HRU area and slope.
+        OutputFolder                     : string
+            The path to the folder that will save output HRU polygon.
+
+        Notes
+        -------
+        Following ouput files will be generated in "<OutputFolder>/"
+        'finalcat_hru_info.shp'              - HRU polygon and it's attributes
+
+
+        Returns:
+        -------
+           None
+
+        Examples
+        -------
+        >>> from ToolboxClass import LRRT
+        >>> import pandas as pd
+        >>> DataFolder = "C:/Path_to_foldr_of_example_dataset_provided_in_Github_wiki/"
+        >>> RTtool=LRRT()
+        >>> RTtool.GenerateHRUS(OutputFolder = DataFolder,
+                               Path_Subbasin_Ply = os.path.join(DataFolder,"finalcat_info.shp"),
+                               Path_Connect_Lake_ply = os.path.join(DataFolder,'Con_Lake_Ply.shp'),
+                               Path_Non_Connect_Lake_ply = os.path.join(DataFolder,'Non_Con_Lake_Ply.shp'),
+                               Path_Landuse_Ply = os.path.join(DataFolder,'modislanduse_exp_lg_pre.shp'),
+                               Landuse_ID = 'gridcode',
+                               Path_Soil_Ply = os.path.join(DataFolder,'ca_all_slc_v3r2_exp_lg.shp'),
+                               Soil_ID = 'POLY_ID',
+                               Landuse_info=os.path.join(DataFolder,'landuse_info.csv'),
+                               Soil_info=os.path.join(DataFolder,'soil_info.csv'),
+                               Veg_info=os.path.join(DataFolder,'veg_info.csv'),
+                               DEM = os.path.join(DataFolder,'na_dem_15s_1.tif')
+                               )
+
+        """
+        from postprocessing.postprocessingfunctions import (
+            generate_hrus,
+        )
+        generate_hrus(
+            Path_Subbasin_Ply=Path_Subbasin_Ply,
+            Landuse_info=Landuse_info,
+            Soil_info=Soil_info,
+            Veg_info=Veg_info,
+            Sub_Lake_ID=Sub_Lake_ID,
+            Sub_ID=Sub_ID,
+            Path_Connect_Lake_ply=Path_Connect_Lake_ply,
+            Path_Non_Connect_Lake_ply=Path_Non_Connect_Lake_ply,
+            Lake_Id=Lake_Id,
+            Path_Landuse_Ply=Path_Landuse_Ply,
+            Landuse_ID=Landuse_ID,
+            Path_Soil_Ply=Path_Soil_Ply,
+            Soil_ID=Soil_ID,
+            Path_Veg_Ply=Path_Veg_Ply,
+            Veg_ID=Veg_ID,
+            Path_Other_Ply_1=Path_Other_Ply_1,
+            Other_Ply_ID_1=Other_Ply_ID_1,
+            Path_Other_Ply_2=Path_Other_Ply_2,
+            Other_Ply_ID_2=Other_Ply_ID_2,
+            DEM=DEM,
+            Project_crs=Project_crs,
+            OutputFolder=OutputFolder,
+            qgis_prefix_path=qgis_prefix_path,
         )

@@ -1,9 +1,9 @@
-from utilities import *
+from func.qgis import *
+from func.pdtable import *
+from func.rarray import *
+from utilities.utilities import *
 import pandas as pd
 import numpy as np
-from processing_functions_vector_qgis import *
-from processing_functions_attribute_table import *
-from addattributes.adddaandstreamorder import update_topology
 
 import tempfile
 
