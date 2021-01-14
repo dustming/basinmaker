@@ -15,7 +15,6 @@ Internal_Constant_Names = {
     "str_sl_connected_lake": "str_sl_connected_lake",
     "nfdr_arcgis": "nfdr_arcgis",
     "nfdr_grass": "nfdr_grass",
-    "pourpoints_add_obs": "pourpoints_add_obs",
     "obs": "obs",
     "pourpoints_with_lakes": "pourpoints_with_lakes",
     "lake_inflow_pourpoints": "lake_inflow_pourpoints",
@@ -25,6 +24,20 @@ Internal_Constant_Names = {
     "cat_ply_info": "cat_ply_info",
     "cat_riv_info": "cat_riv_info",
     "outlet_pt_info": "outlet_pt_info",
+    "fdr_grass":"fdr_grass",
+    "fdr_arcgis":"fdr_arcgis",
+    "str_r":"str_r",
+    "str_v":"str_v",
+    "acc":"acc",
+    "cat_no_lake":"cat_no_lake",
+    "sl_connected_lake":"sl_connected_lake",
+    "sl_nonconnect_lake":"sl_nonconnect_lake",
+    "selected_lakes":"selected_lakes",
+    "catchment_without_merging_lakes":"catchment_without_merging_lakes",
+    "river_without_merging_lakes":"river_without_merging_lakes",
+    "snapped_obs_points":"snapped_obs_points",
+    "cat_use_default_acc":"cat_use_default_acc",
+    "snapped_obs_points":"snapped_obs_points",
 }
 
 

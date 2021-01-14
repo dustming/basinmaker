@@ -35,7 +35,7 @@ import timeit
 import pandas as pd
 from simpledbf import Dbf5
 
-from ToolboxClass import LRRT
+from basinmaker import BasinMakerQGIS
 
 ############ Variable needs to be modified to run this example ######
 
@@ -43,55 +43,41 @@ from ToolboxClass import LRRT
 Outputfolder = "C:/Users/dustm/OneDrive - University of Waterloo/Documents/ProjectData/Petawawa/lake_of_woods/"
 
 ### The BasinMaker folder
-BasinMaker_Folder = "C:/Users/dustm/Documents/GitHub/RoutingTool"
-
+datafolder = "../../tests/testdata/Required_data_to_start_from_dem"
+path_working_folder = os.path.join("../../tests/testdata", "test4")
+#path_working_folder = os.path.join("C:/Users/dustm/Documents","test4")
 ########### Variable needs to be modified to run this example ######
 
 
-### Define derived folder
-DataBase_Folder = os.path.join(
-    BasinMaker_Folder,
-    "Toolbox_QGIS",
-    "tests",
-    "testdata",
-    "Required_data_to_start_from_dem",
-)
 Out_Sub_Reg_Dem_Folder = os.path.join(Outputfolder, "SubRegion_info")
 
 ### Start timer
 start = timeit.default_timer()
 
 ### Define input paths
-na_hydem = os.path.join(DataBase_Folder, "DEM_big_merit.tif")  #'HydroSHED15S.tif')#
-in_wd = os.path.join(DataBase_Folder, "Bkfullwidth_depth.shp")
-in_lake = os.path.join(DataBase_Folder, "HyLake.shp")
-in_obs = os.path.join(DataBase_Folder, "obs.shp")
-landuse = os.path.join(DataBase_Folder, "landuse.tif")
-landuseinfo = os.path.join(DataBase_Folder, "Landuse_info.csv")
+na_hydem = os.path.join(datafolder, "DEM_big_merit.tif")  #'HydroSHED15S.tif')#
+in_lake = os.path.join(datafolder, "HyLake.shp")
 
+### Initialize the BasinMake
+basinmaker = BasinMakerQGIS(path_working_folder=path_working_folder)
 
-### Initialize the BasinMaker
-RTtool = LRRT(
-    dem_in=na_hydem,
-    Lakefile=in_lake,
-    OutputFolder=Outputfolder,
-    Path_Sub_Reg_Out_Folder=Out_Sub_Reg_Dem_Folder,
-    Is_Sub_Region=-1,
-)
-### Define Region of Interest
-RTtool.Generatmaskregion()
-### Define sub-region
-RTtool.Generatesubdomain(
-    Min_Num_Domain=1,
-    Max_Num_Domain=1000000000,
-    Initaial_Acc=500000,
-    Delta_Acc=500000,
-    max_memory=2048 * 8,
-    Acc_Thresthold_stream=2000,
+# basinmaker.define_project_extent_method(
+#     mode="using_dem", path_dem_in=na_hydem
+# )
+
+basinmaker.divide_domain_into_sub_regions_method(
+    path_lakefile_in = in_lake,
+    lake_attributes = ["Hylak_id", "Lake_type", "Lake_area", "Vol_total", "Depth_avg"],
+    Min_Num_Domain=9,
+    Max_Num_Domain=30,
+    Initaial_Acc=250000,
+    Delta_Acc=20000,
     CheckLakeArea=10,
+    fdr_path = '#',
+    Acc_Thresthold_stream=2000,
+    max_memory=2048*3,
+    Out_Sub_Reg_Folder=Out_Sub_Reg_Dem_Folder,
 )
-### Generate subregion output and define routing structure between subregions
-RTtool.Generatesubdomainmaskandinfo(Out_Sub_Reg_Dem_Folder=Out_Sub_Reg_Dem_Folder)
 
 End = timeit.default_timer()
 

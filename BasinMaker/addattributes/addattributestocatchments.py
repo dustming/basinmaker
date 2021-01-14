@@ -141,6 +141,9 @@ def add_attributes_to_catchments(
     cat_riv_info = Internal_Constant_Names["cat_riv_info"]
     outlet_pt_info = Internal_Constant_Names["outlet_pt_info"]
 
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+        
     if gis_platform == "qgis":
         assert (
             grassdb != "#"

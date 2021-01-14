@@ -55,11 +55,11 @@ basinmaker.add_attributes_to_catchments_method(
     output_folder=path_output_folder,
 )
 #
-# basinmaker.combine_catchments_covered_by_the_same_lake_method(
-#     OutputFolder=path_output_folder,
-#     Path_final_rivply=os.path.join(
-#         path_output_folder, "catchment_without_merging_lakes.shp"
-#     ),
-#     Path_final_riv=os.path.join(path_output_folder, "river_without_merging_lakes.shp"),
-#     gis_platform="qgis",
-# )
+basinmaker.combine_catchments_covered_by_the_same_lake_method(
+    OutputFolder=path_output_folder,
+    Path_final_rivply=os.path.join(
+        path_output_folder, "catchment_without_merging_lakes.shp"
+    ),
+    Path_final_riv=os.path.join(path_output_folder, "river_without_merging_lakes.shp"),
+    gis_platform="qgis",
+)

@@ -45,19 +45,18 @@ def add_lakes_into_existing_watershed_delineation(
     dem = input_geo_names["dem"]
 
     # define internal file names
-    cat_use_default_acc = Internal_Constant_Names["cat_use_default_acc"]
     lake_inflow_pourpoints = Internal_Constant_Names["lake_inflow_pourpoints"]
     catchment_pourpoints_outside_lake = Internal_Constant_Names[
         "catchment_pourpoints_outside_lake"
     ]
     cat_add_lake_old_fdr = Internal_Constant_Names["cat_add_lake_old_fdr"]
     str_connected_lake = Internal_Constant_Names["str_connected_lake"]
-    sl_str_connected_lake = Internal_Constant_Names["str_sl_connected_lake"]
     alllake = Internal_Constant_Names["all_lakes"]
     lake_boundary = Internal_Constant_Names["lake_boundary"]
     connected_lake = Internal_Constant_Names["connect_lake"]
     non_connected_lake = Internal_Constant_Names["nonconnect_lake"]
-
+    lakes_lg_cl_thres = 'lakes_lg_cl_thres'
+    lakes_lg_ncl_thres = 'lakes_lg_ncl_thres'
     # prepropessing lakes inputs
     if path_lakefile_in == "#":
         import grass.script as grass
@@ -96,9 +95,13 @@ def add_lakes_into_existing_watershed_delineation(
         grassdb=grassdb,
         grass_location=grass_location,
         qgis_prefix_path=qgis_prefix_path,
+        threshold_con_lake = threshold_con_lake,
+        threshold_non_con_lake = threshold_non_con_lake,
         gis_platform="qgis",
         lake_name=alllake,
         lake_boundary_name=lake_boundary,
+        lakes_lg_cl_thres = lakes_lg_cl_thres,
+        lakes_lg_ncl_thres = lakes_lg_ncl_thres
     )
 
     import grass.script as grass
@@ -142,9 +145,9 @@ def add_lakes_into_existing_watershed_delineation(
     select_lakes_by_area_r(
         grass=grass,
         con=con,
-        lake_v_path=os.path.join(grassdb, alllake + ".shp"),
-        threshold_con_lake=threshold_con_lake,
-        threshold_non_con_lake=threshold_non_con_lake,
+        str_r = str_r,
+        lakes_lg_cl_thres = lakes_lg_cl_thres,
+        lakes_lg_ncl_thres = lakes_lg_ncl_thres,
         lakes=alllake,
         connected_lake=connected_lake,
         non_connected_lake=non_connected_lake,

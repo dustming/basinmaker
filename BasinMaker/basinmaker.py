@@ -18,8 +18,8 @@ class BasinMakerQGIS:
 
     def __init__(
         self,
-        path_output_folder,
-        path_working_folder,
+        path_output_folder = '#',
+        path_working_folder = '#',
     ):
 
         # define drived values
@@ -27,7 +27,7 @@ class BasinMakerQGIS:
         self.path_output_folder = path_output_folder
         self.path_working_folder = path_working_folder
 
-        os.makedirs(self.path_output_folder, exist_ok=True)
+#        os.makedirs(self.path_output_folder, exist_ok=True)
         os.makedirs(self.path_working_folder, exist_ok=True)
 
         # obtain qgis prefix path
@@ -88,6 +88,12 @@ class BasinMakerQGIS:
             "river_without_merging_lakes": "river_without_merging_lakes",
             "cat_use_default_acc": "cat_use_default_acc",
             "snapped_obs_points": "snapped_obs_points",
+            "sub_reg_str_r":"sub_reg_str_r",
+            "sub_reg_str_v":"sub_reg_str_v",
+            "sub_reg_nfdr_grass":"sub_reg_nfdr_grass",
+            "sub_reg_nfdr_arcgis":"sub_reg_nfdr_arcgis",
+            "sub_reg_acc":"sub_reg_acc",
+            "sub_reg_dem":"sub_reg_dem",
         }
 
     # first modulized methods
@@ -1075,3 +1081,50 @@ class BasinMakerQGIS:
             OutputFolder=OutputFolder,
             qgis_prefix_path=qgis_prefix_path,
         )
+        
+    def divide_domain_into_sub_regions_method(
+        self,
+        path_lakefile_in,
+        lake_attributes,
+        Min_Num_Domain=9,
+        Max_Num_Domain=13,
+        Initaial_Acc=5000,
+        Delta_Acc=1000,
+        CheckLakeArea=1,
+        fdr_path = '#',
+        Acc_Thresthold_stream=500,
+        max_memory=2048*3,
+        Out_Sub_Reg_Folder="#",
+        gis_platform='qgis',
+    ):
+
+        from subreg.defsubreg import (
+            divide_domain_into_sub_regions,
+        )
+
+        divide_domain_into_sub_regions(
+            input_geo_names=self.geofilenames,
+            grassdb=self.grassdb,
+            grass_location=self.grass_location_geo,
+            qgis_prefix_path=self.qgispp,
+            path_lakefile_in=path_lakefile_in,
+            lake_attributes=lake_attributes,
+            Min_Num_Domain=Min_Num_Domain,
+            Max_Num_Domain=Max_Num_Domain,
+            Initaial_Acc=Initaial_Acc,
+            Delta_Acc=Delta_Acc,
+            CheckLakeArea=CheckLakeArea,
+            fdr_path = fdr_path,
+            Acc_Thresthold_stream=Acc_Thresthold_stream,
+            max_memory=max_memory,
+            Out_Sub_Reg_Folder=Out_Sub_Reg_Folder,
+            sub_reg_str_r = self.geofilenames["sub_reg_str_r"],
+            sub_reg_str_v = self.geofilenames["sub_reg_str_v"],
+            sub_reg_nfdr_grass = self.geofilenames["sub_reg_nfdr_grass"],
+            sub_reg_nfdr_arcgis = self.geofilenames["sub_reg_nfdr_arcgis"],
+            sub_reg_acc = self.geofilenames["sub_reg_acc"],
+            sub_reg_dem = self.geofilenames["sub_reg_dem"],
+            gis_platform=gis_platform,
+        )
+        
+        

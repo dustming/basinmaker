@@ -1,14 +1,36 @@
+from func.grassgis import *
+from func.pdtable import *
+from func.rarray import *
+from utilities.utilities import *
+from delineationnolake.watdelineationwithoutlake import (
+    watershed_delineation_without_lake,
+)
+from addlakeandobs.addlakesqgis import (
+    add_lakes_into_existing_watershed_delineation,
+)
+        
 def Generatesubdomain(
-    self,
+    input_geo_names,
+    grassdb,
+    grass_location,
+    qgis_prefix_path,
+    path_lakefile_in,
+    lake_attributes,
     Min_Num_Domain=9,
     Max_Num_Domain=13,
     Initaial_Acc=5000,
     Delta_Acc=1000,
-    Out_Sub_Reg_Dem_Folder="#",
-    ProjectNM="Sub_Reg",
     CheckLakeArea=1,
+    fdr_path = '#',
     Acc_Thresthold_stream=500,
-    max_memory=2048,
+    max_memory=2048*3,
+    Out_Sub_Reg_Folder="#",
+    sub_reg_str_r = 'sub_reg_str_r',
+    sub_reg_str_v = 'sub_reg_str_v',
+    sub_reg_nfdr_grass = 'sub_reg_nfdr_grass',
+    sub_reg_nfdr_arcgis = 'sub_reg_nfdr_arcgis',
+    sub_reg_acc = 'sub_reg_acc',
+    sub_reg_dem = 'sub_reg_dem',
 ):
 
     import grass.script as grass
@@ -20,16 +42,40 @@ def Generatesubdomain(
     from grass.script import core as gcore
     from grass_session import Session
 
-    if not os.path.exists(Out_Sub_Reg_Dem_Folder):
-        os.makedirs(Out_Sub_Reg_Dem_Folder)
-
+    if not os.path.exists(Out_Sub_Reg_Folder):
+        os.makedirs(Out_Sub_Reg_Folder)
+    
+    #required inputs 
+    dem = input_geo_names['dem']
+    mask = input_geo_names['mask']
+    
+    # define local variable file names   
+    fdr_arcgis = Internal_Constant_Names["fdr_arcgis"]
+    fdr_grass = Internal_Constant_Names["fdr_grass"]
+    nfdr_arcgis = Internal_Constant_Names["nfdr_arcgis"]
+    nfdr_grass = Internal_Constant_Names["nfdr_grass"]
+    str_r = Internal_Constant_Names["str_r"]
+    str_v = Internal_Constant_Names["str_v"]
+    acc = Internal_Constant_Names["acc"]
+    cat_no_lake = Internal_Constant_Names["cat_no_lake"]
+    sl_connected_lake = Internal_Constant_Names["sl_connected_lake"]
+    sl_non_connected_lake = Internal_Constant_Names["sl_nonconnect_lake"]
+    sl_lakes = Internal_Constant_Names["selected_lakes"]
+    catchment_without_merging_lakes = Internal_Constant_Names["catchment_without_merging_lakes"]
+    river_without_merging_lakes = Internal_Constant_Names["river_without_merging_lakes"]
+    cat_use_default_acc = Internal_Constant_Names["cat_use_default_acc"]
+    cat_add_lake = Internal_Constant_Names["cat_add_lake"] 
+    pourpoints_with_lakes = Internal_Constant_Names["pourpoints_with_lakes"]
+    pourpoints_add_obs = Internal_Constant_Names["pourpoints_add_obs"]
+    lake_outflow_pourpoints = Internal_Constant_Names["lake_outflow_pourpoints"]
+    
     #### Determine Sub subregion without lake
     os.environ.update(
         dict(GRASS_COMPRESS_NULLS="1", GRASS_COMPRESSOR="ZSTD", GRASS_VERBOSE="1")
     )
     PERMANENT = Session()
     PERMANENT.open(
-        gisdb=self.grassdb, location=self.grass_location_geo, create_opts=""
+        gisdb=grassdb, location=grass_location, create_opts=""
     )
     N_Basin = 0
     Acc = Initaial_Acc
@@ -37,7 +83,7 @@ def Generatesubdomain(
     while N_Basin < Min_Num_Domain or N_Basin > Max_Num_Domain:
         grass.run_command(
             "r.watershed",
-            elevation="dem",
+            elevation=dem,
             flags="sa",
             basin="testbasin",
             drainage="dir_grass_reg",
@@ -45,8 +91,10 @@ def Generatesubdomain(
             threshold=Acc,
             overwrite=True,
         )
-        strtemp_array = garray.array(mapname="testbasin")
-        N_Basin = np.unique(strtemp_array)
+        N_Basin, temp = generate_stats_list_from_grass_raster(
+            grass, mode=1, input_a='testbasin'
+        )
+        N_Basin = np.unique(N_Basin)
         N_Basin = len(N_Basin[N_Basin > 0])
         print(
             "Number of Subbasin:    ",
@@ -61,51 +109,69 @@ def Generatesubdomain(
         if N_Basin < Min_Num_Domain:
             Acc = Acc - Delta_Acc
     PERMANENT.close()
-
-    ##### Determine subregion with lake
-    try:
-        self.Generateinputdata(Is_divid_region=1)
-    except:
-        print(
-            "Check print infomation, some unknown error occured, may have no influence on result"
-        )
-        pass
-
-    try:
-        self.WatershedDiscretizationToolset(
-            accthresold=Acc, Is_divid_region=1, max_memroy=max_memory
-        )
-    except:
-        print(
-            "Check print infomation, some unknown error occured, may have no influence on result"
-        )
-        pass
-
-    try:
-        self.AutomatedWatershedsandLakesFilterToolset(
-            Thre_Lake_Area_Connect=CheckLakeArea,
-            Thre_Lake_Area_nonConnect=-1,
-            Is_divid_region=1,
-            max_memroy=max_memory,
-        )
-    except:
-        print(
-            "Check print infomation, some unknown error occured, may have no influence on result"
-        )
-        pass
-
+    
+    if fdr_path == '#':
+        mode = 'usingdem'
+    else:
+        mode = 'usingfdr'
+        
+    watershed_delineation_without_lake(
+        mode=mode,
+        input_geo_names=input_geo_names,
+        acc_thresold=Acc,
+        fdr_path=fdr_path,
+        fdr_arcgis=fdr_arcgis,
+        fdr_grass=fdr_grass,
+        str_r=str_r,
+        str_v=str_v,
+        acc=acc,
+        cat_no_lake=cat_no_lake,
+        max_memroy=max_memory,
+        grassdb=grassdb,
+        grass_location=grass_location,
+        qgis_prefix_path=qgis_prefix_path,
+        gis_platform='qgis',
+    )
+    input_geo_names['fdr_arcgis'] = 'fdr_arcgis'
+    input_geo_names['fdr_grass'] = 'fdr_grass'
+    input_geo_names['str_r'] = 'str_r'
+    input_geo_names['str_v'] = 'str_v'
+    input_geo_names['acc'] = 'acc'
+    input_geo_names['cat_no_lake'] = 'cat_no_lake'
+    
+    add_lakes_into_existing_watershed_delineation(
+        grassdb=grassdb,
+        grass_location=grass_location,
+        qgis_prefix_path=qgis_prefix_path,
+        input_geo_names=input_geo_names,
+        path_lakefile_in=path_lakefile_in,
+        lake_attributes=lake_attributes,
+        threshold_con_lake=CheckLakeArea,
+        threshold_non_con_lake=100000,
+        sl_connected_lake=sl_connected_lake,
+        sl_non_connected_lake=sl_non_connected_lake,
+        sl_lakes=sl_lakes,
+        nfdr_arcgis=nfdr_arcgis,
+        nfdr_grass=nfdr_grass,
+        cat_add_lake=cat_add_lake,
+        pourpoints_with_lakes=pourpoints_with_lakes,
+        cat_use_default_acc=cat_use_default_acc,
+        lake_outflow_pourpoints=lake_outflow_pourpoints,
+        max_memroy=max_memory,
+    )
+    
     ####Determin river network for whole watersheds
     PERMANENT = Session()
     PERMANENT.open(
-        gisdb=self.grassdb, location=self.grass_location_geo, create_opts=""
+        gisdb=grassdb, location=grass_location, create_opts=""
     )
     grass.run_command(
         "r.stream.extract",
-        elevation="dem",
-        accumulation="acc_grass",
+        elevation=dem,
+        accumulation=acc,
         threshold=Acc_Thresthold_stream,
-        stream_raster="Sub_Reg_str_grass_r",
-        stream_vector="Sub_Reg_str_grass_v",
+        stream_raster=Sub_Reg_str_grass_r,
+        stream_vector=Sub_Reg_str_grass_v,
         overwrite=True,
         memory=max_memory,
     )
@@ -113,35 +179,35 @@ def Generatesubdomain(
     #### export outputs
     grass.run_command(
         "r.pack",
-        input="ndir_grass",
-        output=self.Path_Sub_reg_grass_dir,
+        input=nfdr_grass,
+        output=os.path.join(Out_Sub_Reg_Folder,sub_reg_nfdr_grass),
         overwrite=True,
     )
     grass.run_command(
         "r.pack",
-        input="ndir_Arcgis",
-        output=self.Path_Sub_reg_arcgis_dir,
+        input=nfdr_arcgis,
+        output=os.path.join(Out_Sub_Reg_Folder,sub_reg_nfdr_arcgis),
         overwrite=True,
     )
     grass.run_command(
         "r.pack",
-        input="acc_grass",
-        output=self.Path_Sub_reg_grass_acc,
+        input=acc,
+        output=os.path.join(Out_Sub_Reg_Folder,sub_reg_acc),
         overwrite=True,
     )
     grass.run_command(
-        "r.pack", input="dem", output=self.Path_Sub_reg_dem, overwrite=True
+        "r.pack", input=input_geo_names["dem"], output=os.path.join(Out_Sub_Reg_Folder,sub_reg_dem), overwrite=True
     )
     grass.run_command(
         "v.pack",
-        input="Sub_Reg_str_grass_v",
-        output=self.Path_Sub_reg_grass_str_v,
+        input=sub_reg_str_v,
+        output=os.path.join(Out_Sub_Reg_Folder,sub_reg_str_v),
         overwrite=True,
     )
     grass.run_command(
         "r.pack",
-        input="Sub_Reg_str_grass_r",
-        output=self.Path_Sub_reg_grass_str_r,
+        input=sub_reg_str_r,
+        output=os.path.join(Out_Sub_Reg_Folder,sub_reg_str_r),
         overwrite=True,
     )
     PERMANENT.close()

@@ -9,10 +9,10 @@ import sqlite3
 def select_lakes_by_area_r(
     grass,
     con,
-    lake_v_path,
-    threshold_con_lake,
-    threshold_non_con_lake,
+    str_r,
     lakes="alllake",
+    lakes_lg_cl_thres = 'lakes_lg_cl_thres',
+    lakes_lg_ncl_thres = 'lakes_lg_ncl_thres',
     connected_lake="connect_lake",
     non_connected_lake="nonconnect_lake",
     str_connected_lake="str_connected_lake",
@@ -22,30 +22,20 @@ def select_lakes_by_area_r(
     sl_str_connected_lake="str_sl_connected_lake",
 ):
 
-    alllakinfo = Dbf_To_Dataframe(lake_v_path)
-
-    Lakeid_lt_CL_Remove = alllakinfo.loc[alllakinfo["Lake_area"] < threshold_con_lake][
-        "Hylak_id"
-    ].values
-    Lakeid_lt_NCL_Remove = alllakinfo.loc[
-        alllakinfo["Lake_area"] < threshold_non_con_lake
-    ]["Hylak_id"].values
-
-    grass_raster_setnull(
-        grass,
-        connected_lake,
-        Lakeid_lt_CL_Remove.tolist(),
-        True,
+    exp = "%s = if(isnull('%s'),null(),int(%s))" % (
         sl_connected_lake,
+        lakes_lg_cl_thres,
+        connected_lake,
     )
-    grass_raster_setnull(
-        grass,
-        non_connected_lake,
-        Lakeid_lt_NCL_Remove.tolist(),
-        True,
-        sl_non_connected_lake,
-    )
+    grass.run_command("r.mapcalc", expression=exp, overwrite=True)
 
+    exp = "%s = if(isnull('%s'),null(),int(%s))" % (
+        sl_non_connected_lake,
+        lakes_lg_ncl_thres,
+        non_connected_lake,
+    )
+    grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+        
     exp = "%s = if(isnull('%s'),int(%s),int(%s))" % (
         sl_lakes,
         sl_connected_lake,
@@ -53,13 +43,7 @@ def select_lakes_by_area_r(
         sl_connected_lake,
     )
     grass.run_command("r.mapcalc", expression=exp, overwrite=True)
-
-    grass_raster_setnull(
-        grass,
-        str_connected_lake,
-        Lakeid_lt_CL_Remove.tolist(),
-        True,
-        sl_str_connected_lake,
-    )
-
+    exp = "%s = if(isnull('%s'),null(),%s)" % (sl_str_connected_lake, str_r, sl_connected_lake)
+    grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+    
     return
