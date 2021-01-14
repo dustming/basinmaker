@@ -41,30 +41,30 @@ def divide_domain_into_sub_regions(
             Generatesubdomain,generatesubdomainmaskandinfo
         )
 
-        # Generatesubdomain(
-        #     input_geo_names=input_geo_names,
-        #     grassdb=grassdb,
-        #     grass_location=grass_location,
-        #     qgis_prefix_path=qgis_prefix_path,
-        #     path_lakefile_in=path_lakefile_in,
-        #     lake_attributes=lake_attributes,
-        #     Min_Num_Domain=Min_Num_Domain,
-        #     Max_Num_Domain=Max_Num_Domain,
-        #     Initaial_Acc=Initaial_Acc,
-        #     Delta_Acc=Delta_Acc,
-        #     CheckLakeArea=CheckLakeArea,
-        #     fdr_path = fdr_path,
-        #     Acc_Thresthold_stream=Acc_Thresthold_stream,
-        #     max_memory=max_memory,
-        #     Out_Sub_Reg_Folder=Out_Sub_Reg_Folder,
-        #     sub_reg_str_r = sub_reg_str_r,
-        #     sub_reg_str_v = sub_reg_str_v,
-        #     sub_reg_nfdr_grass = sub_reg_nfdr_grass,
-        #     sub_reg_nfdr_arcgis = sub_reg_nfdr_arcgis,
-        #     sub_reg_acc = sub_reg_acc,
-        #     sub_reg_dem = sub_reg_dem,
-        #     cat_add_lake = cat_add_lake,
-        # )
+        Generatesubdomain(
+            input_geo_names=input_geo_names,
+            grassdb=grassdb,
+            grass_location=grass_location,
+            qgis_prefix_path=qgis_prefix_path,
+            path_lakefile_in=path_lakefile_in,
+            lake_attributes=lake_attributes,
+            Min_Num_Domain=Min_Num_Domain,
+            Max_Num_Domain=Max_Num_Domain,
+            Initaial_Acc=Initaial_Acc,
+            Delta_Acc=Delta_Acc,
+            CheckLakeArea=CheckLakeArea,
+            fdr_path = fdr_path,
+            Acc_Thresthold_stream=Acc_Thresthold_stream,
+            max_memory=max_memory,
+            Out_Sub_Reg_Folder=Out_Sub_Reg_Folder,
+            sub_reg_str_r = sub_reg_str_r,
+            sub_reg_str_v = sub_reg_str_v,
+            sub_reg_nfdr_grass = sub_reg_nfdr_grass,
+            sub_reg_nfdr_arcgis = sub_reg_nfdr_arcgis,
+            sub_reg_acc = sub_reg_acc,
+            sub_reg_dem = sub_reg_dem,
+            cat_add_lake = cat_add_lake,
+        )
     
         input_geo_names['cat_add_lake'] = cat_add_lake
         generatesubdomainmaskandinfo(

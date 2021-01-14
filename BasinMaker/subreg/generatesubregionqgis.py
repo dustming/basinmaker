@@ -183,34 +183,34 @@ def Generatesubdomain(
     grass.run_command(
         "r.pack",
         input=nfdr_grass,
-        output=os.path.join(Out_Sub_Reg_Folder,sub_reg_nfdr_grass),
+        output=os.path.join(Out_Sub_Reg_Folder,sub_reg_nfdr_grass+".pack"),
         overwrite=True,
     )
     grass.run_command(
         "r.pack",
         input=nfdr_arcgis,
-        output=os.path.join(Out_Sub_Reg_Folder,sub_reg_nfdr_arcgis),
+        output=os.path.join(Out_Sub_Reg_Folder,sub_reg_nfdr_arcgis+".pack"),
         overwrite=True,
     )
     grass.run_command(
         "r.pack",
         input=acc,
-        output=os.path.join(Out_Sub_Reg_Folder,sub_reg_acc),
+        output=os.path.join(Out_Sub_Reg_Folder,sub_reg_acc+".pack"),
         overwrite=True,
     )
     grass.run_command(
-        "r.pack", input=input_geo_names["dem"], output=os.path.join(Out_Sub_Reg_Folder,sub_reg_dem), overwrite=True
+        "r.pack", input=input_geo_names["dem"], output=os.path.join(Out_Sub_Reg_Folder,sub_reg_dem+".pack"), overwrite=True
     )
     grass.run_command(
         "v.pack",
         input=sub_reg_str_v,
-        output=os.path.join(Out_Sub_Reg_Folder,sub_reg_str_v),
+        output=os.path.join(Out_Sub_Reg_Folder,sub_reg_str_v+".pack"),
         overwrite=True,
     )
     grass.run_command(
         "r.pack",
         input=sub_reg_str_r,
-        output=os.path.join(Out_Sub_Reg_Folder,sub_reg_str_r),
+        output=os.path.join(Out_Sub_Reg_Folder,sub_reg_str_r+".pack"),
         overwrite=True,
     )
     PERMANENT.close()
@@ -441,7 +441,7 @@ def generatesubdomainmaskandinfo(
     grass.run_command(
         "v.pack",
         input=outlet_pt_info,
-        output=os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_Reg_Outlet_v"),
+        output=os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_Reg_Outlet_v"+".pack"),
         overwrite=True,
     )
 

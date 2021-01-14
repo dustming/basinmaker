@@ -44,8 +44,8 @@ Outputfolder = "C:/Users/dustm/OneDrive - University of Waterloo/Documents/Proje
 
 ### The BasinMaker folder
 datafolder = "../../tests/testdata/Required_data_to_start_from_dem"
-path_working_folder = os.path.join("../../tests/testdata", "test4")
-#path_working_folder = os.path.join("C:/Users/dustm/Documents","test4")
+#path_working_folder = os.path.join("../../tests/testdata", "test4")
+path_working_folder = os.path.join("C:/Users/dustm/Documents","testsub")
 ########### Variable needs to be modified to run this example ######
 
 

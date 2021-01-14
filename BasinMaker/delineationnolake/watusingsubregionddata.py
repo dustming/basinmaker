@@ -54,10 +54,10 @@ def delineate_watershed_no_lake_using_subregion_data(
         rules=os.path.join(grassdb, "Arcgis2GrassDIR.txt"),
     )
     exp = "%s  = grass_acc1" % (acc)
-    grass_raster_r_mapcalc(grass, expression="acc_grass  = grass_acc1")
+    grass_raster_r_mapcalc(grass, expression=exp)
 
     # unpack  river network vector
-    grass_raster_v_unpack(grass, input=subreg_str_v_path, output="str_grass_v")
+    grass_raster_v_unpack(grass, input=subreg_str_v_path, output=str_v)
     # unpack  river network raster
     grass_raster_r_unpack(grass, input=subreg_str_r_path, output="str_grass_r1")
     # clip river network with mask
