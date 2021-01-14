@@ -1,4 +1,5 @@
 from func.grassgis import *
+from func.qgis import *
 from func.pdtable import *
 from func.rarray import *
 from utilities.utilities import *
@@ -8,6 +9,8 @@ from delineationnolake.watdelineationwithoutlake import (
 from addlakeandobs.addlakesqgis import (
     add_lakes_into_existing_watershed_delineation,
 )
+import tempfile
+import sqlite3
         
 def Generatesubdomain(
     input_geo_names,
@@ -31,6 +34,7 @@ def Generatesubdomain(
     sub_reg_nfdr_arcgis = 'sub_reg_nfdr_arcgis',
     sub_reg_acc = 'sub_reg_acc',
     sub_reg_dem = 'sub_reg_dem',
+    cat_add_lake = 'cat_add_lake',
 ):
 
     import grass.script as grass
@@ -64,7 +68,6 @@ def Generatesubdomain(
     catchment_without_merging_lakes = Internal_Constant_Names["catchment_without_merging_lakes"]
     river_without_merging_lakes = Internal_Constant_Names["river_without_merging_lakes"]
     cat_use_default_acc = Internal_Constant_Names["cat_use_default_acc"]
-    cat_add_lake = Internal_Constant_Names["cat_add_lake"] 
     pourpoints_with_lakes = Internal_Constant_Names["pourpoints_with_lakes"]
     pourpoints_add_obs = Internal_Constant_Names["pourpoints_add_obs"]
     lake_outflow_pourpoints = Internal_Constant_Names["lake_outflow_pourpoints"]
@@ -170,8 +173,8 @@ def Generatesubdomain(
         elevation=dem,
         accumulation=acc,
         threshold=Acc_Thresthold_stream,
-        stream_raster=Sub_Reg_str_grass_r,
-        stream_vector=Sub_Reg_str_grass_v,
+        stream_raster=sub_reg_str_r,
+        stream_vector=sub_reg_str_v,
         overwrite=True,
         memory=max_memory,
     )
@@ -213,11 +216,30 @@ def Generatesubdomain(
     PERMANENT.close()
     return
 
-def Generatesubdomainmaskandinfo(
-    self, Out_Sub_Reg_Dem_Folder="#", ProjectNM="Sub_Reg"
-):
+def generatesubdomainmaskandinfo(
+    Out_Sub_Reg_Dem_Folder,
+    input_geo_names,
+    grassdb,
+    grass_location,
+    qgis_prefix_path,
+):  
+    ### 
+    dem = input_geo_names['dem']
+    cat_add_lake = input_geo_names['cat_add_lake']
+    ndir_Arcgis = input_geo_names['nfdr_arcgis']
+    acc_grass = input_geo_names['acc']
+    str_r = input_geo_names['str_r']
+    outlet_pt_info = 'outlet_pt_info'
+    
+    maximum_obs_id = 80000
+    tempfolder = os.path.join(
+        tempfile.gettempdir(), "basinmaker_subreg" + str(np.random.randint(1, 10000 + 1))
+    )
+    if not os.path.exists(tempfolder):
+        os.makedirs(tempfolder)
+        
     #### generate subbregion outlet points and subregion info table
-    QgsApplication.setPrefixPath(self.qgisPP, True)
+    QgsApplication.setPrefixPath(qgis_prefix_path, True)
     Qgs = QgsApplication([], False)
     Qgs.initQgis()
     from processing.core.Processing import Processing
@@ -242,51 +264,51 @@ def Generatesubdomainmaskandinfo(
     os.environ.update(
         dict(GRASS_COMPRESS_NULLS="1", GRASS_COMPRESSOR="ZSTD", GRASS_VERBOSE="-1")
     )
+    con = sqlite3.connect(
+        os.path.join(grassdb, grass_location, "PERMANENT", "sqlite", "sqlite.db")
+    )
+    
     PERMANENT = Session()
     PERMANENT.open(
-        gisdb=self.grassdb, location=self.grass_location_geo, create_opts=""
+        gisdb=grassdb, location=grass_location, create_opts=""
     )
-    grass.run_command("r.mask", raster="dem", maskcats="*", overwrite=True)
-    grass.run_command("r.null", map="finalcat", setnull=-9999)
+    grass.run_command("r.mask", raster=dem, maskcats="*", overwrite=True)
+    grass.run_command("r.null", map=cat_add_lake, setnull=-9999)
 
-    strtemp_array = garray.array(mapname="finalcat")
-    #        mask          = np.isin(sl_lake, Un_selectedlake_ids)
 
-    dir = garray.array(mapname="ndir_Arcgis")
-    acc = garray.array(mapname="acc_grass")
-    Cat_outlets = copy.copy(strtemp_array)
-    Cat_outlets[:, :] = -9999
-    Cat_outlets_Down = copy.copy(strtemp_array)
-    Cat_outlets_Down[:, :] = -9999
-    ncols = int(strtemp_array.shape[1])
-    nrows = int(strtemp_array.shape[0])
-    Basins = np.unique(strtemp_array)
+    routing_temp = generate_routing_info_of_catchments(
+        grass,
+        con,
+        cat=cat_add_lake,
+        acc=acc_grass,
+        Name="Final",
+        str=str_r,
+    )
 
-    Basins = Basins[Basins > 0]
-
+    grass.run_command("g.copy", vector=("Final_OL_v", outlet_pt_info), overwrite=True)
+    
+    sqlstat = "SELECT SubId, DowSubId,ILSubIdmax,ILSubIdmin,MaxAcc_cat FROM %s" % (outlet_pt_info)
+    outletinfo = pd.read_sql_query(sqlstat, con)
+    
     subregin_info = pd.DataFrame(
-        np.full(len(Basins), -99999), columns=["Sub_Reg_ID"]
+        np.full(len(outletinfo), -9999), columns=["Sub_Reg_ID"]
     )
     subregin_info["Dow_Sub_Reg_Id"] = -9999
     subregin_info["ProjectNM"] = -9999
     subregin_info["Nun_Grids"] = -9999
     subregin_info["Ply_Name"] = -9999
     subregin_info["Max_ACC"] = -9999
-    for i in range(0, len(Basins)):
-        basinid = int(Basins[i])
-        grass.run_command("r.mask", raster="dem", maskcats="*", overwrite=True)
-        exp = (
-            "dem_reg_"
-            + str(basinid)
-            + "= if(finalcat == "
-            + str(basinid)
-            + ",dem, -9999)"
-        )
+    
+    for i in range(0, len(outletinfo)):
+    
+        basinid = int(outletinfo['SubId'].values[i])
+    
+        grass.run_command("r.mask", raster=dem, maskcats="*", overwrite=True)
+        exp = "%s = if(%s == %s,%s,null())" % ("dem_reg_"+ str(basinid),cat_add_lake,str(basinid),dem)
         grass.run_command("r.mapcalc", expression=exp, overwrite=True)
         grass.run_command(
             "r.null", map="dem_reg_" + str(basinid), setnull=[-9999, 0]
         )
-
         ####define mask
         grass.run_command(
             "r.mask", raster="dem_reg_" + str(basinid), maskcats="*", overwrite=True
@@ -294,20 +316,20 @@ def Generatesubdomainmaskandinfo(
         grass.run_command(
             "r.out.gdal",
             input="MASK",
-            output=os.path.join(self.tempfolder, "Mask1.tif"),
+            output=os.path.join(tempfolder, "Mask1.tif"),
             format="GTiff",
             overwrite=True,
         )
         processing.run(
             "gdal:polygonize",
             {
-                "INPUT": os.path.join(self.tempfolder, "Mask1.tif"),
+                "INPUT": os.path.join(tempfolder, "Mask1.tif"),
                 "BAND": 1,
                 "FIELD": "DN",
                 "EIGHT_CONNECTEDNESS": False,
                 "EXTRA": "",
                 "OUTPUT": os.path.join(
-                    self.tempfolder, "HyMask_region_" + str(basinid) + ".shp"
+                    tempfolder, "HyMask_region_" + str(basinid) + ".shp"
                 ),
             },
         )
@@ -315,11 +337,11 @@ def Generatesubdomainmaskandinfo(
             "gdal:dissolve",
             {
                 "INPUT": os.path.join(
-                    self.tempfolder, "HyMask_region_" + str(basinid) + ".shp"
+                    tempfolder, "HyMask_region_" + str(basinid) + ".shp"
                 ),
                 "FIELD": "DN",
                 "OUTPUT": os.path.join(
-                    self.tempfolder, "HyMask_region_f" + str(basinid) + ".shp"
+                    tempfolder, "HyMask_region_f" + str(basinid) + ".shp"
                 ),
             },
         )
@@ -327,13 +349,13 @@ def Generatesubdomainmaskandinfo(
             "gdal:dissolve",
             {
                 "INPUT": os.path.join(
-                    self.tempfolder, "HyMask_region_" + str(basinid) + ".shp"
+                    tempfolder, "HyMask_region_" + str(basinid) + ".shp"
                 ),
                 "FIELD": "DN",
                 "OUTPUT": os.path.join(
                     Out_Sub_Reg_Dem_Folder,
                     "HyMask_region_"
-                    + str(int(basinid + self.maximum_obs_id))
+                    + str(int(basinid + maximum_obs_id))
                     + "_nobuffer.shp",
                 ),
             },
@@ -342,7 +364,7 @@ def Generatesubdomainmaskandinfo(
             "native:buffer",
             {
                 "INPUT": os.path.join(
-                    self.tempfolder, "HyMask_region_f" + str(basinid) + ".shp"
+                    tempfolder, "HyMask_region_f" + str(basinid) + ".shp"
                 ),
                 "DISTANCE": 0.005,
                 "SEGMENTS": 5,
@@ -353,142 +375,73 @@ def Generatesubdomainmaskandinfo(
                 "OUTPUT": os.path.join(
                     Out_Sub_Reg_Dem_Folder,
                     "HyMask_region_"
-                    + str(int(basinid + self.maximum_obs_id))
+                    + str(int(basinid + maximum_obs_id))
                     + ".shp",
                 ),
             },
         )
-
-    grass.run_command("r.mask", raster="dem", maskcats="*", overwrite=True)
-
-    for i in range(0, len(Basins)):
-        basinid = int(Basins[i])
-        catmask = strtemp_array == basinid
-        catacc = acc[catmask]
-        trow, tcol = Getbasinoutlet(basinid, strtemp_array, acc, dir, nrows, ncols)
-        k = 1
-        ttrow, ttcol = trow, tcol
-        dowsubreginid = -1
-        ### get the downstream catchment id
-        while dowsubreginid < 0 and k < 20:
-            nrow, ncol = Nextcell(dir, ttrow, ttcol)
-            if nrow < 0 or ncol < 0:
-                dowsubreginid = -1
-                Cat_outlets[trow, tcol] = int(
-                    basinid + self.maximum_obs_id
-                )  ### for outlet of watershed, use trow tcol
-                break
-            elif nrow >= nrows or ncol >= ncols:
-                dowsubreginid = -1
-                Cat_outlets[trow, tcol] = int(basinid + self.maximum_obs_id)
-                break
-            elif (
-                strtemp_array[nrow, ncol] <= 0
-                or strtemp_array[nrow, ncol] == basinid
-            ):
-                dowsubreginid = -1
-                Cat_outlets[trow, tcol] = int(basinid + self.maximum_obs_id)
-            else:
-                dowsubreginid = strtemp_array[nrow, ncol]
-                Cat_outlets[ttrow, ttcol] = int(basinid + self.maximum_obs_id)
-                Cat_outlets_Down[nrow, ncol] = int(basinid + self.maximum_obs_id)
-            k = k + 1
-            ttrow = nrow
-            ttcol = ncol
-
+    
+    grass.run_command("r.mask", raster=dem, maskcats="*", overwrite=True)
+     
+    
+    for i in range(0, len(outletinfo)):
+        basinid = int(outletinfo['SubId'].values[i])
+        dowsubreginid = int(outletinfo['DowSubId'].values[i])
+        catacc = int(outletinfo['MaxAcc_cat'].values[i])
+        
         subregin_info.loc[i, "ProjectNM"] = (
-            ProjectNM + "_" + str(int(basinid + self.maximum_obs_id))
+            'sub_reg' + "_" + str(int(basinid + maximum_obs_id))
         )
-        subregin_info.loc[i, "Nun_Grids"] = np.sum(catmask)
         subregin_info.loc[i, "Ply_Name"] = (
-            "HyMask_region_" + str(int(basinid + self.maximum_obs_id)) + ".shp"
+            "HyMask_region_" + str(int(basinid + maximum_obs_id)) + ".shp"
         )
-        subregin_info.loc[i, "Max_ACC"] = np.max(np.unique(catacc))
+        subregin_info.loc[i, "Max_ACC"] = catacc
         subregin_info.loc[i, "Dow_Sub_Reg_Id"] = int(
-            dowsubreginid + self.maximum_obs_id
+            dowsubreginid + maximum_obs_id
         )
-        subregin_info.loc[i, "Sub_Reg_ID"] = int(basinid + self.maximum_obs_id)
+        subregin_info.loc[i, "Sub_Reg_ID"] = int(basinid + maximum_obs_id)
 
     ### remove subregion do not contribute to the outlet
     ## find watershed outlet subregion
-    outlet_reg_info = subregin_info.loc[
-        subregin_info["Dow_Sub_Reg_Id"] == self.maximum_obs_id - 1
-    ]
-    outlet_reg_info = outlet_reg_info.sort_values(by="Max_ACC", ascending=False)
-    outlet_reg_id = outlet_reg_info["Sub_Reg_ID"].values[0]
-
-    mask = subregin_info["Dow_Sub_Reg_Id"] == self.maximum_obs_id - 1
-    mask2 = np.logical_not(subregin_info["Sub_Reg_ID"] == outlet_reg_id)
-    del_row_mask = np.logical_and(mask2, mask)
-
-    subregin_info = subregin_info.loc[np.logical_not(del_row_mask), :]
     subregin_info.to_csv(
         os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_reg_info.csv"),
         index=None,
         header=True,
     )
 
-    ####### save outlet of each subregion
-    grass.run_command("r.mask", raster="dem", maskcats="*", overwrite=True)
-    temparray = garray.array()
-    temparray[:, :] = Cat_outlets[:, :]
-    temparray.write(mapname="Sub_Reg_Outlets", overwrite=True)
+    grass.run_command("v.db.addcolumn", map=outlet_pt_info, columns="reg_subid int")
     grass.run_command(
-        "r.mapcalc",
-        expression="Sub_Reg_Outlets_1 = int(Sub_Reg_Outlets)",
-        overwrite=True,
+        "v.db.addcolumn", map=outlet_pt_info, columns="reg_dowid int"
     )
-    grass.run_command("r.null", map="Sub_Reg_Outlets_1", setnull=-9999)
-
-    temparray = garray.array()
-    temparray[:, :] = Cat_outlets_Down[:, :]
-    temparray.write(mapname="Sub_Reg_Outlets_Down", overwrite=True)
-    grass.run_command(
-        "r.mapcalc",
-        expression="Sub_Reg_Outlets_Down_1 = int(Sub_Reg_Outlets_Down)",
-        overwrite=True,
-    )
-    grass.run_command("r.null", map="Sub_Reg_Outlets_Down_1", setnull=-9999)
 
     grass.run_command(
-        "r.to.vect",
-        input="Sub_Reg_Outlets_1",
-        output="Sub_Reg_Outlets_point",
-        type="point",
-        overwrite=True,
+        "v.db.addcolumn", map=outlet_pt_info, columns="sub_reg_id int"
     )
+    
+    grass.run_command(
+        "v.db.update", map=outlet_pt_info, column="reg_subid", qcol="SubId + " +str(maximum_obs_id) 
+    )
+
+    grass.run_command(
+        "v.db.update", map=outlet_pt_info, column="sub_reg_id", qcol="SubId + " +str(maximum_obs_id) 
+    )
+    
+    grass.run_command(
+        "v.db.update", map=outlet_pt_info, column="reg_dowid", qcol="DowSubId + " +str(maximum_obs_id) 
+    )
+        
+
     grass.run_command(
         "v.out.ogr",
-        input="Sub_Reg_Outlets_point",
-        output=os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_Reg_Outlets.shp"),
+        input=outlet_pt_info,
+        output=os.path.join(Out_Sub_Reg_Dem_Folder, outlet_pt_info + ".shp"),
         format="ESRI_Shapefile",
-        overwrite=True,
-    )
-    grass.run_command(
-        "r.pack",
-        input="Sub_Reg_Outlets_1",
-        output=self.Path_Sub_reg_outlets_r,
         overwrite=True,
     )
     grass.run_command(
         "v.pack",
-        input="Sub_Reg_Outlets_point",
-        output=self.Path_Sub_reg_outlets_v,
-        overwrite=True,
-    )
-
-    grass.run_command(
-        "r.to.vect",
-        input="Sub_Reg_Outlets_Down_1",
-        output="Sub_Reg_Outlets_Down_point",
-        type="point",
-        overwrite=True,
-    )
-    grass.run_command(
-        "v.out.ogr",
-        input="Sub_Reg_Outlets_Down_point",
-        output=os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_Reg_Outlets_Down.shp"),
-        format="ESRI_Shapefile",
+        input=outlet_pt_info,
+        output=os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_Reg_Outlet_v"),
         overwrite=True,
     )
 
