@@ -27,7 +27,7 @@
 
 
 def Generaterouting_subregion(i):
-    os.system("python Parallel_Step_2_Script_For_Each_Sub_Region.py  " + str(i))
+    os.system("python parallel_step_2_script_for_each_sub_region.py  " + str(i))
 
 
 import os
@@ -43,21 +43,14 @@ from joblib import Parallel, delayed
 Outputfolder = "C:/Users/dustm/OneDrive - University of Waterloo/Documents/ProjectData/Petawawa/lake_of_woods/"
 
 ### The BasinMaker folder
-BasinMaker_Folder = "C:/Users/dustm/Documents/GitHub/RoutingTool"
+datafolder = "../../tests/testdata/Required_data_to_start_from_dem"
 
 ### Define number of processors
 ncores = 4
 ########### Variable needs to be modified to run this example ######
 
 
-### Define derived folder
-DataBase_Folder = os.path.join(
-    BasinMaker_Folder,
-    "Toolbox_QGIS",
-    "tests",
-    "testdata",
-    "Required_data_to_start_from_dem",
-)
+
 Out_Sub_Reg_Dem_Folder = os.path.join(Outputfolder, "SubRegion_info")
 
 

@@ -1,9 +1,8 @@
-from processing_functions_raster_array import *
-from processing_functions_raster_grass import *
-from processing_functions_raster_qgis import *
-from processing_functions_vector_grass import *
-from processing_functions_vector_qgis import *
-from utilities import *
+from func.grassgis import *
+from func.qgis import *
+from func.pdtable import *
+from func.rarray import *
+from utilities.utilities import *
 import os
 
 
@@ -81,5 +80,54 @@ def rasterize_vectors_and_load_to_db(
     grass_raster_setnull(
         grass, raster_nm=raster_name, null_values=[-9999], create_new_raster=False
     )
+
+    grass_raster_v_import(grass, input_path=vector_path, output_vector_nm=raster_name)
     Qgs.exit()
     PERMANENT.close()
+
+
+def obtain_lake_vectors_larger_than_threstholds(
+    grassdb,
+    qgis_prefix_path,
+    all_lakes,
+    lake_attributes,
+    threshold_con_lake,
+    threshold_non_con_lake,
+    lakes_lg_cl_thres = 'lakes_lg_cl_thres',
+    lakes_lg_ncl_thres = 'lakes_lg_ncl_thres'
+):
+
+    QgsApplication.setPrefixPath(qgis_prefix_path, True)
+    Qgs = QgsApplication([], False)
+    Qgs.initQgis()
+    from processing.core.Processing import Processing
+    from processing.tools import dataobjects
+    from qgis import processing
+
+    feedback = QgsProcessingFeedback()
+    Processing.initialize()
+    QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
+    context = dataobjects.createContext()
+    context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
+
+    print(threshold_con_lake,threshold_non_con_lake,lake_attributes[2])
+    qgis_vector_extract_by_attribute(
+        processing,
+        context,
+        INPUT_Layer=os.path.join(grassdb, all_lakes + ".shp"),
+        FIELD=lake_attributes[2],
+        OPERATOR=2,
+        VALUE=threshold_con_lake,
+        OUTPUT=os.path.join(grassdb, lakes_lg_cl_thres + ".shp"),
+    )   
+
+    qgis_vector_extract_by_attribute(
+        processing,
+        context,
+        INPUT_Layer=os.path.join(grassdb, all_lakes + ".shp"),
+        FIELD=lake_attributes[2],
+        OPERATOR=2,
+        VALUE=threshold_non_con_lake,
+        OUTPUT=os.path.join(grassdb, lakes_lg_ncl_thres + ".shp"),
+    ) 
+    Qgs.exit() 

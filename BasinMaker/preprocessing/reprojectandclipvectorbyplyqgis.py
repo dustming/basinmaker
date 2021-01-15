@@ -1,9 +1,8 @@
-from processing_functions_raster_array import *
-from processing_functions_raster_grass import *
-from processing_functions_raster_qgis import *
-from processing_functions_vector_grass import *
-from processing_functions_vector_qgis import *
-from utilities import *
+from func.grassgis import *
+from func.qgis import *
+from func.pdtable import *
+from func.rarray import *
+from utilities.utilities import *
 import os
 
 
@@ -65,7 +64,7 @@ def reproject_clip_vectors_by_polygon(
             context,
             INPUT=os.path.join(grassdb, ply_name + "_project.shp"),
             INTERSECT=mask,
-            OUTPUT=os.path.join(grassdb, ply_name + "_clipped.shp"),
+            OUTPUT=os.path.join(grassdb, ply_name + ".shp"),
         )
     except:
         print("Need fix lake boundary geometry to speed up")
@@ -80,5 +79,5 @@ def reproject_clip_vectors_by_polygon(
             context,
             INPUT=os.path.join(grassdb, ply_name + "_fixgeo.shp"),
             INTERSECT=mask,
-            OUTPUT=os.path.join(grassdb, ply_name + "_clipped.shp"),
+            OUTPUT=os.path.join(grassdb, ply_name + ".shp"),
         )

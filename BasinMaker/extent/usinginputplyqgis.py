@@ -1,9 +1,8 @@
-from processing_functions_raster_array import *
-from processing_functions_raster_grass import *
-from processing_functions_raster_qgis import *
-from processing_functions_vector_grass import *
-from processing_functions_vector_qgis import *
-from utilities import *
+from func.grassgis import *
+from func.qgis import *
+from func.pdtable import *
+from func.rarray import *
+from utilities.utilities import *
 
 
 def define_project_extent_using_input_polygon(
@@ -119,7 +118,6 @@ def define_project_extent_using_input_polygon(
 
     # unpack dem dataset
     root, ext = os.path.splitext(path_dem_in)
-    print(os.path.abspath(path_dem_in))
     if ext == ".pack":
         grass_raster_r_unpack(
             grass, input=os.path.abspath(path_dem_in), output=dem + "_big"

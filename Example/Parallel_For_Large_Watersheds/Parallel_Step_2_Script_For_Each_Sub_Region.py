@@ -33,7 +33,7 @@ import tempfile
 
 import pandas as pd
 
-from ToolboxClass import LRRT
+from basinmaker import BasinMakerQGIS
 
 ############ Variable needs to be modified to run this example ######
 
@@ -41,19 +41,9 @@ from ToolboxClass import LRRT
 Outputfolder = "C:/Users/dustm/OneDrive - University of Waterloo/Documents/ProjectData/Petawawa/lake_of_woods/"
 
 ### The BasinMaker folder
-BasinMaker_Folder = "C:/Users/dustm/Documents/GitHub/RoutingTool"
+datafolder = "../../tests/testdata/Required_data_to_start_from_dem"
 
 ########### Variable needs to be modified to run this example ######
-
-
-### Define derived folder
-DataBase_Folder = os.path.join(
-    BasinMaker_Folder,
-    "Toolbox_QGIS",
-    "tests",
-    "testdata",
-    "Required_data_to_start_from_dem",
-)
 Out_Sub_Reg_Dem_Folder = os.path.join(Outputfolder, "SubRegion_info")
 
 ### the id of each subregion
@@ -61,13 +51,7 @@ ith_subregion = int(sys.argv[1])
 
 
 ### Inputs
-na_hydem = os.path.join(DataBase_Folder, "DEM_big_merit.tif")  #'HydroSHED15S.tif')#
-in_wd = os.path.join(DataBase_Folder, "Bkfullwidth_depth.shp")
-in_lake = os.path.join(DataBase_Folder, "HyLake.shp")
-in_obs = os.path.join(DataBase_Folder, "obs.shp")
-landuse = os.path.join(DataBase_Folder, "landuse.tif")
-landuseinfo = os.path.join(DataBase_Folder, "Landuse_info.csv")
-# CA_HYDAT =os.path.join(DataBase_Folder,'Shapefiles','Observation','Hydat.sqlite3')
+na_hydem = os.path.join(Out_Sub_Reg_Dem_Folder, "sub_reg_dem.pack") 
 
 ### open log file
 if ith_subregion == 0:
@@ -87,54 +71,78 @@ Path_Sub_Polygon = os.path.join(
     Out_Sub_Reg_Dem_Folder, SubReg_info["Ply_Name"].values[ith_subregion]
 )
 
+path_working_folder = os.path.join("C:/Users/dustm/Documents","testsub",ProjectName)
+
+path_output_folder = os.path.join(Out_Sub_Reg_Dem_Folder,'subregion_result',ProjectName)
+
 ### run for each sub region
 
 ### initialize the toolbox
-RTtool = LRRT(
-    Lakefile=in_lake,
-    Landuse=landuse,
-    Landuseinfo=landuseinfo,
-    obspoint=in_obs,
-    OutputFolder=os.path.join(Outputfolder, ProjectName),
-    Path_Sub_Reg_Out_Folder=Out_Sub_Reg_Dem_Folder,
-    Is_Sub_Region=1,
-    WidDep=in_wd,
-    debug=True,
-    TempOutFolder=os.path.join(tempfile.gettempdir(), ProjectName),
+basinmaker = BasinMakerQGIS(
+   path_working_folder = path_working_folder
 )
 
-### define processing extent
-RTtool.Generatmaskregion(Path_Sub_Polygon=Path_Sub_Polygon)
-
-### prepare input data within the processing extent
-RTtool.Generateinputdata()
-
-### delineate watershed without lakes
-RTtool.WatershedDiscretizationToolset(max_memroy=1024 * 5)
-
-### add lakes into routing network
-RTtool.AutomatedWatershedsandLakesFilterToolset(
-    Thre_Lake_Area_Connect=0, Thre_Lake_Area_nonConnect=0, max_memroy=1024 * 2
+basinmaker.define_project_extent_method(
+    mode="using_provided_ply", path_dem_in=na_hydem,path_extent_ply=Path_Sub_Polygon
 )
 
-### calcuate parameters
-RTtool.RoutingNetworkTopologyUpdateToolset_riv(
-    projection="EPSG:3573", Outlet_Obs_ID=basinid
+basinmaker.watershed_delineation_without_lake_method(
+    mode="usingsubreg",
+    max_memroy=1024 * 4,
+    subreg_acc_path = os.path.join(
+        Out_Sub_Reg_Dem_Folder, "sub_reg_acc.pack"
+    ),
+    subreg_fdr_path = os.path.join(
+        Out_Sub_Reg_Dem_Folder, "sub_reg_nfdr_arcgis.pack"
+    ),
+    subreg_str_r_path = os.path.join(
+        Out_Sub_Reg_Dem_Folder, "sub_reg_str_r.pack"
+    ),
+    subreg_str_v_path = os.path.join(
+        Out_Sub_Reg_Dem_Folder, "sub_reg_str_v.pack"
+    ),
+    gis_platform="qgis",
 )
 
-### Megrge catchment covered by the same lake
-RTtool.Define_Final_Catchment(
-    OutputFolder=os.path.join(Outputfolder, ProjectName),
-    Path_final_rivply=os.path.join(Outputfolder, ProjectName, "finalriv_info_ply.shp"),
-    Path_final_riv=os.path.join(Outputfolder, ProjectName, "finalriv_info.shp"),
+basinmaker.watershed_delineation_add_lake_control_points(
+    path_lakefile_in=os.path.join(datafolder, "HyLake.shp"),
+    lake_attributes=["Hylak_id", "Lake_type", "Lake_area", "Vol_total", "Depth_avg"],
+    threshold_con_lake = 0,
+    threshold_non_con_lake = 0,
+    path_obsfile_in=os.path.join(datafolder, "obs.shp"),
+    obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
+    max_memroy=1024 * 4,
+    gis_platform="qgis",
+)
+
+basinmaker.add_attributes_to_catchments_method(
+    path_bkfwidthdepth=os.path.join(datafolder, "Bkfullwidth_depth.shp"),
+    bkfwd_attributes=["WIDTH", "DEPTH", "Q_Mean", "UP_AREA"],
+    path_landuse=os.path.join(datafolder, "landuse.tif"),
+    path_landuse_info=os.path.join(datafolder, "Landuse_info3.csv"),
+    gis_platform="qgis",
+    obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
+    lake_attributes =["Hylak_id", "Lake_type", "Lake_area", "Vol_total", "Depth_avg"] ,
+    outlet_obs_id=1,
+    path_sub_reg_outlets_v="#",
+    output_folder=path_output_folder,
+)
+#
+basinmaker.combine_catchments_covered_by_the_same_lake_method(
+    OutputFolder=path_output_folder,
+    Path_final_rivply=os.path.join(
+        path_output_folder, "catchment_without_merging_lakes.shp"
+    ),
+    Path_final_riv=os.path.join(path_output_folder, "river_without_merging_lakes.shp"),
+    gis_platform="qgis",
 )
 
 if os.path.exists(
-    os.path.join(os.path.join(Outputfolder, ProjectName), "finalcat_info.shp")
+    os.path.join(path_output_folder, "finalcat_info.shp")
 ):
     file_object.write(str(basinid) + "          Successful " + "\n")
     file_object.close()
 else:
-    shutil.rmtree(os.path.join(Outputfolder, ProjectName), ignore_errors=True)
+    shutil.rmtree(path_output_folder, ignore_errors=True)
     file_object.write(str(basinid) + "          Failed " + "\n")
     file_object.close()

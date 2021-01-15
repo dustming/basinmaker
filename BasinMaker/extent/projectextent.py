@@ -1,3 +1,5 @@
+import shutil
+import os 
 def define_project_extent(
     mode,
     path_dem_in,
@@ -96,6 +98,10 @@ def define_project_extent(
     Examples
     -------
     """
+    shutil.rmtree(grassdb)
+    if not os.path.exists(grassdb):
+        os.makedirs(grassdb)    
+    
     if gis_platform == "qgis":
         assert (
             grassdb != "#"

@@ -5,50 +5,277 @@ import urllib
 
 import numpy as np
 import pandas as pd
+from utilities.utilities import *
 
 
-def WriteStringToFile(Out_String, File_Path, WriteMethod):
-    """Write String to a file
+def GenerateRavenInput(
+    Path_final_hru_info="#",
+    lenThres=1,
+    iscalmanningn=-1,
+    Startyear=-1,
+    EndYear=-1,
+    CA_HYDAT="#",
+    WarmUp=0,
+    Template_Folder="#",
+    Lake_As_Gauge=False,
+    WriteObsrvt=False,
+    DownLoadObsData=True,
+    Model_Name="test",
+    Old_Product=False,
+    SubBasinGroup_NM_Channel=["Allsubbasins"],
+    SubBasinGroup_Length_Channel=[-1],
+    SubBasinGroup_NM_Lake=["AllLakesubbasins"],
+    SubBasinGroup_Area_Lake=[-1],
+    OutputFolder="#",
+    Forcing_Input_File="#",
+):
 
-    Function that used to write Out_String to a file located at the File_Path.
+    """Generate Raven input files.
+
+    Function that used to generate Raven input files. All output will be stored in folder
+    "<OutputFolder>/RavenInput".
 
     Parameters
     ----------
-    Out_String            : string
-        The string that will be writed to the file located at File_Path
-    File_Path             : string
-        Path and filename of file that will be modified or created
-    WriteMethod           : {'a','w'}
-        If WriteMethod = "w", a new file will be created at the File_Path
-        If WriteMethod = "a", the Out_String will be added to exist file
+
+    Path_final_hru_info     : string
+        Path of the output shapefile from routing toolbox which includes
+        all required parameters; Each row in the attribute table of this
+        shapefile represent a HRU. Different HRU in the same subbasin has
+        the same subbasin related attribute values.
+
+        The shapefile should at least contains following columns
+        ##############Subbasin related attributes###########################
+        SubId           - integer, The subbasin Id
+        DowSubId        - integer, The downstream subbasin ID of this
+                                   subbasin
+        IsLake          - integer, If the subbasin is a lake / reservior
+                                   subbasin. 1 yes, <0, no
+        IsObs           - integer, If the subbasin contains a observation
+                                   gauge. 1 yes, < 0 no.
+        RivLength       - float,   The length of the river in current
+                                   subbasin in m
+        RivSlope        - float,   The slope of the river path in
+                                   current subbasin, in m/m
+        FloodP_n        - float,   Flood plain manning's coefficient, in -
+        Ch_n            - float,   main channel manning's coefficient, in -
+        BkfWidth        - float,   the bankfull width of the main channel
+                                   in m
+        BkfDepth        - float,   the bankfull depth of the main channel
+                                   in m
+        HyLakeId        - integer, the lake id
+        LakeVol         - float,   the Volume of the lake in km3
+        LakeDepth       - float,   the average depth of the lake m
+        LakeArea        - float,   the area of the lake in m2
+        ############## HRU related attributes    ###########################
+        HRU_S_mean      - float,   the slope of the HRU in degree
+        HRU_A_mean      - float,   the aspect of the HRU in degree
+        HRU_E_mean      - float,   the mean elevation of the HRU in m
+        HRU_ID          - integer, the id of the HRU
+        HRU_Area        - integer, the area of the HRU in m2
+        HRU_IsLake      - integer, the 1 the HRU is a lake hru, -1 not
+        LAND_USE_C      - string,  the landuse class name for this HRU, the
+                                   name will be used in Raven rvh, and rvp
+                                   file
+        VEG_C           - string,  the Vegetation class name for this HRU, the
+                                   name will be used in Raven rvh, and rvp
+                                   file
+        SOIL_PROF       - string,  the soil profile name for this HRU, the
+                                   name will be used in Raven rvh, and rvp
+                                   file
+        HRU_CenX        - float,  the centroid coordinates for HRU in x
+                                   dimension
+        HRU_CenY        - float,  the centroid coordinates for HRU in y
+                                   dimension
+    lenThres        : float
+        River length threshold; river length smaller than
+        this will write as zero in Raven rvh file
+    iscalmanningn   : integer
+        If "1", use manning's coefficient in the shpfile table
+        and set to default value (0.035).
+        If "-1", do not use manning's coefficients.
+    Lake_As_Gauge   : Bool
+        If "True", all lake subbasins will labeled as gauged
+        subbasin such that Raven will export lake balance for
+        this lake. If "False", lake subbasin will not be labeled
+        as gauge subbasin.
+    CA_HYDAT        : string,  optional
+        path and filename of downloaded
+        external database containing streamflow observations,
+        e.g. HYDAT for Canada ("Hydat.sqlite3").
+    Startyear       : integer, optional
+        Start year of simulation. Used to
+        read streamflow observations from external databases.
+    EndYear         : integer, optional
+        End year of simulation. Used to
+        read streamflow observations from external databases.
+    WarmUp          : integer, optional
+        The warmup time (in years) used after
+        startyear. Values in output file "obs/xxx.rvt" containing
+        observations will be set to NoData value "-1.2345" from
+        model start year to end of WarmUp year.
+    Template_Folder : string, optional
+        Input that is used to copy raven template files. It is a
+        folder name containing raven template files. All
+        files from that folder will be copied (unchanged)
+        to the "<OutputFolder>/RavenInput".
+    WriteObsrvt     : Bool, optional
+        Input that used to indicate if the observation data file needs
+        to be generated.
+    DownLoadObsData : Bool, optional
+        Input that used to indicate if the observation data will be Download
+        from usgs website or read from hydat database for streamflow Gauge
+        in US or Canada,respectively. If this parameter is False,
+        while WriteObsrvt is True. The program will write the observation data
+        file with "-1.2345" for each observation gauges.
+    Model_Name      : string
+       The Raven model base name. File name of the raven input will be
+       Model_Name.xxx.
+    Old_Product     : bool
+        True, the input polygon is coming from the first version of routing product
+    SubBasinGroup_NM_Channel       : List
+        It is a list of names for subbasin groups, which are grouped based
+        on channel length of each subbsin. Should at least has one name
+    SubBasinGroup_Length_Channel   : List
+        It is a list of float channel length thresthold in meter, to divide
+        subbasin into different groups. for example, [1,10,20] will divide
+        subbasins into four groups, group 1 with channel length (0,1];
+        group 2 with channel length (1,10],
+        group 3 with channel length (10,20],
+        group 4 with channel length (20,Max channel length].
+    SubBasinGroup_NM_Lake          : List
+        It is a list of names for subbasin groups, which are grouped based
+        on Lake area of each subbsin. Should at least has one name
+    SubBasinGroup_Area_Lake        : List
+        It is a list of float lake area thresthold in m2, to divide
+        subbasin into different groups. for example, [1,10,20] will divide
+        subbasins into four groups, group 1 with lake area (0,1];
+        group 2 with lake are (1,10],
+        group 3 with lake are (10,20],
+        group 4 with lake are (20,Max channel length].
+    OutputFolder                   : string
+        Folder name that stores generated Raven input files. The raven
+        input file will be generated in "<OutputFolder>/RavenInput"
 
     Notes
-    ------
-        The file located at the File_Path will be modified or created
-
-    Returns
     -------
-        None
+    Following ouput files will be generated in "<OutputFolder>/RavenInput"
+    modelname.rvh              - contains subbasins and HRUs
+    Lakes.rvh                  - contains definition and parameters of lakes
+    channel_properties.rvp     - contains definition and parameters for channels
+    xxx.rvt                    - (optional) streamflow observation for each gauge
+                                 in shapefile database will be automatically
+                                 generagted in folder "OutputFolder/RavenInput/obs/".
+    obsinfo.csv                - information file generated reporting drainage area
+                                 difference between observed in shapefile and
+                                 standard database as well as number of missing
+                                 values for each gauge
+
+    Returns:
+    -------
+       None
 
     Examples
-    --------
-    >>> from WriteRavenInputs import WriteStringToFile
-    >>> Out_String = 'sometest at line 1\n some test at line 2\n some test at line 3\n'
-    >>> File_Path  = 'C:/Path_to_the_Flie_with_file_name'
-    >>> WriteStringToFile(Out_String = Out_String,File_Path = File_Path,WriteMethod = 'w')
+    -------
 
     """
 
-    if os.path.exists(
-        File_Path
-    ):  ### if file exist, we can either modify or overwrite it
-        with open(File_Path, WriteMethod) as f:
-            f.write(Out_String)
-    else:  ## create a new file anyway, since file did not exist
-        with open(File_Path, "w") as f:
-            f.write(Out_String)
+    Raveinputsfolder = os.path.join(OutputFolder, "RavenInput")
+    Obs_Folder = os.path.join(Raveinputsfolder, "obs")
 
+    if not os.path.exists(OutputFolder):
+        os.makedirs(OutputFolder)
 
+    shutil.rmtree(Raveinputsfolder, ignore_errors=True)
+
+    ### check if there is a model input template provided
+    if Template_Folder != "#":
+        fromDirectory = Template_Folder
+        toDirectory = Raveinputsfolder
+        copy_tree(fromDirectory, toDirectory)
+
+    if not os.path.exists(Raveinputsfolder):
+        os.makedirs(Raveinputsfolder)
+    if not os.path.exists(Obs_Folder):
+        os.makedirs(Obs_Folder)
+
+    if Forcing_Input_File != "#":
+        fromDirectory = Forcing_Input_File
+        toDirectory = os.path.join(Raveinputsfolder, "GriddedForcings2.txt")
+        copyfile(fromDirectory, toDirectory)
+
+    finalcatchpath = Path_final_hru_info
+
+    tempinfo = Dbf5(finalcatchpath[:-3] + "dbf")
+    ncatinfo = tempinfo.to_dataframe()
+    ncatinfo2 = ncatinfo.drop_duplicates("HRU_ID", keep="first")
+    ncatinfo2 = ncatinfo2.loc[(ncatinfo2["HRU_ID"] > 0) & (ncatinfo2["SubId"] > 0)]
+    if Old_Product == True:
+        ncatinfo2["RivLength"] = ncatinfo2["Rivlen"].values
+    #            ncatinfo2['RivSlope'] = ncatinfo2['Rivlen'].values
+    #            ncatinfo2['RivLength'] = ncatinfo2['Rivlen'].values
+    #            ncatinfo2['RivLength'] = ncatinfo2['Rivlen'].values
+    #            ncatinfo2['RivLength'] = ncatinfo2['Rivlen'].values
+    (
+        Channel_rvp_file_path,
+        Channel_rvp_string,
+        Model_rvh_file_path,
+        Model_rvh_string,
+        Model_rvp_file_path,
+        Model_rvp_string_modify,
+    ) = Generate_Raven_Channel_rvp_rvh_String(
+        ncatinfo2,
+        Raveinputsfolder,
+        lenThres,
+        iscalmanningn,
+        Lake_As_Gauge,
+        Model_Name,
+        SubBasinGroup_NM_Lake,
+        SubBasinGroup_Area_Lake,
+        SubBasinGroup_NM_Channel,
+        SubBasinGroup_Length_Channel,
+    )
+    WriteStringToFile(Channel_rvp_string, Channel_rvp_file_path, "w")
+    WriteStringToFile(Model_rvh_string, Model_rvh_file_path, "w")
+    WriteStringToFile(Model_rvp_string_modify, Model_rvp_file_path, "a")
+
+    Lake_rvh_string, Lake_rvh_file_path = Generate_Raven_Lake_rvh_String(
+        ncatinfo2, Raveinputsfolder, Model_Name
+    )
+    WriteStringToFile(Lake_rvh_string, Lake_rvh_file_path, "w")
+
+    if WriteObsrvt > 0:
+        (
+            obs_rvt_file_path_gauge_list,
+            obs_rvt_file_string_gauge_list,
+            Model_rvt_file_path,
+            Model_rvt_file_string_modify_gauge_list,
+            obsnms,
+        ) = Generate_Raven_Obs_rvt_String(
+            ncatinfo2,
+            Raveinputsfolder,
+            Obs_Folder,
+            Startyear + WarmUp,
+            EndYear,
+            CA_HYDAT,
+            DownLoadObsData,
+            Model_Name,
+        )
+        for i in range(0, len(obs_rvt_file_path_gauge_list)):
+            WriteStringToFile(
+                obs_rvt_file_string_gauge_list[i],
+                obs_rvt_file_path_gauge_list[i],
+                "w",
+            )
+            WriteStringToFile(
+                Model_rvt_file_string_modify_gauge_list[i], Model_rvt_file_path, "a"
+            )
+        obsnms.to_csv(os.path.join(Obs_Folder, "obsinfo.csv"))
+        
+
+####
+# Inputs
+####
 def DownloadStreamflowdata_CA(Station_NM, CA_HYDAT, StartYear, EndYear):
     """Return streamflow data from HYDAT
 
@@ -1211,12 +1438,14 @@ def Generate_Raven_Channel_rvp_rvh_String(
             SubBasin_Group_Lake.loc[i, "SubBasin_Group_NM"] = GroupName
             Lake_HRU_Name = LAND_USE_CLASS
     Model_rvh_string_list.append(":EndHRUs")  # orvh.write(":EndHRUs"+"\n")
-    Model_rvh_string_list.append(
-        ":PopulateHRUGroup Lake_HRUs With LANDUSE EQUALS " + Lake_HRU_Name
-    )  # orvh.write(":PopulateHRUGroup Lake_HRUs With LANDUSE EQUALS Lake_HRU" + "\n")
-    Model_rvh_string_list.append(
-        ":RedirectToFile " + "Lakes.rvh"
-    )  # orvh.write(":RedirectToFile TestLake.rvh")
+    # no lake hru in this watershed
+    if Lake_HRU_Name != None:
+        Model_rvh_string_list.append(
+            ":PopulateHRUGroup Lake_HRUs With LANDUSE EQUALS " + Lake_HRU_Name
+        )  # orvh.write(":PopulateHRUGroup Lake_HRUs With LANDUSE EQUALS Lake_HRU" + "\n")
+        Model_rvh_string_list.append(
+            ":RedirectToFile " + "Lakes.rvh"
+        )  # orvh.write(":RedirectToFile TestLake.rvh")
 
     for i in range(0, len(SubBasinGroup_NM_Channel)):
         Model_rvh_string_list.append(":SubBasinGroup   " + SubBasinGroup_NM_Channel[i])
@@ -1291,3 +1520,506 @@ def Generate_Raven_Channel_rvp_rvh_String(
         Model_rvp_file_path,
         Model_rvp_string_modify,
     )
+
+
+####
+# Outputs
+####
+
+
+def plotGuagelineobs(scenario, data, outfilename):
+    import matplotlib
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    plt.rc("font", family="serif")
+    plt.rc("xtick", labelsize="x-small")
+    plt.rc("ytick", labelsize="x-small")
+    fig = plt.figure(figsize=(7.48031, 3))
+    ax = fig.add_subplot(1, 1, 1)
+    colors = np.array(["b", "k", "g", "y", "c"])
+    for i in range(0, len(scenario)):
+        ax.plot(
+            data.index,
+            data[scenario[i]],
+            color=colors[i],
+            ls="solid",
+            linewidth=1,
+            label=scenario[i],
+        )
+
+    ax.scatter(data.index, data["Obs"], color="grey", s=0.1, label="Observation")
+    plt.legend(loc="upper left", frameon=False, ncol=2, prop={"size": 6})
+    plt.ylim(0, max(data[scenario[i]].values) + max(data[scenario[i]].values) * 0.1)
+    plt.xlabel("Model Time")
+    plt.ylabel("Discharge (m3/s)")
+    plt.savefig(outfilename, bbox_inches="tight", dpi=300)
+    plt.close()
+
+
+def plotGuageerror(basename, scenario, data, Diagno):
+    for i in range(0, len(scenario)):
+        plt.rc("font", family="serif")
+        plt.rc("xtick", labelsize="x-small")
+        plt.rc("ytick", labelsize="x-small")
+        fig = plt.figure(figsize=(3, 3))
+        ax = fig.add_subplot(1, 1, 1)
+        results = []
+        for k in range(0, len(data)):
+            if not math.isnan(data[basename + "_" + scenario[0] + "_obs"].values[k]):
+                results.append(
+                    (
+                        data[basename + "_" + scenario[0] + "_obs"].values[k],
+                        data[basename + "_" + scenario[i] + "_sim"].values[k],
+                        data[basename + "_" + scenario[i] + "_sim"].values[k]
+                        - data[basename + "_" + scenario[0] + "_obs"].values[k],
+                    )
+                )
+        results = np.array(results)
+        if len(results) <= 0:
+            print(scenario[i])
+            plt.close()
+            continue
+        plt.hist(results[:, 2], bins="auto")
+        plt.savefig(
+            "./Figures/" + basename + scenario[i] + "_errhist.pdf",
+            bbox_inches="tight",
+            dpi=300,
+        )
+        plt.close()
+        #######
+        plt.rc("font", family="serif")
+        plt.rc("xtick", labelsize="x-small")
+        plt.rc("ytick", labelsize="x-small")
+        fig = plt.figure(figsize=(3, 3))
+        ax = fig.add_subplot(1, 1, 1)
+        ax.scatter(
+            results[0 : len(results) - 2, 2],
+            results[1 : len(results) - 1, 2],
+            color="grey",
+            s=0.1,
+        )
+        plt.savefig(
+            "./Figures/" + basename + scenario[i] + "_errt1t2.pdf",
+            bbox_inches="tight",
+            dpi=300,
+        )
+        plt.close()
+        ########
+        plt.rc("font", family="serif")
+        plt.rc("xtick", labelsize="x-small")
+        plt.rc("ytick", labelsize="x-small")
+        fig = plt.figure(figsize=(3, 3))
+        ax = fig.add_subplot(1, 1, 1)
+        plot_acf(results[:, 2])
+        plt.savefig(
+            "./Figures/" + basename + scenario[i] + "_erracf.pdf",
+            bbox_inches="tight",
+            dpi=300,
+        )
+        plt.close()
+
+
+def plotGuageerrorquainy(basename, scenario, data, Diagno, errpars):
+    for i in range(0, len(scenario)):
+        results = []
+        for k in range(0, len(data)):
+            if not math.isnan(data[basename + "_" + scenario[0] + "_obs"].values[k]):
+                results.append(
+                    (
+                        data[basename + "_" + scenario[0] + "_obs"].values[k],
+                        data[basename + "_" + scenario[i] + "_sim"].values[k],
+                        data[basename + "_" + scenario[i] + "_sim"].values[k]
+                        - data[basename + "_" + scenario[0] + "_obs"].values[k],
+                    )
+                )
+        results = np.array(results)
+        if len(results) <= 0:
+            continue
+        plt.rc("font", family="serif")
+        plt.rc("xtick", labelsize="x-small")
+        plt.rc("ytick", labelsize="x-small")
+        fig = plt.figure(figsize=(7.48031, 3))
+        ax = fig.add_subplot(1, 1, 1)
+        colors = np.array(["b", "k", "g", "y", "c"])
+        for j in range(0, len(results)):
+            jsim = results[j, 1]
+            jerror = results[j, 2] / (
+                errpars["a"].values[i] * jsim + errpars["b"].values[i]
+            )
+            nlarge = results[results[:, 1] <= jsim]
+            ax.scatter(
+                float(len(nlarge)) / float(len(results)), jerror, color="grey", s=0.1
+            )
+        plt.savefig(
+            "./Figures/" + basename + scenario[i] + "_errqutiv.pdf",
+            bbox_inches="tight",
+            dpi=300,
+        )
+        plt.close()
+
+
+def NSE(obs, sim):
+    import numpy as np
+
+    obsmean = np.mean(obs)
+    diffobsmean = (sim - obsmean) ** 2
+    diffsim = (sim - obs) ** 2
+    NSE = 1 - np.sum(diffsim) / np.sum(diffobsmean)
+    return NSE
+
+
+def PlotHydrography_Raven_alone(
+    Path_rvt_Folder="#",
+    Path_Hydrographs_output_file=["#"],
+    Scenario_NM=["#", "#"],
+    OutputFolder="./",
+):
+
+    Obs_rvt_NMS = []
+    ###obtain obs rvt file name
+    for file in os.listdir(Path_rvt_Folder):
+        if file.endswith(".rvt"):
+            Obs_rvt_NMS.append(file)
+
+    Metric_OUT = pd.DataFrame(Obs_rvt_NMS, columns=["Obs_NM"])
+    Metric_OUT["SubId"] = np.nan
+    Metric_OUT["NSE"] = np.nan
+    print(Metric_OUT)
+    Obs_subids = []
+    for i in range(0, len(Obs_rvt_NMS)):
+        ###find subID
+        obs_nm = Obs_rvt_NMS[i]
+        ifilepath = os.path.join(Path_rvt_Folder, obs_nm)
+        f = open(ifilepath, "r")
+        #        print(ifilepath)
+        for line in f:
+            firstline_info = line.split()
+            #            print(firstline_info)
+            if firstline_info[0] == ":ObservationData":
+                obssubid = int(firstline_info[2])
+                break  ### only read first line
+            else:
+                obssubid = -1.2345
+                break  ### only read first line
+        #        print(obssubid)
+        Obs_subids.append(obssubid)
+        Metric_OUT.loc[i, "SubId"] = obssubid
+        ## this is not a observation rvt file
+        if obssubid == -1.2345:
+            continue
+        ####assign column name in the hydrography.csv
+
+        colnm_obs = "sub" + str(obssubid) + " (observed) [m3/s]"
+        colnm_sim = "sub" + str(obssubid) + " [m3/s]"
+        colnm_Date = "date"
+        colnm_hr = "hour"
+
+        ##obtain data from all provided hydrograpy csv output files each hydrograpy csv need has a coorespond scenario name
+        Initial_data_frame = 1
+        readed_data_correc = 1
+        data_len = []
+        #        print(Metric_OUT)
+        for j in range(0, len(Path_Hydrographs_output_file)):
+
+            Path_Hydrographs_output_file_j = Path_Hydrographs_output_file[j]
+            #            print(Path_Hydrographs_output_file_j)#
+            i_simresult = pd.read_csv(Path_Hydrographs_output_file[j], sep=",")
+            colnames = i_simresult.columns
+            ## check if obs name exist in the hydrograpy csv output files
+            if colnm_obs in colnames:
+
+                ## Initial lize the reaed in data frame
+                if Initial_data_frame == 1:
+                    Readed_Data = i_simresult[[colnm_Date, colnm_hr]]
+                    Readed_Data["Obs"] = i_simresult[colnm_obs]
+                    Readed_Data[Scenario_NM[j]] = i_simresult[colnm_sim]
+                    Readed_Data["Date"] = pd.to_datetime(
+                        i_simresult[colnm_Date] + " " + i_simresult[colnm_hr]
+                    )
+                    Initial_data_frame = -1
+                    data_len.append(len(Readed_Data))
+                else:
+                    tempdata = i_simresult[[colnm_Date, colnm_hr]]
+                    tempdata["Date"] = pd.to_datetime(
+                        i_simresult[colnm_Date] + " " + i_simresult[colnm_hr]
+                    )
+                    rowmask = Readed_Data["Date"].isin(tempdata["Date"].values)
+                    Readed_Data.loc[rowmask, Scenario_NM[j]] = i_simresult[
+                        colnm_sim
+                    ].values
+                    data_len.append(len(tempdata))
+            else:
+                readed_data_correc = -1
+                continue
+        print(readed_data_correc)
+        if readed_data_correc == -1:
+            continue
+
+        datalen = min(data_len)
+        #        Readed_Data = Readed_Data.drop(columns=[colnm_Date,colnm_hr])
+        Readed_Data = Readed_Data.head(datalen)
+        Readed_Data = Readed_Data.set_index("Date")
+
+        Readed_Data = Readed_Data.resample("D").sum()
+        Readed_Data["ModelTime"] = Readed_Data.index.strftime("%Y-%m-%d")
+
+        Data_NSE = Readed_Data[Readed_Data["Obs"] > 0]
+        Metric_OUT.loc[i, "NSE"] = NSE(
+            Data_NSE["Obs"].values, Data_NSE[Scenario_NM[0]].values
+        )
+        print("adfadsfadsfadsf")
+        print(Metric_OUT)
+
+
+#        plotGuagelineobs(Scenario_NM,Readed_Data,os.path.join(OutputFolder,obs_nm + '.pdf'))
+def Caluculate_Lake_Active_Depth_and_Lake_Evap(
+    Path_Finalcat_info="#",
+    Path_ReservoirStages="#",
+    Path_ReservoirMassBalance="#",
+    Output_Folder="#",
+):
+    import numpy as np
+    import pandas as pd
+    from simpledbf import Dbf5
+
+    hyinfocsv = Path_Finalcat_info[:-3] + "dbf"
+    tempinfo = Dbf5(hyinfocsv)
+    finalcat_info = tempinfo.to_dataframe()
+
+    Res_Stage_info = pd.read_csv(Path_ReservoirStages, sep=",", header=0)
+    Res_MB_info = pd.read_csv(Path_ReservoirMassBalance, sep=",", header=0)
+
+    Res_Stage_info["Date_2"] = pd.to_datetime(
+        Res_Stage_info["date"] + " " + Res_Stage_info["hour"]
+    )
+    Res_Stage_info = Res_Stage_info.set_index("Date_2")
+
+    Res_MB_info["Date_2"] = pd.to_datetime(
+        Res_MB_info["date"] + " " + Res_MB_info["hour"]
+    )
+    Res_MB_info = Res_MB_info.set_index("Date_2")
+
+    Res_Wat_Ave_Dep_Vol = Res_Stage_info.copy(deep=True)
+    Res_Wat_Ave_Dep_Vol["Lake_Area"] = np.nan
+    Res_Wat_Ave_Dep_Vol["Lake_Stage_Ave"] = np.nan
+    Res_Wat_Ave_Dep_Vol["Lake_Vol"] = np.nan
+
+    Res_Wat_Ave_Dep_Vol["Lake_Stage_Below_Crest"] = np.nan
+    Res_Wat_Ave_Dep_Vol["Lake_Vol_Below_Crest"] = np.nan
+    Res_Wat_Ave_Dep_Vol["Lake_Area_Below_Crest"] = np.nan
+
+    Col_NMS_Stage = list(Res_Stage_info.columns)
+    Col_NMS_MB = list(Res_MB_info.columns)
+
+    finalcat_info_lake_hru = finalcat_info.loc[
+        (finalcat_info["IsLake"] > 0) & (finalcat_info["HRU_Type"] == 1)
+    ]
+
+    ####
+    stage_out_NM = [
+        "Lake_Id",
+        "Lake_Area",
+        "Lake_DA",
+        "Lake_SubId",
+        "#_Day_Active_stage",
+        "Min_stage",
+        "Max_stage",
+        "Ave_stage",
+    ]
+    data_stage = np.full((len(Col_NMS_Stage), 8), np.nan)
+    Stage_Statis = pd.DataFrame(data=data_stage, columns=stage_out_NM)
+    istage = 0
+
+    ###
+    Evp_out_NM = ["Year", "Total_Lake_Evp_Loss"]
+    data_evp = np.full((50, 2), 0.00000)
+    MB_Statis = pd.DataFrame(data=data_evp, columns=Evp_out_NM)
+
+    Year_Begin = Res_MB_info.index.min().year
+    Year_end = Res_MB_info.index.max().year
+    imb = 0
+    for iyr in range(Year_Begin, Year_end + 1):
+        MB_Statis.loc[imb, "Year"] = iyr
+        imb = imb + 1
+
+    for i in range(0, len(Res_Wat_Ave_Dep_Vol)):
+        idate = Res_Wat_Ave_Dep_Vol.index[i]
+
+        Res_Wat_Ave_Vol_iday = 0.0
+        Res_Wat_Ave_Dep_Vol_iday = 0.0
+        Res_Wat_Ave_Dep_Lake_Area = 0.0
+
+        Res_Wat_Lake_Area_Below = 0.0
+        Res_Wat_Ave_Vol_Below_iday = 0.0
+        Res_Wat_Ave_Dep_Vol_Below_iday = 0.0
+        #        print("#######################################"+str(i)+"###################################33")
+        for j in range(0, len(finalcat_info_lake_hru)):
+            LakeId = finalcat_info_lake_hru["HyLakeId"].values[j]
+            Lake_Area = finalcat_info_lake_hru["HRU_Area"].values[j]
+            Lake_Subid = finalcat_info_lake_hru["SubId"].values[j]
+            Lake_DA = finalcat_info_lake_hru["DA"].values[j]
+            Mb_Col_NM = "sub" + str(int(Lake_Subid)) + " losses [m3]"
+            Stage_Col_NM = "sub" + str(int(Lake_Subid)) + " "
+            if Mb_Col_NM in Col_NMS_MB and Stage_Col_NM in Col_NMS_Stage:
+                Res_Wat_Ave_Dep_Vol_iday = (
+                    Res_Wat_Ave_Dep_Vol[Stage_Col_NM].values[i] * Lake_Area
+                    + Res_Wat_Ave_Dep_Vol_iday
+                )
+                Res_Wat_Ave_Dep_Lake_Area = Lake_Area + Res_Wat_Ave_Dep_Lake_Area
+
+                if Res_Wat_Ave_Dep_Vol[Stage_Col_NM].values[i] < 0:
+                    Res_Wat_Ave_Vol_Below_iday = (
+                        Res_Wat_Ave_Dep_Vol[Stage_Col_NM].values[i] * Lake_Area
+                        + Res_Wat_Ave_Vol_Below_iday
+                    )
+                    Res_Wat_Lake_Area_Below = Lake_Area + Res_Wat_Lake_Area_Below
+        #                    print(Res_Wat_Ave_Vol_Below_iday,Res_Wat_Lake_Area_Below,Res_Wat_Ave_Dep_Vol[Stage_Col_NM].values[i])
+        #                print(j,Res_Wat_Ave_Dep_Vol[Stage_Col_NM].values[i],Lake_Area,Res_Wat_Ave_Dep_Vol_iday)
+        if Res_Wat_Ave_Dep_Lake_Area > 0:
+            Res_Wat_Ave_Dep_iday = Res_Wat_Ave_Dep_Vol_iday / Res_Wat_Ave_Dep_Lake_Area
+        else:
+            Res_Wat_Ave_Dep_iday = np.nan
+
+        if Res_Wat_Lake_Area_Below > 0:
+            Res_Wat_Ave_Dep_Vol_Below_iday = (
+                Res_Wat_Ave_Vol_Below_iday / Res_Wat_Lake_Area_Below
+            )
+        else:
+            Res_Wat_Ave_Dep_Vol_Below_iday = np.nan
+
+        #        print(Res_Wat_Ave_Dep_iday,Res_Wat_Ave_Dep_Lake_Area,Res_Wat_Ave_Dep_Vol_iday)
+        #        print("####################################################")
+
+        Res_Wat_Ave_Dep_Vol.loc[idate, "Lake_Area"] = Res_Wat_Ave_Dep_Lake_Area
+        Res_Wat_Ave_Dep_Vol.loc[idate, "Lake_Stage_Ave"] = Res_Wat_Ave_Dep_iday
+        Res_Wat_Ave_Dep_Vol.loc[idate, "Lake_Vol"] = Res_Wat_Ave_Dep_Vol_iday
+
+        Res_Wat_Ave_Dep_Vol.loc[
+            idate, "Lake_Area_Below_Crest"
+        ] = Res_Wat_Lake_Area_Below
+        Res_Wat_Ave_Dep_Vol.loc[
+            idate, "Lake_Stage_Below_Crest"
+        ] = Res_Wat_Ave_Dep_Vol_Below_iday
+        Res_Wat_Ave_Dep_Vol.loc[
+            idate, "Lake_Vol_Below_Crest"
+        ] = Res_Wat_Ave_Vol_Below_iday
+
+    Res_Wat_Ave_Dep_Vol = Res_Wat_Ave_Dep_Vol[
+        [
+            "date",
+            "hour",
+            "Lake_Area",
+            "Lake_Stage_Ave",
+            "Lake_Vol",
+            "Lake_Area_Below_Crest",
+            "Lake_Stage_Below_Crest",
+            "Lake_Vol_Below_Crest",
+        ]
+    ]
+
+    Res_Wat_Ave_Dep_Vol.to_csv(
+        os.path.join(Output_Folder, "Lake_Wat_Ave_Depth_Vol.csv"), sep=","
+    )
+
+    for i in range(0, len(finalcat_info_lake_hru)):
+        LakeId = finalcat_info_lake_hru["HyLakeId"].values[i]
+        Lake_Area = finalcat_info_lake_hru["HRU_Area"].values[i]
+        Lake_Subid = finalcat_info_lake_hru["SubId"].values[i]
+        Lake_DA = finalcat_info_lake_hru["DA"].values[i]
+
+        ####
+        stage_idx = Stage_Statis.index[istage]
+        Stage_Statis.loc[stage_idx, "Lake_Id"] = LakeId
+        Stage_Statis.loc[stage_idx, "Lake_Area"] = Lake_Area
+        Stage_Statis.loc[stage_idx, "Lake_SubId"] = Lake_Subid
+        Stage_Statis.loc[stage_idx, "Lake_DA"] = Lake_DA
+        istage = istage + 1
+
+        ###
+        Mb_Col_NM = "sub" + str(int(Lake_Subid)) + " losses [m3]"
+        Stage_Col_NM = "sub" + str(int(Lake_Subid)) + " "
+
+        if Mb_Col_NM not in Col_NMS_MB or Stage_Col_NM not in Col_NMS_Stage:
+            print(
+                Mb_Col_NM in Col_NMS_MB,
+                Mb_Col_NM[0] == Col_NMS_MB[7][0],
+                len(Mb_Col_NM),
+                len(Mb_Col_NM[7]),
+                Mb_Col_NM,
+                Col_NMS_MB[7],
+            )
+            print(
+                Stage_Col_NM in Col_NMS_Stage,
+                Stage_Col_NM[0] == Col_NMS_Stage[7][0],
+                len(Stage_Col_NM),
+                len(Col_NMS_Stage[7]),
+                Stage_Col_NM,
+                Col_NMS_Stage[7],
+            )
+
+        if Mb_Col_NM in Col_NMS_MB and Stage_Col_NM in Col_NMS_Stage:
+            Mb_info_lake = Res_MB_info[Mb_Col_NM]
+            Stage_info_lake = Res_Stage_info[Stage_Col_NM]
+
+            ### For stage
+            Stage_Statis = Calulate_Yearly_Reservior_stage_statistics(
+                Stage_info_lake, Stage_Statis, stage_idx, Stage_Col_NM
+            )
+
+            ### for Mass
+
+            for iyr in range(Year_Begin, Year_end + 1):
+                Mb_info_lake_iyr = Mb_info_lake.loc[
+                    Stage_info_lake.index.year == iyr
+                ].values
+                MB_Statis.loc[
+                    MB_Statis["Year"] == iyr, "Total_Lake_Evp_Loss"
+                ] = MB_Statis.loc[
+                    MB_Statis["Year"] == iyr, "Total_Lake_Evp_Loss"
+                ] + sum(
+                    Mb_info_lake_iyr
+                )
+
+    Stage_Statis.to_csv(
+        os.path.join(Output_Folder, "Lake_Stage_Yearly_statistics.csv"), sep=","
+    )
+    MB_Statis.to_csv(
+        os.path.join(Output_Folder, "Lake_MB_Yearly_statistics.csv"), sep=","
+    )
+
+    ####
+
+
+def Calulate_Yearly_Reservior_stage_statistics(
+    Stage_info_lake, Stage_Statis, stage_idx, Stage_Col_NM
+):
+    Year_Begin = Stage_info_lake.index.min().year
+    Year_end = Stage_info_lake.index.max().year
+
+    Num_Day_Active_stage_sum = 0
+    Min_stage_sum = 0
+    Max_stage_sum = 0
+    Ave_stage_sum = 0
+
+    nyear = 0
+    for iyr in range(Year_Begin, Year_end + 1):
+        nyear = nyear + 1
+        Stage_info_lake_iyr = Stage_info_lake.loc[
+            Stage_info_lake.index.year == iyr
+        ].values
+        Active_Stage_info_lake_iyr = Stage_info_lake_iyr[Stage_info_lake_iyr < 0]
+        if len(Active_Stage_info_lake_iyr) > 0:
+            Num_Day_Active_stage_sum = Num_Day_Active_stage_sum + len(
+                Active_Stage_info_lake_iyr
+            )
+            Min_stage_sum = Min_stage_sum + min(Stage_info_lake_iyr)
+            Max_stage_sum = Max_stage_sum + max(Stage_info_lake_iyr)
+            Ave_stage_sum = Ave_stage_sum + np.average(Stage_info_lake_iyr)
+
+    Stage_Statis.loc[stage_idx, "#_Day_Active_stage"] = Num_Day_Active_stage_sum / nyear
+    Stage_Statis.loc[stage_idx, "Min_stage"] = Min_stage_sum / nyear
+    Stage_Statis.loc[stage_idx, "Max_stage"] = Max_stage_sum / nyear
+    Stage_Statis.loc[stage_idx, "Ave_stage"] = Ave_stage_sum / nyear
+
+    return Stage_Statis

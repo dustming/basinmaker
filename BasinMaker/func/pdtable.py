@@ -2,6 +2,84 @@ import copy
 
 import numpy as np
 import pandas as pd
+from scipy.optimize import curve_fit
+
+
+def update_non_connected_catchment_info(catinfo):
+    routing_info = catinfo[["SubId", "DowSubId"]].astype("float").values
+    catinfo_non_connected = catinfo.loc[catinfo["IsLake"] == 2].copy()
+
+    catids_nc = catinfo_non_connected["SubId"].copy()
+
+    catinfo.loc[
+        catinfo["SubId"].isin(catids_nc), "RivLength"
+    ] = 0.0  ## no reiver length since not connected.
+
+    for i in range(0, len(catinfo_non_connected)):
+        c_subid = catinfo_non_connected["SubId"].values[i]
+        d_subid = catinfo_non_connected["DowSubId"].values[i]
+        d_sub_info = catinfo.loc[catinfo["SubId"] == d_subid].copy()
+
+        lc_subid = d_subid
+
+        Upstreamcats = defcat(routing_info, c_subid)  ### alll subuds
+
+        Up_cat_info = catinfo.loc[catinfo["SubId"].isin(Upstreamcats)].copy()
+
+        DA = sum(Up_cat_info["BasArea"].values)
+
+        catinfo.loc[catinfo["SubId"] == c_subid, "DA"] = DA
+
+        if len(d_sub_info) < 1:
+            continue
+
+        ## add nonconnected lake catchment area to downsubbasin drinage area
+        #        if d_sub_info['IsLake'].values[0]  != 2:
+        #            catinfo.loc[catinfo['SubId'] == d_subid,'DA'] = d_sub_info['DA'].values[0] + DA
+
+        while d_sub_info["IsLake"].values[0] == 2:
+
+            lc_subid_info = catinfo.loc[catinfo["SubId"] == lc_subid].copy()
+            d_subid = lc_subid_info["DowSubId"].values[0]
+            d_sub_info = catinfo.loc[catinfo["SubId"] == d_subid].copy()
+            if len(d_sub_info) < 1:
+                lc_subid = -1
+                break
+            lc_subid = d_subid
+
+        if lc_subid == -1:
+            continue
+
+        catinfo.loc[catinfo["SubId"] == c_subid, "RivSlope"] = d_sub_info[
+            "RivSlope"
+        ].values[0]
+        catinfo.loc[catinfo["SubId"] == c_subid, "Ch_n"] = d_sub_info["Ch_n"].values[0]
+        catinfo.loc[catinfo["SubId"] == c_subid, "Q_Mean"] = d_sub_info[
+            "Q_Mean"
+        ].values[0]
+        catinfo.loc[catinfo["SubId"] == c_subid, "BkfWidth"] = d_sub_info[
+            "BkfWidth"
+        ].values[0]
+        catinfo.loc[catinfo["SubId"] == c_subid, "BkfDepth"] = d_sub_info[
+            "BkfDepth"
+        ].values[0]
+        catinfo.loc[catinfo["SubId"] == c_subid, "Strahler"] = d_sub_info[
+            "Strahler"
+        ].values[0]
+        catinfo.loc[catinfo["SubId"] == c_subid, "Seg_ID"] = d_sub_info[
+            "Seg_ID"
+        ].values[0]
+        catinfo.loc[catinfo["SubId"] == c_subid, "Seg_order"] = d_sub_info[
+            "Seg_order"
+        ].values[0]
+        catinfo.loc[catinfo["SubId"] == c_subid, "Max_DEM"] = d_sub_info[
+            "Max_DEM"
+        ].values[0]
+        catinfo.loc[catinfo["SubId"] == c_subid, "Min_DEM"] = d_sub_info[
+            "Min_DEM"
+        ].values[0]
+
+    return catinfo
 
 
 def Calculate_Longest_flowpath(mainriv_merg_info):
@@ -107,11 +185,11 @@ def New_SubId_To_Dissolve(
     sub_colnm = "SubId"
     routing_info = catchmentinfo[["SubId", "DowSubId"]].astype("float").values
     if ismodifids < 0:
-        Modify_subids1 = Defcat(
+        Modify_subids1 = defcat(
             routing_info, subid
         )  ### find all subids drainage to this subid
         if upsubid > 0:
-            Modify_subids2 = Defcat(routing_info, upsubid)
+            Modify_subids2 = defcat(routing_info, upsubid)
             mask = np.in1d(Modify_subids1, Modify_subids2)
             Modify_subids = Modify_subids1[np.logical_not(mask)]
         else:
@@ -291,7 +369,7 @@ def UpdateTopology(mapoldnew_info, UpdateStreamorder=1, UpdateSubId=1):
 
     mapoldnew_info_unique = mapoldnew_info.drop_duplicates("SubId", keep="first")
 
-    mapoldnew_info_unique = Streamorderanddrainagearea(mapoldnew_info_unique)
+    mapoldnew_info_unique = streamorderanddrainagearea(mapoldnew_info_unique)
 
     for i in range(0, len(mapoldnew_info_unique)):
         isubid = mapoldnew_info_unique["SubId"].values[i]
@@ -311,7 +389,7 @@ def UpdateTopology(mapoldnew_info, UpdateStreamorder=1, UpdateSubId=1):
     return mapoldnew_info
 
 
-def Streamorderanddrainagearea(catinfoall):
+def streamorderanddrainagearea(catinfoall):
     """Functions will  calcuate stream order and
         update drainage area in the attribute table catinfoall
     ----------
@@ -349,7 +427,7 @@ def Streamorderanddrainagearea(catinfoall):
             if len(routing_ncl) == 0:
                 DA_ncl = 0.0
             else:
-                Upstreamcats = Defcat(routing_ncl, catid)  ### alll subuds
+                Upstreamcats = defcat(routing_ncl, catid)  ### alll subuds
                 Up_cat_info = catinfo_ncl.loc[
                     catinfo_ncl["SubId"].isin(Upstreamcats)
                 ].copy()
@@ -389,7 +467,7 @@ def Streamorderanddrainagearea(catinfoall):
                 #                print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
                 #                print(catid)
                 #                print(routing_ncl)
-                Upstreamcats = Defcat(routing_ncl, catid)  ### alll subuds
+                Upstreamcats = defcat(routing_ncl, catid)  ### alll subuds
                 Up_cat_info = catinfo_ncl.loc[
                     catinfo_ncl["SubId"].isin(Upstreamcats)
                 ].copy()
@@ -472,7 +550,7 @@ def Streamorderanddrainagearea(catinfoall):
     return catinfoall
 
 
-def Defcat(out, outletid):
+def defcat(out, outletid):
     """Functions will return upstream ids in out taht drainage
         to outletid
     ----------
@@ -561,7 +639,7 @@ def Connect_SubRegion_Update_DownSubId(AllCatinfo, DownCatinfo, Sub_Region_info)
 
         Sub_Region_info.loc[
             Sub_Region_info["Sub_Reg_ID"] == isubregion, "N_Up_SubRegion"
-        ] = len(Defcat(routing_info, isubregion))
+        ] = len(defcat(routing_info, isubregion))
 
         ### check if this subregion exist in merged data
         if len(Sub_Region_cat_info) <= 0:
@@ -1258,7 +1336,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
             Lake_Cat_seg_info = Lake_Cat_seg_info.sort_values(["DA"], ascending=(False))
             tsubid = Lake_Cat_seg_info["SubId"].values[0]
 
-            All_up_subids = Defcat(routing_info, tsubid)
+            All_up_subids = defcat(routing_info, tsubid)
             All_up_subids = All_up_subids[All_up_subids > 0]
 
             mask = np.in1d(All_up_subids, processed_subid)
@@ -1311,14 +1389,14 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
                         .astype("float")
                         .values
                     )
-                    UpstreamLakeids = Defcat(routing_info_lake, tsubid)
+                    UpstreamLakeids = defcat(routing_info_lake, tsubid)
                     seg_sub_ids = np.unique(
                         np.concatenate([seg_sub_ids, UpstreamLakeids])
                     )
                     seg_sub_ids = seg_sub_ids[seg_sub_ids > 0]
 
                     ### merge all subbasin not connected to the main river but drainarge to this tsubid
-                All_up_subids = Defcat(routing_info, tsubid)
+                All_up_subids = defcat(routing_info, tsubid)
                 All_up_subids = All_up_subids[All_up_subids > 0]
                 mask1 = np.in1d(
                     All_up_subids, Subid_main
@@ -1367,13 +1445,13 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
                         .astype("float")
                         .values
                     )
-                    UpstreamLakeids = Defcat(routing_info_lake, tsubid)
+                    UpstreamLakeids = defcat(routing_info_lake, tsubid)
                     seg_sub_ids = np.unique(
                         np.concatenate([seg_sub_ids, UpstreamLakeids])
                     )
                     seg_sub_ids = seg_sub_ids[seg_sub_ids > 0]
 
-                All_up_subids = Defcat(routing_info, tsubid)
+                All_up_subids = defcat(routing_info, tsubid)
                 All_up_subids = All_up_subids[All_up_subids > 0]
                 mask1 = np.in1d(
                     All_up_subids, Subid_main
@@ -1758,19 +1836,18 @@ def Return_SubIds_Between_Two_Subbasins_In_Rouing_Network(
 
     Notes
     -------
-        For example, lake 'la' covering catchment a,b,c. the lake outlet catchment
-        is a. then this function will change attribute of b and c to a.
+
     Returns:
     -------
         None,
     """
 
-    HydroBasins1 = Defcat(
+    HydroBasins1 = defcat(
         routing_info, subid_downstream
     )  ### return fid of polygons that needs to be select
 
     if subid_upstream > 0:
-        HydroBasins2 = Defcat(routing_info, subid_upstream)
+        HydroBasins2 = defcat(routing_info, subid_upstream)
         for i in range(len(HydroBasins2)):
             if HydroBasins2[i] == subid_upstream:
                 continue
@@ -1781,6 +1858,86 @@ def Return_SubIds_Between_Two_Subbasins_In_Rouing_Network(
         HydroBasins = HydroBasins1
 
     return HydroBasins
+
+
+def return_non_lake_inflow_segs_and_segs_within_lakes(
+    riv_lake_id, str_id, riv_lake_id2, cl_id, routing_info, str_start_pt_lakeid
+):
+
+    # combine river lake id and str id and lake id
+    riv_lake = np.column_stack((riv_lake_id, str_id))
+    riv_lake = riv_lake[riv_lake[:, 0].argsort()]
+    riv_lake_cl = np.column_stack((riv_lake_id2, cl_id))
+    riv_lake_cl = riv_lake_cl[riv_lake_cl[:, 0].argsort()]
+    riv_lake = np.append(riv_lake, riv_lake_cl, axis=1)
+
+    # assign acc for each row
+    str_id_unique = np.unique(np.array(riv_lake[:, 1]))
+    cl_id_unique = np.unique(np.array(riv_lake[:, 3]))
+
+    acc_str_cl = np.full((len(riv_lake), 1), np.nan)
+    for i in range(0, len(str_id_unique)):
+        strid = str_id_unique[i]
+        maxacc = routing_info.loc[routing_info["SubId"] == strid]["MaxAcc_cat"].values[
+            0
+        ]
+        acc_str_cl[riv_lake[:, 1] == strid] = maxacc
+    riv_lake = np.append(riv_lake, acc_str_cl, axis=1)
+
+    ## loop for each lake, identify, outlet seg, and inlet segs
+    ## and segs between outlet and inlet segs
+
+    non_lake_inflow_segs = []
+    str_id_lake_inlfow = []
+    str_id_within_lakes = []
+    for i in range(0, len(cl_id_unique)):
+        # obtain current lakeid
+        cl_id = cl_id_unique[i]
+        # get all new riv seg id and str id covered by this lake
+        riv_lake_il = riv_lake[riv_lake[:, 3] == cl_id]
+        riv_lake_il = riv_lake_il[riv_lake_il[:, 4].argsort()]
+        outlet_str = riv_lake_il[len(riv_lake_il) - 1, 1]
+        sub_routing_info = routing_info.loc[
+            routing_info["SubId"].isin(riv_lake_il[:, 1])
+        ]
+        # if lake only overlay with one str, skip
+        # this river is lake infow str and lake outflow str
+        if len(riv_lake_il) == 1:
+            str_id_cl_j = riv_lake_il[0, 1]
+            # the river can not start within the lake
+            if (
+                str_start_pt_lakeid.loc[str_start_pt_lakeid["IL_SubId"] == str_id_cl_j][
+                    "sl_cl_id"
+                ].values[0]
+                != cl_id
+            ):
+                str_id_lake_inlfow.append(int(riv_lake_il[0, 1]))
+            else:
+                non_lake_inflow_segs.append(int(riv_lake_il[0, 0]))
+            continue
+
+        for j in range(0, len(riv_lake_il)):
+            str_id_cl_j = riv_lake_il[j, 1]
+            # check if there is any upstream river id in the str covered by the lake and there is some upstream
+            # and the begining of the str is not located in current lake
+            if (
+                len(sub_routing_info.loc[sub_routing_info["DowSubId"] == str_id_cl_j])
+                > 0
+                or str_start_pt_lakeid.loc[
+                    str_start_pt_lakeid["IL_SubId"] == str_id_cl_j
+                ]["sl_cl_id"].values[0]
+                == cl_id
+            ):
+                # there is some str drainge to this str,
+                # so this lake-riv seg is not the lake inflow segment
+                non_lake_inflow_segs.append(int(riv_lake_il[j, 0]))
+            else:
+                str_id_lake_inlfow.append(int(riv_lake_il[j, 1]))
+            # excpet str of the lake outlet, all outlet of str that covered by the lake
+            if str_id_cl_j != outlet_str:
+                str_id_within_lakes.append(int(riv_lake_il[j, 1]))
+
+    return str_id_within_lakes, non_lake_inflow_segs, str_id_lake_inlfow
 
 
 def Check_If_Lake_Have_Multi_OutLet(CL_Id, Str_Id, Routing_info):
@@ -1831,10 +1988,10 @@ def Check_If_Lake_Have_Multi_OutLet(CL_Id, Str_Id, Routing_info):
         str_max_acc = i_CL_Str[len(i_CL_Str) - 1, 1]
         #        print(str_max_acc,len(routing_info_only),"#################")
         ### obtain all upstream str id of max acc str
-        str_to_str_max_acc = Defcat(routing_info_only, str_max_acc)
+        str_to_str_max_acc = defcat(routing_info_only, str_max_acc)
 
         if len(str_to_str_max_acc) <= 1:
-            str_to_str_max_acc = Defcat(
+            str_to_str_max_acc = defcat(
                 routing_info_only, i_CL_Str[len(i_CL_Str) - 2, 1]
             )
         ### create a mask for i_CL_Str[:,1], it will be true for in positon
@@ -1859,8 +2016,228 @@ def Check_If_Lake_Have_Multi_OutLet(CL_Id, Str_Id, Routing_info):
                 #                if len(upstrs) == 1:
                 Remove_Str_i.append(strid)
 
-            if len(Remove_Str_i) == len(str_notflowto_lakeoutlet):
-                Remove_Str = Remove_Str + Remove_Str_i
-            else:
-                Lakes_WIth_Multi_Outlet.append(lake_id)
+            # if len(Remove_Str_i) == len(str_notflowto_lakeoutlet):
+            #     Remove_Str = Remove_Str + Remove_Str_i
+            # else:
+            Remove_Str = Remove_Str + Remove_Str_i
+            Lakes_WIth_Multi_Outlet.append(lake_id)
+
     return Lakes_WIth_Multi_Outlet, Remove_Str
+
+
+def change_attribute_values_for_catchments_covered_by_same_lake(finalrivply_info):
+    """Change attributes for catchments that covered by the same lake.
+    ----------
+
+    Notes
+    -------
+        For example, lake 'la' covering catchment a,b,c. the lake outlet catchment
+        is a. then this function will change attribute of b and c to a.
+    Returns:
+    -------
+        None,
+    """
+
+    sub_colnm = "SubId"
+    mapoldnew_info = finalrivply_info.copy(deep=True)
+    mapoldnew_info["nsubid"] = mapoldnew_info["SubId"].values
+    AllConnectLakeIDS = finalrivply_info["HyLakeId"].values
+    AllConnectLakeIDS = AllConnectLakeIDS[AllConnectLakeIDS > 0]
+    AllConnectLakeIDS = np.unique(AllConnectLakeIDS)
+
+    ### process connected lakes  merge polygons
+    for i in range(0, len(AllConnectLakeIDS)):
+        lakeid = AllConnectLakeIDS[i]
+        Lakesub_info = finalrivply_info.loc[finalrivply_info["HyLakeId"] == lakeid]
+        Lakesub_info = Lakesub_info.sort_values(["DA"], ascending=(False))
+        tsubid = Lakesub_info[sub_colnm].values[
+            0
+        ]  ### outlet subbasin id with highest acc
+        lakesubids = Lakesub_info[sub_colnm].values
+        if len(lakesubids) > 1:  ## only for connected lakes
+            mapoldnew_info = New_SubId_To_Dissolve(
+                subid=tsubid,
+                catchmentinfo=finalrivply_info,
+                mapoldnew_info=mapoldnew_info,
+                ismodifids=1,
+                modifiidin=lakesubids,
+                mainriv=finalrivply_info,
+                Islake=1,
+            )
+    return mapoldnew_info
+
+
+def update_topology(mapoldnew_info, UpdateStreamorder=1, UpdateSubId=1):
+    """Functions will update subid,downsubid, calcuate stream order and
+        update drainage area in the attribute table mapoldnew_info
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        mapoldnew_info
+    """
+
+    idx = mapoldnew_info.index
+
+    if UpdateSubId > 0:
+        for i in range(0, len(idx)):
+            nsubid = mapoldnew_info.loc[idx[i], "nsubid"]
+            subid = mapoldnew_info.loc[idx[i], "SubId"]
+            odownsubid = mapoldnew_info.loc[idx[i], "DowSubId"]
+
+            donsubidinfo = mapoldnew_info.loc[
+                mapoldnew_info["SubId"] == odownsubid
+            ].copy()
+
+            if len(donsubidinfo) > 0:
+                mapoldnew_info.loc[idx[i], "ndownsubid"] = donsubidinfo[
+                    "nsubid"
+                ].values[0]
+            else:
+                mapoldnew_info.loc[idx[i], "ndownsubid"] = -1
+
+        mapoldnew_info["Old_SubId"] = mapoldnew_info["SubId"].values
+        mapoldnew_info["Old_DowSubId"] = mapoldnew_info["DowSubId"].values
+        mapoldnew_info["SubId"] = mapoldnew_info["nsubid"].values
+
+        mapoldnew_info["DowSubId"] = mapoldnew_info["ndownsubid"].values
+
+    if UpdateStreamorder < 0:
+        return mapoldnew_info
+
+    mapoldnew_info_unique = mapoldnew_info.drop_duplicates("SubId", keep="first")
+
+    mapoldnew_info_unique = Streamorderanddrainagearea(mapoldnew_info_unique)
+
+    for i in range(0, len(mapoldnew_info_unique)):
+        isubid = mapoldnew_info_unique["SubId"].values[i]
+        mapoldnew_info.loc[
+            mapoldnew_info["SubId"] == isubid, "Strahler"
+        ] = mapoldnew_info_unique["Strahler"].values[i]
+        mapoldnew_info.loc[
+            mapoldnew_info["SubId"] == isubid, "Seg_ID"
+        ] = mapoldnew_info_unique["Seg_ID"].values[i]
+        mapoldnew_info.loc[
+            mapoldnew_info["SubId"] == isubid, "Seg_order"
+        ] = mapoldnew_info_unique["Seg_order"].values[i]
+        mapoldnew_info.loc[
+            mapoldnew_info["SubId"] == isubid, "DA"
+        ] = mapoldnew_info_unique["DA"].values[i]
+
+    return mapoldnew_info
+
+
+def func_Q_DA(A, k, c):
+    return k * A ** c
+
+
+def return_k_and_c_in_q_da_relationship(da_q):
+
+    try:
+        popt2, pcov2 = curve_fit(func_Q_DA, da_q[:, 0], da_q[:, 1])
+    except RuntimeError:
+        print("#######################################################")
+        popt2 = np.full(2, -1)
+
+    print(popt2)
+    print(pcov2)
+    return popt2[0], popt2[1]
+
+
+def calculateChannaln(width, depth, Q, slope):
+    zch = 2
+    sidwd = zch * depth  ###river side width
+    tab = "          "
+    botwd = width - 2 * sidwd  ### river
+    if botwd < 0:
+        botwd = 0.5 * width
+        sidwd = 0.5 * 0.5 * width
+        zch = (width - botwd) / 2 / depth
+    Ach = botwd * depth + 2 * zch * depth * depth / 2
+    #    arcpy.AddMessage(depth)
+    #    arcpy.AddMessage(zch)
+    #    arcpy.AddMessage(botwd)
+    #    arcpy.AddMessage(width)
+    #    arcpy.AddMessage(slope)
+
+    Pch = botwd + 2 * depth * (1 + zch ** 2) ** 0.5
+    Rch = float(Ach) / float(Pch)  ### in meter
+    V = float(Q) / float(Ach)
+    if V > 0:
+        n = (Rch ** (2.0 / 3.0)) * (slope ** (1.0 / 2.0)) / V
+    else:
+        n = -1.2345
+    return n
+
+
+def return_interest_catchments_info(catinfo, outlet_obs_id, path_sub_reg_outlets_v="#"):
+
+    if outlet_obs_id < 0:
+        return catinfo
+
+    routing_info = catinfo[["SubId", "DowSubId"]].astype("float").values
+
+    if path_sub_reg_outlets_v != "#":
+
+        Sub_reg_outlets = Dbf_To_Dataframe(path_sub_reg_outlets_v)["value"].values
+        Sub_reg_outlets = np.unique(Sub_reg_outlets)
+        Sub_reg_outlets_ids = Sub_reg_outlets_ids[Sub_reg_outlets_ids > 0]
+
+        #### Find all obervation id that is subregion outlet
+        reg_outlet_info = catinfo.loc[catinfo["IsObs"].isin(Sub_reg_outlets_ids)]
+
+        #### Define outlet ID
+        outletid = -1
+
+        if outlet_obs_id < 0:
+            print("To use subregion, the Subregion Id MUST provided as Outlet_Obs_ID")
+            return catinfo
+
+        outletID_info = catinfo.loc[catinfo["IsObs"] == outlet_obs_id]
+
+        if len(outletID_info) > 0:
+            outletid = outletID_info["SubId"].values[0]
+        else:
+            print("No Outlet id is founded for subregion   ", Outlet_Obs_ID)
+            return catinfo
+
+        ### find all subregion drainge to this outlet id
+        HydroBasins1 = defcat(routing_info, outletid)
+
+        ### if there is other subregion outlet included in current sturcture
+        ### remove subbasins drainge to them
+
+        if len(reg_outlet_info) >= 2:  ### has upstream regin outlet s
+            ### remove subbains drainage to upstream regin outlet s
+            for i in range(0, len(reg_outlet_info)):
+                upregid = reg_outlet_info["SubId"].values[i]
+                ### the subregion ouetlet not within the target domain neglect
+                if upregid == outletid or np.sum(np.in1d(HydroBasins1, upregid)) < 1:
+                    continue
+                HydroBasins_remove = Defcat(routing_info, upregid)
+                mask = np.in1d(
+                    HydroBasins1, HydroBasins_remove
+                )  ### exluced ids that belongs to main river stream
+                HydroBasins1 = HydroBasins1[np.logical_not(mask)]
+
+        HydroBasins = HydroBasins1
+
+        catinfo = catinfo.loc[catinfo["SubId"].isin(HydroBasins)]
+        return catinfo
+    ### selected based on observation guage obs id
+    else:
+        outletid = -1
+        outletID_info = catinfo.loc[catinfo["IsObs"] == outlet_obs_id]
+        if len(outletID_info) > 0:
+            outletid = outletID_info["SubId"].values[0]
+            ##find upsteam catchment id
+            HydroBasins = defcat(routing_info, outletid)
+        else:
+            HydroBasins = catinfo["SubId"].values
+
+        catinfo = catinfo.loc[catinfo["SubId"].isin(HydroBasins)]
+        return catinfo
+    

@@ -1,17 +1,15 @@
-from processing_functions_raster_array import *
-from processing_functions_raster_grass import *
-from processing_functions_raster_qgis import *
-from processing_functions_vector_grass import *
-from processing_functions_vector_qgis import *
-from utilities import *
+from func.grassgis import *
+from func.qgis import *
+from func.pdtable import *
+from func.rarray import *
+from utilities.utilities import *
 
 
 def delineate_watershed_no_lake_using_dem(
     grassdb,
     grass_location,
     qgis_prefix_path,
-    mask,
-    dem,
+    input_geo_names,
     acc_thresold,
     fdr_arcgis,
     fdr_grass,
@@ -22,6 +20,9 @@ def delineate_watershed_no_lake_using_dem(
     max_memroy,
 ):
 
+    mask = input_geo_names["mask"]
+    dem = input_geo_names["dem"]
+    
     import grass.script as grass
     import grass.script.setup as gsetup
     from grass.pygrass.modules import Module
