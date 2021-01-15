@@ -306,9 +306,6 @@ def generatesubdomainmaskandinfo(
         grass.run_command("r.mask", raster=dem, maskcats="*", overwrite=True)
         exp = "%s = if(%s == %s,%s,null())" % ("dem_reg_"+ str(basinid),cat_add_lake,str(basinid),dem)
         grass.run_command("r.mapcalc", expression=exp, overwrite=True)
-        grass.run_command(
-            "r.null", map="dem_reg_" + str(basinid), setnull=[-9999, 0]
-        )
         ####define mask
         grass.run_command(
             "r.mask", raster="dem_reg_" + str(basinid), maskcats="*", overwrite=True
