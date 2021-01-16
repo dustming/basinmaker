@@ -1,8 +1,7 @@
 import os
-
-import pytest
-
-from basinmaker import BasinMakerQGIS
+import tempfile 
+import numpy as np 
+from basinmaker import basinmaker
 
 #
 # BasinMaker_Folder = "C:/Users/dustm/Documents/GitHub/RoutingTool"
@@ -12,7 +11,7 @@ datafolder = os.path.join("../../tests/testdata", "Required_data_to_start_from_d
 path_output_folder = os.path.join("../../tests/testdata", "test3")
 path_working_folder = os.path.join("../../tests/testdata", "test4")
 
-basinmaker = BasinMakerQGIS(
+basinmaker = basinmaker(
     path_output_folder=path_output_folder, path_working_folder=path_working_folder
 )
 
@@ -54,7 +53,8 @@ basinmaker.add_attributes_to_catchments_method(
     path_sub_reg_outlets_v="#",
     output_folder=path_output_folder,
 )
-#
+
+
 basinmaker.combine_catchments_covered_by_the_same_lake_method(
     OutputFolder=path_output_folder,
     Path_final_rivply=os.path.join(

@@ -1,7 +1,7 @@
 import os
 
 
-class BasinMakerQGIS:
+class basinmaker:
 
     """
     QGIS/GRASSToolsets to delelineate lake river routing structure
