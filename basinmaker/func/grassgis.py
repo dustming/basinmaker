@@ -483,7 +483,7 @@ def Generate_Routing_structure(
         overwrite=True,
     )
     ### Find the grid that equal to the max acc, thus this is the outlet grids
-    exp = "'%s' =if(%s == int('%s'),%s,null())" % (
+    exp = "'%s' =if(float(%s) == float(%s),%s,null())" % (
         Name + "_OL",
         acc,
         Name + "_maxacc",
@@ -697,7 +697,7 @@ def Generate_Routing_structure(
         output=Name + "_OL1_G_Clu_maxacc",
         overwrite=True,
     )
-    exp = "'%s'=if(%s == int('%s'),%s,null())" % (
+    exp = "%s=if(float(%s) == float(%s),%s,null())" % (
         Name + "_IL",
         acc,
         Name + "_OL1_G_Clu_maxacc",
@@ -916,7 +916,7 @@ def generate_routing_info_of_catchments(
         overwrite=True,
     )
     ### Find the grid that equal to the max acc, thus this is the outlet grids
-    exp = "'%s' =if(float(%s) == %s,%s,null())" % (
+    exp = "'%s' =if(float(%s) == float(%s),%s,null())" % (
         Name + "_OL",
         acc,
         Name + "_maxacc",
@@ -957,7 +957,7 @@ def generate_routing_info_of_catchments(
         overwrite=True,
     )
     ### Find the grid that equal to the max acc, thus this is the outlet grids
-    exp = "%s =if(float(%s) == %s,%s,null())" % (
+    exp = "%s =if(float(%s) == float(%s),%s,null())" % (
         Name + "_IL",
         Name + "_acc_riv",
         Name + "_minacc",
@@ -1130,7 +1130,7 @@ def generate_routing_info_of_catchments(
         output=Name + "_OL1_G_Clu_maxacc",
         overwrite=True,
     )
-    exp = "%s=if(float(%s) == %s,%s,null())" % (
+    exp = "%s=if(float(%s) == float(%s),%s,null())" % (
         Name + "_IL",
         acc,
         Name + "_OL1_G_Clu_maxacc",
