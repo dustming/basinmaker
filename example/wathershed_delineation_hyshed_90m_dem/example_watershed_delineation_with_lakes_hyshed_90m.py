@@ -26,10 +26,10 @@ basinmaker = basinmaker(
 #############################################
 basinmaker.define_project_extent_method(
     mode="using_hybasin",
-    path_dem_in=os.path.join(datafolder, "DEM_hyshed.tif"),
-    buffer_distance=0.1,
+    path_dem_in=os.path.join(datafolder, "hyshed_90_dem.tif"),
+    buffer_distance=0.01,
     hybasin_ply="C:/Users/dustm/OneDrive - University of Waterloo/Documents/ProjectData/Geo_Data_Base/Shapefiles/HydroBASINS/hybas_na_lev07_v1c.shp",
-    down_hybasin_id=7070393390,
+    down_hybasin_id=7070356140,
 )
 
 
@@ -37,7 +37,7 @@ basinmaker.define_project_extent_method(
 # generate a watershed delineation without considering lakes 
 #############################################
 basinmaker.watershed_delineation_without_lake_method(
-    acc_thresold=500,
+    acc_thresold=2000,
     mode="usingdem",
     max_memroy=1024 * 4,
     gis_platform="qgis",
@@ -48,7 +48,7 @@ basinmaker.watershed_delineation_without_lake_method(
 # add lake and obs control points in the existing watershed delineation  
 #############################################
 basinmaker.watershed_delineation_add_lake_control_points(
-    path_lakefile_in=os.path.join(datafolder, "HyLake.shp"),
+    path_lakefile_in=os.path.join(datafolder, "hylake.shp"),
     lake_attributes=["Hylak_id", "Lake_type", "Lake_area", "Vol_total", "Depth_avg"],
     threshold_con_lake = 0,
     threshold_non_con_lake = 0,
@@ -63,9 +63,9 @@ basinmaker.watershed_delineation_add_lake_control_points(
 # add hydrological attributes to existing watershed delineation  
 #############################################
 basinmaker.add_attributes_to_catchments_method(
-    path_bkfwidthdepth=os.path.join(datafolder, "Bkfullwidth_depth.shp"),
+    path_bkfwidthdepth=os.path.join(datafolder, "bkf_wd.shp"),
     bkfwd_attributes=["WIDTH", "DEPTH", "Q_Mean", "UP_AREA"],
-    path_landuse=os.path.join(datafolder, "landuse.tif"),
+    path_landuse=os.path.join(datafolder, "landuse_modis_250.tif"),
     path_landuse_info=os.path.join(datafolder, "Landuse_info3.csv"),
     gis_platform="qgis",
     obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
@@ -73,6 +73,7 @@ basinmaker.add_attributes_to_catchments_method(
     outlet_obs_id=-1,
     path_sub_reg_outlets_v="#",
     output_folder=path_output_folder,
+    projection = 'EPSG:3573',
 )
 
 
