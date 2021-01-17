@@ -3,33 +3,47 @@ import tempfile
 import numpy as np 
 from basinmaker import basinmaker
 
-#
-# BasinMaker_Folder = "C:/Users/dustm/Documents/GitHub/RoutingTool"
-
-###Floder where store the inputs for tests function
+#############################################
+# define working folder, output folder amd data folder  
+#############################################
+num  = str(np.random.randint(1, 10000 + 1))
+path_output_folder = os.path.join(tempfile.gettempdir(), "basinmaker_exp_" +num,"output")
+path_working_folder = os.path.join(tempfile.gettempdir(), "basinmaker_exp_" +num,"work")
 datafolder = os.path.join("../../tests/testdata", "Required_data_to_start_from_dem")
-path_output_folder = os.path.join("../../tests/testdata", "test3")
-path_working_folder = os.path.join("../../tests/testdata", "test4")
 
+#############################################
+# initialize basinmaker with working folder    
+#############################################
 basinmaker = basinmaker(
-    path_output_folder=path_output_folder, path_working_folder=path_working_folder
+    path_working_folder=path_working_folder
 )
 
+
+#############################################
+# define extent of the processing domain  
+#############################################
 basinmaker.define_project_extent_method(
     mode="using_outlet_pt",
     path_dem_in=os.path.join(datafolder, "DEM_big_merit.tif"),
-    outlet_pt=[-91.977, 48.25],
-    buffer_distance=0.03,
+    outlet_pt=[-92.387, 49.09],
+    buffer_distance=0.00,
 )
 
+
+#############################################
+# generate a watershed delineation without considering lakes 
+#############################################
 basinmaker.watershed_delineation_without_lake_method(
-    acc_thresold=1000,
+    acc_thresold=500,
     mode="usingdem",
     max_memroy=1024 * 4,
     gis_platform="qgis",
 )
 
 
+#############################################
+# add lake and obs control points in the existing watershed delineation  
+#############################################
 basinmaker.watershed_delineation_add_lake_control_points(
     path_lakefile_in=os.path.join(datafolder, "HyLake.shp"),
     lake_attributes=["Hylak_id", "Lake_type", "Lake_area", "Vol_total", "Depth_avg"],
@@ -41,6 +55,10 @@ basinmaker.watershed_delineation_add_lake_control_points(
     gis_platform="qgis",
 )
 
+
+#############################################
+# add hydrological attributes to existing watershed delineation  
+#############################################
 basinmaker.add_attributes_to_catchments_method(
     path_bkfwidthdepth=os.path.join(datafolder, "Bkfullwidth_depth.shp"),
     bkfwd_attributes=["WIDTH", "DEPTH", "Q_Mean", "UP_AREA"],
@@ -49,12 +67,15 @@ basinmaker.add_attributes_to_catchments_method(
     gis_platform="qgis",
     obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
     lake_attributes =["Hylak_id", "Lake_type", "Lake_area", "Vol_total", "Depth_avg"] ,
-    outlet_obs_id=1,
+    outlet_obs_id=-1,
     path_sub_reg_outlets_v="#",
     output_folder=path_output_folder,
 )
 
 
+#############################################
+# combine catchments covered by the same lakes 
+#############################################
 basinmaker.combine_catchments_covered_by_the_same_lake_method(
     OutputFolder=path_output_folder,
     Path_final_rivply=os.path.join(

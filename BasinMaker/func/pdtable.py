@@ -2142,8 +2142,6 @@ def return_k_and_c_in_q_da_relationship(da_q):
         print("#######################################################")
         popt2 = np.full(2, -1)
 
-    print(popt2)
-    print(pcov2)
     return popt2[0], popt2[1]
 
 

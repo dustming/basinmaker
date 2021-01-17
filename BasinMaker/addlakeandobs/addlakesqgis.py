@@ -129,8 +129,8 @@ def add_lakes_into_existing_watershed_delineation(
     exp = "%s = int(%s)" % (lake_boundary, lake_boundary)
     grass_raster_r_mapcalc(grass, exp)
 
-    # Define connected and non connected lakes and
-    # identify which str make certain lake have two outlet
+#    #Define connected and non connected lakes and
+#    #identify which str make certain lake have two outlet
     define_connected_and_non_connected_lake_type(
         grass,
         con,
@@ -141,7 +141,7 @@ def add_lakes_into_existing_watershed_delineation(
         non_connected_lake=non_connected_lake,
         str_connected_lake=str_connected_lake,
     )
-
+    
     select_lakes_by_area_r(
         grass=grass,
         con=con,
