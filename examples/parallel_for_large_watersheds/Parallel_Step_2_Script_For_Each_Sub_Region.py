@@ -33,7 +33,7 @@ import tempfile
 
 import pandas as pd
 
-from basinmaker import BasinMakerQGIS
+from basinmaker import basinmaker
 
 ############ Variable needs to be modified to run this example ######
 
@@ -78,7 +78,7 @@ path_output_folder = os.path.join(Out_Sub_Reg_Dem_Folder,'subregion_result',Proj
 ### run for each sub region
 
 ### initialize the toolbox
-basinmaker = BasinMakerQGIS(
+basinmaker = basinmaker(
    path_working_folder = path_working_folder
 )
 
@@ -105,7 +105,7 @@ basinmaker.watershed_delineation_without_lake_method(
 )
 
 basinmaker.watershed_delineation_add_lake_control_points(
-    path_lakefile_in=os.path.join(datafolder, "HyLake.shp"),
+    path_lakefile_in=os.path.join(datafolder, "hylake.shp"),
     lake_attributes=["Hylak_id", "Lake_type", "Lake_area", "Vol_total", "Depth_avg"],
     threshold_con_lake = 0,
     threshold_non_con_lake = 0,
@@ -116,9 +116,9 @@ basinmaker.watershed_delineation_add_lake_control_points(
 )
 
 basinmaker.add_attributes_to_catchments_method(
-    path_bkfwidthdepth=os.path.join(datafolder, "Bkfullwidth_depth.shp"),
+    path_bkfwidthdepth=os.path.join(datafolder, "bkf_wd.shp"),
     bkfwd_attributes=["WIDTH", "DEPTH", "Q_Mean", "UP_AREA"],
-    path_landuse=os.path.join(datafolder, "landuse.tif"),
+    path_landuse=os.path.join(datafolder, "landuse_modis_250.tif"),
     path_landuse_info=os.path.join(datafolder, "Landuse_info3.csv"),
     gis_platform="qgis",
     obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
