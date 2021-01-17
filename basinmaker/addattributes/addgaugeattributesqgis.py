@@ -17,6 +17,7 @@ def add_gauge_attributes(
 
     outlet_pt_info = input_geo_names["outlet_pt_info"]
     snapped_obs_points = input_geo_names["snapped_obs_points"]
+    obsname = 'obs' #input_geo_names["obsname"]
 
     import grass.script as grass
     import grass.script.setup as gsetup
@@ -40,18 +41,10 @@ def add_gauge_attributes(
     grass.run_command(
         "v.what.rast",
         map=outlet_pt_info,
-        raster=snapped_obs_points,
+        raster=obsname,
         column="obsid_pour",
     )
     
-    grass_raster_v_db_join(
-        grass,
-        map=outlet_pt_info,
-        column="obsid_pour",
-        other_table=snapped_obs_points,
-        other_column="cat",
-    )
-
     grass.run_command(
         "v.out.ogr",
         input=outlet_pt_info,
@@ -62,26 +55,37 @@ def add_gauge_attributes(
     )
     
     ### read catchment
-    sqlstat = "SELECT SubId,%s,%s,%s,%s FROM %s" % (
-        obs_attributes[0],
-        obs_attributes[1],
-        obs_attributes[2],
-        obs_attributes[3],
+    sqlstat = "SELECT SubId,obsid_pour FROM %s" % (
         outlet_pt_info,
     )
     outletinfo = pd.read_sql_query(sqlstat, con)
     outletinfo = outletinfo.fillna(-9999)
+    outletinfo = outletinfo.loc[outletinfo['obsid_pour'] > 0]
 
+    sqlstat = "SELECT  %s,%s,%s,%s,%s FROM %s" % (
+        obs_attributes[0],
+        obs_attributes[1],
+        obs_attributes[2],
+        obs_attributes[3],
+        obs_attributes[0]+'n',
+        snapped_obs_points,
+    )
+    gaugeinfo = pd.read_sql_query(sqlstat, con)
+    gaugeinfo = gaugeinfo.fillna(-9999)
+    
+    
     for i in range(0, len(outletinfo)):
         catid = outletinfo["SubId"].values[i]
+        obsid = outletinfo['obsid_pour'].values[i]
         catrow = catinfo["SubId"] == catid
-        obsid = outletinfo[obs_attributes[0]].values[i]
-
-        if obsid > 0:
-            catinfo.loc[catrow, "IsObs"] = obsid
-            catinfo.loc[catrow, "DA_Obs"] = outletinfo[obs_attributes[2]].values[i]
-            catinfo.loc[catrow, "Obs_NM"] = outletinfo[obs_attributes[1]].values[i]
-            catinfo.loc[catrow, "SRC_obs"] = outletinfo[obs_attributes[3]].values[i]
+        subgaugeinfo = gaugeinfo.loc[gaugeinfo[obs_attributes[0]+'n'] == obsid]
+        
+        catinfo.loc[catrow, "IsObs"] = obsid
+        if len(subgaugeinfo) > 0:
+            catinfo.loc[catrow, "IsObs"] = subgaugeinfo[obs_attributes[0]].values[0]
+            catinfo.loc[catrow, "DA_Obs"] = subgaugeinfo[obs_attributes[2]].values[0]
+            catinfo.loc[catrow, "Obs_NM"] = subgaugeinfo[obs_attributes[1]].values[0]
+            catinfo.loc[catrow, "SRC_obs"] = subgaugeinfo[obs_attributes[3]].values[0]
 
     PERMANENT.close()
     return catinfo

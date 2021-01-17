@@ -291,7 +291,7 @@ def calculate_basic_attributes(
         grass,
         con,
         cat=catchments,
-        acc="acc_grass_CatOL2",
+        acc=acc,#"acc_grass_CatOL2",
         Name="Final",
         str=river_r,
     )

@@ -58,7 +58,7 @@ def calculate_flood_plain_manning_n(
 
     # viturally  landuse dataset
     
-    grass_raster_r_external(grass, input=os.path.join(grassdb,'landuse'+'.tif'), output="landuse_in")
+    grass_raster_r_external(grass, input=os.path.join(grassdb,'landuse_proj'+'.tif'), output="landuse_in")
     # clip raster with mask in grass env
     grass_raster_r_clip(grass, input="landuse_in", output="landuse")
     # reclass landuse to manning's coefficient value *1000

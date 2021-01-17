@@ -3,6 +3,7 @@ import copy
 import numpy as np
 import pandas as pd
 from scipy.optimize import curve_fit
+from utilities.utilities import *
 
 
 def update_non_connected_catchment_info(catinfo):
@@ -2180,8 +2181,8 @@ def return_interest_catchments_info(catinfo, outlet_obs_id, path_sub_reg_outlets
 
     if path_sub_reg_outlets_v != "#":
 
-        Sub_reg_outlets = Dbf_To_Dataframe(path_sub_reg_outlets_v)["value"].values
-        Sub_reg_outlets = np.unique(Sub_reg_outlets)
+        Sub_reg_outlets = Dbf_To_Dataframe(path_sub_reg_outlets_v)["reg_subid"].values
+        Sub_reg_outlets_ids = np.unique(Sub_reg_outlets)        
         Sub_reg_outlets_ids = Sub_reg_outlets_ids[Sub_reg_outlets_ids > 0]
 
         #### Find all obervation id that is subregion outlet
@@ -2195,16 +2196,14 @@ def return_interest_catchments_info(catinfo, outlet_obs_id, path_sub_reg_outlets
             return catinfo
 
         outletID_info = catinfo.loc[catinfo["IsObs"] == outlet_obs_id]
-
         if len(outletID_info) > 0:
             outletid = outletID_info["SubId"].values[0]
         else:
-            print("No Outlet id is founded for subregion   ", Outlet_Obs_ID)
+            print("No Outlet id is founded for subregion   ", outletID_info)
             return catinfo
 
         ### find all subregion drainge to this outlet id
         HydroBasins1 = defcat(routing_info, outletid)
-
         ### if there is other subregion outlet included in current sturcture
         ### remove subbasins drainge to them
 
@@ -2215,12 +2214,11 @@ def return_interest_catchments_info(catinfo, outlet_obs_id, path_sub_reg_outlets
                 ### the subregion ouetlet not within the target domain neglect
                 if upregid == outletid or np.sum(np.in1d(HydroBasins1, upregid)) < 1:
                     continue
-                HydroBasins_remove = Defcat(routing_info, upregid)
+                HydroBasins_remove = defcat(routing_info, upregid)
                 mask = np.in1d(
                     HydroBasins1, HydroBasins_remove
                 )  ### exluced ids that belongs to main river stream
                 HydroBasins1 = HydroBasins1[np.logical_not(mask)]
-
         HydroBasins = HydroBasins1
 
         catinfo = catinfo.loc[catinfo["SubId"].isin(HydroBasins)]

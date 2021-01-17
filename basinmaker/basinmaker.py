@@ -33,8 +33,6 @@ class basinmaker:
         # obtain qgis prefix path
         self.qgispp = os.environ["QGISPrefixPath"]
         # obtain basinmaker path
-        self.basinmaker_path = os.environ["RoutingToolFolder"]
-
         # define grass database folder
         self.grassdb = os.path.join(self.path_working_folder, "grassdb")
         if not os.path.exists(self.grassdb):
