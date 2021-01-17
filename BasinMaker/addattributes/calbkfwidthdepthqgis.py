@@ -26,25 +26,28 @@ def calculate_bankfull_width_depth_from_polyline(
     default_slope = 0.000012345
     min_manning_n = 0.01
     max_manning_n = 0.15
-    reproject_clip_vectors_by_polygon(
-        grassdb=grassdb,
-        grass_location=grass_location,
-        qgis_prefix_path=qgis_prefix_path,
-        mask=os.path.join(grassdb, mask + ".shp"),
-        path_polygon=path_bkfwidthdepth,
-        ply_name="bkf_width_depth",
-    )
+    default_bkf_width = 1.2345
+    default_bkf_depth = 1.2345
+    
+    if path_bkfwidthdepth !='#':
+        reproject_clip_vectors_by_polygon(
+            grassdb=grassdb,
+            grass_location=grass_location,
+            qgis_prefix_path=qgis_prefix_path,
+            mask=os.path.join(grassdb, mask + ".shp"),
+            path_polygon=path_bkfwidthdepth,
+            ply_name="bkf_width_depth",
+        )
 
     if k_in == -1 and c_in == -1:
         bkf_width_depth = Dbf_To_Dataframe(
             os.path.join(grassdb, "bkf_width_depth" + ".shp")
-        )
+        )         
         da_q = bkf_width_depth[[bkfwd_attributes[3], bkfwd_attributes[2]]].values
         k, c = return_k_and_c_in_q_da_relationship(da_q)
     else:
         k = k_in
         c = c_in
-
     import grass.script as grass
     import grass.script.setup as gsetup
     from grass.pygrass.modules import Module

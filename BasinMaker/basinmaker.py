@@ -1,7 +1,7 @@
 import os
 
 
-class BasinMakerQGIS:
+class basinmaker:
 
     """
     QGIS/GRASSToolsets to delelineate lake river routing structure
@@ -434,6 +434,9 @@ class BasinMakerQGIS:
         bkfwd_attributes=[],
         path_landuse="#",
         path_landuse_info="#",
+        projection = "EPSG:3573",
+        k_in=-1,
+        c_in=-1,
         gis_platform="qgis",
         lake_attributes = [],
         obs_attributes=[],
@@ -542,6 +545,9 @@ class BasinMakerQGIS:
             bkfwd_attributes=bkfwd_attributes,
             path_landuse=path_landuse,
             path_landuse_info=path_landuse_info,
+            projection = projection,
+            k_in=k_in,
+            c_in=k_in,
             out_cat_name=self.geofilenames["catchment_without_merging_lakes"],
             out_riv_name=self.geofilenames["river_without_merging_lakes"],
             grassdb=self.grassdb,

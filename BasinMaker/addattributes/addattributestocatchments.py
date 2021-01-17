@@ -8,6 +8,8 @@ def add_attributes_to_catchments(
     bkfwd_attributes=[],
     path_landuse="#",
     path_landuse_info="#",
+    k_in=-1,
+    c_in=-1,
     out_cat_name="catchment_without_merging_lakes",
     out_riv_name="river_without_merging_lakes",
     grassdb="#",
@@ -241,7 +243,7 @@ def add_attributes_to_catchments(
 
         attr_da = streamorderanddrainagearea(attr_landuse)
 
-        if path_bkfwidthdepth != "#":
+        if path_bkfwidthdepth != "#" or k_in != -1:
             attr_bkf = calculate_bankfull_width_depth_from_polyline(
                 grassdb=grassdb,
                 grass_location=grass_location,
@@ -250,6 +252,8 @@ def add_attributes_to_catchments(
                 bkfwd_attributes=bkfwd_attributes,
                 catinfo=attr_da,
                 input_geo_names=input_geo_names,
+                k_in=k_in,
+                c_in=k_in,
             )
         else:
             attr_bkf = attr_da
