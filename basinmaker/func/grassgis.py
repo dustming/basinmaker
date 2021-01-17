@@ -524,7 +524,7 @@ def Generate_Routing_structure(
         overwrite=True,
     )
     ### Find the grid that equal to the max acc, thus this is the outlet grids
-    exp = "'%s' =if(%s == int('%s'),%s,null())" % (
+    exp = "'%s' =if(float(%s) == float(%s),%s,null())" % (
         Name + "_IL",
         Name + "_acc_riv",
         Name + "_minacc",
@@ -916,7 +916,7 @@ def generate_routing_info_of_catchments(
         overwrite=True,
     )
     ### Find the grid that equal to the max acc, thus this is the outlet grids
-    exp = "'%s' =if(float(%s) == float(%s),%s,null())" % (
+    exp = "%s =if(float(%s) == float(%s),%s,null())" % (
         Name + "_OL",
         acc,
         Name + "_maxacc",
