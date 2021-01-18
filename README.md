@@ -29,9 +29,25 @@ The BasinMaker is developed within python3 environment and using several basic r
 
 # Example usage
 
-* The application procedure to delineate a lake river routing structure from DEM can be found in [here](https://github.com/dustming/RoutingTool/wiki/Application-procedure-for-watershed-delineation-with-lakes)
 
-* The application procedure to simplify an existing routing network can be found in [here](https://github.com/dustming/RoutingTool/wiki/Application-procedure-for-post-processing-tools)
+## Example to delineate lake-river routing structure from DEM 
+
+
+* An example to delineate lake-river routing structure with OIH 30 m DEM can be found [here](https://github.com/dustming/basinmaker/tree/master/examples/wathershed_delineation_oih_30m_dem)
+
+
+* An example to delineate lake-river routing structure with HydroSHEDS 90 m DEM can be found [here](https://github.com/dustming/basinmaker/tree/master/examples/wathershed_delineation_hyshed_90m_dem)
+  
+
+* An example to delineate lake-river routing structure with MERIT 90 m DEM can be found [here](https://github.com/dustming/basinmaker/tree/master/examples/wathershed_delineation_merit_90m_dem)  
+
+## Example to post processing existing lake-river routing structure 
+
+
+* The application procedure to simplify an existing lake-river routing structure can be found in [here](https://github.com/dustming/RoutingTool/wiki/Application-procedure-for-post-processing-tools)
+
+## Example for semi-parallel processing  
+
 
 * The application procedure to working with large domain with high resolution DEM [here]()
 
