@@ -52,7 +52,8 @@ In this example, the project spatial extent will be defined using a wathershed o
       is the coordinates of the watershed outlet point in [lon,lat]
 * \<buffer_distance\> 
       is the parameter that used to buffer the extent defined by \<outlet_pt\>      
- 
+* \<gis_platform\> 
+    It is the parameter indicate which gis platform is used. For now only "qgis" is supported   
 ```
 #############################################
 # define extent of the processing domain  
@@ -62,6 +63,7 @@ basinmaker.define_project_extent_method(
     path_dem_in=os.path.join(datafolder, "DEM_big_merit.tif"),
     outlet_pt=[-92.387, 49.09],
     buffer_distance=0.00,
+    gis_platform="qgis",
 )
 ```
 ### outputs  
@@ -186,6 +188,8 @@ After adding lakes and gauge control points into existing watershed delineation.
       is the path to the sub region outlet file. it is only needed when basinmaker has divide the project extent into several sub regions. and then process each sub region in a parallel approach.     
 * \<gis_platform\> 
       It is the parameter indicate which gis platform is used. For now only "qgis" is supported  
+* \<output_folder\> 
+      is the path to the output folder  
 ```
 #############################################
 # add hydrological attributes to existing watershed delineation  
@@ -215,3 +219,38 @@ basinmaker.add_attributes_to_catchments_method(
 * \<obs_gauges\> 
       is the gauge points after snapped to closest river network, located in output folder             
 
+
+## combine catchment covered by the same lake
+In this step, catchments covered by the same lake will be combined together. and the final lake-river routing network will be saved in the output folder 
+
+### parameters 
+
+* \<output_folder\> 
+      is the path to the output folder  
+* \<Path_final_rivply\> 
+      is path to the catchment polygon represent watershed delineation after add lake and gauges control points and update hydrological attributes  
+* \<Path_final_riv\> 
+      is path to the catchment river polyline represent watershed delineation after add lake and gauges control points and update hydrological attributes  
+* \<outlet_pt\> 
+      is the coordinates of the watershed outlet point in [lon,lat]
+* \<gis_platform\> 
+    It is the parameter indicate which gis platform is used. For now only "qgis" is supported  
+ 
+```
+#############################################
+# combine catchments covered by the same lakes 
+#############################################
+basinmaker.combine_catchments_covered_by_the_same_lake_method(
+    OutputFolder=path_output_folder,
+    Path_final_rivply=os.path.join(
+        path_output_folder, "catchment_without_merging_lakes.shp"
+    ),
+    Path_final_riv=os.path.join(path_output_folder, "river_without_merging_lakes.shp"),
+    gis_platform="qgis",
+)
+```
+### outputs  
+* \<finalcat_info\> 
+      is catchment of final lake-river routing structure in output folder 
+* \<finalcat_info_riv\> 
+      is the river of the final lake-river routing structure in output folder  

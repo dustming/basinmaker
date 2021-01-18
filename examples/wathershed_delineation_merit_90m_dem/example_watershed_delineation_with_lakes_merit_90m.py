@@ -27,6 +27,7 @@ basinmaker.define_project_extent_method(
     path_dem_in=os.path.join(datafolder, "DEM_big_merit.tif"),
     outlet_pt=[-92.387, 49.09],
     buffer_distance=0.00,
+    gis_platform="qgis",
 )
 
 

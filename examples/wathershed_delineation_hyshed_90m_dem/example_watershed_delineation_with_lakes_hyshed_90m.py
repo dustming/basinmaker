@@ -30,6 +30,7 @@ basinmaker.define_project_extent_method(
     buffer_distance=0.01,
     hybasin_ply="C:/Users/dustm/OneDrive - University of Waterloo/Documents/ProjectData/Geo_Data_Base/Shapefiles/HydroBASINS/hybas_na_lev07_v1c.shp",
     down_hybasin_id=7070356140,
+    gis_platform="qgis",
 )
 
 

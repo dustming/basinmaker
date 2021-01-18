@@ -25,6 +25,7 @@ basinmaker = basinmaker(
 basinmaker.define_project_extent_method(
     mode="using_dem",
     path_dem_in=os.path.join(datafolder, "oih_30_dem.tif"),
+    gis_platform="qgis",
 )
 
 
