@@ -8,7 +8,7 @@ from basinmaker import basinmaker
 #############################################
 num  = str(np.random.randint(1, 10000 + 1))
 path_output_folder = os.path.join(tempfile.gettempdir(), "basinmaker_exp_hyshed" +num,"output")
-path_working_folder = os.path.join(tempfile.gettempdir(), "basinmaker_exp_hysed" +num,"work")
+path_working_folder = os.path.join(tempfile.gettempdir(), "basinmaker_exp_hyshed" +num,"work")
 datafolder = os.path.join("../../tests/testdata", "Required_data_to_start_from_dem")
 
 #############################################
