@@ -68,22 +68,20 @@ basinmaker.define_project_extent_method(
       is the dem within the project extent, located in working folder 
 * \<mask\> 
       is the a mask to represent project extent, located in working folder  
-           
-## delineate watershed without considering lakes 
-After obtain the project extent. 
 
-In this example, the project spatial extent will be defined using a wathershed outlet coordinates and a MERIT 90m DEM.
+## Delineate watershed without considering lakes 
+After obtain dem within the project extent. basinmaker will first generate a watershed delineation without considering lakes. 
 
-* \<define_project_extent_method\> 
-      is the function that can be used to define project extent 
+### parameters 
+
+* \<acc_thresold\> 
+      is the flow accumulation threshold, the density of the generated river network and the size of the catchment will be decreasing with increasing of this parameter   
 * \<mode\> 
-      is a parameter indicate which method will be used to define project extent. In this case, "using_outlet_pt" is used. 
-* \<path_dem_in\> 
-      is a full path to the DEM dataset. 
-* \<outlet_pt\> 
-      is the coordinates of the watershed outlet point in [lon,lat]
-* \<buffer_distance\> 
-      is the parameter that used to buffer the extent defined by \<outlet_pt\>      
+      is a parameter indicate which method will be used to delineate watershed without considering lakes. In this example dem is used, with "usingdem".
+* \<max_memroy\> 
+      It is the maximum memory allow to be used by basinmaker  
+* \<gis_platform\> 
+      It is the parameter indicate which gis platform is used. For now only "qgis" is supported 
  
 ```
 #############################################
@@ -96,5 +94,22 @@ basinmaker.watershed_delineation_without_lake_method(
     gis_platform="qgis",
 )
 ```
+### outputs  
+* \<fdr_grass\> 
+      is the flow direction dataset, which is using 1 - 8 to represent different directions, located in working folder 
+* \<fdr_arcgis\> 
+      is the flow direction dataset, which is using 1,2,4,...64,128 to represent different directions, located in working folder  
+* \<str_v\> 
+      is the generated river network in vector format, located in working folder 
+* \<str_r\> 
+      is the generated river network in raster format, located in working folder  
+* \<cat_no_lake\> 
+      is the delineated watersheds without considering lakes, located in working folder 
+* \<acc\> 
+      is the a flow accumulation dataset, located in working folder  
 
+
+
+
+           
 
