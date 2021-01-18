@@ -441,7 +441,7 @@ def generatesubdomainmaskandinfo(
     )
     
     grass.run_command(
-        "v.db.update", map='sub_reg_inlet', column="reg_subid", qcol="IL_SubId + " +str(maximum_obs_id) 
+        "v.db.update", map='sub_reg_inlet', column="sub_reg_id", qcol="IL_SubId + " +str(maximum_obs_id) 
     )
     
             
@@ -453,10 +453,11 @@ def generatesubdomainmaskandinfo(
         format="ESRI_Shapefile",
         overwrite=True,
     )
+    
     grass.run_command(
         "v.out.ogr",
         input='sub_reg_inlet',
-        output=os.path.join(Out_Sub_Reg_Dem_Folder, 'sub_reg_inlet' + ".shp"),
+        output=os.path.join(Out_Sub_Reg_Dem_Folder, "sub_reg_inlet" + ".shp"),
         format="ESRI_Shapefile",
         overwrite=True,
     )

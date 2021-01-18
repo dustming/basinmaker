@@ -7,8 +7,8 @@ from basinmaker import basinmaker
 # define working folder, output folder amd data folder  
 #############################################
 num  = str(np.random.randint(1, 10000 + 1))
-path_output_folder = os.path.join(tempfile.gettempdir(), "basinmaker_exp_" +num,"output")
-path_working_folder = os.path.join(tempfile.gettempdir(), "basinmaker_exp_" +num,"work")
+path_output_folder = os.path.join(tempfile.gettempdir(), "basinmaker_exp_oih" +num,"output")
+path_working_folder = os.path.join(tempfile.gettempdir(), "basinmaker_exp_oih" +num,"work")
 datafolder = os.path.join("../../tests/testdata", "Required_data_to_start_from_dem")
 
 #############################################

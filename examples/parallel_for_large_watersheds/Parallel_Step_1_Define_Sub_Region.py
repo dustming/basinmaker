@@ -31,7 +31,7 @@ import shutil
 import sys
 import tempfile
 import timeit
-
+import numpy as np
 import pandas as pd
 from simpledbf import Dbf5
 
@@ -42,6 +42,8 @@ from basinmaker import basinmaker
 ### Define a output folder where to store subregion information
 num  = str(np.random.randint(1, 10000 + 1))
 path_working_folder = os.path.join(tempfile.gettempdir(), "basinmaker_exp_" +num,"work")
+path_working_folder = os.path.join("C:/Users/dustm/Documents", "basinmaker_subreg","work")
+
 Outputfolder = "C:/Users/dustm/OneDrive - University of Waterloo/Documents/ProjectData/Petawawa/lake_of_woods/"
 ### The BasinMaker folder
 datafolder = "../../tests/testdata/Required_data_to_start_from_dem"

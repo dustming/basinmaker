@@ -1991,10 +1991,10 @@ def Check_If_Lake_Have_Multi_OutLet(CL_Id, Str_Id, Routing_info):
         ### obtain all upstream str id of max acc str
         str_to_str_max_acc = defcat(routing_info_only, str_max_acc)
 
-        if len(str_to_str_max_acc) <= 1:
-            str_to_str_max_acc = defcat(
-                routing_info_only, i_CL_Str[len(i_CL_Str) - 2, 1]
-            )
+#        if len(str_to_str_max_acc) <= 1:
+#            str_to_str_max_acc = defcat(
+#                routing_info_only, i_CL_Str[len(i_CL_Str) - 2, 1]
+#            )
         ### create a mask for i_CL_Str[:,1], it will be true for in positon
         ### where it's value in str_to_str_max_acc
         mask = np.isin(i_CL_Str[:, 1], str_to_str_max_acc)
@@ -2015,7 +2015,8 @@ def Check_If_Lake_Have_Multi_OutLet(CL_Id, Str_Id, Routing_info):
                 #                upstrs  = Defcat(routing_info_only,strid)
                 #### no upstream str, ### remove str instead remove lake
                 #                if len(upstrs) == 1:
-                Remove_Str_i.append(strid)
+                if strid != str_max_acc:
+                    Remove_Str_i.append(strid)
 
             # if len(Remove_Str_i) == len(str_notflowto_lakeoutlet):
             #     Remove_Str = Remove_Str + Remove_Str_i
