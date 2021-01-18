@@ -251,8 +251,8 @@ def New_SubId_To_Dissolve(
     if (
         Islake == 1
     ):  ## Meger subbasin covered by lakes, Keep lake outlet catchment  DA, stream order info
-        Longestpath = Calculate_Longest_flowpath(mainriv_merg_info)
-        tarinfo.loc[idx, "RivLength"] = Longestpath
+#        Longestpath = Calculate_Longest_flowpath(mainriv_merg_info)
+        tarinfo.loc[idx, "RivLength"] = 0 #Longestpath
 
     elif Islake == 2:
         tarinfo.loc[idx, "RivLength"] = 0.0
