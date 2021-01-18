@@ -34,6 +34,7 @@ basinmaker = basinmaker(
 )
 ```
 
+
 ## Define project spatial extent
 The first step of watershed delineation is to define the project spatial extent. Once the project spatial extent is defined. The basinmaker will delineate lake-river routing structure within this extent. 
 
@@ -68,6 +69,7 @@ basinmaker.define_project_extent_method(
       is the dem within the project extent, located in working folder 
 * \<mask\> 
       is the a mask to represent project extent, located in working folder  
+
 
 ## Delineate watershed without considering lakes 
 After obtain dem within the project extent. basinmaker will first generate a watershed delineation without considering lakes. 
@@ -109,7 +111,54 @@ basinmaker.watershed_delineation_without_lake_method(
       is the a flow accumulation dataset, located in working folder  
 
 
+## add lakes and gauges control points into existing watershed delineation  
+After obtain the watershed delineation without considering lakes. Here, the basinmaker will add lakes and gauge control points into existing watershed delineation.
 
+Gauges will be snapped to the closest river network and then added as a catchment outlets.
 
-           
+each lake's inflow and outflow points will be identified and added as a catchment outlets. 
+
+### parameters 
+
+* \<path_lakefile_in\> 
+      is a full path to the lake polygon file. user do not needs to do any preprocessing such as clipped and reproject. basinmaker will handle them. 
+* \<lake_attributes\> 
+      is a list of column names in the lake polygon file.lake_attributes[0] should be the column name represnt the unique lake id (integer). lake_attributes[1] should be the column name represent the lake type (integer). lake_attributes[2] should be the column name represent the lake area in km2 (float). lake_attributes[3] should be the column name represent the lake volumn in km3 (float). lake_attributes[4] should be the column name represent the lake depth in m (float).
+* \<threshold_con_lake\> 
+      is a lake area threshold in km2, all connected lakes with lake area smaller than this threshold will be removed 
+* \<threshold_non_con_lake\> 
+      is a lake area threshold in km2, all non connected lakes with lake area smaller than this threshold will be removed         
+* \<path_obsfile_in\> 
+      is a full path to the gauge point shp file. 
+* \<obs_attributes\> 
+      is a list of column names in the obs point file.obs_attributes[0] should be the column name represnt the unique obs id (integer). obs_attributes[1] should be the column name represent the obs name (string). obs_attributes[2] should be the column name represent the gauge drainage area in km2 (float). obs_attributes[3] should be the column name represent the source of the observation gauges,"CA" or "US" (character).      
+* \<max_memroy\> 
+      It is the maximum memory allow to be used by basinmaker  
+* \<gis_platform\> 
+      It is the parameter indicate which gis platform is used. For now only "qgis" is supported  
+```
+basinmaker.watershed_delineation_add_lake_control_points(
+    path_lakefile_in=os.path.join(datafolder, "hylake.shp"),
+    lake_attributes=["Hylak_id", "Lake_type", "Lake_area", "Vol_total", "Depth_avg"],
+    threshold_con_lake = 0,
+    threshold_non_con_lake = 0,
+    path_obsfile_in=os.path.join(datafolder, "obs.shp"),
+    obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
+    max_memroy=1024 * 4,
+    gis_platform="qgis",
+)
+```
+### outputs  
+* \<selected_lakes\> 
+      is all selected lakes, located in working folder 
+* \<sl_nonconnect_lake\> 
+      is selected non connected lakes, located in working folder  
+* \<sl_connected_lake\> 
+      is selected connected lakes, located in working folder 
+* \<river_without_merging_lakes\> 
+      is the river network after add lake and gauge control points, located in working folder  
+* \<catchment_without_merging_lakes\> 
+      is catchment polygons after add lake and gauge control points, located in working folder 
+* \<snapped_obs_points\> 
+      is the gauge points after snapped to closest river network, located in working folder             
 
