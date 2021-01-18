@@ -39,6 +39,17 @@ The first step of watershed delineation is to define the project spatial extent.
 
 In this example, the project spatial extent will be defined using a wathershed outlet coordinates and a MERIT 90m DEM.
 
+* \<define_project_extent_method\> 
+      is the function that can be used to define project extent 
+* \<mode\> 
+      is a parameter indicate which method will be used to define project extent. In this case, "using_outlet_pt" is used. 
+* \<path_dem_in\> 
+      is a full path to the DEM dataset. 
+* \<outlet_pt\> 
+      is the coordinates of the watershed outlet point in [lon,lat]
+* \<buffer_distance\> 
+      is the parameter that used to buffer the extent defined by \<outlet_pt\>      
+ 
 ```
 #############################################
 # define extent of the processing domain  
