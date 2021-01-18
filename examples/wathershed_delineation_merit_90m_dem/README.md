@@ -162,3 +162,56 @@ basinmaker.watershed_delineation_add_lake_control_points(
 * \<snapped_obs_points\> 
       is the gauge points after snapped to closest river network, located in working folder             
 
+
+## add hydrological attributes to catchments without merging lakes   
+After adding lakes and gauge control points into existing watershed delineation. Here, the basinmaker will add hydrological attributes for each generated catchment.
+
+### parameters 
+
+* \<path_bkfwidthdepth\> 
+      is a full path to the bankfull width and depth dataset. user do not needs to do any preprocessing such as clipped and reproject. basinmaker will handle them. the dataset in this example can be found [here](https://agupubs.onlinelibrary.wiley.com/doi/full/10.1002/wrcr.20440) 
+* \<bkfwd_attributes\> 
+      is a list of column names in the bankfull width and depth file. bkfwd_attributes[0] should be the column name represnt the width of the channel in m (float). bkfwd_attributes[1] should be the column name represent depth of channel in m (float). bkfwd_attributes[2] should be the column name represent the annual mean flow of the channel in m3/s (float). bkfwd_attributes[3] should be the column name represent the drainage area of the channel km2 (float).
+* \<path_landuse\> 
+      is the full path of the table in '.csv' format.The table describe the floodplain roughness coefficient correspond to a given landuse type. The table should have two columns: RasterV and MannV. RasterV is the landuse value in the landuse raster for each land use type and the MannV is the roughness coefficient value for each landuse type. 
+* \<path_landuse_info\> 
+      is a lake area threshold in km2, all non connected lakes with lake area smaller than this threshold will be removed  
+* \<lake_attributes\> 
+      is a list of column names in the lake polygon file.lake_attributes[0] should be the column name represnt the unique lake id (integer). lake_attributes[1] should be the column name represent the lake type (integer). lake_attributes[2] should be the column name represent the lake area in km2 (float). lake_attributes[3] should be the column name represent the lake volumn in km3 (float). lake_attributes[4] should be the column name represent the lake depth in m (float).       
+* \<obs_attributes\> 
+      is a list of column names in the obs point file. obs_attributes[0] should be the column name represnt the unique obs id (integer). obs_attributes[1] should be the column name represent the obs name (string). obs_attributes[2] should be the column name represent the gauge drainage area in km2 (float). obs_attributes[3] should be the column name represent the source of the observation gauges,"CA" or "US" (character).      
+* \<outlet_obs_id\> 
+      is the one gauge id from obs_attributes[0] in the provided gauge file. if it is larger than zero. basinmaker will remove the catchment do not drainage to this gauge 
+* \<path_sub_reg_outlets_v\> 
+      is the path to the sub region outlet file. it is only needed when basinmaker has divide the project extent into several sub regions. and then process each sub region in a parallel approach.     
+* \<gis_platform\> 
+      It is the parameter indicate which gis platform is used. For now only "qgis" is supported  
+```
+#############################################
+# add hydrological attributes to existing watershed delineation  
+#############################################
+basinmaker.add_attributes_to_catchments_method(
+    path_bkfwidthdepth=os.path.join(datafolder, "bkf_wd.shp"),
+    bkfwd_attributes=["WIDTH", "DEPTH", "Q_Mean", "UP_AREA"],
+    path_landuse=os.path.join(datafolder, "landuse_modis_250.tif"),
+    path_landuse_info=os.path.join(datafolder, "Landuse_info3.csv"),
+    gis_platform="qgis",
+    obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
+    lake_attributes =["Hylak_id", "Lake_type", "Lake_area", "Vol_total", "Depth_avg"] ,
+    outlet_obs_id=-1,
+    path_sub_reg_outlets_v="#",
+    output_folder=path_output_folder,
+)
+```
+### outputs  
+* \<sl_connected_lake\> 
+      is selected non connected lakes, located in output folder  
+* \<sl_non_connected_lake\> 
+      is selected connected lakes, located in output folder 
+* \<river_without_merging_lakes\> 
+      is the river network after add lake and gauge control points, located in output folder  
+* \<catchment_without_merging_lakes\> 
+      is catchment polygons after add lake and gauge control points, located in output folder 
+* \<obs_gauges\> 
+      is the gauge points after snapped to closest river network, located in output folder             
+
