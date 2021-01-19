@@ -12,14 +12,20 @@ path_output_folder = os.path.join(tempfile.gettempdir(), "basinmaker_exp_" +num,
 path_working_folder = os.path.join(tempfile.gettempdir(), "basinmaker_exp_" +num,"work")
 datafolder = os.path.join("../../tests/testdata", "existing_lake_river_routing_structure")
 demfolder = os.path.join("../../tests/testdata", "Required_data_to_start_from_dem")
-
 HRU_Folder = os.path.join("../../tests/testdata/", "HRU")
-print(path_output_folder)
+
+
+#############################################
+# initialize basinmaker with working folder    
+#############################################
 
 basinmaker = basinmaker(
     path_output_folder=path_output_folder, path_working_folder=path_working_folder
 )
 
+#############################################
+# define hurs    
+#############################################
 basinmaker.generate_hrus_methods(
     OutputFolder=path_output_folder,
     Path_Subbasin_Ply=os.path.join(
@@ -49,6 +55,11 @@ basinmaker.generate_hrus_methods(
     gis_platform="qgis",
 )
 
+
+#############################################
+# generate raven inputs    
+#############################################
+
 basinmaker.generate_raven_model_inputs_method(
     path_final_hru_info=os.path.join(path_output_folder,'finalcat_hru_info.shp'),
     startyear=2010,
@@ -65,5 +76,4 @@ basinmaker.generate_raven_model_inputs_method(
     subbasingroup_nm_lake=["AllLakesubbasins"],
     subbasingroup_area_lake=[-1],
     outputfolder=path_output_folder,
-    forcing_input_file="#",
 )
