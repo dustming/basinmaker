@@ -8,6 +8,8 @@ def divide_domain_into_sub_regions(
     qgis_prefix_path,
     path_lakefile_in,
     lake_attributes,
+    path_bkfwidthdepth = '#',
+    bkfwd_attributes = '#',
     Min_Num_Domain=9,
     Max_Num_Domain=13,
     Initaial_Acc=5000,
@@ -73,5 +75,7 @@ def divide_domain_into_sub_regions(
             grassdb=grassdb,
             grass_location=grass_location,
             qgis_prefix_path=qgis_prefix_path,
+            path_bkfwidthdepth = path_bkfwidthdepth,
+            bkfwd_attributes = bkfwd_attributes,
         )
 

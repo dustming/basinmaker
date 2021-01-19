@@ -81,3 +81,4 @@ def reproject_clip_vectors_by_polygon(
             INTERSECT=mask,
             OUTPUT=os.path.join(grassdb, ply_name + ".shp"),
         )
+    Qgs.exit()

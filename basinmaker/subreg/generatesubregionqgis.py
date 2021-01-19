@@ -9,6 +9,7 @@ from delineationnolake.watdelineationwithoutlake import (
 from addlakeandobs.addlakesqgis import (
     add_lakes_into_existing_watershed_delineation,
 )
+from addattributes.calbkfwidthdepthqgis import calculate_bankfull_width_depth_from_polyline
 import tempfile
 import sqlite3
         
@@ -222,6 +223,8 @@ def generatesubdomainmaskandinfo(
     grassdb,
     grass_location,
     qgis_prefix_path,
+    path_bkfwidthdepth,
+    bkfwd_attributes,
 ):  
     ### 
     dem = input_geo_names['dem']
@@ -237,7 +240,23 @@ def generatesubdomainmaskandinfo(
     )
     if not os.path.exists(tempfolder):
         os.makedirs(tempfolder)
-        
+
+    k = -1 
+    c = -1 
+    if path_bkfwidthdepth != '#':
+        k,c = calculate_bankfull_width_depth_from_polyline(
+            grassdb=grassdb,
+            grass_location=grass_location,
+            qgis_prefix_path=qgis_prefix_path,
+            path_bkfwidthdepth=path_bkfwidthdepth,
+            bkfwd_attributes=bkfwd_attributes,
+            catinfo=[],
+            input_geo_names=input_geo_names,
+            k_in=-1,
+            c_in=-1,
+            return_k_c_only = True,
+        )
+                
     #### generate subbregion outlet points and subregion info table
     QgsApplication.setPrefixPath(qgis_prefix_path, True)
     Qgs = QgsApplication([], False)
@@ -298,7 +317,13 @@ def generatesubdomainmaskandinfo(
     
     sqlstat = "SELECT SubId, DowSubId,ILSubIdmax,ILSubIdmin,MaxAcc_cat FROM %s" % (outlet_pt_info)
     outletinfo = pd.read_sql_query(sqlstat, con)
-    
+    outletinfo = outletinfo.fillna(-1)
+    outletinfo = outletinfo.loc[outletinfo['SubId'] > 0]
+
+    # update watershed bankfull k and c first 
+    outletinfo['k'] = k
+    outletinfo['c'] = c 
+        
     subregin_info = pd.DataFrame(
         np.full(len(outletinfo), -9999), columns=["Sub_Reg_ID"]
     )
@@ -402,13 +427,33 @@ def generatesubdomainmaskandinfo(
             "HyMask_region_" + str(int(basinid + maximum_obs_id)) + ".shp"
         )
         subregin_info.loc[i, "Max_ACC"] = catacc
-        subregin_info.loc[i, "Dow_Sub_Reg_Id"] = int(
-            dowsubreginid + maximum_obs_id
-        )
+        
+        if basinid == dowsubreginid:
+            subregin_info.loc[i, "Dow_Sub_Reg_Id"] = int(
+                -1 + maximum_obs_id
+            )        
+        else:
+            subregin_info.loc[i, "Dow_Sub_Reg_Id"] = int(
+                dowsubreginid + maximum_obs_id
+            )
         subregin_info.loc[i, "Sub_Reg_ID"] = int(basinid + maximum_obs_id)
-
+    
+    subregin_info['k'] = k
+    subregin_info['c'] = c
+    
     ### remove subregion do not contribute to the outlet
     ## find watershed outlet subregion
+#    subregin_info  = subregin_info.loc[subregin_info['Dow_Sub_Reg_Id'] == self.maximum_obs_id-1]
+    subregin_info  = subregin_info.sort_values(by='Max_ACC', ascending=False)
+    outlet_reg_id  = subregin_info['Sub_Reg_ID'].values[0]
+    routing_info = subregin_info[["Sub_Reg_ID", "Dow_Sub_Reg_Id"]].astype("float").values
+    needed_sub_reg_ids = defcat(routing_info, outlet_reg_id)
+    
+    mask  = subregin_info['Sub_Reg_ID'].isin(needed_sub_reg_ids)
+    subregin_info = subregin_info.loc[mask,:]
+#        subregin_info.drop(subregin_info.index[del_row_mask]) ###
+    subregin_info.to_csv(os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_reg_info.csv'),index = None, header=True)
+        
     subregin_info.to_csv(
         os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_reg_info.csv"),
         index=None,

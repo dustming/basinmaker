@@ -121,25 +121,25 @@ def add_lake_attributes(
             catinfo.loc[catrow, "LakeDepth"] = slakeinfo.iloc[0][lake_attributes[4]]
             catinfo.loc[catrow, "Laketype"] = slakeinfo.iloc[0][lake_attributes[1]]
 
-         #check if down subid of the lake cl lake catchments 
-        if CL_LakeId > 0:
-            downsubid = catinfo["DowSubId"].values[catrow][0]
-            subid_inlakes = outletinfo.loc[outletinfo["cl"] == CL_LakeId]["SubId"].values
-            # if downsubid is one of the lake subbasin continue, if not check if it is 
-            # the lake outlet 
-            if downsubid in subid_inlakes and downsubid != catid:
-                continue 
-            i_lakeinfo = lakeoutinfo.loc[lakeoutinfo['lakeid'] == CL_LakeId]
-            if len(i_lakeinfo) <=0:
-                continue 
-            lake_outlet_subid = i_lakeinfo['SubId'].values[0]
-            
-            # if catid not the lake outlet subid 
-            # and this cat is not flowinto the lake catchment 
-            # force it to flow into the lake outlet catchment 
-            if catid != lake_outlet_subid:
-                catinfo.loc[catrow, "DowSubId"] = lake_outlet_subid
-                print(CL_LakeId,catid,downsubid,lake_outlet_subid)
+        #  #check if down subid of the lake cl lake catchments 
+        # if CL_LakeId > 0:
+        #     downsubid = catinfo["DowSubId"].values[catrow][0]
+        #     subid_inlakes = outletinfo.loc[outletinfo["cl"] == CL_LakeId]["SubId"].values
+        #     # if downsubid is one of the lake subbasin continue, if not check if it is 
+        #     # the lake outlet 
+        #     if downsubid in subid_inlakes and downsubid != catid:
+        #         continue 
+        #     i_lakeinfo = lakeoutinfo.loc[lakeoutinfo['lakeid'] == CL_LakeId]
+        #     if len(i_lakeinfo) <=0:
+        #         continue 
+        #     lake_outlet_subid = i_lakeinfo['SubId'].values[0]
+        # 
+        #     # if catid not the lake outlet subid 
+        #     # and this cat is not flowinto the lake catchment 
+        #     # force it to flow into the lake outlet catchment 
+        #     if catid != lake_outlet_subid:
+        #         catinfo.loc[catrow, "DowSubId"] = lake_outlet_subid
+        #         print(CL_LakeId,catid,downsubid,lake_outlet_subid)
                 
     PERMANENT.close()
     return catinfo

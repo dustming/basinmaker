@@ -69,6 +69,8 @@ basinmaker.define_project_extent_method(
 basinmaker.divide_domain_into_sub_regions_method(
     path_lakefile_in = in_lake,
     lake_attributes = ["Hylak_id", "Lake_type", "Lake_area", "Vol_total", "Depth_avg"],
+    path_bkfwidthdepth=os.path.join(datafolder, "bkf_wd.shp"),
+    bkfwd_attributes=["WIDTH", "DEPTH", "Q_Mean", "UP_AREA"],
     Min_Num_Domain=9,
     Max_Num_Domain=30,
     Initaial_Acc=250000,

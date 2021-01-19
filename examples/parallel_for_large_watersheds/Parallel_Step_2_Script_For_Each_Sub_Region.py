@@ -82,41 +82,41 @@ basinmaker = basinmaker(
    path_working_folder = path_working_folder
 )
 
-# basinmaker.define_project_extent_method(
-#     mode="using_provided_ply", path_dem_in=na_hydem,path_extent_ply=Path_Sub_Polygon
-# )
-# 
-# basinmaker.watershed_delineation_without_lake_method(
-#     mode="usingsubreg",
-#     max_memroy=1024 * 4,
-#     subreg_acc_path = os.path.join(
-#         Out_Sub_Reg_Dem_Folder, "sub_reg_acc.pack"
-#     ),
-#     subreg_fdr_path = os.path.join(
-#         Out_Sub_Reg_Dem_Folder, "sub_reg_nfdr_arcgis.pack"
-#     ),
-#     subreg_str_r_path = os.path.join(
-#         Out_Sub_Reg_Dem_Folder, "sub_reg_str_r.pack"
-#     ),
-#     subreg_str_v_path = os.path.join(
-#         Out_Sub_Reg_Dem_Folder, "sub_reg_str_v.pack"
-#     ),
-#     gis_platform="qgis",
-# )
+basinmaker.define_project_extent_method(
+    mode="using_provided_ply", path_dem_in=na_hydem,path_extent_ply=Path_Sub_Polygon
+)
 
-# basinmaker.watershed_delineation_add_lake_control_points(
-#     path_lakefile_in=os.path.join(datafolder, "hylake.shp"),
-#     lake_attributes=["Hylak_id", "Lake_type", "Lake_area", "Vol_total", "Depth_avg"],
-#     threshold_con_lake = 0,
-#     threshold_non_con_lake = 0,
-#     path_obsfile_in=os.path.join(datafolder, "obs.shp"),
-#     obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
-#     path_sub_reg_outlets_v = os.path.join(
-#         Out_Sub_Reg_Dem_Folder, "Sub_Reg_Outlet_v.pack"
-#     ),
-#     max_memroy=1024 * 4,
-#     gis_platform="qgis",
-# )
+basinmaker.watershed_delineation_without_lake_method(
+    mode="usingsubreg",
+    max_memroy=1024 * 4,
+    subreg_acc_path = os.path.join(
+        Out_Sub_Reg_Dem_Folder, "sub_reg_acc.pack"
+    ),
+    subreg_fdr_path = os.path.join(
+        Out_Sub_Reg_Dem_Folder, "sub_reg_nfdr_arcgis.pack"
+    ),
+    subreg_str_r_path = os.path.join(
+        Out_Sub_Reg_Dem_Folder, "sub_reg_str_r.pack"
+    ),
+    subreg_str_v_path = os.path.join(
+        Out_Sub_Reg_Dem_Folder, "sub_reg_str_v.pack"
+    ),
+    gis_platform="qgis",
+)
+
+basinmaker.watershed_delineation_add_lake_control_points(
+    path_lakefile_in=os.path.join(datafolder, "hylake.shp"),
+    lake_attributes=["Hylak_id", "Lake_type", "Lake_area", "Vol_total", "Depth_avg"],
+    threshold_con_lake = 0,
+    threshold_non_con_lake = 0,
+    path_obsfile_in=os.path.join(datafolder, "obs.shp"),
+    obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
+    path_sub_reg_outlets_v = os.path.join(
+        Out_Sub_Reg_Dem_Folder, "Sub_Reg_Outlet_v.pack"
+    ),
+    max_memroy=1024 * 4,
+    gis_platform="qgis",
+)
 
 basinmaker.add_attributes_to_catchments_method(
     path_bkfwidthdepth=os.path.join(datafolder, "bkf_wd.shp"),
@@ -131,6 +131,8 @@ basinmaker.add_attributes_to_catchments_method(
     path_sub_reg_outlets_v = os.path.join(
         Out_Sub_Reg_Dem_Folder, "outlet_pt_info.shp"
     ),
+    k_in = SubReg_info["k"].values[ith_subregion],
+    c_in = SubReg_info["c"].values[ith_subregion],
 )
 #
 basinmaker.combine_catchments_covered_by_the_same_lake_method(

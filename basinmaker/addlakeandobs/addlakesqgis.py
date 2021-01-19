@@ -215,6 +215,16 @@ def add_lakes_into_existing_watershed_delineation(
     temparray[:, :] = ndir[:, :]
     temparray.write(mapname=nfdr_arcgis, overwrite=True)
     grass.run_command("r.null", map=nfdr_arcgis, setnull=-9999)
+     
+    temparray[:, :] = chandir[:, :]
+    temparray.write(mapname='chandir', overwrite=True)
+    grass.run_command("r.null", map='chandir', setnull=-9999)
+    
+    temparray[:, :] = bd_problem[:, :]
+    temparray.write(mapname='bd_problem', overwrite=True)
+    grass.run_command("r.null", map='bd_problem', setnull=-9999)
+
+
     grass.run_command(
         "r.reclass",
         input=nfdr_arcgis,
