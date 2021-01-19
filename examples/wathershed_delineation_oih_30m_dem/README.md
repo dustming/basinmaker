@@ -223,10 +223,8 @@ In this step, catchments covered by the same lake will be combined together. and
       is path to the catchment polygon represent watershed delineation after add lake and gauges control points and update hydrological attributes  
 * \<Path_final_riv\> 
       is path to the catchment river polyline represent watershed delineation after add lake and gauges control points and update hydrological attributes  
-* \<outlet_pt\> 
-      is the coordinates of the watershed outlet point in [lon,lat]
 * \<gis_platform\> 
-    It is the parameter indicate which gis platform is used. For now only "qgis" is supported  
+      It is the parameter indicate which gis platform is used. For now only "qgis" is supported  
  
 ```
 #############################################

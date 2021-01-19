@@ -9,14 +9,21 @@ from basinmaker import basinmaker
 #############################################
 num  = str(np.random.randint(1, 10000 + 1))
 path_output_folder = os.path.join(tempfile.gettempdir(), "basinmaker_exp_" +num,"output")
-path_working_folder = os.path.join(tempfile.gettempdir(), "basinmaker_exp_" +num,"work")
 datafolder = os.path.join("../../tests/testdata", "existing_lake_river_routing_structure")
 HRU_Folder = os.path.join("../../tests/testdata/", "HRU")
-print(path_output_folder)
+
+
+#############################################
+# initialize basinmaker with working folder    
+#############################################
 basinmaker = basinmaker(
     path_output_folder=path_output_folder, path_working_folder=path_working_folder
 )
 
+
+#############################################
+# simplify existing routing structure by filtering lakes   
+#############################################
 basinmaker.simplify_routing_structure_by_filter_lakes_method(
     OutputFolder=path_output_folder,
     Path_final_riv_ply=os.path.join(
