@@ -44,6 +44,7 @@ The BasinMaker is developed within python3 environment and using several basic r
 
 ## Example to post processing existing lake-river routing structure 
 
+* The application procedure to part of the existing lake-river routing structure can be found in [here](https://github.com/dustming/basinmaker/tree/master/examples/extract_part_of_existing_lake_river_routing_structure)
 
 * The application procedure to simplify an existing lake-river routing structure by increasing catchments minimum drainage area can be found in [here](https://github.com/dustming/basinmaker/tree/master/examples/simplify_existing_routing_product_by_drainage_area)
 
@@ -51,8 +52,7 @@ The BasinMaker is developed within python3 environment and using several basic r
 
 * The application procedure to generate hrus and raven model inputs can be found in [here](https://github.com/dustming/basinmaker/tree/master/examples/generate_hru_and_model_inputs)
 
-
-## Example to semi-parallel processing  
+## Example to 'parallel' processing  
 
 * The application procedure to working with large domain with high resolution DEM [here](https://github.com/dustming/basinmaker/tree/master/examples/parallel_for_large_watersheds)
 

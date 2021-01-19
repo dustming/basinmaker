@@ -35,7 +35,6 @@ basinmaker = basinmaker(
 ```
 
 ## simplify existing routing structure by filtering lakes 
-The basinmaker can be initialized with path to the working folder 
 
 ### parameters 
 
