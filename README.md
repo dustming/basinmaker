@@ -21,7 +21,7 @@ For both CL and NCL, the BasinMaker will use lake polygon to identify each lakeâ
 
 # Documentation 
 
-The BasinMaker is developed within python3 environment and using several basic raster and vector functions in QGIS and GRASS GIS. The list of functions from GRASS and QGIS and have been used by BasinMaker can be found in [here](https://github.com/dustming/RoutingTool/wiki/Installation-of-the-BasinMaker#functions-from-qgis-and-grass-gis) 
+The BasinMaker is developed within python3 environment and using several basic raster and vector functions in QGIS and GRASS GIS. The list of functions from GRASS and QGIS and have been used by BasinMaker can be found in [here](https://github.com/dustming/basinmaker/wiki/Installation-of-the-BasinMaker#functions-from-qgis-and-grass-gis) 
 
 * The installation of the toolbox can be found in [here](https://github.com/dustming/RoutingTool/wiki/Installation-of-the-BasinMaker)
 
