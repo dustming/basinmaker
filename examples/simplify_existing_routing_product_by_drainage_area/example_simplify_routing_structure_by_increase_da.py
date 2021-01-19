@@ -8,15 +8,16 @@ from basinmaker import basinmaker
 # define working folder, output folder amd data folder  
 #############################################
 num  = str(np.random.randint(1, 10000 + 1))
-num='3365'
 path_output_folder = os.path.join(tempfile.gettempdir(), "basinmaker_exp_" +num,"output")
 path_working_folder = os.path.join(tempfile.gettempdir(), "basinmaker_exp_" +num,"work")
 datafolder = os.path.join("../../tests/testdata", "existing_lake_river_routing_structure")
 HRU_Folder = os.path.join("../../tests/testdata/", "HRU")
 
-basinmaker = basinmaker(
-    path_output_folder=path_output_folder, path_working_folder=path_working_folder
-)
+
+#############################################
+# initialize basinmaker with working folder    
+#############################################
+basinmaker = basinmaker(path_working_folder=path_working_folder)
 
 
 #############################################
