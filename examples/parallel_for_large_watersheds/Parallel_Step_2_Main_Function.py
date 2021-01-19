@@ -51,14 +51,14 @@ ncores = 4
 
 
 
-Out_Sub_Reg_Dem_Folder = os.path.join(Outputfolder, "SubRegion_info")
+Out_Sub_Reg_Folder = os.path.join(Outputfolder, "SubRegion_info")
 
 
 ### Start timer
 start = timeit.default_timer()
 
 ### Read sub-region information
-SubReg_info_main = pd.read_csv(os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_reg_info.csv"))
+SubReg_info_main = pd.read_csv(os.path.join(Out_Sub_Reg_Folder, "Sub_reg_info.csv"))
 arg_instances = range(0, len(SubReg_info_main))
 ### run watershed delineation for each subregion
 Parallel(n_jobs=ncores, verbose=1, backend="threading")(

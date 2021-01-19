@@ -71,6 +71,8 @@ basinmaker.add_attributes_to_catchments_method(
     outlet_obs_id=-1,
     path_sub_reg_outlets_v="#",
     output_folder=path_output_folder,
+    k_in = 1,
+    c_in = 1,
 )
 
 

@@ -118,3 +118,15 @@ basinmaker.divide_domain_into_sub_regions_method(
 
 
 
+# parallel generate lake-river routing structure in each sub region 
+
+In this example, for cores will be used to parallel process sub regions. number of cores can be modified the variable 'ncores' in "Parallel_Step_2_Main_Function.py" . 
+The explanation of the script in "" can be found in [here](https://github.com/dustming/basinmaker/tree/master/examples/wathershed_delineation_merit_90m_dem).  
+
+## example usage 
+```
+python Parallel_Step_2_Main_Function.py
+```
+
+
+
