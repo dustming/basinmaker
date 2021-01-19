@@ -1133,4 +1133,191 @@ class basinmaker:
             gis_platform=gis_platform,
         )
         
+    def generate_raven_model_inputs_method(
+        self,
+        path_final_hru_info="#",
+        startyear=-1,
+        endYear=-1,
+        CA_HYDAT="#",
+        warmup=0,
+        template_folder="#",
+        lake_as_gauge=False,
+        writeobsrvt=False,
+        downloadobsdata=True,
+        model_name="test",
+        subbasingroup_nm_channel=["Allsubbasins"],
+        subbasingroup_length_channel=[-1],
+        subbasingroup_nm_lake=["AllLakesubbasins"],
+        subbasingroup_area_lake=[-1],
+        outputfolder="#",
+        forcing_input_file="#",
+    ):
+        """Generate Raven input files.
+
+        Function that used to generate Raven input files. All output will be stored in folder
+        "<OutputFolder>/RavenInput".
+
+        Parameters
+        ----------
+
+        path_final_hru_info     : string
+            Path of the output shapefile from routing toolbox which includes
+            all required parameters; Each row in the attribute table of this
+            shapefile represent a HRU. Different HRU in the same subbasin has
+            the same subbasin related attribute values.
+
+            The shapefile should at least contains following columns
+            ##############Subbasin related attributes###########################
+            SubId           - integer, The subbasin Id
+            DowSubId        - integer, The downstream subbasin ID of this
+                                       subbasin
+            IsLake          - integer, If the subbasin is a lake / reservior
+                                       subbasin. 1 yes, <0, no
+            IsObs           - integer, If the subbasin contains a observation
+                                       gauge. 1 yes, < 0 no.
+            RivLength       - float,   The length of the river in current
+                                       subbasin in m
+            RivSlope        - float,   The slope of the river path in
+                                       current subbasin, in m/m
+            FloodP_n        - float,   Flood plain manning's coefficient, in -
+            Ch_n            - float,   main channel manning's coefficient, in -
+            BkfWidth        - float,   the bankfull width of the main channel
+                                       in m
+            BkfDepth        - float,   the bankfull depth of the main channel
+                                       in m
+            HyLakeId        - integer, the lake id
+            LakeVol         - float,   the Volume of the lake in km3
+            LakeDepth       - float,   the average depth of the lake m
+            LakeArea        - float,   the area of the lake in m2
+            ############## HRU related attributes    ###########################
+            HRU_S_mean      - float,   the slope of the HRU in degree
+            HRU_A_mean      - float,   the aspect of the HRU in degree
+            HRU_E_mean      - float,   the mean elevation of the HRU in m
+            HRU_ID          - integer, the id of the HRU
+            HRU_Area        - integer, the area of the HRU in m2
+            HRU_IsLake      - integer, the 1 the HRU is a lake hru, -1 not
+            LAND_USE_C      - string,  the landuse class name for this HRU, the
+                                       name will be used in Raven rvh, and rvp
+                                       file
+            VEG_C           - string,  the Vegetation class name for this HRU, the
+                                       name will be used in Raven rvh, and rvp
+                                       file
+            SOIL_PROF       - string,  the soil profile name for this HRU, the
+                                       name will be used in Raven rvh, and rvp
+                                       file
+            HRU_CenX        - float,  the centroid coordinates for HRU in x
+                                       dimension
+            HRU_CenY        - float,  the centroid coordinates for HRU in y
+                                       dimension
+        lake_as_gauge   : Bool
+            If "True", all lake subbasins will labeled as gauged
+            subbasin such that Raven will export lake balance for
+            this lake. If "False", lake subbasin will not be labeled
+            as gauge subbasin.
+        CA_HYDAT        : string,  optional
+            path and filename of downloaded
+            external database containing streamflow observations,
+            e.g. HYDAT for Canada ("Hydat.sqlite3").
+        startyear       : integer, optional
+            Start year of simulation. Used to
+            read streamflow observations from external databases.
+        endYear         : integer, optional
+            End year of simulation. Used to
+            read streamflow observations from external databases.
+        warmup          : integer, optional
+            The warmup time (in years) used after
+            startyear. Values in output file "obs/xxx.rvt" containing
+            observations will be set to NoData value "-1.2345" from
+            model start year to end of WarmUp year.
+        template_folder : string, optional
+            Input that is used to copy raven template files. It is a
+            folder name containing raven template files. All
+            files from that folder will be copied (unchanged)
+            to the "<OutputFolder>/RavenInput".
+        writeobsrvt     : Bool, optional
+            Input that used to indicate if the observation data file needs
+            to be generated.
+        downloadobsdata : Bool, optional
+            Input that used to indicate if the observation data will be Download
+            from usgs website or read from hydat database for streamflow Gauge
+            in US or Canada,respectively. If this parameter is False,
+            while WriteObsrvt is True. The program will write the observation data
+            file with "-1.2345" for each observation gauges.
+        model_name      : string
+           The Raven model base name. File name of the raven input will be
+           Model_Name.xxx.
+        subbasingroup_nm_channel       : List
+            It is a list of names for subbasin groups, which are grouped based
+            on channel length of each subbsin. Should at least has one name
+        subbasingroup_length_channel   : List
+            It is a list of float channel length thresthold in meter, to divide
+            subbasin into different groups. for example, [1,10,20] will divide
+            subbasins into four groups, group 1 with channel length (0,1];
+            group 2 with channel length (1,10],
+            group 3 with channel length (10,20],
+            group 4 with channel length (20,Max channel length].
+        subbasingroup_nm_lake          : List
+            It is a list of names for subbasin groups, which are grouped based
+            on Lake area of each subbsin. Should at least has one name
+        subbasingroup_area_lake        : List
+            It is a list of float lake area thresthold in m2, to divide
+            subbasin into different groups. for example, [1,10,20] will divide
+            subbasins into four groups, group 1 with lake area (0,1];
+            group 2 with lake are (1,10],
+            group 3 with lake are (10,20],
+            group 4 with lake are (20,Max channel length].
+        outputfolder                   : string
+            Folder name that stores generated Raven input files. The raven
+            input file will be generated in "<OutputFolder>/RavenInput"
+
+        Notes
+        -------
+        Following ouput files will be generated in "<OutputFolder>/RavenInput"
+        modelname.rvh              - contains subbasins and HRUs
+        Lakes.rvh                  - contains definition and parameters of lakes
+        channel_properties.rvp     - contains definition and parameters for channels
+        xxx.rvt                    - (optional) streamflow observation for each gauge
+                                     in shapefile database will be automatically
+                                     generagted in folder "OutputFolder/RavenInput/obs/".
+        obsinfo.csv                - information file generated reporting drainage area
+                                     difference between observed in shapefile and
+                                     standard database as well as number of missing
+                                     values for each gauge
+
+        Returns:
+        -------
+           None
+
+        Examples
+        -------
+
+        """
+
+        from hymodin.raveninput import (
+            GenerateRavenInput,
+        )
+
+        GenerateRavenInput(
+            Path_final_hru_info=path_final_hru_info,
+            lenThres=1,
+            iscalmanningn=-1,
+            Startyear=startyear,
+            EndYear=endYear,
+            CA_HYDAT=CA_HYDAT,
+            WarmUp=warmup,
+            Template_Folder=template_folder,
+            Lake_As_Gauge=lake_as_gauge,
+            WriteObsrvt=writeobsrvt,
+            DownLoadObsData=downloadobsdata,
+            Model_Name=model_name,
+            Old_Product=False,
+            SubBasinGroup_NM_Channel=subbasingroup_nm_channel,
+            SubBasinGroup_Length_Channel=subbasingroup_length_channel,
+            SubBasinGroup_NM_Lake=subbasingroup_nm_lake,
+            SubBasinGroup_Area_Lake=subbasingroup_area_lake,
+            OutputFolder=outputfolder,
+            Forcing_Input_File=forcing_input_file,
+        )
+
+
         

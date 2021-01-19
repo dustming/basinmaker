@@ -2,6 +2,7 @@ import copy
 import os
 import sqlite3
 import urllib
+import shutil
 
 import numpy as np
 import pandas as pd
