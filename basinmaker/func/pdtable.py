@@ -650,7 +650,8 @@ def Connect_SubRegion_Update_DownSubId(AllCatinfo, DownCatinfo, Sub_Region_info)
         outlet_mask = Sub_Region_cat_info["DowSubId"] == -1
         iReg_Outlet_Subid = Sub_Region_cat_info.loc[outlet_mask, "SubId"].values[
             0
-        ]  # (isubregion - 80000) * 200000 - 1
+        ]  
+        # (isubregion - 80000) * 200000 - 1
         Sub_Region_info.loc[
             Sub_Region_info["Sub_Reg_ID"] == isubregion, "Outlet_SubId"
         ] = iReg_Outlet_Subid
@@ -663,7 +664,7 @@ def Connect_SubRegion_Update_DownSubId(AllCatinfo, DownCatinfo, Sub_Region_info)
             continue
 
         ### find downstrem subbasin id of outlet subbasin
-        Down_Sub_info = DownCatinfo.loc[DownCatinfo["value"] == isubregion].copy()
+        Down_Sub_info = DownCatinfo.loc[DownCatinfo["sub_reg_id"] == Dow_Sub_Region_id].copy()
 
         if len(Down_Sub_info) == 1:  ###
             DownSubid = Down_Sub_info["SubId"].values[0]

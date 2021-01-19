@@ -824,6 +824,8 @@ def generate_routing_info_of_catchments(
         radius=1.5,
         overwrite=True,
     )
+    #"_OL1_G_Clu" has the unique id for meeting point between catchments 
+    
     grass.run_command(
         "r.clump", input=Name + "_OL1_G", output=Name + "_OL1_G_Clu", overwrite=True
     )
@@ -898,5 +900,36 @@ def generate_routing_info_of_catchments(
     )
     sqlstat = "SELECT SubId, DowSubId, MaxAcc_cat FROM %s" % (Name + "_OL_v")
     Routing_info = pd.read_sql_query(sqlstat, con)
+    
+    grass.run_command(
+        "r.to.vect",
+        input=Name + "_IL1",
+        output=Name + "_IL_v_c",
+        type="point",
+        overwrite=True,
+    )
+
+    grass.run_command(
+        "v.what.rast",
+        map=Name + "_IL_v_c",
+        raster=cat,
+        column="SubId_I",
+    )
+
+    grass.run_command(
+        "v.what.rast",
+        map=Name + "_IL_v_c",
+        raster=Name + "_OL1_G_Clu",
+        column="ILpt_ID",
+    )
+
+    grass.run_command(
+        "v.what.rast",
+        map=Name + "_OL_v",
+        raster=Name + "_OL1_G_Clu",
+        column="ILpt_ID",
+    )
+
+    
     return Routing_info
 

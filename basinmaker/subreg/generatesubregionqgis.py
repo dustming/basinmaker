@@ -311,14 +311,20 @@ def generatesubdomainmaskandinfo(
         str='river_r',
     )
 
+
     grass.run_command("g.copy", vector=("Final_OL_v", outlet_pt_info), overwrite=True)
-    grass.run_command("g.copy", vector=("Final_IL_v", 'sub_reg_inlet'), overwrite=True)
+    grass.run_command("g.copy", vector=("Final_IL_v_c", 'sub_reg_inlet'), overwrite=True)
+    Paths_Finalcat_ply = []
     
-    
-    sqlstat = "SELECT SubId, DowSubId,ILSubIdmax,ILSubIdmin,MaxAcc_cat FROM %s" % (outlet_pt_info)
+    sqlstat = "SELECT SubId, DowSubId,ILSubIdmax,ILSubIdmin,MaxAcc_cat,ILpt_ID FROM %s" % (outlet_pt_info)
     outletinfo = pd.read_sql_query(sqlstat, con)
     outletinfo = outletinfo.fillna(-1)
     outletinfo = outletinfo.loc[outletinfo['SubId'] > 0]
+
+    sqlstat = "SELECT ILpt_ID,SubId_I FROM %s" % ('Final_IL_v_c')
+    inletinfo = pd.read_sql_query(sqlstat, con)
+    inletinfo = inletinfo.fillna(-1)
+
 
     # update watershed bankfull k and c first 
     outletinfo['k'] = k
@@ -336,7 +342,7 @@ def generatesubdomainmaskandinfo(
     for i in range(0, len(outletinfo)):
     
         basinid = int(outletinfo['SubId'].values[i])
-    
+                
         grass.run_command("r.mask", raster=dem, maskcats="*", overwrite=True)
         exp = "%s = if(%s == %s,%s,null())" % ("dem_reg_"+ str(basinid),cat_add_lake,str(basinid),dem)
         grass.run_command("r.mapcalc", expression=exp, overwrite=True)
@@ -391,6 +397,9 @@ def generatesubdomainmaskandinfo(
                 ),
             },
         )
+        
+        Paths_Finalcat_ply.append(os.path.join(Out_Sub_Reg_Dem_Folder,"HyMask_region_"+ str(int(basinid + maximum_obs_id))+ "_nobuffer.shp"))
+            
         processing.run(
             "native:buffer",
             {
@@ -412,12 +421,25 @@ def generatesubdomainmaskandinfo(
             },
         )
     
+    qgis_vector_merge_vector_layers(
+        processing,
+        context,
+        INPUT_Layer_List=Paths_Finalcat_ply,
+        OUTPUT=os.path.join(Out_Sub_Reg_Dem_Folder, "subregion_ply.shp"),
+    )
+            
     grass.run_command("r.mask", raster=dem, maskcats="*", overwrite=True)
      
-    
+    problem_subid = []
     for i in range(0, len(outletinfo)):
         basinid = int(outletinfo['SubId'].values[i])
         dowsubreginid = int(outletinfo['DowSubId'].values[i])
+        ILpt_ID = outletinfo['ILpt_ID'].values[i]
+        downsubid_inlet = inletinfo[inletinfo['ILpt_ID'] ==ILpt_ID]['SubId_I'].values[0]
+        
+        if dowsubreginid != downsubid_inlet:
+            problem_subid.append(basinid)
+        
         catacc = int(outletinfo['MaxAcc_cat'].values[i])
         
         subregin_info.loc[i, "ProjectNM"] = (
@@ -486,11 +508,9 @@ def generatesubdomainmaskandinfo(
     )
     
     grass.run_command(
-        "v.db.update", map='sub_reg_inlet', column="sub_reg_id", qcol="IL_SubId + " +str(maximum_obs_id) 
+        "v.db.update", map='sub_reg_inlet', column="sub_reg_id", qcol="SubId_I + " +str(maximum_obs_id) 
     )
-    
-            
-
+        
     grass.run_command(
         "v.out.ogr",
         input=outlet_pt_info,
@@ -513,18 +533,21 @@ def generatesubdomainmaskandinfo(
         output=os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_Reg_Outlet_v"+".pack"),
         overwrite=True,
     )
-
+    print("following subregion's inlet needs to be checked ")
+    print(problem_subid)
+    
     return
 
 ############################################################################
 
 
 def Combine_Sub_Region_Results(
-    self,
-    Sub_Region_info="#",
-    Sub_Region_OutputFolder="#",
-    OutputFolder="#",
-    Is_Final_Result=True,
+    Sub_Region_info,
+    Sub_Region_OutputFolder,
+    OutputFolder,
+    Is_Final_Result,
+    qgis_prefix_path,
+    subregion_inlet,
 ):
     """Combine subregion watershed delineation results
 
@@ -566,8 +589,15 @@ def Combine_Sub_Region_Results(
     -------
 
     """
-
-    QgsApplication.setPrefixPath(self.qgisPP, True)
+    
+    if not os.path.exists(OutputFolder):
+        os.makedirs(OutputFolder)
+        
+    tempfolder = os.path.join(
+        tempfile.gettempdir(), "basinmaker_comsubreg" + str(np.random.randint(1, 10000 + 1))
+    )
+    
+    QgsApplication.setPrefixPath(qgis_prefix_path, True)
     Qgs = QgsApplication([], False)
     Qgs.initQgis()
     from processing.core.Processing import Processing
@@ -591,7 +621,7 @@ def Combine_Sub_Region_Results(
     Paths_None_Con_Lake_ply = []
     Paths_obs_point = []
 
-    Path_Outlet_Down_point = Path_Down_Stream_Points
+    Path_Outlet_Down_point = subregion_inlet
 
     ### add new attribte
     ### find outlet subregion id
@@ -624,16 +654,14 @@ def Combine_Sub_Region_Results(
         ### define path of the output file in this sub region
         Path_Finalcat_ply = os.path.join(SubFolder, "finalcat_info.shp")
         Path_Finalcat_line = os.path.join(SubFolder, "finalcat_info_riv.shp")
-        Path_Finalriv_ply = os.path.join(SubFolder, "finalriv_info_ply.shp")
-        Path_Finalriv_line = os.path.join(SubFolder, "finalriv_info.shp")
-        Path_Con_Lake_ply = os.path.join(SubFolder, "Con_Lake_Ply.shp")
-        Path_None_Con_Lake_ply = os.path.join(SubFolder, "Non_Con_Lake_Ply.shp")
-        Path_obs_point = os.path.join(SubFolder, "obspoint.shp")
+        Path_Finalriv_ply = os.path.join(SubFolder, "catchment_without_merging_lakes.shp")
+        Path_Finalriv_line = os.path.join(SubFolder, "river_without_merging_lakes.shp")
+        Path_Con_Lake_ply = os.path.join(SubFolder, "sl_connected_lake.shp")
+        Path_None_Con_Lake_ply = os.path.join(SubFolder, "sl_non_connected_lake.shp")
+        Path_obs_point = os.path.join(SubFolder, "obs_gauges.shp")
 
         ### product do not exist
-        if (
-            os.path.exists(Path_Finalcat_ply) != 1
-        ):  ### this sub region did not generate outputs
+        if (os.path.exists(Path_Finalcat_ply) != 1):  
             continue
 
         ### For each subregion, add new subid to each polygon files,
@@ -657,7 +685,7 @@ def Combine_Sub_Region_Results(
                 context,
                 layer_cat,
                 OutputPath=os.path.join(
-                    self.tempfolder,
+                    tempfolder,
                     "finalcat_info_Region_" + str(isubregion) + "addatrri.shp",
                 ),
                 Region_ID=isubregion,
@@ -665,7 +693,7 @@ def Combine_Sub_Region_Results(
             )
             Paths_Finalcat_ply.append(
                 os.path.join(
-                    self.tempfolder,
+                    tempfolder,
                     "finalcat_info_Region_" + str(isubregion) + "addatrri.shp",
                 )
             )
@@ -677,7 +705,7 @@ def Combine_Sub_Region_Results(
                 context,
                 layer_cat,
                 OutputPath=os.path.join(
-                    self.tempfolder,
+                    tempfolder,
                     "finalcat_info_riv_Region_" + str(isubregion) + "addatrri.shp",
                 ),
                 Region_ID=isubregion,
@@ -685,7 +713,7 @@ def Combine_Sub_Region_Results(
             )
             Paths_Finalcat_line.append(
                 os.path.join(
-                    self.tempfolder,
+                    tempfolder,
                     "finalcat_info_riv_Region_" + str(isubregion) + "addatrri.shp",
                 )
             )
@@ -709,7 +737,7 @@ def Combine_Sub_Region_Results(
                 context,
                 layer_cat,
                 OutputPath=os.path.join(
-                    self.tempfolder,
+                    tempfolder,
                     "finalriv_info_ply_Region_" + str(isubregion) + "addatrri.shp",
                 ),
                 Region_ID=isubregion,
@@ -717,7 +745,7 @@ def Combine_Sub_Region_Results(
             )
             Paths_Finalriv_ply.append(
                 os.path.join(
-                    self.tempfolder,
+                    tempfolder,
                     "finalriv_info_ply_Region_" + str(isubregion) + "addatrri.shp",
                 )
             )
@@ -729,7 +757,7 @@ def Combine_Sub_Region_Results(
                 context,
                 layer_cat,
                 OutputPath=os.path.join(
-                    self.tempfolder,
+                    tempfolder,
                     "finalriv_info_Region_" + str(isubregion) + "addatrri.shp",
                 ),
                 Region_ID=isubregion,
@@ -737,7 +765,7 @@ def Combine_Sub_Region_Results(
             )
             Paths_Finalriv_line.append(
                 os.path.join(
-                    self.tempfolder,
+                    tempfolder,
                     "finalriv_info_Region_" + str(isubregion) + "addatrri.shp",
                 )
             )
@@ -785,7 +813,7 @@ def Combine_Sub_Region_Results(
             processing,
             context,
             INPUT_Layer_List=Paths_obs_point,
-            OUTPUT=os.path.join(OutputFolder, "obspoint.shp"),
+            OUTPUT=os.path.join(OutputFolder, "obs_gauges.shp"),
         )
 
     # merge catchment polygon and polyline layers, and update their attirbutes
@@ -795,36 +823,36 @@ def Combine_Sub_Region_Results(
             processing,
             context,
             INPUT_Layer_List=Paths_Finalcat_ply,
-            OUTPUT=os.path.join(self.tempfolder, "finalcat_info.shp"),
+            OUTPUT=os.path.join(tempfolder, "finalcat_info.shp"),
         )
         qgis_vector_merge_vector_layers(
             processing,
             context,
             INPUT_Layer_List=Paths_Finalcat_line,
-            OUTPUT=os.path.join(self.tempfolder, "finalcat_info_riv.shp"),
+            OUTPUT=os.path.join(tempfolder, "finalcat_info_riv.shp"),
         )
         processing.run(
             "qgis:joinattributesbylocation",
             {
                 "INPUT": Path_Outlet_Down_point,
-                "JOIN": os.path.join(self.tempfolder, "finalcat_info.shp"),
+                "JOIN": os.path.join(tempfolder, "finalcat_info.shp"),
                 "PREDICATE": [5],
                 "JOIN_FIELDS": [],
                 "METHOD": 1,
                 "DISCARD_NONMATCHING": True,
                 "PREFIX": "",
-                "OUTPUT": os.path.join(self.tempfolder, "Down_Sub_ID.shp"),
+                "OUTPUT": os.path.join(tempfolder, "Down_Sub_ID.shp"),
             },
             context=context,
         )
 
         AllCatinfo = (
-            Dbf_To_Dataframe(os.path.join(self.tempfolder, "finalcat_info.shp"))
+            Dbf_To_Dataframe(os.path.join(tempfolder, "finalcat_info.shp"))
             .drop_duplicates("SubId", keep="first")
             .copy()
         )
         DownCatinfo = (
-            Dbf_To_Dataframe(os.path.join(self.tempfolder, "Down_Sub_ID.shp"))
+            Dbf_To_Dataframe(os.path.join(tempfolder, "Down_Sub_ID.shp"))
             .drop_duplicates("SubId", keep="first")
             .copy()
         )
@@ -837,12 +865,12 @@ def Combine_Sub_Region_Results(
         )
 
         Copy_Pddataframe_to_shpfile(
-            os.path.join(self.tempfolder, "finalcat_info.shp"),
+            os.path.join(tempfolder, "finalcat_info.shp"),
             AllCatinfo,
             UpdateColNM=["DowSubId", "DA", "Strahler"],
         )
         Copy_Pddataframe_to_shpfile(
-            os.path.join(self.tempfolder, "finalcat_info_riv.shp"),
+            os.path.join(tempfolder, "finalcat_info_riv.shp"),
             AllCatinfo,
             UpdateColNM=["DowSubId", "DA", "Strahler"],
         )
@@ -850,7 +878,7 @@ def Combine_Sub_Region_Results(
         processing.run(
             "native:dissolve",
             {
-                "INPUT": os.path.join(self.tempfolder, "finalcat_info.shp"),
+                "INPUT": os.path.join(tempfolder, "finalcat_info.shp"),
                 "FIELD": ["SubId"],
                 "OUTPUT": os.path.join(OutputFolder, "finalcat_info.shp"),
             },
@@ -859,7 +887,7 @@ def Combine_Sub_Region_Results(
         processing.run(
             "native:dissolve",
             {
-                "INPUT": os.path.join(self.tempfolder, "finalcat_info_riv.shp"),
+                "INPUT": os.path.join(tempfolder, "finalcat_info_riv.shp"),
                 "FIELD": ["SubId"],
                 "OUTPUT": os.path.join(OutputFolder, "finalcat_info_riv.shp"),
             },
@@ -871,37 +899,37 @@ def Combine_Sub_Region_Results(
             processing,
             context,
             INPUT_Layer_List=Paths_Finalriv_ply,
-            OUTPUT=os.path.join(self.tempfolder, "finalriv_info_ply.shp"),
+            OUTPUT=os.path.join(tempfolder, "finalriv_info_ply.shp"),
         )
         qgis_vector_merge_vector_layers(
             processing,
             context,
             INPUT_Layer_List=Paths_Finalriv_line,
-            OUTPUT=os.path.join(self.tempfolder, "finalriv_info.shp"),
+            OUTPUT=os.path.join(tempfolder, "finalriv_info.shp"),
         )
 
         processing.run(
             "qgis:joinattributesbylocation",
             {
                 "INPUT": Path_Outlet_Down_point,
-                "JOIN": os.path.join(self.tempfolder, "finalriv_info_ply.shp"),
+                "JOIN": os.path.join(tempfolder, "finalriv_info_ply.shp"),
                 "PREDICATE": [5],
                 "JOIN_FIELDS": [],
                 "METHOD": 1,
                 "DISCARD_NONMATCHING": True,
                 "PREFIX": "",
-                "OUTPUT": os.path.join(self.tempfolder, "Down_Sub_ID.shp"),
+                "OUTPUT": os.path.join(tempfolder, "Down_Sub_ID.shp"),
             },
             context=context,
         )
 
         AllCatinfo = (
-            Dbf_To_Dataframe(os.path.join(self.tempfolder, "finalriv_info_ply.shp"))
+            Dbf_To_Dataframe(os.path.join(tempfolder, "finalriv_info_ply.shp"))
             .drop_duplicates("SubId", keep="first")
             .copy()
         )
         DownCatinfo = (
-            Dbf_To_Dataframe(os.path.join(self.tempfolder, "Down_Sub_ID.shp"))
+            Dbf_To_Dataframe(os.path.join(tempfolder, "Down_Sub_ID.shp"))
             .drop_duplicates("SubId", keep="first")
             .copy()
         )
@@ -914,13 +942,13 @@ def Combine_Sub_Region_Results(
         )
 
         Copy_Pddataframe_to_shpfile(
-            os.path.join(self.tempfolder, "finalriv_info_ply.shp"),
+            os.path.join(tempfolder, "finalriv_info_ply.shp"),
             AllCatinfo,
             link_col_nm="SubId",
             UpdateColNM=["DowSubId", "DA", "Strahler"],
         )
         Copy_Pddataframe_to_shpfile(
-            os.path.join(self.tempfolder, "finalriv_info.shp"),
+            os.path.join(tempfolder, "finalriv_info.shp"),
             AllCatinfo,
             link_col_nm="SubId",
             UpdateColNM=["DowSubId", "DA", "Strahler"],
@@ -929,7 +957,7 @@ def Combine_Sub_Region_Results(
         processing.run(
             "native:dissolve",
             {
-                "INPUT": os.path.join(self.tempfolder, "finalriv_info_ply.shp"),
+                "INPUT": os.path.join(tempfolder, "finalriv_info_ply.shp"),
                 "FIELD": ["SubId"],
                 "OUTPUT": os.path.join(OutputFolder, "finalriv_info_ply.shp"),
             },
@@ -938,7 +966,7 @@ def Combine_Sub_Region_Results(
         processing.run(
             "native:dissolve",
             {
-                "INPUT": os.path.join(self.tempfolder, "finalriv_info.shp"),
+                "INPUT": os.path.join(tempfolder, "finalriv_info.shp"),
                 "FIELD": ["SubId"],
                 "OUTPUT": os.path.join(OutputFolder, "finalriv_info.shp"),
             },
