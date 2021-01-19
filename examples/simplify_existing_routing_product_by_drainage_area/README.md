@@ -43,16 +43,22 @@ The basinmaker can be initialized with path to the working folder
 
 * \<OutputFolder\> 
       is the folder that stores generated outputs
+
 * \<Path_final_riv_ply\> 
       Path to the catchment polygon which is the routing product before merging lakes catchment and need to be processed before used. It is the input for simplify the routing product based on lake area or drianage area.
+
 * \<Path_final_riv\> 
       Path to the river polyline which is the routing product before merging lakes catchments and need to be processed before used. It is the input for simplify the routing product based on lake area or drianage area.
+
 * \<Path_Con_Lake_ply\> 
       Path to a connected lake polygon. Connected lakes are lakes that are connected by Path_final_riv.
+
 * \<Path_NonCon_Lake_ply\> 
       Path to a non connected lake polygon. Connected lakes are lakes that are not connected by Path_final_riv.
+
 * \<Area_Min\> 
       is the minimum catchment drainage area, in km2      
+
 * \<gis_platform\> 
     It is the parameter indicate which gis platform is used. For now only "qgis" is supported   
 
@@ -76,12 +82,16 @@ basinmaker.simplify_routing_structure_by_drainage_area_method(
 ### outputs  
 * \<sl_connected_lake\> 
       is selected non connected lakes, located in output folder  
+
 * \<sl_non_connected_lake\> 
       is selected connected lakes, located in output folder 
+
 * \<river_without_merging_lakes\> 
       is the river network after add lake and gauge control points, located in output folder  
+
 * \<catchment_without_merging_lakes\> 
       is catchment polygons after add lake and gauge control points, located in output folder 
+
 * \<obs_gauges\> 
       is the gauge points after snapped to closest river network, located in output folder             
 
@@ -93,10 +103,13 @@ In this step, catchments covered by the same lake will be combined together. and
 
 * \<output_folder\> 
       is the path to the output folder  
-* \<Path_final_rivply\> 
+
+* \<Path_final_info\> 
       is path to the catchment polygon represent watershed delineation after add lake and gauges control points and update hydrological attributes  
-* \<Path_final_riv\> 
+
+* \<Path_final_inforiv\> 
       is path to the catchment river polyline represent watershed delineation after add lake and gauges control points and update hydrological attributes  
+
 * \<gis_platform\> 
       It is the parameter indicate which gis platform is used. For now only "qgis" is supported  
  

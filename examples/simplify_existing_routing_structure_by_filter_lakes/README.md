@@ -41,22 +41,31 @@ The basinmaker can be initialized with path to the working folder
 
 * \<OutputFolder\> 
       is the folder that stores generated outputs
+
 * \<Path_final_riv_ply\> 
       Path to the catchment polygon which is the routing product before merging lakes catchment and need to be processed before used. It is the input for simplify the routing product based on lake area or drianage area.
+
 * \<Path_final_riv\> 
       Path to the river polyline which is the routing product before merging lakes catchments and need to be processed before used. It is the input for simplify the routing product based on lake area or drianage area.
+
 * \<Path_Con_Lake_ply\> 
       Path to a connected lake polygon. Connected lakes are lakes that are connected by Path_final_riv.
+
 * \<Path_NonCon_Lake_ply\> 
       Path to a non connected lake polygon. Connected lakes are lakes that are not connected by Path_final_riv.
+
 * \<Thres_Area_Conn_Lakes\> 
       It is the lake area threshold for connated lakes, in km2      
+
 * \<Thres_Area_Non_Conn_Lakes\> 
       It is the lake area threshold for non connated lakes, in km2
+
 * \<Selection_Method\> 
       It is a string indicate lake selection methods "ByArea" means lake in the routing product will be selected based on two lake area thresthold Thres_Area_Conn_Lakes and Thres_Area_Non_Conn_Lakes; "ByLakelist" means lake in the routing product will be selected based on user provided hydrolake id, in Selected_Lake_List_in
+
 * \<Selected_Lake_List_in\> 
       A list of lake ids that will be keeped in the routing product. Lakes not in the list will be removed from routing product.
+
 * \<gis_platform\> 
     It is the parameter indicate which gis platform is used. For now only "qgis" is supported   
 
@@ -86,12 +95,16 @@ basinmaker.simplify_routing_structure_by_filter_lakes_method(
 ### outputs  
 * \<sl_connected_lake\> 
       is selected non connected lakes, located in output folder  
+
 * \<sl_non_connected_lake\> 
       is selected connected lakes, located in output folder 
+
 * \<river_without_merging_lakes\> 
       is the river network after add lake and gauge control points, located in output folder  
+
 * \<catchment_without_merging_lakes\> 
       is catchment polygons after add lake and gauge control points, located in output folder 
+
 * \<obs_gauges\> 
       is the gauge points after snapped to closest river network, located in output folder             
 
@@ -103,10 +116,13 @@ In this step, catchments covered by the same lake will be combined together. and
 
 * \<output_folder\> 
       is the path to the output folder  
+
 * \<Path_final_rivply\> 
       is path to the catchment polygon represent watershed delineation after add lake and gauges control points and update hydrological attributes  
+
 * \<Path_final_riv\> 
       is path to the catchment river polyline represent watershed delineation after add lake and gauges control points and update hydrological attributes  
+
 * \<gis_platform\> 
       It is the parameter indicate which gis platform is used. For now only "qgis" is supported  
  
@@ -126,5 +142,6 @@ basinmaker.combine_catchments_covered_by_the_same_lake_method(
 ### outputs  
 * \<finalcat_info\> 
       is catchment of final lake-river routing structure in output folder 
+
 * \<finalcat_info_riv\> 
       is the river of the final lake-river routing structure in output folder  

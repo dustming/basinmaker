@@ -44,14 +44,19 @@ In this example, the project spatial extent will be defined using a wathershed o
 
 * \<define_project_extent_method\> 
       is the function that can be used to define project extent 
+
 * \<mode\> 
       is a parameter indicate which method will be used to define project extent. In this case, "using_outlet_pt" is used. 
+
 * \<path_dem_in\> 
       is a full path to the DEM dataset. 
+
 * \<outlet_pt\> 
       is the coordinates of the watershed outlet point in [lon,lat]
+
 * \<buffer_distance\> 
       is the parameter that used to buffer the extent defined by \<outlet_pt\>      
+
 * \<gis_platform\> 
     It is the parameter indicate which gis platform is used. For now only "qgis" is supported   
 ```
@@ -69,6 +74,7 @@ basinmaker.define_project_extent_method(
 ### outputs  
 * \<dem\> 
       is the dem within the project extent, located in working folder 
+
 * \<mask\> 
       is the a mask to represent project extent, located in working folder  
 
@@ -80,10 +86,13 @@ After obtain dem within the project extent. basinmaker will first generate a wat
 
 * \<acc_thresold\> 
       is the flow accumulation threshold, the density of the generated river network and the size of the catchment will be decreasing with increasing of this parameter   
+
 * \<mode\> 
       is a parameter indicate which method will be used to delineate watershed without considering lakes. In this example dem is used, with "usingdem".
+
 * \<max_memroy\> 
       It is the maximum memory allow to be used by basinmaker  
+
 * \<gis_platform\> 
       It is the parameter indicate which gis platform is used. For now only "qgis" is supported 
  
@@ -101,14 +110,19 @@ basinmaker.watershed_delineation_without_lake_method(
 ### outputs  
 * \<fdr_grass\> 
       is the flow direction dataset, which is using 1 - 8 to represent different directions, located in working folder 
+
 * \<fdr_arcgis\> 
       is the flow direction dataset, which is using 1,2,4,...64,128 to represent different directions, located in working folder  
+
 * \<str_v\> 
       is the generated river network in vector format, located in working folder 
+
 * \<str_r\> 
       is the generated river network in raster format, located in working folder  
+
 * \<cat_no_lake\> 
       is the delineated watersheds without considering lakes, located in working folder 
+
 * \<acc\> 
       is the a flow accumulation dataset, located in working folder  
 
@@ -124,18 +138,25 @@ each lake's inflow and outflow points will be identified and added as a catchmen
 
 * \<path_lakefile_in\> 
       is a full path to the lake polygon file. user do not needs to do any preprocessing such as clipped and reproject. basinmaker will handle them. 
+
 * \<lake_attributes\> 
       is a list of column names in the lake polygon file.lake_attributes[0] should be the column name represnt the unique lake id (integer). lake_attributes[1] should be the column name represent the lake type (integer). lake_attributes[2] should be the column name represent the lake area in km2 (float). lake_attributes[3] should be the column name represent the lake volumn in km3 (float). lake_attributes[4] should be the column name represent the lake depth in m (float).
+
 * \<threshold_con_lake\> 
       is a lake area threshold in km2, all connected lakes with lake area smaller than this threshold will be removed 
+
 * \<threshold_non_con_lake\> 
       is a lake area threshold in km2, all non connected lakes with lake area smaller than this threshold will be removed         
+
 * \<path_obsfile_in\> 
       is a full path to the gauge point shp file. 
+
 * \<obs_attributes\> 
       is a list of column names in the obs point file.obs_attributes[0] should be the column name represnt the unique obs id (integer). obs_attributes[1] should be the column name represent the obs name (string). obs_attributes[2] should be the column name represent the gauge drainage area in km2 (float). obs_attributes[3] should be the column name represent the source of the observation gauges,"CA" or "US" (character).      
+
 * \<max_memroy\> 
       It is the maximum memory allow to be used by basinmaker  
+
 * \<gis_platform\> 
       It is the parameter indicate which gis platform is used. For now only "qgis" is supported  
 ```
