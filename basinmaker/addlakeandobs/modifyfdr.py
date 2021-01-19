@@ -103,101 +103,55 @@ def modify_lakes_flow_direction(
         #####  Locate the grids that at the target grids ege
         Grid_Nee_Mo = np.argwhere(BD_Out_Lakecat_Nriv_mask == 1)
         #        print(print(Grid_Nee_Mo[:,0], Grid_Nee_Mo[:,1]))
-
-        goodpoint = copy.copy(Grid_Nee_Mo)
-        goodpoint_2 = copy.copy(Grid_Nee_Mo)
-        goodpoint_2[:, :] = -9999
-        idx = 0
-        for i in range(0, len(goodpoint)):
-            trow = goodpoint[i, 0]
-            tcol = goodpoint[i, 1]
-            #                print(i,ipo,trow,tcol)
-            if trow >= nrows - 1 or tcol == ncols - 1:
-                continue
-
-            ndir, IS_Change, changed_ndir = changeflowdirectionofedgegrids(
-                ndir,
-                trow,
-                tcol,
-                Lakeincat_mask,
-                1,
-                ncols,
-                nrows,
-                BD_Out_Lakecat_Nriv_mask,
-                changed_ndir,
-            )
-            if IS_Change > 0:
-                goodpoint_2[idx] = goodpoint[i, :]
-                idx = idx + 1
-        goodpoint = goodpoint_2
-        #        print(goodpoint[goodpoint[:,0]>0,])
-        ### add just these flow direction of edge grids to lake domian
-
-        ###3 make BD_Out_Lakecat_Nriv_mask flow to Lakeoutcat_mask
-        #        print(goodpoint[goodpoint[:,0]>0,])
-        ip = len(
-            goodpoint[
-                goodpoint[:, 0] > 0,
-            ]
-        )
-        k = (
-            len(
-                goodpoint[
-                    goodpoint[:, 0] > 0,
-                ]
-            )
-            - 1
-        )
-        ipo = 0
+        
+        # problem_points is the point needs to modfiy flow direction 
+        problem_points = copy.copy(Grid_Nee_Mo)        
         iter = 0
-        #        print("############################333")
-        while (
-            ip > ipo and iter < np.sum(BD_Out_Lakecat_mask) + 10
-        ):  ###maixmum loop for N points
+
+        # loop until all len problem_points is zero or iteration times exceed        
+        while (iter < np.sum(BD_Out_Lakecat_mask) + 10 and len(problem_points) >0):
+
+            # loop for each problem points, and check if it can flow to an lake 
+            # catchment, by chaning it's flow direction only.
+            #
             iter = iter + 1
-            #            print(ip,ipo,iter,np.sum(BD_Out_Lakecat_mask),"################3")
-            for i in range(
-                ipo,
-                len(
-                    goodpoint[
-                        goodpoint[:, 0] > 0,
-                    ]
-                ),
-            ):
-                trow = goodpoint[i, 0]
-                tcol = goodpoint[i, 1]
+            idx = 0
+            new_problem_points = np.full((len(problem_points)+10,2),-9999)
+            for i in range(0, len(problem_points)):
+                # get problem point row anc col
+                trow = problem_points[i, 0]
+                tcol = problem_points[i, 1]
                 #                print(i,ipo,trow,tcol)
                 if trow >= nrows - 1 or tcol == ncols - 1:
                     continue
-                ndir, goodpoint, k1, changed_ndir = Dirpoints_v3(
+                    
+                # try to modify the flow direction of this row and col 
+                # see if it can flow to the lake catchment 
+                
+                ndir, IS_Change, changed_ndir = changeflowdirectionofedgegrids(
                     ndir,
                     trow,
                     tcol,
                     Lakeincat_mask,
                     1,
-                    goodpoint,
-                    k,
                     ncols,
                     nrows,
                     BD_Out_Lakecat_Nriv_mask,
                     changed_ndir,
                 )
-                k = k1 - 1
-
-            ipo = ip
-            ip = (
-                len(
-                    goodpoint[
-                        goodpoint[:, 0] > 0,
-                    ]
-                )
-                - 1
-            )
-            k = ip
-
-    #        print(len(goodpoint[goodpoint[:,0]>0,]),np.sum(BD_Out_Lakecat_mask))
-
-    #        print(lakeid,arclakeid,len(nlake),len(lrowcol),float(len(nlake)/len(lrowcol)))
+                
+                # if the point can flow to the lake catchment 
+                # store the points in to goodpoint2 
+                if IS_Change > 0:
+                    Lakeincat_mask[trow,tcol] = 1
+                else:
+                    new_problem_points[idx,0] = trow
+                    new_problem_points[idx,1] = tcol 
+                    idx = idx + 1
+            # keep only larger         
+            new_problem_points=new_problem_points[new_problem_points[:,0] > 0]        
+            problem_points = new_problem_points
+        print(" # of uncorrect lake boundary grids     ", len(problem_points))
     outlakeids = outlakeids[outlakeids[:, 0] > 0]
     return outlakeids, changed_ndir, ndir, BD_problem
 
