@@ -1,10 +1,10 @@
-# Example - simplify the existing lake-river routing structure by filtering lakes
+# Example - extract part of the existing lake-river routing structure 
  
 # Overview
-In this example, the existing lake-river routing structure will be simplified by increasing the minimum catchment drainage area.
+In this example, the part existing lake-river routing structure will be extracted based on either:1) a point shpfile, all catchments drainage to the catchment contain provided point will be extracted; 2) most down stream subbasin id and most upstream subbasin id. all catchment located between these two subbasin ids will be extracted; 3)a gauge name, all catchment drainage to the catchment contain the gauge name in the attribute table will be extracted.  
  
 ```
-python example_simplify_routing_structure_by_filter_lakes.py
+python example_select_part_of_routing_product.py
 ```
 
 # Explanation of script 
@@ -36,17 +36,18 @@ basinmaker = basinmaker(
 )
 ```
 
-## simplify existing routing structure by increase catchment minimum drainage area 
+
+## extract part of the existing routing structure  
 
 ### parameters 
 
 * \<OutputFolder\> 
       is the folder that stores generated outputs
 
-* \<Path_final_riv_ply\> 
+* \<Path_Catchment_Polygon\> 
       Path to the catchment polygon which is the routing product before merging lakes catchment and need to be processed before used. It is the input for simplify the routing product based on lake area or drianage area.
 
-* \<Path_final_riv\> 
+* \<Path_River_Polyline\> 
       Path to the river polyline which is the routing product before merging lakes catchments and need to be processed before used. It is the input for simplify the routing product based on lake area or drianage area.
 
 * \<Path_Con_Lake_ply\> 
@@ -55,25 +56,38 @@ basinmaker = basinmaker(
 * \<Path_NonCon_Lake_ply\> 
       Path to a non connected lake polygon. Connected lakes are lakes that are not connected by Path_final_riv.
 
-* \<Area_Min\> 
-      is the minimum catchment drainage area, in km2      
+* \<Gauge_NMS\> 
+      a list contain gauge name      
+
+* \<mostdownid\> 
+      the most downstream subbasin id       
+
+* \<mostupid\> 
+      the most upstream subbasin id       
+
+* \<Path_Points\> 
+      the path to the point shp file       
 
 * \<gis_platform\> 
-    It is the parameter indicate which gis platform is used. For now only "qgis" is supported   
+      It is the parameter indicate which gis platform is used. For now only "qgis" is supported   
 
 ```
 #############################################
-# obtain simplified catchments and river network before merging lakes  
+# obtain part of the routing sturcture by gauge name or
+# subbasin ids   
 #############################################
-basinmaker.simplify_routing_structure_by_drainage_area_method(
+basinmaker.select_part_of_routing_product_methods(
     OutputFolder=path_output_folder,
-    Path_final_riv_ply=os.path.join(
+    Path_Catchment_Polygon=os.path.join(
         datafolder, "catchment_without_merging_lakes.shp"
     ),
-    Path_final_riv=os.path.join(datafolder, "river_without_merging_lakes.shp"),
+    Path_River_Polyline=os.path.join(datafolder, "river_without_merging_lakes.shp"),
     Path_Con_Lake_ply=os.path.join(datafolder, "sl_connected_lake.shp"),
     Path_NonCon_Lake_ply=os.path.join(datafolder, "sl_non_connected_lake.shp"),
-    Area_Min=500,
+    Gauge_NMS= ['#'],  #['02KB001'],
+    mostdownid = 1388,
+    mostupid = 1198,
+    Path_Points = '#',
     gis_platform="qgis",
 )
 ```

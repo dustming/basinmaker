@@ -203,7 +203,11 @@ basinmaker.generate_raven_model_inputs_method(
 ```
 ### outputs  
 * \<modelname.rvh\> 
+
 * \<Lakes.rvh\> 
+
 * \<channel_properties.rvp\> 
+
 * \</obs/xxx.rvt.rvh\> 
+
 * \<obsinfo.csv\> 

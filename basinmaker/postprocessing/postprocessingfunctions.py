@@ -1,3 +1,5 @@
+import os 
+
 def combine_catchments_covered_by_the_same_lake(
     OutputFolder="#",
     Path_final_rivply="#",
@@ -93,6 +95,8 @@ def select_part_of_routing_product(
     Path_Points,
     Gauge_NMS,
     OutputFolder,
+    mostdownid,
+    mostupid,
     Path_Catchment_Polygon="#",
     Path_River_Polyline="#",
     Path_Con_Lake_ply="#",
@@ -105,23 +109,27 @@ def select_part_of_routing_product(
         from postprocessing.selectprod import (
             Locate_subid_needsbyuser_qgis,Select_Routing_product_based_SubId_qgis
         )
-
-        subids = Locate_subid_needsbyuser_qgis(
-            Path_Points=Path_Points, Gauge_NMS=Gauge_NMS, Path_products=Path_Catchment_Polygon,qgis_prefix_path=qgis_prefix_path
-        )    
-        if len(subids) > 1:
-            for i in range(0,len(subids)):
-                subid = subids[i]
-                OutputFolder_i = os.path.join(OutputFolder,'SubId_'+str(subid))
-                Select_Routing_product_based_SubId_qgis(
-                    OutputFolder = OutputFolder_i,
-                    Path_Catchment_Polygon=Path_Catchment_Polygon,
-                    Path_River_Polyline=Path_River_Polyline,
-                    Path_Con_Lake_ply=Path_Con_Lake_ply,
-                    Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,
-                    mostdownid=subid,
-                    qgis_prefix_path = qgis_prefix_path,
-                )             
+        
+        if Gauge_NMS[0] != '#' or Path_Points != '#':
+            subids = Locate_subid_needsbyuser_qgis(
+                Path_Points=Path_Points, Gauge_NMS=Gauge_NMS, Path_products=Path_Catchment_Polygon,qgis_prefix_path=qgis_prefix_path
+            )    
+            if len(subids)<= 0 :
+                print("subbasin did not found        ")
+                return 
+                
+            subid = subids[0]
+            Select_Routing_product_based_SubId_qgis(
+                OutputFolder = OutputFolder,
+                Path_Catchment_Polygon=Path_Catchment_Polygon,
+                Path_River_Polyline=Path_River_Polyline,
+                Path_Con_Lake_ply=Path_Con_Lake_ply,
+                Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,
+                mostdownid=subid,
+                mostupstreamid =-1,
+                qgis_prefix_path = qgis_prefix_path,
+            )  
+                           
         else:
             Select_Routing_product_based_SubId_qgis(
                 OutputFolder = OutputFolder,
@@ -129,7 +137,8 @@ def select_part_of_routing_product(
                 Path_River_Polyline=Path_River_Polyline,
                 Path_Con_Lake_ply=Path_Con_Lake_ply,
                 Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,
-                mostdownid=subids,
+                mostdownid=mostdownid,
+                mostupstreamid =mostupid,
                 qgis_prefix_path = qgis_prefix_path,
             )
         
