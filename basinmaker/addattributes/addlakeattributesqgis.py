@@ -123,11 +123,11 @@ def add_lake_attributes(
 
          #check if down subid of the lake cl lake catchments 
         if CL_LakeId > 0:
-            downsubid = outletinfo["DowSubId"].values[i]
+            downsubid = catinfo["DowSubId"].values[catrow][0]
             subid_inlakes = outletinfo.loc[outletinfo["cl"] == CL_LakeId]["SubId"].values
             # if downsubid is one of the lake subbasin continue, if not check if it is 
             # the lake outlet 
-            if downsubid in subid_inlakes:
+            if downsubid in subid_inlakes and downsubid != catid:
                 continue 
             i_lakeinfo = lakeoutinfo.loc[lakeoutinfo['lakeid'] == CL_LakeId]
             if len(i_lakeinfo) <=0:

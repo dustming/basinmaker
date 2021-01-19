@@ -597,3 +597,29 @@ def Nextcell(N_dir, N_row, N_col):
         N_nrow = -9999
         N_ncol = -9999
     return N_nrow, N_ncol
+
+def return_subid_of_next_down_stream_grids(cat_array,catid,nfdr_arcgis_array,cat_outlet_array,ncols,nrows):
+    # get outlet row cols 
+    maxtry = 10
+    outlet_row_col = np.argwhere(cat_outlet_array == catid)
+    if len(outlet_row_col) <=0:
+        return -1 
+    outlet_row = outlet_row_col[0,0]
+    outlet_col = outlet_row_col[0,1]
+    downcatid = -1  
+    for i in range(0,maxtry):
+        nrow, ncol = Nextcell(nfdr_arcgis_array, outlet_row, outlet_col)
+        if nrow >=nrows or ncol >=ncols:
+            downsubid = -1
+            return downsubid
+        elif nrow <= 0 or ncol <= 0:
+            downsubid = -1 
+            return downsubid
+        else:
+            downcatid = cat_array[nrow,ncol]
+            if downcatid != catid:
+                return downcatid
+            else:
+                outlet_row = nrow
+                outlet_col = ncol
+    return downcatid

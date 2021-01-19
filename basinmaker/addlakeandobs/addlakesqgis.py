@@ -32,6 +32,7 @@ def add_lakes_into_existing_watershed_delineation(
     pourpoints_with_lakes="pourpoints_with_lakes",
     cat_use_default_acc="cat_use_default_acc",
     lake_outflow_pourpoints="lake_outflow_pourpoints",
+    problem_seg="problem_seg",
     max_memroy=1024 * 4,
 ):
     # define required input files names
@@ -129,8 +130,8 @@ def add_lakes_into_existing_watershed_delineation(
     exp = "%s = int(%s)" % (lake_boundary, lake_boundary)
     grass_raster_r_mapcalc(grass, exp)
 
-#    #Define connected and non connected lakes and
-#    #identify which str make certain lake have two outlet
+   #Define connected and non connected lakes and
+   #identify which str make certain lake have two outlet
     define_connected_and_non_connected_lake_type(
         grass,
         con,
@@ -157,7 +158,7 @@ def add_lakes_into_existing_watershed_delineation(
         sl_lakes=sl_lakes,
         sl_str_connected_lake=sl_str_connected_lake,
     )
-
+    
     Lakes_WIth_Multi_Outlet, Remove_Str = define_pour_points_with_lakes(
         grass=grass,
         con=con,
@@ -173,7 +174,7 @@ def add_lakes_into_existing_watershed_delineation(
         lake_outflow_pourpoints=lake_outflow_pourpoints,
         catchment_pourpoints_outside_lake=catchment_pourpoints_outside_lake,
     )
-
+    
     grass.run_command(
         "r.stream.basins",
         direction=fdr_grass,
@@ -182,7 +183,7 @@ def add_lakes_into_existing_watershed_delineation(
         overwrite=True,
         memory=max_memroy,
     )
-
+    
     cat_withlake_array = garray.array(mapname=cat_add_lake_old_fdr)
     fdr_arcgis_array = garray.array(mapname=fdr_arcgis)
     str_r_array = garray.array(mapname=str_r)
@@ -191,7 +192,7 @@ def add_lakes_into_existing_watershed_delineation(
     ncols = int(cat_withlake_array.shape[1])
     nrows = int(cat_withlake_array.shape[0])
     lake_boundary_array = garray.array(mapname=lake_boundary)
-
+    
     maximumLakegrids = 1000000000
     pec_grid_outlier = 1
     un_modify_fdr_lakeids = []
@@ -208,9 +209,9 @@ def add_lakes_into_existing_watershed_delineation(
         maximumLakegrids,
         un_modify_fdr_lakeids,
     )
-
+    
     temparray = garray.array()
-
+    
     temparray[:, :] = ndir[:, :]
     temparray.write(mapname=nfdr_arcgis, overwrite=True)
     grass.run_command("r.null", map=nfdr_arcgis, setnull=-9999)
@@ -230,17 +231,51 @@ def add_lakes_into_existing_watershed_delineation(
         overwrite=True,
         memory=max_memroy,
     )
-
+    
     grass.run_command("g.copy", rast=(cat_no_lake, cat_use_default_acc), overwrite=True)
+    grass.run_command("g.copy", rast=(str_r, 'good_seg'), overwrite=True)
+
     if len(Remove_Str) > 0:
         grass.run_command(
             "r.null", map=cat_use_default_acc, setnull=Remove_Str, overwrite=True
+        ) 
+        grass.run_command(
+            "r.null", map='good_seg', setnull=Remove_Str, overwrite=True
         )
+        
+        exp = "prob_seg_str = if(isnull(good_seg),%s,null())" % (str_r)
+        grass_raster_r_mapcalc(grass,expression=exp)
+
+        exp = "prob_seg_str_w_lid = if(isnull(prob_seg_str),null(),%s)" % (sl_connected_lake)
+        grass_raster_r_mapcalc(grass,expression=exp)
+        
+        grass.run_command("g.copy", rast=('prob_seg_str_w_lid', 'prob_seg_lake'), overwrite=True)
+        
+        grass.run_command(
+            "r.null", map='prob_seg_lake', setnull=Lakes_WIth_Multi_Outlet, overwrite=True
+        )
+
+        exp = "%s = if(isnull(prob_seg_lake),prob_seg_str_w_lid,null())" % (problem_seg)
+        grass_raster_r_mapcalc(grass,expression=exp)
+    
+    else:
+        exp = "%s = if(isnull(%s),null(),null())" % (problem_seg,'good_seg')
+        grass_raster_r_mapcalc(grass,expression=exp)
+                      
+    grass.run_command(
+        "r.to.vect",
+        input=problem_seg,
+        output=problem_seg,
+        type="point",
+        overwrite=True,
+        flags="v",
+    )        
+        
     print("Following lake have multi outlet ")
     print(Lakes_WIth_Multi_Outlet)
     print("following str are corrected to make one lake one outlet")
     print(Remove_Str)
-
+    
     grass.run_command(
         "v.out.ogr",
         input=catchment_pourpoints_outside_lake,

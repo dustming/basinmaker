@@ -7,6 +7,7 @@ from basinmaker import basinmaker
 # define working folder, output folder amd data folder  
 #############################################
 num  = str(np.random.randint(1, 10000 + 1))
+num = '9642'
 path_output_folder = os.path.join(tempfile.gettempdir(), "basinmaker_exp_oih" +num,"output")
 path_working_folder = os.path.join(tempfile.gettempdir(), "basinmaker_exp_oih" +num,"work")
 datafolder = os.path.join("../../tests/testdata", "Required_data_to_start_from_dem")
@@ -20,39 +21,39 @@ basinmaker = basinmaker(
 
 
 #############################################
-# define extent of the processing domain  
+#define extent of the processing domain  
 #############################################
-basinmaker.define_project_extent_method(
-    mode="using_dem",
-    path_dem_in=os.path.join(datafolder, "oih_30_dem.tif"),
-    gis_platform="qgis",
-)
-
-
-#############################################
-# generate a watershed delineation without considering lakes 
-#############################################
-basinmaker.watershed_delineation_without_lake_method(
-    acc_thresold=5000,
-    mode="usingdem",
-    max_memroy=1024 * 4,
-    gis_platform="qgis",
-)
-
+# basinmaker.define_project_extent_method(
+#     mode="using_dem",
+#     path_dem_in=os.path.join(datafolder, "oih_30_dem.tif"),
+#     gis_platform="qgis",
+# )
+# 
+# 
+# #############################################
+# # generate a watershed delineation without considering lakes 
+# #############################################
+# basinmaker.watershed_delineation_without_lake_method(
+#     acc_thresold=5000,
+#     mode="usingdem",
+#     max_memroy=1024 * 4,
+#     gis_platform="qgis",
+# )
+# 
 
 #############################################
 # add lake and obs control points in the existing watershed delineation  
 #############################################
-basinmaker.watershed_delineation_add_lake_control_points(
-    path_lakefile_in=os.path.join(datafolder, "hylake.shp"),
-    lake_attributes=["Hylak_id", "Lake_type", "Lake_area", "Vol_total", "Depth_avg"],
-    threshold_con_lake = 0,
-    threshold_non_con_lake = 0,
-    path_obsfile_in=os.path.join(datafolder, "obs.shp"),
-    obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
-    max_memroy=1024 * 4,
-    gis_platform="qgis",
-)
+# basinmaker.watershed_delineation_add_lake_control_points(
+#     path_lakefile_in=os.path.join(datafolder, "hylake.shp"),
+#     lake_attributes=["Hylak_id", "Lake_type", "Lake_area", "Vol_total", "Depth_avg"],
+#     threshold_con_lake = 0,
+#     threshold_non_con_lake = 0,
+#     path_obsfile_in=os.path.join(datafolder, "obs.shp"),
+#     obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
+#     max_memroy=1024 * 4,
+#     gis_platform="qgis",
+# )
 
 
 #############################################
@@ -66,7 +67,7 @@ basinmaker.add_attributes_to_catchments_method(
     gis_platform="qgis",
     obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
     lake_attributes =["Hylak_id", "Lake_type", "Lake_area", "Vol_total", "Depth_avg"] ,
-    outlet_obs_id=-1,
+    outlet_obs_id=1,
     path_sub_reg_outlets_v="#",
     output_folder=path_output_folder,
 )

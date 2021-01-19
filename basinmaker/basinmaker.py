@@ -92,6 +92,8 @@ class basinmaker:
             "sub_reg_nfdr_arcgis":"sub_reg_nfdr_arcgis",
             "sub_reg_acc":"sub_reg_acc",
             "sub_reg_dem":"sub_reg_dem",
+            "problem_seg":"problem_seg",
+            "lake_outflow_pourpoints":"lake_outflow_pourpoints",
         }
 
     # first modulized methods

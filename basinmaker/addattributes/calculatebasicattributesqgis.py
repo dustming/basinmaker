@@ -25,7 +25,9 @@ def calculate_basic_attributes(
     fdr = input_geo_names["nfdr_grass"]
     acc = input_geo_names["acc"]
     cat_use_default_acc = input_geo_names["cat_use_default_acc"]
-
+    problem_seg = input_geo_names["problem_seg"]
+    nfdr_arcgis = input_geo_names["nfdr_arcgis"]
+    
     import grass.script as grass
     import grass.script.setup as gsetup
     from grass.pygrass.modules import Module
@@ -276,6 +278,19 @@ def calculate_basic_attributes(
         overwrite=True,
     )
 
+    ##### obtain catment id overlaied with problem seg 
+    prom_seg_id, cat_pro_id = generate_stats_list_from_grass_raster(
+        grass, mode=2, input_a=problem_seg, input_b=catchments
+    )
+    cat_pro_id = np.unique(cat_pro_id)
+    grass.run_command("g.copy", rast=(catchments, cat_use_default_acc), overwrite=True)
+    if len(cat_pro_id) > 0:
+        grass.run_command(
+            "r.null", map=cat_use_default_acc, setnull=cat_pro_id, overwrite=True
+        )
+    else:
+        cat_pro_id = []
+          
     exp = "acc_grass_CatOL2 = if(isnull(%s),%s,%s)" % (
         cat_use_default_acc,
         "acc_grass_CatOL",
@@ -295,6 +310,13 @@ def calculate_basic_attributes(
         Name="Final",
         str=river_r,
     )
+
+
+    cat_array = garray.array(mapname=catchments)
+    nfdr_arcgis_array = garray.array(mapname=nfdr_arcgis)
+    cat_outlet_array = garray.array(mapname='Final_OL')
+    ncols = int(cat_array.shape[1])
+    nrows = int(cat_array.shape[0])
 
     grass.run_command("g.copy", vector=("Final_OL_v", outlet_pt_info), overwrite=True)
     ### update dataframe
@@ -319,6 +341,11 @@ def calculate_basic_attributes(
         catid = outletinfo["SubId"].values[i]
         DownSubID = outletinfo["DowSubId"].values[i]
         catinfo.loc[i, "SubId"] = catid
+        if catid in cat_pro_id or DownSubID == catid:
+            downsubid_array = return_subid_of_next_down_stream_grids(cat_array,catid,nfdr_arcgis_array,cat_outlet_array,ncols,nrows)
+#            print(catid,DownSubID,downsubid_array)
+            if downsubid_array > 0:
+                DownSubID = downsubid_array
         ### change the downsub id to -1 for watershed outlet
         if len(outletinfo.loc[outletinfo["SubId"] == DownSubID]) < 1:
             catinfo.loc[i, "DowSubId"] = -1
