@@ -48,7 +48,7 @@ Outputfolder = "C:/Users/dustm/OneDrive - University of Waterloo/Documents/Proje
 ### The BasinMaker folder
 datafolder = "../../tests/testdata/Required_data_to_start_from_dem"
 ########### Variable needs to be modified to run this example ######
-Out_Sub_Reg_Dem_Folder = os.path.join(Outputfolder, "SubRegion_info")
+Out_Sub_Reg_Folder = os.path.join(Outputfolder, "SubRegion_info")
 
 ### Start timer
 start = timeit.default_timer()
@@ -76,10 +76,9 @@ basinmaker.divide_domain_into_sub_regions_method(
     Initaial_Acc=250000,
     Delta_Acc=20000,
     CheckLakeArea=10,
-    fdr_path = '#',
     Acc_Thresthold_stream=2000,
     max_memory=2048*3,
-    Out_Sub_Reg_Folder=Out_Sub_Reg_Dem_Folder,
+    Out_Sub_Reg_Folder=Out_Sub_Reg_Folder,
 )
 
 End = timeit.default_timer()
