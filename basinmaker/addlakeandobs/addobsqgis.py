@@ -180,7 +180,7 @@ def add_obs_into_existing_watershed_delineation(
         )
 
         lake_new_cat_ids = np.column_stack((lake_id, cat_id))
-        grass.run_command("g.copy", rast=(obsname, obsname + '2'), overwrite=True)
+        grass.run_command("g.copy", rast=(obsname, obsname + "2"), overwrite=True)
         # remove obs that located within the lake catchments
         obsid, cat_add_lake_id = generate_stats_list_from_grass_raster(
             grass, mode=2, input_a=obsname, input_b=cat_add_lake
@@ -190,7 +190,7 @@ def add_obs_into_existing_watershed_delineation(
         obsid_inlake = lakecat_obs[obsinlake_mask, 1]
         if len(obsid_inlake) > 0:
             grass.run_command(
-                "r.null", map=obsname + '2', setnull=obsid_inlake, overwrite=True
+                "r.null", map=obsname + "2", setnull=obsid_inlake, overwrite=True
             )
 
         # combine lake and obs pourpoints
@@ -198,7 +198,7 @@ def add_obs_into_existing_watershed_delineation(
         exp = "'%s' =if(isnull(%s),%s,%s)" % (
             pourpoints_add_obs,
             pourpoints_with_lakes,
-            obsname + '2',
+            obsname + "2",
             pourpoints_with_lakes,
         )
         grass.run_command("r.mapcalc", expression=exp, overwrite=True)

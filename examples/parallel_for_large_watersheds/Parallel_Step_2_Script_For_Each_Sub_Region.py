@@ -51,7 +51,7 @@ ith_subregion = int(sys.argv[1])
 
 
 ### Inputs
-na_hydem = os.path.join(Out_Sub_Reg_Dem_Folder, "sub_reg_dem.pack") 
+na_hydem = os.path.join(Out_Sub_Reg_Dem_Folder, "sub_reg_dem.pack")
 
 ### open log file
 if ith_subregion == 0:
@@ -71,47 +71,39 @@ Path_Sub_Polygon = os.path.join(
     Out_Sub_Reg_Dem_Folder, SubReg_info["Ply_Name"].values[ith_subregion]
 )
 
-path_working_folder = os.path.join("C:/Users/dustm/Documents","testsub",ProjectName)
+path_working_folder = os.path.join("C:/Users/dustm/Documents", "testsub", ProjectName)
 
-path_output_folder = os.path.join(Out_Sub_Reg_Dem_Folder,'subregion_result',ProjectName)
+path_output_folder = os.path.join(
+    Out_Sub_Reg_Dem_Folder, "subregion_result", ProjectName
+)
 
 ### run for each sub region
 
 ### initialize the toolbox
-basinmaker = basinmaker(
-   path_working_folder = path_working_folder
-)
+basinmaker = basinmaker(path_working_folder=path_working_folder)
 
 basinmaker.define_project_extent_method(
-    mode="using_provided_ply", path_dem_in=na_hydem,path_extent_ply=Path_Sub_Polygon
+    mode="using_provided_ply", path_dem_in=na_hydem, path_extent_ply=Path_Sub_Polygon
 )
 
 basinmaker.watershed_delineation_without_lake_method(
     mode="usingsubreg",
     max_memroy=1024 * 4,
-    subreg_acc_path = os.path.join(
-        Out_Sub_Reg_Dem_Folder, "sub_reg_acc.pack"
-    ),
-    subreg_fdr_path = os.path.join(
-        Out_Sub_Reg_Dem_Folder, "sub_reg_nfdr_arcgis.pack"
-    ),
-    subreg_str_r_path = os.path.join(
-        Out_Sub_Reg_Dem_Folder, "sub_reg_str_r.pack"
-    ),
-    subreg_str_v_path = os.path.join(
-        Out_Sub_Reg_Dem_Folder, "sub_reg_str_v.pack"
-    ),
+    subreg_acc_path=os.path.join(Out_Sub_Reg_Dem_Folder, "sub_reg_acc.pack"),
+    subreg_fdr_path=os.path.join(Out_Sub_Reg_Dem_Folder, "sub_reg_nfdr_arcgis.pack"),
+    subreg_str_r_path=os.path.join(Out_Sub_Reg_Dem_Folder, "sub_reg_str_r.pack"),
+    subreg_str_v_path=os.path.join(Out_Sub_Reg_Dem_Folder, "sub_reg_str_v.pack"),
     gis_platform="qgis",
 )
 
 basinmaker.watershed_delineation_add_lake_control_points(
     path_lakefile_in=os.path.join(datafolder, "hylake.shp"),
     lake_attributes=["Hylak_id", "Lake_type", "Lake_area", "Vol_total", "Depth_avg"],
-    threshold_con_lake = 0,
-    threshold_non_con_lake = 0,
+    threshold_con_lake=0,
+    threshold_non_con_lake=0,
     path_obsfile_in=os.path.join(datafolder, "obs.shp"),
     obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
-    path_sub_reg_outlets_v = os.path.join(
+    path_sub_reg_outlets_v=os.path.join(
         Out_Sub_Reg_Dem_Folder, "Sub_Reg_Outlet_v.pack"
     ),
     max_memroy=1024 * 4,
@@ -125,14 +117,12 @@ basinmaker.add_attributes_to_catchments_method(
     path_landuse_info=os.path.join(datafolder, "Landuse_info3.csv"),
     gis_platform="qgis",
     obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
-    lake_attributes =["Hylak_id", "Lake_type", "Lake_area", "Vol_total", "Depth_avg"] ,
+    lake_attributes=["Hylak_id", "Lake_type", "Lake_area", "Vol_total", "Depth_avg"],
     outlet_obs_id=basinid,
     output_folder=path_output_folder,
-    path_sub_reg_outlets_v = os.path.join(
-        Out_Sub_Reg_Dem_Folder, "outlet_pt_info.shp"
-    ),
-    k_in = SubReg_info["k"].values[ith_subregion],
-    c_in = SubReg_info["c"].values[ith_subregion],
+    path_sub_reg_outlets_v=os.path.join(Out_Sub_Reg_Dem_Folder, "outlet_pt_info.shp"),
+    k_in=SubReg_info["k"].values[ith_subregion],
+    c_in=SubReg_info["c"].values[ith_subregion],
 )
 #
 basinmaker.combine_catchments_covered_by_the_same_lake_method(
@@ -144,9 +134,7 @@ basinmaker.combine_catchments_covered_by_the_same_lake_method(
     gis_platform="qgis",
 )
 
-if os.path.exists(
-    os.path.join(path_output_folder, "finalcat_info.shp")
-):
+if os.path.exists(os.path.join(path_output_folder, "finalcat_info.shp")):
     file_object.write(str(basinid) + "          Successful " + "\n")
     file_object.close()
 else:

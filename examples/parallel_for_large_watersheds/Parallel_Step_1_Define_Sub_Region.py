@@ -40,9 +40,13 @@ from basinmaker import basinmaker
 ############ Variable needs to be modified to run this example ######
 
 ### Define a output folder where to store subregion information
-num  = str(np.random.randint(1, 10000 + 1))
-path_working_folder = os.path.join(tempfile.gettempdir(), "basinmaker_exp_" +num,"work")
-path_working_folder = os.path.join("C:/Users/dustm/Documents", "basinmaker_subreg","work")
+num = str(np.random.randint(1, 10000 + 1))
+path_working_folder = os.path.join(
+    tempfile.gettempdir(), "basinmaker_exp_" + num, "work"
+)
+path_working_folder = os.path.join(
+    "C:/Users/dustm/Documents", "basinmaker_subreg", "work"
+)
 
 Outputfolder = "C:/Users/dustm/OneDrive - University of Waterloo/Documents/ProjectData/Petawawa/lake_of_woods/"
 ### The BasinMaker folder
@@ -59,16 +63,14 @@ in_lake = os.path.join(datafolder, "hylake.shp")
 
 ### Initialize the BasinMake
 basinmaker = basinmaker(path_working_folder=path_working_folder)
- 
-### define extent 
-basinmaker.define_project_extent_method(
-    mode="using_dem", path_dem_in=na_hydem
-)
 
-# divide domain in to subregions 
+### define extent
+basinmaker.define_project_extent_method(mode="using_dem", path_dem_in=na_hydem)
+
+# divide domain in to subregions
 basinmaker.divide_domain_into_sub_regions_method(
-    path_lakefile_in = in_lake,
-    lake_attributes = ["Hylak_id", "Lake_type", "Lake_area", "Vol_total", "Depth_avg"],
+    path_lakefile_in=in_lake,
+    lake_attributes=["Hylak_id", "Lake_type", "Lake_area", "Vol_total", "Depth_avg"],
     path_bkfwidthdepth=os.path.join(datafolder, "bkf_wd.shp"),
     bkfwd_attributes=["WIDTH", "DEPTH", "Q_Mean", "UP_AREA"],
     Min_Num_Domain=9,
@@ -77,7 +79,7 @@ basinmaker.divide_domain_into_sub_regions_method(
     Delta_Acc=20000,
     CheckLakeArea=10,
     Acc_Thresthold_stream=2000,
-    max_memory=2048*3,
+    max_memory=2048 * 3,
     Out_Sub_Reg_Folder=Out_Sub_Reg_Folder,
 )
 

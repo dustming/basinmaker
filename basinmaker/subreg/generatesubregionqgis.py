@@ -9,10 +9,13 @@ from delineationnolake.watdelineationwithoutlake import (
 from addlakeandobs.addlakesqgis import (
     add_lakes_into_existing_watershed_delineation,
 )
-from addattributes.calbkfwidthdepthqgis import calculate_bankfull_width_depth_from_polyline
+from addattributes.calbkfwidthdepthqgis import (
+    calculate_bankfull_width_depth_from_polyline,
+)
 import tempfile
 import sqlite3
-        
+
+
 def Generatesubdomain(
     input_geo_names,
     grassdb,
@@ -25,17 +28,17 @@ def Generatesubdomain(
     Initaial_Acc=5000,
     Delta_Acc=1000,
     CheckLakeArea=1,
-    fdr_path = '#',
+    fdr_path="#",
     Acc_Thresthold_stream=500,
-    max_memory=2048*3,
+    max_memory=2048 * 3,
     Out_Sub_Reg_Folder="#",
-    sub_reg_str_r = 'sub_reg_str_r',
-    sub_reg_str_v = 'sub_reg_str_v',
-    sub_reg_nfdr_grass = 'sub_reg_nfdr_grass',
-    sub_reg_nfdr_arcgis = 'sub_reg_nfdr_arcgis',
-    sub_reg_acc = 'sub_reg_acc',
-    sub_reg_dem = 'sub_reg_dem',
-    cat_add_lake = 'cat_add_lake',
+    sub_reg_str_r="sub_reg_str_r",
+    sub_reg_str_v="sub_reg_str_v",
+    sub_reg_nfdr_grass="sub_reg_nfdr_grass",
+    sub_reg_nfdr_arcgis="sub_reg_nfdr_arcgis",
+    sub_reg_acc="sub_reg_acc",
+    sub_reg_dem="sub_reg_dem",
+    cat_add_lake="cat_add_lake",
 ):
 
     import grass.script as grass
@@ -49,12 +52,12 @@ def Generatesubdomain(
 
     if not os.path.exists(Out_Sub_Reg_Folder):
         os.makedirs(Out_Sub_Reg_Folder)
-    
-    #required inputs 
-    dem = input_geo_names['dem']
-    mask = input_geo_names['mask']
-    
-    # define local variable file names   
+
+    # required inputs
+    dem = input_geo_names["dem"]
+    mask = input_geo_names["mask"]
+
+    # define local variable file names
     fdr_arcgis = Internal_Constant_Names["fdr_arcgis"]
     fdr_grass = Internal_Constant_Names["fdr_grass"]
     nfdr_arcgis = Internal_Constant_Names["nfdr_arcgis"]
@@ -66,22 +69,22 @@ def Generatesubdomain(
     sl_connected_lake = Internal_Constant_Names["sl_connected_lake"]
     sl_non_connected_lake = Internal_Constant_Names["sl_nonconnect_lake"]
     sl_lakes = Internal_Constant_Names["selected_lakes"]
-    catchment_without_merging_lakes = Internal_Constant_Names["catchment_without_merging_lakes"]
+    catchment_without_merging_lakes = Internal_Constant_Names[
+        "catchment_without_merging_lakes"
+    ]
     river_without_merging_lakes = Internal_Constant_Names["river_without_merging_lakes"]
     cat_use_default_acc = Internal_Constant_Names["cat_use_default_acc"]
     pourpoints_with_lakes = Internal_Constant_Names["pourpoints_with_lakes"]
     pourpoints_add_obs = Internal_Constant_Names["pourpoints_add_obs"]
     lake_outflow_pourpoints = Internal_Constant_Names["lake_outflow_pourpoints"]
-    all_lakes = input_geo_names['all_lakes']
-    
+    all_lakes = input_geo_names["all_lakes"]
+
     #### Determine Sub subregion without lake
     os.environ.update(
         dict(GRASS_COMPRESS_NULLS="1", GRASS_COMPRESSOR="ZSTD", GRASS_VERBOSE="1")
     )
     PERMANENT = Session()
-    PERMANENT.open(
-        gisdb=grassdb, location=grass_location, create_opts=""
-    )
+    PERMANENT.open(gisdb=grassdb, location=grass_location, create_opts="")
     N_Basin = 0
     Acc = Initaial_Acc
     print("##############################Loop for suitable ACC ")
@@ -97,7 +100,7 @@ def Generatesubdomain(
             overwrite=True,
         )
         N_Basin, temp = generate_stats_list_from_grass_raster(
-            grass, mode=1, input_a='testbasin'
+            grass, mode=1, input_a="testbasin"
         )
         N_Basin = np.unique(N_Basin)
         N_Basin = len(N_Basin[N_Basin > 0])
@@ -114,12 +117,12 @@ def Generatesubdomain(
         if N_Basin < Min_Num_Domain:
             Acc = Acc - Delta_Acc
     PERMANENT.close()
-    
-    if fdr_path == '#':
-        mode = 'usingdem'
+
+    if fdr_path == "#":
+        mode = "usingdem"
     else:
-        mode = 'usingfdr'
-        
+        mode = "usingfdr"
+
     watershed_delineation_without_lake(
         mode=mode,
         input_geo_names=input_geo_names,
@@ -135,15 +138,15 @@ def Generatesubdomain(
         grassdb=grassdb,
         grass_location=grass_location,
         qgis_prefix_path=qgis_prefix_path,
-        gis_platform='qgis',
+        gis_platform="qgis",
     )
-    input_geo_names['fdr_arcgis'] = 'fdr_arcgis'
-    input_geo_names['fdr_grass'] = 'fdr_grass'
-    input_geo_names['str_r'] = 'str_r'
-    input_geo_names['str_v'] = 'str_v'
-    input_geo_names['acc'] = 'acc'
-    input_geo_names['cat_no_lake'] = 'cat_no_lake'
-    
+    input_geo_names["fdr_arcgis"] = "fdr_arcgis"
+    input_geo_names["fdr_grass"] = "fdr_grass"
+    input_geo_names["str_r"] = "str_r"
+    input_geo_names["str_v"] = "str_v"
+    input_geo_names["acc"] = "acc"
+    input_geo_names["cat_no_lake"] = "cat_no_lake"
+
     add_lakes_into_existing_watershed_delineation(
         grassdb=grassdb,
         grass_location=grass_location,
@@ -164,12 +167,10 @@ def Generatesubdomain(
         lake_outflow_pourpoints=lake_outflow_pourpoints,
         max_memroy=max_memory,
     )
-    
+
     ####Determin river network for whole watersheds
     PERMANENT = Session()
-    PERMANENT.open(
-        gisdb=grassdb, location=grass_location, create_opts=""
-    )
+    PERMANENT.open(gisdb=grassdb, location=grass_location, create_opts="")
     grass.run_command(
         "r.stream.extract",
         elevation=dem,
@@ -185,46 +186,50 @@ def Generatesubdomain(
     grass.run_command(
         "r.pack",
         input=nfdr_grass,
-        output=os.path.join(Out_Sub_Reg_Folder,sub_reg_nfdr_grass+".pack"),
+        output=os.path.join(Out_Sub_Reg_Folder, sub_reg_nfdr_grass + ".pack"),
         overwrite=True,
     )
     grass.run_command(
         "r.pack",
         input=nfdr_arcgis,
-        output=os.path.join(Out_Sub_Reg_Folder,sub_reg_nfdr_arcgis+".pack"),
+        output=os.path.join(Out_Sub_Reg_Folder, sub_reg_nfdr_arcgis + ".pack"),
         overwrite=True,
     )
     grass.run_command(
         "r.pack",
         input=acc,
-        output=os.path.join(Out_Sub_Reg_Folder,sub_reg_acc+".pack"),
+        output=os.path.join(Out_Sub_Reg_Folder, sub_reg_acc + ".pack"),
         overwrite=True,
     )
     grass.run_command(
-        "r.pack", input=input_geo_names["dem"], output=os.path.join(Out_Sub_Reg_Folder,sub_reg_dem+".pack"), overwrite=True
+        "r.pack",
+        input=input_geo_names["dem"],
+        output=os.path.join(Out_Sub_Reg_Folder, sub_reg_dem + ".pack"),
+        overwrite=True,
     )
     grass.run_command(
         "v.pack",
         input=sub_reg_str_v,
-        output=os.path.join(Out_Sub_Reg_Folder,sub_reg_str_v+".pack"),
+        output=os.path.join(Out_Sub_Reg_Folder, sub_reg_str_v + ".pack"),
         overwrite=True,
     )
     grass.run_command(
         "r.pack",
         input=sub_reg_str_r,
-        output=os.path.join(Out_Sub_Reg_Folder,sub_reg_str_r+".pack"),
+        output=os.path.join(Out_Sub_Reg_Folder, sub_reg_str_r + ".pack"),
         overwrite=True,
     )
 
     grass.run_command(
         "r.pack",
         input=all_lakes,
-        output=os.path.join(Out_Sub_Reg_Folder,all_lakes+".pack"),
+        output=os.path.join(Out_Sub_Reg_Folder, all_lakes + ".pack"),
         overwrite=True,
     )
 
     PERMANENT.close()
     return
+
 
 def generatesubdomainmaskandinfo(
     Out_Sub_Reg_Dem_Folder,
@@ -234,26 +239,27 @@ def generatesubdomainmaskandinfo(
     qgis_prefix_path,
     path_bkfwidthdepth,
     bkfwd_attributes,
-):  
-    ### 
-    dem = input_geo_names['dem']
-    cat_add_lake = input_geo_names['cat_add_lake']
-    ndir_Arcgis = input_geo_names['nfdr_arcgis']
-    acc_grass = input_geo_names['acc']
-    str_r = input_geo_names['str_r']
-    outlet_pt_info = 'outlet_pt_info'
-    
+):
+    ###
+    dem = input_geo_names["dem"]
+    cat_add_lake = input_geo_names["cat_add_lake"]
+    ndir_Arcgis = input_geo_names["nfdr_arcgis"]
+    acc_grass = input_geo_names["acc"]
+    str_r = input_geo_names["str_r"]
+    outlet_pt_info = "outlet_pt_info"
+
     maximum_obs_id = 80000
     tempfolder = os.path.join(
-        tempfile.gettempdir(), "basinmaker_subreg" + str(np.random.randint(1, 10000 + 1))
+        tempfile.gettempdir(),
+        "basinmaker_subreg" + str(np.random.randint(1, 10000 + 1)),
     )
     if not os.path.exists(tempfolder):
         os.makedirs(tempfolder)
 
-    k = -1 
-    c = -1 
-    if path_bkfwidthdepth != '#':
-        k,c = calculate_bankfull_width_depth_from_polyline(
+    k = -1
+    c = -1
+    if path_bkfwidthdepth != "#":
+        k, c = calculate_bankfull_width_depth_from_polyline(
             grassdb=grassdb,
             grass_location=grass_location,
             qgis_prefix_path=qgis_prefix_path,
@@ -263,9 +269,9 @@ def generatesubdomainmaskandinfo(
             input_geo_names=input_geo_names,
             k_in=-1,
             c_in=-1,
-            return_k_c_only = True,
+            return_k_c_only=True,
         )
-                
+
     #### generate subbregion outlet points and subregion info table
     QgsApplication.setPrefixPath(qgis_prefix_path, True)
     Qgs = QgsApplication([], False)
@@ -295,21 +301,18 @@ def generatesubdomainmaskandinfo(
     con = sqlite3.connect(
         os.path.join(grassdb, grass_location, "PERMANENT", "sqlite", "sqlite.db")
     )
-    
+
     PERMANENT = Session()
-    PERMANENT.open(
-        gisdb=grassdb, location=grass_location, create_opts=""
-    )
+    PERMANENT.open(gisdb=grassdb, location=grass_location, create_opts="")
     grass.run_command("r.mask", raster=dem, maskcats="*", overwrite=True)
     grass.run_command("r.null", map=cat_add_lake, setnull=-9999)
 
     exp = "%s = if(isnull(%s),null(),%s)" % (
-        'river_r',
+        "river_r",
         str_r,
         cat_add_lake,
     )
     grass.run_command("r.mapcalc", expression=exp, overwrite=True)
-        
 
     routing_temp = generate_routing_info_of_catchments(
         grass,
@@ -317,28 +320,31 @@ def generatesubdomainmaskandinfo(
         cat=cat_add_lake,
         acc=acc_grass,
         Name="Final",
-        str='river_r',
+        str="river_r",
     )
 
-
     grass.run_command("g.copy", vector=("Final_OL_v", outlet_pt_info), overwrite=True)
-    grass.run_command("g.copy", vector=("Final_IL_v_c", 'sub_reg_inlet'), overwrite=True)
+    grass.run_command(
+        "g.copy", vector=("Final_IL_v_c", "sub_reg_inlet"), overwrite=True
+    )
     Paths_Finalcat_ply = []
-    
-    sqlstat = "SELECT SubId, DowSubId,ILSubIdmax,ILSubIdmin,MaxAcc_cat,ILpt_ID FROM %s" % (outlet_pt_info)
+
+    sqlstat = (
+        "SELECT SubId, DowSubId,ILSubIdmax,ILSubIdmin,MaxAcc_cat,ILpt_ID FROM %s"
+        % (outlet_pt_info)
+    )
     outletinfo = pd.read_sql_query(sqlstat, con)
     outletinfo = outletinfo.fillna(-1)
-    outletinfo = outletinfo.loc[outletinfo['SubId'] > 0]
+    outletinfo = outletinfo.loc[outletinfo["SubId"] > 0]
 
-    sqlstat = "SELECT ILpt_ID,SubId_I FROM %s" % ('Final_IL_v_c')
+    sqlstat = "SELECT ILpt_ID,SubId_I FROM %s" % ("Final_IL_v_c")
     inletinfo = pd.read_sql_query(sqlstat, con)
     inletinfo = inletinfo.fillna(-1)
 
+    # update watershed bankfull k and c first
+    outletinfo["k"] = k
+    outletinfo["c"] = c
 
-    # update watershed bankfull k and c first 
-    outletinfo['k'] = k
-    outletinfo['c'] = c 
-        
     subregin_info = pd.DataFrame(
         np.full(len(outletinfo), -9999), columns=["Sub_Reg_ID"]
     )
@@ -348,13 +354,18 @@ def generatesubdomainmaskandinfo(
     subregin_info["Ply_Name"] = -9999
     subregin_info["Max_ACC"] = -9999
     subregin_info["ILpt_ID"] = -9999
-    
+
     for i in range(0, len(outletinfo)):
-    
-        basinid = int(outletinfo['SubId'].values[i])
-                
+
+        basinid = int(outletinfo["SubId"].values[i])
+
         grass.run_command("r.mask", raster=dem, maskcats="*", overwrite=True)
-        exp = "%s = if(%s == %s,%s,null())" % ("dem_reg_"+ str(basinid),cat_add_lake,str(basinid),dem)
+        exp = "%s = if(%s == %s,%s,null())" % (
+            "dem_reg_" + str(basinid),
+            cat_add_lake,
+            str(basinid),
+            dem,
+        )
         grass.run_command("r.mapcalc", expression=exp, overwrite=True)
         ####define mask
         grass.run_command(
@@ -407,9 +418,14 @@ def generatesubdomainmaskandinfo(
                 ),
             },
         )
-        
-        Paths_Finalcat_ply.append(os.path.join(Out_Sub_Reg_Dem_Folder,"HyMask_region_"+ str(int(basinid + maximum_obs_id))+ "_nobuffer.shp"))
-            
+
+        Paths_Finalcat_ply.append(
+            os.path.join(
+                Out_Sub_Reg_Dem_Folder,
+                "HyMask_region_" + str(int(basinid + maximum_obs_id)) + "_nobuffer.shp",
+            )
+        )
+
         processing.run(
             "native:buffer",
             {
@@ -424,69 +440,71 @@ def generatesubdomainmaskandinfo(
                 "DISSOLVE": True,
                 "OUTPUT": os.path.join(
                     Out_Sub_Reg_Dem_Folder,
-                    "HyMask_region_"
-                    + str(int(basinid + maximum_obs_id))
-                    + ".shp",
+                    "HyMask_region_" + str(int(basinid + maximum_obs_id)) + ".shp",
                 ),
             },
         )
-    
+
     qgis_vector_merge_vector_layers(
         processing,
         context,
         INPUT_Layer_List=Paths_Finalcat_ply,
         OUTPUT=os.path.join(Out_Sub_Reg_Dem_Folder, "subregion_ply.shp"),
     )
-            
+
     grass.run_command("r.mask", raster=dem, maskcats="*", overwrite=True)
-     
+
     problem_subid = []
     for i in range(0, len(outletinfo)):
-        basinid = int(outletinfo['SubId'].values[i])
-        dowsubreginid = int(outletinfo['DowSubId'].values[i])
-        ILpt_ID = outletinfo['ILpt_ID'].values[i]
-        subregin_info.loc[i,"ILpt_ID"] = ILpt_ID
-        if len(inletinfo[inletinfo['ILpt_ID'] ==ILpt_ID]['SubId_I']) > 0:
-            downsubid_inlet = inletinfo[inletinfo['ILpt_ID'] ==ILpt_ID]['SubId_I'].values[0]        
+        basinid = int(outletinfo["SubId"].values[i])
+        dowsubreginid = int(outletinfo["DowSubId"].values[i])
+        ILpt_ID = outletinfo["ILpt_ID"].values[i]
+        subregin_info.loc[i, "ILpt_ID"] = ILpt_ID
+        if len(inletinfo[inletinfo["ILpt_ID"] == ILpt_ID]["SubId_I"]) > 0:
+            downsubid_inlet = inletinfo[inletinfo["ILpt_ID"] == ILpt_ID][
+                "SubId_I"
+            ].values[0]
             if dowsubreginid != downsubid_inlet:
                 problem_subid.append(basinid)
-        
-        catacc = int(outletinfo['MaxAcc_cat'].values[i])
-        
+
+        catacc = int(outletinfo["MaxAcc_cat"].values[i])
+
         subregin_info.loc[i, "ProjectNM"] = (
-            'sub_reg' + "_" + str(int(basinid + maximum_obs_id))
+            "sub_reg" + "_" + str(int(basinid + maximum_obs_id))
         )
         subregin_info.loc[i, "Ply_Name"] = (
             "HyMask_region_" + str(int(basinid + maximum_obs_id)) + ".shp"
         )
         subregin_info.loc[i, "Max_ACC"] = catacc
-        
+
         if basinid == dowsubreginid:
-            subregin_info.loc[i, "Dow_Sub_Reg_Id"] = int(
-                -1 + maximum_obs_id
-            )        
+            subregin_info.loc[i, "Dow_Sub_Reg_Id"] = int(-1 + maximum_obs_id)
         else:
-            subregin_info.loc[i, "Dow_Sub_Reg_Id"] = int(
-                dowsubreginid + maximum_obs_id
-            )
+            subregin_info.loc[i, "Dow_Sub_Reg_Id"] = int(dowsubreginid + maximum_obs_id)
         subregin_info.loc[i, "Sub_Reg_ID"] = int(basinid + maximum_obs_id)
-    
-    subregin_info['k'] = k
-    subregin_info['c'] = c
-    
+
+    subregin_info["k"] = k
+    subregin_info["c"] = c
+
     ### remove subregion do not contribute to the outlet
     ## find watershed outlet subregion
-#    subregin_info  = subregin_info.loc[subregin_info['Dow_Sub_Reg_Id'] == self.maximum_obs_id-1]
-    subregin_info  = subregin_info.sort_values(by='Max_ACC', ascending=False)
-    outlet_reg_id  = subregin_info['Sub_Reg_ID'].values[0]
-    routing_info = subregin_info[["Sub_Reg_ID", "Dow_Sub_Reg_Id"]].astype("float").values
+    #    subregin_info  = subregin_info.loc[subregin_info['Dow_Sub_Reg_Id'] == self.maximum_obs_id-1]
+    subregin_info = subregin_info.sort_values(by="Max_ACC", ascending=False)
+    outlet_reg_id = subregin_info["Sub_Reg_ID"].values[0]
+    routing_info = (
+        subregin_info[["Sub_Reg_ID", "Dow_Sub_Reg_Id"]].astype("float").values
+    )
     needed_sub_reg_ids = defcat(routing_info, outlet_reg_id)
-    
-    mask  = subregin_info['Sub_Reg_ID'].isin(needed_sub_reg_ids)
-    subregin_info = subregin_info.loc[mask,:]
-#        subregin_info.drop(subregin_info.index[del_row_mask]) ###
-    subregin_info.to_csv(os.path.join(Out_Sub_Reg_Dem_Folder,'Sub_reg_info.csv'),index = None, header=True)
-        
+
+    mask = subregin_info["Sub_Reg_ID"].isin(needed_sub_reg_ids)
+    subregin_info = subregin_info.loc[mask, :]
+    #        subregin_info.drop(subregin_info.index[del_row_mask]) ###
+    subregin_info.to_csv(
+        os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_reg_info.csv"),
+        index=None,
+        header=True,
+    )
+
     subregin_info.to_csv(
         os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_reg_info.csv"),
         index=None,
@@ -494,34 +512,40 @@ def generatesubdomainmaskandinfo(
     )
 
     grass.run_command("v.db.addcolumn", map=outlet_pt_info, columns="reg_subid int")
+    grass.run_command("v.db.addcolumn", map=outlet_pt_info, columns="reg_dowid int")
+
+    grass.run_command("v.db.addcolumn", map=outlet_pt_info, columns="sub_reg_id int")
+
     grass.run_command(
-        "v.db.addcolumn", map=outlet_pt_info, columns="reg_dowid int"
+        "v.db.update",
+        map=outlet_pt_info,
+        column="reg_subid",
+        qcol="SubId + " + str(maximum_obs_id),
     )
 
     grass.run_command(
-        "v.db.addcolumn", map=outlet_pt_info, columns="sub_reg_id int"
-    )
-    
-    grass.run_command(
-        "v.db.update", map=outlet_pt_info, column="reg_subid", qcol="SubId + " +str(maximum_obs_id) 
+        "v.db.update",
+        map=outlet_pt_info,
+        column="sub_reg_id",
+        qcol="SubId + " + str(maximum_obs_id),
     )
 
     grass.run_command(
-        "v.db.update", map=outlet_pt_info, column="sub_reg_id", qcol="SubId + " +str(maximum_obs_id) 
+        "v.db.update",
+        map=outlet_pt_info,
+        column="reg_dowid",
+        qcol="DowSubId + " + str(maximum_obs_id),
     )
-    
+
+    grass.run_command("v.db.addcolumn", map="sub_reg_inlet", columns="sub_reg_id int")
+
     grass.run_command(
-        "v.db.update", map=outlet_pt_info, column="reg_dowid", qcol="DowSubId + " +str(maximum_obs_id) 
+        "v.db.update",
+        map="sub_reg_inlet",
+        column="sub_reg_id",
+        qcol="SubId_I + " + str(maximum_obs_id),
     )
-    
-    grass.run_command(
-        "v.db.addcolumn", map='sub_reg_inlet', columns="sub_reg_id int"
-    )
-    
-    grass.run_command(
-        "v.db.update", map='sub_reg_inlet', column="sub_reg_id", qcol="SubId_I + " +str(maximum_obs_id) 
-    )
-        
+
     grass.run_command(
         "v.out.ogr",
         input=outlet_pt_info,
@@ -529,32 +553,33 @@ def generatesubdomainmaskandinfo(
         format="ESRI_Shapefile",
         overwrite=True,
     )
-    
+
     grass.run_command(
         "v.out.ogr",
-        input='sub_reg_inlet',
+        input="sub_reg_inlet",
         output=os.path.join(Out_Sub_Reg_Dem_Folder, "sub_reg_inlet" + ".shp"),
         format="ESRI_Shapefile",
         overwrite=True,
     )
-    
+
     grass.run_command(
         "v.pack",
         input=outlet_pt_info,
-        output=os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_Reg_Outlet_v"+".pack"),
+        output=os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_Reg_Outlet_v" + ".pack"),
         overwrite=True,
     )
     grass.run_command(
         "r.pack",
-        input='Final_OL',
-        output=os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_Reg_Outlet_r"+".pack"),
+        input="Final_OL",
+        output=os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_Reg_Outlet_r" + ".pack"),
         overwrite=True,
     )
 
     print("following subregion's inlet needs to be checked ")
     print(problem_subid)
-    
+
     return
+
 
 ############################################################################
 
@@ -610,13 +635,14 @@ def Combine_Sub_Region_Results(
     maximum_obs_id = 80000
     if not os.path.exists(OutputFolder):
         os.makedirs(OutputFolder)
-        
+
     tempfolder = os.path.join(
-        tempfile.gettempdir(), "basinmaker_comsubreg" + str(np.random.randint(1, 10000 + 1))
+        tempfile.gettempdir(),
+        "basinmaker_comsubreg" + str(np.random.randint(1, 10000 + 1)),
     )
     if not os.path.exists(tempfolder):
         os.makedirs(tempfolder)
-            
+
     QgsApplication.setPrefixPath(qgis_prefix_path, True)
     Qgs = QgsApplication([], False)
     Qgs.initQgis()
@@ -674,14 +700,16 @@ def Combine_Sub_Region_Results(
         ### define path of the output file in this sub region
         Path_Finalcat_ply = os.path.join(SubFolder, "finalcat_info.shp")
         Path_Finalcat_line = os.path.join(SubFolder, "finalcat_info_riv.shp")
-        Path_Finalriv_ply = os.path.join(SubFolder, "catchment_without_merging_lakes.shp")
+        Path_Finalriv_ply = os.path.join(
+            SubFolder, "catchment_without_merging_lakes.shp"
+        )
         Path_Finalriv_line = os.path.join(SubFolder, "river_without_merging_lakes.shp")
         Path_Con_Lake_ply = os.path.join(SubFolder, "sl_connected_lake.shp")
         Path_None_Con_Lake_ply = os.path.join(SubFolder, "sl_non_connected_lake.shp")
         Path_obs_point = os.path.join(SubFolder, "obs_gauges.shp")
 
         ### product do not exist
-        if (os.path.exists(Path_Finalcat_ply) != 1):  
+        if os.path.exists(Path_Finalcat_ply) != 1:
             continue
 
         ### For each subregion, add new subid to each polygon files,
@@ -880,9 +908,7 @@ def Combine_Sub_Region_Results(
         AllCatinfo, Sub_Region_info = Connect_SubRegion_Update_DownSubId(
             AllCatinfo, DownCatinfo, Sub_Region_info
         )
-        AllCatinfo = Update_DA_Strahler_For_Combined_Result(
-            AllCatinfo, Sub_Region_info
-        )
+        AllCatinfo = Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info)
 
         Copy_Pddataframe_to_shpfile(
             os.path.join(tempfolder, "finalcat_info.shp"),
@@ -961,9 +987,7 @@ def Combine_Sub_Region_Results(
         AllCatinfo, Sub_Region_info = Connect_SubRegion_Update_DownSubId(
             AllCatinfo, DownCatinfo, Sub_Region_info
         )
-        AllCatinfo = Update_DA_Strahler_For_Combined_Result(
-            AllCatinfo, Sub_Region_info
-        )
+        AllCatinfo = Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info)
 
         Copy_Pddataframe_to_shpfile(
             os.path.join(tempfolder, "finalriv_info_ply.shp"),

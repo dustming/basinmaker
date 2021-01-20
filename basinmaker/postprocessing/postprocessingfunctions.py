@@ -1,4 +1,5 @@
-import os 
+import os
+
 
 def combine_catchments_covered_by_the_same_lake(
     OutputFolder="#",
@@ -102,48 +103,51 @@ def select_part_of_routing_product(
     Path_Con_Lake_ply="#",
     Path_NonCon_Lake_ply="#",
     qgis_prefix_path="#",
-    gis_platform = 'qgis'
+    gis_platform="qgis",
 ):
 
-    if gis_platform == 'qgis':
+    if gis_platform == "qgis":
         from postprocessing.selectprod import (
-            Locate_subid_needsbyuser_qgis,Select_Routing_product_based_SubId_qgis
+            Locate_subid_needsbyuser_qgis,
+            Select_Routing_product_based_SubId_qgis,
         )
-        
-        if Gauge_NMS[0] != '#' or Path_Points != '#':
+
+        if Gauge_NMS[0] != "#" or Path_Points != "#":
             subids = Locate_subid_needsbyuser_qgis(
-                Path_Points=Path_Points, Gauge_NMS=Gauge_NMS, Path_products=Path_Catchment_Polygon,qgis_prefix_path=qgis_prefix_path
-            )    
-            if len(subids)<= 0 :
+                Path_Points=Path_Points,
+                Gauge_NMS=Gauge_NMS,
+                Path_products=Path_Catchment_Polygon,
+                qgis_prefix_path=qgis_prefix_path,
+            )
+            if len(subids) <= 0:
                 print("subbasin did not found        ")
-                return 
-                
+                return
+
             subid = subids[0]
             Select_Routing_product_based_SubId_qgis(
-                OutputFolder = OutputFolder,
+                OutputFolder=OutputFolder,
                 Path_Catchment_Polygon=Path_Catchment_Polygon,
                 Path_River_Polyline=Path_River_Polyline,
                 Path_Con_Lake_ply=Path_Con_Lake_ply,
                 Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,
                 mostdownid=subid,
-                mostupstreamid =-1,
-                qgis_prefix_path = qgis_prefix_path,
-            )  
-                           
+                mostupstreamid=-1,
+                qgis_prefix_path=qgis_prefix_path,
+            )
+
         else:
             Select_Routing_product_based_SubId_qgis(
-                OutputFolder = OutputFolder,
+                OutputFolder=OutputFolder,
                 Path_Catchment_Polygon=Path_Catchment_Polygon,
                 Path_River_Polyline=Path_River_Polyline,
                 Path_Con_Lake_ply=Path_Con_Lake_ply,
                 Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,
                 mostdownid=mostdownid,
-                mostupstreamid =mostupid,
-                qgis_prefix_path = qgis_prefix_path,
+                mostupstreamid=mostupid,
+                qgis_prefix_path=qgis_prefix_path,
             )
-        
-    return 
 
+    return
 
 
 def generate_hrus(
@@ -169,14 +173,13 @@ def generate_hrus(
     DEM="#",
     Project_crs="EPSG:3573",
     OutputFolder="#",
-    qgis_prefix_path='#',
-    gis_platform='qgis',
+    qgis_prefix_path="#",
+    gis_platform="qgis",
 ):
 
-    if gis_platform == 'qgis':
-        from postprocessing.hru import (
-            GenerateHRUS_qgis
-        )
+    if gis_platform == "qgis":
+        from postprocessing.hru import GenerateHRUS_qgis
+
         GenerateHRUS_qgis(
             Path_Subbasin_Ply=Path_Subbasin_Ply,
             Landuse_info=Landuse_info,
@@ -201,8 +204,6 @@ def generate_hrus(
             Project_crs=Project_crs,
             OutputFolder=OutputFolder,
             qgis_prefix_path=qgis_prefix_path,
-        )        
-        
-    return 
-    
-    
+        )
+
+    return

@@ -20,7 +20,7 @@ def calculate_bankfull_width_depth_from_polyline(
     input_geo_names,
     k_in=-1,
     c_in=-1,
-    return_k_c_only = False,
+    return_k_c_only=False,
 ):
     mask = input_geo_names["mask"]
 
@@ -29,10 +29,10 @@ def calculate_bankfull_width_depth_from_polyline(
     max_manning_n = 0.15
     default_bkf_width = 1.2345
     default_bkf_depth = 1.2345
-    default_bkf_q     = 1.2345
-    k = -1 
+    default_bkf_q = 1.2345
+    k = -1
     c = -1
-    if path_bkfwidthdepth !='#':
+    if path_bkfwidthdepth != "#":
         reproject_clip_vectors_by_polygon(
             grassdb=grassdb,
             grass_location=grass_location,
@@ -45,7 +45,7 @@ def calculate_bankfull_width_depth_from_polyline(
     if k_in < 0 and c_in < 0:
         bkf_width_depth = Dbf_To_Dataframe(
             os.path.join(grassdb, "bkf_width_depth" + ".shp")
-        )         
+        )
         da_q = bkf_width_depth[[bkfwd_attributes[3], bkfwd_attributes[2]]].values
         if len(da_q) > 3:
             k, c = return_k_and_c_in_q_da_relationship(da_q)
@@ -57,14 +57,14 @@ def calculate_bankfull_width_depth_from_polyline(
             default_bkf_q = np.average(bkf_width_depth[bkfwd_attributes[3]])
         else:
             k = -1
-            c = -1 
+            c = -1
     else:
         k = k_in
         c = c_in
-        
+
     if return_k_c_only:
-        return k,c
-        
+        return k, c
+
     import grass.script as grass
     import grass.script.setup as gsetup
     from grass.pygrass.modules import Module
@@ -97,7 +97,7 @@ def calculate_bankfull_width_depth_from_polyline(
             catinfo.loc[idx_i, "BkfWidth"] = default_bkf_width
             catinfo.loc[idx_i, "BkfDepth"] = default_bkf_depth
             catinfo.loc[idx_i, "Q_Mean"] = default_bkf_q
-            
+
     # adjust channel parameters
 
     catinfo_riv = catinfo.loc[catinfo["IsLake"] < 2]

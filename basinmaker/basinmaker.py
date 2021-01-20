@@ -18,8 +18,8 @@ class basinmaker:
 
     def __init__(
         self,
-        path_output_folder = '#',
-        path_working_folder = '#',
+        path_output_folder="#",
+        path_working_folder="#",
     ):
 
         # define drived values
@@ -27,7 +27,7 @@ class basinmaker:
         self.path_output_folder = path_output_folder
         self.path_working_folder = path_working_folder
 
-#        os.makedirs(self.path_output_folder, exist_ok=True)
+        #        os.makedirs(self.path_output_folder, exist_ok=True)
         os.makedirs(self.path_working_folder, exist_ok=True)
 
         # obtain qgis prefix path
@@ -50,7 +50,6 @@ class basinmaker:
         )
 
         # define constants
-
 
         # default channel manning's coefficient
         DEFAULT_CHN = 0.035
@@ -86,14 +85,14 @@ class basinmaker:
             "river_without_merging_lakes": "river_without_merging_lakes",
             "cat_use_default_acc": "cat_use_default_acc",
             "snapped_obs_points": "snapped_obs_points",
-            "sub_reg_str_r":"sub_reg_str_r",
-            "sub_reg_str_v":"sub_reg_str_v",
-            "sub_reg_nfdr_grass":"sub_reg_nfdr_grass",
-            "sub_reg_nfdr_arcgis":"sub_reg_nfdr_arcgis",
-            "sub_reg_acc":"sub_reg_acc",
-            "sub_reg_dem":"sub_reg_dem",
-            "problem_seg":"problem_seg",
-            "lake_outflow_pourpoints":"lake_outflow_pourpoints",
+            "sub_reg_str_r": "sub_reg_str_r",
+            "sub_reg_str_v": "sub_reg_str_v",
+            "sub_reg_nfdr_grass": "sub_reg_nfdr_grass",
+            "sub_reg_nfdr_arcgis": "sub_reg_nfdr_arcgis",
+            "sub_reg_acc": "sub_reg_acc",
+            "sub_reg_dem": "sub_reg_dem",
+            "problem_seg": "problem_seg",
+            "lake_outflow_pourpoints": "lake_outflow_pourpoints",
         }
 
     # first modulized methods
@@ -434,11 +433,11 @@ class basinmaker:
         bkfwd_attributes=[],
         path_landuse="#",
         path_landuse_info="#",
-        projection = "EPSG:3573",
+        projection="EPSG:3573",
         k_in=-1,
         c_in=-1,
         gis_platform="qgis",
-        lake_attributes = [],
+        lake_attributes=[],
         obs_attributes=[],
         outlet_obs_id=-1,
         path_sub_reg_outlets_v="#",
@@ -456,55 +455,55 @@ class basinmaker:
         path_bkfwidthdepth             : string
             It is a string to indicate the full path of the
             polyline shapefile that having bankfull width and
-            depth data        
-        bkfwd_attributes               : 
+            depth data
+        bkfwd_attributes               :
             the columns names that indicate following items has to be included
             1) column name for the Bankfull width in m;
             2) column name for the Bankfull depth in m;
-            3) column name for the annual mean discharge in m3/s; 
-        path_landuse                   : string 
+            3) column name for the annual mean discharge in m3/s;
+        path_landuse                   : string
             It is a string to indicate the full path of the landuse data.
             It will be used to estimate the floodplain roughness
             coefficient. Should have the same projection with the DEM data
-            in ".tif" format.        
-        path_landuse_info              : string 
+            in ".tif" format.
+        path_landuse_info              : string
             It is a string to indicate the full path of the table in '.csv'
             format.The table describe the floodplain roughness coefficient
             correspond to a given landuse type. The table should have two
             columns: RasterV and MannV. RasterV is the landuse value in the
             landuse raster for each land use type and the MannV is the
-            roughness coefficient value for each landuse type.        
+            roughness coefficient value for each landuse type.
         gis_platform                   : string
             It is a string indicate with gis platform is used:
             'qgis'                : the basinmaker is running within QGIS
             'arcgis'              : the basinmaker is running within ArcGIS
-        lake_attributes                : list 
+        lake_attributes                : list
             the columns names that indicate following items has to be included
             1) column name for the unique Id of each lake within the lake polygon shpfile;
             2) column name for type of the lake should be integer;
             3) column name for the volume of the lake in km3;
             4) column name for the average depth of the lake in m;
-            5) column name for the area of the lake in km2.        
-        obs_attributes                 : list 
+            5) column name for the area of the lake in km2.
+        obs_attributes                 : list
             the columns names that indicate following items has to be included
             1) column name for the unique Id of each observation point;
             2) column name for the unique name of each observation point;
             3) column name for the drainage area of each observation point in km3;
             4) column name for the source of the observation point:
                 'CA' for observation in canada;
-                'US' for observation in US;   
-        outlet_obs_id                  : int 
+                'US' for observation in US;
+        outlet_obs_id                  : int
             It is one 'Obs_ID' in the provided observation gauge
             shapefile. If it is larger than zero. Subbasins that
             do not drainage to this gauge will be removed from
-            delineation result.                   
+            delineation result.
         projection                     : string
             It is a string indicate a projected coordinate system,
             which wiil be used to calcuate area, slope and aspect.
         output_folder                  : string
             The path to a folder to save outputs
-        path_sub_reg_outlets_v         : string 
-        
+        path_sub_reg_outlets_v         : string
+
         Notes
         -------
         Five vector files will be generated by this function. these files
@@ -527,7 +526,7 @@ class basinmaker:
         obs_gauges                                      : shapefile
             It is the point shapefile that represent the observation gauge
             after snap to river network.
-            
+
         Returns:
         -------
            None
@@ -536,7 +535,7 @@ class basinmaker:
         -------
 
         """
-        
+
         from addattributes.addattributestocatchments import add_attributes_to_catchments
 
         add_attributes_to_catchments(
@@ -545,7 +544,7 @@ class basinmaker:
             bkfwd_attributes=bkfwd_attributes,
             path_landuse=path_landuse,
             path_landuse_info=path_landuse_info,
-            projection = projection,
+            projection=projection,
             k_in=k_in,
             c_in=k_in,
             out_cat_name=self.geofilenames["catchment_without_merging_lakes"],
@@ -555,7 +554,7 @@ class basinmaker:
             qgis_prefix_path=self.qgispp,
             gis_platform=gis_platform,
             obs_attributes=obs_attributes,
-            lake_attributes = lake_attributes,
+            lake_attributes=lake_attributes,
             outlet_obs_id=outlet_obs_id,
             path_sub_reg_outlets_v=path_sub_reg_outlets_v,
             output_folder=output_folder,
@@ -808,17 +807,17 @@ class basinmaker:
 
     def select_part_of_routing_product_methods(
         self,
-        Path_Points = '#',
-        Gauge_NMS = '#',
-        OutputFolder = '#',
-        mostdownid = -1,
-        mostupid = -1,
+        Path_Points="#",
+        Gauge_NMS="#",
+        OutputFolder="#",
+        mostdownid=-1,
+        mostupid=-1,
         Path_Catchment_Polygon="#",
         Path_River_Polyline="#",
         Path_Con_Lake_ply="#",
         Path_NonCon_Lake_ply="#",
         qgis_prefix_path="#",
-        gis_platform = 'qgis',
+        gis_platform="qgis",
     ):
         """Extract region of interest based on provided pourpoints or gauge name
 
@@ -868,20 +867,21 @@ class basinmaker:
         from postprocessing.postprocessingfunctions import (
             select_part_of_routing_product,
         )
+
         select_part_of_routing_product(
             Path_Points=Path_Points,
             Gauge_NMS=Gauge_NMS,
             OutputFolder=OutputFolder,
-            mostdownid = mostdownid,
-            mostupid = mostupid,
+            mostdownid=mostdownid,
+            mostupid=mostupid,
             Path_Catchment_Polygon=Path_Catchment_Polygon,
             Path_River_Polyline=Path_River_Polyline,
             Path_Con_Lake_ply=Path_Con_Lake_ply,
             Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,
             qgis_prefix_path=qgis_prefix_path,
-            gis_platform = gis_platform,
+            gis_platform=gis_platform,
         )
-        
+
     def generate_hrus_methods(
         self,
         Path_Subbasin_Ply,
@@ -906,8 +906,8 @@ class basinmaker:
         DEM="#",
         Project_crs="EPSG:3573",
         OutputFolder="#",
-        qgis_prefix_path='#',
-        gis_platform='qgis',
+        qgis_prefix_path="#",
+        gis_platform="qgis",
     ):
         """Generate HRU polygons and their attributes needed by hydrological model
 
@@ -1066,6 +1066,7 @@ class basinmaker:
         from postprocessing.postprocessingfunctions import (
             generate_hrus,
         )
+
         generate_hrus(
             Path_Subbasin_Ply=Path_Subbasin_Ply,
             Landuse_info=Landuse_info,
@@ -1091,23 +1092,23 @@ class basinmaker:
             OutputFolder=OutputFolder,
             qgis_prefix_path=qgis_prefix_path,
         )
-        
+
     def divide_domain_into_sub_regions_method(
         self,
         path_lakefile_in,
         lake_attributes,
-        path_bkfwidthdepth = '#',
-        bkfwd_attributes = '#',
+        path_bkfwidthdepth="#",
+        bkfwd_attributes="#",
         Min_Num_Domain=9,
         Max_Num_Domain=13,
         Initaial_Acc=5000,
         Delta_Acc=1000,
         CheckLakeArea=1,
-        fdr_path = '#',
+        fdr_path="#",
         Acc_Thresthold_stream=500,
-        max_memory=2048*3,
+        max_memory=2048 * 3,
         Out_Sub_Reg_Folder="#",
-        gis_platform='qgis',
+        gis_platform="qgis",
     ):
 
         from subreg.defsubreg import (
@@ -1121,23 +1122,23 @@ class basinmaker:
             qgis_prefix_path=self.qgispp,
             path_lakefile_in=path_lakefile_in,
             lake_attributes=lake_attributes,
-            path_bkfwidthdepth = path_bkfwidthdepth,
-            bkfwd_attributes = bkfwd_attributes,
+            path_bkfwidthdepth=path_bkfwidthdepth,
+            bkfwd_attributes=bkfwd_attributes,
             Min_Num_Domain=Min_Num_Domain,
             Max_Num_Domain=Max_Num_Domain,
             Initaial_Acc=Initaial_Acc,
             Delta_Acc=Delta_Acc,
             CheckLakeArea=CheckLakeArea,
-            fdr_path = fdr_path,
+            fdr_path=fdr_path,
             Acc_Thresthold_stream=Acc_Thresthold_stream,
             max_memory=max_memory,
             Out_Sub_Reg_Folder=Out_Sub_Reg_Folder,
-            sub_reg_str_r = self.geofilenames["sub_reg_str_r"],
-            sub_reg_str_v = self.geofilenames["sub_reg_str_v"],
-            sub_reg_nfdr_grass = self.geofilenames["sub_reg_nfdr_grass"],
-            sub_reg_nfdr_arcgis = self.geofilenames["sub_reg_nfdr_arcgis"],
-            sub_reg_acc = self.geofilenames["sub_reg_acc"],
-            sub_reg_dem = self.geofilenames["sub_reg_dem"],
+            sub_reg_str_r=self.geofilenames["sub_reg_str_r"],
+            sub_reg_str_v=self.geofilenames["sub_reg_str_v"],
+            sub_reg_nfdr_grass=self.geofilenames["sub_reg_nfdr_grass"],
+            sub_reg_nfdr_arcgis=self.geofilenames["sub_reg_nfdr_arcgis"],
+            sub_reg_acc=self.geofilenames["sub_reg_acc"],
+            sub_reg_dem=self.geofilenames["sub_reg_dem"],
             gis_platform=gis_platform,
         )
 
@@ -1156,17 +1157,14 @@ class basinmaker:
         )
 
         combine_sub_region(
-            path_sub_region_info = path_sub_region_info,
-            sub_region_outputfolder = sub_region_outputfolder,
-            outputfolder = outputfolder,
-            is_final_result = is_final_result,
-            qgis_prefix_path = self.qgispp,
-            path_subregion_inlet = path_subregion_inlet,
+            path_sub_region_info=path_sub_region_info,
+            sub_region_outputfolder=sub_region_outputfolder,
+            outputfolder=outputfolder,
+            is_final_result=is_final_result,
+            qgis_prefix_path=self.qgispp,
+            path_subregion_inlet=path_subregion_inlet,
         )
 
-
-
-        
     def generate_raven_model_inputs_method(
         self,
         path_final_hru_info="#",
@@ -1352,6 +1350,3 @@ class basinmaker:
             OutputFolder=outputfolder,
             Forcing_Input_File=forcing_input_file,
         )
-
-
-        

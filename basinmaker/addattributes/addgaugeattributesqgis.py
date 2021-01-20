@@ -17,7 +17,7 @@ def add_gauge_attributes(
 
     outlet_pt_info = input_geo_names["outlet_pt_info"]
     snapped_obs_points = input_geo_names["snapped_obs_points"]
-    obsname = 'obs' #input_geo_names["obsname"]
+    obsname = "obs"  # input_geo_names["obsname"]
 
     import grass.script as grass
     import grass.script.setup as gsetup
@@ -44,7 +44,7 @@ def add_gauge_attributes(
         raster=obsname,
         column="obsid_pour",
     )
-    
+
     grass.run_command(
         "v.out.ogr",
         input=outlet_pt_info,
@@ -53,33 +53,30 @@ def add_gauge_attributes(
         overwrite=True,
         quiet="Ture",
     )
-    
+
     ### read catchment
-    sqlstat = "SELECT SubId,obsid_pour FROM %s" % (
-        outlet_pt_info,
-    )
+    sqlstat = "SELECT SubId,obsid_pour FROM %s" % (outlet_pt_info,)
     outletinfo = pd.read_sql_query(sqlstat, con)
     outletinfo = outletinfo.fillna(-9999)
-    outletinfo = outletinfo.loc[outletinfo['obsid_pour'] > 0]
+    outletinfo = outletinfo.loc[outletinfo["obsid_pour"] > 0]
 
     sqlstat = "SELECT  %s,%s,%s,%s,%s FROM %s" % (
         obs_attributes[0],
         obs_attributes[1],
         obs_attributes[2],
         obs_attributes[3],
-        obs_attributes[0]+'n',
+        obs_attributes[0] + "n",
         snapped_obs_points,
     )
     gaugeinfo = pd.read_sql_query(sqlstat, con)
     gaugeinfo = gaugeinfo.fillna(-9999)
-    
-    
+
     for i in range(0, len(outletinfo)):
         catid = outletinfo["SubId"].values[i]
-        obsid = outletinfo['obsid_pour'].values[i]
+        obsid = outletinfo["obsid_pour"].values[i]
         catrow = catinfo["SubId"] == catid
-        subgaugeinfo = gaugeinfo.loc[gaugeinfo[obs_attributes[0]+'n'] == obsid]
-        
+        subgaugeinfo = gaugeinfo.loc[gaugeinfo[obs_attributes[0] + "n"] == obsid]
+
         catinfo.loc[catrow, "IsObs"] = obsid
         if len(subgaugeinfo) > 0:
             catinfo.loc[catrow, "IsObs"] = subgaugeinfo[obs_attributes[0]].values[0]

@@ -43,20 +43,25 @@ Outputfolder = "C:/Users/dustm/OneDrive - University of Waterloo/Documents/Proje
 
 ########### Variable needs to be modified to run this example ######
 Out_Sub_Reg_Dem_Folder = os.path.join(Outputfolder, "SubRegion_info")
-Sub_Region_OutputFolder = os.path.join(Out_Sub_Reg_Dem_Folder,'subregion_result')
+Sub_Region_OutputFolder = os.path.join(Out_Sub_Reg_Dem_Folder, "subregion_result")
 OutputFolder_Combined = os.path.join(Out_Sub_Reg_Dem_Folder, "Combined")
-path_subregion_inlet = os.path.join(Out_Sub_Reg_Dem_Folder,'sub_reg_inlet.shp')
+path_subregion_inlet = os.path.join(Out_Sub_Reg_Dem_Folder, "sub_reg_inlet.shp")
 ####
 SubReg_info = pd.read_csv(os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_reg_info.csv"))
 path_working_folder = Out_Sub_Reg_Dem_Folder
 
 start = timeit.default_timer()
 ### initialize the toolbox
-basinmaker = basinmaker(
-   path_working_folder = Out_Sub_Reg_Dem_Folder
-)
+basinmaker = basinmaker(path_working_folder=Out_Sub_Reg_Dem_Folder)
 
-basinmaker.combine_sub_region_results_method(path_sub_region_info =SubReg_info,sub_region_outputfolder =Sub_Region_OutputFolder,outputfolder = OutputFolder_Combined,is_final_result=False,path_subregion_inlet = path_subregion_inlet,gis_platform="qgis")
+basinmaker.combine_sub_region_results_method(
+    path_sub_region_info=SubReg_info,
+    sub_region_outputfolder=Sub_Region_OutputFolder,
+    outputfolder=OutputFolder_Combined,
+    is_final_result=False,
+    path_subregion_inlet=path_subregion_inlet,
+    gis_platform="qgis",
+)
 
 End = timeit.default_timer()
 

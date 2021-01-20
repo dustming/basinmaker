@@ -8,7 +8,7 @@ import tempfile
 
 
 def Locate_subid_needsbyuser_qgis(
-    Path_Points="#", Gauge_NMS="#", Path_products="#",qgis_prefix_path='#'
+    Path_Points="#", Gauge_NMS="#", Path_products="#", qgis_prefix_path="#"
 ):
     """Get Subbasin Ids
 
@@ -53,11 +53,12 @@ def Locate_subid_needsbyuser_qgis(
     """
 
     tempfolder = os.path.join(
-        tempfile.gettempdir(), "basinmaker_locsubid" + str(np.random.randint(1, 10000 + 1))
+        tempfile.gettempdir(),
+        "basinmaker_locsubid" + str(np.random.randint(1, 10000 + 1)),
     )
     if not os.path.exists(tempfolder):
         os.makedirs(tempfolder)
-        
+
     # obtain subbasin ID based on either points or guage names
     QgsApplication.setPrefixPath(qgis_prefix_path, True)
     Qgs = QgsApplication([], False)
@@ -114,6 +115,7 @@ def Locate_subid_needsbyuser_qgis(
 
     return SubId_Selected
 
+
 def Select_Routing_product_based_SubId_qgis(
     OutputFolder,
     Path_Catchment_Polygon="#",
@@ -122,7 +124,7 @@ def Select_Routing_product_based_SubId_qgis(
     Path_NonCon_Lake_ply="#",
     mostdownid=-1,
     mostupstreamid=-1,
-    qgis_prefix_path='#',
+    qgis_prefix_path="#",
 ):
     """Extract region of interest based on provided Subid
 
@@ -175,11 +177,12 @@ def Select_Routing_product_based_SubId_qgis(
     if not os.path.exists(OutputFolder):
         os.makedirs(OutputFolder)
     tempfolder = os.path.join(
-        tempfile.gettempdir(), "basinmaker_extsubprod" + str(np.random.randint(1, 10000 + 1))
+        tempfile.gettempdir(),
+        "basinmaker_extsubprod" + str(np.random.randint(1, 10000 + 1)),
     )
     if not os.path.exists(tempfolder):
         os.makedirs(tempfolder)
-        
+
     QgsApplication.setPrefixPath(qgis_prefix_path, True)
     Qgs = QgsApplication([], False)
     Qgs.initQgis()
@@ -241,9 +244,7 @@ def Select_Routing_product_based_SubId_qgis(
 
     finalcat_csv = Outputfilename_cat[:-3] + "dbf"
     finalcat_info = Dbf5(finalcat_csv)
-    finalcat_info = finalcat_info.to_dataframe().drop_duplicates(
-        "SubId", keep="first"
-    )
+    finalcat_info = finalcat_info.to_dataframe().drop_duplicates("SubId", keep="first")
 
     #### extract lakes
 
@@ -267,9 +268,7 @@ def Select_Routing_product_based_SubId_qgis(
         Selectfeatureattributes(
             processing,
             Input=Path_NonCon_Lake_ply,
-            Output=os.path.join(
-                OutputFolder, os.path.basename(Path_NonCon_Lake_ply)
-            ),
+            Output=os.path.join(OutputFolder, os.path.basename(Path_NonCon_Lake_ply)),
             Attri_NM="Hylak_id",
             Values=NonCL_Lakeids,
         )

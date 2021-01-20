@@ -48,19 +48,19 @@ def add_lakes_and_obs_into_existing_watershed_delineation(
             using 1 - 8 to represent different directions
         str_r                        : raster
             it is a river network in vector format
-        
+
         str_v                        : vector
             it is a river network in raster format
-        
+
         cat_no_lake                  : raster
              it is the raster represent the delineated subbasins without
-             considering lakes        
+             considering lakes
         mask                         : raster
             it is a mask raster stored in grass database, which indicate
-            the PSE        
+            the PSE
         dem                          : raster
             it is a dem raster stored in grass database, which is
-            has the same extent with MASK.        
+            has the same extent with MASK.
         acc                          : raster
             it is the raster represent the flow accumulation
     path_lakefile_in            : string (optional)
@@ -140,7 +140,7 @@ def add_lakes_and_obs_into_existing_watershed_delineation(
     -------
 
     """
-        
+
     # define internal file names
     cat_add_lake = Internal_Constant_Names["cat_add_lake"]
     pourpoints_with_lakes = Internal_Constant_Names["pourpoints_with_lakes"]

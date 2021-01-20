@@ -251,8 +251,8 @@ def New_SubId_To_Dissolve(
     if (
         Islake == 1
     ):  ## Meger subbasin covered by lakes, Keep lake outlet catchment  DA, stream order info
-#        Longestpath = Calculate_Longest_flowpath(mainriv_merg_info)
-        tarinfo.loc[idx, "RivLength"] = 0 #Longestpath
+        #        Longestpath = Calculate_Longest_flowpath(mainriv_merg_info)
+        tarinfo.loc[idx, "RivLength"] = 0  # Longestpath
 
     elif Islake == 2:
         tarinfo.loc[idx, "RivLength"] = 0.0
@@ -634,9 +634,9 @@ def Connect_SubRegion_Update_DownSubId(AllCatinfo, DownCatinfo, Sub_Region_info)
 
         ### obtain all subbasin data for i isubregion
         isubregion = Sub_Region_info["Sub_Reg_ID"].values[i]
-        # get link id for corresponding down stream sub region inlet point 
+        # get link id for corresponding down stream sub region inlet point
         ILpt_ID = Sub_Region_info["ILpt_ID"].values[i]
-        
+
         Sub_Region_cat_info = AllCatinfo.loc[
             AllCatinfo["Region_ID"] == isubregion
         ].copy()
@@ -651,9 +651,7 @@ def Connect_SubRegion_Update_DownSubId(AllCatinfo, DownCatinfo, Sub_Region_info)
 
         ### Subregion outlet subbasin ID
         outlet_mask = Sub_Region_cat_info["DowSubId"] == -1
-        iReg_Outlet_Subid = Sub_Region_cat_info.loc[outlet_mask, "SubId"].values[
-            0
-        ]  
+        iReg_Outlet_Subid = Sub_Region_cat_info.loc[outlet_mask, "SubId"].values[0]
         # (isubregion - 80000) * 200000 - 1
         Sub_Region_info.loc[
             Sub_Region_info["Sub_Reg_ID"] == isubregion, "Outlet_SubId"
@@ -680,10 +678,10 @@ def Connect_SubRegion_Update_DownSubId(AllCatinfo, DownCatinfo, Sub_Region_info)
         elif Dow_Sub_Region_id == 79999:
             AllCatinfo.loc[AllCatinfo["SubId"] == iReg_Outlet_Subid, "DowSubId"] = -1
         else:
-                print("##################################################")
-                print("Subregion : ", isubregion, "   To  ", Dow_Sub_Region_id)
-                print("Need be manually connected")
-                print("##################################################")
+            print("##################################################")
+            print("Subregion : ", isubregion, "   To  ", Dow_Sub_Region_id)
+            print("Need be manually connected")
+            print("##################################################")
     return AllCatinfo, Sub_Region_info
 
 
@@ -1983,10 +1981,10 @@ def Check_If_Lake_Have_Multi_OutLet(CL_Id, Str_Id, Routing_info):
         ### obtain all upstream str id of max acc str
         str_to_str_max_acc = defcat(routing_info_only, str_max_acc)
 
-#        if len(str_to_str_max_acc) <= 1:
-#            str_to_str_max_acc = defcat(
-#                routing_info_only, i_CL_Str[len(i_CL_Str) - 2, 1]
-#            )
+        #        if len(str_to_str_max_acc) <= 1:
+        #            str_to_str_max_acc = defcat(
+        #                routing_info_only, i_CL_Str[len(i_CL_Str) - 2, 1]
+        #            )
         ### create a mask for i_CL_Str[:,1], it will be true for in positon
         ### where it's value in str_to_str_max_acc
         mask = np.isin(i_CL_Str[:, 1], str_to_str_max_acc)
@@ -2175,7 +2173,7 @@ def return_interest_catchments_info(catinfo, outlet_obs_id, path_sub_reg_outlets
     if path_sub_reg_outlets_v != "#":
 
         Sub_reg_outlets = Dbf_To_Dataframe(path_sub_reg_outlets_v)["reg_subid"].values
-        Sub_reg_outlets_ids = np.unique(Sub_reg_outlets)        
+        Sub_reg_outlets_ids = np.unique(Sub_reg_outlets)
         Sub_reg_outlets_ids = Sub_reg_outlets_ids[Sub_reg_outlets_ids > 0]
 
         #### Find all obervation id that is subregion outlet
@@ -2229,4 +2227,3 @@ def return_interest_catchments_info(catinfo, outlet_obs_id, path_sub_reg_outlets
 
         catinfo = catinfo.loc[catinfo["SubId"].isin(HydroBasins)]
         return catinfo
-    

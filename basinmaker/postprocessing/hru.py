@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import tempfile
 
+
 def GenerateHRUS_qgis(
     Path_Subbasin_Ply,
     Landuse_info,
@@ -29,7 +30,7 @@ def GenerateHRUS_qgis(
     DEM="#",
     Project_crs="EPSG:3573",
     OutputFolder="#",
-    qgis_prefix_path='#',
+    qgis_prefix_path="#",
 ):
 
     """Generate HRU polygons and their attributes needed by hydrological model
@@ -1260,5 +1261,3 @@ def Define_HRU_Attributes(
         OUTPUT="memory:",
     )["OUTPUT"]
     return HRU_draf_final
-    
-    

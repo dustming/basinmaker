@@ -93,8 +93,8 @@ def obtain_lake_vectors_larger_than_threstholds(
     lake_attributes,
     threshold_con_lake,
     threshold_non_con_lake,
-    lakes_lg_cl_thres = 'lakes_lg_cl_thres',
-    lakes_lg_ncl_thres = 'lakes_lg_ncl_thres'
+    lakes_lg_cl_thres="lakes_lg_cl_thres",
+    lakes_lg_ncl_thres="lakes_lg_ncl_thres",
 ):
 
     QgsApplication.setPrefixPath(qgis_prefix_path, True)
@@ -110,7 +110,7 @@ def obtain_lake_vectors_larger_than_threstholds(
     context = dataobjects.createContext()
     context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
 
-    print(threshold_con_lake,threshold_non_con_lake,lake_attributes[2])
+    print(threshold_con_lake, threshold_non_con_lake, lake_attributes[2])
     qgis_vector_extract_by_attribute(
         processing,
         context,
@@ -119,7 +119,7 @@ def obtain_lake_vectors_larger_than_threstholds(
         OPERATOR=2,
         VALUE=threshold_con_lake,
         OUTPUT=os.path.join(grassdb, lakes_lg_cl_thres + ".shp"),
-    )   
+    )
 
     qgis_vector_extract_by_attribute(
         processing,
@@ -129,5 +129,5 @@ def obtain_lake_vectors_larger_than_threstholds(
         OPERATOR=2,
         VALUE=threshold_non_con_lake,
         OUTPUT=os.path.join(grassdb, lakes_lg_ncl_thres + ".shp"),
-    ) 
-    Qgs.exit() 
+    )
+    Qgs.exit()

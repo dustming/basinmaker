@@ -7,6 +7,7 @@ import sqlite3
 import pandas as pd
 from preprocessing.preprocessrasterqgis import preprocess_raster
 
+
 def calculate_flood_plain_manning_n(
     grassdb,
     grass_location,
@@ -16,16 +17,16 @@ def calculate_flood_plain_manning_n(
     path_landuse="#",
     path_landuse_info="#",
 ):
-    
-    mask = input_geo_names['mask']
+
+    mask = input_geo_names["mask"]
 
     preprocess_raster(
-        grassdb = grassdb,
-        grass_location = grass_location,
-        qgis_prefix_path = qgis_prefix_path,
-        mask = mask,
-        raster_path = path_landuse,
-        raster_name = 'landuse',
+        grassdb=grassdb,
+        grass_location=grass_location,
+        qgis_prefix_path=qgis_prefix_path,
+        mask=mask,
+        raster_path=path_landuse,
+        raster_name="landuse",
     )
 
     cat_riv_info = input_geo_names["cat_riv_info"]
@@ -57,8 +58,10 @@ def calculate_flood_plain_manning_n(
     )
 
     # viturally  landuse dataset
-    
-    grass_raster_r_external(grass, input=os.path.join(grassdb,'landuse_proj'+'.tif'), output="landuse_in")
+
+    grass_raster_r_external(
+        grass, input=os.path.join(grassdb, "landuse_proj" + ".tif"), output="landuse_in"
+    )
     # clip raster with mask in grass env
     grass_raster_r_clip(grass, input="landuse_in", output="landuse")
     # reclass landuse to manning's coefficient value *1000

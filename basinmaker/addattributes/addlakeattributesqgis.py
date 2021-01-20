@@ -20,7 +20,7 @@ def add_lake_attributes(
     outlet_pt_info = input_geo_names["outlet_pt_info"]
     all_lakes = input_geo_names["all_lakes"]
     lake_outflow_pourpoints = input_geo_names["lake_outflow_pourpoints"]
-    
+
     import grass.script as grass
     import grass.script.setup as gsetup
     from grass.pygrass.modules import Module
@@ -48,7 +48,7 @@ def add_lake_attributes(
         output="Connect_Lake_Cat_w_Lake_ID",
         overwrite=True,
     )
-    
+
     grass.run_command(
         "v.what.rast",
         map=outlet_pt_info,
@@ -66,9 +66,9 @@ def add_lake_attributes(
     grass.run_command(
         "v.db.addcolumn", map=lake_outflow_pourpoints, columns="lakeid int"
     )
-    
+
     grass.run_command(
-        "v.db.update", map=lake_outflow_pourpoints, column="lakeid", qcol="cat" 
+        "v.db.update", map=lake_outflow_pourpoints, column="lakeid", qcol="cat"
     )
 
     grass.run_command(
@@ -77,7 +77,7 @@ def add_lake_attributes(
         raster=catchments,
         column="SubId",
     )
-    
+
     ### read catchment
     sqlstat = "SELECT SubId,lakeid FROM %s" % (lake_outflow_pourpoints)
     lakeoutinfo = pd.read_sql_query(sqlstat, con)
@@ -87,7 +87,7 @@ def add_lake_attributes(
     sqlstat = "SELECT SubId,DowSubId,ncl,cl FROM %s" % (outlet_pt_info)
     outletinfo = pd.read_sql_query(sqlstat, con)
     outletinfo = outletinfo.fillna(-9999)
-    lakeinfo = Dbf_To_Dataframe(os.path.join(grassdb,all_lakes+'.shp'))
+    lakeinfo = Dbf_To_Dataframe(os.path.join(grassdb, all_lakes + ".shp"))
 
     for i in range(0, len(outletinfo)):
         catid = outletinfo["SubId"].values[i]
@@ -121,25 +121,25 @@ def add_lake_attributes(
             catinfo.loc[catrow, "LakeDepth"] = slakeinfo.iloc[0][lake_attributes[4]]
             catinfo.loc[catrow, "Laketype"] = slakeinfo.iloc[0][lake_attributes[1]]
 
-        #  #check if down subid of the lake cl lake catchments 
+        #  #check if down subid of the lake cl lake catchments
         # if CL_LakeId > 0:
         #     downsubid = catinfo["DowSubId"].values[catrow][0]
         #     subid_inlakes = outletinfo.loc[outletinfo["cl"] == CL_LakeId]["SubId"].values
-        #     # if downsubid is one of the lake subbasin continue, if not check if it is 
-        #     # the lake outlet 
+        #     # if downsubid is one of the lake subbasin continue, if not check if it is
+        #     # the lake outlet
         #     if downsubid in subid_inlakes and downsubid != catid:
-        #         continue 
+        #         continue
         #     i_lakeinfo = lakeoutinfo.loc[lakeoutinfo['lakeid'] == CL_LakeId]
         #     if len(i_lakeinfo) <=0:
-        #         continue 
+        #         continue
         #     lake_outlet_subid = i_lakeinfo['SubId'].values[0]
-        # 
-        #     # if catid not the lake outlet subid 
-        #     # and this cat is not flowinto the lake catchment 
-        #     # force it to flow into the lake outlet catchment 
+        #
+        #     # if catid not the lake outlet subid
+        #     # and this cat is not flowinto the lake catchment
+        #     # force it to flow into the lake outlet catchment
         #     if catid != lake_outlet_subid:
         #         catinfo.loc[catrow, "DowSubId"] = lake_outlet_subid
         #         print(CL_LakeId,catid,downsubid,lake_outlet_subid)
-                
+
     PERMANENT.close()
     return catinfo

@@ -50,7 +50,6 @@ ncores = 4
 ########### Variable needs to be modified to run this example ######
 
 
-
 Out_Sub_Reg_Folder = os.path.join(Outputfolder, "SubRegion_info")
 
 

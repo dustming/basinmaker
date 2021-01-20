@@ -1,22 +1,28 @@
 import os
-import numpy as np 
+import numpy as np
 import pytest
 import tempfile
 from basinmaker import basinmaker
 
 #############################################
-# define working folder, output folder amd data folder  
+# define working folder, output folder amd data folder
 #############################################
-num  = str(np.random.randint(1, 10000 + 1))
-path_output_folder = os.path.join(tempfile.gettempdir(), "basinmaker_exp_" +num,"output")
-path_working_folder = os.path.join(tempfile.gettempdir(), "basinmaker_exp_" +num,"work")
-datafolder = os.path.join("../../tests/testdata", "existing_lake_river_routing_structure")
+num = str(np.random.randint(1, 10000 + 1))
+path_output_folder = os.path.join(
+    tempfile.gettempdir(), "basinmaker_exp_" + num, "output"
+)
+path_working_folder = os.path.join(
+    tempfile.gettempdir(), "basinmaker_exp_" + num, "work"
+)
+datafolder = os.path.join(
+    "../../tests/testdata", "existing_lake_river_routing_structure"
+)
 demfolder = os.path.join("../../tests/testdata", "Required_data_to_start_from_dem")
 HRU_Folder = os.path.join("../../tests/testdata/", "HRU")
 
 
 #############################################
-# initialize basinmaker with working folder    
+# initialize basinmaker with working folder
 #############################################
 
 basinmaker = basinmaker(
@@ -24,20 +30,14 @@ basinmaker = basinmaker(
 )
 
 #############################################
-# define hurs    
+# define hurs
 #############################################
 basinmaker.generate_hrus_methods(
     OutputFolder=path_output_folder,
-    Path_Subbasin_Ply=os.path.join(
-        datafolder, "finalcat_info.shp"
-    ),
-    Path_Connect_Lake_ply=os.path.join(
-        datafolder, "sl_connected_lake.shp"
-    ),
-    Path_Non_Connect_Lake_ply=os.path.join(
-        datafolder, "sl_non_connected_lake.shp"
-    ),
-    Lake_Id="Hylak_id",    
+    Path_Subbasin_Ply=os.path.join(datafolder, "finalcat_info.shp"),
+    Path_Connect_Lake_ply=os.path.join(datafolder, "sl_connected_lake.shp"),
+    Path_Non_Connect_Lake_ply=os.path.join(datafolder, "sl_non_connected_lake.shp"),
+    Lake_Id="Hylak_id",
     Path_Landuse_Ply="#",
     Landuse_ID="Landuse_ID",
     Path_Soil_Ply="#",
@@ -57,11 +57,11 @@ basinmaker.generate_hrus_methods(
 
 
 #############################################
-# generate raven inputs    
+# generate raven inputs
 #############################################
 
 basinmaker.generate_raven_model_inputs_method(
-    path_final_hru_info=os.path.join(path_output_folder,'finalcat_hru_info.shp'),
+    path_final_hru_info=os.path.join(path_output_folder, "finalcat_hru_info.shp"),
     startyear=2010,
     endYear=2014,
     CA_HYDAT="#",

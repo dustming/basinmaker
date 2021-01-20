@@ -27,7 +27,7 @@ def calculate_basic_attributes(
     cat_use_default_acc = input_geo_names["cat_use_default_acc"]
     problem_seg = input_geo_names["problem_seg"]
     nfdr_arcgis = input_geo_names["nfdr_arcgis"]
-    
+
     import grass.script as grass
     import grass.script.setup as gsetup
     from grass.pygrass.modules import Module
@@ -278,7 +278,7 @@ def calculate_basic_attributes(
         overwrite=True,
     )
 
-    ##### obtain catment id overlaied with problem seg 
+    ##### obtain catment id overlaied with problem seg
     prom_seg_id, cat_pro_id = generate_stats_list_from_grass_raster(
         grass, mode=2, input_a=problem_seg, input_b=catchments
     )
@@ -290,7 +290,7 @@ def calculate_basic_attributes(
         )
     else:
         cat_pro_id = []
-          
+
     exp = "acc_grass_CatOL2 = if(isnull(%s),%s,%s)" % (
         cat_use_default_acc,
         "acc_grass_CatOL",
@@ -311,10 +311,9 @@ def calculate_basic_attributes(
         str=river_r,
     )
 
-
     cat_array = garray.array(mapname=catchments)
     nfdr_arcgis_array = garray.array(mapname=nfdr_arcgis)
-    cat_outlet_array = garray.array(mapname='Final_OL')
+    cat_outlet_array = garray.array(mapname="Final_OL")
     ncols = int(cat_array.shape[1])
     nrows = int(cat_array.shape[0])
 
@@ -342,8 +341,10 @@ def calculate_basic_attributes(
         DownSubID = outletinfo["DowSubId"].values[i]
         catinfo.loc[i, "SubId"] = catid
         if catid in cat_pro_id or DownSubID == catid:
-            downsubid_array = return_subid_of_next_down_stream_grids(cat_array,catid,nfdr_arcgis_array,cat_outlet_array,ncols,nrows)
-#            print(catid,DownSubID,downsubid_array)
+            downsubid_array = return_subid_of_next_down_stream_grids(
+                cat_array, catid, nfdr_arcgis_array, cat_outlet_array, ncols, nrows
+            )
+            #            print(catid,DownSubID,downsubid_array)
             if downsubid_array > 0:
                 DownSubID = downsubid_array
         ### change the downsub id to -1 for watershed outlet

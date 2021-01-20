@@ -21,7 +21,7 @@ def delineate_watershed_no_lake_using_fdr(
     max_memroy,
 ):
     mask = input_geo_names["mask"]
-    
+
     import grass.script as grass
     import grass.script.setup as gsetup
     from grass.pygrass.modules import Module

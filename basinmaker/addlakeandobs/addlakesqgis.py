@@ -56,8 +56,8 @@ def add_lakes_into_existing_watershed_delineation(
     lake_boundary = Internal_Constant_Names["lake_boundary"]
     connected_lake = Internal_Constant_Names["connect_lake"]
     non_connected_lake = Internal_Constant_Names["nonconnect_lake"]
-    lakes_lg_cl_thres = 'lakes_lg_cl_thres'
-    lakes_lg_ncl_thres = 'lakes_lg_ncl_thres'
+    lakes_lg_cl_thres = "lakes_lg_cl_thres"
+    lakes_lg_ncl_thres = "lakes_lg_ncl_thres"
     # prepropessing lakes inputs
     if path_lakefile_in == "#":
         import grass.script as grass
@@ -96,13 +96,13 @@ def add_lakes_into_existing_watershed_delineation(
         grassdb=grassdb,
         grass_location=grass_location,
         qgis_prefix_path=qgis_prefix_path,
-        threshold_con_lake = threshold_con_lake,
-        threshold_non_con_lake = threshold_non_con_lake,
+        threshold_con_lake=threshold_con_lake,
+        threshold_non_con_lake=threshold_non_con_lake,
         gis_platform="qgis",
         lake_name=alllake,
         lake_boundary_name=lake_boundary,
-        lakes_lg_cl_thres = lakes_lg_cl_thres,
-        lakes_lg_ncl_thres = lakes_lg_ncl_thres
+        lakes_lg_cl_thres=lakes_lg_cl_thres,
+        lakes_lg_ncl_thres=lakes_lg_ncl_thres,
     )
 
     import grass.script as grass
@@ -129,9 +129,9 @@ def add_lakes_into_existing_watershed_delineation(
     grass_raster_r_mapcalc(grass, exp)
     exp = "%s = int(%s)" % (lake_boundary, lake_boundary)
     grass_raster_r_mapcalc(grass, exp)
-
-   #Define connected and non connected lakes and
-   #identify which str make certain lake have two outlet
+    
+    # Define connected and non connected lakes and
+    # identify which str make certain lake have two outlet
     define_connected_and_non_connected_lake_type(
         grass,
         con,
@@ -146,9 +146,9 @@ def add_lakes_into_existing_watershed_delineation(
     select_lakes_by_area_r(
         grass=grass,
         con=con,
-        str_r = str_r,
-        lakes_lg_cl_thres = lakes_lg_cl_thres,
-        lakes_lg_ncl_thres = lakes_lg_ncl_thres,
+        str_r=str_r,
+        lakes_lg_cl_thres=lakes_lg_cl_thres,
+        lakes_lg_ncl_thres=lakes_lg_ncl_thres,
         lakes=alllake,
         connected_lake=connected_lake,
         non_connected_lake=non_connected_lake,
@@ -183,7 +183,7 @@ def add_lakes_into_existing_watershed_delineation(
         overwrite=True,
         memory=max_memroy,
     )
-    
+
     cat_withlake_array = garray.array(mapname=cat_add_lake_old_fdr)
     fdr_arcgis_array = garray.array(mapname=fdr_arcgis)
     str_r_array = garray.array(mapname=str_r)
@@ -192,7 +192,7 @@ def add_lakes_into_existing_watershed_delineation(
     ncols = int(cat_withlake_array.shape[1])
     nrows = int(cat_withlake_array.shape[0])
     lake_boundary_array = garray.array(mapname=lake_boundary)
-    
+
     maximumLakegrids = 1000000000
     pec_grid_outlier = 1
     un_modify_fdr_lakeids = []
@@ -209,21 +209,20 @@ def add_lakes_into_existing_watershed_delineation(
         maximumLakegrids,
         un_modify_fdr_lakeids,
     )
-    
+
     temparray = garray.array()
-    
+
     temparray[:, :] = ndir[:, :]
     temparray.write(mapname=nfdr_arcgis, overwrite=True)
     grass.run_command("r.null", map=nfdr_arcgis, setnull=-9999)
-     
-    temparray[:, :] = chandir[:, :]
-    temparray.write(mapname='chandir', overwrite=True)
-    grass.run_command("r.null", map='chandir', setnull=-9999)
-    
-    temparray[:, :] = bd_problem[:, :]
-    temparray.write(mapname='bd_problem', overwrite=True)
-    grass.run_command("r.null", map='bd_problem', setnull=-9999)
 
+    temparray[:, :] = chandir[:, :]
+    temparray.write(mapname="chandir", overwrite=True)
+    grass.run_command("r.null", map="chandir", setnull=-9999)
+
+    temparray[:, :] = bd_problem[:, :]
+    temparray.write(mapname="bd_problem", overwrite=True)
+    grass.run_command("r.null", map="bd_problem", setnull=-9999)
 
     grass.run_command(
         "r.reclass",
@@ -241,37 +240,42 @@ def add_lakes_into_existing_watershed_delineation(
         overwrite=True,
         memory=max_memroy,
     )
-    
+
     grass.run_command("g.copy", rast=(cat_no_lake, cat_use_default_acc), overwrite=True)
-    grass.run_command("g.copy", rast=(str_r, 'good_seg'), overwrite=True)
+    grass.run_command("g.copy", rast=(str_r, "good_seg"), overwrite=True)
 
     if len(Remove_Str) > 0:
         grass.run_command(
             "r.null", map=cat_use_default_acc, setnull=Remove_Str, overwrite=True
-        ) 
-        grass.run_command(
-            "r.null", map='good_seg', setnull=Remove_Str, overwrite=True
         )
-        
-        exp = "prob_seg_str = if(isnull(good_seg),%s,null())" % (str_r)
-        grass_raster_r_mapcalc(grass,expression=exp)
+        grass.run_command("r.null", map="good_seg", setnull=Remove_Str, overwrite=True)
 
-        exp = "prob_seg_str_w_lid = if(isnull(prob_seg_str),null(),%s)" % (sl_connected_lake)
-        grass_raster_r_mapcalc(grass,expression=exp)
-        
-        grass.run_command("g.copy", rast=('prob_seg_str_w_lid', 'prob_seg_lake'), overwrite=True)
-        
+        exp = "prob_seg_str = if(isnull(good_seg),%s,null())" % (str_r)
+        grass_raster_r_mapcalc(grass, expression=exp)
+
+        exp = "prob_seg_str_w_lid = if(isnull(prob_seg_str),null(),%s)" % (
+            sl_connected_lake
+        )
+        grass_raster_r_mapcalc(grass, expression=exp)
+
         grass.run_command(
-            "r.null", map='prob_seg_lake', setnull=Lakes_WIth_Multi_Outlet, overwrite=True
+            "g.copy", rast=("prob_seg_str_w_lid", "prob_seg_lake"), overwrite=True
+        )
+
+        grass.run_command(
+            "r.null",
+            map="prob_seg_lake",
+            setnull=Lakes_WIth_Multi_Outlet,
+            overwrite=True,
         )
 
         exp = "%s = if(isnull(prob_seg_lake),prob_seg_str_w_lid,null())" % (problem_seg)
-        grass_raster_r_mapcalc(grass,expression=exp)
-    
+        grass_raster_r_mapcalc(grass, expression=exp)
+
     else:
-        exp = "%s = if(isnull(%s),null(),null())" % (problem_seg,'good_seg')
-        grass_raster_r_mapcalc(grass,expression=exp)
-                      
+        exp = "%s = if(isnull(%s),null(),null())" % (problem_seg, "good_seg")
+        grass_raster_r_mapcalc(grass, expression=exp)
+
     grass.run_command(
         "r.to.vect",
         input=problem_seg,
@@ -279,13 +283,13 @@ def add_lakes_into_existing_watershed_delineation(
         type="point",
         overwrite=True,
         flags="v",
-    )        
-        
+    )
+
     print("Following lake have multi outlet ")
     print(Lakes_WIth_Multi_Outlet)
     print("following str are corrected to make one lake one outlet")
     print(Remove_Str)
-    
+
     grass.run_command(
         "v.out.ogr",
         input=catchment_pourpoints_outside_lake,
