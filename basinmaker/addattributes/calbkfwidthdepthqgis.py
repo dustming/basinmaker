@@ -42,29 +42,6 @@ def calculate_bankfull_width_depth_from_polyline(
             ply_name="bkf_width_depth",
         )
 
-    if k_in < 0 and c_in < 0:
-        bkf_width_depth = Dbf_To_Dataframe(
-            os.path.join(grassdb, "bkf_width_depth" + ".shp")
-        )
-        da_q = bkf_width_depth[[bkfwd_attributes[3], bkfwd_attributes[2]]].values
-        if len(da_q) > 3:
-            k, c = return_k_and_c_in_q_da_relationship(da_q)
-        elif len(da_q) > 0 and len(da_q) <= 3:
-            k = -1
-            c = -1
-            default_bkf_width = np.average(bkf_width_depth[bkfwd_attributes[0]])
-            default_bkf_depth = np.average(bkf_width_depth[bkfwd_attributes[1]])
-            default_bkf_q = np.average(bkf_width_depth[bkfwd_attributes[3]])
-        else:
-            k = -1
-            c = -1
-    else:
-        k = k_in
-        c = c_in
-
-    if return_k_c_only:
-        return k, c
-
     import grass.script as grass
     import grass.script.setup as gsetup
     from grass.pygrass.modules import Module
@@ -83,6 +60,47 @@ def calculate_bankfull_width_depth_from_polyline(
     con = sqlite3.connect(
         os.path.join(grassdb, grass_location, "PERMANENT", "sqlite", "sqlite.db")
     )
+
+    if path_bkfwidthdepth !='#':
+        grass.run_command(
+            "v.import",
+            input=os.path.join(grassdb, "bkf_width_depth" + ".shp"),
+            output='bk_full_wid_depth',
+            overwrite=True,
+        )
+
+    if k_in < 0 and c_in < 0:
+        ### read catchment
+        sqlstat = "SELECT %s,%s,%s,%s FROM %s" % (
+            bkfwd_attributes[3],
+            bkfwd_attributes[2],
+            bkfwd_attributes[1],
+            bkfwd_attributes[0],
+            'bk_full_wid_depth',
+        )
+        bkf_width_depth = pd.read_sql_query(sqlstat, con)
+        bkf_width_depth = bkf_width_depth.fillna(-9999)
+
+        da_q = bkf_width_depth[[bkfwd_attributes[3], bkfwd_attributes[2]]].values
+        
+        if len(da_q) > 3:
+            k, c = return_k_and_c_in_q_da_relationship(da_q)
+        elif len(da_q) > 0 and len(da_q) <= 3:
+            k = -1
+            c = -1
+            default_bkf_width = np.average(bkf_width_depth[bkfwd_attributes[0]])
+            default_bkf_depth = np.average(bkf_width_depth[bkfwd_attributes[1]])
+            default_bkf_q = np.average(bkf_width_depth[bkfwd_attributes[3]])
+        else:
+            k = -1
+            c = -1
+    else:
+        k = k_in
+        c = c_in
+        
+    if return_k_c_only:
+        return k, c
+
     idx = catinfo.index
     for i in range(0, len(idx)):
         idx_i = idx[i]
