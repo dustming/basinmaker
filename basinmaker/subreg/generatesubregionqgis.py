@@ -338,6 +338,7 @@ def generatesubdomainmaskandinfo(
     subregin_info["Nun_Grids"] = -9999
     subregin_info["Ply_Name"] = -9999
     subregin_info["Max_ACC"] = -9999
+    subregin_info["ILpt_ID"] = -9999
     
     for i in range(0, len(outletinfo)):
     
@@ -435,10 +436,11 @@ def generatesubdomainmaskandinfo(
         basinid = int(outletinfo['SubId'].values[i])
         dowsubreginid = int(outletinfo['DowSubId'].values[i])
         ILpt_ID = outletinfo['ILpt_ID'].values[i]
-        downsubid_inlet = inletinfo[inletinfo['ILpt_ID'] ==ILpt_ID]['SubId_I'].values[0]
-        
-        if dowsubreginid != downsubid_inlet:
-            problem_subid.append(basinid)
+        subregin_info.loc[i,"ILpt_ID"] = ILpt_ID
+        if len(inletinfo[inletinfo['ILpt_ID'] ==ILpt_ID]['SubId_I']) > 0:
+            downsubid_inlet = inletinfo[inletinfo['ILpt_ID'] ==ILpt_ID]['SubId_I'].values[0]        
+            if dowsubreginid != downsubid_inlet:
+                problem_subid.append(basinid)
         
         catacc = int(outletinfo['MaxAcc_cat'].values[i])
         
@@ -589,14 +591,16 @@ def Combine_Sub_Region_Results(
     -------
 
     """
-    
+    maximum_obs_id = 80000
     if not os.path.exists(OutputFolder):
         os.makedirs(OutputFolder)
         
     tempfolder = os.path.join(
         tempfile.gettempdir(), "basinmaker_comsubreg" + str(np.random.randint(1, 10000 + 1))
     )
-    
+    if not os.path.exists(tempfolder):
+        os.makedirs(tempfolder)
+            
     QgsApplication.setPrefixPath(qgis_prefix_path, True)
     Qgs = QgsApplication([], False)
     Qgs.initQgis()
@@ -626,12 +630,12 @@ def Combine_Sub_Region_Results(
     ### add new attribte
     ### find outlet subregion id
     outlet_subregion_id = Sub_Region_info.loc[
-        Sub_Region_info["Dow_Sub_Reg_Id"] == self.maximum_obs_id - 1
+        Sub_Region_info["Dow_Sub_Reg_Id"] == maximum_obs_id - 1
     ]["Sub_Reg_ID"].values[0]
     routing_info = (
         Sub_Region_info[["Sub_Reg_ID", "Dow_Sub_Reg_Id"]].astype("float").values
     )
-    Subregion_to_outlet = Defcat(routing_info, outlet_subregion_id)
+    Subregion_to_outlet = defcat(routing_info, outlet_subregion_id)
 
     ###remove subregions do not drainge to outlet subregion
     Sub_Region_info = Sub_Region_info.loc[
@@ -783,7 +787,7 @@ def Combine_Sub_Region_Results(
             "    the start new subid is    ",
             subid_strat_iregion,
             " The end of subid is ",
-            min(SubID_info["nSubId"]),
+            max(SubID_info["nSubId"]),
         )
 
         subid_strat_iregion = max(SubID_info["nSubId"]) + 10
@@ -808,13 +812,13 @@ def Combine_Sub_Region_Results(
         )
 
     # merge observation points
-    if len(Paths_obs_point) > 0:
-        qgis_vector_merge_vector_layers(
-            processing,
-            context,
-            INPUT_Layer_List=Paths_obs_point,
-            OUTPUT=os.path.join(OutputFolder, "obs_gauges.shp"),
-        )
+    # if len(Paths_obs_point) > 0:
+    #     qgis_vector_merge_vector_layers(
+    #         processing,
+    #         context,
+    #         INPUT_Layer_List=Paths_obs_point,
+    #         OUTPUT=os.path.join(OutputFolder, "obs_gauges.shp"),
+    #     )
 
     # merge catchment polygon and polyline layers, and update their attirbutes
     if Is_Final_Result == 1:
@@ -867,11 +871,15 @@ def Combine_Sub_Region_Results(
         Copy_Pddataframe_to_shpfile(
             os.path.join(tempfolder, "finalcat_info.shp"),
             AllCatinfo,
+            link_col_nm_shp="SubId",
+            link_col_nm_df="SubId",
             UpdateColNM=["DowSubId", "DA", "Strahler"],
         )
         Copy_Pddataframe_to_shpfile(
             os.path.join(tempfolder, "finalcat_info_riv.shp"),
             AllCatinfo,
+            link_col_nm_shp="SubId",
+            link_col_nm_df="SubId",
             UpdateColNM=["DowSubId", "DA", "Strahler"],
         )
 
@@ -944,13 +952,15 @@ def Combine_Sub_Region_Results(
         Copy_Pddataframe_to_shpfile(
             os.path.join(tempfolder, "finalriv_info_ply.shp"),
             AllCatinfo,
-            link_col_nm="SubId",
+            link_col_nm_shp="SubId",
+            link_col_nm_df="SubId",
             UpdateColNM=["DowSubId", "DA", "Strahler"],
         )
         Copy_Pddataframe_to_shpfile(
             os.path.join(tempfolder, "finalriv_info.shp"),
             AllCatinfo,
-            link_col_nm="SubId",
+            link_col_nm_shp="SubId",
+            link_col_nm_df="SubId",
             UpdateColNM=["DowSubId", "DA", "Strahler"],
         )
 

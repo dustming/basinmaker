@@ -634,6 +634,9 @@ def Connect_SubRegion_Update_DownSubId(AllCatinfo, DownCatinfo, Sub_Region_info)
 
         ### obtain all subbasin data for i isubregion
         isubregion = Sub_Region_info["Sub_Reg_ID"].values[i]
+        # get link id for corresponding down stream sub region inlet point 
+        ILpt_ID = Sub_Region_info["ILpt_ID"].values[i]
+        
         Sub_Region_cat_info = AllCatinfo.loc[
             AllCatinfo["Region_ID"] == isubregion
         ].copy()
@@ -664,7 +667,7 @@ def Connect_SubRegion_Update_DownSubId(AllCatinfo, DownCatinfo, Sub_Region_info)
             continue
 
         ### find downstrem subbasin id of outlet subbasin
-        Down_Sub_info = DownCatinfo.loc[DownCatinfo["sub_reg_id"] == Dow_Sub_Region_id].copy()
+        Down_Sub_info = DownCatinfo.loc[DownCatinfo["ILpt_ID"] == ILpt_ID].copy()
 
         if len(Down_Sub_info) == 1:  ###
             DownSubid = Down_Sub_info["SubId"].values[0]
@@ -677,18 +680,6 @@ def Connect_SubRegion_Update_DownSubId(AllCatinfo, DownCatinfo, Sub_Region_info)
         elif Dow_Sub_Region_id == 79999:
             AllCatinfo.loc[AllCatinfo["SubId"] == iReg_Outlet_Subid, "DowSubId"] = -1
         else:
-            ### find if there is other subabsin drainage to this watershed
-            AllUpper_Subregions = DownCatinfo.loc[
-                DownCatinfo["Region_ID"] == Dow_Sub_Region_id
-            ].copy()
-            if len(AllUpper_Subregions) == 1:
-                DownSubid = AllUpper_Subregions["SubId"].values[
-                    0
-                ]  ### share the same points
-                AllCatinfo.loc[
-                    AllCatinfo["SubId"] == iReg_Outlet_Subid, "DowSubId"
-                ] = DownSubid
-            else:
                 print("##################################################")
                 print("Subregion : ", isubregion, "   To  ", Dow_Sub_Region_id)
                 print("Need be manually connected")

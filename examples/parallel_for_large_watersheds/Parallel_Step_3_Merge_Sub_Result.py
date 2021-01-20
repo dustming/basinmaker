@@ -34,46 +34,30 @@ import timeit
 
 import pandas as pd
 
-from ToolboxClass import LRRT
+from basinmaker import basinmaker
 
 ############ Variable needs to be modified to run this example ######
 
 ### Define a output folder where to store subregion information
 Outputfolder = "C:/Users/dustm/OneDrive - University of Waterloo/Documents/ProjectData/Petawawa/lake_of_woods/"
 
-### The BasinMaker folder
-BasinMaker_Folder = "C:/Users/dustm/Documents/GitHub/RoutingTool"
-
-############ Variable needs to be modified to run this example ######
-
-
-### Define derived folder
-DataBase_Folder = os.path.join(
-    BasinMaker_Folder,
-    "Toolbox_QGIS",
-    "tests",
-    "testdata",
-    "Required_data_to_start_from_dem",
-)
-Sub_Region_OutputFolder = Outputfolder
+########### Variable needs to be modified to run this example ######
 Out_Sub_Reg_Dem_Folder = os.path.join(Outputfolder, "SubRegion_info")
-OutputFolder_Combined = os.path.join(Outputfolder, "Combined")
-
+Sub_Region_OutputFolder = os.path.join(Out_Sub_Reg_Dem_Folder,'subregion_result')
+OutputFolder_Combined = os.path.join(Out_Sub_Reg_Dem_Folder, "Combined")
+path_subregion_inlet = os.path.join(Out_Sub_Reg_Dem_Folder,'sub_reg_inlet.shp')
 ####
 SubReg_info = pd.read_csv(os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_reg_info.csv"))
+path_working_folder = Out_Sub_Reg_Dem_Folder
 
 start = timeit.default_timer()
-
-RTtool = LRRT()
-RTtool.Combine_Sub_Region_Results(
-    Sub_Region_info=SubReg_info,
-    Sub_Region_OutputFolder=Sub_Region_OutputFolder,
-    Path_Down_Stream_Points=os.path.join(
-        Out_Sub_Reg_Dem_Folder, "Sub_Reg_Outlets_Down.shp"
-    ),
-    Is_Final_Result=True,
-    OutputFolder=OutputFolder_Combined,
+### initialize the toolbox
+basinmaker = basinmaker(
+   path_working_folder = Out_Sub_Reg_Dem_Folder
 )
+
+basinmaker.combine_sub_region_results_method(path_sub_region_info =SubReg_info,sub_region_outputfolder =Sub_Region_OutputFolder,outputfolder = OutputFolder_Combined,is_final_result=False,path_subregion_inlet = path_subregion_inlet,gis_platform="qgis")
+
 End = timeit.default_timer()
 
 print("use    ", start - End)

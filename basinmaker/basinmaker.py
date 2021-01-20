@@ -1140,6 +1140,32 @@ class basinmaker:
             sub_reg_dem = self.geofilenames["sub_reg_dem"],
             gis_platform=gis_platform,
         )
+
+    def combine_sub_region_results_method(
+        self,
+        path_sub_region_info,
+        sub_region_outputfolder,
+        outputfolder,
+        is_final_result,
+        path_subregion_inlet,
+        gis_platform="qgis",
+    ):
+
+        from subreg.defsubreg import (
+            combine_sub_region,
+        )
+
+        combine_sub_region(
+            path_sub_region_info = path_sub_region_info,
+            sub_region_outputfolder = sub_region_outputfolder,
+            outputfolder = outputfolder,
+            is_final_result = is_final_result,
+            qgis_prefix_path = self.qgispp,
+            path_subregion_inlet = path_subregion_inlet,
+        )
+
+
+
         
     def generate_raven_model_inputs_method(
         self,

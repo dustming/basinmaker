@@ -79,3 +79,28 @@ def divide_domain_into_sub_regions(
             bkfwd_attributes = bkfwd_attributes,
         )
 
+
+def combine_sub_region(
+    path_sub_region_info,
+    sub_region_outputfolder,
+    outputfolder,
+    is_final_result,
+    qgis_prefix_path,
+    path_subregion_inlet,
+    gis_platform="qgis",
+):
+    if gis_platform == "qgis":
+        assert (
+            qgis_prefix_path != "#"
+        ), "qgis prefix path is needed, when gis_platform = qgis"
+        from subreg.generatesubregionqgis import (
+            Combine_Sub_Region_Results
+        )
+        Combine_Sub_Region_Results(
+            Sub_Region_info = path_sub_region_info,
+            Sub_Region_OutputFolder = sub_region_outputfolder,
+            OutputFolder = outputfolder,
+            Is_Final_Result = is_final_result,
+            qgis_prefix_path = qgis_prefix_path,
+            subregion_inlet = path_subregion_inlet,
+        )        
