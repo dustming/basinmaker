@@ -544,6 +544,13 @@ def generatesubdomainmaskandinfo(
         output=os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_Reg_Outlet_v"+".pack"),
         overwrite=True,
     )
+    grass.run_command(
+        "r.pack",
+        input='Final_OL',
+        output=os.path.join(Out_Sub_Reg_Dem_Folder, "Sub_Reg_Outlet_r"+".pack"),
+        overwrite=True,
+    )
+
     print("following subregion's inlet needs to be checked ")
     print(problem_subid)
     
