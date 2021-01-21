@@ -850,7 +850,7 @@ def Combine_Sub_Region_Results(
             processing,
             context,
             INPUT_Layer_List=Paths_Con_Lake_ply,
-            OUTPUT=os.path.join(OutputFolder, "Con_Lake_Ply.shp"),
+            OUTPUT=os.path.join(OutputFolder, "sl_connected_lake.shp"),
         )
 
     # merge non connected lake polygon
@@ -859,7 +859,7 @@ def Combine_Sub_Region_Results(
             processing,
             context,
             INPUT_Layer_List=Paths_None_Con_Lake_ply,
-            OUTPUT=os.path.join(OutputFolder, "Non_Con_Lake_Ply.shp"),
+            OUTPUT=os.path.join(OutputFolder, "sl_non_connected_lake.shp"),
         )
 
     # merge observation points
@@ -941,6 +941,11 @@ def Combine_Sub_Region_Results(
             },
             context=context,
         )
+
+        Clean_Attribute_Name(
+            os.path.join(OutputFolder, "finalcat_info.shp"), COLUMN_NAMES_CONSTANT
+        )
+
         processing.run(
             "native:dissolve",
             {
@@ -950,6 +955,10 @@ def Combine_Sub_Region_Results(
             },
             context=context,
         )
+        Clean_Attribute_Name(
+            os.path.join(OutputFolder, "finalcat_info_riv.shp"), COLUMN_NAMES_CONSTANT
+        )
+
 
     else:
         qgis_vector_merge_vector_layers(
@@ -1016,16 +1025,25 @@ def Combine_Sub_Region_Results(
             {
                 "INPUT": os.path.join(tempfolder, "finalriv_info_ply.shp"),
                 "FIELD": ["SubId"],
-                "OUTPUT": os.path.join(OutputFolder, "finalriv_info_ply.shp"),
+                "OUTPUT": os.path.join(OutputFolder, "catchment_without_merging_lakes.shp"),
             },
             context=context,
         )
+
+        Clean_Attribute_Name(
+            os.path.join(OutputFolder, "catchment_without_merging_lakes.shp"), COLUMN_NAMES_CONSTANT
+        )
+
         processing.run(
             "native:dissolve",
             {
                 "INPUT": os.path.join(tempfolder, "finalriv_info.shp"),
                 "FIELD": ["SubId"],
-                "OUTPUT": os.path.join(OutputFolder, "finalriv_info.shp"),
+                "OUTPUT": os.path.join(OutputFolder, "river_without_merging_lakes.shp"),
             },
             context=context,
+        )
+
+        Clean_Attribute_Name(
+            os.path.join(OutputFolder, "river_without_merging_lakes.shp"), COLUMN_NAMES_CONSTANT
         )
