@@ -667,7 +667,7 @@ def Connect_SubRegion_Update_DownSubId(AllCatinfo, DownCatinfo, Sub_Region_info)
         ### find downstrem subbasin id of outlet subbasin
         Down_Sub_info = DownCatinfo.loc[DownCatinfo["ILpt_ID"] == ILpt_ID].copy()
 
-        if len(Down_Sub_info) == 1:  ###
+        if len(Down_Sub_info) == 1 and Dow_Sub_Region_id != 79999:  ###
             DownSubid = Down_Sub_info["SubId"].values[0]
             AllCatinfo.loc[
                 AllCatinfo["SubId"] == iReg_Outlet_Subid, "DowSubId"

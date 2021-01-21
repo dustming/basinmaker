@@ -136,7 +136,7 @@ def define_cat_and_riv_without_merge_lake_cats(
         )
         grass.run_command("r.mapcalc", expression=exp, overwrite=True)
 
-        exp = "%s = if(isnull(%s),null(),%s)" % (
+        exp = "%s = if(isnull(int(%s)),null(),%s)" % (
             river_without_merging_lakes,
             str_r,
             catchment_without_merging_lakes,
@@ -172,7 +172,7 @@ def define_cat_and_riv_without_merge_lake_cats(
             overwrite=True,
         )
 
-        exp = "%s = if(isnull(%s),null(),%s)" % (
+        exp = "%s = if(isnull(int(%s)),null(),%s)" % (
             river_without_merging_lakes,
             str_r,
             catchment_without_merging_lakes,

@@ -18,7 +18,7 @@ def define_connected_and_non_connected_lake_type(
 ):
 
     #### overlay str and lakes
-    exp = "%s = if(isnull('%s'),null(),%s)" % (str_connected_lake, str_r, lake)
+    exp = "%s = if(isnull(int(%s)),null(),%s)" % (str_connected_lake, str_r, lake)
     grass.run_command("r.mapcalc", expression=exp, overwrite=True)
 
     ### obtain connected lake ids
@@ -31,7 +31,7 @@ def define_connected_and_non_connected_lake_type(
         "r.null", map=non_connected_lake, setnull=Connect_Lake_Ids, overwrite=True
     )
     #### create potential connected lake raster
-    exp = "%s = if(isnull('%s'),%s,null())" % (connected_lake, non_connected_lake, lake)
+    exp = "%s = if(isnull(int(%s)),%s,null())" % (connected_lake, non_connected_lake, lake)
     grass.run_command("r.mapcalc", expression=exp, overwrite=True)
 
     return

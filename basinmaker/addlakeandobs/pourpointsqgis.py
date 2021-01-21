@@ -48,7 +48,7 @@ def define_pour_points_with_lakes(
     # add lake inlets
 
     #### overlay str and lakes
-    exp = "%s = if(isnull('%s'),null(),%s)" % (
+    exp = "%s = if(isnull(int(%s)),null(),%s)" % (
         "connect_lake_str",
         sl_str_connected_lake,
         str_r,

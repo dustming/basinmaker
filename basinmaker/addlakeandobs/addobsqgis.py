@@ -148,7 +148,7 @@ def add_obs_into_existing_watershed_delineation(
             use="attr",
         )
         # added into observation raster point
-        exp = "%s = if(isnull(Sub_reg_outlets),%s,Sub_reg_outlets)" % (
+        exp = "%s = if(isnull(int(Sub_reg_outlets)),%s,Sub_reg_outlets)" % (
             obsname,
             obsname + "1",
         )
@@ -195,7 +195,7 @@ def add_obs_into_existing_watershed_delineation(
 
         # combine lake and obs pourpoints
         # combine obsoutlets and outlet from cat no lake
-        exp = "'%s' =if(isnull(%s),%s,%s)" % (
+        exp = "'%s' =if(isnull(int(%s)),%s,%s)" % (
             pourpoints_add_obs,
             pourpoints_with_lakes,
             obsname + "2",

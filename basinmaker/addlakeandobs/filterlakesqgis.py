@@ -91,14 +91,14 @@ def select_lakes_by_area_r(
     )
     grass.run_command("r.mapcalc", expression=exp, overwrite=True)
 
-    exp = "%s = if(isnull('%s'),int(%s),int(%s))" % (
+    exp = "%s = if(isnull(%s),int(%s),int(%s))" % (
         sl_lakes,
         sl_connected_lake,
         sl_non_connected_lake,
         sl_connected_lake,
     )
     grass.run_command("r.mapcalc", expression=exp, overwrite=True)
-    exp = "%s = if(isnull('%s'),null(),%s)" % (
+    exp = "%s = if(isnull(int(%s)),null(),%s)" % (
         sl_str_connected_lake,
         str_r,
         sl_connected_lake,
