@@ -151,11 +151,15 @@ def modify_lakes_flow_direction(
         all_good_start_points = copy.copy(good_starts_points)
         idx_good_all = idx_good + 1
         iter = 0
-        good_starts_points = good_starts_points[good_starts_points[:,0] > 0]
-        problem_points = problem_points[problem_points[:,0] > 0]
+        good_starts_points = good_starts_points[good_starts_points[:, 0] > 0]
+        problem_points = problem_points[problem_points[:, 0] > 0]
         # print("#################################")
         # loop until all len problem_points is zero or iteration times exceed
-        while iter < np.sum(BD_Out_Lakecat_mask) + 10 and len(problem_points) > 0 and len(good_starts_points) > 0:
+        while (
+            iter < np.sum(BD_Out_Lakecat_mask) + 10
+            and len(problem_points) > 0
+            and len(good_starts_points) > 0
+        ):
             iter = iter + 1
             idx_good_loop = 0
             new_good_starts_points = np.full((len(BD_Out_Lakecat_mask) + 30, 2), -9999)
@@ -165,7 +169,7 @@ def modify_lakes_flow_direction(
             # print(len(all_good_start_points[all_good_start_points[:,0] > 0]))
             # print(len(good_starts_points))
             # print(good_starts_points)
- 
+
             for i in range(0, len(good_starts_points)):
                 trow = good_starts_points[i, 0]
                 tcol = good_starts_points[i, 1]
@@ -207,18 +211,20 @@ def modify_lakes_flow_direction(
                 # print(new_good_starts_points[new_good_starts_points[:,0]>0])
                 # print("###")
             # keep only larger
-            good_starts_points = new_good_starts_points[new_good_starts_points[:, 0] > 0]
-        
-        ## in case some point is missed, loop problem point again 
-        iter = 0
-        while (iter < np.sum(BD_Out_Lakecat_mask) + 10 and len(problem_points) > 0):
+            good_starts_points = new_good_starts_points[
+                new_good_starts_points[:, 0] > 0
+            ]
 
-            # loop for each problem points, and check if it can flow to an lake 
+        ## in case some point is missed, loop problem point again
+        iter = 0
+        while iter < np.sum(BD_Out_Lakecat_mask) + 10 and len(problem_points) > 0:
+
+            # loop for each problem points, and check if it can flow to an lake
             # catchment, by chaning it's flow direction only.
             #
             iter = iter + 1
             idx = 0
-            new_problem_points = np.full((len(problem_points)+10,2),-9999)
+            new_problem_points = np.full((len(problem_points) + 10, 2), -9999)
             for i in range(0, len(problem_points)):
                 # get problem point row anc col
                 trow = problem_points[i, 0]
@@ -226,10 +232,10 @@ def modify_lakes_flow_direction(
                 #                print(i,ipo,trow,tcol)
                 if trow >= nrows - 1 or tcol == ncols - 1:
                     continue
-                    
-                # try to modify the flow direction of this row and col 
-                # see if it can flow to the lake catchment 
-                
+
+                # try to modify the flow direction of this row and col
+                # see if it can flow to the lake catchment
+
                 ndir, IS_Change, changed_ndir = changeflowdirectionofedgegrids(
                     ndir,
                     trow,
@@ -241,21 +247,21 @@ def modify_lakes_flow_direction(
                     BD_Out_Lakecat_Nriv_mask,
                     changed_ndir,
                 )
-                
-                # if the point can flow to the lake catchment 
-                # store the points in to goodpoint2 
+
+                # if the point can flow to the lake catchment
+                # store the points in to goodpoint2
                 if IS_Change > 0:
-                    Lakeincat_mask[trow,tcol] = 1
+                    Lakeincat_mask[trow, tcol] = 1
                 else:
-                    new_problem_points[idx,0] = trow
-                    new_problem_points[idx,1] = tcol 
+                    new_problem_points[idx, 0] = trow
+                    new_problem_points[idx, 1] = tcol
                     idx = idx + 1
-            # keep only larger         
-            new_problem_points=new_problem_points[new_problem_points[:,0] > 0]        
+            # keep only larger
+            new_problem_points = new_problem_points[new_problem_points[:, 0] > 0]
             problem_points = new_problem_points
-                         
+
         print(" # of uncorrect lake boundary grids     ", len(problem_points))
-        if (len(problem_points) > 0):
+        if len(problem_points) > 0:
             print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             print(lakeid)
             print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
@@ -520,7 +526,7 @@ def is_point_in_2d_array(array, value_x, value_y):
     # print(vy_is_in)
     # print(is_in)
     # print(True in is_in)
-    return (True in is_in,is_in)
+    return (True in is_in, is_in)
 
 
 def modify_flow_direction_of_nearby_boundary_grids(
@@ -610,7 +616,7 @@ def modify_flow_direction_of_nearby_boundary_grids(
             # print(len(row_of_problempoints),len(problem_points_new),np.sum(row_of_problempoints))
             # print(is_alreay_in_good_points)
             # print("a1")
-    
+
             # modify lake cat grids to 1
             lake_cat_grids_new[p_row + 1, p_col + 1] = 1
 

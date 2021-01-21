@@ -22,6 +22,8 @@ def add_lakes_into_existing_watershed_delineation(
     lake_attributes,
     threshold_con_lake,
     threshold_non_con_lake,
+    path_sub_reg_lake_r="#",
+    path_sub_reg_lake_bd_r="#",
     sl_connected_lake="sl_connected_lake",
     sl_non_connected_lake="sl_nonconnect_lake",
     sl_lakes="selected_lakes",
@@ -124,12 +126,27 @@ def add_lakes_into_existing_watershed_delineation(
         os.path.join(grassdb, grass_location, "PERMANENT", "sqlite", "sqlite.db")
     )
 
-    write_grass_and_arcgis_fdr_rules(grassdb)
-    exp = "%s = int(%s)" % (alllake, alllake)
-    grass_raster_r_mapcalc(grass, exp)
-    exp = "%s = int(%s)" % (lake_boundary, lake_boundary)
-    grass_raster_r_mapcalc(grass, exp)
-    
+    if path_sub_reg_lake_r != "#":
+        grass.run_command(
+            "r.unpack", input=path_sub_reg_lake_r, output="rg_lake", overwrite=True
+        )
+        grass.run_command(
+            "r.unpack",
+            input=path_sub_reg_lake_bd_r,
+            output="rg_lake_bd",
+            overwrite=True,
+        )
+        exp = "%s = int(%s)" % (alllake, "rg_lake")
+        grass_raster_r_mapcalc(grass, exp)
+        exp = "%s = int(%s)" % (lake_boundary, "rg_lake_bd")
+        grass_raster_r_mapcalc(grass, exp)
+    else:
+        write_grass_and_arcgis_fdr_rules(grassdb)
+        exp = "%s = int(%s)" % (alllake, alllake)
+        grass_raster_r_mapcalc(grass, exp)
+        exp = "%s = int(%s)" % (lake_boundary, lake_boundary)
+        grass_raster_r_mapcalc(grass, exp)
+
     # Define connected and non connected lakes and
     # identify which str make certain lake have two outlet
     define_connected_and_non_connected_lake_type(
@@ -142,11 +159,11 @@ def add_lakes_into_existing_watershed_delineation(
         non_connected_lake=non_connected_lake,
         str_connected_lake=str_connected_lake,
     )
-    
+
     select_lakes_by_area_r(
         grass=grass,
         con=con,
-        garray = garray,
+        garray=garray,
         str_r=str_r,
         threshold_con_lake=threshold_con_lake,
         threshold_non_con_lake=threshold_non_con_lake,
@@ -160,7 +177,7 @@ def add_lakes_into_existing_watershed_delineation(
         sl_lakes=sl_lakes,
         sl_str_connected_lake=sl_str_connected_lake,
     )
-    
+
     Lakes_WIth_Multi_Outlet, Remove_Str = define_pour_points_with_lakes(
         grass=grass,
         con=con,
@@ -176,7 +193,7 @@ def add_lakes_into_existing_watershed_delineation(
         lake_outflow_pourpoints=lake_outflow_pourpoints,
         catchment_pourpoints_outside_lake=catchment_pourpoints_outside_lake,
     )
-    
+
     grass.run_command(
         "r.stream.basins",
         direction=fdr_grass,

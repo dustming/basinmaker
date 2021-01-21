@@ -78,6 +78,7 @@ def Generatesubdomain(
     pourpoints_add_obs = Internal_Constant_Names["pourpoints_add_obs"]
     lake_outflow_pourpoints = Internal_Constant_Names["lake_outflow_pourpoints"]
     all_lakes = input_geo_names["all_lakes"]
+    lake_boundary = input_geo_names["lake_boundary"]
 
     #### Determine Sub subregion without lake
     os.environ.update(
@@ -224,6 +225,12 @@ def Generatesubdomain(
         "r.pack",
         input=all_lakes,
         output=os.path.join(Out_Sub_Reg_Folder, all_lakes + ".pack"),
+        overwrite=True,
+    )
+    grass.run_command(
+        "r.pack",
+        input=all_lakes,
+        output=os.path.join(Out_Sub_Reg_Folder, lake_boundary + ".pack"),
         overwrite=True,
     )
 

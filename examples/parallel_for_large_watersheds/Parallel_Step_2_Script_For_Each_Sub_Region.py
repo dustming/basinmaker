@@ -99,6 +99,8 @@ basinmaker.watershed_delineation_without_lake_method(
 basinmaker.watershed_delineation_add_lake_control_points(
     path_lakefile_in=os.path.join(datafolder, "hylake.shp"),
     lake_attributes=["Hylak_id", "Lake_type", "Lake_area", "Vol_total", "Depth_avg"],
+    path_sub_reg_lake_r=os.path.join(Out_Sub_Reg_Dem_Folder, "all_lakes.pack"),
+    path_sub_reg_lake_bd_r=os.path.join(Out_Sub_Reg_Dem_Folder, "lake_boundary.pack"),
     threshold_con_lake=0,
     threshold_non_con_lake=0,
     path_obsfile_in=os.path.join(datafolder, "obs.shp"),

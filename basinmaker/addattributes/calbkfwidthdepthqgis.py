@@ -61,11 +61,11 @@ def calculate_bankfull_width_depth_from_polyline(
         os.path.join(grassdb, grass_location, "PERMANENT", "sqlite", "sqlite.db")
     )
 
-    if path_bkfwidthdepth !='#':
+    if path_bkfwidthdepth != "#":
         grass.run_command(
             "v.import",
             input=os.path.join(grassdb, "bkf_width_depth" + ".shp"),
-            output='bk_full_wid_depth',
+            output="bk_full_wid_depth",
             overwrite=True,
         )
 
@@ -76,13 +76,13 @@ def calculate_bankfull_width_depth_from_polyline(
             bkfwd_attributes[2],
             bkfwd_attributes[1],
             bkfwd_attributes[0],
-            'bk_full_wid_depth',
+            "bk_full_wid_depth",
         )
         bkf_width_depth = pd.read_sql_query(sqlstat, con)
         bkf_width_depth = bkf_width_depth.fillna(-9999)
 
         da_q = bkf_width_depth[[bkfwd_attributes[3], bkfwd_attributes[2]]].values
-        
+
         if len(da_q) > 3:
             k, c = return_k_and_c_in_q_da_relationship(da_q)
         elif len(da_q) > 0 and len(da_q) <= 3:
@@ -97,7 +97,7 @@ def calculate_bankfull_width_depth_from_polyline(
     else:
         k = k_in
         c = c_in
-        
+
     if return_k_c_only:
         return k, c
 
