@@ -58,16 +58,16 @@ def preprocessing_lake_polygon(
             ply_path=os.path.join(grassdb, lake_name + ".shp"),
             output=os.path.join(grassdb, lake_boundary_name + ".shp"),
         )
-        obtain_lake_vectors_larger_than_threstholds(
-            grassdb=grassdb,
-            qgis_prefix_path=qgis_prefix_path,
-            all_lakes=lake_name,
-            lake_attributes=lake_attributes,
-            threshold_con_lake=threshold_con_lake,
-            threshold_non_con_lake=threshold_non_con_lake,
-            lakes_lg_cl_thres=lakes_lg_cl_thres,
-            lakes_lg_ncl_thres=lakes_lg_ncl_thres,
-        )
+        # obtain_lake_vectors_larger_than_threstholds(
+        #     grassdb=grassdb,
+        #     qgis_prefix_path=qgis_prefix_path,
+        #     all_lakes=lake_name,
+        #     lake_attributes=lake_attributes,
+        #     threshold_con_lake=threshold_con_lake,
+        #     threshold_non_con_lake=threshold_non_con_lake,
+        #     lakes_lg_cl_thres=lakes_lg_cl_thres,
+        #     lakes_lg_ncl_thres=lakes_lg_ncl_thres,
+        # )
 
         rasterize_vectors_and_load_to_db(
             grassdb,
@@ -79,21 +79,21 @@ def preprocessing_lake_polygon(
             raster_name=lake_boundary_name,
         )
 
-        rasterize_vectors_and_load_to_db(
-            grassdb,
-            grass_location,
-            qgis_prefix_path,
-            mask,
-            vector_path=os.path.join(grassdb, lakes_lg_cl_thres + ".shp"),
-            attribue_name=lake_attributes[0],
-            raster_name=lakes_lg_cl_thres,
-        )
-        rasterize_vectors_and_load_to_db(
-            grassdb,
-            grass_location,
-            qgis_prefix_path,
-            mask,
-            vector_path=os.path.join(grassdb, lakes_lg_ncl_thres + ".shp"),
-            attribue_name=lake_attributes[0],
-            raster_name=lakes_lg_ncl_thres,
-        )
+        # rasterize_vectors_and_load_to_db(
+        #     grassdb,
+        #     grass_location,
+        #     qgis_prefix_path,
+        #     mask,
+        #     vector_path=os.path.join(grassdb, lakes_lg_cl_thres + ".shp"),
+        #     attribue_name=lake_attributes[0],
+        #     raster_name=lakes_lg_cl_thres,
+        # )
+        # rasterize_vectors_and_load_to_db(
+        #     grassdb,
+        #     grass_location,
+        #     qgis_prefix_path,
+        #     mask,
+        #     vector_path=os.path.join(grassdb, lakes_lg_ncl_thres + ".shp"),
+        #     attribue_name=lake_attributes[0],
+        #     raster_name=lakes_lg_ncl_thres,
+        # )

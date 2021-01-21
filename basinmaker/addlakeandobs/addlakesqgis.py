@@ -146,9 +146,11 @@ def add_lakes_into_existing_watershed_delineation(
     select_lakes_by_area_r(
         grass=grass,
         con=con,
+        garray = garray,
         str_r=str_r,
-        lakes_lg_cl_thres=lakes_lg_cl_thres,
-        lakes_lg_ncl_thres=lakes_lg_ncl_thres,
+        threshold_con_lake=threshold_con_lake,
+        threshold_non_con_lake=threshold_non_con_lake,
+        lake_attributes=lake_attributes,
         lakes=alllake,
         connected_lake=connected_lake,
         non_connected_lake=non_connected_lake,
