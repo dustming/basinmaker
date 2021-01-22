@@ -22,6 +22,7 @@ def select_lakes_by_area_r(
     sl_non_connected_lake="sl_nonconnect_lake",
     sl_lakes="selected_lakes",
     sl_str_connected_lake="str_sl_connected_lake",
+    only_included_lake_at_river_interction=False,
 ):
     # get lake attributes
     sqlstat = "SELECT %s,%s FROM %s" % (
@@ -98,11 +99,37 @@ def select_lakes_by_area_r(
         sl_connected_lake,
     )
     grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+    
     exp = "%s = if(isnull(int(%s)),null(),%s)" % (
         sl_str_connected_lake,
         str_r,
         sl_connected_lake,
     )
     grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+    
+    if only_included_lake_at_river_interction:
+        # first find lakes id and river reach id 
+        
+        lakeid, str_id = generate_stats_list_from_grass_raster(
+            grass, mode=2, input_a=sl_lakes, input_b=str_r
+        )
+        lakeid = np.array(lakeid)
+        (unique, counts) = np.unique(lakeid, return_counts=True)
+        lake_counts = np.column_stack((unique, counts))
+        # find lake id only occurs <=1
+        Remove_lake_ids = lake_counts[lake_counts[:,1] <= 1][:,0]
+        if len(Remove_lake_ids) > 0:
+            grass.run_command(
+                "r.null", map=sl_connected_lake, setnull=Remove_lake_ids, overwrite=True
+            )
 
+            grass.run_command(
+                "r.null", map=sl_lakes, setnull=Remove_lake_ids, overwrite=True
+            )
+#        print(unique)
+#        print(Remove_lake_ids)
+       #if a lake cover more than two times 
+       # means this lake cover more than two river 
+            
+        
     return
