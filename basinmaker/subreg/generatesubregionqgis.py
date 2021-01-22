@@ -157,6 +157,7 @@ def Generatesubdomain(
         lake_attributes=lake_attributes,
         threshold_con_lake=CheckLakeArea,
         threshold_non_con_lake=100000,
+        remove_lake_inlets = True,
         only_included_lake_at_river_interction = True,
         sl_connected_lake=sl_connected_lake,
         sl_non_connected_lake=sl_non_connected_lake,

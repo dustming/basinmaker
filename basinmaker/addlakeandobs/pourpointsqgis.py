@@ -10,6 +10,7 @@ def define_pour_points_with_lakes(
     grass,
     con,
     garray,
+    remove_lake_inlets = False,
     str_r="str_grass_r",
     cat_no_lake="cat_no_lake",
     sl_lakes="sl_lakes",
@@ -177,6 +178,21 @@ def define_pour_points_with_lakes(
         "extented_lake_inflow_seg",
     )
     grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+
+    if remove_lake_inlets:
+        exp = "%s =if(float(%s) > -1000000,null(),null())" % (
+            lake_inflow_pourpoints+'t',
+            lake_inflow_pourpoints,
+        )
+        grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+
+        exp = "%s = int(%s)" % (
+            lake_inflow_pourpoints,
+            lake_inflow_pourpoints+'t',
+        )
+
+        grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+
 
     #### create a unique id for overlaied lake and river
     grass.run_command(
