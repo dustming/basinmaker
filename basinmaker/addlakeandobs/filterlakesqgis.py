@@ -99,14 +99,7 @@ def select_lakes_by_area_r(
         sl_connected_lake,
     )
     grass.run_command("r.mapcalc", expression=exp, overwrite=True)
-    
-    exp = "%s = if(isnull(int(%s)),null(),%s)" % (
-        sl_str_connected_lake,
-        str_r,
-        sl_connected_lake,
-    )
-    grass.run_command("r.mapcalc", expression=exp, overwrite=True)
-    
+        
     if only_included_lake_at_river_interction:
         # first find lakes id and river reach id 
         
@@ -126,6 +119,14 @@ def select_lakes_by_area_r(
             grass.run_command(
                 "r.null", map=sl_lakes, setnull=Remove_lake_ids, overwrite=True
             )
+            
+    exp = "%s = if(isnull(int(%s)),null(),%s)" % (
+        sl_str_connected_lake,
+        str_r,
+        sl_connected_lake,
+    )
+    grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+
 #        print(unique)
 #        print(Remove_lake_ids)
        #if a lake cover more than two times 
