@@ -6,7 +6,46 @@ from utilities.utilities import *
 import os
 
 
-def obtain_polygon_boundary(grassdb, qgis_prefix_path, ply_path, output):
+def obtain_polygon_boundary(grassdb, grass_location,qgis_prefix_path, lake_name, output):
+    
+    
+    import grass.script as grass
+    import grass.script.setup as gsetup
+    from grass.pygrass.modules import Module
+    from grass.pygrass.modules.shortcuts import general as g
+    from grass.pygrass.modules.shortcuts import raster as r
+    from grass.script import array as garray
+    from grass.script import core as gcore
+    from grass_session import Session
+
+    os.environ.update(
+        dict(GRASS_COMPRESS_NULLS="1", GRASS_COMPRESSOR="ZSTD", GRASS_VERBOSE="1")
+    )
+    PERMANENT = Session()
+    PERMANENT.open(gisdb=grassdb, location=grass_location, create_opts="")
+
+    exp = "%s = int(%s)" % (lake_name, lake_name)
+    grass_raster_r_mapcalc(grass, exp)
+
+    
+    grass.run_command(
+        "r.to.vect",
+        input=lake_name,
+        output=lake_name + "plybd",
+        type="area",
+        overwrite=True,
+        flags="v",
+    )
+    grass.run_command(
+        "v.out.ogr",
+        input=lake_name + "plybd",
+        output=os.path.join(grassdb, lake_name + "plybd.shp"),
+        format="ESRI_Shapefile",
+        overwrite=True,
+    )
+    
+    PERMANENT.close()
+    
     QgsApplication.setPrefixPath(qgis_prefix_path, True)
     Qgs = QgsApplication([], False)
     Qgs.initQgis()
@@ -24,7 +63,7 @@ def obtain_polygon_boundary(grassdb, qgis_prefix_path, ply_path, output):
     qgis_vector_polygon_stro_lines(
         processing,
         context,
-        INPUT=ply_path,
+        INPUT=os.path.join(grassdb, lake_name + "plybd.shp"),
         OUTPUT=output,
     )
 
