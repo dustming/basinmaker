@@ -10,7 +10,6 @@ def modify_lakes_flow_direction(
     fac,
     dir,
     str_array,
-    lakeinfo,
     nrows,
     ncols,
     LakeBD_array,
@@ -28,12 +27,8 @@ def modify_lakes_flow_direction(
     arlakeid = arlakeid[arlakeid > 0]
     outlakeids = np.full((1000000, 2), -99999.999)
     stream_mask = str_array > 0
-    # sort with lake outlet flow accumulation thresthold 
-    lakeinfo = lakeinfo.loc[lakeinfo['cat'].isin(arlakeid)]
-    lakeinfo = lakeinfo.sort_values(by='lmax_acc', ascending=False)
-
-    for i in range(0, len(lakeinfo)):
-        lakeid = lakeinfo['cat'].values[i]
+    for i in range(0, len(arlakeid)):
+        lakeid = arlakeid[i]
         if lakeid in Lakemorestream:
             continue
 
@@ -82,7 +77,7 @@ def modify_lakes_flow_direction(
         ):  ### smaller than nlakegrids or smaller than 0.9
             continue
 
-        print("Total # of lakes: ", len(lakeinfo), " Processing    ", i, "th lake")
+        print("Total # of lakes: ", len(arlakeid), " Processing    ", i, "th lake")
         print(
             "Lake ID : ",
             lakeid,

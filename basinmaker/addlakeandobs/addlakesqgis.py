@@ -207,19 +207,6 @@ def add_lakes_into_existing_watershed_delineation(
         memory=max_memroy,
     )
 
-    grass.run_command(
-        "v.what.rast",
-        map=lake_outflow_pourpoints,
-        raster=acc,
-        column="lmax_acc",
-    )
-    ### read catchment
-    sqlstat = "SELECT cat,lmax_acc FROM %s" % (lake_outflow_pourpoints,)
-    lakeinfo = pd.read_sql_query(sqlstat, con)
-    lakeinfo = lakeinfo.fillna(-9999)
-    lakeinfo = lakeinfo.loc[lakeinfo["cat"] > 0]
-
-    
     cat_withlake_array = garray.array(mapname=cat_add_lake_old_fdr)
     fdr_arcgis_array = garray.array(mapname=fdr_arcgis)
     str_r_array = garray.array(mapname=str_r)
@@ -238,7 +225,6 @@ def add_lakes_into_existing_watershed_delineation(
         acc_array,
         fdr_arcgis_array,
         str_r_array,
-        lakeinfo,
         nrows,
         ncols,
         lake_boundary_array,
