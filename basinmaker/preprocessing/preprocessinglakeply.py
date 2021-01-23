@@ -54,9 +54,8 @@ def preprocessing_lake_polygon(
         # obtain lake boundary lines
         obtain_polygon_boundary(
             grassdb=grassdb,
-            grass_location= grass_location,
             qgis_prefix_path=qgis_prefix_path,
-            lake_name=lake_name,
+            ply_path=os.path.join(grassdb, lake_name + ".shp"),
             output=os.path.join(grassdb, lake_boundary_name + ".shp"),
         )
         # obtain_lake_vectors_larger_than_threstholds(
@@ -76,7 +75,7 @@ def preprocessing_lake_polygon(
             qgis_prefix_path,
             mask,
             vector_path=os.path.join(grassdb, lake_boundary_name + ".shp"),
-            attribue_name='cat',
+            attribue_name=lake_attributes[0],
             raster_name=lake_boundary_name,
         )
 
