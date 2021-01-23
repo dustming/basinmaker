@@ -311,6 +311,15 @@ def calculate_basic_attributes(
         str=river_r,
     )
 
+    routing_temp = generate_routing_info_of_catchments(
+        grass,
+        con,
+        cat=river_r,
+        acc="acc_grass_CatOL2",
+        Name="Friv",
+        str=river_r,
+    )
+
     cat_array = garray.array(mapname=catchments)
     nfdr_arcgis_array = garray.array(mapname=nfdr_arcgis)
     cat_outlet_array = garray.array(mapname="Final_OL")
@@ -331,22 +340,62 @@ def calculate_basic_attributes(
     ### read catchment
     sqlstat = "SELECT SubId, DowSubId,ILSubIdmax,ILSubIdmin FROM %s" % (outlet_pt_info)
     outletinfo = pd.read_sql_query(sqlstat, con)
-
     outletinfo = outletinfo.fillna(-9999)
+
+    ### read catchment
+    sqlstat = "SELECT SubId, DSubId_str FROM %s" % ('Friv_OL_v')
+    outlet_riv_info = pd.read_sql_query(sqlstat, con)
+    outlet_riv_info = outlet_riv_info.fillna(-9999)
+
+
     leninfo = leninfo.astype(float).fillna(-9999)
     areainfo = areainfo.astype(float).fillna(-9999)
 
     for i in range(0, len(outletinfo)):
         catid = outletinfo["SubId"].values[i]
-        DownSubID = outletinfo["DowSubId"].values[i]
+        DownSubID_cat = outletinfo["DowSubId"].values[i]
         catinfo.loc[i, "SubId"] = catid
-        if catid in cat_pro_id or DownSubID == catid:
+
+        # load routing info based on str
+        outlet_riv_info_i = outlet_riv_info.loc[outlet_riv_info['SubId'] == catid]
+
+        # check if riv outlet exist
+        if len(outlet_riv_info_i) < 1:
+            DownSubID = DownSubID_cat
+            DownSubID_riv = -9999
+        else:
+           # get down sub id based in river network
+           DownSubID_riv = outlet_riv_info_i['DSubId_str'].values[0]
+
+           # may need to modify if downsub id from river != down subid from cat
+           if DownSubID_riv != DownSubID_cat:
+
+               # check if DownSubID_cat drainage to DSubId_str
+               Down_id_of_downriv_info = outletinfo.loc[outletinfo['SubId'] == DownSubID_riv]
+               if len(Down_id_of_downriv_info) > 0:
+                   # get down subid of down subid of river
+                   DSubId_DSubId_str = Down_id_of_downriv_info['DowSubId'].values[0]
+                   # if down subid of down sub id of river  = down sub id from cat
+                   if catid == 10762:
+                       print(DSubId_DSubId_str,DownSubID_cat)
+
+                   if DSubId_DSubId_str == DownSubID_cat:
+                       DownSubID = DownSubID_riv
+                   else:
+                       DownSubID = DownSubID_cat
+               else:
+                   DownSubID = DownSubID_cat
+           else:
+               DownSubID = DownSubID_cat
+
+        if catid in cat_pro_id or DownSubID == catid or DownSubID == -9999:
             downsubid_array = return_subid_of_next_down_stream_grids(
                 cat_array, catid, nfdr_arcgis_array, cat_outlet_array, ncols, nrows
             )
             #            print(catid,DownSubID,downsubid_array)
             if downsubid_array > 0:
                 DownSubID = downsubid_array
+
         ### change the downsub id to -1 for watershed outlet
         if len(outletinfo.loc[outletinfo["SubId"] == DownSubID]) < 1:
             catinfo.loc[i, "DowSubId"] = -1
