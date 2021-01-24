@@ -221,7 +221,7 @@ def obtain_grids_polygon_from_netcdf_file(
     spatial_ref="EPSG:4326",
     x_add=-360,
     y_add=0,
-    gis_platform="qgis",
+    gis_platform = "qgis",
 ):
 
 
@@ -252,9 +252,9 @@ def generate_area_weight_of_two_polygons(
     col_nm="HRU_ID",
     output_folder="#",
     qgis_prefix_path = '#',
-    gis_platform == "qgis"
+    gis_platform = "qgis"
 ):
-
+    
     if gis_platform == "qgis":
         from postprocessing.gridweight import (
             Area_Weighted_Mapping_Between_Two_Polygons_QGIS,
