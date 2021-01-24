@@ -17,7 +17,7 @@ def Generate_Grid_Poly_From_NetCDF_QGIS(
     SpatialRef="EPSG:4326",
     x_add=-360,
     y_add=0,
-    qgis_prefix_path=qgis_prefix_path,
+    qgis_prefix_path='#',
 ):
 
     """Generate Grid polygon from NetCDF file
@@ -281,6 +281,7 @@ def Area_Weighted_Mapping_Between_Two_Polygons_QGIS(
     Mapping_Ply_Path="#",
     Col_NM="HRU_ID",
     Output_Folder="#",
+    qgis_prefix_path = '#',
 ):
 
     """Generate Grid polygon from NetCDF file

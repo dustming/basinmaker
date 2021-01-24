@@ -1395,6 +1395,7 @@ class basinmaker:
 
 
     def generate_area_weight_of_two_polygons_method(
+        self,
         target_polygon_path="#",
         mapping_polygon_path="#",
         col_nm="HRU_ID",
@@ -1403,7 +1404,7 @@ class basinmaker:
     ):
     
         from postprocessing.postprocessingfunctions import (
-            obtain_grids_polygon_from_netcdf_file
+            generate_area_weight_of_two_polygons
         )
 
         generate_area_weight_of_two_polygons(
