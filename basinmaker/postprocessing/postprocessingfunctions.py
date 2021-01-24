@@ -207,3 +207,65 @@ def generate_hrus(
         )
 
     return
+
+
+def obtain_grids_polygon_from_netcdf_file(
+    qgis_prefix_path,
+    netcdf_path="#",
+    output_folder="#",
+    coor_x_nm="lon",
+    coor_y_nm="lat",
+    is_rotated_grid=1,
+    r_coor_x_nm="rlon",
+    r_coor_y_nm="rlat",
+    spatial_ref="EPSG:4326",
+    x_add=-360,
+    y_add=0,
+    gis_platform="qgis",
+):
+
+
+
+    if gis_platform == "qgis":
+        from postprocessing.gridweight import (
+            Generate_Grid_Poly_From_NetCDF_QGIS,
+        )
+        Generate_Grid_Poly_From_NetCDF_QGIS(
+            NetCDF_Path=netcdf_path,
+            Output_Folder=output_folder,
+            Coor_x_NM=coor_x_nm,
+            Coor_y_NM=coor_y_nm,
+            Is_Rotated_Grid=is_rotated_grid,
+            R_Coor_x_NM=r_coor_x_nm,
+            R_Coor_y_NM=r_coor_y_nm,
+            SpatialRef=spatial_ref,
+            x_add=x_add,
+            y_add=y_add,
+            qgis_prefix_path=qgis_prefix_path,
+        )
+
+
+
+def generate_area_weight_of_two_polygons(
+    target_polygon_path="#",
+    mapping_polygon_path="#",
+    col_nm="HRU_ID",
+    output_folder="#",
+    qgis_prefix_path = '#',
+    gis_platform == "qgis"
+):
+
+    if gis_platform == "qgis":
+        from postprocessing.gridweight import (
+            Area_Weighted_Mapping_Between_Two_Polygons_QGIS,
+        )
+        Area_Weighted_Mapping_Between_Two_Polygons_QGIS(
+            Target_Ply_Path=target_polygon_path,
+            Mapping_Ply_Path=mapping_polygon_path,
+            Col_NM=col_nm,
+            Output_Folder=output_folder,
+            qgis_prefix_path = qgis_prefix_path,
+        )
+
+
+
