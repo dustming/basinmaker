@@ -28,7 +28,12 @@ HRU_Folder = os.path.join("../../tests/testdata/", "HRU")
 ## Initialize basinmaker 
 The basinmaker can be initialized with path to the working folder 
 ```
-
+#############################################
+# initialize basinmaker with working folder    
+#############################################
+basinmaker = basinmaker(
+    path_working_folder=path_working_folder
+)
 ```
 
 ## generate hrus 
