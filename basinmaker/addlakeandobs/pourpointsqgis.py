@@ -38,7 +38,8 @@ def define_pour_points_with_lakes(
         output="sl_lakes_maxacc",
         overwrite=True,
     )
-    exp = "%s =if(int(%s) == int(%s),%s,null())" % (
+
+    exp = "%s =if( abs(%s - %s) < 1.0e-15,%s,null())" % (
         lake_outflow_pourpoints,
         acc,
         "sl_lakes_maxacc",
@@ -137,7 +138,8 @@ def define_pour_points_with_lakes(
         overwrite=True,
     )
     ### Find the grid that equal to the max acc, thus this is the outlet grids
-    exp = "%s =if(int(%s) == int(%s),%s,null())" % (
+
+    exp = "%s =if( abs(%s - %s) < 1.0e-15,%s,null())" % (
         "lake_inflow_IL",
         "cat1_acc_riv",
         "lake_inflow_seg_minacc",
@@ -171,7 +173,8 @@ def define_pour_points_with_lakes(
         overwrite=True,
     )
     ### Find the grid that equal to the max acc, thus this is the outlet grids
-    exp = "%s =if(int(%s) == int(%s),%s,null())" % (
+
+    exp = "%s =if(abs(%s - %s) < 1.0e-15,%s,null())" % (
         lake_inflow_pourpoints,
         "cat1_acc_riv",
         "extented_lake_inflow_seg_minacc",

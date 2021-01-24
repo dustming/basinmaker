@@ -58,6 +58,13 @@ def delineate_watershed_no_lake_using_dem(
         direction=fdr_grass,
         memory=max_memroy,
     )
+    exp = "%s = int(%s)" % (
+        acc,
+        acc,
+    )
+    grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+
+
     # create a arcgis flow direction
     grass_raster_r_reclass(
         grass,

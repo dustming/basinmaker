@@ -622,7 +622,8 @@ def generate_routing_info_of_catchments(
         overwrite=True,
     )
     ### Find the grid that equal to the max acc, thus this is the outlet grids
-    exp = "%s =if(int(%s) == int(%s),%s,null())" % (
+
+    exp = "%s =if(abs(%s - %s) < 1.0e-15,%s,null())" % (
         Name + "_OL",
         acc,
         Name + "_maxacc",
@@ -663,7 +664,14 @@ def generate_routing_info_of_catchments(
         overwrite=True,
     )
     ### Find the grid that equal to the max acc, thus this is the outlet grids
-    exp = "%s =if(int(%s) == int(%s),%s,null())" % (
+
+    exp = "%s = int(%s)" % (
+        Name + "_acc_riv",
+        Name + "_acc_riv",
+    )
+    grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+
+    exp = "%s =if(abs(%s - %s) < 1.0e-15,%s,null())" % (
         Name + "_IL",
         Name + "_acc_riv",
         Name + "_minacc",
@@ -838,12 +846,15 @@ def generate_routing_info_of_catchments(
         output=Name + "_OL1_G_Clu_maxacc",
         overwrite=True,
     )
-    exp = "%s=if(int(%s) == int(%s),%s,null())" % (
+
+
+    exp = "%s=if( abs(%s - %s) < 1.0e-15,%s,null())" % (
         Name + "_IL1",
         acc,
         Name + "_OL1_G_Clu_maxacc",
         cat,
     )
+
     grass.run_command("r.mapcalc", expression=exp, overwrite=True)
     grass.run_command(
         "r.stats.zonal",
