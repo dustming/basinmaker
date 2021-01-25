@@ -848,7 +848,7 @@ def Combine_Sub_Region_Results(
         seg_id_strat_iregion = max(SubID_info["nSeg_ID"]) + 10
 
     # merge connected lake polygons
-    if len(Paths_Con_Lake_ply) > 0:
+    if len(Paths_Con_Lake_ply) > 0 and not os.path.exists(os.path.join(OutputFolder, "sl_connected_lake.shp")):
         qgis_vector_merge_vector_layers(
             processing,
             context,
@@ -857,7 +857,7 @@ def Combine_Sub_Region_Results(
         )
 
     # merge non connected lake polygon
-    if len(Paths_None_Con_Lake_ply) > 0:
+    if len(Paths_None_Con_Lake_ply) > 0 and not os.path.exists(os.path.join(OutputFolder, "sl_non_connected_lake.shp")):
         qgis_vector_merge_vector_layers(
             processing,
             context,
@@ -866,13 +866,13 @@ def Combine_Sub_Region_Results(
         )
 
     # merge observation points
-    # if len(Paths_obs_point) > 0:
-    #     qgis_vector_merge_vector_layers(
-    #         processing,
-    #         context,
-    #         INPUT_Layer_List=Paths_obs_point,
-    #         OUTPUT=os.path.join(OutputFolder, "obs_gauges.shp"),
-    #     )
+    if len(Paths_obs_point) > 0 and not os.path.exists(os.path.join(OutputFolder, "obs_gauges.shp")):
+        qgis_vector_merge_vector_layers(
+            processing,
+            context,
+            INPUT_Layer_List=Paths_obs_point,
+            OUTPUT=os.path.join(OutputFolder, "obs_gauges.shp"),
+        )
 
     # merge catchment polygon and polyline layers, and update their attirbutes
     if Is_Final_Result == 1:

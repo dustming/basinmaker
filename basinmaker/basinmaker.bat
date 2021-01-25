@@ -1,11 +1,11 @@
 @echo off
 
-SET OSGEO4W_ROOT=C:\QGIS310
-SET GRASS_ROOT=C:\QGIS310\apps\grass\grass78
-SET GISBASE=C:\QGIS310\apps\grass\grass78
-SET QGISPrefixPath=C:\QGIS310\apps\qgis
-SET GRASSBIN=C:\QGIS310\bin\grass78.bat
-SET RoutingToolFolder=C:\Users\dustm\Documents\GitHub\basinmaker\basinmaker
+SET OSGEO4W_ROOT=C:\PROGRA~1\QGIS3~1.12
+SET GRASS_ROOT=C:\PROGRA~1\QGIS3~1.12\apps\grass\grass78
+SET GISBASE=C:\PROGRA~1\QGIS3~1.12\apps\grass\grass78
+SET QGIS_PREFIX_PATH=C:\PROGRA~1\QGIS3~1.12\apps\qgis
+SET GRASSBIN=C:\PROGRA~1\QGIS3~1.12\bin\grass78.bat
+SET RoutingToolFolder=C:\Users\m43han\Documents\GitHub\RoutingTool\BasinMaker
 
 @echo off
 call %OSGEO4W_ROOT%\bin\o4w_env.bat
@@ -27,7 +27,7 @@ path %PATH%;%RoutingToolFolder%
 
 set GDAL_FILENAME_IS_UTF8=YES
 
-SET PYTHONHOME=C:\QGIS310\apps\Python37
+rem SET PYTHONHOME=%OSGEO4W_ROOT%\apps\Python37
 
 SET PYTHONPATH=%PYTHONPATH%;%OSGEO4W_ROOT%\apps\qgis\python;%OSGEO4W_ROOT%\apps\qgis\python\plugins;%OSGEO4W_ROOT%\apps\qgis\python\plugins\processing
 SET PYTHONPATH=%PYTHONPATH%;%GRASS_ROOT%\etc\python\;%GRASS_ROOT%\etc\python\grass;%GRASS_ROOT%\etc\python\grass\script;%RoutingToolFolder%;%RoutingToolFolder%\Toolbox_Common_Functions
@@ -39,4 +39,4 @@ set VSI_CACHE_SIZE=1000000
 set QT_PLUGIN_PATH=%OSGEO4W_ROOT%\apps\qgis\qtplugins;%OSGEO4W_ROOT%\apps\qt5\plugins
 set QGIS_PREFIX_PATH=%OSGEO4W_ROOT:\=/%/apps/qgis
 
-cmd.exe 
+cmd.exe
