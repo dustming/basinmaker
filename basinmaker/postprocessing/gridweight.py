@@ -354,7 +354,7 @@ def Area_Weighted_Mapping_Between_Two_Polygons_QGIS(
         INPUT=Target_Ply_Path,
         OVERLAY=Mapping_Ply_Path,
         OVERLAY_FIELDS_PREFIX="Map_",
-        OUTPUT=Path_finalcat_hru_temp2,
+        OUTPUT=Path_finalcat_hru_temp,
     )["OUTPUT"]
 
     processing.run(
