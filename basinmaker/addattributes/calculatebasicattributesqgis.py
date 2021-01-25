@@ -309,6 +309,7 @@ def calculate_basic_attributes(
         acc="acc_grass_CatOL2",
         Name="Final",
         str=river_r,
+        garray = garray,
     )
 
     routing_temp = generate_routing_info_of_catchments(
@@ -318,6 +319,7 @@ def calculate_basic_attributes(
         acc="acc_grass_CatOL2",
         Name="Friv",
         str=river_r,
+        garray = garray,
     )
 
     cat_array = garray.array(mapname=catchments)
@@ -341,7 +343,7 @@ def calculate_basic_attributes(
     sqlstat = "SELECT SubId, DowSubId,ILSubIdmax,ILSubIdmin FROM %s" % (outlet_pt_info)
     outletinfo = pd.read_sql_query(sqlstat, con)
     outletinfo = outletinfo.fillna(-9999)
-
+    outletinfo = outletinfo.loc[outletinfo['SubId'] >= 0]
     ### read catchment
     sqlstat = "SELECT SubId, DSubId_str FROM %s" % ('Friv_OL_v')
     outlet_riv_info = pd.read_sql_query(sqlstat, con)

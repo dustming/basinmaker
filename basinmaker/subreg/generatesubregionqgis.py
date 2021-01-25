@@ -330,6 +330,7 @@ def generatesubdomainmaskandinfo(
         acc=acc_grass,
         Name="Final",
         str="river_r",
+        garray=garray,
     )
 
     grass.run_command("g.copy", vector=("Final_OL_v", outlet_pt_info), overwrite=True)

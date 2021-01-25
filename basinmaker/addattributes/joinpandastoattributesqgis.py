@@ -53,6 +53,15 @@ def join_pandas_table_to_vector_attributes(
         other_column="SubId",
         overwrite=True,
     )
+
+    grass.run_command(
+        "v.db.update",
+        map=vector_name,
+        column="DA_error",
+        qcol="DA/1000/1000/DA_Obs",
+        where="IsObs > 0",
+    )
+
     grass.run_command(
         "v.out.ogr",
         input=vector_name,

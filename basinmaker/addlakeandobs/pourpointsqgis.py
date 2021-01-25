@@ -25,7 +25,7 @@ def define_pour_points_with_lakes(
 
     # define catchment pourpoints and routing info
     routing_info = generate_routing_info_of_catchments(
-        grass, con, cat=cat_no_lake, acc=acc, str=str_r, Name="cat1"
+        grass, con, cat=cat_no_lake, acc=acc, str=str_r, Name="cat1",garray=garray
     )
     routing_info = routing_info.fillna(-1)
 
@@ -156,7 +156,7 @@ def define_pour_points_with_lakes(
         overwrite=True,
     )
 
-    # set grids in lakes to null 
+    # set grids in lakes to null
     exp = "%s = if(isnull(%s),int(%s),null())" % (
         "lake_inflow_IL_grow",
         sl_connected_lake,

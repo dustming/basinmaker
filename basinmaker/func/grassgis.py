@@ -1,5 +1,5 @@
 import copy
-
+import numpy as np
 import pandas as pd
 from grass.script import array as garray
 
@@ -607,7 +607,7 @@ def grass_raster_v_db_join(grass, map, column, other_table, other_column):
 
 ###
 def generate_routing_info_of_catchments(
-    grass, con, cat="Net_cat", acc="acc_grass", Name="a1", str="#"
+    grass, con, garray,cat="Net_cat", acc="acc_grass", Name="a1", str="#"
 ):
 
     Raster_res = grass.core.region()["nsres"]
@@ -639,12 +639,20 @@ def generate_routing_info_of_catchments(
 #        flags="v",
         overwrite=True,
     )
+    grass_raster_v_to_raster(
+        grass,
+        input=Name + "_OL_v1",
+        output=Name + "_OL_2",
+        column="#",
+        use="cat",
+    )
+
     grass.run_command("v.db.addcolumn", map=Name + "_OL_v1", columns="SubId int")
     grass.run_command("v.what.rast", map=Name + "_OL_v1", raster=acc, column="OL_acc")
     grass.run_command("v.what.rast", map=Name + "_OL_v1", raster=Name + "_OL1", column="SubId")
 
 ## section to remove fake outlet points, may not needed when using r.statistics in stead of
-#  r.stats.zonal 
+#  r.stats.zonal
 ###############################################################
 ###    # remove fake outlet,
     sqlstat = "SELECT cat, OL_acc,SubId FROM %s" % (
@@ -657,22 +665,59 @@ def generate_routing_info_of_catchments(
     for k in range(0,len(outletinfo_temp)):
         if outletinfo_temp['OL_acc'].values[k] == outletinfo_temp['maxacc'].values[k]:
              extract_cat.append(outletinfo_temp['cat'].values[k])
-   # extract good points by cat
+
+    # remove cat not belongs to fake outlet
+
+    extract_cat = np.array(extract_cat)
+    array_cat_OL2 = garray.array(mapname=Name + "_OL_2")
+    mask = np.logical_not(np.isin(array_cat_OL2, extract_cat))
+    array_cat_OL2[mask] = -9999
+    temparray = garray.array()
+    temparray[:, :] = array_cat_OL2[:, :]
+    temparray.write(mapname=Name + "_OL3", overwrite=True)
+    grass.run_command("r.null", map=Name + "_OL3", setnull=[-9999])
+    exp = "%s = int(%s)" % (
+        Name + "_OL3",
+        Name + "_OL3",
+    )
+    grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+
+    exp = "%s = if(isnull(%s),null(),%s)" % (
+        Name + "_OL",
+        Name + "_OL3",
+        cat,
+    )
+    grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+
     grass.run_command(
-        "v.extract",
-        input=Name + "_OL_v1",
+        "r.to.vect",
+        input=Name + "_OL",
         output=Name + "_OL_v",
-        cats=extract_cat,
+        type="point",
+        flags="v",
         overwrite=True,
     )
-    grass.run_command(
-        "v.to.rast",
-        input=Name + "_OL_v",
-        output=Name + "_OL_v",
-        use="attr",
-        attribute_column='SubId',
-        overwrite=True,
-    )
+    grass.run_command("v.db.addcolumn", map=Name + "_OL_v", columns="SubId int")
+    grass.run_command("v.what.rast", map=Name + "_OL_v", raster=acc, column="OL_acc")
+    grass.run_command("v.what.rast", map=Name + "_OL_v", raster=Name + "_OL", column="SubId")
+
+
+
+    # grass.run_command(
+    #     "v.extract",
+    #     input=Name + "_OL_v1",
+    #     output=Name + "_OL_v",
+    #     cats=extract_cat,
+    #     overwrite=True,
+    # )
+    # grass.run_command(
+    #     "v.to.rast",
+    #     input=Name + "_OL_v",
+    #     output=Name + "_OL",
+    #     use="attr",
+    #     attribute_column='SubId',
+    #     overwrite=True,
+    # )
 ####################################################
 
 #    grass.run_command("v.db.update", map=Name + "_OL_v", column="SubId", qcol="cat")
