@@ -31,7 +31,7 @@ class basinmaker:
         os.makedirs(self.path_working_folder, exist_ok=True)
 
         # obtain qgis prefix path
-        self.qgispp = os.environ["QGISPrefixPath"]
+        self.qgispp = os.environ["QGIS_PREFIX_PATH"]
         # obtain basinmaker path
         # define grass database folder
         self.grassdb = os.path.join(self.path_working_folder, "grassdb")
@@ -1355,4 +1355,63 @@ class basinmaker:
             SubBasinGroup_Area_Lake=subbasingroup_area_lake,
             OutputFolder=outputfolder,
             Forcing_Input_File=forcing_input_file,
+        )
+
+
+    def obtain_grids_polygon_from_netcdf_file_method(
+        self,
+        netcdf_path="#",
+        output_folder="#",
+        coor_x_nm="lon",
+        coor_y_nm="lat",
+        is_rotated_grid=1,
+        r_coor_x_nm="rlon",
+        r_coor_y_nm="rlat",
+        spatial_ref="EPSG:4326",
+        x_add=-360,
+        y_add=0,
+        gis_platform="qgis",
+    ):
+
+
+        from postprocessing.postprocessingfunctions import (
+            obtain_grids_polygon_from_netcdf_file
+        )
+
+        obtain_grids_polygon_from_netcdf_file(
+            netcdf_path=netcdf_path,
+            output_folder=output_folder,
+            coor_x_nm=coor_x_nm,
+            coor_y_nm=coor_y_nm,
+            is_rotated_grid=is_rotated_grid,
+            r_coor_x_nm=r_coor_x_nm,
+            r_coor_y_nm=r_coor_y_nm,
+            spatial_ref=spatial_ref,
+            x_add=x_add,
+            y_add=y_add,
+            qgis_prefix_path=self.qgispp,
+            gis_platform=gis_platform,
+        )
+
+
+    def generate_area_weight_of_two_polygons_method(
+        self,
+        target_polygon_path="#",
+        mapping_polygon_path="#",
+        col_nm="HRU_ID",
+        output_folder="#",
+        gis_platform='qgis',
+    ):
+    
+        from postprocessing.postprocessingfunctions import (
+            generate_area_weight_of_two_polygons
+        )
+
+        generate_area_weight_of_two_polygons(
+            target_polygon_path=target_polygon_path,
+            mapping_polygon_path=mapping_polygon_path,
+            col_nm=col_nm,
+            output_folder=output_folder,
+            qgis_prefix_path=self.qgispp,
+            gis_platform=gis_platform,
         )
