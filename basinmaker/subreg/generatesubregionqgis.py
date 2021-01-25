@@ -909,9 +909,10 @@ def Combine_Sub_Region_Results(
             .drop_duplicates("SubId", keep="first")
             .copy()
         )
+
         DownCatinfo = (
             Dbf_To_Dataframe(os.path.join(tempfolder, "Down_Sub_ID.shp"))
-            .drop_duplicates("SubId", keep="first")
+            .drop_duplicates("ILpt_ID", keep="first")
             .copy()
         )
 
@@ -999,7 +1000,7 @@ def Combine_Sub_Region_Results(
         )
         DownCatinfo = (
             Dbf_To_Dataframe(os.path.join(tempfolder, "Down_Sub_ID.shp"))
-            .drop_duplicates("SubId", keep="first")
+            .drop_duplicates("ILpt_ID", keep="first")
             .copy()
         )
 

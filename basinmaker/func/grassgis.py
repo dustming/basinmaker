@@ -661,14 +661,16 @@ def generate_routing_info_of_catchments(
     outletinfo_temp = pd.read_sql_query(sqlstat, con)
     outletinfo_temp['count'] = outletinfo_temp.groupby('SubId')['SubId'].transform('count')
     outletinfo_temp['maxacc'] = outletinfo_temp.groupby('SubId')['OL_acc'].transform('max')
-    extract_cat = []
-    for k in range(0,len(outletinfo_temp)):
-        if outletinfo_temp['OL_acc'].values[k] == outletinfo_temp['maxacc'].values[k]:
-             extract_cat.append(outletinfo_temp['cat'].values[k])
+    outletinfo_temp = outletinfo_temp.sort_values(by='OL_acc', ascending=False)
+    outletinfo_temp = outletinfo_temp.drop_duplicates(subset=['SubId'], keep='first')
+    extract_cat = outletinfo_temp['cat'].values
+
+    # for k in range(0,len(outletinfo_temp)):
+    #     if outletinfo_temp['OL_acc'].values[k] == outletinfo_temp['maxacc'].values[k]:
+    #          extract_cat.append(outletinfo_temp['cat'].values[k])
 
     # remove cat not belongs to fake outlet
-
-    extract_cat = np.array(extract_cat)
+    # extract_cat = np.array(extract_cat)
     array_cat_OL2 = garray.array(mapname=Name + "_OL_2")
     mask = np.logical_not(np.isin(array_cat_OL2, extract_cat))
     array_cat_OL2[mask] = -9999

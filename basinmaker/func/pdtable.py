@@ -680,6 +680,10 @@ def Connect_SubRegion_Update_DownSubId(AllCatinfo, DownCatinfo, Sub_Region_info)
         else:
             print("##################################################")
             print("Subregion : ", isubregion, "   To  ", Dow_Sub_Region_id)
+            print(Dow_Sub_Region_id,ILpt_ID)
+            print(Down_Sub_info)
+            print(iReg_Outlet_Subid)
+            print(DownCatinfo[["ILpt_ID","SubId"]])
             print("Need be manually connected")
             print("##################################################")
     return AllCatinfo, Sub_Region_info
@@ -1498,7 +1502,7 @@ def Return_Selected_Lakes_Attribute_Table_And_Id(
     -------
         None,
     """
-
+    finalcat_info = finalcat_info.fillna(-9999)
     finalcat_info["LakeArea"] = finalcat_info["LakeArea"].astype(float)
     finalcat_info["HyLakeId"] = finalcat_info["HyLakeId"].astype(int)
     finalcat_info["Seg_ID"] = finalcat_info["Seg_ID"].astype(int)
