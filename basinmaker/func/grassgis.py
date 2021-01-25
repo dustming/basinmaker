@@ -624,7 +624,7 @@ def generate_routing_info_of_catchments(
     ### Find the grid that equal to the max acc, thus this is the outlet grids
 
     exp = "%s =if(abs(%s - %s) < 1.0e-15,%s,null())" % (
-        Name + "_OL",
+        Name + "_OL1",
         acc,
         Name + "_maxacc",
         cat,
@@ -633,15 +633,50 @@ def generate_routing_info_of_catchments(
     ### change outlet points to point vector
     grass.run_command(
         "r.to.vect",
-        input=Name + "_OL",
-        output=Name + "_OL_v",
+        input=Name + "_OL1",
+        output=Name + "_OL_v1",
         type="point",
-        flags="v",
+#        flags="v",
         overwrite=True,
     )
-    grass.run_command("v.db.addcolumn", map=Name + "_OL_v", columns="SubId int")
-    grass.run_command("v.db.update", map=Name + "_OL_v", column="SubId", qcol="cat")
-    grass.run_command("v.what.rast", map=Name + "_OL_v", raster=acc, column="OL_acc")
+    grass.run_command("v.db.addcolumn", map=Name + "_OL_v1", columns="SubId int")
+    grass.run_command("v.what.rast", map=Name + "_OL_v1", raster=acc, column="OL_acc")
+    grass.run_command("v.what.rast", map=Name + "_OL_v1", raster=Name + "_OL1", column="SubId")
+
+## section to remove fake outlet points, may not needed when using r.statistics in stead of
+#  r.stats.zonal 
+###############################################################
+###    # remove fake outlet,
+    sqlstat = "SELECT cat, OL_acc,SubId FROM %s" % (
+        Name + "_OL_v1"
+    )
+    outletinfo_temp = pd.read_sql_query(sqlstat, con)
+    outletinfo_temp['count'] = outletinfo_temp.groupby('SubId')['SubId'].transform('count')
+    outletinfo_temp['maxacc'] = outletinfo_temp.groupby('SubId')['OL_acc'].transform('max')
+    extract_cat = []
+    for k in range(0,len(outletinfo_temp)):
+        if outletinfo_temp['OL_acc'].values[k] == outletinfo_temp['maxacc'].values[k]:
+             extract_cat.append(outletinfo_temp['cat'].values[k])
+   # extract good points by cat
+    grass.run_command(
+        "v.extract",
+        input=Name + "_OL_v1",
+        output=Name + "_OL_v",
+        cats=extract_cat,
+        overwrite=True,
+    )
+    grass.run_command(
+        "v.to.rast",
+        input=Name + "_OL_v",
+        output=Name + "_OL_v",
+        use="attr",
+        attribute_column='SubId',
+        overwrite=True,
+    )
+####################################################
+
+#    grass.run_command("v.db.update", map=Name + "_OL_v", column="SubId", qcol="cat")
+#    grass.run_command("v.what.rast", map=Name + "_OL_v", raster=acc, column="OL_acc")
     grass.run_command(
         "v.buffer",
         input=Name + "_OL_v",
