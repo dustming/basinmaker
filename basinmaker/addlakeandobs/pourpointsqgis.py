@@ -151,10 +151,19 @@ def define_pour_points_with_lakes(
     grass.run_command(
         "r.grow",
         input="lake_inflow_IL",
-        output="lake_inflow_IL_grow",
+        output="lake_inflow_IL_grow2",
         radius=1.5,
         overwrite=True,
     )
+
+    # set grids in lakes to null 
+    exp = "%s = if(isnull(%s),int(%s),null())" % (
+        "lake_inflow_IL_grow",
+        sl_connected_lake,
+        "lake_inflow_IL_grow2",
+    )
+    grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+
 
     # set non river cells to non
     exp = "%s = if(isnull('%s'),null(),int(%s))" % (
