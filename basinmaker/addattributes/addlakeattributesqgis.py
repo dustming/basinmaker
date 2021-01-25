@@ -40,7 +40,7 @@ def add_lake_attributes(
         os.path.join(grassdb, grass_location, "PERMANENT", "sqlite", "sqlite.db")
     )
 
-    # keep large lake ids 
+    # keep large lake ids
     grass.run_command(
         "r.stats.zonal",
         base=catchments,

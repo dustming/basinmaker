@@ -40,12 +40,67 @@ def define_pour_points_with_lakes(
     )
 
     exp = "%s =if( abs(%s - %s) < 1.0e-15,%s,null())" % (
-        lake_outflow_pourpoints,
+        lake_outflow_pourpoints+'t',
         acc,
         "sl_lakes_maxacc",
         sl_lakes,
     )
     grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+
+    ##################################################################
+    # check if got mult points
+    # only keep 1 points
+    grass.run_command(
+        "r.to.vect",
+        input=lake_outflow_pourpoints+'t',
+        output=lake_outflow_pourpoints+'t',
+        type="point",
+#        flags="v",
+        overwrite=True,
+    )
+    grass_raster_v_to_raster(
+        grass,
+        input=lake_outflow_pourpoints+'t',
+        output=lake_outflow_pourpoints+'t2',
+        column="#",
+        use="cat",
+    )
+
+    grass.run_command("v.db.addcolumn", map=lake_outflow_pourpoints+'t', columns="lakeid int")
+    grass.run_command("v.what.rast", map=lake_outflow_pourpoints+'t', raster=acc, column="OL_acc")
+    grass.run_command("v.what.rast", map=lake_outflow_pourpoints+'t', raster=lake_outflow_pourpoints+'t', column="lakeid")
+    sqlstat = "SELECT cat, OL_acc,lakeid FROM %s" % (
+        lake_outflow_pourpoints+'t'
+    )
+    outletinfo_temp = pd.read_sql_query(sqlstat, con)
+    outletinfo_temp['count'] = outletinfo_temp.groupby('lakeid')['lakeid'].transform('count')
+    outletinfo_temp['maxacc'] = outletinfo_temp.groupby('lakeid')['OL_acc'].transform('max')
+    outletinfo_temp = outletinfo_temp.sort_values(by='OL_acc', ascending=False)
+    outletinfo_temp = outletinfo_temp.drop_duplicates(subset=['lakeid'], keep='first')
+    extract_lake = outletinfo_temp['cat'].values
+
+    array_lake_OL2 = garray.array(mapname=lake_outflow_pourpoints+'t2')
+    mask = np.logical_not(np.isin(array_lake_OL2, extract_lake))
+    array_lake_OL2[mask] = -9999
+    temparray = garray.array()
+    temparray[:, :] = array_lake_OL2[:, :]
+    temparray.write(mapname=lake_outflow_pourpoints + "t3", overwrite=True)
+    grass.run_command("r.null", map=lake_outflow_pourpoints + "t3", setnull=[-9999])
+    exp = "%s = int(%s)" % (
+        lake_outflow_pourpoints + "t3",
+        lake_outflow_pourpoints + "t3",
+    )
+    grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+
+    exp = "%s = if(isnull(%s),null(),%s)" % (
+        lake_outflow_pourpoints,
+        lake_outflow_pourpoints + "t3",
+        sl_lakes,
+    )
+    grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+
+    ##################################################################
+
 
     # add lake inlets
 
