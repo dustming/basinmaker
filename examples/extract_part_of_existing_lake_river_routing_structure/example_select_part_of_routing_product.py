@@ -5,7 +5,7 @@ import tempfile
 from basinmaker import basinmaker
 
 #############################################
-# define working folder, output folder amd data folder
+# define working folder, output folder and data folder
 #############################################
 num = str(np.random.randint(1, 10000 + 1))
 num = "100"
@@ -28,7 +28,7 @@ basinmaker = basinmaker(path_working_folder=path_working_folder)
 
 
 #############################################
-# obtain part of the routing sturcture by gauge name or
+# obtain part of the routing structure by gauge name or
 # subbasin ids
 #############################################
 basinmaker.select_part_of_routing_product_methods(
