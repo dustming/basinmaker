@@ -118,6 +118,21 @@ def simplify_routing_structure_by_drainage_area(
             qgis_prefix_path=qgis_prefix_path,
         )
 
+    if gis_platform == "arcgis":
+        from postprocessing.increasedaarcgis import (
+            simplify_routing_structure_by_drainage_area_arcgis,
+        )
+
+        simplify_routing_structure_by_drainage_area_arcgis(
+            Path_final_riv_ply=Path_final_riv_ply,
+            Path_final_riv=Path_final_riv,
+            Path_Con_Lake_ply=Path_Con_Lake_ply,
+            Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,
+            Area_Min=Area_Min,
+            OutputFolder=OutputFolder,
+        )
+
+
 
 def select_part_of_routing_product(
     Path_Points,
