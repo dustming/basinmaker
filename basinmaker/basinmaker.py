@@ -873,7 +873,6 @@ class basinmaker:
         from postprocessing.postprocessingfunctions import (
             select_part_of_routing_product,
         )
-
         select_part_of_routing_product(
             Path_Points=Path_Points,
             Gauge_NMS=Gauge_NMS,

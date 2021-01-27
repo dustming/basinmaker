@@ -16,8 +16,7 @@ def select_feature_by_attributes_arcgis(input,Attri_NM,Attri_v,output):
         else:
             where_clause = where_clause + "," + str(Attri_v[i])
     where_clause = where_clause + ")"
-    arcpy.AddMessage(where_clause)
-    arcpy.AddMessage(Attri_v)
+    
     arcpy.Select_analysis(input, output, where_clause)
     return
 ##################

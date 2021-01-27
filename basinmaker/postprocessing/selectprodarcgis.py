@@ -7,12 +7,14 @@ import sys
 import os
 import csv
 import pandas as pd
-from arcgis import GIS
-from arcgis.features import GeoAccessor, GeoSeriesAccessor
 import tempfile 
 import copy 
-from ..func.pdtable import *
-from ..func.arcgis import *
+
+import sys, os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
+from func.arcgis import *
+from func.pdtable import *
 
 arcpy.env.overwriteOutput = True
 arcpy.CheckOutExtension("Spatial")
@@ -195,13 +197,8 @@ def Select_Routing_product_based_SubId_arcgis(
         OutputFolder, os.path.basename(Path_Catchment_Polygon)
     )
 
-    arcpy.AddMessage(hyshdinfo)
-    arcpy.AddMessage(OutHyID)
-    arcpy.AddMessage(OutHyID2)
-    arcpy.AddMessage(OutHyID in hyshdinfo[:,0])
-    arcpy.AddMessage(OutHyID in hyshdinfo[:,1])
-    arcpy.AddMessage(HydroBasins)
-        
+    print(HydroBasins)
+    print(Outputfilename_cat)    
     select_feature_by_attributes_arcgis(
         input = Path_Catchment_Polygon, 
         Attri_NM = "SubId",
@@ -247,33 +244,8 @@ def Select_Routing_product_based_SubId_arcgis(
             Attri_v = NonCL_Lakeids,
             output = os.path.join(OutputFolder, os.path.basename(Path_NonCon_Lake_ply)),
         )
+ 
     return 
 
 
 ################################################################
-
-
-OutputFolder =sys.argv[6]
-Path_Catchment_Polygon=sys.argv[1]
-Path_River_Polyline=sys.argv[2]
-Path_Con_Lake_ply=sys.argv[3]
-Path_NonCon_Lake_ply=sys.argv[4]
-mostdownid=int(sys.argv[5])
-mostupstreamid=int(sys.argv[6])
-
-Select_Routing_product_based_SubId_arcgis(
-    OutputFolder = OutputFolder,
-    Path_Catchment_Polygon=Path_Catchment_Polygon,
-    Path_River_Polyline=Path_River_Polyline,
-    Path_Con_Lake_ply=Path_Con_Lake_ply,
-    Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,
-    mostdownid=mostdownid,
-    mostupstreamid=mostupstreamid,
-)
-
-
-# gis = GIS()
-# item = gis.content.get(Path_Catchment_Polygon)
-# flayer = item.layers[0]
-# sdf = pd.DataFrame.spatial.from_layer(flayer)
-# sdf.head()

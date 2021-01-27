@@ -146,7 +146,21 @@ def select_part_of_routing_product(
                 mostupstreamid=mostupid,
                 qgis_prefix_path=qgis_prefix_path,
             )
-
+        
+    if gis_platform == "arcgis":
+        from postprocessing.selectprodarcgis import (
+        Select_Routing_product_based_SubId_arcgis
+        )
+        Select_Routing_product_based_SubId_arcgis(
+            OutputFolder=OutputFolder,
+            Path_Catchment_Polygon=Path_Catchment_Polygon,
+            Path_River_Polyline=Path_River_Polyline,
+            Path_Con_Lake_ply=Path_Con_Lake_ply,
+            Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,
+            mostdownid=mostdownid,
+            mostupstreamid=mostupid,
+        )
+                        
     return
 
 
