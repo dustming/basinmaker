@@ -23,6 +23,16 @@ def combine_catchments_covered_by_the_same_lake(
             Path_final_riv=Path_final_riv,
             qgis_prefix_path=qgis_prefix_path,
         )
+    if gis_platform == "arcgis":
+        from postprocessing.combinearcgis import (
+            combine_catchments_covered_by_the_same_lake_arcgis,
+        )
+
+        combine_catchments_covered_by_the_same_lake_arcgis(
+            OutputFolder=OutputFolder,
+            Path_final_rivply=Path_final_rivply,
+            Path_final_riv=Path_final_riv,
+        )        
 
 
 def simplify_routing_structure_by_filter_lakes(

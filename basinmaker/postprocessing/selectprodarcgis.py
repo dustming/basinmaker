@@ -170,9 +170,9 @@ def Select_Routing_product_based_SubId_arcgis(
     down_colnm = "DowSubId"
 
     ##3
-    hyshdinfo2 = pd.DataFrame.spatial.from_featureclass(Path_Catchment_Polygon)
+    cat_ply = pd.DataFrame.spatial.from_featureclass(Path_Catchment_Polygon)
 
-    hyshdinfo = hyshdinfo2[[sub_colnm, down_colnm]].astype("int32").values
+    hyshdinfo = cat_ply[[sub_colnm, down_colnm]].astype("int32").values
 
     ### Loop for each downstream id
     OutHyID = mostdownid
@@ -197,54 +197,40 @@ def Select_Routing_product_based_SubId_arcgis(
         OutputFolder, os.path.basename(Path_Catchment_Polygon)
     )
 
-    print(HydroBasins)
-    print(Outputfilename_cat)    
-    select_feature_by_attributes_arcgis(
-        input = Path_Catchment_Polygon, 
-        Attri_NM = "SubId",
-        Attri_v = HydroBasins,
-        output = Outputfilename_cat,
+    cat_ply_select = cat_ply.loc[cat_ply['SubId'].isin(HydroBasins)]
+    cat_ply_select.spatial.to_featureclass(location=Outputfilename_cat) 
+
+
+
+    Outputfilename_cat_riv = os.path.join(
+        OutputFolder, os.path.basename(Path_River_Polyline)
     )
 
-    if Path_River_Polyline != "#":
-        Outputfilename_cat_riv = os.path.join(
-            OutputFolder, os.path.basename(Path_River_Polyline)
-        )
+    cat_riv = pd.DataFrame.spatial.from_featureclass(Path_River_Polyline)
+    cat_riv_select = cat_riv.loc[cat_ply['SubId'].isin(HydroBasins)]
+    cat_riv_select.spatial.to_featureclass(location=Outputfilename_cat_riv) 
 
-        select_feature_by_attributes_arcgis(
-            input = Path_River_Polyline, 
-            Attri_NM = "SubId",
-            Attri_v = HydroBasins,
-            output = Outputfilename_cat_riv,
-        )
 
-    finalcat_info = pd.DataFrame.spatial.from_featureclass(Outputfilename_cat)
-
-    Connect_Lake_info = finalcat_info.loc[finalcat_info["IsLake"] == 1]
+    Connect_Lake_info = cat_ply_select.loc[cat_ply_select["IsLake"] == 1]
     Connect_Lakeids = np.unique(Connect_Lake_info["HyLakeId"].values)
     Connect_Lakeids = Connect_Lakeids[Connect_Lakeids > 0]
 
-    NConnect_Lake_info = finalcat_info.loc[finalcat_info["IsLake"] == 2]
+    NConnect_Lake_info = cat_ply_select.loc[cat_ply_select["IsLake"] == 2]
     NonCL_Lakeids = np.unique(NConnect_Lake_info["HyLakeId"].values)
     NonCL_Lakeids = NonCL_Lakeids[NonCL_Lakeids > 0]
 
     if len(Connect_Lakeids) > 0 and Path_Con_Lake_ply != "#":
 
-        select_feature_by_attributes_arcgis(
-            input = Path_Con_Lake_ply, 
-            Attri_NM = "Hylak_id",
-            Attri_v = Connect_Lakeids,
-            output = os.path.join(OutputFolder, os.path.basename(Path_Con_Lake_ply)),
-        )
+        sl_con_lakes = pd.DataFrame.spatial.from_featureclass(Path_Con_Lake_ply)
+        sl_con_lakes = sl_con_lakes.loc[sl_con_lakes['Hylak_id'].isin(Connect_Lakeids)]
+        sl_con_lakes.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_Con_Lake_ply)))
+
 
     if len(NonCL_Lakeids) > 0 and Path_NonCon_Lake_ply != "#":
-        select_feature_by_attributes_arcgis(
-            input = Path_NonCon_Lake_ply, 
-            Attri_NM = "Hylak_id",
-            Attri_v = NonCL_Lakeids,
-            output = os.path.join(OutputFolder, os.path.basename(Path_NonCon_Lake_ply)),
-        )
- 
+        sl_non_con_lakes = pd.DataFrame.spatial.from_featureclass(Path_NonCon_Lake_ply)
+        sl_non_con_lakes = sl_non_con_lakes.loc[sl_non_con_lakes['Hylak_id'].isin(NonCL_Lakeids)]
+        sl_non_con_lakes.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply)))
+         
     return 
 
 

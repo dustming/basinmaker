@@ -294,6 +294,7 @@ def New_SubId_To_Dissolve(
             or col == "ndownsubid"
             or col == "Old_SubId"
             or col == "Old_DowSubId"
+            or col == "SHAPE"
         ):
             continue
         else:

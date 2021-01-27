@@ -46,11 +46,11 @@ basinmaker.select_part_of_routing_product_methods(
     gis_platform="arcgis",
 )
  
-# basinmaker.combine_catchments_covered_by_the_same_lake_method(
-#     OutputFolder=path_output_folder,
-#     Path_final_rivply=os.path.join(
-#         path_output_folder, "catchment_without_merging_lakes.shp"
-#     ),
-#     Path_final_riv=os.path.join(path_output_folder, "river_without_merging_lakes.shp"),
-#     gis_platform="qgis",
-# )
+basinmaker.combine_catchments_covered_by_the_same_lake_method(
+    OutputFolder=path_output_folder,
+    Path_final_rivply=os.path.join(
+        path_output_folder, "catchment_without_merging_lakes.shp"
+    ),
+    Path_final_riv=os.path.join(path_output_folder, "river_without_merging_lakes.shp"),
+    gis_platform="arcgis",
+)

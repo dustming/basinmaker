@@ -2,7 +2,7 @@ import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from postprocessing.selectprodarcgis import Select_Routing_product_based_SubId_arcgis
 
-OutputFolder =sys.argv[6]
+OutputFolder =sys.argv[7]
 Path_Catchment_Polygon=sys.argv[1]
 Path_River_Polyline=sys.argv[2]
 Path_Con_Lake_ply=sys.argv[3]
