@@ -1,14 +1,25 @@
-from func.qgis import *
-from func.pdtable import *
-from func.rarray import *
-from utilities.utilities import *
-import pandas as pd
 import numpy as np
+import sys
+import os
+import csv
+import tempfile 
+import copy 
+import pandas as pd
+from arcgis.features import GeoAccessor, GeoSeriesAccessor
+import arcpy
+from arcpy import env
+from arcpy.sa import *
 
-import tempfile
 
+import sys, os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-def simplify_routing_structure_by_filter_lakes_qgis(
+from func.arcgis import *
+from func.pdtable import *
+arcpy.env.overwriteOutput = True
+arcpy.CheckOutExtension("Spatial")
+
+def simplify_routing_structure_by_filter_lakes_arcgis(
     Path_final_riv_ply="#",
     Path_final_riv="#",
     Path_Con_Lake_ply="#",
@@ -18,8 +29,7 @@ def simplify_routing_structure_by_filter_lakes_qgis(
     Selection_Method="ByArea",
     Selected_Lake_List_in=[],
     OutputFolder="#",
-    qgis_prefix_path="#",
-    gis_platform="qgis",
+    gis_platform="arcgis",
 ):
     """Simplify the routing product by lake area
 
@@ -89,19 +99,6 @@ def simplify_routing_structure_by_filter_lakes_qgis(
     -------
 
     """
-    QgsApplication.setPrefixPath(qgis_prefix_path, True)
-    Qgs = QgsApplication([], False)
-    Qgs.initQgis()
-    from processing.core.Processing import Processing
-    from processing.tools import dataobjects
-    from qgis import processing
-
-    feedback = QgsProcessingFeedback()
-    Processing.initialize()
-    QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
-    context = dataobjects.createContext()
-    context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
-
     if not os.path.exists(OutputFolder):
         os.makedirs(OutputFolder)
 
@@ -111,10 +108,9 @@ def simplify_routing_structure_by_filter_lakes_qgis(
     )
     if not os.path.exists(tempfolder):
         os.makedirs(tempfolder)
-
+    
     ### read attribute table
-    finalcat_info = Dbf_To_Dataframe(Path_final_riv_ply)
-    finalcat_info = finalcat_info.fillna(-9999)
+    finalcat_info = pd.DataFrame.spatial.from_featureclass(Path_final_riv_ply)
 
     ### Obtain selected lake's attribute info
     (
@@ -132,113 +128,51 @@ def simplify_routing_structure_by_filter_lakes_qgis(
 
     ### Extract lake polygons
     if len(Selected_Non_ConnLakes) > 0:
-        Selectfeatureattributes(
-            processing,
-            Input=Path_NonCon_Lake_ply,
-            Output=os.path.join(OutputFolder, os.path.basename(Path_NonCon_Lake_ply)),
-            Attri_NM="Hylak_id",
-            Values=Selected_Non_ConnLakes,
-        )
+        sl_con_lakes = pd.DataFrame.spatial.from_featureclass(Path_NonCon_Lake_ply)
+        sl_con_lakes = sl_con_lakes.loc[sl_con_lakes['Hylak_id'].isin(Selected_Non_ConnLakes)]
+        sl_con_lakes.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply)))
+
     if len(Selected_ConnLakes) > 0:
-        Selectfeatureattributes(
-            processing,
-            Input=Path_Con_Lake_ply,
-            Output=os.path.join(OutputFolder, os.path.basename(Path_Con_Lake_ply)),
-            Attri_NM="Hylak_id",
-            Values=Selected_ConnLakes,
-        )
+        sl_con_lakes = pd.DataFrame.spatial.from_featureclass(Path_Con_Lake_ply)
+        sl_con_lakes = sl_con_lakes.loc[sl_con_lakes['Hylak_id'].isin(Selected_ConnLakes)]
+        sl_con_lakes.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_Con_Lake_ply)))
 
     print(" Obtain selected Lake IDs done")
 
-    ### create a copy of shapfiles in temp folder
-    Path_Temp_final_rviply = os.path.join(
-        tempfolder, "temp_finalriv_ply_selectlake.shp"
-    )
-    Path_Temp_final_rvi = os.path.join(tempfolder, "temp_finalriv_selectlake.shp")
-    qgis_vector_dissolve(
-        processing,
-        context,
-        INPUT=Path_final_riv,
-        FIELD=["SubId"],
-        OUTPUT=Path_Temp_final_rvi,
-    )
-    qgis_vector_dissolve(
-        processing,
-        context,
-        INPUT=Path_final_riv_ply,
-        FIELD=["SubId"],
-        OUTPUT=Path_Temp_final_rviply,
-    )
-
+   
+    finalcat_ply = pd.DataFrame.spatial.from_featureclass(Path_final_riv_ply)
     # change lake related attribute for un selected connected lake
     # catchment to -1.2345
-    Remove_Unselected_Lake_Attribute_In_Finalcatinfo(
-        Path_Temp_final_rviply, Selected_ConnLakes
+    finalcat_ply = Remove_Unselected_Lake_Attribute_In_Finalcatinfo_Arcgis(
+        finalcat_ply, Selected_ConnLakes
     )
-    # remove lake attributes
-    Remove_Unselected_Lake_Attribute_In_Finalcatinfo(
-        Path_Temp_final_rvi, Selected_ConnLakes
-    )
-
+    # remove lake attribute
+        
     # Modify attribute table to merge un selected lake catchment if needed
-    finalcat_info_temp = Dbf_To_Dataframe(Path_Temp_final_rviply)
     # change attributes for catchment due to remove of connected lakes
     mapoldnew_info = (
         Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_CL(
-            finalcat_info_temp, Un_Selected_ConnLakes_info
+            finalcat_ply, Un_Selected_ConnLakes_info
         )
     )
     # change attribute for catchment due to remove of non connected lakes
     mapoldnew_info = (
         Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_NCL(
-            mapoldnew_info, finalcat_info_temp, Un_Selected_Non_ConnL_info
+            mapoldnew_info, finalcat_ply, Un_Selected_Non_ConnL_info
         )
     )
-
+    
     # update topology for new attribute table
-    UpdateTopology(mapoldnew_info, UpdateStreamorder=-1)
+    mapoldnew_info = UpdateTopology(mapoldnew_info, UpdateStreamorder=-1)
     mapoldnew_info = update_non_connected_catchment_info(mapoldnew_info)
-
-    # copy new attribute table to shpfiles
-    Copy_Pddataframe_to_shpfile(
-        Path_Temp_final_rviply,
-        mapoldnew_info,
-        link_col_nm_shp="SubId",
-        link_col_nm_df="Old_SubId",
-        UpdateColNM=["#"],
-    )
-    Copy_Pddataframe_to_shpfile(
-        Path_Temp_final_rvi,
-        mapoldnew_info,
-        link_col_nm_shp="SubId",
-        link_col_nm_df="Old_SubId",
-        UpdateColNM=["#"],
-    )
-
-    # disslove line and polygon based on new subid
-    qgis_vector_dissolve(
-        processing,
-        context,
-        INPUT=Path_Temp_final_rvi,
-        FIELD=["SubId"],
-        OUTPUT=os.path.join(OutputFolder, os.path.basename(Path_final_riv)),
-    )
-    qgis_vector_dissolve(
-        processing,
-        context,
-        INPUT=Path_Temp_final_rviply,
-        FIELD=["SubId"],
-        OUTPUT=os.path.join(OutputFolder, os.path.basename(Path_final_riv_ply)),
-    )
-
-    # clean attribute table
-    Clean_Attribute_Name(
-        os.path.join(OutputFolder, os.path.basename(Path_final_riv)),
-        COLUMN_NAMES_CONSTANT,
-    )
-    Clean_Attribute_Name(
-        os.path.join(OutputFolder, os.path.basename(Path_final_riv_ply)),
-        COLUMN_NAMES_CONSTANT,
+    
+    save_modified_attributes_to_outputs(
+        mapoldnew_info=mapoldnew_info,
+        tempfolder=tempfolder,
+        OutputFolder=OutputFolder,
+        cat_name=os.path.basename(Path_final_riv_ply),
+        riv_name = os.path.basename(Path_final_riv),
+        Path_final_riv = Path_final_riv,
     )
 
     return

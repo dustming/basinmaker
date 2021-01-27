@@ -70,7 +70,24 @@ def simplify_routing_structure_by_filter_lakes(
             qgis_prefix_path=qgis_prefix_path,
             gis_platform=gis_platform,
         )
+    if gis_platform == "arcgis":
+        from postprocessing.selectlakearcgis import (
+            simplify_routing_structure_by_filter_lakes_arcgis,
+        )
 
+        simplify_routing_structure_by_filter_lakes_arcgis(
+            Path_final_riv_ply=Path_final_riv_ply,
+            Path_final_riv=Path_final_riv,
+            Path_Con_Lake_ply=Path_Con_Lake_ply,
+            Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,
+            Thres_Area_Conn_Lakes=Thres_Area_Conn_Lakes,
+            Thres_Area_Non_Conn_Lakes=Thres_Area_Non_Conn_Lakes,
+            Selection_Method=Selection_Method,
+            Selected_Lake_List_in=Selected_Lake_List_in,
+            OutputFolder=OutputFolder,
+            gis_platform=gis_platform,
+        )
+        
 
 def simplify_routing_structure_by_drainage_area(
     Path_final_riv_ply="#",

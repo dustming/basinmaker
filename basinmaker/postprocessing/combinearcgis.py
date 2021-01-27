@@ -16,7 +16,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from func.arcgis import *
 from func.pdtable import *
-
+arcpy.env.overwriteOutput = True
+arcpy.CheckOutExtension("Spatial")
 
 def combine_catchments_covered_by_the_same_lake_arcgis(
     OutputFolder, Path_final_rivply="#", Path_final_riv="#"
@@ -80,7 +81,7 @@ def combine_catchments_covered_by_the_same_lake_arcgis(
     if not os.path.exists(tempfolder):
         os.makedirs(tempfolder)
     arcpy.env.workspace = tempfolder
-    print(tempfolder)
+
     ### create a copy of shapfiles in temp folder
     Path_Temp_final_rviply = os.path.join(OutputFolder,"temp_finalriv_ply" + str(np.random.randint(1, 10000 + 1)) + ".shp")
     
@@ -96,11 +97,13 @@ def combine_catchments_covered_by_the_same_lake_arcgis(
 
     # update topology for new attribute table
     mapoldnew_info = update_topology(mapoldnew_info, UpdateStreamorder=-1)    
-
-    mapoldnew_info.spatial.to_featureclass(location=os.path.join(tempfolder,'updateattri.shp'))
-    arcpy.Dissolve_management(os.path.join(tempfolder,'updateattri.shp'), os.path.join(OutputFolder,'finalcat_info.shp'), ["SubId"])
-    arcpy.JoinField_management(os.path.join(OutputFolder,'finalcat_info.shp'), "SubId", os.path.join(tempfolder,'updateattri.shp'), "SubId")
-    arcpy.DeleteField_management(os.path.join(OutputFolder,'finalcat_info.shp'), ["SubId_1", "Id", "nsubid","ndownsubid","Old_SubId","Old_DowSub"])
-
-    arcpy.CalculateGeometryAttributes_management(os.path.join(OutputFolder,'finalcat_info.shp'), [["centroid_x", "CENTROID_X"], ["centroid_y", "CENTROID_Y"]])
-    return
+    
+    save_modified_attributes_to_outputs(
+        mapoldnew_info=mapoldnew_info,
+        tempfolder=tempfolder,
+        OutputFolder=OutputFolder,
+        cat_name='finalcat_info.shp',
+        riv_name ='finalcat_info_riv.shp',
+        Path_final_riv = Path_final_riv,
+    )
+    return 

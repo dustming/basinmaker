@@ -3,6 +3,10 @@ from arcgis.features import GeoAccessor, GeoSeriesAccessor
 import arcpy
 from arcpy import env
 from arcpy.sa import *
+import numpy as np
+import os
+import pandas as pd 
+
 #####
 arcpy.env.overwriteOutput = True
 arcpy.CheckOutExtension("Spatial")
@@ -21,3 +25,50 @@ def select_feature_by_attributes_arcgis(input,Attri_NM,Attri_v,output):
     return
 ##################
 
+
+def Remove_Unselected_Lake_Attribute_In_Finalcatinfo_Arcgis(finalcat_ply, Conn_Lake_Ids):
+    """Functions will set lake id not in Conn_Lake_Ids to -1.2345 in attribute
+        table of Path_Finalcatinfo
+    ----------
+
+    Notes
+    -------
+
+    Returns:
+    -------
+        None, the attribute table of Path_shpfile will be updated
+    """
+    
+    mask1 = np.logical_not(finalcat_ply['HyLakeId'].isin(Conn_Lake_Ids))
+    mask2 = finalcat_ply['IsLake'] != 2
+    mask = np.logical_and(mask1,mask2)
+    
+    finalcat_ply.loc[mask,'HyLakeId'] = -9999
+    finalcat_ply.loc[mask,'LakeVol'] = -9999
+    finalcat_ply.loc[mask,'LakeArea'] = -9999
+    finalcat_ply.loc[mask,'LakeDepth'] = -9999
+    finalcat_ply.loc[mask,'Laketype'] = -9999
+    finalcat_ply.loc[mask,'IsLake'] = -9999
+    
+    return finalcat_ply
+
+
+def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,cat_name,riv_name,Path_final_riv):
+
+    mapoldnew_info.spatial.to_featureclass(location=os.path.join(tempfolder,'updateattri.shp'))
+    arcpy.Dissolve_management(os.path.join(tempfolder,'updateattri.shp'), os.path.join(OutputFolder,cat_name), ["SubId"])
+    arcpy.JoinField_management(os.path.join(OutputFolder,cat_name), "SubId", os.path.join(tempfolder,'updateattri.shp'), "SubId")
+    arcpy.DeleteField_management(os.path.join(OutputFolder,cat_name), ["SubId_1", "Id","nsubid2", "nsubid","ndownsubid","Old_SubId","Old_DowSub"])
+    arcpy.CalculateGeometryAttributes_management(os.path.join(OutputFolder, cat_name), [["centroid_x", "CENTROID_X"], ["centroid_y", "CENTROID_Y"]])
+
+    riv_pd = pd.DataFrame.spatial.from_featureclass(Path_final_riv)
+    riv_pd['SubID_Oldriv'] = riv_pd['SubId']
+    # remove all columns 
+    riv_pd = riv_pd[['SHAPE','SubID_Oldriv']]
+    riv_pd.spatial.to_featureclass(location=os.path.join(tempfolder,'riv_no_attri.shp'))
+    arcpy.SpatialJoin_analysis(os.path.join(tempfolder,'riv_no_attri.shp'), os.path.join(OutputFolder, cat_name), os.path.join(tempfolder,'riv_attri.shp'),match_option='WITHIN')
+    arcpy.Dissolve_management(os.path.join(tempfolder,'riv_attri.shp'), os.path.join(OutputFolder,riv_name), ["SubId"])
+    arcpy.JoinField_management(os.path.join(OutputFolder,riv_name), "SubId", os.path.join(tempfolder,'riv_attri.shp'), "SubId")
+    arcpy.DeleteField_management(os.path.join(OutputFolder,cat_name), ["SubId_1", "Id","nsubid2", "nsubid","ndownsubid","Old_SubId","Old_DowSub","Join_Count","TARGET_FID","Id","SubID_Oldr"])
+
+    

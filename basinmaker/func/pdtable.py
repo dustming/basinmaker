@@ -1503,7 +1503,6 @@ def Return_Selected_Lakes_Attribute_Table_And_Id(
     -------
         None,
     """
-    finalcat_info = finalcat_info.fillna(-9999)
     finalcat_info["LakeArea"] = finalcat_info["LakeArea"].astype(float)
     finalcat_info["HyLakeId"] = finalcat_info["HyLakeId"].astype(int)
     finalcat_info["Seg_ID"] = finalcat_info["Seg_ID"].astype(int)
