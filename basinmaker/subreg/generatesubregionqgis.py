@@ -231,7 +231,7 @@ def Generatesubdomain(
     )
     grass.run_command(
         "r.pack",
-        input=all_lakes,
+        input=lake_boundary,
         output=os.path.join(Out_Sub_Reg_Folder, lake_boundary + ".pack"),
         overwrite=True,
     )
