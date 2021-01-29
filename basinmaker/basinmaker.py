@@ -1096,6 +1096,7 @@ class basinmaker:
             Project_crs=Project_crs,
             OutputFolder=OutputFolder,
             qgis_prefix_path=qgis_prefix_path,
+            gis_platform = gis_platform,
         )
 
     def divide_domain_into_sub_regions_method(

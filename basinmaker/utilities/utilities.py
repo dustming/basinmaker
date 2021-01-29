@@ -126,6 +126,7 @@ COLUMN_NAMES_CONSTANT_HRU = [
     "HRU_S_mean",
     "HRU_A_mean",
     "HRU_E_mean",
+    "SHAPE",
 ]
 
 

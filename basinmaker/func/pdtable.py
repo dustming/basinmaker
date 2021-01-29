@@ -895,7 +895,6 @@ def Determine_Lake_HRU_Id(Attribute_Table):
     -------
         None,
     """
-    Attribute_Table = Attribute_Table.fillna(-1)
     Attribute_Table = Attribute_Table.replace(to_replace="NULL", value=-1)
 
     Sub_ID = "SubId"

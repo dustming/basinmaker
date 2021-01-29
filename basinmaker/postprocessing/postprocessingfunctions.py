@@ -232,7 +232,6 @@ def generate_hrus(
     qgis_prefix_path="#",
     gis_platform="qgis",
 ):
-
     if gis_platform == "qgis":
         from postprocessing.hru import GenerateHRUS_qgis
 
@@ -261,6 +260,35 @@ def generate_hrus(
             OutputFolder=OutputFolder,
             qgis_prefix_path=qgis_prefix_path,
         )
+
+    if gis_platform == "arcgis":
+        from postprocessing.hruarcgis import GenerateHRUS_arcgis
+
+        GenerateHRUS_arcgis(
+            Path_Subbasin_Ply=Path_Subbasin_Ply,
+            Landuse_info=Landuse_info,
+            Soil_info=Soil_info,
+            Veg_info=Veg_info,
+            Sub_Lake_ID=Sub_Lake_ID,
+            Sub_ID=Sub_ID,
+            Path_Connect_Lake_ply=Path_Connect_Lake_ply,
+            Path_Non_Connect_Lake_ply=Path_Non_Connect_Lake_ply,
+            Lake_Id=Lake_Id,
+            Path_Landuse_Ply=Path_Landuse_Ply,
+            Landuse_ID=Landuse_ID,
+            Path_Soil_Ply=Path_Soil_Ply,
+            Soil_ID=Soil_ID,
+            Path_Veg_Ply=Path_Veg_Ply,
+            Veg_ID=Veg_ID,
+            Path_Other_Ply_1=Path_Other_Ply_1,
+            Other_Ply_ID_1=Other_Ply_ID_1,
+            Path_Other_Ply_2=Path_Other_Ply_2,
+            Other_Ply_ID_2=Other_Ply_ID_2,
+            DEM=DEM,
+            Project_crs=Project_crs,
+            OutputFolder=OutputFolder,
+        )
+
 
     return
 
