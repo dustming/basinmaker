@@ -713,7 +713,7 @@ class basinmaker:
         from postprocessing.postprocessingfunctions import (
             simplify_routing_structure_by_filter_lakes,
         )
-
+        
         simplify_routing_structure_by_filter_lakes(
             Path_final_riv_ply=Path_final_riv_ply,
             Path_final_riv=Path_final_riv,
@@ -873,7 +873,6 @@ class basinmaker:
         from postprocessing.postprocessingfunctions import (
             select_part_of_routing_product,
         )
-
         select_part_of_routing_product(
             Path_Points=Path_Points,
             Gauge_NMS=Gauge_NMS,
@@ -1097,6 +1096,7 @@ class basinmaker:
             Project_crs=Project_crs,
             OutputFolder=OutputFolder,
             qgis_prefix_path=qgis_prefix_path,
+            gis_platform = gis_platform,
         )
 
     def divide_domain_into_sub_regions_method(

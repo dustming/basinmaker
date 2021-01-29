@@ -1,13 +1,27 @@
-from func.qgis import *
-from func.pdtable import *
-from func.rarray import *
-from utilities.utilities import *
-import pandas as pd
 import numpy as np
-import tempfile
+import sys
+import os
+import csv
+import tempfile 
+import copy 
+import pandas as pd
+from arcgis.features import GeoAccessor, GeoSeriesAccessor
+import arcpy
+from arcpy import env
+from arcpy.sa import *
 
 
-def GenerateHRUS_qgis(
+import sys, os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
+from func.arcgis import *
+from func.pdtable import *
+arcpy.env.overwriteOutput = True
+arcpy.CheckOutExtension("Spatial")
+
+
+
+def GenerateHRUS_arcgis(
     Path_Subbasin_Ply,
     Landuse_info,
     Soil_info,
@@ -28,9 +42,8 @@ def GenerateHRUS_qgis(
     Path_Other_Ply_2="#",
     Other_Ply_ID_2="O_ID_2",
     DEM="#",
-    Project_crs="EPSG:3573",
+    Project_crs = '3573',
     OutputFolder="#",
-    qgis_prefix_path="#",
 ):
 
     """Generate HRU polygons and their attributes needed by hydrological model
@@ -187,139 +200,121 @@ def GenerateHRUS_qgis(
                            )
 
     """
-    QgsApplication.setPrefixPath(qgis_prefix_path, True)
-    Qgs = QgsApplication([], False)
-    Qgs.initQgis()
-    from processing.core.Processing import Processing
-    from processing.tools import dataobjects
-    from qgis import processing
-
-    feedback = QgsProcessingFeedback()
-    Processing.initialize()
-    QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
-    context = dataobjects.createContext()
-    context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
 
     if not os.path.exists(OutputFolder):
         os.makedirs(OutputFolder)
+        
     tempfolder = os.path.join(
         tempfile.gettempdir(), "basinmaker_hru" + str(np.random.randint(1, 10000 + 1))
     )
-
+    if not os.path.exists(tempfolder):
+        os.makedirs(tempfolder)
+    prj_crs = int(Project_crs)
     Merge_layer_list = []
-    output_hru_shp = os.path.join(OutputFolder, "finalcat_hru_info.shp")
+
     ### First overlay the subbasin layer with lake polygon, the new unique
     # id will be 'HRULake_ID'
 
     Sub_Lake_HRU_Layer, trg_crs, fieldnames_list = GeneratelandandlakeHRUS(
-        processing,
-        context,
         OutputFolder,
+        tempfolder,
         Path_Subbasin_ply=Path_Subbasin_Ply,
         Path_Connect_Lake_ply=Path_Connect_Lake_ply,
         Path_Non_Connect_Lake_ply=Path_Non_Connect_Lake_ply,
         Sub_ID=Sub_ID,
         Sub_Lake_ID=Sub_Lake_ID,
         Lake_Id=Lake_Id,
-    )
+    ) 
 
+    lakehruinfo = pd.DataFrame.spatial.from_featureclass(Sub_Lake_HRU_Layer)
+    hru_lake_info = lakehruinfo.loc[lakehruinfo['HRU_IsLake'] > 0].copy()
+    lakehruinfo_landhrus = lakehruinfo.loc[lakehruinfo['HRU_IsLake'] <= 0].copy()
+
+    lakehruinfo_landhrus = lakehruinfo_landhrus.spatial.to_featureclass(
+        location=os.path.join(tempfolder,'land_hrus.shp')
+    )
+    
     fieldnames_list.extend(
         [
             Landuse_ID,
             Soil_ID,
             Veg_ID,
+            Other_Ply_ID_1,
+            Other_Ply_ID_2,
             "LAND_USE_C",
             "VEG_C",
             "SOIL_PROF",
             "HRU_Slope",
             "HRU_Area",
             "HRU_Aspect",
+            "SHAPE",
         ]
     )
     dissolve_filedname_list = ["HRULake_ID"]
-    Merge_layer_list.append(Sub_Lake_HRU_Layer)
+    
+    Merge_layer_list.append([os.path.join(tempfolder,'land_hrus.shp'),1])
 
     #### check which data will be inlucded to determine HRU
     if Path_Landuse_Ply != "#":
-        layer_landuse_dis = Reproj_Clip_Dissolve_Simplify_Polygon(
-            processing,
-            context,
-            Path_Landuse_Ply,
-            Project_crs,
-            trg_crs,
-            Landuse_ID,
-            Sub_Lake_HRU_Layer,
+        layer_path = Reproj_Clip_Dissolve_Simplify_Polygon_arcgis(
+            layer_path = Path_Landuse_Ply, 
+            Class_Col = Landuse_ID, 
+            tempfolder = tempfolder,
+            mask_layer = os.path.join(tempfolder,'land_hrus.shp')
         )
-        Merge_layer_list.append(layer_landuse_dis)
+        Merge_layer_list.append([layer_path,2])
         dissolve_filedname_list.append(Landuse_ID)
 
     if Path_Soil_Ply != "#":
-        layer_soil_dis = Reproj_Clip_Dissolve_Simplify_Polygon(
-            processing,
-            context,
-            Path_Soil_Ply,
-            Project_crs,
-            trg_crs,
-            Soil_ID,
-            Sub_Lake_HRU_Layer,
+        layer_path = Reproj_Clip_Dissolve_Simplify_Polygon_arcgis(
+            layer_path = Path_Soil_Ply, 
+            Class_Col = Soil_ID, 
+            tempfolder = tempfolder,
+            mask_layer = os.path.join(tempfolder,'land_hrus.shp')
         )
-        Merge_layer_list.append(layer_soil_dis)
+        Merge_layer_list.append([layer_path,2])
         dissolve_filedname_list.append(Soil_ID)
 
     if Path_Veg_Ply != "#":
-        layer_veg_dis = Reproj_Clip_Dissolve_Simplify_Polygon(
-            processing,
-            context,
-            Path_Veg_Ply,
-            Project_crs,
-            trg_crs,
-            Veg_ID,
-            Sub_Lake_HRU_Layer,
+        layer_path = Reproj_Clip_Dissolve_Simplify_Polygon_arcgis(
+            layer_path = Path_Veg_Ply, 
+            Class_Col = Veg_ID, 
+            tempfolder = tempfolder,
+            mask_layer = os.path.join(tempfolder,'land_hrus.shp')
         )
-        Merge_layer_list.append(layer_veg_dis)
+        Merge_layer_list.append([layer_path,2])
         dissolve_filedname_list.append(Veg_ID)
-
+        
     if Path_Other_Ply_1 != "#":
-        layer_other_1_dis = Reproj_Clip_Dissolve_Simplify_Polygon(
-            processing,
-            context,
-            Path_Other_Ply_1,
-            Project_crs,
-            trg_crs,
-            Other_Ply_ID_1,
-            Sub_Lake_HRU_Layer,
-        )
-        Merge_layer_list.append(layer_other_1_dis)
-        fieldnames_list.append(Other_Ply_ID_1)
+        layer_path = Reproj_Clip_Dissolve_Simplify_Polygon_arcgis(
+            layer_path = Path_Other_Ply_1, 
+            Class_Col = Other_Ply_ID_1, 
+            tempfolder = tempfolder,
+            mask_layer = os.path.join(tempfolder,'land_hrus.shp')
+        )        
+        Merge_layer_list.append([layer_path,2])
         dissolve_filedname_list.append(Other_Ply_ID_1)
 
     if Path_Other_Ply_2 != "#":
-        layer_other_2_dis = Reproj_Clip_Dissolve_Simplify_Polygon(
-            processing,
-            context,
-            Path_Other_Ply_2,
-            Project_crs,
-            trg_crs,
-            Other_Ply_ID_2,
-            Sub_Lake_HRU_Layer,
-        )
-        Merge_layer_list.append(layer_other_2_dis)
-        fieldnames_list.append(Other_Ply_ID_2)
+        layer_path = Reproj_Clip_Dissolve_Simplify_Polygon_arcgis(
+            layer_path = Path_Other_Ply_2, 
+            Class_Col = Other_Ply_ID_2, 
+            tempfolder = tempfolder,
+            mask_layer = os.path.join(tempfolder,'land_hrus.shp')
+        )        
+        Merge_layer_list.append([layer_path,2])
         dissolve_filedname_list.append(Other_Ply_ID_2)
 
-    fieldnames = set(fieldnames_list)
+    fieldnames = np.array(fieldnames_list)
 
     print("begin union")
     #### uniion polygons in the Merge_layer_list
-    mem_union = Union_Ply_Layers_And_Simplify(
-        processing,
-        context,
-        Merge_layer_list,
-        dissolve_filedname_list,
-        fieldnames,
-        OutputFolder,
-    )
+    print(Merge_layer_list)
+    arcpy.Union_analysis(Merge_layer_list, os.path.join(tempfolder,'hrus_land_union.shp'))
+    print("union done ")
 
+    hru_land_info = pd.DataFrame.spatial.from_featureclass( os.path.join(tempfolder,'hrus_land_union.shp'))
+    
     #####
 
     Landuse_info_data = pd.read_csv(Landuse_info)
@@ -328,81 +323,33 @@ def GenerateHRUS_qgis(
 
     # landuse polygon is not provided,landused id the same as IS_lake
     if Path_Landuse_Ply == "#":
-        formula = '- "%s" ' % "HRU_IsLake"
-        mem_union_landuse = qgis_vector_field_calculator(
-            processing=processing,
-            context=context,
-            INPUT=mem_union,
-            FIELD_NAME=Landuse_ID,
-            FORMULA=formula,
-            FIELD_PRECISION=3,
-            OUTPUT="memory:",
-        )["OUTPUT"]
-    else:
-        mem_union_landuse = mem_union
+        hru_land_info[Landuse_ID] = hru_land_info['HRU_IsLake']
+    hru_lake_info[Landuse_ID] = -1
     # if soil is not provied, it the value,will be the same as land use
     if Path_Soil_Ply == "#":
-        formula = ' "%s" ' % Landuse_ID
-        mem_union_soil = qgis_vector_field_calculator(
-            processing=processing,
-            context=context,
-            INPUT=mem_union_landuse,
-            FIELD_NAME=Soil_ID,
-            FORMULA=formula,
-            FIELD_PRECISION=3,
-            OUTPUT="memory:",
-        )["OUTPUT"]
-    else:
-        mem_union_soil = mem_union_landuse
+        hru_land_info[Soil_ID] = hru_land_info[Landuse_ID]
+    hru_lake_info[Soil_ID] = -1
     # if no vegetation polygon is provide vegetation, will be the same as landuse
     if Path_Veg_Ply == "#":
-        formula = ' "%s" ' % Landuse_ID
-        mem_union_veg = qgis_vector_field_calculator(
-            processing=processing,
-            context=context,
-            INPUT=mem_union_soil,
-            FIELD_NAME=Veg_ID,
-            FORMULA=formula,
-            FIELD_PRECISION=3,
-            OUTPUT="memory:",
-        )["OUTPUT"]
-    else:
-        mem_union_veg = mem_union_soil
+        hru_land_info[Veg_ID] = hru_land_info[Landuse_ID]
+    hru_lake_info[Veg_ID] = -1
     if Path_Other_Ply_1 == "#":
-        formula = '- "%s" ' % "HRU_IsLake"
-        mem_union_o1 = qgis_vector_field_calculator(
-            processing=processing,
-            context=context,
-            INPUT=mem_union_veg,
-            FIELD_NAME=Other_Ply_ID_1,
-            FORMULA=formula,
-            FIELD_PRECISION=3,
-            OUTPUT="memory:",
-        )["OUTPUT"]
-    else:
-        mem_union_o1 = mem_union_veg
+        hru_land_info[Other_Ply_ID_1] = hru_land_info['HRU_IsLake']
+    hru_lake_info[Other_Ply_ID_1] = -1
     if Path_Other_Ply_2 == "#":
-        formula = '- "%s" ' % "HRU_IsLake"
-        mem_union_o2 = qgis_vector_field_calculator(
-            processing=processing,
-            context=context,
-            INPUT=mem_union_o1,
-            FIELD_NAME=Other_Ply_ID_2,
-            FORMULA=formula,
-            FIELD_PRECISION=3,
-            OUTPUT="memory:",
-        )["OUTPUT"]
-    else:
-        mem_union_o2 = mem_union_o1
+        hru_land_info[Other_Ply_ID_2] = hru_land_info['HRU_IsLake']
+    hru_lake_info[Other_Ply_ID_2] = -1
 
-    hru_layer_draft = mem_union_o2
+    hru_lake_info = clean_attribute_name_arcgis(hru_lake_info,fieldnames)
+    hru_land_info = clean_attribute_name_arcgis(hru_land_info,fieldnames)
 
+    
+    hruinfo = pd.concat([hru_lake_info, hru_land_info], ignore_index=True)
+       
     HRU_draf_final = Define_HRU_Attributes(
-        processing,
-        context,
-        Project_crs,
+        prj_crs,
         trg_crs,
-        hru_layer_draft,
+        hruinfo,
         dissolve_filedname_list,
         Sub_ID,
         Landuse_ID,
@@ -416,28 +363,15 @@ def GenerateHRUS_qgis(
         DEM,
         Path_Subbasin_Ply,
         OutputFolder,
+        tempfolder,
     )
 
-    qgis_vector_field_calculator(
-        processing=processing,
-        context=context,
-        INPUT=HRU_draf_final,
-        FIELD_NAME="HRU_ID",
-        FORMULA=" @row_number",
-        FIELD_PRECISION=0,
-        NEW_FIELD=False,
-        OUTPUT=output_hru_shp,
-    )
-
-    Clean_Attribute_Name(output_hru_shp, COLUMN_NAMES_CONSTANT_HRU)
-    del Sub_Lake_HRU_Layer, mem_union
-    Qgs.exit()
-
+    HRU_draf_final = clean_attribute_name_arcgis(HRU_draf_final,COLUMN_NAMES_CONSTANT_HRU)
+    HRU_draf_final.spatial.to_featureclass(location = os.path.join(OutputFolder,'final_hru_info.shp'))
 
 def GeneratelandandlakeHRUS(
-    processing,
-    context,
     OutputFolder,
+    tempfolder,
     Path_Subbasin_ply,
     Path_Connect_Lake_ply="#",
     Path_Non_Connect_Lake_ply="#",
@@ -511,14 +445,9 @@ def GeneratelandandlakeHRUS(
             it is a string list
     """
 
-    # Define output path
-    Path_finalcat_hru_out = os.path.join(OutputFolder, "finalcat_hru_lake_info.shp")
-
     # Fix geometry errors in subbasin polygon
-    Subfixgeo = qgis_vector_fix_geometries(
-        processing, context, INPUT=Path_Subbasin_ply, OUTPUT="memory:"
-    )
-
+    arcpy.RepairGeometry_management(Path_Subbasin_ply)
+    
     # Create a file name list that will be strored in output attribute table
     fieldnames_list = [
         "HRULake_ID",
@@ -526,169 +455,80 @@ def GeneratelandandlakeHRUS(
         Lake_Id,
         Sub_ID,
         Sub_Lake_ID,
+        "SHAPE"
     ]  ### attribubte name in the need to be saved
-    fieldnames = set(fieldnames_list)
+    fieldnames = np.array(fieldnames_list)
 
     # if no lake polygon is provided, use subId as HRULake_ID.
     if Path_Connect_Lake_ply == "#" and Path_Non_Connect_Lake_ply == "#":
-        memresult_addlakeid = qgis_vector_field_calculator(
-            processing=processing,
-            context=context,
-            FORMULA="-1",
-            FIELD_NAME="Hylak_id",
-            INPUT=Subfixgeo["OUTPUT"],
-            OUTPUT="memory:",
-        )
-        memresult_addhruid = qgis_vector_field_calculator(
-            processing=processing,
-            context=context,
-            FORMULA=' "SubId" ',
-            FIELD_NAME="HRULake_ID",
-            INPUT=memresult_addlakeid["OUTPUT"],
-            OUTPUT="memory:",
-        )
-        Sub_Lake_HRU = qgis_vector_field_calculator(
-            processing=processing,
-            context=context,
-            FORMULA="-1",
-            FIELD_NAME="HRU_IsLake",
-            INPUT=memresult_addhruid["OUTPUT"],
-            OUTPUT="memory:",
-        )
+        
+        cat_info = pd.DataFrame.spatial.from_featureclass(Path_Subbasin_ply)
+        cat_info['Hylak_id'] = -1
+        cat_info['HRULake_ID'] = catinfo['SubId']
+        cat_info['HRU_IsLake'] = catinfo['-1']
+        
         # remove column not in fieldnames
-        Sub_Lake_HRU, temp_out = Clean_Attribute_Name(
-            Sub_Lake_HRU["OUTPUT"], fieldnames, Input_Is_Feature_In_Mem=True
-        )
-        crs_id = qgis_vector_return_crs_id(
-            processing, context, Sub_Lake_HRU, Input_Is_Feature_In_Mem=True
-        )
-        return Sub_Lake_HRU, crs_id, ["HRULake_ID", "HRU_IsLake", Sub_ID]
+        cat_info = clean_attribute_name_arcgis(cat_info,fieldnames)
+        cat_info.spatial.to_featureclass(location=os.path.join(OutputFolder,'finalcat_hru_lake_info.shp'))
+        crs_id = arcpy.Describe(Path_products).spatialReference.factoryCode
+        return os.path.path.join(OutputFolder,'finalcat_hru_lake_info.shp'), crs_id, ["HRULake_ID", "HRU_IsLake", Sub_ID]
 
     # fix lake polygon  geometry
     if Path_Connect_Lake_ply != "#":
-        ConLakefixgeo = qgis_vector_fix_geometries(
-            processing, context, INPUT=Path_Connect_Lake_ply, OUTPUT="memory:"
-        )
+        arcpy.RepairGeometry_management(Path_Connect_Lake_ply)
     # fix lake polygon geometry
     if Path_Non_Connect_Lake_ply != "#":
-        NonConLakefixgeo = qgis_vector_fix_geometries(
-            processing, context, INPUT=Path_Non_Connect_Lake_ply, OUTPUT="memory:"
-        )
-
+        arcpy.RepairGeometry_management(Path_Non_Connect_Lake_ply)
     # Merge connected and non connected lake polygons first
     if Path_Connect_Lake_ply != "#" and Path_Non_Connect_Lake_ply != "#":
-        meme_Alllakeply = qgis_vector_merge_vector_layers(
-            processing,
-            context,
-            INPUT_Layer_List=[ConLakefixgeo["OUTPUT"], NonConLakefixgeo["OUTPUT"]],
-            OUTPUT="memory:",
-        )
+        arcpy.Merge_management([Path_Connect_Lake_ply, Path_Non_Connect_Lake_ply], os.path.join(tempfolder,'merged_lake_ply.shp'))    
     elif Path_Connect_Lake_ply != "#" and Path_Non_Connect_Lake_ply == "#":
-        meme_Alllakeply = ConLakefixgeo
+        arcpy.CopyFeatures_management(Path_Connect_Lake_ply, os.path.join(tempfolder,'merged_lake_ply.shp'))
     elif Path_Connect_Lake_ply == "#" and Path_Non_Connect_Lake_ply != "#":
-        meme_Alllakeply = NonConLakefixgeo
+        arcpy.CopyFeatures_management(Path_Non_Connect_Lake_ply, os.path.join(tempfolder,'merged_lake_ply.shp'))
     else:
         print("should never happened......")
 
     # union merged polygon and subbasin polygon
-    mem_sub_lake_union_temp = qgis_vector_union_two_layers(
-        processing=processing,
-        context=context,
-        INPUT=Subfixgeo["OUTPUT"],
-        OVERLAY=meme_Alllakeply["OUTPUT"],
-        OUTPUT="memory:",
-    )["OUTPUT"]
+#    cat_info.spatial.to_featureclass(location=os.path.join(tempfolder,'cat_ply.shp'))
+#    arcpy.RepairGeometry_management(os.path.join(tempfolder,'cat_ply.shp'))
+    
+    inFeatures = [[Path_Subbasin_ply, 1], [os.path.join(tempfolder,'merged_lake_ply.shp'), 2]]
+    
+    arcpy.Union_analysis(inFeatures, os.path.join(tempfolder,'cat_lake_union.shp'))
+    
+    arcpy.RepairGeometry_management(os.path.join(tempfolder,'cat_lake_union.shp'))
+    sub_lake_info = pd.DataFrame.spatial.from_featureclass(location=os.path.join(tempfolder,'cat_lake_union.shp'))
+    sub_lake_info['HRULake_ID'] = -9999
+    sub_lake_info['HRU_IsLake'] = -9999
+    
+    crs_id = arcpy.Describe(os.path.join(tempfolder,'cat_lake_union.shp')).spatialReference.factoryCode
 
-    # fix union geometry
-    mem_sub_lake_union = qgis_vector_fix_geometries(
-        processing, context, INPUT=mem_sub_lake_union_temp, OUTPUT="memory:"
-    )["OUTPUT"]
+    sub_lake_info['HRU_ID_Temp'] = sub_lake_info['FID'] + 1
+    
 
-    # add attribute
-    layer_cat = mem_sub_lake_union
-    # obtain projection crs id
-    SpRef_in = qgis_vector_return_crs_id(
-        processing, context, layer_cat, Input_Is_Feature_In_Mem=True
-    )  ### get Raster spatialReference id
-
-    # add attribute to layer
-    layer_cat = qgis_vector_add_attributes(
-        processing,
-        context,
-        INPUT_Layer=layer_cat,
-        attribute_list=[
-            QgsField("HRULake_ID", QVariant.Int),
-            QgsField("HRU_IsLake", QVariant.Int),
-        ],
-    )
-
-    # remove column not in fieldnames
-    layer_cat = qgis_vector_field_calculator(
-        processing=processing,
-        context=context,
-        FORMULA=" @row_number",
-        FIELD_NAME="HRU_ID_Temp",
-        INPUT=layer_cat,
-        OUTPUT="memory:",
-    )["OUTPUT"]
-
-    # create HRU_lAKE_ID
-
-    # obtain attribute table in vector
-    Attri_table = Obtain_Attribute_Table(processing, context, layer_cat)
-    # determine lake hru id
-    Attri_table = Attri_table.fillna(-1)
-    Attri_table = Determine_Lake_HRU_Id(Attri_table)
+    sub_lake_info = Determine_Lake_HRU_Id(sub_lake_info)
     # copy determined lake hru id to vector
-    layer_cat = Copy_Pddataframe_to_shpfile(
-        Path_shpfile=layer_cat,
-        Pddataframe=Attri_table,
-        link_col_nm_shp="HRU_ID_Temp",
-        link_col_nm_df="HRU_ID_Temp",
-        UpdateColNM=["HRU_IsLake", "HRULake_ID", "SubId", "HyLakeId"],
-        Input_Is_Feature_In_Mem=True,
-    )
-    # clean attribute table
-    layer_cat, temp_not_used = Clean_Attribute_Name(
-        layer_cat, fieldnames, Input_Is_Feature_In_Mem=True, Col_NM_Max="SubId"
-    )
+    sub_lake_info = clean_attribute_name_arcgis(sub_lake_info,fieldnames)
 
-    # dissolve and fix geometry export output
-    mem_union_fix = qgis_vector_fix_geometries(
-        processing, context, INPUT=layer_cat, OUTPUT="memory:"
-    )["OUTPUT"]
-    Sub_Lake_HRU1 = qgis_vector_dissolve(
-        processing,
-        context,
-        INPUT=mem_union_fix,
-        FIELD=["HRULake_ID"],
-        OUTPUT=os.path.join(
-            tempfile.gettempdir(), str(np.random.randint(1, 10000 + 1)) + "tempfile.shp"
-        ),
-    )["OUTPUT"]
-    Sub_Lake_HRU2 = qgis_vector_dissolve(
-        processing,
-        context,
-        INPUT=Sub_Lake_HRU1,
-        FIELD=["HRULake_ID"],
-        OUTPUT=Path_finalcat_hru_out,
+    save_modified_attributes_to_outputs(
+        mapoldnew_info = sub_lake_info,
+        tempfolder = tempfolder,
+        OutputFolder = OutputFolder,
+        cat_name = 'finalcat_hru_lake_info.shp',
+        riv_name = '#',
+        Path_final_riv = '#',
+        dis_col_name='HRULake_ID'
     )
-    Sub_Lake_HRU = qgis_vector_dissolve(
-        processing, context, INPUT=Sub_Lake_HRU1, FIELD=["HRULake_ID"], OUTPUT="memory:"
-    )
-
-    del layer_cat
-    crs_id = qgis_vector_return_crs_id(
-        processing, context, Sub_Lake_HRU["OUTPUT"], Input_Is_Feature_In_Mem=True
-    )
-    return Sub_Lake_HRU["OUTPUT"], crs_id, ["HRULake_ID", "HRU_IsLake", Sub_ID]
+    
+    return os.path.join(OutputFolder,'finalcat_hru_lake_info.shp'), crs_id, ["HRULake_ID", "HRU_IsLake", Sub_ID]
 
 
 ############
 
 
-def Reproj_Clip_Dissolve_Simplify_Polygon(
-    processing, context, layer_path, Project_crs, trg_crs, Class_Col, Layer_clip
+def Reproj_Clip_Dissolve_Simplify_Polygon_arcgis(
+    layer_path, Class_Col, tempfolder,mask_layer
 ):
     """Preprocess user provided polygons
 
@@ -725,21 +565,28 @@ def Reproj_Clip_Dissolve_Simplify_Polygon(
         layer_dis                  : qgis object
             it is a polygon after preprocess
     """
-    layer_proj = qgis_vector_reproject_layers(
-        processing, context, layer_path, trg_crs, "memory:"
-    )["OUTPUT"]
-    layer_fix = qgis_vector_fix_geometries(
-        processing, context, INPUT=layer_proj, OUTPUT="memory:"
-    )["OUTPUT"]
-    layer_clip = qgis_vector_clip(
-        processing, context, layer_fix, Layer_clip, "memory:"
-    )["OUTPUT"]
-    #    layer_clip = processing.run("native:clip", {'INPUT':layer_fix,'OVERLAY':Layer_clip,'OUTPUT':'memory:'})['OUTPUT']
-    layer_dis = qgis_vector_dissolve(
-        processing, context, INPUT=layer_clip, FIELD=[Class_Col], OUTPUT="memory:"
-    )["OUTPUT"]
-    qgis_vector_create_spatial_index(processing, context, layer_dis)
-    return layer_dis
+    arcpy.Project_management(
+        layer_path,
+        os.path.join(tempfolder,Class_Col+"_proj.shp"), 
+        arcpy.Describe(mask_layer).spatialReference,
+        )
+    arcpy.Clip_analysis(
+        os.path.join(tempfolder,Class_Col+"_proj.shp"), 
+        mask_layer, 
+        os.path.join(tempfolder,Class_Col+"_clip.shp")
+    )
+    
+    arcpy.Dissolve_management(
+        os.path.join(tempfolder,Class_Col+"_clip.shp"), 
+        os.path.join(tempfolder,Class_Col+"_dislve.shp"), 
+        [Class_Col]
+    )
+    
+    arcpy.RepairGeometry_management(os.path.join(tempfolder,Class_Col+"_dislve.shp"))
+    
+    arcpy.AddSpatialIndex_management(os.path.join(tempfolder,Class_Col+"_dislve.shp"))
+
+    return os.path.join(tempfolder,Class_Col+"_dislve.shp")
 
 
 def Union_Ply_Layers_And_Simplify(
@@ -847,11 +694,9 @@ def Union_Ply_Layers_And_Simplify(
 
 
 def Define_HRU_Attributes(
-    processing,
-    context,
-    Project_crs,
+    prj_crs,
     trg_crs,
-    hru_layer,
+    hruinfo,
     dissolve_filedname_list,
     Sub_ID,
     Landuse_ID,
@@ -865,6 +710,7 @@ def Define_HRU_Attributes(
     DEM,
     Path_Subbasin_Ply,
     OutputFolder,
+    tempfolder,
 ):
 
     """Generate attributes of each HRU
@@ -965,49 +811,29 @@ def Define_HRU_Attributes(
         like RAVEN
     """
     num = str(np.random.randint(1, 10000 + 1))
+    hruinfo["LAND_USE_C"] = '-9999'
+    hruinfo["VEG_C"] = '-9999'
+    hruinfo["SOIL_PROF"] = '-9999'
+    hruinfo["HRU_CenX"] = -9999.9999
+    hruinfo["HRU_CenY"] = -9999.9999
+    hruinfo["HRU_ID_New"] = -9999
+    hruinfo["HRU_Area"] = -9999.99 
+    hruinfo.spatial.to_featureclass(location=os.path.join(tempfolder,'hru_add_area.shp'))
+
+    arcpy.CalculateGeometryAttributes_management(
+        os.path.join(tempfolder,'hru_add_area.shp'),
+        [["HRU_Area", "AREA"]],
+        area_unit = 'SQUARE_METERS',
+        coordinate_system = arcpy.SpatialReference(prj_crs)
+    ) 
     ### calcuate area of each feature
-    formular = "area(transform($geometry, '%s','%s'))" % (
-        hru_layer.crs().authid(),
-        Project_crs,
-    )
-    layer_area = qgis_vector_field_calculator(
-        processing=processing,
-        context=context,
-        FORMULA=formular,
-        FIELD_NAME="HRU_Area",
-        INPUT=hru_layer,
-        OUTPUT="memory:",
-    )["OUTPUT"]
-    layer_area_id = qgis_vector_field_calculator(
-        processing=processing,
-        context=context,
-        FORMULA=" @row_number",
-        FIELD_NAME="HRU_ID",
-        INPUT=layer_area,
-        OUTPUT="memory:",
-    )["OUTPUT"]
+    hruinfo_area = pd.DataFrame.spatial.from_featureclass(os.path.join(tempfolder,'hru_add_area.shp'))
 
-    ### add attributes columns
-    attribute_list = [
-        QgsField("LAND_USE_C", QVariant.String),
-        QgsField("VEG_C", QVariant.String),
-        QgsField("SOIL_PROF", QVariant.String),
-        QgsField("HRU_CenX", QVariant.Double),
-        QgsField("HRU_CenY", QVariant.Double),
-        QgsField("HRU_ID_New", QVariant.Double),
-    ]
-
-    layer_area_id = qgis_vector_add_attributes(
-        processing, context, INPUT_Layer=layer_area_id, attribute_list=attribute_list
-    )
-
-    ### Determine HRU attribute HruID, LAND_USE_C,VEG_C,SOIL_PROF
-    Attri_table = Obtain_Attribute_Table(processing, context, layer_area_id)
-    Attri_table.to_csv(
-        os.path.join(tempfile.gettempdir(), "attribute_pre.csv"), sep=","
-    )
-    Attri_table = Determine_HRU_Attributes(
-        Attri_table,
+    hruinfo_area['HRU_ID'] = hruinfo_area['FID'] + 1
+    hruinfo_area["HRU_ID_New"] = hruinfo_area["FID"] + 1  
+    
+    hruinfo_area_update_attribute = Determine_HRU_Attributes(
+        hruinfo_area,
         Sub_ID,
         Landuse_ID,
         Soil_ID,
@@ -1018,247 +844,185 @@ def Define_HRU_Attributes(
         Soil_info_data,
         Veg_info_data,
     )
-    Attri_table.to_csv(os.path.join(tempfile.gettempdir(), "attribute.csv"))
-    layer_area_id = Copy_Pddataframe_to_shpfile(
-        Path_shpfile=layer_area_id,
-        Pddataframe=Attri_table,
-        link_col_nm_shp="HRU_ID",
-        link_col_nm_df="HRU_ID",
-        UpdateColNM=[
-            Sub_ID,
-            Landuse_ID,
-            Soil_ID,
-            Veg_ID,
-            Other_Ply_ID_1,
-            Other_Ply_ID_2,
-            "LAND_USE_C",
-            "SOIL_PROF",
-            "VEG_C",
-            "HRU_ID_New",
-        ],
-        Input_Is_Feature_In_Mem=True,
+
+    save_modified_attributes_to_outputs(
+        mapoldnew_info = hruinfo_area_update_attribute,
+        tempfolder = tempfolder,
+        OutputFolder = tempfolder,
+        cat_name = 'finalcat_hru_info.shp',
+        riv_name = '#',
+        Path_final_riv = '#',
+        dis_col_name='HRU_ID_New'
     )
 
-    ### merge lake hru.
-    qgis_vector_dissolve(
-        processing,
-        context,
-        INPUT=layer_area_id,
-        FIELD="HRU_ID_New",
-        OUTPUT=os.path.join(tempfile.gettempdir(), num + "_dissolve_union2.shp"),
+    arcpy.RepairGeometry_management(os.path.join(tempfolder,'finalcat_hru_info.shp'))
+
+    arcpy.CalculateGeometryAttributes_management(
+        os.path.join(tempfolder,'finalcat_hru_info.shp'),
+        [["HRU_Area", "AREA"]],
+        area_unit = 'SQUARE_METERS',
+        coordinate_system = arcpy.SpatialReference(prj_crs)
+    ) 
+   
+    min_hru_pct_sub_area = 0.2
+    hruinfo_new = pd.DataFrame.spatial.from_featureclass(os.path.join(tempfolder,'finalcat_hru_info.shp'))
+    
+    hruinfo_simple = simplidfy_hrus(
+        min_hru_pct_sub_area = 0.1,
+        hruinfo = hruinfo_new,
+        importance_order = [Other_Ply_ID_1,Landuse_ID,Soil_ID],
     )
-
-    qgis_vector_dissolve(
-        processing,
-        context,
-        INPUT=os.path.join(tempfile.gettempdir(), num + "_dissolve_union2.shp"),
-        FIELD="HRU_ID_New",
-        OUTPUT=os.path.join(tempfile.gettempdir(), num + "_dissolve_union3.shp"),
+    
+    save_modified_attributes_to_outputs(
+        mapoldnew_info = hruinfo_simple,
+        tempfolder = tempfolder,
+        OutputFolder = tempfolder,
+        cat_name = 'hru_simple.shp',
+        riv_name = '#',
+        Path_final_riv = '#',
+        dis_col_name='HRU_ID_New'
     )
-
-    HRU_draft = qgis_vector_dissolve(
-        processing,
-        context,
-        os.path.join(tempfile.gettempdir(), num + "_dissolve_union3.shp"),
-        "HRU_ID_New",
-        "memory:",
-    )["OUTPUT"]
-
-    HRU_draft = qgis_vector_fix_geometries(
-        processing, context, INPUT=HRU_draft, OUTPUT="memory:"
-    )["OUTPUT"]
-
-    formular = "area(transform($geometry, '%s','%s'))" % (
-        HRU_draft.crs().authid(),
-        Project_crs,
+    
+    arcpy.CalculateGeometryAttributes_management(
+        os.path.join(tempfolder,'hru_simple.shp'), 
+        [["HRU_CenX", "CENTROID_X"], 
+        ["HRU_CenY", "CENTROID_Y"]],
+        coordinate_system = arcpy.SpatialReference(4326)
     )
-
-    HRU_draft = qgis_vector_field_calculator(
-        processing=processing,
-        context=context,
-        FORMULA=formular,
-        FIELD_NAME="HRU_Area2",
-        INPUT=HRU_draft,
-        OUTPUT="memory:",
-    )["OUTPUT"]
-
-    HRU_draft = qgis_vector_extract_by_attribute(
-        processing,
-        context,
-        INPUT_Layer=HRU_draft,
-        FIELD="SubId",
-        OPERATOR=1,
-        VALUE=0,
-        OUTPUT="memory:",
-    )["OUTPUT"]
-
-    HRU_draft = qgis_vector_extract_by_attribute(
-        processing,
-        context,
-        INPUT_Layer=HRU_draft,
-        FIELD="HRU_Area2",
-        OPERATOR=1,
-        VALUE=0,
-        OUTPUT="memory:",
-    )["OUTPUT"]
-
-    HRU_draft = Add_centroid_to_feature(
-        Path_feagure=HRU_draft,
-        centroidx_nm="HRU_CenX",
-        centroidy_nm="HRU_CenY",
-        Input_Is_Feature_In_Mem=True,
+    # 
+    arcpy.JoinField_management(
+        os.path.join(tempfolder,'hru_simple.shp'), 
+        'SubId', 
+        os.path.join(Path_Subbasin_Ply), 
+        'SubId',
     )
-
-    ### add subbasin attribute back to hru polygons
-
-    HRU_draft_sub_info = qgis_vector_join_attribute_table(
-        processing,
-        context,
-        INPUT1=HRU_draft,
-        FIELD1=Sub_ID,
-        INPUT2=Path_Subbasin_Ply,
-        FIELD2=Sub_ID,
-        OUTPUT="memory:",
-    )["OUTPUT"]
+    arcpy.CalculateGeometryAttributes_management(
+        os.path.join(tempfolder,'hru_simple.shp'),
+        [["HRU_Area", "AREA"]],
+        area_unit = 'SQUARE_METERS',
+        coordinate_system = arcpy.SpatialReference(prj_crs)
+    ) 
 
     if DEM != "#":
-
-        HRU_draft_proj = qgis_vector_reproject_layers(
-            processing, context, HRU_draft_sub_info, Project_crs, "memory:"
-        )["OUTPUT"]
-
-        DEM_proj = qgis_raster_gdal_warpreproject(
-            processing, Input=DEM, TARGET_CRS=Project_crs, Output="TEMPORARY_OUTPUT"
-        )["OUTPUT"]
-
-        ext = HRU_draft_proj.extent()
-        projwin = "%s,%s,%s,%s [%s]" % (
-            ext.xMinimum(),
-            ext.xMaximum(),
-            ext.yMinimum(),
-            ext.yMaximum(),
-            Project_crs,
+        
+        arcpy.Project_management(
+            os.path.join(tempfolder,'hru_simple.shp'),
+            os.path.join(tempfolder,"hru_proj.shp"), 
+            arcpy.SpatialReference(int(prj_crs)),
+            )
+        
+        extract_dem = ExtractByMask(DEM, os.path.join(tempfolder,'hru_simple.shp'))
+        arcpy.ProjectRaster_management(
+            extract_dem, 
+            os.path.join(tempfolder,"demproj.tif"),
+            arcpy.SpatialReference(int(prj_crs)),
+            "NEAREST"
         )
-        DEM_clip = qgis_raster_clip_raster_by_extent(
-            processing, Input=DEM_proj, PROJWIN=projwin, Output="TEMPORARY_OUTPUT"
-        )["OUTPUT"]
+        Slopeout = Slope(extract_dem, "DEGREE", 0.3043)
+        Slopeout.save(os.path.join(OutputFolder,'slop.tif'))
+        Aspectout = Aspect(extract_dem)
 
-        DEM_slope = qgis_raster_slope(
-            processing, Input=DEM_clip, Output="TEMPORARY_OUTPUT"
-        )["OUTPUT"]
-        DEM_aspect = qgis_raster_aspect(
-            processing, Input=DEM_clip, Output="TEMPORARY_OUTPUT"
-        )["OUTPUT"]
+        # Save the output 
+        Aspectout.save(os.path.join(OutputFolder,'aspect.tif'))
 
-        qgis_raster_zonal_statistics(
-            processing,
-            INPUT_RASTER=DEM_slope,
-            INPUT_VECTOR=HRU_draft_proj,
-            COLUMN_PREFIX="HRU_S_",
-        )
-        qgis_raster_zonal_statistics(
-            processing,
-            INPUT_RASTER=DEM_aspect,
-            INPUT_VECTOR=HRU_draft_proj,
-            COLUMN_PREFIX="HRU_A_",
-        )
-        qgis_raster_zonal_statistics(
-            processing,
-            INPUT_RASTER=DEM_clip,
-            INPUT_VECTOR=HRU_draft_proj,
-            COLUMN_PREFIX="HRU_E_",
-        )
-
-        HRU_draft_reproj = qgis_vector_reproject_layers(
-            processing,
-            context,
-            INPUT=HRU_draft_proj,
-            TARGET_CRS=trg_crs,
-            OUTPUT="memory:",
-        )["OUTPUT"]
-
+        table_zon_slope = ZonalStatisticsAsTable(
+            os.path.join(tempfolder,"hru_proj.shp"), 
+            'HRU_ID_New', 
+            Slopeout, 
+            os.path.join(tempfolder,"slope_zonal.dbf"), 
+            "DATA", 
+            "MEAN", 
+        ) 
+        table_zon_aspect = ZonalStatisticsAsTable(
+            os.path.join(tempfolder,"hru_proj.shp"), 
+            'HRU_ID_New', 
+            Aspectout, 
+            os.path.join(tempfolder,"asp_zonal.dbf"), 
+            "DATA", 
+            "MEAN", 
+        ) 
+        table_zon_elev = ZonalStatisticsAsTable(
+            os.path.join(tempfolder,"hru_proj.shp"), 
+            'HRU_ID_New', 
+            os.path.join(tempfolder,"demproj.tif"), 
+            os.path.join(tempfolder,"elv_zonal.dbf"), 
+            "DATA", 
+            "MEAN", 
+        ) 
+        
+        hruinfo_add_slp_asp = pd.DataFrame.spatial.from_featureclass(os.path.join(tempfolder,'hru_simple.shp'))
+        table_slp = Dbf_To_Dataframe(os.path.join(tempfolder,"slope_zonal.dbf")) 
+        table_asp = Dbf_To_Dataframe(os.path.join(tempfolder,"asp_zonal.dbf"))
+        table_elv = Dbf_To_Dataframe(os.path.join(tempfolder,"elv_zonal.dbf"))
+        
+        table_slp['HRU_S_mean'] = table_slp['MEAN']
+        table_slp = table_slp[['HRU_ID_New','HRU_S_mean']]
+        table_asp['HRU_A_mean'] = table_asp['MEAN']
+        table_asp = table_asp[['HRU_ID_New','HRU_A_mean']]
+        table_elv['HRU_E_mean'] = table_elv['MEAN']
+        table_elv = table_elv[['HRU_ID_New','HRU_E_mean']]
+        
+        
+        hruinfo_add_slp_asp = pd.merge(hruinfo_add_slp_asp, table_slp, on='HRU_ID_New')          
+        hruinfo_add_slp_asp = pd.merge(hruinfo_add_slp_asp, table_asp, on='HRU_ID_New')          
+        hruinfo_add_slp_asp = pd.merge(hruinfo_add_slp_asp, table_elv, on='HRU_ID_New')          
+        hruinfo_add_slp_asp['HRU_ID'] = hruinfo_add_slp_asp['FID'] + 1
     else:
-        ## if no dem provided hru slope will use subbasin slope aspect
-        ## and elevation
-        formula = ' "%s" ' % "BasSlope"
-        HRU_draft_sub_info_S = qgis_vector_field_calculator(
-            processing=processing,
-            context=context,
-            FORMULA=formula,
-            FIELD_NAME="HRU_S_mean",
-            INPUT=HRU_draft_sub_info,
-            OUTPUT="memory:",
-            FIELD_PRECISION=3,
-        )["OUTPUT"]
+        hruinfo_add_slp_asp = pd.DataFrame.spatial.from_featureclass(os.path.join(OutputFolder,'hru_simple.shp'))
+        hruinfo_add_slp_asp['HRU_ID'] = hruinfo_add_slp_asp['FID'] + 1
+        hruinfo_add_slp_asp['HRU_S_mean'] = hruinfo_add_slp_asp['BasSlope']
+        hruinfo_add_slp_asp['HRU_A_mean'] = hruinfo_add_slp_asp['BasAspect']
+        hruinfo_add_slp_asp['HRU_E_mean'] = hruinfo_add_slp_asp['MeanElev']
+        
+    return hruinfo_add_slp_asp
 
-        formula = ' "%s" ' % "BasAspect"
-        HRU_draft_sub_info_A = qgis_vector_field_calculator(
-            processing=processing,
-            context=context,
-            FORMULA=formula,
-            FIELD_NAME="HRU_A_mean",
-            INPUT=HRU_draft_sub_info_S,
-            OUTPUT="memory:",
-            FIELD_PRECISION=3,
-        )["OUTPUT"]
 
-        formula = ' "%s" ' % "MeanElev"
-        HRU_draft_sub_info_S = qgis_vector_field_calculator(
-            processing=processing,
-            context=context,
-            FORMULA=formula,
-            FIELD_NAME="HRU_E_mean",
-            INPUT=HRU_draft_sub_info_A,
-            OUTPUT="memory:",
-            FIELD_PRECISION=3,
-        )["OUTPUT"]
+def simplidfy_hrus(min_hru_pct_sub_area,hruinfo,importance_order):
 
-        HRU_draft_reproj = HRU_draft_sub_info_S
-
-    ### update HRU area
-    formular = "area(transform($geometry, '%s','%s'))" % (trg_crs, Project_crs)
-    HRU_draf_final = qgis_vector_field_calculator(
-        processing=processing,
-        context=context,
-        FORMULA=formular,
-        FIELD_NAME="HRU_Area",
-        INPUT=HRU_draft_reproj,
-        OUTPUT="memory:",
-        NEW_FIELD=False,
-        FIELD_PRECISION=3,
-    )["OUTPUT"]
-
-    qgis_vector_extract_by_attribute(
-        processing,
-        context,
-        INPUT_Layer=HRU_draf_final,
-        FIELD="HRU_Area",
-        OPERATOR=1,
-        VALUE="0",
-        OUTPUT=os.path.join(tempfile.gettempdir(), num + "_extract_non_zero_area1.shp"),
-    )
-
-    qgis_vector_extract_by_attribute(
-        processing,
-        context,
-        INPUT_Layer=os.path.join(
-            tempfile.gettempdir(), num + "_extract_non_zero_area1.shp"
-        ),
-        FIELD="HRU_Area",
-        OPERATOR=1,
-        VALUE="0",
-        OUTPUT=os.path.join(tempfile.gettempdir(), num + "_extract_non_zero_area2.shp"),
-    )
-
-    HRU_draf_final = qgis_vector_extract_by_attribute(
-        processing,
-        context,
-        INPUT_Layer=os.path.join(
-            tempfile.gettempdir(), num + "_extract_non_zero_area2.shp"
-        ),
-        FIELD="HRU_Area",
-        OPERATOR=1,
-        VALUE="0",
-        OUTPUT="memory:",
-    )["OUTPUT"]
-    return HRU_draf_final
+    subids = np.unique(hruinfo['SubId'].values)
+    
+    # loop for each subbasin 
+    for i in range(0,len(subids)):
+        subid = subids[i]
+        # hrus in this subbasin 
+        sub_hru_info = hruinfo.loc[hruinfo['SubId'] == subid].copy(deep = True)
+        # calculate area and subbasin minimum hur ares 
+        subasrea = np.sum(sub_hru_info['HRU_Area'].values)
+        subarea_thrs = min_hru_pct_sub_area * subasrea
+         
+        # obtain hru need to be removed 
+        need_remove_hrus = sub_hru_info.loc[sub_hru_info['HRU_Area'] < subarea_thrs].copy()
+        # obtain hrus that will be keepted 
+        good_hrus = sub_hru_info.loc[sub_hru_info['HRU_Area'] >= subarea_thrs].copy()
+        
+        hru_columns = good_hrus.columns
+        # loop for each 
+        indexes = need_remove_hrus.index
+        for j in range(0,len(indexes)):
+            idx = indexes[j]
+            hruid = need_remove_hrus.loc[idx,'HRU_ID_New']
+            # find a target hru from good_hrus, and merge them by change attribute 
+            
+            # loop the importance_order, 
+            for k in range(0,len(importance_order)):
+                colnm = importance_order[k]
+                # find the attribute value of the problem hru for this column
+                attri_remove_hru = need_remove_hrus.loc[idx,colnm]
+                
+                # check if there is good hrus has the same attribute value 
+                good_hrus_k  = good_hrus.loc[good_hrus[colnm] == attri_remove_hru].copy()
+                
+                if len(good_hrus_k) > 0:
+                    # sort by hru areas
+                    good_hrus_k = good_hrus_k.sort_values(by='HRU_Area', ascending=False)
+                    for i_nm in range(0,len(hru_columns)):
+                        columnname = hru_columns[i_nm]
+                        if columnname == 'SHAPE':
+                            continue 
+                        # modify the hru attributes to good hru attribute     
+                        hruinfo.loc[hruinfo['HRU_ID_New'] == hruid,columnname] = good_hrus_k[columnname].values[0]
+                else:
+                    continue 
+                
+    return hruinfo
+        

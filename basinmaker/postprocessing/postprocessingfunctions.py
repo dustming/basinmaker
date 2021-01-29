@@ -23,6 +23,16 @@ def combine_catchments_covered_by_the_same_lake(
             Path_final_riv=Path_final_riv,
             qgis_prefix_path=qgis_prefix_path,
         )
+    if gis_platform == "arcgis":
+        from postprocessing.combinearcgis import (
+            combine_catchments_covered_by_the_same_lake_arcgis,
+        )
+
+        combine_catchments_covered_by_the_same_lake_arcgis(
+            OutputFolder=OutputFolder,
+            Path_final_rivply=Path_final_rivply,
+            Path_final_riv=Path_final_riv,
+        )        
 
 
 def simplify_routing_structure_by_filter_lakes(
@@ -60,7 +70,24 @@ def simplify_routing_structure_by_filter_lakes(
             qgis_prefix_path=qgis_prefix_path,
             gis_platform=gis_platform,
         )
+    if gis_platform == "arcgis":
+        from postprocessing.selectlakearcgis import (
+            simplify_routing_structure_by_filter_lakes_arcgis,
+        )
 
+        simplify_routing_structure_by_filter_lakes_arcgis(
+            Path_final_riv_ply=Path_final_riv_ply,
+            Path_final_riv=Path_final_riv,
+            Path_Con_Lake_ply=Path_Con_Lake_ply,
+            Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,
+            Thres_Area_Conn_Lakes=Thres_Area_Conn_Lakes,
+            Thres_Area_Non_Conn_Lakes=Thres_Area_Non_Conn_Lakes,
+            Selection_Method=Selection_Method,
+            Selected_Lake_List_in=Selected_Lake_List_in,
+            OutputFolder=OutputFolder,
+            gis_platform=gis_platform,
+        )
+        
 
 def simplify_routing_structure_by_drainage_area(
     Path_final_riv_ply="#",
@@ -90,6 +117,21 @@ def simplify_routing_structure_by_drainage_area(
             OutputFolder=OutputFolder,
             qgis_prefix_path=qgis_prefix_path,
         )
+
+    if gis_platform == "arcgis":
+        from postprocessing.increasedaarcgis import (
+            simplify_routing_structure_by_drainage_area_arcgis,
+        )
+
+        simplify_routing_structure_by_drainage_area_arcgis(
+            Path_final_riv_ply=Path_final_riv_ply,
+            Path_final_riv=Path_final_riv,
+            Path_Con_Lake_ply=Path_Con_Lake_ply,
+            Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,
+            Area_Min=Area_Min,
+            OutputFolder=OutputFolder,
+        )
+
 
 
 def select_part_of_routing_product(
@@ -146,7 +188,21 @@ def select_part_of_routing_product(
                 mostupstreamid=mostupid,
                 qgis_prefix_path=qgis_prefix_path,
             )
-
+        
+    if gis_platform == "arcgis":
+        from postprocessing.selectprodarcgis import (
+        Select_Routing_product_based_SubId_arcgis
+        )
+        Select_Routing_product_based_SubId_arcgis(
+            OutputFolder=OutputFolder,
+            Path_Catchment_Polygon=Path_Catchment_Polygon,
+            Path_River_Polyline=Path_River_Polyline,
+            Path_Con_Lake_ply=Path_Con_Lake_ply,
+            Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,
+            mostdownid=mostdownid,
+            mostupstreamid=mostupid,
+        )
+                        
     return
 
 
@@ -176,7 +232,6 @@ def generate_hrus(
     qgis_prefix_path="#",
     gis_platform="qgis",
 ):
-
     if gis_platform == "qgis":
         from postprocessing.hru import GenerateHRUS_qgis
 
@@ -205,6 +260,35 @@ def generate_hrus(
             OutputFolder=OutputFolder,
             qgis_prefix_path=qgis_prefix_path,
         )
+
+    if gis_platform == "arcgis":
+        from postprocessing.hruarcgis import GenerateHRUS_arcgis
+
+        GenerateHRUS_arcgis(
+            Path_Subbasin_Ply=Path_Subbasin_Ply,
+            Landuse_info=Landuse_info,
+            Soil_info=Soil_info,
+            Veg_info=Veg_info,
+            Sub_Lake_ID=Sub_Lake_ID,
+            Sub_ID=Sub_ID,
+            Path_Connect_Lake_ply=Path_Connect_Lake_ply,
+            Path_Non_Connect_Lake_ply=Path_Non_Connect_Lake_ply,
+            Lake_Id=Lake_Id,
+            Path_Landuse_Ply=Path_Landuse_Ply,
+            Landuse_ID=Landuse_ID,
+            Path_Soil_Ply=Path_Soil_Ply,
+            Soil_ID=Soil_ID,
+            Path_Veg_Ply=Path_Veg_Ply,
+            Veg_ID=Veg_ID,
+            Path_Other_Ply_1=Path_Other_Ply_1,
+            Other_Ply_ID_1=Other_Ply_ID_1,
+            Path_Other_Ply_2=Path_Other_Ply_2,
+            Other_Ply_ID_2=Other_Ply_ID_2,
+            DEM=DEM,
+            Project_crs=Project_crs,
+            OutputFolder=OutputFolder,
+        )
+
 
     return
 

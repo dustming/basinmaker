@@ -294,6 +294,7 @@ def New_SubId_To_Dissolve(
             or col == "ndownsubid"
             or col == "Old_SubId"
             or col == "Old_DowSubId"
+            or col == "SHAPE"
         ):
             continue
         else:
@@ -894,7 +895,6 @@ def Determine_Lake_HRU_Id(Attribute_Table):
     -------
         None,
     """
-    Attribute_Table = Attribute_Table.fillna(-1)
     Attribute_Table = Attribute_Table.replace(to_replace="NULL", value=-1)
 
     Sub_ID = "SubId"
@@ -1502,7 +1502,6 @@ def Return_Selected_Lakes_Attribute_Table_And_Id(
     -------
         None,
     """
-    finalcat_info = finalcat_info.fillna(-9999)
     finalcat_info["LakeArea"] = finalcat_info["LakeArea"].astype(float)
     finalcat_info["HyLakeId"] = finalcat_info["HyLakeId"].astype(int)
     finalcat_info["Seg_ID"] = finalcat_info["Seg_ID"].astype(int)
