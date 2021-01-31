@@ -26,6 +26,7 @@ def GenerateHRUS_arcgis(
     Landuse_info,
     Soil_info,
     Veg_info,
+    Inmportance_order,
     Sub_Lake_ID="HyLakeId",
     Sub_ID="SubId",
     Path_Connect_Lake_ply="#",
@@ -45,7 +46,6 @@ def GenerateHRUS_arcgis(
     Project_crs = '3573',
     OutputFolder="#",
 ):
-
     """Generate HRU polygons and their attributes needed by hydrological model
 
     Function that be used to overlay: subbasin polygon, lake polygon (optional)
@@ -346,26 +346,27 @@ def GenerateHRUS_arcgis(
     
     hruinfo = pd.concat([hru_lake_info, hru_land_info], ignore_index=True)
        
-    HRU_draf_final = Define_HRU_Attributes(
-        prj_crs,
-        trg_crs,
-        hruinfo,
-        dissolve_filedname_list,
-        Sub_ID,
-        Landuse_ID,
-        Soil_ID,
-        Veg_ID,
-        Other_Ply_ID_1,
-        Other_Ply_ID_2,
-        Landuse_info_data,
-        Soil_info_data,
-        Veg_info_data,
-        DEM,
-        Path_Subbasin_Ply,
-        OutputFolder,
-        tempfolder,
-    )
-
+    HRU_draf_final = Define_HRU_Attributes_arcgis(
+        prj_crs = prj_crs,
+        trg_crs = trg_crs,
+        hruinfo = hruinfo,
+        dissolve_filedname_list = dissolve_filedname_list,
+        Sub_ID = Sub_ID,
+        Landuse_ID = Landuse_ID,
+        Soil_ID = Soil_ID,
+        Veg_ID = Veg_ID,
+        Other_Ply_ID_1 = Other_Ply_ID_1,
+        Other_Ply_ID_2 = Other_Ply_ID_2,
+        Landuse_info_data = Landuse_info_data,
+        Soil_info_data = Soil_info_data,
+        Veg_info_data = Veg_info_data,
+        DEM = DEM,
+        Path_Subbasin_Ply = Path_Subbasin_Ply,
+        Inmportance_order = Inmportance_order,
+        OutputFolder = OutputFolder,
+        tempfolder = tempfolder,
+    )    
+    
     HRU_draf_final = clean_attribute_name_arcgis(HRU_draf_final,COLUMN_NAMES_CONSTANT_HRU)
     HRU_draf_final.spatial.to_featureclass(location = os.path.join(OutputFolder,'final_hru_info.shp'))
 
@@ -693,7 +694,7 @@ def Union_Ply_Layers_And_Simplify(
     return mem_union_dis
 
 
-def Define_HRU_Attributes(
+def Define_HRU_Attributes_arcgis(
     prj_crs,
     trg_crs,
     hruinfo,
@@ -709,6 +710,7 @@ def Define_HRU_Attributes(
     Veg_info_data,
     DEM,
     Path_Subbasin_Ply,
+    Inmportance_order,
     OutputFolder,
     tempfolder,
 ):
@@ -870,7 +872,7 @@ def Define_HRU_Attributes(
     hruinfo_simple = simplidfy_hrus(
         min_hru_pct_sub_area = 0.1,
         hruinfo = hruinfo_new,
-        importance_order = [Other_Ply_ID_1,Landuse_ID,Soil_ID],
+        importance_order = Inmportance_order,
     )
     
     save_modified_attributes_to_outputs(

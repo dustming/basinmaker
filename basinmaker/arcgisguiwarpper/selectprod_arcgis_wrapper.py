@@ -10,6 +10,10 @@ Path_NonCon_Lake_ply=sys.argv[4]
 mostdownid=int(sys.argv[5])
 mostupstreamid=int(sys.argv[6])
 
+arcpy.AddMessage(mostupstreamid)
+arcpy.AddMessage(Path_NonCon_Lake_ply)
+arcpy.AddMessage(OutputFolder)
+
 Select_Routing_product_based_SubId_arcgis(
     OutputFolder = OutputFolder,
     Path_Catchment_Polygon=Path_Catchment_Polygon,
