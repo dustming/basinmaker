@@ -26,10 +26,27 @@ def define_connected_and_non_connected_lake_type(
         grass, mode=1, input_a=str_connected_lake
     )
     #### create non connected lake raster
-    grass.run_command("g.copy", rast=(lake, non_connected_lake), overwrite=True)
-    grass.run_command(
-        "r.null", map=non_connected_lake, setnull=Connect_Lake_Ids, overwrite=True
+#    grass.run_command("g.copy", rast=(lake, non_connected_lake), overwrite=True)
+
+
+    non_connected_lake = garray.array(mapname="lake")
+    if (len(Connect_Lake_Ids) > 0):
+        mask = np.isin(non_connected_lake, Connect_Lake_Ids)
+        non_connected_lake[mask] = -9999
+
+    temparray = garray.array()
+    temparray[:, :] = non_connected_lake[:, :]
+    temparray.write(mapname=non_connected_lake, overwrite=True)
+    grass.run_command("r.null", map=non_connected_lake, setnull=[-9999, 0])
+    exp = "%s = int(%s)" % (
+        non_connected_lake,
+        non_connected_lake,
     )
+    grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+
+    # grass.run_command(
+    #     "r.null", map=non_connected_lake, setnull=Connect_Lake_Ids, overwrite=True
+    # )
     #### create potential connected lake raster
     exp = "%s = if(isnull(int(%s)),%s,null())" % (connected_lake, non_connected_lake, lake)
     grass.run_command("r.mapcalc", expression=exp, overwrite=True)

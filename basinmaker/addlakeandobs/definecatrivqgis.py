@@ -92,17 +92,29 @@ def define_cat_and_riv_without_merge_lake_cats(
         not_non_cl_lake_catids = all_catids[
             np.logical_not(np.isin(all_catids, non_cl_lake_catid))
         ]
-
-        grass.run_command(
-            "g.copy", rast=("define_cat_and_riv_1", "non_cl_lake_cat"), overwrite=True
+        # grass.run_command(
+        #     "g.copy", rast=("define_cat_and_riv_1", "non_cl_lake_cat"), overwrite=True
+        # )
+        non_cl_lake_cat_array = garray.array(mapname="define_cat_and_riv_1")
+        if (len(not_non_cl_lake_catids) > 0):
+            mask = np.isin(non_cl_lake_cat_array, not_non_cl_lake_catids)
+            non_cl_lake_cat_array[mask] = -9999
+        temparray = garray.array()
+        temparray[:, :] = non_cl_lake_cat_array[:, :]
+        temparray.write(mapname="non_cl_lake_cat", overwrite=True)
+        grass.run_command("r.null", map="non_cl_lake_cat", setnull=[-9999, 0])
+        exp = "%s = int(%s)" % (
+            "non_cl_lake_cat",
+            "non_cl_lake_cat",
         )
+        grass.run_command("r.mapcalc", expression=exp, overwrite=True)
 
-        grass.run_command(
-            "r.null",
-            map="non_cl_lake_cat",
-            setnull=not_non_cl_lake_catids,
-            overwrite=True,
-        )
+        # grass.run_command(
+        #     "r.null",
+        #     map="non_cl_lake_cat",
+        #     setnull=not_non_cl_lake_catids,
+        #     overwrite=True,
+        # )
 
         # define str and cat
         grass.run_command(

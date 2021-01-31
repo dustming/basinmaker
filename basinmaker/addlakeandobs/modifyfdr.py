@@ -28,7 +28,7 @@ def modify_lakes_flow_direction(
     arlakeid = arlakeid[arlakeid > 0]
     outlakeids = np.full((1000000, 2), -99999.999)
     stream_mask = str_array > 0
-    # sort with lake outlet flow accumulation thresthold 
+    # sort with lake outlet flow accumulation thresthold
     lakeinfo = lakeinfo.loc[lakeinfo['cat'].isin(arlakeid)]
     lakeinfo = lakeinfo.sort_values(by='lmax_acc', ascending=False)
 
@@ -160,8 +160,9 @@ def modify_lakes_flow_direction(
         problem_points = problem_points[problem_points[:, 0] > 0]
         # print("#################################")
         # loop until all len problem_points is zero or iteration times exceed
+        nproblempoint = len(problem_points)
         while (
-            iter < np.sum(BD_Out_Lakecat_mask) + 10
+            iter < nproblempoint + 10
             and len(problem_points) > 0
             and len(good_starts_points) > 0
         ):
@@ -222,7 +223,8 @@ def modify_lakes_flow_direction(
 
         ## in case some point is missed, loop problem point again
         iter = 0
-        while iter < np.sum(BD_Out_Lakecat_mask) + 10 and len(problem_points) > 0:
+        nproblempoint = len(problem_points)
+        while iter < nproblempoint + 10 and len(problem_points) > 0:
 
             # loop for each problem points, and check if it can flow to an lake
             # catchment, by chaning it's flow direction only.
