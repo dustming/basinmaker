@@ -29,13 +29,13 @@ def define_connected_and_non_connected_lake_type(
 #    grass.run_command("g.copy", rast=(lake, non_connected_lake), overwrite=True)
 
 
-    non_connected_lake = garray.array(mapname="lake")
+    non_connected_lake_array = garray.array(mapname=lake)
     if (len(Connect_Lake_Ids) > 0):
-        mask = np.isin(non_connected_lake, Connect_Lake_Ids)
-        non_connected_lake[mask] = -9999
+        mask = np.isin(non_connected_lake_array, Connect_Lake_Ids)
+        non_connected_lake_array[mask] = -9999
 
     temparray = garray.array()
-    temparray[:, :] = non_connected_lake[:, :]
+    temparray[:, :] = non_connected_lake_array[:, :]
     temparray.write(mapname=non_connected_lake, overwrite=True)
     grass.run_command("r.null", map=non_connected_lake, setnull=[-9999, 0])
     exp = "%s = int(%s)" % (
