@@ -1,30 +1,23 @@
 import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from postprocessing.selectprodarcgis import Select_Routing_product_based_SubId_arcgis
+from postprocessing.increasedaarcgis import simplify_routing_structure_by_drainage_area_arcgis
 from postprocessing.combinearcgis import combine_catchments_covered_by_the_same_lake_arcgis
 
-OutputFolder =sys.argv[7]
-Path_Catchment_Polygon=sys.argv[1]
-Path_River_Polyline=sys.argv[2]
+Path_final_riv_ply=sys.argv[1]
+Path_final_riv=sys.argv[2]
 Path_Con_Lake_ply=sys.argv[3]
 Path_NonCon_Lake_ply=sys.argv[4]
-mostdownid=int(sys.argv[5])
-mostupstreamid=int(sys.argv[6])
+Area_Min=int(sys.argv[5])
+OutputFolder =sys.argv[6]
 
-arcpy.AddMessage(mostupstreamid)
-arcpy.AddMessage(Path_NonCon_Lake_ply)
-arcpy.AddMessage(OutputFolder)
-
-Select_Routing_product_based_SubId_arcgis(
-    OutputFolder = OutputFolder,
-    Path_Catchment_Polygon=Path_Catchment_Polygon,
-    Path_River_Polyline=Path_River_Polyline,
+simplify_routing_structure_by_drainage_area_arcgis(
+    Path_final_riv_ply=Path_final_riv_ply,
+    Path_final_riv=Path_final_riv,
     Path_Con_Lake_ply=Path_Con_Lake_ply,
     Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,
-    mostdownid=mostdownid,
-    mostupstreamid=mostupstreamid,
+    Area_Min=Area_Min,
+    OutputFolder=OutputFolder,
 )
-
 
 combine_catchments_covered_by_the_same_lake_arcgis(
     OutputFolder = OutputFolder, 
