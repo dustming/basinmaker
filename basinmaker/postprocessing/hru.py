@@ -638,6 +638,7 @@ def GeneratelandandlakeHRUS(
     Attri_table = Obtain_Attribute_Table(processing, context, layer_cat)
     # determine lake hru id
     Attri_table = Attri_table.fillna(-1)
+    Attribute_Table = Attribute_Table.replace(to_replace="NULL", value=-1)
     Attri_table = Determine_Lake_HRU_Id(Attri_table)
     # copy determined lake hru id to vector
     layer_cat = Copy_Pddataframe_to_shpfile(

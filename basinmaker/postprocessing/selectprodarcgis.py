@@ -159,7 +159,7 @@ def Select_Routing_product_based_SubId_arcgis(
     """
     tempfolder = os.path.join(
         tempfile.gettempdir(),
-        "basinmaker_locsubid" + str(np.random.randint(1, 10000 + 1)),
+        "basinmaker_locsubid" + str(101),#np.random.randint(1, 10000 + 1)),
     )
     if not os.path.exists(tempfolder):
         os.makedirs(tempfolder)
@@ -207,10 +207,14 @@ def Select_Routing_product_based_SubId_arcgis(
     )
 
     cat_riv = pd.DataFrame.spatial.from_featureclass(Path_River_Polyline)
-    cat_riv_select = cat_riv.loc[cat_ply['SubId'].isin(HydroBasins)]
-    cat_riv_select.spatial.to_featureclass(location=Outputfilename_cat_riv) 
+    
 
-
+    cat_riv_select = cat_riv.loc[cat_riv['SubId'].isin(HydroBasins)]
+    
+#    print(cat_riv_select.columns)
+    cat_riv_select.spatial.to_featureclass(location=Outputfilename_cat_riv,overwrite=True,sanitize_columns=False) 
+#    print(cat_ply_select.columns)
+    
     Connect_Lake_info = cat_ply_select.loc[cat_ply_select["IsLake"] == 1]
     Connect_Lakeids = np.unique(Connect_Lake_info["HyLakeId"].values)
     Connect_Lakeids = Connect_Lakeids[Connect_Lakeids > 0]

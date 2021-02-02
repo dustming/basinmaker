@@ -27,6 +27,7 @@ def GenerateHRUS_arcgis(
     Soil_info,
     Veg_info,
     Inmportance_order,
+    min_hru_area_pct_sub,
     Sub_Lake_ID="HyLakeId",
     Sub_ID="SubId",
     Path_Connect_Lake_ply="#",
@@ -205,7 +206,7 @@ def GenerateHRUS_arcgis(
         os.makedirs(OutputFolder)
         
     tempfolder = os.path.join(
-        tempfile.gettempdir(), "basinmaker_hru" + str(np.random.randint(1, 10000 + 1))
+        tempfile.gettempdir(), "basinmaker_hru" + str(101)#np.random.randint(1, 10000 + 1))
     )
     if not os.path.exists(tempfolder):
         os.makedirs(tempfolder)
@@ -362,6 +363,7 @@ def GenerateHRUS_arcgis(
         Veg_info_data = Veg_info_data,
         DEM = DEM,
         Path_Subbasin_Ply = Path_Subbasin_Ply,
+        min_hru_area_pct_sub = min_hru_area_pct_sub,
         Inmportance_order = Inmportance_order,
         OutputFolder = OutputFolder,
         tempfolder = tempfolder,
@@ -507,11 +509,11 @@ def GeneratelandandlakeHRUS(
 
     sub_lake_info['HRU_ID_Temp'] = sub_lake_info['FID'] + 1
     
-
     sub_lake_info = Determine_Lake_HRU_Id(sub_lake_info)
+    sub_lake_info.spatial.to_featureclass(location=os.path.join(tempfolder,'test2.shp'))
     # copy determined lake hru id to vector
     sub_lake_info = clean_attribute_name_arcgis(sub_lake_info,fieldnames)
-
+    sub_lake_info.spatial.to_featureclass(location=os.path.join(tempfolder,'test3.shp'))
     save_modified_attributes_to_outputs(
         mapoldnew_info = sub_lake_info,
         tempfolder = tempfolder,
@@ -711,6 +713,7 @@ def Define_HRU_Attributes_arcgis(
     DEM,
     Path_Subbasin_Ply,
     Inmportance_order,
+    min_hru_area_pct_sub,
     OutputFolder,
     tempfolder,
 ):
@@ -870,7 +873,7 @@ def Define_HRU_Attributes_arcgis(
     hruinfo_new = pd.DataFrame.spatial.from_featureclass(os.path.join(tempfolder,'finalcat_hru_info.shp'))
     
     hruinfo_simple = simplidfy_hrus(
-        min_hru_pct_sub_area = 0.1,
+        min_hru_pct_sub_area = min_hru_area_pct_sub,
         hruinfo = hruinfo_new,
         importance_order = Inmportance_order,
     )
