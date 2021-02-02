@@ -20,9 +20,10 @@ Veg_ID = sys.argv[14]
 Other_Ply_ID_1 = sys.argv[15]
 Other_Ply_ID_2 = sys.argv[16]
 DEM = sys.argv[17]
-Inmportance_order = arcpy.GetParameterAsText(17)
-Project_crs = sys.argv[19]
-OutputFolder = sys.argv[20]
+Inmportance_order = sys.argv[18]
+min_hru_area_pct_sub = float(sys.argv[19])
+Project_crs = sys.argv[20]
+OutputFolder = sys.argv[21]
 
 arcpy.AddMessage(Path_Subbasin_Ply)
 arcpy.AddMessage(Path_Connect_Lake_ply)
@@ -63,5 +64,6 @@ GenerateHRUS_arcgis(
     DEM=DEM,
     Project_crs = Project_crs,
     Inmportance_order = Inmportance_order,
+    min_hru_area_pct_sub = min_hru_area_pct_sub,
     OutputFolder = OutputFolder,
 )

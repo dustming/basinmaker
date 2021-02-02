@@ -923,7 +923,7 @@ def Define_HRU_Attributes_arcgis(
             "NEAREST"
         )
         Slopeout = Slope(extract_dem, "DEGREE", 0.3043)
-        Slopeout.save(os.path.join(OutputFolder,'slop.tif'))
+        Slopeout.save(os.path.join(OutputFolder,'slope.tif'))
         Aspectout = Aspect(extract_dem)
 
         # Save the output 
@@ -953,7 +953,6 @@ def Define_HRU_Attributes_arcgis(
             "DATA", 
             "MEAN", 
         ) 
-        
         hruinfo_add_slp_asp = pd.DataFrame.spatial.from_featureclass(os.path.join(tempfolder,'hru_simple.shp'))
         table_slp = Dbf_To_Dataframe(os.path.join(tempfolder,"slope_zonal.dbf")) 
         table_asp = Dbf_To_Dataframe(os.path.join(tempfolder,"asp_zonal.dbf"))
@@ -972,7 +971,8 @@ def Define_HRU_Attributes_arcgis(
         hruinfo_add_slp_asp = pd.merge(hruinfo_add_slp_asp, table_elv, on='HRU_ID_New')          
         hruinfo_add_slp_asp['HRU_ID'] = hruinfo_add_slp_asp['FID'] + 1
     else:
-        hruinfo_add_slp_asp = pd.DataFrame.spatial.from_featureclass(os.path.join(OutputFolder,'hru_simple.shp'))
+        arcpy.AddMessage(os.path.join(tempfolder,'hru_simple.shp'))
+        hruinfo_add_slp_asp = pd.DataFrame.spatial.from_featureclass(os.path.join(tempfolder,'hru_simple.shp'))
         hruinfo_add_slp_asp['HRU_ID'] = hruinfo_add_slp_asp['FID'] + 1
         hruinfo_add_slp_asp['HRU_S_mean'] = hruinfo_add_slp_asp['BasSlope']
         hruinfo_add_slp_asp['HRU_A_mean'] = hruinfo_add_slp_asp['BasAspect']
