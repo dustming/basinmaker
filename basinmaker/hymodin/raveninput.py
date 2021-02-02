@@ -237,8 +237,8 @@ def GenerateRavenInput(
         SubBasinGroup_Length_Channel,
     )
     WriteStringToFile(Channel_rvp_string + '\n \n', Channel_rvp_file_path, "w")
-    WriteStringToFile(Model_rvh_string + + '\n \n', Model_rvh_file_path, "w")
-    WriteStringToFile(Model_rvp_string_modify + + '\n \n', Model_rvp_file_path, "a")
+    WriteStringToFile(Model_rvh_string + '\n \n', Model_rvh_file_path, "w")
+    WriteStringToFile(Model_rvp_string_modify + '\n \n', Model_rvp_file_path, "a")
 
     Lake_rvh_string, Lake_rvh_file_path = Generate_Raven_Lake_rvh_String(
         ncatinfo2, Raveinputsfolder, Model_Name
@@ -264,12 +264,12 @@ def GenerateRavenInput(
         )
         for i in range(0, len(obs_rvt_file_path_gauge_list)):
             WriteStringToFile(
-                obs_rvt_file_string_gauge_list[i] + + '\n \n',
+                obs_rvt_file_string_gauge_list[i] + '\n \n',
                 obs_rvt_file_path_gauge_list[i],
                 "w",
             )
             WriteStringToFile(
-                Model_rvt_file_string_modify_gauge_list[i] + + '\n \n', Model_rvt_file_path, "a"
+                Model_rvt_file_string_modify_gauge_list[i] + '\n \n', Model_rvt_file_path, "a"
             )
         obsnms.to_csv(os.path.join(Obs_Folder, "obsinfo.csv"))
 

@@ -7,12 +7,10 @@ Path_final_riv_ply=sys.argv[1]
 Path_final_riv=sys.argv[2]
 Path_Con_Lake_ply=sys.argv[3]
 Path_NonCon_Lake_ply=sys.argv[4]
-Thres_Area_Conn_Lakes=int(sys.argv[5])
-Thres_Area_Non_Conn_Lakes=int(sys.argv[6])
+Thres_Area_Conn_Lakes=float(sys.argv[5])
+Thres_Area_Non_Conn_Lakes=float(sys.argv[6])
 OutputFolder =sys.argv[7]
 
-Selection_Method = "ByArea"
-Selected_Lake_List_in = []
 simplify_routing_structure_by_filter_lakes_arcgis(
     Path_final_riv_ply=Path_final_riv_ply,
     Path_final_riv=Path_final_riv,
@@ -20,8 +18,8 @@ simplify_routing_structure_by_filter_lakes_arcgis(
     Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,
     Thres_Area_Conn_Lakes=Thres_Area_Conn_Lakes,
     Thres_Area_Non_Conn_Lakes=Thres_Area_Non_Conn_Lakes,
-    Selection_Method=Selection_Method,
-    Selected_Lake_List_in=Selected_Lake_List_in,
+    Selection_Method="ByArea",
+    Selected_Lake_List_in=[],
     OutputFolder=OutputFolder,
     gis_platform="arcgis",
 )
