@@ -3,6 +3,7 @@ import numpy as np
 import arcpy
 from arcpy import env
 from arcpy.sa import *
+from arcgis.features import GeoAccessor, GeoSeriesAccessor
 import sys
 import os
 import csv
@@ -198,9 +199,7 @@ def Select_Routing_product_based_SubId_arcgis(
     )
 
     cat_ply_select = cat_ply.loc[cat_ply['SubId'].isin(HydroBasins)]
-    cat_ply_select.spatial.to_featureclass(location=Outputfilename_cat) 
-
-
+    cat_ply_select.spatial.to_featureclass(location=Outputfilename_cat,overwrite=True,sanitize_columns=False) 
 
     Outputfilename_cat_riv = os.path.join(
         OutputFolder, os.path.basename(Path_River_Polyline)
@@ -211,9 +210,7 @@ def Select_Routing_product_based_SubId_arcgis(
 
     cat_riv_select = cat_riv.loc[cat_riv['SubId'].isin(HydroBasins)]
     
-#    print(cat_riv_select.columns)
     cat_riv_select.spatial.to_featureclass(location=Outputfilename_cat_riv,overwrite=True,sanitize_columns=False) 
-#    print(cat_ply_select.columns)
     
     Connect_Lake_info = cat_ply_select.loc[cat_ply_select["IsLake"] == 1]
     Connect_Lakeids = np.unique(Connect_Lake_info["HyLakeId"].values)
@@ -227,13 +224,13 @@ def Select_Routing_product_based_SubId_arcgis(
 
         sl_con_lakes = pd.DataFrame.spatial.from_featureclass(Path_Con_Lake_ply)
         sl_con_lakes = sl_con_lakes.loc[sl_con_lakes['Hylak_id'].isin(Connect_Lakeids)]
-        sl_con_lakes.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_Con_Lake_ply)))
+        sl_con_lakes.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_Con_Lake_ply)),overwrite=True,sanitize_columns=False)
 
 
     if len(NonCL_Lakeids) > 0 and Path_NonCon_Lake_ply != "#":
         sl_non_con_lakes = pd.DataFrame.spatial.from_featureclass(Path_NonCon_Lake_ply)
         sl_non_con_lakes = sl_non_con_lakes.loc[sl_non_con_lakes['Hylak_id'].isin(NonCL_Lakeids)]
-        sl_non_con_lakes.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply)))
+        sl_non_con_lakes.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply)),overwrite=True,sanitize_columns=False)
          
     return 
 

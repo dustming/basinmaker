@@ -82,6 +82,12 @@ basinmaker = basinmaker(
 * \<Other_Ply_ID_2\> 
       the the column name in Other_Ply_2 polygon indicate the unique type ID.
 
+* \<Inmportance_order\> 
+      It is a list of [Landuse_ID,Soil_ID ...]. The list will be used to remove small hrus, and try to keep the area of the first item in the list unchanged in a subbasin, if area of the first item can not be kepted, then tried to keep the area of the second item in the list of a subbasin unchanged. 
+    
+* \<min_hru_area_pct_sub\> 
+      It is the minimum hru area, HRU area smaller than this value will be merged to other hrus in the same subbasin. The basinmaker will first try to merge it with the the hrus has the same properties. The properties is specified by the parameter Inmportance_order 
+
 * \<Landuse_info\> 
       Path to a csv file that contains landuse information, including following attributes: Landuse_ID (integer) the landuse ID in the landuse polygon; LAND_USE_C(string),the landuse class name for each landuse type
 
@@ -104,16 +110,10 @@ basinmaker = basinmaker(
 #############################################
 basinmaker.generate_hrus_methods(
     OutputFolder=path_output_folder,
-    Path_Subbasin_Ply=os.path.join(
-        datafolder, "finalcat_info.shp"
-    ),
-    Path_Connect_Lake_ply=os.path.join(
-        datafolder, "sl_connected_lake.shp"
-    ),
-    Path_Non_Connect_Lake_ply=os.path.join(
-        datafolder, "sl_non_connected_lake.shp"
-    ),
-    Lake_Id="Hylak_id",    
+    Path_Subbasin_Ply=os.path.join(datafolder, "finalcat_info.shp"),
+    Path_Connect_Lake_ply=os.path.join(datafolder, "sl_connected_lake.shp"),
+    Path_Non_Connect_Lake_ply=os.path.join(datafolder, "sl_non_connected_lake.shp"),
+    Lake_Id="Hylak_id",
     Path_Landuse_Ply="#",
     Landuse_ID="Landuse_ID",
     Path_Soil_Ply="#",
@@ -124,11 +124,14 @@ basinmaker.generate_hrus_methods(
     Other_Ply_ID_1="O_ID_1",
     Path_Other_Ply_2="#",
     Other_Ply_ID_2="O_ID_2",
+    Inmportance_order = ["Landuse_ID"],
+    min_hru_area_pct_sub = 0.0,
     Landuse_info=os.path.join(HRU_Folder, "landuse_info.csv"),
     Soil_info=os.path.join(HRU_Folder, "soil_info.csv"),
     Veg_info=os.path.join(HRU_Folder, "veg_info.csv"),
     DEM=os.path.join(demfolder, "oih_30_dem.tif"),
-    gis_platform="qgis",
+    gis_platform="arcgis",
+    Project_crs = '3573',
 )
 ```
 

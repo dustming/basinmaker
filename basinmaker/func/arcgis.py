@@ -55,7 +55,7 @@ def Remove_Unselected_Lake_Attribute_In_Finalcatinfo_Arcgis(finalcat_ply, Conn_L
 
 def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,cat_name,riv_name,Path_final_riv,dis_col_name='SubId'):
 
-    mapoldnew_info.spatial.to_featureclass(location=os.path.join(tempfolder,'updateattri.shp'))
+    mapoldnew_info.spatial.to_featureclass(location=os.path.join(tempfolder,'updateattri.shp'),overwrite=True,sanitize_columns=False)
     arcpy.Dissolve_management(os.path.join(tempfolder,'updateattri.shp'), os.path.join(OutputFolder,cat_name), [dis_col_name])
     arcpy.JoinField_management(os.path.join(OutputFolder,cat_name), dis_col_name, os.path.join(tempfolder,'updateattri.shp'), dis_col_name)
     arcpy.DeleteField_management(os.path.join(OutputFolder,cat_name), 
@@ -69,7 +69,7 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
         riv_pd['SubID_Oldriv'] = riv_pd['SubId']
         # remove all columns 
         riv_pd = riv_pd[['SHAPE','SubID_Oldriv']]
-        riv_pd.spatial.to_featureclass(location=os.path.join(tempfolder,'riv_no_attri.shp'))
+        riv_pd.spatial.to_featureclass(location=os.path.join(tempfolder,'riv_no_attri.shp'),overwrite=True,sanitize_columns=False)
         arcpy.SpatialJoin_analysis(os.path.join(tempfolder,'riv_no_attri.shp'), os.path.join(OutputFolder, cat_name), os.path.join(tempfolder,'riv_attri.shp'),match_option='WITHIN')
         arcpy.Dissolve_management(os.path.join(tempfolder,'riv_attri.shp'), os.path.join(OutputFolder,riv_name), ["SubId"])
         arcpy.JoinField_management(os.path.join(OutputFolder,riv_name), "SubId", os.path.join(tempfolder,'riv_attri.shp'), "SubId")

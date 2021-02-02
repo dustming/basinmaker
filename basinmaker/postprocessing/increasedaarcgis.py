@@ -132,7 +132,7 @@ def simplify_routing_structure_by_drainage_area_arcgis(
     )
 
     finalriv_inforiv_main = finalriv_inforiv.loc[finalriv_inforiv['SubId'].isin(Selected_riv_ids)]
-    finalriv_inforiv_main.spatial.to_featureclass(location=os.path.join(tempfolder,'selected_riv.shp'))
+    finalriv_inforiv_main.spatial.to_featureclass(location=os.path.join(tempfolder,'selected_riv.shp'),overwrite=True,sanitize_columns=False)
     
     UpdateTopology(mapoldnew_info)
     mapoldnew_info = update_non_connected_catchment_info(mapoldnew_info)
@@ -155,11 +155,11 @@ def simplify_routing_structure_by_drainage_area_arcgis(
     Conn_Lakes_ply_not_select = Conn_Lakes_ply.loc[np.logical_not(lake_mask)].copy()
 
     # export lake polygons
-    Conn_Lakes_ply_select.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_Conl_ply)))
+    Conn_Lakes_ply_select.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_Conl_ply)),overwrite=True,sanitize_columns=False)
     
     if len(Conn_Lakes_ply_not_select) >0 and Path_NonCon_Lake_ply != '#':
         non_conn_Lakes_ply = pd.DataFrame.spatial.from_featureclass(Path_NonCon_Lake_ply)  
         new_non_connected_lake = pd.concat([non_conn_Lakes_ply, Conn_Lakes_ply_not_select], ignore_index=True)
-        new_non_connected_lake.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply)))
+        new_non_connected_lake.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply)),overwrite=True,sanitize_columns=False)
      
     return 

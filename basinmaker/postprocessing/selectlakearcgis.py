@@ -130,12 +130,12 @@ def simplify_routing_structure_by_filter_lakes_arcgis(
     if len(Selected_Non_ConnLakes) > 0:
         sl_con_lakes = pd.DataFrame.spatial.from_featureclass(Path_NonCon_Lake_ply)
         sl_con_lakes = sl_con_lakes.loc[sl_con_lakes['Hylak_id'].isin(Selected_Non_ConnLakes)]
-        sl_con_lakes.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply)))
+        sl_con_lakes.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply)),overwrite=True,sanitize_columns=False)
 
     if len(Selected_ConnLakes) > 0:
         sl_con_lakes = pd.DataFrame.spatial.from_featureclass(Path_Con_Lake_ply)
         sl_con_lakes = sl_con_lakes.loc[sl_con_lakes['Hylak_id'].isin(Selected_ConnLakes)]
-        sl_con_lakes.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_Con_Lake_ply)))
+        sl_con_lakes.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_Con_Lake_ply)),overwrite=True,sanitize_columns=False)
 
     print(" Obtain selected Lake IDs done")
 

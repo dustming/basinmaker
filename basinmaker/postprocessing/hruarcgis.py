@@ -232,7 +232,8 @@ def GenerateHRUS_arcgis(
     lakehruinfo_landhrus = lakehruinfo.loc[lakehruinfo['HRU_IsLake'] <= 0].copy()
 
     lakehruinfo_landhrus = lakehruinfo_landhrus.spatial.to_featureclass(
-        location=os.path.join(tempfolder,'land_hrus.shp')
+        location=os.path.join(tempfolder,'land_hrus.shp'),
+        overwrite=True,sanitize_columns=False,
     )
     
     fieldnames_list.extend(
@@ -370,7 +371,7 @@ def GenerateHRUS_arcgis(
     )    
     
     HRU_draf_final = clean_attribute_name_arcgis(HRU_draf_final,COLUMN_NAMES_CONSTANT_HRU)
-    HRU_draf_final.spatial.to_featureclass(location = os.path.join(OutputFolder,'final_hru_info.shp'))
+    HRU_draf_final.spatial.to_featureclass(location = os.path.join(OutputFolder,'final_hru_info.shp'),overwrite=True,sanitize_columns=False)
 
 def GeneratelandandlakeHRUS(
     OutputFolder,
@@ -472,7 +473,7 @@ def GeneratelandandlakeHRUS(
         
         # remove column not in fieldnames
         cat_info = clean_attribute_name_arcgis(cat_info,fieldnames)
-        cat_info.spatial.to_featureclass(location=os.path.join(OutputFolder,'finalcat_hru_lake_info.shp'))
+        cat_info.spatial.to_featureclass(location=os.path.join(OutputFolder,'finalcat_hru_lake_info.shp'),overwrite=True,sanitize_columns=False)
         crs_id = arcpy.Describe(Path_products).spatialReference.factoryCode
         return os.path.path.join(OutputFolder,'finalcat_hru_lake_info.shp'), crs_id, ["HRULake_ID", "HRU_IsLake", Sub_ID]
 
@@ -510,10 +511,8 @@ def GeneratelandandlakeHRUS(
     sub_lake_info['HRU_ID_Temp'] = sub_lake_info['FID'] + 1
     
     sub_lake_info = Determine_Lake_HRU_Id(sub_lake_info)
-    sub_lake_info.spatial.to_featureclass(location=os.path.join(tempfolder,'test2.shp'))
     # copy determined lake hru id to vector
     sub_lake_info = clean_attribute_name_arcgis(sub_lake_info,fieldnames)
-    sub_lake_info.spatial.to_featureclass(location=os.path.join(tempfolder,'test3.shp'))
     save_modified_attributes_to_outputs(
         mapoldnew_info = sub_lake_info,
         tempfolder = tempfolder,
@@ -823,7 +822,7 @@ def Define_HRU_Attributes_arcgis(
     hruinfo["HRU_CenY"] = -9999.9999
     hruinfo["HRU_ID_New"] = -9999
     hruinfo["HRU_Area"] = -9999.99 
-    hruinfo.spatial.to_featureclass(location=os.path.join(tempfolder,'hru_add_area.shp'))
+    hruinfo.spatial.to_featureclass(location=os.path.join(tempfolder,'hru_add_area.shp'),overwrite=True,sanitize_columns=False)
 
     arcpy.CalculateGeometryAttributes_management(
         os.path.join(tempfolder,'hru_add_area.shp'),
