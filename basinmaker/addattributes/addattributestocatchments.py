@@ -259,7 +259,8 @@ def add_attributes_to_catchments(
             attr_bkf = attr_da
 
         attr_ncl = update_non_connected_catchment_info(attr_bkf)
-
+        attr_ncl.loc[attr_ncl['RivLength'] < 0,'RivLength'] = 0
+        
         join_pandas_table_to_vector_attributes(
             grassdb=grassdb,
             grass_location=grass_location,

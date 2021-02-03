@@ -126,11 +126,16 @@ def calculate_bankfull_width_depth_from_polyline(
         i_seg_id = Seg_IDS[iseg]
         i_seg_info = catinfo_riv[catinfo_riv["Seg_ID"] == i_seg_id]
         max_elve_seg = np.max(i_seg_info["Max_DEM"].values)
-        min_elve_seg = np.max(i_seg_info["Min_DEM"].values)
-        length_seg = np.sum(i_seg_info["RivLength"].values)
-        qmean_seg = np.average(i_seg_info["Q_Mean"].values)
-        width_seg = np.average(i_seg_info["BkfWidth"].values)
-        depth_Seg = np.average(i_seg_info["BkfDepth"].values)
+        min_elve_seg = np.min(i_seg_info["Min_DEM"].values)
+        length_seg = np.sum(i_seg_info["RivLength"].values[i_seg_info["RivLength"].values > 0])
+        qmean_seg = np.average(i_seg_info["Q_Mean"].values[i_seg_info["Q_Mean"].values > 0])
+        width_seg = np.average(i_seg_info["BkfWidth"].values[i_seg_info["BkfWidth"].values > 0])
+        depth_Seg = np.average(i_seg_info["BkfDepth"].values[i_seg_info["BkfDepth"].values > 0])
+        floodn_Seg = np.average(i_seg_info["FloodP_n"].values[i_seg_info["FloodP_n"].values > 0])
+        basslp_Seg = np.average(i_seg_info["BasSlope"].values[i_seg_info["BasSlope"].values > 0])
+        basasp_Seg = np.average(i_seg_info["BasAspect"].values[i_seg_info["BasAspect"].values > 0])
+        baselv_Seg = np.average(i_seg_info["MeanElev"].values[i_seg_info["MeanElev"].values > 0])
+
         slope_seg = (max_elve_seg - min_elve_seg) / length_seg
         if slope_seg < 0.000000001:
             slope_seg = default_slope  #### Needs to update later
@@ -163,6 +168,43 @@ def calculate_bankfull_width_depth_from_polyline(
 
             catinfo.loc[catinfo["SubId"] == subid, "RivSlope"] = slope_rch
             catinfo.loc[catinfo["SubId"] == subid, "Ch_n"] = n_rch
+
+            if i_seg_info["Max_DEM"].values[i] <= 0:
+                if i_seg_info["MeanElev"].values[i] > 0:
+                    catinfo.loc[catinfo["SubId"] == subid, "Max_DEM"] = i_seg_info["MeanElev"].values[i]
+                    catinfo.loc[catinfo["SubId"] == subid, "Min_DEM"] = i_seg_info["MeanElev"].values[i]
+                else:
+                    catinfo.loc[catinfo["SubId"] == subid, "Max_DEM"] = baselv_Seg
+                    catinfo.loc[catinfo["SubId"] == subid, "Min_DEM"] = baselv_Seg
+
+            if i_seg_info["FloodP_n"].values[i] < 0:
+                if floodn_Seg > 0:
+                    catinfo.loc[catinfo["SubId"] == subid, "FloodP_n"] = floodn_Seg
+                else:
+                    catinfo.loc[catinfo["SubId"] == subid, "FloodP_n"] = DEFALUT_FLOOD_N
+
+            if i_seg_info["RivLength"].values[i] < 0:
+                catinfo.loc[catinfo["RivLength"] == subid, "RivLength"] = 0
+
+            if i_seg_info["BasSlope"].values[i] <= 0:
+                if basslp_Seg > 0:
+                    catinfo.loc[catinfo["SubId"] == subid, "BasSlope"] = basslp_Seg
+                else:
+                    catinfo.loc[catinfo["SubId"] == subid, "BasSlope"] = 0
+
+            if i_seg_info["BasAspect"].values[i] <= 0:
+                if basasp_Seg > 0:
+                    catinfo.loc[catinfo["SubId"] == subid, "BasAspect"] = basasp_Seg
+                else:
+                    catinfo.loc[catinfo["SubId"] == subid, "BasAspect"] = 0
+
+            if i_seg_info["MeanElev"].values[i] < 0:
+                if baselv_Seg > 0:
+                    catinfo.loc[catinfo["SubId"] == subid, "MeanElev"] = baselv_Seg
+                else:
+                    catelv = catinfo['MeanElev'].values
+                    catelv = catelv[catelv > 0]
+                    catinfo.loc[catinfo["SubId"] == subid, "MeanElev"] =np.average(catelv)
 
     PERMANENT.close()
     return catinfo

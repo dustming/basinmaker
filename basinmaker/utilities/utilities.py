@@ -165,6 +165,7 @@ COLUMN_TYPES_CONSTANT = [
     "Real",
 ]
 
+DEFALUT_FLOOD_N = 0.29
 
 def Dbf_To_Dataframe(file_path):
     """Transfer an input dbf file to dataframe

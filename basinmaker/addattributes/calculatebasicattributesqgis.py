@@ -445,18 +445,18 @@ def calculate_basic_attributes(
         dminelev = np.unique(
             leninfo.loc[leninfo["Gridcode"] == catid]["d_minimum"].values
         )
-        if len(rivlen) == 1:
-            catinfo.loc[i, "RivLength"] = rivlen
-            maxdem = dmaxelev
-            mindem = dminelev
+        if len(rivlen) > 0:
+            catinfo.loc[i, "RivLength"] = rivlen[0]
+            maxdem = dmaxelev[0]
+            mindem = dminelev[0]
             catinfo.loc[i, "Min_DEM"] = mindem
             catinfo.loc[i, "Max_DEM"] = maxdem
-            if rivlen >= 0:
-                if max(0, float((maxdem - mindem)) / float(rivlen)) == 0:
+            if rivlen[0] >= 0:
+                if max(0, float((maxdem - mindem)) / float(rivlen[0])) == 0:
                     catinfo.loc[i, "RivSlope"] = -9999
                 else:
                     catinfo.loc[i, "RivSlope"] = max(
-                        0, float((maxdem - mindem)) / float(rivlen)
+                        0, float((maxdem - mindem)) / float(rivlen[0])
                     )
             else:
                 catinfo.loc[i, "RivSlope"] = -9999

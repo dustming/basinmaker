@@ -78,6 +78,9 @@ def add_gauge_attributes(
         subgaugeinfo = gaugeinfo.loc[gaugeinfo[obs_attributes[0] + "n"] == obsid]
 
         catinfo.loc[catrow, "IsObs"] = obsid
+        if obsid > 79000:
+            continue
+
         if len(subgaugeinfo) > 0:
             catinfo.loc[catrow, "IsObs"] = subgaugeinfo[obs_attributes[0]].values[0]
             catinfo.loc[catrow, "DA_Obs"] = subgaugeinfo[obs_attributes[2]].values[0]

@@ -79,7 +79,9 @@ def update_non_connected_catchment_info(catinfo):
         catinfo.loc[catinfo["SubId"] == c_subid, "Min_DEM"] = d_sub_info[
             "Min_DEM"
         ].values[0]
-
+        catinfo.loc[catinfo["SubId"] == c_subid, "FloodP_n"] = d_sub_info[
+            "FloodP_n"
+        ].values[0]
     return catinfo
 
 
