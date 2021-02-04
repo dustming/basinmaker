@@ -29,6 +29,7 @@ def GenerateRavenInput(
     SubBasinGroup_Area_Lake=[-1],
     OutputFolder="#",
     Forcing_Input_File="#",
+    aspect_from_gis = 'grass'
 ):
 
     """Generate Raven input files.
@@ -235,6 +236,7 @@ def GenerateRavenInput(
         SubBasinGroup_Area_Lake,
         SubBasinGroup_NM_Channel,
         SubBasinGroup_Length_Channel,
+        aspect_from_gis
     )
     WriteStringToFile(Channel_rvp_string + '\n \n', Channel_rvp_file_path, "w")
     WriteStringToFile(Model_rvh_string + '\n \n', Model_rvh_file_path, "w")
@@ -1129,6 +1131,7 @@ def Generate_Raven_Channel_rvp_rvh_String(
     SubBasinGroup_Area_Lake,
     SubBasinGroup_NM_Channel,
     SubBasinGroup_Length_Channel,
+    aspect_from_gis = 'grass'
 ):  # Writervhchanl(ocatinfo,Raveinputsfolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM,Lake_As_Gauge = False,Model_Name = 'test'):
     """Generate string of raven chennel rvp input and rvh input
 
@@ -1231,6 +1234,7 @@ def Generate_Raven_Channel_rvp_rvh_String(
     >>>
 
     """
+        
     Channel_rvp_file_path = os.path.join(Raveinputsfolder, "channel_properties.rvp")
     Channel_rvp_string_list = []
     Model_rvh_file_path = os.path.join(Raveinputsfolder, Model_Name + ".rvh")
@@ -1410,7 +1414,21 @@ def Generate_Raven_Channel_rvp_rvh_String(
         TERRAIN_CLASS = "[NONE]" + tab
 
         SLOPE = str(catslope) + tab
-        ASPECT = str(360 - cataspect) + tab
+        
+        if aspect_from_gis == 'grass':
+            asp_temp = 270 + cataspect
+            if asp_temp > 360:
+                asp_temp = asp_temp - 360
+            ASPECT = str(asp_temp) + tab
+            
+        elif aspect_from_gis == 'arcgis':
+            asp_temp = -(-360 + cataspect)
+            if asp_temp > 360:
+                asp_temp = asp_temp - 360
+            ASPECT = str(asp_temp) + tab
+        else:
+            ASPECT = str(cataspect) + tab
+            
         Model_rvh_string_list.append(
             "  "
             + StrGid

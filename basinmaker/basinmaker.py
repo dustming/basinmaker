@@ -1193,6 +1193,7 @@ class basinmaker:
         subbasingroup_area_lake=[-1],
         outputfolder="#",
         forcing_input_file="#",
+        aspect_from_gis = "grass",
     ):
         """Generate Raven input files.
 
@@ -1359,6 +1360,7 @@ class basinmaker:
             SubBasinGroup_Area_Lake=subbasingroup_area_lake,
             OutputFolder=outputfolder,
             Forcing_Input_File=forcing_input_file,
+            aspect_from_gis = aspect_from_gis
         )
 
 

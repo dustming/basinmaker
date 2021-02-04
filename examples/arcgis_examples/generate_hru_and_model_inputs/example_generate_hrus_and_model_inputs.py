@@ -64,20 +64,21 @@ basinmaker.generate_hrus_methods(
 # generate raven inputs
 #############################################
 
-# basinmaker.generate_raven_model_inputs_method(
-#     path_final_hru_info=os.path.join(path_output_folder, "finalcat_hru_info.shp"),
-#     startyear=2010,
-#     endYear=2014,
-#     CA_HYDAT="#",
-#     warmup=1,
-#     template_folder="#",
-#     lake_as_gauge=False,
-#     writeobsrvt=False,
-#     downloadobsdata=False,
-#     model_name="test",
-#     subbasingroup_nm_channel=["Allsubbasins"],
-#     subbasingroup_length_channel=[-1],
-#     subbasingroup_nm_lake=["AllLakesubbasins"],
-#     subbasingroup_area_lake=[-1],
-#     outputfolder=path_output_folder,
-# )
+basinmaker.generate_raven_model_inputs_method(
+    path_final_hru_info=os.path.join(path_output_folder, "final_hru_info.shp"),
+    startyear=2010,
+    endYear=2014,
+    CA_HYDAT="#",
+    warmup=1,
+    template_folder="#",
+    lake_as_gauge=False,
+    writeobsrvt=False,
+    downloadobsdata=False,
+    model_name="test",
+    subbasingroup_nm_channel=["Allsubbasins"],
+    subbasingroup_length_channel=[-1],
+    subbasingroup_nm_lake=["AllLakesubbasins"],
+    subbasingroup_area_lake=[-1],
+    outputfolder=path_output_folder,
+    aspect_from_gis = 'arcgis',
+)

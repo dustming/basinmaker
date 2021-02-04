@@ -44,4 +44,5 @@ GenerateRavenInput(
     SubBasinGroup_Area_Lake=[-1],
     OutputFolder=OutputFolder,
     Forcing_Input_File="#",
+    aspect_from_gis = "arcgis",
 )
