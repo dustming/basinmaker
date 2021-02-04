@@ -206,7 +206,7 @@ def GenerateHRUS_arcgis(
         os.makedirs(OutputFolder)
         
     tempfolder = os.path.join(
-        tempfile.gettempdir(), "basinmaker_hru" + str(101)#np.random.randint(1, 10000 + 1))
+        tempfile.gettempdir(), "basinmaker_hru" + str(np.random.randint(1, 10000 + 1))
     )
     if not os.path.exists(tempfolder):
         os.makedirs(tempfolder)
@@ -325,7 +325,7 @@ def GenerateHRUS_arcgis(
 
     # landuse polygon is not provided,landused id the same as IS_lake
     if Path_Landuse_Ply == "#":
-        hru_land_info[Landuse_ID] = hru_land_info['HRU_IsLake']
+        hru_land_info[Landuse_ID] = -hru_land_info['HRU_IsLake']
     hru_lake_info[Landuse_ID] = -1
     # if soil is not provied, it the value,will be the same as land use
     if Path_Soil_Ply == "#":
@@ -336,10 +336,10 @@ def GenerateHRUS_arcgis(
         hru_land_info[Veg_ID] = hru_land_info[Landuse_ID]
     hru_lake_info[Veg_ID] = -1
     if Path_Other_Ply_1 == "#":
-        hru_land_info[Other_Ply_ID_1] = hru_land_info['HRU_IsLake']
+        hru_land_info[Other_Ply_ID_1] = -hru_land_info['HRU_IsLake']
     hru_lake_info[Other_Ply_ID_1] = -1
     if Path_Other_Ply_2 == "#":
-        hru_land_info[Other_Ply_ID_2] = hru_land_info['HRU_IsLake']
+        hru_land_info[Other_Ply_ID_2] = -hru_land_info['HRU_IsLake']
     hru_lake_info[Other_Ply_ID_2] = -1
 
     hru_lake_info = clean_attribute_name_arcgis(hru_lake_info,fieldnames)
