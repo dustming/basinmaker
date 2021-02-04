@@ -124,7 +124,6 @@ def add_lake_attributes(
                 catinfo.loc[catrow, "LakeDepth"] = slakeinfo.iloc[0][lake_attributes[4]]
                 catinfo.loc[catrow, "Laketype"] = slakeinfo.iloc[0][lake_attributes[1]]
         if NCL_LakeId > 0 and CL_LakeId > 0:
-            print(catinfo["RivLength"].values[catrow])
             if catinfo["RivLength"].values[catrow] <= 0:
                 catinfo.loc[catrow, "IsLake"] = 2
                 catinfo.loc[catrow, "HyLakeId"] = NCL_LakeId
