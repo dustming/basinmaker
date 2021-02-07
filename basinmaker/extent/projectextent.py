@@ -121,6 +121,7 @@ def define_project_extent(
     
     if gis_platform == "arcgis":
         from extent.usingdemarcgis import define_project_extent_using_dem
+        from extent.usinghybasinplyarcgis import define_project_extent_using_hybasin_ply
         
     if mode == "using_hybasin":
         assert (
