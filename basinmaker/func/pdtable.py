@@ -1508,40 +1508,45 @@ def Return_Selected_Lakes_Attribute_Table_And_Id(
     finalcat_info["HyLakeId"] = finalcat_info["HyLakeId"].astype(int)
     finalcat_info["Seg_ID"] = finalcat_info["Seg_ID"].astype(int)
 
-    Non_ConnL_info = finalcat_info.loc[finalcat_info["IsLake"] == 2]
-    ConnL_info = finalcat_info.loc[finalcat_info["IsLake"] == 1]
+    Non_ConnL_info = finalcat_info.loc[finalcat_info["IsLake"] == 2].copy(deep=True)
+    ConnL_info = finalcat_info.loc[finalcat_info["IsLake"] == 1].copy(deep=True)
 
     if Selection_Method == "ByArea":
         ### process connected lakes first
-        Selected_ConnLakes = finalcat_info.loc[
-            (finalcat_info["IsLake"] == 1)
-            & (finalcat_info["LakeArea"] >= Thres_Area_Conn_Lakes)
+        Selected_ConnLakes = ConnL_info.loc[
+            (ConnL_info["IsObs"] > 0)
+            | (ConnL_info["LakeArea"] >= Thres_Area_Conn_Lakes)
         ]["HyLakeId"].values
+        
+        Selected_ConnLakes = Selected_ConnLakes[Selected_ConnLakes > 0]
         Selected_ConnLakes = np.unique(Selected_ConnLakes)
-        Un_Selected_ConnLakes_info = finalcat_info.loc[
-            (finalcat_info["IsLake"] == 1)
-            & (finalcat_info["LakeArea"] < Thres_Area_Conn_Lakes)
-            & (finalcat_info["LakeArea"] > 0)
+        
+        Un_Selected_ConnLakes_info = ConnL_info.loc[
+            ~ConnL_info["HyLakeId"].isin(Selected_ConnLakes)
         ]
+        
         ### process non connected selected lakes
         if Thres_Area_Non_Conn_Lakes >= 0:
             Selected_Non_ConnLakes = Non_ConnL_info[
-                Non_ConnL_info["LakeArea"] >= Thres_Area_Non_Conn_Lakes
+                (Non_ConnL_info["LakeArea"] >= Thres_Area_Non_Conn_Lakes) | 
+                (Non_ConnL_info["IsObs"] >= 0)
             ]["HyLakeId"].values
+            Selected_Non_ConnLakes = Selected_Non_ConnLakes[Selected_Non_ConnLakes > 0]
             Selected_Non_ConnLakes = np.unique(Selected_Non_ConnLakes)
-            Selected_Non_ConnL_info = Non_ConnL_info[
-                Non_ConnL_info["LakeArea"] >= Thres_Area_Non_Conn_Lakes
-            ]
+            
             Un_Selected_Non_ConnL_info = Non_ConnL_info[
-                Non_ConnL_info["LakeArea"] < Thres_Area_Non_Conn_Lakes
+                ~Non_ConnL_info["HyLakeId"].isin(Selected_Non_ConnLakes)
             ]
         else:
             Selected_Non_ConnLakes = Non_ConnL_info[
-                Non_ConnL_info["LakeArea"] >= 10000000
+                (Non_ConnL_info["LakeArea"] >= 99999999999) | 
+                (Non_ConnL_info["IsObs"] >= 0)
             ]["HyLakeId"].values
+            Selected_Non_ConnLakes = Selected_Non_ConnLakes[Selected_Non_ConnLakes > 0]
             Selected_Non_ConnLakes = np.unique(Selected_Non_ConnLakes)
-            Selected_Non_ConnL_info = Non_ConnL_info[
-                Non_ConnL_info["LakeArea"] >= 10000000
+            
+            Un_Selected_Non_ConnL_info = Non_ConnL_info[
+                ~Non_ConnL_info["HyLakeId"].isin(Selected_Non_ConnLakes)
             ]
 
     elif Selection_Method == "ByLakelist":
@@ -1614,7 +1619,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_CL(
             continue
 
         ### All lakes in this segment are removed
-        if np.max(N_Hylakeid) < 0:  ##
+        if np.max(N_Hylakeid) and np.max(i_seg_info["IsObs"].values) < 0:  ##
             tsubid = i_seg_info["SubId"].values[len(i_seg_info) - 1]
             seg_sub_ids = i_seg_info["SubId"].values
             mapoldnew_info = New_SubId_To_Dissolve(
@@ -1654,6 +1659,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_CL(
             elif (
                 i_seg_info["HyLakeId"].values[iorder]
                 == i_seg_info["HyLakeId"].values[iorder + 1]
+                and i_seg_info["IsObs"].values[iorder] < 0
             ):
                 continue
             else:
