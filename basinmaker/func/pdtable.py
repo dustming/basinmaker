@@ -1253,6 +1253,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
     Selected_riv = Selected_riv.sort_values(
         ["Strahler"], ascending=(True)
     )  ###sort selected river by Strahler stream order
+    Selected_riv = Selected_riv.loc[Selected_riv['IsLake'] != 2].copy()
     Subid_main = Selected_riv[sub_colnm].values
 
     ### Obtain connected lakes based on current river segment
