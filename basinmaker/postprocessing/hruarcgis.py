@@ -468,14 +468,14 @@ def GeneratelandandlakeHRUS(
         
         cat_info = pd.DataFrame.spatial.from_featureclass(Path_Subbasin_ply)
         cat_info['Hylak_id'] = -1
-        cat_info['HRULake_ID'] = catinfo['SubId']
-        cat_info['HRU_IsLake'] = catinfo['-1']
+        cat_info['HRULake_ID'] = cat_info['SubId']
+        cat_info['HRU_IsLake'] = -1
         
         # remove column not in fieldnames
         cat_info = clean_attribute_name_arcgis(cat_info,fieldnames)
         cat_info.spatial.to_featureclass(location=os.path.join(OutputFolder,'finalcat_hru_lake_info.shp'),overwrite=True,sanitize_columns=False)
-        crs_id = arcpy.Describe(Path_products).spatialReference.factoryCode
-        return os.path.path.join(OutputFolder,'finalcat_hru_lake_info.shp'), crs_id, ["HRULake_ID", "HRU_IsLake", Sub_ID]
+        crs_id = arcpy.Describe(Path_Subbasin_ply).spatialReference.factoryCode
+        return os.path.join(OutputFolder,'finalcat_hru_lake_info.shp'), crs_id, ["HRULake_ID", "HRU_IsLake", Sub_ID]
 
     # fix lake polygon  geometry
     if Path_Connect_Lake_ply != "#":

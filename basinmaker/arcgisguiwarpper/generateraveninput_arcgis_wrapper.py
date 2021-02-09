@@ -27,7 +27,7 @@ else:
 GenerateRavenInput(
     Path_final_hru_info=Path_final_hru_info,
     lenThres=1,
-    iscalmanningn=-1,
+    iscalmanningn=1,
     Startyear=Startyear,
     EndYear=EndYear,
     CA_HYDAT=CA_HYDAT,

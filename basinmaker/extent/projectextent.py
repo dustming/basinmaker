@@ -118,7 +118,11 @@ def define_project_extent(
         from extent.usingoutletpointqgis import define_project_extent_using_outlet_point
         from extent.usinginputplyqgis import define_project_extent_using_input_polygon
         from extent.usinghybasinplyqgis import define_project_extent_using_hybasin_ply
-
+    
+    if gis_platform == "arcgis":
+        from extent.usingdemarcgis import define_project_extent_using_dem
+        from extent.usinghybasinplyarcgis import define_project_extent_using_hybasin_ply
+        
     if mode == "using_hybasin":
         assert (
             hybasin_ply != "#"
