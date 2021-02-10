@@ -194,7 +194,14 @@ def simplify_routing_structure_by_filter_lakes_qgis(
             mapoldnew_info, finalcat_info_temp, Un_Selected_Non_ConnL_info
         )
     )
-
+    
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] < 0,'HyLakeId'] = -9999
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] < 0,'IsLake'] = -9999
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] < 0,'LakeVol'] = -9999
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] < 0,'LakeDepth'] = -9999
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] < 0,'LakeArea'] = -9999
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] < 0,'Laketype'] = -9999
+    
     # update topology for new attribute table
     UpdateTopology(mapoldnew_info, UpdateStreamorder=-1)
     mapoldnew_info = update_non_connected_catchment_info(mapoldnew_info)

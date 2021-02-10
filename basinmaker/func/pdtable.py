@@ -1497,6 +1497,10 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
                 seg_order = seg_order + 1
     mapoldnew_info.loc[mapoldnew_info['HyLakeId'] < 0,'HyLakeId'] = -9999
     mapoldnew_info.loc[mapoldnew_info['HyLakeId'] < 0,'IsLake'] = -9999
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] < 0,'LakeVol'] = -9999
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] < 0,'LakeDepth'] = -9999
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] < 0,'LakeArea'] = -9999
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] < 0,'Laketype'] = -9999
     return (
         mapoldnew_info,
         Selected_riv_ids,
