@@ -1269,14 +1269,32 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
     Subid_lakes = Lakecover_riv[sub_colnm].values
     #####
 
+    ###
+    ## add removed gauges 
+    unselected_gauges_subids = finalriv_info.loc[
+        (~finalriv_info["SubId"].isin(Subid_main)) &
+        (finalriv_info["IsObs"] > 0 )
+    ]['SubId'].values
+    finalriv_info_ncl = finalriv_info.copy(deep=True)
+    # make unselected gauge to be a false lake 
+    finalriv_info_ncl.loc[finalriv_info_ncl['SubId'].isin(unselected_gauges_subids),'HyLakeId'] = - finalriv_info_ncl.loc[finalriv_info_ncl['SubId'].isin(unselected_gauges_subids),'SubId']  
+    fake_obs_hyalkeids =  finalriv_info_ncl.loc[finalriv_info_ncl['SubId'].isin(unselected_gauges_subids),'HyLakeId'].values
+    ##
+    ###
+        
     # identify which connected lake will be moved to non connected lake due to remove of river network
     All_Conn_Lakeids = Conn_Lakes_ply["Hylak_id"].values
     mask = np.in1d(All_Conn_Lakeids, Connected_Lake_Mainriv)
     Conn_To_NonConlakeids = All_Conn_Lakeids[np.logical_not(mask)].copy()
-    Conn_To_NonConlake_info = finalriv_info.loc[
-        finalriv_info["HyLakeId"].isin(Conn_To_NonConlakeids)
+    Conn_To_NonConlake_info = finalriv_info_ncl.loc[
+        (finalriv_info_ncl["HyLakeId"].isin(Conn_To_NonConlakeids)) |
+        (finalriv_info_ncl["HyLakeId"].isin(fake_obs_hyalkeids))
     ].copy()
 
+
+
+    
+    
     # Get origional non connected lake subid and lake id
     Old_Non_Connect_SubIds = finalriv_info.loc[finalriv_info["IsLake"] == 2][
         "SubId"
@@ -1321,7 +1339,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
         )
 
         C_T_N_Lakeid = Conn_To_NonConlake_info_outlet["HyLakeId"].values[i]
-        Lake_Cat_info = finalriv_info[finalriv_info["HyLakeId"] == C_T_N_Lakeid]
+        Lake_Cat_info = finalriv_info_ncl[finalriv_info_ncl["HyLakeId"] == C_T_N_Lakeid]
         Riv_Seg_IDS = np.unique(Lake_Cat_info["Seg_ID"].values)
         modifysubids = []
         for j in range(0, len(Riv_Seg_IDS)):
@@ -1348,10 +1366,10 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
 
         mapoldnew_info = New_SubId_To_Dissolve(
             subid=tsubid,
-            catchmentinfo=finalriv_info,
+            catchmentinfo=finalriv_info_ncl,
             mapoldnew_info=mapoldnew_info,
             ismodifids=1,
-            mainriv=finalriv_info,
+            mainriv=finalriv_info_ncl,
             modifiidin=modifysubids,
             Islake=2,
         )
@@ -1477,7 +1495,8 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
                 )
                 modifysubids = []
                 seg_order = seg_order + 1
-
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] < 0,'HyLakeId'] = -9999
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] < 0,'IsLake'] = -9999
     return (
         mapoldnew_info,
         Selected_riv_ids,
