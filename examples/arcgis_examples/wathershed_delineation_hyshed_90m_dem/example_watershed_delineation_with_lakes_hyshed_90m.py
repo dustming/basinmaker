@@ -15,7 +15,7 @@ path_working_folder = os.path.join(
     tempfile.gettempdir(), "basinmaker_exp_hyshed" + num, "work"
 )
 datafolder = os.path.join("../../../tests/testdata", "Required_data_to_start_from_dem")
-
+print(path_working_folder)
 #############################################
 # initialize basinmaker with working folder
 #############################################
@@ -37,15 +37,15 @@ basinmaker.define_project_extent_method(
 )
 
 
-#############################################
-# generate a watershed delineation without considering lakes
-#############################################
-# basinmaker.watershed_delineation_without_lake_method(
-#     acc_thresold=2000,
-#     mode="usingdem",
-#     max_memroy=1024 * 4,
-#     gis_platform="qgis",
-# )
+############################################
+#generate a watershed delineation without considering lakes
+############################################
+basinmaker.watershed_delineation_without_lake_method(
+    acc_thresold=2000,
+    mode="usingdem",
+    max_memroy=1024 * 4,
+    gis_platform="arcgis",
+)
 # 
 # 
 # #############################################
