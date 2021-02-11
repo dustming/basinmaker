@@ -51,16 +51,16 @@ basinmaker.watershed_delineation_without_lake_method(
 # #############################################
 # # add lake and obs control points in the existing watershed delineation
 # #############################################
-# basinmaker.watershed_delineation_add_lake_control_points(
-#     path_lakefile_in=os.path.join(datafolder, "hylake.shp"),
-#     lake_attributes=["Hylak_id", "Lake_type", "Lake_area", "Vol_total", "Depth_avg"],
-#     threshold_con_lake=0,
-#     threshold_non_con_lake=0,
-#     path_obsfile_in=os.path.join(datafolder, "obs.shp"),
-#     obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
-#     max_memroy=1024 * 4,
-#     gis_platform="qgis",
-# )
+basinmaker.watershed_delineation_add_lake_control_points(
+    path_lakefile_in=os.path.join(datafolder, "hylake.shp"),
+    lake_attributes=["Hylak_id", "Lake_type", "Lake_area", "Vol_total", "Depth_avg"],
+    threshold_con_lake=0,
+    threshold_non_con_lake=0,
+    path_obsfile_in=os.path.join(datafolder, "obs.shp"),
+    obs_attributes=["Obs_ID", "STATION_NU", "DA_obs", "SRC_obs"],
+    max_memroy=1024 * 4,
+    gis_platform="arcgis",
+)
 # 
 # 
 # #############################################

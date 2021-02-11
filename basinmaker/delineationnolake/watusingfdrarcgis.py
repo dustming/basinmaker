@@ -1,5 +1,4 @@
-from func.grassgis import *
-from func.qgis import *
+from func.arcgis import *
 from func.pdtable import *
 from func.rarray import *
 from utilities.utilities import *
