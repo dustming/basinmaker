@@ -121,7 +121,16 @@ def watershed_delineation_without_lake(
         from delineationnolake.watusingsubregionddata import (
             delineate_watershed_no_lake_using_subregion_data,
         )
-
+    elif gis_platform == "arcgis":
+        from delineationnolake.watusingdemarcgis import (
+            delineate_watershed_no_lake_using_dem,
+        )
+        from delineationnolake.watusingfdrarcgis import (
+            delineate_watershed_no_lake_using_fdr,
+        )
+    else:
+        print('gis_platform    ',gis_platform,'   do not support')    
+        
     if mode == "usingdem":
         assert (
             acc_thresold > 0

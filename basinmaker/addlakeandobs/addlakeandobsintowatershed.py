@@ -167,6 +167,13 @@ def add_lakes_and_obs_into_existing_watershed_delineation(
         from addlakeandobs.definecatrivqgis import (
             define_cat_and_riv_without_merge_lake_cats,
         )
+    elif gis_platform == "arcgis":
+        from addlakeandobs.addlakesarcgis import (
+            add_lakes_into_existing_watershed_delineation,
+        )
+    else:
+        print('gis_platform    ',gis_platform,'   do not support') 
+            
     add_lakes_into_existing_watershed_delineation(
         grassdb=grassdb,
         grass_location=grass_location,
