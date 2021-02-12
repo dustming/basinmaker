@@ -44,7 +44,7 @@ def delineate_watershed_no_lake_using_subregion_data(
     # unpack subregion flow accumulation and flow direction data
     grass_raster_r_unpack(grass, input=subreg_fdr_path, output="dir_Arcgis1")
     grass_raster_r_unpack(grass, input=subreg_acc_path, output="grass_acc1")
-    exp = "%s  = dir_Arcgis1" % (fdr_arcgis)
+    exp = "%s  = int(dir_Arcgis1)" % (fdr_arcgis)
     grass_raster_r_mapcalc(grass, expression=exp)
     # calcuate flow direction in grass format
     grass_raster_r_reclass(
@@ -61,7 +61,7 @@ def delineate_watershed_no_lake_using_subregion_data(
     # unpack  river network raster
     grass_raster_r_unpack(grass, input=subreg_str_r_path, output="str_grass_r1")
     # clip river network with mask
-    exp = "%s = str_grass_r1" % (str_r)
+    exp = "%s = int(str_grass_r1)" % (str_r)
     grass_raster_r_mapcalc(grass, expression=exp)
 
     grass_raster_r_stream_basins(
