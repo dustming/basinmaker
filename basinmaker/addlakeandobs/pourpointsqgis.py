@@ -177,11 +177,25 @@ def define_pour_points_with_lakes(
         grass, mode=1, input_a=str_r
     )
     str_id_non_lake_inlfow = [x for x in all_river_ids if x not in str_id_lake_inlfow]
-    grass.run_command("g.copy", rast=(str_r, "lake_inflow_str"), overwrite=True)
-    grass.run_command(
-        "r.null", map="lake_inflow_str", setnull=str_id_non_lake_inlfow, overwrite=True
-    )
-
+    try:
+        grass.run_command("g.copy", rast=(str_r, "lake_inflow_str"), overwrite=True)
+        grass.run_command(
+            "r.null", map="lake_inflow_str", setnull=str_id_non_lake_inlfow, overwrite=True
+        )
+    except:
+        lake_inflow_str_array = garray.array(mapname=str_r)
+        mask = np.isin(lake_inflow_str_array, str_id_non_lake_inlfow)
+        lake_inflow_str_array[mask] = -9999
+        temparray = garray.array()
+        temparray[:, :] = lake_inflow_str_array[:, :]
+        temparray.write(mapname="lake_inflow_str", overwrite=True)
+        grass.run_command("r.null", map="lake_inflow_str", setnull=[-9999])
+        exp = "%s = int(%s)" % (
+            "lake_inflow_str",
+            "lake_inflow_str",
+        )
+        grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+            
     # find the lake inlet point within the lake
 
     grass.run_command(
