@@ -200,6 +200,18 @@ def Generatesubdomain(
     )
     grass.run_command(
         "r.pack",
+        input=fdr_grass,
+        output=os.path.join(Out_Sub_Reg_Folder, 'sub_reg_fdr_grass' + ".pack"),
+        overwrite=True,
+    )
+    grass.run_command(
+        "r.pack",
+        input=fdr_arcgis,
+        output=os.path.join(Out_Sub_Reg_Folder, 'sub_reg_fdr_arcgis' + ".pack"),
+        overwrite=True,
+    )
+    grass.run_command(
+        "r.pack",
         input=acc,
         output=os.path.join(Out_Sub_Reg_Folder, sub_reg_acc + ".pack"),
         overwrite=True,
