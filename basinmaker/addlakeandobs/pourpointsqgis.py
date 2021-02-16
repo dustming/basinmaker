@@ -22,7 +22,7 @@ def define_pour_points_with_lakes(
     lake_outflow_pourpoints="lake_outflow_pourpoints",
     catchment_pourpoints_outside_lake="catchment_pourpoints_outside_lake",
 ):
-
+    r_nuill_n = 500
     # define catchment pourpoints and routing info
     routing_info = generate_routing_info_of_catchments(
         grass, con, cat=cat_no_lake, acc=acc, str=str_r, Name="cat1",garray=garray
@@ -30,6 +30,7 @@ def define_pour_points_with_lakes(
     routing_info = routing_info.fillna(-1)
 
     # define lake outlets
+    # lake maximum acc 
     grass.run_command(
         "r.stats.zonal",
         base=sl_lakes,
@@ -38,7 +39,7 @@ def define_pour_points_with_lakes(
         output="sl_lakes_maxacc",
         overwrite=True,
     )
-
+    # get lake output 
     exp = "%s =if( abs(%s - %s) < 1.0e-15,%s,null())" % (
         lake_outflow_pourpoints+'t',
         acc,
@@ -149,16 +150,54 @@ def define_pour_points_with_lakes(
     )
 
     # remove cat outlet that within the lake
-    grass.run_command(
-        "g.copy", rast=("cat1_OL", catchment_pourpoints_outside_lake), overwrite=True
-    )
-    grass.run_command(
-        "r.null",
-        map=catchment_pourpoints_outside_lake,
-        setnull=str_id_within_lakes,
-        overwrite=True,
-    )
-
+    
+    if len(str_id_within_lakes) < r_nuill_n * 10:
+        grass.run_command(
+            "g.copy", rast=("cat1_OL", catchment_pourpoints_outside_lake), overwrite=True
+        )
+        grass.run_command(
+            "r.null",
+            map=catchment_pourpoints_outside_lake,
+            setnull=str_id_within_lakes,
+            overwrite=True,
+        )
+    else:
+        grass.run_command(
+            "g.copy", rast=("cat1_OL", catchment_pourpoints_outside_lake), overwrite=True
+        )
+        k=0
+        for i in range(0,int(len(str_id_within_lakes)/r_nuill_n) + 1):
+            print("r.null   ",k,i*r_nuill_n+r_nuill_n,len(str_id_within_lakes))
+            if i*r_nuill_n+r_nuill_n < len(str_id_within_lakes):
+                grass.run_command(
+                    "r.null",
+                    map=catchment_pourpoints_outside_lake,
+                    setnull=str_id_within_lakes[k:i*r_nuill_n+r_nuill_n],
+                    overwrite=True,
+                ) 
+            elif  k > len(str_id_within_lakes):
+                break
+            else:
+                grass.run_command(
+                    "r.null",
+                    map=catchment_pourpoints_outside_lake,
+                    setnull=str_id_within_lakes[k:len(str_id_within_lakes) - 1],
+                    overwrite=True,
+                )      
+            k = i*r_nuill_n+r_nuill_n                             
+        # catchment_pourpoints_outside_lake_array = garray.array(mapname="cat1_OL")
+        # mask = np.isin(catchment_pourpoints_outside_lake_array, str_id_within_lakes)
+        # catchment_pourpoints_outside_lake_array[mask] = -9999
+        # temparray = garray.array()
+        # temparray[:, :] = catchment_pourpoints_outside_lake_array[:, :]
+        # temparray.write(mapname=catchment_pourpoints_outside_lake, overwrite=True)
+        # grass.run_command("r.null", map=catchment_pourpoints_outside_lake, setnull=[-9999])
+        # exp = "%s = int(%s)" % (
+        #     catchment_pourpoints_outside_lake,
+        #     catchment_pourpoints_outside_lake,
+        # )
+        # grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+                
     # remove non lake inflow river segment
     grass.run_command(
         "g.copy", rast=("unique_lake_str", "unique_lake_str_inflow"), overwrite=True
@@ -177,24 +216,47 @@ def define_pour_points_with_lakes(
         grass, mode=1, input_a=str_r
     )
     str_id_non_lake_inlfow = [x for x in all_river_ids if x not in str_id_lake_inlfow]
-    try:
+    
+    if len(str_id_non_lake_inlfow) < r_nuill_n * 10:
         grass.run_command("g.copy", rast=(str_r, "lake_inflow_str"), overwrite=True)
         grass.run_command(
             "r.null", map="lake_inflow_str", setnull=str_id_non_lake_inlfow, overwrite=True
         )
-    except:
-        lake_inflow_str_array = garray.array(mapname=str_r)
-        mask = np.isin(lake_inflow_str_array, str_id_non_lake_inlfow)
-        lake_inflow_str_array[mask] = -9999
-        temparray = garray.array()
-        temparray[:, :] = lake_inflow_str_array[:, :]
-        temparray.write(mapname="lake_inflow_str", overwrite=True)
-        grass.run_command("r.null", map="lake_inflow_str", setnull=[-9999])
-        exp = "%s = int(%s)" % (
-            "lake_inflow_str",
-            "lake_inflow_str",
-        )
-        grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+    else:
+        grass.run_command("g.copy", rast=(str_r, "lake_inflow_str"), overwrite=True)
+        k=0
+        for i in range(0,int(len(str_id_non_lake_inlfow)/r_nuill_n)+1):
+            print("r.null   ",k,i*r_nuill_n+r_nuill_n,len(str_id_non_lake_inlfow))
+            if i*r_nuill_n+r_nuill_n < len(str_id_non_lake_inlfow):
+                grass.run_command(
+                    "r.null",
+                    map="lake_inflow_str",
+                    setnull=str_id_non_lake_inlfow[k:i*r_nuill_n+r_nuill_n],
+                    overwrite=True,
+                )
+            elif  k > len(str_id_non_lake_inlfow):
+                break
+            else:
+                grass.run_command(
+                    "r.null",
+                    map="lake_inflow_str",
+                    setnull=str_id_non_lake_inlfow[k:len(str_id_non_lake_inlfow) - 1],
+                    overwrite=True,
+                )      
+            k = i*r_nuill_n+r_nuill_n  
+            
+        # lake_inflow_str_array = garray.array(mapname=str_r)
+        # mask = np.isin(lake_inflow_str_array, str_id_non_lake_inlfow)
+        # lake_inflow_str_array[mask] = -9999
+        # temparray = garray.array()
+        # temparray[:, :] = lake_inflow_str_array[:, :]
+        # temparray.write(mapname="lake_inflow_str", overwrite=True)
+        # grass.run_command("r.null", map="lake_inflow_str", setnull=[-9999])
+        # exp = "%s = int(%s)" % (
+        #     "lake_inflow_str",
+        #     "lake_inflow_str",
+        # )
+        # grass.run_command("r.mapcalc", expression=exp, overwrite=True)
             
     # find the lake inlet point within the lake
 

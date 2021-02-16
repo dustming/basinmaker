@@ -132,23 +132,33 @@ def add_lakes_into_existing_watershed_delineation(
         grass.run_command(
             "r.unpack", input=path_sub_reg_lake_r, output="rg_lake", overwrite=True
         )
+        exp = "%s = int(%s)" % ("rg_lake", "rg_lake")
+        grass_raster_r_mapcalc(grass, exp)
+    
         grass.run_command(
             "r.unpack",
             input=path_sub_reg_lake_bd_r,
             output="rg_lake_bd",
             overwrite=True,
         )
-        exp = "%s = int(%s)" % (alllake, "rg_lake")
+        exp = "%s = int(%s)" % ("rg_lake_bd", "rg_lake_bd")
         grass_raster_r_mapcalc(grass, exp)
-        exp = "%s = int(%s)" % (lake_boundary, "rg_lake_bd")
+    
+        exp = "%s = if(isnull(%s),%s,%s)" % (alllake,"rg_lake",alllake,"rg_lake")
         grass_raster_r_mapcalc(grass, exp)
+        exp = "%s = if(isnull(%s),%s,%s)" %  (lake_boundary,"rg_lake_bd",lake_boundary,"rg_lake")
+        exp = "%s = int(%s)" % (alllake, alllake)
+        grass_raster_r_mapcalc(grass, exp)
+        exp = "%s = int(%s)" % (lake_boundary,lake_boundary)
+        grass_raster_r_mapcalc(grass, exp)
+    
     else:
         write_grass_and_arcgis_fdr_rules(grassdb)
         exp = "%s = int(%s)" % (alllake, alllake)
         grass_raster_r_mapcalc(grass, exp)
         exp = "%s = int(%s)" % (lake_boundary, lake_boundary)
         grass_raster_r_mapcalc(grass, exp)
-
+    
     # Define connected and non connected lakes and
     # identify which str make certain lake have two outlet
     define_connected_and_non_connected_lake_type(
@@ -161,7 +171,7 @@ def add_lakes_into_existing_watershed_delineation(
         non_connected_lake=non_connected_lake,
         str_connected_lake=str_connected_lake,
     )
-
+    
     select_lakes_by_area_r(
         grass=grass,
         con=con,
