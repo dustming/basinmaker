@@ -148,18 +148,22 @@ def simplify_routing_structure_by_drainage_area_arcgis(
    
     # export lakes     
     Conn_Lakes_ply = pd.DataFrame.spatial.from_featureclass(Path_Conl_ply)
-    non_conn_Lakes_ply = pd.DataFrame.spatial.from_featureclass(Path_Conl_ply)
+    non_conn_Lakes_ply = pd.DataFrame.spatial.from_featureclass(Path_Non_ConL_ply)
     
     lake_mask = Conn_Lakes_ply['Hylak_id'].isin(Connected_Lake_Mainriv)
     Conn_Lakes_ply_select = Conn_Lakes_ply.loc[lake_mask].copy()
     Conn_Lakes_ply_not_select = Conn_Lakes_ply.loc[np.logical_not(lake_mask)].copy()
 
     # export lake polygons
+    # export connected lake polygon
     Conn_Lakes_ply_select.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_Conl_ply)),overwrite=True,sanitize_columns=False)
     
+    # export non connected polygon 
     if len(Conn_Lakes_ply_not_select) >0 and Path_NonCon_Lake_ply != '#':
         non_conn_Lakes_ply = pd.DataFrame.spatial.from_featureclass(Path_NonCon_Lake_ply)  
         new_non_connected_lake = pd.concat([non_conn_Lakes_ply, Conn_Lakes_ply_not_select], ignore_index=True)
         new_non_connected_lake.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply)),overwrite=True,sanitize_columns=False)
-     
+    if len(Conn_Lakes_ply_not_select) <= 0 and Path_NonCon_Lake_ply != '#':
+        non_conn_Lakes_ply.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply)),overwrite=True,sanitize_columns=False)
+        
     return 
