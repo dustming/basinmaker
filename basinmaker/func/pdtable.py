@@ -1963,8 +1963,7 @@ def return_non_lake_inflow_segs_and_segs_within_lakes(
                     down_sun_of_lake_cover_str = routing_info.loc[routing_info['SubId'] == str_id_cl_j]['DowSubId'].values[0]
                     # if the it is also flow to the lake outlet , remove it 
                     # and it is not already in the list 
-                    if down_sun_of_lake_cover_str in strs_to_lake_outlet and down_sun_of_lake_cover_str not in str_id_within_lakes:
-                        
+                    if down_sun_of_lake_cover_str in strs_to_lake_outlet and down_sun_of_lake_cover_str not in riv_lake_il[:, 1]:
                         # remove all dnow str unitl it reach to a lake coverd str_r
                         # or a str already be removed 
                         str_id_within_lakes.append(int(down_sun_of_lake_cover_str)) 
@@ -1976,7 +1975,7 @@ def return_non_lake_inflow_segs_and_segs_within_lakes(
                             if len(routing_info.loc[routing_info['SubId'] == cstrid]) > 0:
                                 dstr_id = routing_info.loc[routing_info['SubId'] == cstrid]['DowSubId'].values[0]
                                 # check if it reach a lake covered str id 
-                                if dstr_id not in riv_lake_il[:, 1]:
+                                if dstr_id not in riv_lake_il[:, 1] and dstr_id in strs_to_lake_outlet:
                                     str_id_within_lakes.append(int(dstr_id))
                                     cstrid = dstr_id 
                                 else:
