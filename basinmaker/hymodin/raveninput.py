@@ -1479,7 +1479,7 @@ def Generate_Raven_Channel_rvp_rvh_String(
 
             SubIDs_In_Group_Str_list.append(str(int(SubIDs_In_Group[j])))
             nsubbasin = nsubbasin + 1
-            if nsubbasin == 10 or nsubbasin == len(SubIDs_In_Group):
+            if nsubbasin == 10 or j == len(SubIDs_In_Group) - 1:
                 SubIDs_In_Group_Str = "   ".join(SubIDs_In_Group_Str_list)
                 Model_rvh_string_list.append(SubIDs_In_Group_Str)
                 nsubbasin = 0
@@ -1509,7 +1509,7 @@ def Generate_Raven_Channel_rvp_rvh_String(
 
             SubIDs_In_Group_Str_list.append(str(int(SubIDs_In_Group[j])))
             nsubbasin = nsubbasin + 1
-            if nsubbasin == 10 or nsubbasin == len(SubIDs_In_Group):
+            if nsubbasin == 10 or j == len(SubIDs_In_Group) - 1:
                 SubIDs_In_Group_Str = "   ".join(SubIDs_In_Group_Str_list)
                 Model_rvh_string_list.append(SubIDs_In_Group_Str)
                 nsubbasin = 0
