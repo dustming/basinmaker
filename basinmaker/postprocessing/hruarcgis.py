@@ -826,7 +826,7 @@ def Define_HRU_Attributes_arcgis(
 
     arcpy.CalculateGeometryAttributes_management(
         os.path.join(tempfolder,'hru_add_area.shp'),
-        [["HRU_Area", "AREA"]],
+        [["HRU_Area", "AREA_GEODESIC"]],
         area_unit = 'SQUARE_METERS',
         coordinate_system = arcpy.SpatialReference(prj_crs)
     ) 
@@ -863,7 +863,7 @@ def Define_HRU_Attributes_arcgis(
 
     arcpy.CalculateGeometryAttributes_management(
         os.path.join(tempfolder,'finalcat_hru_info.shp'),
-        [["HRU_Area", "AREA"]],
+        [["HRU_Area", "AREA_GEODESIC"]],
         area_unit = 'SQUARE_METERS',
         coordinate_system = arcpy.SpatialReference(prj_crs)
     ) 
@@ -902,7 +902,7 @@ def Define_HRU_Attributes_arcgis(
     )
     arcpy.CalculateGeometryAttributes_management(
         os.path.join(tempfolder,'hru_simple.shp'),
-        [["HRU_Area", "AREA"]],
+        [["HRU_Area", "AREA_GEODESIC"]],
         area_unit = 'SQUARE_METERS',
         coordinate_system = arcpy.SpatialReference(prj_crs)
     ) 
