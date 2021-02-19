@@ -922,6 +922,9 @@ def Combine_Sub_Region_Results(
             .copy()
         )
 
+        AllCatinfo['SubId'] = AllCatinfo['SubId'].astype('int32')
+        AllCatinfo['DowSubId'] = AllCatinfo['DowSubId'].astype('int32')  
+        
         DownCatinfo = (
             Dbf_To_Dataframe(os.path.join(tempfolder, "Down_Sub_ID.shp"))
             .drop_duplicates("ILpt_ID", keep="first")
@@ -1015,7 +1018,9 @@ def Combine_Sub_Region_Results(
             .drop_duplicates("ILpt_ID", keep="first")
             .copy()
         )
-
+        AllCatinfo['SubId'] = AllCatinfo['SubId'].astype('int32')
+        AllCatinfo['DowSubId'] = AllCatinfo['DowSubId'].astype('int32')  
+        
         AllCatinfo, Sub_Region_info = Connect_SubRegion_Update_DownSubId(
             AllCatinfo, DownCatinfo, Sub_Region_info
         )

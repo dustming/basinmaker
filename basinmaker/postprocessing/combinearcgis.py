@@ -91,6 +91,11 @@ def combine_catchments_covered_by_the_same_lake_arcgis(
     ### read attribute table
     finalrivply_info = pd.DataFrame.spatial.from_featureclass(Path_final_rivply)
     # change attribute table for lake covered catchments,
+    finalrivply_info['SubId'] = finalrivply_info['SubId'].astype('int32')
+    finalrivply_info['DowSubId'] = finalrivply_info['DowSubId'].astype('int32')
+    finalrivply_info['HyLakeId'] = finalrivply_info['HyLakeId'].astype('int32')
+#    finalrivply_info['DA'] = finalrivply_info['DA'].astype('float')
+
     mapoldnew_info = change_attribute_values_for_catchments_covered_by_same_lake(
         finalrivply_info
     )

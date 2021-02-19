@@ -652,7 +652,7 @@ def Connect_SubRegion_Update_DownSubId(AllCatinfo, DownCatinfo, Sub_Region_info)
         if len(Sub_Region_cat_info) <= 0:
             continue
 
-        ### Subregion outlet subbasin ID
+        ### Subregion outlet subbasin ID        
         outlet_mask = Sub_Region_cat_info["DowSubId"] == -1
         iReg_Outlet_Subid = Sub_Region_cat_info.loc[outlet_mask, "SubId"].values[0]
         # (isubregion - 80000) * 200000 - 1
