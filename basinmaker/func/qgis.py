@@ -575,7 +575,7 @@ def Add_New_SubId_To_Subregion_shpfile(
             cSubId = int(sf["SubId"])
             cDowSubId = int(sf["DowSubId"])
             nSubId = SubID_info.loc[SubID_info["SubId"] == cSubId]["nSubId"]
-            if len(SubID_info.loc[SubID_info["SubId"] == cDowSubId]) == 0:
+            if len(SubID_info.loc[SubID_info["SubId"] == cDowSubId]) == 0 or cSubId == cDowSubId:
                 nDowSubId = -1
             else:
                 nDowSubId = SubID_info.loc[SubID_info["SubId"] == cDowSubId]["nSubId"]
