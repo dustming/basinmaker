@@ -909,7 +909,7 @@ class basinmaker:
         Path_Other_Ply_2="#",
         Other_Ply_ID_2="O_ID_2",
         Inmportance_order = [],
-        min_hru_area_pct_sub = 0.1,
+        min_hru_area_pct_sub = 0.0,
         DEM="#",
         Project_crs="EPSG:3573",
         OutputFolder="#",
