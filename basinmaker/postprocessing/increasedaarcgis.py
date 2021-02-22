@@ -156,7 +156,8 @@ def simplify_routing_structure_by_drainage_area_arcgis(
 
     # export lake polygons
     # export connected lake polygon
-    Conn_Lakes_ply_select.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_Conl_ply)),overwrite=True,sanitize_columns=False)
+    if len(Conn_Lakes_ply_select) > 0:
+        Conn_Lakes_ply_select.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_Conl_ply)),overwrite=True,sanitize_columns=False)
     
     # export non connected polygon 
     if len(Conn_Lakes_ply_not_select) >0 and Path_NonCon_Lake_ply != '#':
@@ -165,5 +166,7 @@ def simplify_routing_structure_by_drainage_area_arcgis(
         new_non_connected_lake.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply)),overwrite=True,sanitize_columns=False)
     if len(Conn_Lakes_ply_not_select) <= 0 and Path_NonCon_Lake_ply != '#':
         non_conn_Lakes_ply.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply)),overwrite=True,sanitize_columns=False)
+    if len(Conn_Lakes_ply_not_select) > 0 and Path_NonCon_Lake_ply == '#':
+        Conn_Lakes_ply_not_select.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply)),overwrite=True,sanitize_columns=False)
         
     return 

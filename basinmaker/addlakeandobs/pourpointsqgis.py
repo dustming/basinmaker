@@ -199,16 +199,41 @@ def define_pour_points_with_lakes(
         # grass.run_command("r.mapcalc", expression=exp, overwrite=True)
                 
     # remove non lake inflow river segment
-    grass.run_command(
-        "g.copy", rast=("unique_lake_str", "unique_lake_str_inflow"), overwrite=True
-    )
-    grass.run_command(
-        "r.null",
-        map="unique_lake_str_inflow",
-        setnull=non_lake_inflow_segs,
-        overwrite=True,
-    )
-
+    if len(non_lake_inflow_segs) < r_nuill_n * 10:
+        grass.run_command(
+            "g.copy", rast=("unique_lake_str", "unique_lake_str_inflow"), overwrite=True
+        )
+        grass.run_command(
+            "r.null",
+            map="unique_lake_str_inflow",
+            setnull=non_lake_inflow_segs,
+            overwrite=True,
+        )
+    else:
+        grass.run_command(
+            "g.copy", rast=("unique_lake_str", "unique_lake_str_inflow"), overwrite=True
+        )
+        k=0
+        for i in range(0,int(len(non_lake_inflow_segs)/r_nuill_n)+1):
+            print("r.null   ",k,i*r_nuill_n+r_nuill_n,len(non_lake_inflow_segs))
+            if i*r_nuill_n+r_nuill_n < len(non_lake_inflow_segs):
+                grass.run_command(
+                    "r.null",
+                    map="unique_lake_str_inflow",
+                    setnull=non_lake_inflow_segs[k:i*r_nuill_n+r_nuill_n],
+                    overwrite=True,
+                )
+            elif  k > len(non_lake_inflow_segs):
+                break
+            else:
+                grass.run_command(
+                    "r.null",
+                    map="unique_lake_str_inflow",
+                    setnull=non_lake_inflow_segs[k:len(non_lake_inflow_segs) - 1],
+                    overwrite=True,
+                )      
+            k = i*r_nuill_n+r_nuill_n  
+    
     ## find lake inflow points from inflow segments
 
     # get all str that are lake inflow str

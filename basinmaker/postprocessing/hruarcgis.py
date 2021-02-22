@@ -370,6 +370,15 @@ def GenerateHRUS_arcgis(
         tempfolder = tempfolder,
     )    
     
+    COLUMN_NAMES_CONSTANT_HRU_extend = COLUMN_NAMES_CONSTANT_HRU.extend(
+        [
+            Landuse_ID,
+            Soil_ID,
+            Veg_ID,
+            Other_Ply_ID_1,
+            Other_Ply_ID_2,
+        ]
+    )
     HRU_draf_final = clean_attribute_name_arcgis(HRU_draf_final,COLUMN_NAMES_CONSTANT_HRU)
     HRU_draf_final.spatial.to_featureclass(location = os.path.join(OutputFolder,'final_hru_info.shp'),overwrite=True,sanitize_columns=False)
 
@@ -868,7 +877,6 @@ def Define_HRU_Attributes_arcgis(
         coordinate_system = arcpy.SpatialReference(prj_crs)
     ) 
    
-    min_hru_pct_sub_area = 0.2
     hruinfo_new = pd.DataFrame.spatial.from_featureclass(os.path.join(tempfolder,'finalcat_hru_info.shp'))
     
     hruinfo_simple = simplidfy_hrus(
@@ -982,7 +990,9 @@ def Define_HRU_Attributes_arcgis(
 
 
 def simplidfy_hrus(min_hru_pct_sub_area,hruinfo,importance_order):
-
+    
+    hruinfo['HRU_ID_New2'] = hruinfo['HRU_ID_New']
+     
     subids = np.unique(hruinfo['SubId'].values)
     
     # loop for each subbasin 
@@ -1000,11 +1010,46 @@ def simplidfy_hrus(min_hru_pct_sub_area,hruinfo,importance_order):
         good_hrus = sub_hru_info.loc[sub_hru_info['HRU_Area'] >= subarea_thrs].copy()
         
         hru_columns = good_hrus.columns
+        # do not modify this columns 
+        hru_columns = hru_columns[hru_columns != 'HRU_ID_New2']
+        # check if the need_remove_hru can merge togeher for importance order 
+        # 1 
+        colnm1 = importance_order[0]
+        import1_Area_need_remove_hru = need_remove_hrus.copy(deep=True)
+        unique_import1 = np.unique(import1_Area_need_remove_hru[colnm1].values)
+        # if subid == 116:
+        #     print(subarea_thrs,min_hru_pct_sub_area,subasrea)
+        #     print(need_remove_hrus[['HRU_ID_New2','HRU_Area',colnm1]]) 
+            
+        for i_import in range(0,len(unique_import1)):
+            i_colnm1 = unique_import1[i_import]
+            i_import1_Area_need_remove_hru = import1_Area_need_remove_hru.loc[import1_Area_need_remove_hru[colnm1] == i_colnm1].copy(deep=True)
+            total_area_i_import_in_need_remove_hrus = np.sum(i_import1_Area_need_remove_hru['HRU_Area'].values)
+            ## check total area of the most important column in the importance list 
+            ## if it is larger than area threthold,
+            ## then merge them together 
+            
+            if total_area_i_import_in_need_remove_hrus >= subarea_thrs:
+                
+                #merge to the hru with largest area in the list 
+                i_import1_Area_need_remove_hru = i_import1_Area_need_remove_hru.sort_values(by=['HRU_Area'],ascending=False)
+                for i_nm in range(0,len(hru_columns)):
+                    columnname = hru_columns[i_nm]
+                    if columnname == 'SHAPE':
+                        continue 
+                    # modify the hru attributes to good hru attribute     
+                    hruinfo.loc[hruinfo['HRU_ID_New2'].isin(i_import1_Area_need_remove_hru['HRU_ID_New2'].values),columnname] = i_import1_Area_need_remove_hru[columnname].values[0]
+                    
+                # remove modified HRU from need removed hru list 
+                need_remove_hrus = need_remove_hrus[~need_remove_hrus['HRU_ID_New2'].isin(i_import1_Area_need_remove_hru['HRU_ID_New2'].values)]
         # loop for each 
         indexes = need_remove_hrus.index
+        # if subid == 116:
+        #     print(need_remove_hrus[['HRU_ID_New2','HRU_Area',colnm1]])                    
+
         for j in range(0,len(indexes)):
             idx = indexes[j]
-            hruid = need_remove_hrus.loc[idx,'HRU_ID_New']
+            hruid = need_remove_hrus.loc[idx,'HRU_ID_New2']
             # find a target hru from good_hrus, and merge them by change attribute 
             
             # loop the importance_order, 
@@ -1024,9 +1069,9 @@ def simplidfy_hrus(min_hru_pct_sub_area,hruinfo,importance_order):
                         if columnname == 'SHAPE':
                             continue 
                         # modify the hru attributes to good hru attribute     
-                        hruinfo.loc[hruinfo['HRU_ID_New'] == hruid,columnname] = good_hrus_k[columnname].values[0]
+                        hruinfo.loc[hruinfo['HRU_ID_New2'] == hruid,columnname] = good_hrus_k[columnname].values[0]
                 else:
                     continue 
-                
+    hruinfo = hruinfo.drop(columns=['HRU_ID_New2'])    
     return hruinfo
         
