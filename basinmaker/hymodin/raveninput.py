@@ -1109,7 +1109,7 @@ def Return_Group_Name_Based_On_Value(value, GroupNames, Group_Thresthold_Values)
         GroupName = GroupNames[0]
     elif len(GroupNames) > 1:
         for i in range(0, len(Group_Thresthold_Values)):
-
+#            print(value,Group_Thresthold_Values,GroupNames[i])
             ###
             if value < Group_Thresthold_Values[i]:
                 GroupName = GroupNames[i]
@@ -1449,7 +1449,7 @@ def Generate_Raven_Channel_rvp_rvh_String(
 
         if catinfo_hru["HRU_IsLake"].values[i] == 1:
             GroupName = Return_Group_Name_Based_On_Value(
-                catinfo_hru["HRU_Area"].values[i],
+                catinfo_hru["HRU_Area"].values[i]/1000/1000,
                 SubBasinGroup_NM_Lake,
                 SubBasinGroup_Area_Lake,
             )
