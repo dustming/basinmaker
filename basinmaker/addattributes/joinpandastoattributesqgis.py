@@ -19,10 +19,10 @@ def join_pandas_table_to_vector_attributes(
     columns_names,
 ):
 
-    # str = ",".join(column_types)
-    # WriteStringToFile(str, os.path.join(grassdb, "catinfo_riv.csvt"), "w")
-    # 
-    # pd_table.to_csv(os.path.join(grassdb, "catinfo_riv.csv"), index=None, header=True)
+    str = ",".join(column_types)
+    WriteStringToFile(str, os.path.join(grassdb, "catinfo_riv.csvt"), "w")
+    
+    pd_table.to_csv(os.path.join(grassdb, "catinfo_riv.csv"), index=None, header=True)
 
     import grass.script as grass
     import grass.script.setup as gsetup
@@ -43,20 +43,20 @@ def join_pandas_table_to_vector_attributes(
         os.path.join(grassdb, grass_location, "PERMANENT", "sqlite", "sqlite.db")
     )
     
-    pd_table.to_sql('catinfo_pd',con,if_exists='replace',index_label='ix')
+#    pd_table.to_sql('catinfo_pd',con,if_exists='replace',index_label='ix')
     
     ### add catchment info to all river segment
-    # grass.run_command(
-    #     "db.in.ogr",
-    #     input=os.path.join(grassdb, "catinfo_riv.csv"),
-    #     output="result_riv",
-    #     overwrite=True,
-    # )
+    grass.run_command(
+        "db.in.ogr",
+        input=os.path.join(grassdb, "catinfo_riv.csv"),
+        output="result_riv",
+        overwrite=True,
+    )
     grass.run_command(
         "v.db.join",
         map=vector_name,
         column="Gridcode",
-        other_table="catinfo_pd",
+        other_table="result_riv",
         other_column="SubId",
         overwrite=True,
     )
