@@ -200,7 +200,6 @@ def Select_Routing_product_based_SubId_arcgis(
 
     cat_ply_select = cat_ply.loc[cat_ply['SubId'].isin(HydroBasins)]
     cat_ply_select.spatial.to_featureclass(location=Outputfilename_cat,overwrite=True,sanitize_columns=False) 
-
     Outputfilename_cat_riv = os.path.join(
         OutputFolder, os.path.basename(Path_River_Polyline)
     )
@@ -212,10 +211,11 @@ def Select_Routing_product_based_SubId_arcgis(
     
     cat_riv_select.spatial.to_featureclass(location=Outputfilename_cat_riv,overwrite=True,sanitize_columns=False) 
     
+    cat_ply_select = pd.DataFrame.spatial.from_featureclass(Outputfilename_cat)
     Connect_Lake_info = cat_ply_select.loc[cat_ply_select["IsLake"] == 1]
     Connect_Lakeids = np.unique(Connect_Lake_info["HyLakeId"].values)
     Connect_Lakeids = Connect_Lakeids[Connect_Lakeids > 0]
-
+    
     NConnect_Lake_info = cat_ply_select.loc[cat_ply_select["IsLake"] == 2]
     NonCL_Lakeids = np.unique(NConnect_Lake_info["HyLakeId"].values)
     NonCL_Lakeids = NonCL_Lakeids[NonCL_Lakeids > 0]
