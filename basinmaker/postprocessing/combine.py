@@ -109,12 +109,12 @@ def combine_catchments_covered_by_the_same_lake_qgis(
     finalrivply_info = Dbf_To_Dataframe(Path_Temp_final_rviply).drop_duplicates(
         "SubId", keep="first"
     )
-
     # change attribute table for lake covered catchments,
     mapoldnew_info = change_attribute_values_for_catchments_covered_by_same_lake(
         finalrivply_info
     )
-
+    
+    mapoldnew_info.loc[mapoldnew_info['Lake_Cat'] > 0,'RivLength'] = 0
     # update topology for new attribute table
     update_topology(mapoldnew_info, UpdateStreamorder=-1)
 

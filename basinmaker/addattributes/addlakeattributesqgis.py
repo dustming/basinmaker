@@ -106,40 +106,40 @@ def add_lake_attributes(
         #        print(CL_LakeId,NCL_LakeId)
         ### add lake info
         if CL_LakeId > 0 and NCL_LakeId < 0:
-            catinfo.loc[catrow, "IsLake"] = 1
+            catinfo.loc[catrow, "Lake_Cat"] = 1
             catinfo.loc[catrow, "HyLakeId"] = CL_LakeId
             slakeinfo = lakeinfo.loc[lakeinfo[lake_attributes[0]] == CL_LakeId]
             if len(slakeinfo) > 0:
                 catinfo.loc[catrow, "LakeVol"] = slakeinfo.iloc[0][lake_attributes[3]]
-                catinfo.loc[catrow, "LakeArea"] = slakeinfo.iloc[0][lake_attributes[2]]
+                catinfo.loc[catrow, "LakeArea"] = slakeinfo.iloc[0][lake_attributes[2]]*1000*1000
                 catinfo.loc[catrow, "LakeDepth"] = slakeinfo.iloc[0][lake_attributes[4]]
                 catinfo.loc[catrow, "Laketype"] = slakeinfo.iloc[0][lake_attributes[1]]
         if NCL_LakeId > 0 and CL_LakeId < 0:
-            catinfo.loc[catrow, "IsLake"] = 2
+            catinfo.loc[catrow, "Lake_Cat"] = 2
             catinfo.loc[catrow, "HyLakeId"] = NCL_LakeId
             slakeinfo = lakeinfo.loc[lakeinfo[lake_attributes[0]] == NCL_LakeId]
             if len(slakeinfo) > 0:
                 catinfo.loc[catrow, "LakeVol"] = slakeinfo.iloc[0][lake_attributes[3]]
-                catinfo.loc[catrow, "LakeArea"] = slakeinfo.iloc[0][lake_attributes[2]]
+                catinfo.loc[catrow, "LakeArea"] = slakeinfo.iloc[0][lake_attributes[2]]*1000*1000
                 catinfo.loc[catrow, "LakeDepth"] = slakeinfo.iloc[0][lake_attributes[4]]
                 catinfo.loc[catrow, "Laketype"] = slakeinfo.iloc[0][lake_attributes[1]]
         if NCL_LakeId > 0 and CL_LakeId > 0:
             if catinfo["RivLength"].values[catrow] <= 0:
-                catinfo.loc[catrow, "IsLake"] = 2
+                catinfo.loc[catrow, "Lake_Cat"] = 2
                 catinfo.loc[catrow, "HyLakeId"] = NCL_LakeId
                 slakeinfo = lakeinfo.loc[lakeinfo[lake_attributes[0]] == NCL_LakeId]
                 if len(slakeinfo) > 0:
                     catinfo.loc[catrow, "LakeVol"] = slakeinfo.iloc[0][lake_attributes[3]]
-                    catinfo.loc[catrow, "LakeArea"] = slakeinfo.iloc[0][lake_attributes[2]]
+                    catinfo.loc[catrow, "LakeArea"] = slakeinfo.iloc[0][lake_attributes[2]]*1000*1000
                     catinfo.loc[catrow, "LakeDepth"] = slakeinfo.iloc[0][lake_attributes[4]]
                     catinfo.loc[catrow, "Laketype"] = slakeinfo.iloc[0][lake_attributes[1]]
             else:
-                catinfo.loc[catrow, "IsLake"] = 1
+                catinfo.loc[catrow, "Lake_Cat"] = 1
                 catinfo.loc[catrow, "HyLakeId"] = CL_LakeId
                 slakeinfo = lakeinfo.loc[lakeinfo[lake_attributes[0]] == CL_LakeId]
                 if len(slakeinfo) > 0:
                     catinfo.loc[catrow, "LakeVol"] = slakeinfo.iloc[0][lake_attributes[3]]
-                    catinfo.loc[catrow, "LakeArea"] = slakeinfo.iloc[0][lake_attributes[2]]
+                    catinfo.loc[catrow, "LakeArea"] = slakeinfo.iloc[0][lake_attributes[2]]*1000*1000
                     catinfo.loc[catrow, "LakeDepth"] = slakeinfo.iloc[0][lake_attributes[4]]
                     catinfo.loc[catrow, "Laketype"] = slakeinfo.iloc[0][lake_attributes[1]]
 

@@ -104,7 +104,7 @@ def calculate_bankfull_width_depth_from_polyline(
     idx = catinfo.index
     for i in range(0, len(idx)):
         idx_i = idx[i]
-        da = catinfo.loc[idx_i, "DA"] / 1000 / 1000  # m2 to km2
+        da = catinfo.loc[idx_i, "DrainArea"] / 1000 / 1000  # m2 to km2
         catid = catinfo.loc[idx_i, "SubId"]
         if k > 0:
             q = func_Q_DA(da, k, c)
@@ -118,7 +118,7 @@ def calculate_bankfull_width_depth_from_polyline(
 
     # adjust channel parameters
 
-    catinfo_riv = catinfo.loc[catinfo["IsLake"] < 2]
+    catinfo_riv = catinfo.loc[catinfo["Lake_Cat"] < 2]
     Seg_IDS = catinfo_riv["Seg_ID"].values
     Seg_IDS = np.unique(Seg_IDS)
 

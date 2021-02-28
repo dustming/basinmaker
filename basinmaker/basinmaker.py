@@ -940,9 +940,9 @@ class basinmaker:
             SubID           - integer, The subbasin Id
             DowSubId        - integer, The downstream subbasin ID of this
                                        subbasin
-            IsLake          - integer, If the subbasin is a lake / reservior
+            Lake_Cat          - integer, If the subbasin is a lake / reservior
                                        subbasin. 1 yes, <0, no
-            IsObs           - integer, If the subbasin contains a observation
+            Has_Gauge           - integer, If the subbasin contains a observation
                                        gauge. 1 yes, < 0 no.
             RivLength       - float,   The length of the river in current
                                        subbasin in m
@@ -1214,9 +1214,9 @@ class basinmaker:
             SubId           - integer, The subbasin Id
             DowSubId        - integer, The downstream subbasin ID of this
                                        subbasin
-            IsLake          - integer, If the subbasin is a lake / reservior
+            Lake_Cat          - integer, If the subbasin is a lake / reservior
                                        subbasin. 1 yes, <0, no
-            IsObs           - integer, If the subbasin contains a observation
+            Has_Gauge           - integer, If the subbasin contains a observation
                                        gauge. 1 yes, < 0 no.
             RivLength       - float,   The length of the river in current
                                        subbasin in m

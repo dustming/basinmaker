@@ -8,7 +8,7 @@ from utilities.utilities import *
 
 def update_non_connected_catchment_info(catinfo):
     routing_info = catinfo[["SubId", "DowSubId"]].astype("float").values
-    catinfo_non_connected = catinfo.loc[catinfo["IsLake"] == 2].copy()
+    catinfo_non_connected = catinfo.loc[catinfo["Lake_Cat"] == 2].copy()
 
     catids_nc = catinfo_non_connected["SubId"].copy()
 
@@ -29,7 +29,7 @@ def update_non_connected_catchment_info(catinfo):
 
         DA = sum(Up_cat_info["BasArea"].values)
 
-        catinfo.loc[catinfo["SubId"] == c_subid, "DA"] = DA
+        catinfo.loc[catinfo["SubId"] == c_subid, "DrainArea"] = DA
 
         if len(d_sub_info) < 1:
             continue
@@ -38,7 +38,7 @@ def update_non_connected_catchment_info(catinfo):
         #        if d_sub_info['IsLake'].values[0]  != 2:
         #            catinfo.loc[catinfo['SubId'] == d_subid,'DA'] = d_sub_info['DA'].values[0] + DA
 
-        while d_sub_info["IsLake"].values[0] == 2:
+        while d_sub_info["Lake_Cat"].values[0] == 2:
 
             lc_subid_info = catinfo.loc[catinfo["SubId"] == lc_subid].copy()
             d_subid = lc_subid_info["DowSubId"].values[0]
@@ -86,7 +86,7 @@ def update_non_connected_catchment_info(catinfo):
 
 
 def Calculate_Longest_flowpath(mainriv_merg_info):
-    mainriv_merg_info_sort = mainriv_merg_info.sort_values(["DA"], ascending=(False))
+    mainriv_merg_info_sort = mainriv_merg_info.sort_values(["DrainArea"], ascending=(False))
     #    print(mainriv_merg_info_sort[['SubId','DowSubId','DA','Strahler','RivLength']])
     longest_flow_pathes = np.full(100, 0)
     #    print(longest_flow_pathes)
@@ -258,18 +258,18 @@ def New_SubId_To_Dissolve(
 
     elif Islake == 2:
         tarinfo.loc[idx, "RivLength"] = 0.0
-        tarinfo.loc[idx, "IsLake"] = 2
+        tarinfo.loc[idx, "Lake_Cat"] = 2
     elif Islake < 0:
         #        tarinfo.loc[idx,'Strahler']      = -1.2345
         #        tarinfo.loc[idx,'Seg_ID']        = -1.2345
         #        tarinfo.loc[idx,'Seg_order']     = -1.2345
         #        tarinfo.loc[idx,'DA']            = -1.2345
-        tarinfo.loc[idx, "HyLakeId"] = -1.2345
-        tarinfo.loc[idx, "LakeVol"] = -1.2345
-        tarinfo.loc[idx, "LakeArea"] = -1.2345
-        tarinfo.loc[idx, "LakeDepth"] = -1.2345
-        tarinfo.loc[idx, "Laketype"] = -1.2345
-        tarinfo.loc[idx, "IsLake"] = -1.2345
+        tarinfo.loc[idx, "HyLakeId"] = 0
+        tarinfo.loc[idx, "LakeVol"] = 0
+        tarinfo.loc[idx, "LakeArea"] = 0
+        tarinfo.loc[idx, "LakeDepth"] = 0
+        tarinfo.loc[idx, "Laketype"] = 0
+        tarinfo.loc[idx, "Lake_Cat"] = 0
 
     tarinfo.loc[idx, "centroid_x"] = -1.2345
     tarinfo.loc[idx, "centroid_y"] = -1.2345
@@ -387,8 +387,8 @@ def UpdateTopology(mapoldnew_info, UpdateStreamorder=1, UpdateSubId=1):
             mapoldnew_info["SubId"] == isubid, "Seg_order"
         ] = mapoldnew_info_unique["Seg_order"].values[i]
         mapoldnew_info.loc[
-            mapoldnew_info["SubId"] == isubid, "DA"
-        ] = mapoldnew_info_unique["DA"].values[i]
+            mapoldnew_info["SubId"] == isubid, "DrainArea"
+        ] = mapoldnew_info_unique["DrainArea"].values[i]
 
     return mapoldnew_info
 
@@ -406,9 +406,9 @@ def streamorderanddrainagearea(catinfoall):
         catinfoall
     """
     catinfo = catinfoall.loc[
-        catinfoall["IsLake"] != 2
+        catinfoall["Lake_Cat"] != 2
     ].copy()  ### remove none connected lake catchments, which do not connected to the river system
-    catinfo_ncl = catinfoall.loc[catinfoall["IsLake"] == 2].copy()
+    catinfo_ncl = catinfoall.loc[catinfoall["Lake_Cat"] == 2].copy()
     routing_ncl = catinfo_ncl[["SubId", "DowSubId"]].astype("float").values
 
     catlist = np.full((len(catinfo)), -9)
@@ -441,7 +441,7 @@ def streamorderanddrainagearea(catinfoall):
                 else:
                     DA_ncl = 0.0
 
-            catinfo.loc[idx, "DA"] = DA_ncl + catinfo["BasArea"].values[i]
+            catinfo.loc[idx, "DrainArea"] = DA_ncl + catinfo["BasArea"].values[i]
             catinfo.loc[idx, "Strahler"] = 1
             catinfo.loc[idx, "Seg_order"] = 1
             catinfo.loc[idx, "Seg_ID"] = iseg
@@ -486,9 +486,9 @@ def streamorderanddrainagearea(catinfoall):
                 break
 
             if len(Up_Reaches_info) == 1:  ### only have one upstream
-                catinfo.loc[curcat_idx, "DA"] = (
+                catinfo.loc[curcat_idx, "DrainArea"] = (
                     cur_Reach_info["BasArea"].values[0]
-                    + Up_Reaches_info["DA"].values[0]
+                    + Up_Reaches_info["DrainArea"].values[0]
                     + DA_ncl
                 )
                 catinfo.loc[curcat_idx, "Strahler"] = Up_Reaches_info[
@@ -504,9 +504,9 @@ def streamorderanddrainagearea(catinfoall):
                 if (
                     np.min(Up_Reaches_info["Strahler"].values) > 0
                 ):  ### all upstream has been processed
-                    catinfo.loc[catinfo["SubId"] == catid, "DA"] = (
+                    catinfo.loc[catinfo["SubId"] == catid, "DrainArea"] = (
                         cur_Reach_info["BasArea"].values[0]
-                        + np.sum(Up_Reaches_info["DA"].values)
+                        + np.sum(Up_Reaches_info["DrainArea"].values)
                         + DA_ncl
                     )
                     if np.min(Up_Reaches_info["Strahler"].values) == np.max(
@@ -537,7 +537,7 @@ def streamorderanddrainagearea(catinfoall):
     catinfoall.loc[mask, "Seg_order"] = catinfo["Seg_order"].values
     catinfoall.loc[mask, "Strahler"] = catinfo["Strahler"].values
     catinfoall.loc[mask, "Seg_ID"] = catinfo["Seg_ID"].values
-    catinfoall.loc[mask, "DA"] = catinfo["DA"].values
+    catinfoall.loc[mask, "DrainArea"] = catinfo["DrainArea"].values
 
     ### calcuate channel manning's coefficient
     for i in range(0, len(catinfoall)):
@@ -545,10 +545,10 @@ def streamorderanddrainagearea(catinfoall):
         # if catinfo['BkfWidth'].values[i] > 0 and catinfo['RivSlope'].values[i] > 0 :
         #     catinfo.loc[idx,'Ch_n'] = calculateChannaln(catinfo['BkfWidth'].values[i],catinfo['BkfDepth'].values[i],
         #                       catinfo['Q_Mean'].values[i],catinfo['RivSlope'].values[i])
-        if catinfoall["IsObs"].values[i] > 0:
+        if catinfoall["Has_Gauge"].values[i] > 0:
             if catinfoall["DA_Obs"].values[i] > 0:
                 catinfoall.loc[idx, "DA_error"] = (
-                    catinfoall["DA"].values[i] / 1000.0 / 1000.0
+                    catinfoall["DrainArea"].values[i] / 1000.0 / 1000.0
                     - catinfoall["DA_Obs"].values[i]
                 ) / catinfoall["DA_Obs"].values[i]
     return catinfoall
@@ -745,7 +745,7 @@ def Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info):
         Outletsubid_csubr = Sub_Region_info["Outlet_SubId"].values[i]
         Total_DA_Subregion = (
             Total_DA_Subregion
-            + AllCatinfo.loc[AllCatinfo["SubId"] == Outletsubid_csubr]["DA"].values[0]
+            + AllCatinfo.loc[AllCatinfo["SubId"] == Outletsubid_csubr]["DrainArea"].values[0]
         )
         print(
             "######Area and DA check for subregion ",
@@ -753,7 +753,7 @@ def Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info):
         )
         print(
             "DA at the subregion outlet is    ",
-            AllCatinfo.loc[AllCatinfo["SubId"] == Outletsubid_csubr]["DA"].values[0],
+            AllCatinfo.loc[AllCatinfo["SubId"] == Outletsubid_csubr]["DrainArea"].values[0],
         )
         print(
             "Total subregion area is          ",
@@ -834,7 +834,7 @@ def Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info):
                 ### ## new DA = basin area + DA of upper subregions
 
                 NewDA = C_sub_info["BasArea"].values[0] + sum(
-                    Upper_sub_info["DA"].values
+                    Upper_sub_info["DrainArea"].values
                 )
 
                 ### calculate new Strahler orders
@@ -847,7 +847,7 @@ def Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info):
                     newStrahler = maxStrahler
                 #### updateAllCatinfo
                 AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "Strahler"] = newStrahler
-                AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "DA"] = NewDA
+                AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "DrainArea"] = NewDA
 
                 ####find next downsubbasin id
                 downsubid = C_sub_info["DowSubId"].values[0]
@@ -877,7 +877,7 @@ def Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info):
     print("Total basin area is              ", sum(AllCatinfo["BasArea"].values))
     print(
         "DA of the watersehd outlet is    ",
-        AllCatinfo.loc[AllCatinfo["SubId"] == int(Watershedoutletsubid)]["DA"].values[
+        AllCatinfo.loc[AllCatinfo["SubId"] == int(Watershedoutletsubid)]["DrainArea"].values[
             0
         ],
     )
@@ -1231,7 +1231,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
     """
     sub_colnm = "SubId"
     down_colnm = "DowSubId"
-    DA_colnm = "DA"
+    DA_colnm = "DrainArea"
     SegID_colnm = "Seg_ID"
     ### Modify attribute table mapoldnew_info, create new sub id for
     ### 1. catchment needs to be merged due to meet the drainage area thresthold
@@ -1273,7 +1273,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
     ## add removed gauges 
     unselected_gauges_subids = finalriv_info.loc[
         (~finalriv_info["SubId"].isin(Subid_main)) &
-        (finalriv_info["IsObs"] > 0 )
+        (finalriv_info["HasGauge"] > 0 )
     ]['SubId'].values
     finalriv_info_ncl = finalriv_info.copy(deep=True)
     # make unselected gauge to be a false lake 
@@ -1324,13 +1324,13 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
 
     #####for catchment polygon flow to lake with is changed from connected lake to non connected lakes
     idx = (
-        Conn_To_NonConlake_info.groupby(["HyLakeId"])["DA"].transform(max)
-        == Conn_To_NonConlake_info["DA"]
+        Conn_To_NonConlake_info.groupby(["HyLakeId"])["DrainArea"].transform(max)
+        == Conn_To_NonConlake_info["DrainArea"]
     )
     Conn_To_NonConlake_info_outlet = Conn_To_NonConlake_info[idx]
 
     Conn_To_NonConlake_info_outlet = Conn_To_NonConlake_info_outlet.sort_values(
-        ["Strahler", "DA"], ascending=[True, True]
+        ["Strahler", "DrainArea"], ascending=[True, True]
     )
     ### process fron upstream lake to down stream lake
     for i in range(0, len(Conn_To_NonConlake_info_outlet)):
@@ -1348,7 +1348,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
             Lake_Cat_seg_info = Lake_Cat_info.loc[
                 Lake_Cat_info["Seg_ID"] == iriv_seg
             ].copy()
-            Lake_Cat_seg_info = Lake_Cat_seg_info.sort_values(["DA"], ascending=(False))
+            Lake_Cat_seg_info = Lake_Cat_seg_info.sort_values(["DrainArea"], ascending=(False))
             tsubid = Lake_Cat_seg_info["SubId"].values[0]
 
             All_up_subids = defcat(routing_info, tsubid)
@@ -1445,7 +1445,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
             elif (
                 i_seg_info["HyLakeId"].values[iorder]
                 == i_seg_info["HyLakeId"].values[iorder + 1]
-                and i_seg_info["IsObs"].values[iorder] < 0
+                and i_seg_info["HasGauge"].values[iorder] < 0
             ):
                 continue
             else:
@@ -1537,7 +1537,7 @@ def Return_Selected_Lakes_Attribute_Table_And_Id(
     if Selection_Method == "ByArea":
         ### process connected lakes first
         Selected_ConnLakes = ConnL_info.loc[
-            (ConnL_info["IsObs"] > 0)
+            (ConnL_info["HasGauge"] > 0)
             | (ConnL_info["LakeArea"] >= Thres_Area_Conn_Lakes)
         ]["HyLakeId"].values
         
@@ -1552,7 +1552,7 @@ def Return_Selected_Lakes_Attribute_Table_And_Id(
         if Thres_Area_Non_Conn_Lakes >= 0:
             Selected_Non_ConnLakes = Non_ConnL_info[
                 (Non_ConnL_info["LakeArea"] >= Thres_Area_Non_Conn_Lakes) | 
-                (Non_ConnL_info["IsObs"] >= 0)
+                (Non_ConnL_info["HasGauge"] >= 0)
             ]["HyLakeId"].values
             Selected_Non_ConnLakes = Selected_Non_ConnLakes[Selected_Non_ConnLakes > 0]
             Selected_Non_ConnLakes = np.unique(Selected_Non_ConnLakes)
@@ -1563,7 +1563,7 @@ def Return_Selected_Lakes_Attribute_Table_And_Id(
         else:
             Selected_Non_ConnLakes = Non_ConnL_info[
                 (Non_ConnL_info["LakeArea"] >= 99999999999) | 
-                (Non_ConnL_info["IsObs"] >= 0)
+                (Non_ConnL_info["HasGauge"] >= 0)
             ]["HyLakeId"].values
             Selected_Non_ConnLakes = Selected_Non_ConnLakes[Selected_Non_ConnLakes > 0]
             Selected_Non_ConnLakes = np.unique(Selected_Non_ConnLakes)
@@ -1642,7 +1642,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_CL(
             continue
 
         ### All lakes in this segment are removed
-        if np.max(N_Hylakeid) and np.max(i_seg_info["IsObs"].values) < 0:  ##
+        if np.max(N_Hylakeid) and np.max(i_seg_info["HasGauge"].values) < 0:  ##
             tsubid = i_seg_info["SubId"].values[len(i_seg_info) - 1]
             seg_sub_ids = i_seg_info["SubId"].values
             mapoldnew_info = New_SubId_To_Dissolve(
@@ -1682,7 +1682,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_CL(
             elif (
                 i_seg_info["HyLakeId"].values[iorder]
                 == i_seg_info["HyLakeId"].values[iorder + 1]
-                and i_seg_info["IsObs"].values[iorder] < 0
+                and i_seg_info["HasGauge"].values[iorder] < 0
             ):
                 continue
             else:
@@ -1718,7 +1718,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_NCL(
     """
 
     Un_Selected_Non_ConnL_info = Un_Selected_Non_ConnL_info.sort_values(
-        ["DA"], ascending=[False]
+        ["DrainArea"], ascending=[False]
     )
     for i in range(0, len(Un_Selected_Non_ConnL_info)):
         Remove_Non_ConnL_Lakeid = Un_Selected_Non_ConnL_info["HyLakeId"].values[
@@ -1835,7 +1835,7 @@ def Change_Attribute_Values_For_Catchments_Covered_By_Same_Lake(finalrivply_info
     for i in range(0, len(AllConnectLakeIDS)):
         lakeid = AllConnectLakeIDS[i]
         Lakesub_info = finalrivply_info.loc[finalrivply_info["HyLakeId"] == lakeid]
-        Lakesub_info = Lakesub_info.sort_values(["DA"], ascending=(False))
+        Lakesub_info = Lakesub_info.sort_values(["DrainArea"], ascending=(False))
         tsubid = Lakesub_info[sub_colnm].values[
             0
         ]  ### outlet subbasin id with highest acc
@@ -2126,7 +2126,7 @@ def change_attribute_values_for_catchments_covered_by_same_lake(finalrivply_info
     for i in range(0, len(AllConnectLakeIDS)):
         lakeid = AllConnectLakeIDS[i]
         Lakesub_info = finalrivply_info.loc[finalrivply_info["HyLakeId"] == lakeid]
-        Lakesub_info = Lakesub_info.sort_values(["DA"], ascending=(False))
+        Lakesub_info = Lakesub_info.sort_values(["DrainArea"], ascending=(False))
         tsubid = Lakesub_info[sub_colnm].values[
             0
         ]  ### outlet subbasin id with highest acc
@@ -2201,8 +2201,8 @@ def update_topology(mapoldnew_info, UpdateStreamorder=1, UpdateSubId=1):
             mapoldnew_info["SubId"] == isubid, "Seg_order"
         ] = mapoldnew_info_unique["Seg_order"].values[i]
         mapoldnew_info.loc[
-            mapoldnew_info["SubId"] == isubid, "DA"
-        ] = mapoldnew_info_unique["DA"].values[i]
+            mapoldnew_info["SubId"] == isubid, "DrainArea"
+        ] = mapoldnew_info_unique["DrainArea"].values[i]
 
     return mapoldnew_info
 
@@ -2262,7 +2262,7 @@ def return_interest_catchments_info(catinfo, outlet_obs_id, path_sub_reg_outlets
         Sub_reg_outlets_ids = Sub_reg_outlets_ids[Sub_reg_outlets_ids > 0]
 
         #### Find all obervation id that is subregion outlet
-        reg_outlet_info = catinfo.loc[catinfo["IsObs"].isin(Sub_reg_outlets_ids)]
+        reg_outlet_info = catinfo.loc[catinfo["Has_Gauge"].isin(Sub_reg_outlets_ids)]
 
         #### Define outlet ID
         outletid = -1
@@ -2271,7 +2271,7 @@ def return_interest_catchments_info(catinfo, outlet_obs_id, path_sub_reg_outlets
             print("To use subregion, the Subregion Id MUST provided as Outlet_Obs_ID")
             return catinfo
 
-        outletID_info = catinfo.loc[catinfo["IsObs"] == outlet_obs_id]
+        outletID_info = catinfo.loc[catinfo["Has_Gauge"] == outlet_obs_id]
         if len(outletID_info) > 0:
             outletid = outletID_info["SubId"].values[0]
         else:
@@ -2302,7 +2302,7 @@ def return_interest_catchments_info(catinfo, outlet_obs_id, path_sub_reg_outlets
     ### selected based on observation guage obs id
     else:
         outletid = -1
-        outletID_info = catinfo.loc[catinfo["IsObs"] == outlet_obs_id]
+        outletID_info = catinfo.loc[catinfo["Has_Gauge"] == outlet_obs_id]
         if len(outletID_info) > 0:
             outletid = outletID_info["SubId"].values[0]
             ##find upsteam catchment id

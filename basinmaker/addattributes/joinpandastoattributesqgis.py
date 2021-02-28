@@ -21,6 +21,17 @@ def join_pandas_table_to_vector_attributes(
 
     str = ",".join(column_types)
     WriteStringToFile(str, os.path.join(grassdb, "catinfo_riv.csvt"), "w")
+    pd_table.loc[pd_table['Has_Gauge'] <= 0,'Has_Gauge'] = 0
+    pd_table.loc[pd_table['Has_Gauge'] > 0,'Has_Gauge'] = 1
+    pd_table.loc[pd_table['Lake_Cat'] <= 0,'Lake_Cat'] = 0
+    pd_table.loc[pd_table['LakeArea'] <= 0,'LakeArea'] = 0
+    pd_table.loc[pd_table['HyLakeId'] <= 0,'HyLakeId'] = 0
+    pd_table.loc[pd_table['Laketype'] <= 0,'Laketype'] = 0
+    pd_table.loc[pd_table['LakeVol'] <= 0,'LakeVol'] = 0
+    pd_table.loc[pd_table['LakeDepth'] <= 0,'LakeDepth'] = 0
+    pd_table.loc[pd_table['LakeArea'] <= 0,'LakeArea'] = 0
+    pd_table.loc[pd_table['DA_Obs'] <= 0,'DA_Obs'] = 0
+    pd_table.loc[pd_table['DA_error'] <= 0,'DA_error'] = 0
     
     pd_table.to_csv(os.path.join(grassdb, "catinfo_riv.csv"), index=None, header=True)
 
@@ -65,8 +76,8 @@ def join_pandas_table_to_vector_attributes(
         "v.db.update",
         map=vector_name,
         column="DA_error",
-        qcol="DA/1000/1000/DA_Obs",
-        where="IsObs > 0",
+        qcol="DrainArea/1000/1000/DA_Obs",
+        where="Has_Gauge > 0",
     )
 
     grass.run_command(

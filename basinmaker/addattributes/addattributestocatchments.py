@@ -179,7 +179,7 @@ def add_attributes_to_catchments(
             columns=columns,
             input_geo_names=input_geo_names,
         )
-
+        
         attr_basic = calculate_basic_attributes(
             grassdb=grassdb,
             grass_location=grass_location,
@@ -194,7 +194,7 @@ def add_attributes_to_catchments(
         input_geo_names["cat_ply_info"] = cat_ply_info
         input_geo_names["cat_riv_info"] = cat_riv_info
         input_geo_names["outlet_pt_info"] = outlet_pt_info
-
+        
         if len(lake_attributes) > 0:
             attr_lake = add_lake_attributes(
                 grassdb=grassdb,
@@ -206,7 +206,7 @@ def add_attributes_to_catchments(
             )
         else:
             attr_lake = attr_basic
-
+        
         if len(obs_attributes) > 0:
             attr_obs = add_gauge_attributes(
                 grassdb=grassdb,
@@ -218,7 +218,7 @@ def add_attributes_to_catchments(
             )
         else:
             attr_obs = attr_lake
-
+        
         if outlet_obs_id > 0:
             attr_select = return_interest_catchments_info(
                 catinfo=attr_obs,
@@ -227,7 +227,7 @@ def add_attributes_to_catchments(
             )
         else:
             attr_select = attr_obs
-
+        
         if path_landuse != "#":
             attr_landuse = calculate_flood_plain_manning_n(
                 grassdb=grassdb,
@@ -240,9 +240,9 @@ def add_attributes_to_catchments(
             )
         else:
             attr_landuse = attr_select
-
+        
         attr_da = streamorderanddrainagearea(attr_landuse)
-
+        
         if path_bkfwidthdepth != "#" or k_in != -1:
             attr_bkf = calculate_bankfull_width_depth_from_polyline(
                 grassdb=grassdb,
@@ -257,7 +257,7 @@ def add_attributes_to_catchments(
             )
         else:
             attr_bkf = attr_da
-
+        
         attr_ncl = update_non_connected_catchment_info(attr_bkf)
         attr_ncl.loc[attr_ncl['RivLength'] < 0,'RivLength'] = 0
         
@@ -270,7 +270,7 @@ def add_attributes_to_catchments(
             column_types=coltypes,
             columns_names=columns,
         )
-
+        
         join_pandas_table_to_vector_attributes(
             grassdb=grassdb,
             grass_location=grass_location,

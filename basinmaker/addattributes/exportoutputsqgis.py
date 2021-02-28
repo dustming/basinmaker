@@ -70,18 +70,29 @@ def export_files_to_output_folder(
     Selectfeatureattributes(
         processing,
         Input=layer_cat,
-        Output=os.path.join(output_folder, output_cat + ".shp"),
+        Output=os.path.join(grassdb, output_cat + "withnegv.shp"),
         Attri_NM="SubId",
         Values=subinfo[subinfo["SubId"] > 0]["SubId"].values,
     )
     Selectfeatureattributes(
         processing,
         Input=os.path.join(grassdb, cat_riv_info + "_dis.shp"),
-        Output=os.path.join(output_folder, output_riv + ".shp"),
+        Output=os.path.join(grassdb, output_riv + "withnegv.shp"),
         Attri_NM="SubId",
         Values=subinfo[subinfo["SubId"] > 0]["SubId"].values,
     )
-
+    
+    change_neg_value_to_null_in_attribute_table(
+                 processing,
+                 os.path.join(grassdb, output_cat + "withnegv.shp"),
+                 os.path.join(output_folder, output_cat + ".shp")
+    )
+    change_neg_value_to_null_in_attribute_table(
+                 processing,
+                 os.path.join(grassdb, output_riv + "withnegv.shp"),
+                 os.path.join(output_folder, output_riv + ".shp")
+    )
+    
     Add_centroid_to_feature(
         os.path.join(output_folder, output_cat + ".shp"), "centroid_x", "centroid_y"
     )
@@ -89,8 +100,8 @@ def export_files_to_output_folder(
     subinfo = Dbf_To_Dataframe(os.path.join(output_folder, output_cat + ".shp"))
 
     if os.path.exists(os.path.join(grassdb, all_lakes + ".shp")):
-        cl_lakeids = subinfo.loc[subinfo["IsLake"] == 1]["HyLakeId"].values
-        ncl_lakeids = subinfo.loc[subinfo["IsLake"] == 2]["HyLakeId"].values
+        cl_lakeids = subinfo.loc[subinfo["Lake_Cat"] == 1]["HyLakeId"].values
+        ncl_lakeids = subinfo.loc[subinfo["Lake_Cat"] == 2]["HyLakeId"].values
 
         if len(cl_lakeids) > 0:
             Selectfeatureattributes(
@@ -111,7 +122,7 @@ def export_files_to_output_folder(
 
     if (
         os.path.exists(os.path.join(grassdb, snapped_obs_points + ".shp"))
-        and len(subinfo.loc[subinfo["IsObs"] > 0]["IsObs"].values) > 0
+        and len(subinfo.loc[subinfo["Has_Gauge"] > 0]["Has_Gauge"].values) > 0
     ):
 
         Selectfeatureattributes(
@@ -119,7 +130,7 @@ def export_files_to_output_folder(
             Input=os.path.join(grassdb, snapped_obs_points + ".shp"),
             Output=os.path.join(output_folder, "obs_gauges.shp"),
             Attri_NM="Obs_ID",
-            Values=subinfo.loc[subinfo["IsObs"] > 0]["IsObs"].values,
+            Values=subinfo.loc[subinfo["Has_Gauge"] > 0]["Has_Gauge"].values,
         )
 
     Clean_Attribute_Name(

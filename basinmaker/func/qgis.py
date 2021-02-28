@@ -358,10 +358,13 @@ def Copy_Pddataframe_to_shpfile(
                         or Attri_Name[icolnm] == "LAND_USE_C"
                         or Attri_Name[icolnm] == "SOIL_PROF"
                         or Attri_Name[icolnm] == "VEG_C"
-                    ):
-                        sf[Attri_Name[icolnm]] = str(
-                            tarinfo[Attri_Name[icolnm]].values[0]
-                        )
+                    ):  
+                        if str(tarinfo[Attri_Name[icolnm]].values[0]) == 'nan':
+                            sf[Attri_Name[icolnm]] = qgis.core.NULL
+                        else:
+                            sf[Attri_Name[icolnm]] = str(
+                                tarinfo[Attri_Name[icolnm]].values[0]
+                            )
                     elif (
                         Attri_Name[icolnm] == "cat"
                         or Attri_Name[icolnm] == "layer"
@@ -1090,5 +1093,30 @@ def Clean_Attribute_Name(
         del layer_cat
         return max_subbasin_id
 
+def change_neg_value_to_null_in_attribute_table(processing,Path_input_Layer,Path_output_layer):
+    
+    col_Name = 'Obs_NM'
+    formular = 'CASE \r\n  WHEN \"%s\" =-9999 THEN NULL\r\n  ELSE \"%s\"\r\nEND' %(col_Name,col_Name)
+    memout1 = processing.run("native:fieldcalculator", {
+                   'INPUT':Path_input_Layer,
+                   'FIELD_NAME':col_Name,
+                   'FIELD_TYPE':2,
+                   'FIELD_LENGTH':0,
+                   'FIELD_PRECISION':0,
+                   'FORMULA':formular,
+                   'OUTPUT':"memory:",
+                   })["OUTPUT"] 
 
+    col_Name = 'SRC_obs'
+    formular = 'CASE \r\n  WHEN \"%s\" =-9999 THEN NULL\r\n  ELSE \"%s\"\r\nEND' %(col_Name,col_Name)
+    memout1 = processing.run("native:fieldcalculator", {
+                   'INPUT':memout1,
+                   'FIELD_NAME':col_Name,
+                   'FIELD_TYPE':2,
+                   'FIELD_LENGTH':0,
+                   'FIELD_PRECISION':0,
+                   'FORMULA':formular,
+                   'OUTPUT':Path_output_layer,
+                   })    
+    return 
 ########
