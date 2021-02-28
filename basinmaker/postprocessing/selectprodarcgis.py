@@ -212,11 +212,11 @@ def Select_Routing_product_based_SubId_arcgis(
     cat_riv_select.spatial.to_featureclass(location=Outputfilename_cat_riv,overwrite=True,sanitize_columns=False) 
     
     cat_ply_select = pd.DataFrame.spatial.from_featureclass(Outputfilename_cat)
-    Connect_Lake_info = cat_ply_select.loc[cat_ply_select["IsLake"] == 1]
+    Connect_Lake_info = cat_ply_select.loc[cat_ply_select["Lake_Cat"] == 1]
     Connect_Lakeids = np.unique(Connect_Lake_info["HyLakeId"].values)
     Connect_Lakeids = Connect_Lakeids[Connect_Lakeids > 0]
     
-    NConnect_Lake_info = cat_ply_select.loc[cat_ply_select["IsLake"] == 2]
+    NConnect_Lake_info = cat_ply_select.loc[cat_ply_select["Lake_Cat"] == 2]
     NonCL_Lakeids = np.unique(NConnect_Lake_info["HyLakeId"].values)
     NonCL_Lakeids = NonCL_Lakeids[NonCL_Lakeids > 0]
 

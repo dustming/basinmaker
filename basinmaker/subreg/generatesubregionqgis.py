@@ -613,6 +613,7 @@ def Combine_Sub_Region_Results(
     Is_Final_Result,
     qgis_prefix_path,
     subregion_inlet,
+    start_sub_id = 0,
 ):
     """Combine subregion watershed delineation results
 
@@ -660,7 +661,7 @@ def Combine_Sub_Region_Results(
 
     tempfolder = os.path.join(
         tempfile.gettempdir(),
-        "basinmaker_comsubreg" + str(np.random.randint(1, 10000 + 1)),
+        "basinmaker_comsubreg" + '100'#str(np.random.randint(1, 10000 + 1)),
     )
     if not os.path.exists(tempfolder):
         os.makedirs(tempfolder)
@@ -746,8 +747,8 @@ def Combine_Sub_Region_Results(
                 .copy()
             )
             SubID_info = SubID_info.reset_index()
-            SubID_info["nSubId"] = SubID_info.index + subid_strat_iregion
-            SubID_info["nSeg_ID"] = SubID_info["Seg_ID"] + seg_id_strat_iregion
+            SubID_info["nSubId"] = SubID_info.index + subid_strat_iregion + start_sub_id
+            SubID_info["nSeg_ID"] = SubID_info["Seg_ID"] + seg_id_strat_iregion+ start_sub_id
 
             layer_cat = QgsVectorLayer(Path_Finalcat_ply, "")
             Add_New_SubId_To_Subregion_shpfile(
@@ -798,8 +799,8 @@ def Combine_Sub_Region_Results(
                 .copy()
             )
             SubID_info = SubID_info.reset_index()
-            SubID_info["nSubId"] = SubID_info.index + subid_strat_iregion
-            SubID_info["nSeg_ID"] = SubID_info["Seg_ID"] + seg_id_strat_iregion
+            SubID_info["nSubId"] = SubID_info.index + subid_strat_iregion + start_sub_id
+            SubID_info["nSeg_ID"] = SubID_info["Seg_ID"] + seg_id_strat_iregion + start_sub_id
 
             layer_cat = QgsVectorLayer(Path_Finalriv_ply, "")
             Add_New_SubId_To_Subregion_shpfile(
@@ -856,8 +857,9 @@ def Combine_Sub_Region_Results(
             max(SubID_info["nSubId"]),
         )
 
-        subid_strat_iregion = max(SubID_info["nSubId"]) + 10
-        seg_id_strat_iregion = max(SubID_info["nSeg_ID"]) + 10
+        subid_strat_iregion = max(SubID_info["nSubId"]) + 10 - start_sub_id
+        seg_id_strat_iregion = max(SubID_info["nSeg_ID"]) + 10 - start_sub_id
+    
 
     # merge connected lake polygons
     if len(Paths_Con_Lake_ply) > 0 and not os.path.exists(os.path.join(OutputFolder, "sl_connected_lake.shp")):
@@ -941,14 +943,14 @@ def Combine_Sub_Region_Results(
             AllCatinfo,
             link_col_nm_shp="SubId",
             link_col_nm_df="SubId",
-            UpdateColNM=["DowSubId", "DA", "Strahler"],
+            UpdateColNM=["DowSubId", "DrainArea", "Strahler"],
         )
         Copy_Pddataframe_to_shpfile(
             os.path.join(tempfolder, "finalcat_info_riv.shp"),
             AllCatinfo,
             link_col_nm_shp="SubId",
             link_col_nm_df="SubId",
-            UpdateColNM=["DowSubId", "DA", "Strahler"],
+            UpdateColNM=["DowSubId", "DrainArea", "Strahler"],
         )
 
         processing.run(
@@ -1031,14 +1033,14 @@ def Combine_Sub_Region_Results(
             AllCatinfo,
             link_col_nm_shp="SubId",
             link_col_nm_df="SubId",
-            UpdateColNM=["DowSubId", "DA", "Strahler"],
+            UpdateColNM=["DowSubId", "DrainArea", "Strahler"],
         )
         Copy_Pddataframe_to_shpfile(
             os.path.join(tempfolder, "finalriv_info.shp"),
             AllCatinfo,
             link_col_nm_shp="SubId",
             link_col_nm_df="SubId",
-            UpdateColNM=["DowSubId", "DA", "Strahler"],
+            UpdateColNM=["DowSubId", "DrainArea", "Strahler"],
         )
 
         processing.run(

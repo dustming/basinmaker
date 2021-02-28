@@ -35,7 +35,7 @@ def update_non_connected_catchment_info(catinfo):
             continue
 
         ## add nonconnected lake catchment area to downsubbasin drinage area
-        #        if d_sub_info['IsLake'].values[0]  != 2:
+        #        if d_sub_info['Lake_Cat'].values[0]  != 2:
         #            catinfo.loc[catinfo['SubId'] == d_subid,'DA'] = d_sub_info['DA'].values[0] + DA
 
         while d_sub_info["Lake_Cat"].values[0] == 2:
@@ -182,7 +182,7 @@ def New_SubId_To_Dissolve(
     ismodifids=-1,
     modifiidin=[-1],
     mainriv=[-1],
-    Islake=-1,
+    Lake_Cat=-1,
     seg_order=-1,
 ):
     sub_colnm = "SubId"
@@ -251,15 +251,15 @@ def New_SubId_To_Dissolve(
         tarinfo.loc[idx, "Min_DEM"] = np.min(cbranch["Min_DEM"].values)
     #    print(tarinfo.loc[idx,'BasArea'],"2")
     if (
-        Islake == 1
+        Lake_Cat == 1
     ):  ## Meger subbasin covered by lakes, Keep lake outlet catchment  DA, stream order info
         #        Longestpath = Calculate_Longest_flowpath(mainriv_merg_info)
         tarinfo.loc[idx, "RivLength"] = 0  # Longestpath
 
-    elif Islake == 2:
+    elif Lake_Cat == 2:
         tarinfo.loc[idx, "RivLength"] = 0.0
         tarinfo.loc[idx, "Lake_Cat"] = 2
-    elif Islake < 0:
+    elif Lake_Cat <= 0:
         #        tarinfo.loc[idx,'Strahler']      = -1.2345
         #        tarinfo.loc[idx,'Seg_ID']        = -1.2345
         #        tarinfo.loc[idx,'Seg_order']     = -1.2345
@@ -1253,11 +1253,11 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
     Selected_riv = Selected_riv.sort_values(
         ["Strahler"], ascending=(True)
     )  ###sort selected river by Strahler stream order
-    Selected_riv = Selected_riv.loc[Selected_riv['IsLake'] != 2].copy()
+    Selected_riv = Selected_riv.loc[Selected_riv['Lake_Cat'] != 2].copy()
     Subid_main = Selected_riv[sub_colnm].values
 
     ### Obtain connected lakes based on current river segment
-    Connected_Lake_Mainriv = Selected_riv.loc[Selected_riv["IsLake"] == 1][
+    Connected_Lake_Mainriv = Selected_riv.loc[Selected_riv["Lake_Cat"] == 1][
         "HyLakeId"
     ].values
     Connected_Lake_Mainriv = np.unique(
@@ -1296,13 +1296,13 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
     
     
     # Get origional non connected lake subid and lake id
-    Old_Non_Connect_SubIds = finalriv_info.loc[finalriv_info["IsLake"] == 2][
+    Old_Non_Connect_SubIds = finalriv_info.loc[finalriv_info["Lake_Cat"] == 2][
         "SubId"
     ].values
     Old_Non_Connect_SubIds = np.unique(
         Old_Non_Connect_SubIds[Old_Non_Connect_SubIds > 0]
     )
-    Old_Non_Connect_LakeIds = finalriv_info.loc[finalriv_info["IsLake"] == 2][
+    Old_Non_Connect_LakeIds = finalriv_info.loc[finalriv_info["Lake_Cat"] == 2][
         "HyLakeId"
     ].values
     Old_Non_Connect_LakeIds = np.unique(
@@ -1318,8 +1318,8 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
     Seg_IDS = np.unique(Seg_IDS)
 
     ##### for Non connected lakes, catchment polygon do not need to change
-    mapoldnew_info.loc[mapoldnew_info["IsLake"] == 2, "nsubid"] = mapoldnew_info.loc[
-        mapoldnew_info["IsLake"] == 2
+    mapoldnew_info.loc[mapoldnew_info["Lake_Cat"] == 2, "nsubid"] = mapoldnew_info.loc[
+        mapoldnew_info["Lake_Cat"] == 2
     ]["SubId"].values
 
     #####for catchment polygon flow to lake with is changed from connected lake to non connected lakes
@@ -1371,7 +1371,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
             ismodifids=1,
             mainriv=finalriv_info_ncl,
             modifiidin=modifysubids,
-            Islake=2,
+            Lake_Cat=2,
         )
 
         ####################3 for rest of the polygons dissolve to main river
@@ -1435,7 +1435,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
                     ismodifids=1,
                     modifiidin=seg_sub_ids,
                     mainriv=Selected_riv,
-                    Islake=3,
+                    Lake_Cat=3,
                     seg_order=seg_order,
                 )
                 #                    New_NonConn_Lakes = ConnectLake_to_NonConnectLake_Updateinfo(NonC_Lakeinfo = New_NonConn_Lakes,finalriv_info = finalriv_info ,Merged_subids = seg_sub_ids,Connect_Lake_ply_info = Conn_Lakes_ply,ConLakeId = iorder_Lakeid)
@@ -1490,17 +1490,17 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
                     ismodifids=1,
                     modifiidin=seg_sub_ids,
                     mainriv=Selected_riv,
-                    Islake=3,
+                    Lake_Cat=3,
                     seg_order=seg_order,
                 )
                 modifysubids = []
                 seg_order = seg_order + 1
-    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] < 0,'HyLakeId'] = -9999
-    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] < 0,'IsLake'] = -9999
-    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] < 0,'LakeVol'] = -9999
-    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] < 0,'LakeDepth'] = -9999
-    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] < 0,'LakeArea'] = -9999
-    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] < 0,'Laketype'] = -9999
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'HyLakeId'] = 0
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'Lake_Cat'] = 0
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'LakeVol'] = 0
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'LakeDepth'] = 0
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'LakeArea'] = 0
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'Laketype'] = 0
     return (
         mapoldnew_info,
         Selected_riv_ids,
@@ -1531,8 +1531,8 @@ def Return_Selected_Lakes_Attribute_Table_And_Id(
     finalcat_info["HyLakeId"] = finalcat_info["HyLakeId"].astype(int)
     finalcat_info["Seg_ID"] = finalcat_info["Seg_ID"].astype(int)
 
-    Non_ConnL_info = finalcat_info.loc[finalcat_info["IsLake"] == 2].copy(deep=True)
-    ConnL_info = finalcat_info.loc[finalcat_info["IsLake"] == 1].copy(deep=True)
+    Non_ConnL_info = finalcat_info.loc[finalcat_info["Lake_Cat"] == 2].copy(deep=True)
+    ConnL_info = finalcat_info.loc[finalcat_info["Lake_Cat"] == 1].copy(deep=True)
 
     if Selection_Method == "ByArea":
         ### process connected lakes first
@@ -1586,11 +1586,11 @@ def Return_Selected_Lakes_Attribute_Table_And_Id(
         Selected_Non_ConnLakes = np.unique(Selected_Non_ConnLakes)
 
         Un_Selected_ConnLakes_info = finalcat_info.loc[
-            (finalcat_info["IsLake"] == 1)
+            (finalcat_info["Lake_Cat"] == 1)
             & (np.logical_not(finalcat_info["HyLakeId"].isin(Selected_ConnLakes)))
         ]
         Un_Selected_Non_ConnL_info = finalcat_info.loc[
-            (finalcat_info["IsLake"] == 2)
+            (finalcat_info["Lake_Cat"] == 2)
             & (np.logical_not(finalcat_info["HyLakeId"].isin(Selected_Non_ConnLakes)))
         ]
 
@@ -1632,7 +1632,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_CL(
         i_seg_id = Seg_IDS[iseg]
         i_seg_info = finalcat_info_temp.loc[
             (finalcat_info_temp["Seg_ID"] == i_seg_id)
-            & (finalcat_info_temp["IsLake"] != 2)
+            & (finalcat_info_temp["Lake_Cat"] != 2)
         ].copy()
         i_seg_info = i_seg_info.sort_values(["Seg_order"], ascending=(True))
 
@@ -1652,7 +1652,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_CL(
                 ismodifids=1,
                 modifiidin=seg_sub_ids,
                 mainriv=finalcat_info_temp,
-                Islake=-1,
+                Lake_Cat=-1,
                 seg_order=1,
             )
 
@@ -1673,7 +1673,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_CL(
                     ismodifids=1,
                     modifiidin=seg_sub_ids,
                     mainriv=finalcat_info_temp,
-                    Islake=i_seg_info["HyLakeId"].values[iorder],
+                    Lake_Cat=i_seg_info["HyLakeId"].values[iorder],
                     seg_order=seg_order,
                 )
                 modifysubids = []
@@ -1694,7 +1694,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_CL(
                     ismodifids=1,
                     modifiidin=seg_sub_ids,
                     mainriv=finalcat_info_temp,
-                    Islake=i_seg_info["HyLakeId"].values[iorder],
+                    Lake_Cat=i_seg_info["HyLakeId"].values[iorder],
                     seg_order=seg_order,
                 )
                 modifysubids = []
@@ -1743,7 +1743,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_NCL(
         Down_Sub_info = finalcat_info_temp.loc[
             finalcat_info_temp["SubId"] == downsubid
         ].copy()  ###obtain downstream infomation
-        if Down_Sub_info["IsLake"].values[0] != 2:
+        if Down_Sub_info["Lake_Cat"].values[0] != 2:
             ### check if this downsubid has a new subid
             nsubid = mapoldnew_info.loc[mapoldnew_info["SubId"] == downsubid][
                 "nsubid"
@@ -1787,7 +1787,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_NCL(
                 ismodifids=1,
                 modifiidin=modifysubids,
                 mainriv=finalcat_info_temp,
-                Islake=Tar_Lake_Id,
+                Lake_Cat=Tar_Lake_Id,
             )
         else:
             mapoldnew_info = New_SubId_To_Dissolve(
@@ -1797,7 +1797,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_NCL(
                 ismodifids=1,
                 modifiidin=modifysubids,
                 mainriv=finalcat_info_temp,
-                Islake=Tar_Lake_Id,
+                Lake_Cat=Tar_Lake_Id,
             )
 
     unprocessedmask = mapoldnew_info["nsubid"] <= 0
@@ -1848,7 +1848,7 @@ def Change_Attribute_Values_For_Catchments_Covered_By_Same_Lake(finalrivply_info
                 ismodifids=1,
                 modifiidin=lakesubids,
                 mainriv=finalrivply_info,
-                Islake=1,
+                Lake_Cat=1,
             )
     return mapoldnew_info
 
@@ -2139,7 +2139,7 @@ def change_attribute_values_for_catchments_covered_by_same_lake(finalrivply_info
                 ismodifids=1,
                 modifiidin=lakesubids,
                 mainriv=finalrivply_info,
-                Islake=1,
+                Lake_Cat=1,
             )
     return mapoldnew_info
 

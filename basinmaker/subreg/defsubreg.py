@@ -89,6 +89,7 @@ def combine_sub_region(
     qgis_prefix_path,
     path_subregion_inlet,
     gis_platform="qgis",
+    start_sub_id = 0,
 ):
     if gis_platform == "qgis":
         assert (
@@ -103,4 +104,5 @@ def combine_sub_region(
             Is_Final_Result=is_final_result,
             qgis_prefix_path=qgis_prefix_path,
             subregion_inlet=path_subregion_inlet,
+            start_sub_id = start_sub_id,
         )

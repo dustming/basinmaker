@@ -681,7 +681,7 @@ def Generate_Raven_Obs_rvt_String(
         'Obs_NM'  - the name of the stream flow obsrvation gauge
         'SubId'   - the subbasin Id of this stremflow gauge located at.
         'SRC_obs' - the country of the gauge located at
-        'DA'      - the drainage area controlled by the gauge obtained from
+        'DrainArea'      - the drainage area controlled by the gauge obtained from
                     the routing structure
     outFolderraven            : String
         Path and name of the output folder of Raven input files
@@ -769,11 +769,11 @@ def Generate_Raven_Obs_rvt_String(
 
     """
 
-    obsnms = catinfo[["Obs_NM", "SRC_obs", "SubId", "DA"]]
+    obsnms = catinfo[["Obs_NM", "SRC_obs", "SubId", "DrainArea"]]
     obsnms = obsnms.drop_duplicates("Obs_NM", keep="first")
     obsnms = obsnms.loc[obsnms["Obs_NM"] != "-9999.0"]
 
-    obsnms.loc[:, "DA"] = obsnms["DA"].values / 1000 / 1000  # m2 to km2
+    obsnms.loc[:, "DrainArea"] = obsnms["DrainArea"].values / 1000 / 1000  # m2 to km2
     index = obsnms.index
     Date = pd.date_range(
         start=str(startyear) + "-" + "01" + "-" + "01",
@@ -1303,7 +1303,7 @@ def Generate_Raven_Channel_rvp_rvh_String(
             catlen = -9999
             strRlen = "ZERO-"
         if (
-            catinfo_sub["IsLake"].values[i] >= 0
+            catinfo_sub["Lake_Cat"].values[i] >= 0
         ):  # and catinfo_sub['HRU_Type'].values[i] == 1:
             strRlen = "ZERO-"
         #####################################################3
@@ -1354,10 +1354,10 @@ def Generate_Raven_Channel_rvp_rvh_String(
 
         Channel_rvp_string_list.append(output_string_chn_rvp_sub)
 
-        if catinfo_sub["IsObs"].values[i] > 0:
+        if catinfo_sub["Has_Gauge"].values[i] > 0:
             Guage = "1"
         elif (
-            catinfo_sub["IsLake"].values[i] >= 0 and Lake_As_Gauge == True
+            catinfo_sub["Lake_Cat"].values[i] >= 0 and Lake_As_Gauge == True
         ):  # and catinfo_sub['HRU_Type'].values[i] == 1:
             Guage = "1"
         else:
@@ -1876,7 +1876,7 @@ def Caluculate_Lake_Active_Depth_and_Lake_Evap(
             LakeId = finalcat_info_lake_hru["HyLakeId"].values[j]
             Lake_Area = finalcat_info_lake_hru["HRU_Area"].values[j]
             Lake_Subid = finalcat_info_lake_hru["SubId"].values[j]
-            Lake_DA = finalcat_info_lake_hru["DA"].values[j]
+            Lake_DA = finalcat_info_lake_hru["DrainArea"].values[j]
             Mb_Col_NM = "sub" + str(int(Lake_Subid)) + " losses [m3]"
             Stage_Col_NM = "sub" + str(int(Lake_Subid)) + " "
             if Mb_Col_NM in Col_NMS_MB and Stage_Col_NM in Col_NMS_Stage:
@@ -1944,7 +1944,7 @@ def Caluculate_Lake_Active_Depth_and_Lake_Evap(
         LakeId = finalcat_info_lake_hru["HyLakeId"].values[i]
         Lake_Area = finalcat_info_lake_hru["HRU_Area"].values[i]
         Lake_Subid = finalcat_info_lake_hru["SubId"].values[i]
-        Lake_DA = finalcat_info_lake_hru["DA"].values[i]
+        Lake_DA = finalcat_info_lake_hru["DrainArea"].values[i]
 
         ####
         stage_idx = Stage_Statis.index[istage]

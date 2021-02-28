@@ -195,12 +195,12 @@ def simplify_routing_structure_by_filter_lakes_qgis(
         )
     )
     
-    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] < 0,'HyLakeId'] = -9999
-    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] < 0,'IsLake'] = -9999
-    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] < 0,'LakeVol'] = -9999
-    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] < 0,'LakeDepth'] = -9999
-    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] < 0,'LakeArea'] = -9999
-    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] < 0,'Laketype'] = -9999
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'HyLakeId'] = 0
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'Lake_Cat'] = 0
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'LakeVol'] = 0
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'LakeDepth'] = 0
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'LakeArea'] = 0
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'Laketype'] = 0
     
     # update topology for new attribute table
     UpdateTopology(mapoldnew_info, UpdateStreamorder=-1)

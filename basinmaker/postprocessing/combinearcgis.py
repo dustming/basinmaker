@@ -94,7 +94,7 @@ def combine_catchments_covered_by_the_same_lake_arcgis(
     finalrivply_info['SubId'] = finalrivply_info['SubId'].astype('int32')
     finalrivply_info['DowSubId'] = finalrivply_info['DowSubId'].astype('int32')
     finalrivply_info['HyLakeId'] = finalrivply_info['HyLakeId'].astype('int32')
-#    finalrivply_info['DA'] = finalrivply_info['DA'].astype('float')
+#    finalrivply_info['DrainArea'] = finalrivply_info['DrainArea'].astype('float')
 
     mapoldnew_info = change_attribute_values_for_catchments_covered_by_same_lake(
         finalrivply_info

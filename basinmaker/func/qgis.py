@@ -426,14 +426,14 @@ def Remove_Unselected_Lake_Attribute_In_Finalcatinfo(Path_Finalcatinfo, Conn_Lak
         for sf in features:
             sf_subid = float(sf["HyLakeId"])
 
-            if sf_subid in Conn_Lake_Ids or float(sf["IsLake"]) == 2:
+            if sf_subid in Conn_Lake_Ids or float(sf["Lake_Cat"]) == 2:
                 continue
-            sf["HyLakeId"] = float(-1.2345)
-            sf["LakeVol"] = float(-1.2345)
-            sf["LakeArea"] = float(-1.2345)
-            sf["LakeDepth"] = float(-1.2345)
-            sf["Laketype"] = float(-1.2345)
-            sf["IsLake"] = float(-1.2345)
+            sf["HyLakeId"] = float(0)
+            sf["LakeVol"] = float(0)
+            sf["LakeArea"] = float(0)
+            sf["LakeDepth"] = float(0)
+            sf["Laketype"] = float(0)
+            sf["Lake_Cat"] = float(0)
             layer_cat.updateFeature(sf)
     del layer_cat
     return

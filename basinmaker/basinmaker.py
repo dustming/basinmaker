@@ -1160,6 +1160,7 @@ class basinmaker:
         is_final_result,
         path_subregion_inlet,
         gis_platform="qgis",
+        start_sub_id = 0,
     ):
 
         from subreg.defsubreg import (
@@ -1173,6 +1174,7 @@ class basinmaker:
             is_final_result=is_final_result,
             qgis_prefix_path=self.qgispp,
             path_subregion_inlet=path_subregion_inlet,
+            start_sub_id = start_sub_id,
         )
 
     def generate_raven_model_inputs_method(

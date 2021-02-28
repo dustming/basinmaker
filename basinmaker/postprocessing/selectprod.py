@@ -248,11 +248,11 @@ def Select_Routing_product_based_SubId_qgis(
 
     #### extract lakes
 
-    Connect_Lake_info = finalcat_info.loc[finalcat_info["IsLake"] == 1]
+    Connect_Lake_info = finalcat_info.loc[finalcat_info["Lake_Cat"] == 1]
     Connect_Lakeids = np.unique(Connect_Lake_info["HyLakeId"].values)
     Connect_Lakeids = Connect_Lakeids[Connect_Lakeids > 0]
 
-    NConnect_Lake_info = finalcat_info.loc[finalcat_info["IsLake"] == 2]
+    NConnect_Lake_info = finalcat_info.loc[finalcat_info["Lake_Cat"] == 2]
     NonCL_Lakeids = np.unique(NConnect_Lake_info["HyLakeId"].values)
     NonCL_Lakeids = NonCL_Lakeids[NonCL_Lakeids > 0]
 

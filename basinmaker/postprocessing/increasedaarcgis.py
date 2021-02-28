@@ -88,7 +88,7 @@ def simplify_routing_structure_by_drainage_area_arcgis(
 
     sub_colnm = "SubId"
     down_colnm = "DowSubId"
-    DA_colnm = "DA"
+    DA_colnm = "DrainArea"
     SegID_colnm = "Seg_ID"
 
     if not os.path.exists(OutputFolder):
