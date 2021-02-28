@@ -952,7 +952,8 @@ def Combine_Sub_Region_Results(
             link_col_nm_df="SubId",
             UpdateColNM=["DowSubId", "DrainArea", "Strahler"],
         )
-
+        COLUMN_NAMES_CONSTANT_Local = COLUMN_NAMES_CONSTANT
+        COLUMN_NAMES_CONSTANT_Local.append("Region_ID")
         processing.run(
             "native:dissolve",
             {
@@ -964,7 +965,7 @@ def Combine_Sub_Region_Results(
         )
 
         Clean_Attribute_Name(
-            os.path.join(OutputFolder, "finalcat_info.shp"), COLUMN_NAMES_CONSTANT
+            os.path.join(OutputFolder, "finalcat_info.shp"), COLUMN_NAMES_CONSTANT_Local
         )
 
         processing.run(
@@ -977,7 +978,7 @@ def Combine_Sub_Region_Results(
             context=context,
         )
         Clean_Attribute_Name(
-            os.path.join(OutputFolder, "finalcat_info_riv.shp"), COLUMN_NAMES_CONSTANT
+            os.path.join(OutputFolder, "finalcat_info_riv.shp"), COLUMN_NAMES_CONSTANT_Local
         )
 
 
@@ -1052,9 +1053,10 @@ def Combine_Sub_Region_Results(
             },
             context=context,
         )
-
+        COLUMN_NAMES_CONSTANT_Local = COLUMN_NAMES_CONSTANT
+        COLUMN_NAMES_CONSTANT_Local.append("Region_ID")
         Clean_Attribute_Name(
-            os.path.join(OutputFolder, "catchment_without_merging_lakes.shp"), COLUMN_NAMES_CONSTANT
+            os.path.join(OutputFolder, "catchment_without_merging_lakes.shp"), COLUMN_NAMES_CONSTANT_Local
         )
 
         processing.run(
@@ -1068,5 +1070,5 @@ def Combine_Sub_Region_Results(
         )
 
         Clean_Attribute_Name(
-            os.path.join(OutputFolder, "river_without_merging_lakes.shp"), COLUMN_NAMES_CONSTANT
+            os.path.join(OutputFolder, "river_without_merging_lakes.shp"), COLUMN_NAMES_CONSTANT_Local
         )
