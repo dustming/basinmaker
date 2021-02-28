@@ -471,7 +471,7 @@ def Add_centroid_to_feature(
         del layer_cat
 
 
-def Selectfeatureattributes(processing, Input="#", Output="#", Attri_NM="#", Values=[]):
+def Selectfeatureattributes(processing, Input="#", Output="#", Attri_NM="#", Values=[],Is_str=False):
     """Functions extract features from Input, based on values in column Attri_NM
     ----------
 
@@ -482,10 +482,20 @@ def Selectfeatureattributes(processing, Input="#", Output="#", Attri_NM="#", Val
     -------
         None, the attribute table of Path_shpfile will be updated
     """
-    exp = Attri_NM + "  IN  (  " + str(int(Values[0]))
-    for i in range(1, len(Values)):
-        exp = exp + " , " + str(int(Values[i]))
-    exp = exp + ")"
+    if Is_str:
+        
+        #'  \"STATION_NU\" IN (\'02KB001\',\'02KB003\')'
+        
+        exp = "\"%s\" IN (" %(Attri_NM)
+        exp = exp + "\'%s\'" %(Values[0])
+        for i in range(1, len(Values)):
+            exp =  exp + " , \'%s\'" %(Values[i])
+        exp = exp + ")"
+    else:
+        exp = Attri_NM + "  IN  (  " + str(int(Values[0]))
+        for i in range(1, len(Values)):
+            exp = exp + " , " + str(int(Values[i]))
+        exp = exp + ")"
     processing.run(
         "native:extractbyexpression",
         {"INPUT": Input, "EXPRESSION": exp, "OUTPUT": Output},

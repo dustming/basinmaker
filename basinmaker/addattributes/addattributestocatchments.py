@@ -289,4 +289,5 @@ def add_attributes_to_catchments(
             output_riv=out_riv_name,
             output_cat=out_cat_name,
             output_folder=output_folder,
+            obs_attributes = obs_attributes,
         )

@@ -15,6 +15,7 @@ def export_files_to_output_folder(
     output_riv,
     output_cat,
     output_folder,
+    obs_attributes,
 ):
     cat_riv_info = input_geo_names["cat_riv_info"]
     cat_ply_info = input_geo_names["cat_ply_info"]
@@ -129,8 +130,9 @@ def export_files_to_output_folder(
             processing,
             Input=os.path.join(grassdb, snapped_obs_points + ".shp"),
             Output=os.path.join(output_folder, "obs_gauges.shp"),
-            Attri_NM="Obs_ID",
-            Values=subinfo.loc[subinfo["Has_Gauge"] > 0]["Has_Gauge"].values,
+            Attri_NM=obs_attributes[1],
+            Values=subinfo.loc[subinfo["Has_Gauge"] > 0]["Obs_NM"].values,
+            Is_str = True,
         )
 
     Clean_Attribute_Name(
