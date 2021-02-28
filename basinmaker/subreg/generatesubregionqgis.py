@@ -691,7 +691,6 @@ def Combine_Sub_Region_Results(
     Paths_obs_point = []
 
     Path_Outlet_Down_point = subregion_inlet
-
     ### add new attribte
     ### find outlet subregion id
     outlet_subregion_id = Sub_Region_info.loc[
@@ -712,7 +711,6 @@ def Combine_Sub_Region_Results(
 
     Sub_Region_info["N_Up_SubRegion"] = np.nan
     Sub_Region_info["Outlet_SubId"] = np.nan
-
     subid_strat_iregion = 1
     seg_id_strat_iregion = 1
     for i in range(0, len(Sub_Region_info)):
@@ -731,14 +729,14 @@ def Combine_Sub_Region_Results(
         Path_None_Con_Lake_ply = os.path.join(SubFolder, "sl_non_connected_lake.shp")
         Path_obs_point = os.path.join(SubFolder, "obs_gauges.shp")
 
-        ### product do not exist
-        if os.path.exists(Path_Finalcat_ply) != 1:
-            continue
+
 
         ### For each subregion, add new subid to each polygon files,
         ### and append result file in the merge list
         if Is_Final_Result == True:
-
+        ### product do not exist
+            if os.path.exists(Path_Finalcat_ply) != 1:
+                continue
             SubID_info = (
                 Dbf_To_Dataframe(Path_Finalcat_ply)
                 .drop_duplicates(subset=["SubId"], keep="first")[
@@ -791,6 +789,8 @@ def Combine_Sub_Region_Results(
             del layer_cat
 
         else:
+            if os.path.exists(Path_Finalriv_ply) != 1:
+                continue
             SubID_info = (
                 Dbf_To_Dataframe(Path_Finalriv_ply)
                 .drop_duplicates(subset=["SubId"], keep="first")[
@@ -801,7 +801,6 @@ def Combine_Sub_Region_Results(
             SubID_info = SubID_info.reset_index()
             SubID_info["nSubId"] = SubID_info.index + subid_strat_iregion + start_sub_id
             SubID_info["nSeg_ID"] = SubID_info["Seg_ID"] + seg_id_strat_iregion + start_sub_id
-
             layer_cat = QgsVectorLayer(Path_Finalriv_ply, "")
             Add_New_SubId_To_Subregion_shpfile(
                 processing,
