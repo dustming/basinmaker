@@ -1831,7 +1831,7 @@ def Caluculate_Lake_Active_Depth_and_Lake_Evap(
     Col_NMS_MB = list(Res_MB_info.columns)
 
     finalcat_info_lake_hru = finalcat_info.loc[
-        (finalcat_info["IsLake"] > 0) & (finalcat_info["HRU_Type"] == 1)
+        (finalcat_info["Lake_Cat"] > 0) & (finalcat_info["HRU_Type"] == 1)
     ]
 
     ####

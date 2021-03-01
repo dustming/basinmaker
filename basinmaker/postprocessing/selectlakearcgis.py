@@ -120,8 +120,8 @@ def simplify_routing_structure_by_filter_lakes_arcgis(
         Un_Selected_Non_ConnL_info,
     ) = Return_Selected_Lakes_Attribute_Table_And_Id(
         finalcat_info,
-        Thres_Area_Conn_Lakes,
-        Thres_Area_Non_Conn_Lakes,
+        Thres_Area_Conn_Lakes*1000*1000,  # km2 to m2
+        Thres_Area_Non_Conn_Lakes*1000*1000, # km2 to m2
         Selection_Method,
         Selected_Lake_List_in,
     )

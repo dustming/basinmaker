@@ -953,7 +953,7 @@ def Determine_Lake_HRU_Id(Attribute_Table):
             continue
 
         # feature is not lake
-        if Sub_Lakeid_sf < 0:
+        if Sub_Lakeid_sf <= 0:
             old_new_hruid = subid_sf
             Attribute_Table.loc[i, "HRU_IsLake"] = -1
 
@@ -988,7 +988,7 @@ def Determine_Lake_HRU_Id(Attribute_Table):
         Sub_Lakeid_sf = Attribute_Table[Sub_Lake_ID].values[i]
         if subid_sf > 0:
             continue
-        if lakelakeid_sf < 0:
+        if lakelakeid_sf <= 0:
             print("lake has unexpected holes ")
             print(Attribute_Table.loc[i, :])
             continue
@@ -1273,7 +1273,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
     ## add removed gauges 
     unselected_gauges_subids = finalriv_info.loc[
         (~finalriv_info["SubId"].isin(Subid_main)) &
-        (finalriv_info["HasGauge"] > 0 )
+        (finalriv_info["Has_Gauge"] > 0 )
     ]['SubId'].values
     finalriv_info_ncl = finalriv_info.copy(deep=True)
     # make unselected gauge to be a false lake 
@@ -1445,7 +1445,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
             elif (
                 i_seg_info["HyLakeId"].values[iorder]
                 == i_seg_info["HyLakeId"].values[iorder + 1]
-                and i_seg_info["HasGauge"].values[iorder] < 0
+                and i_seg_info["Has_Gauge"].values[iorder] <= 0
             ):
                 continue
             else:
@@ -1537,7 +1537,7 @@ def Return_Selected_Lakes_Attribute_Table_And_Id(
     if Selection_Method == "ByArea":
         ### process connected lakes first
         Selected_ConnLakes = ConnL_info.loc[
-            (ConnL_info["HasGauge"] > 0)
+            (ConnL_info["Has_Gauge"] > 0)
             | (ConnL_info["LakeArea"] >= Thres_Area_Conn_Lakes)
         ]["HyLakeId"].values
         
@@ -1552,7 +1552,7 @@ def Return_Selected_Lakes_Attribute_Table_And_Id(
         if Thres_Area_Non_Conn_Lakes >= 0:
             Selected_Non_ConnLakes = Non_ConnL_info[
                 (Non_ConnL_info["LakeArea"] >= Thres_Area_Non_Conn_Lakes) | 
-                (Non_ConnL_info["HasGauge"] >= 0)
+                (Non_ConnL_info["Has_Gauge"] > 0)
             ]["HyLakeId"].values
             Selected_Non_ConnLakes = Selected_Non_ConnLakes[Selected_Non_ConnLakes > 0]
             Selected_Non_ConnLakes = np.unique(Selected_Non_ConnLakes)
@@ -1563,7 +1563,7 @@ def Return_Selected_Lakes_Attribute_Table_And_Id(
         else:
             Selected_Non_ConnLakes = Non_ConnL_info[
                 (Non_ConnL_info["LakeArea"] >= 99999999999) | 
-                (Non_ConnL_info["HasGauge"] >= 0)
+                (Non_ConnL_info["Has_Gauge"] > 0)
             ]["HyLakeId"].values
             Selected_Non_ConnLakes = Selected_Non_ConnLakes[Selected_Non_ConnLakes > 0]
             Selected_Non_ConnLakes = np.unique(Selected_Non_ConnLakes)
@@ -1642,7 +1642,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_CL(
             continue
 
         ### All lakes in this segment are removed
-        if np.max(N_Hylakeid) and np.max(i_seg_info["HasGauge"].values) < 0:  ##
+        if np.max(N_Hylakeid) and np.max(i_seg_info["Has_Gauge"].values) <= 0:  ##
             tsubid = i_seg_info["SubId"].values[len(i_seg_info) - 1]
             seg_sub_ids = i_seg_info["SubId"].values
             mapoldnew_info = New_SubId_To_Dissolve(
@@ -1682,7 +1682,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_CL(
             elif (
                 i_seg_info["HyLakeId"].values[iorder]
                 == i_seg_info["HyLakeId"].values[iorder + 1]
-                and i_seg_info["HasGauge"].values[iorder] < 0
+                and i_seg_info["Has_Gauge"].values[iorder] <= 0
             ):
                 continue
             else:

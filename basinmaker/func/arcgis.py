@@ -40,7 +40,7 @@ def Remove_Unselected_Lake_Attribute_In_Finalcatinfo_Arcgis(finalcat_ply, Conn_L
     """
     
     mask1 = np.logical_not(finalcat_ply['HyLakeId'].isin(Conn_Lake_Ids))
-    mask2 = finalcat_ply['IsLake'] != 2
+    mask2 = finalcat_ply['Lake_Cat'] != 2
     mask = np.logical_and(mask1,mask2)
     
     finalcat_ply.loc[mask,'HyLakeId'] = 0
@@ -48,7 +48,7 @@ def Remove_Unselected_Lake_Attribute_In_Finalcatinfo_Arcgis(finalcat_ply, Conn_L
     finalcat_ply.loc[mask,'LakeArea'] = 0
     finalcat_ply.loc[mask,'LakeDepth'] = 0
     finalcat_ply.loc[mask,'Laketype'] =0
-    finalcat_ply.loc[mask,'IsLake'] = 0
+    finalcat_ply.loc[mask,'Lake_Cat'] = 0
     
     return finalcat_ply
 
