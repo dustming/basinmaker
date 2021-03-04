@@ -661,7 +661,7 @@ def Combine_Sub_Region_Results(
 
     tempfolder = os.path.join(
         tempfile.gettempdir(),
-        "basinmaker_comsubreg" + '100'#str(np.random.randint(1, 10000 + 1)),
+        "basinmaker_comsubreg" + str(np.random.randint(1, 10000 + 1)),
     )
     if not os.path.exists(tempfolder):
         os.makedirs(tempfolder)
