@@ -1021,5 +1021,26 @@ def generate_routing_info_of_catchments(
         raster=Name + "_OL1_G_Clu",
         column="ILpt_ID",
     )
-
+    
+    un_used_map = [
+                   Name + "_maxacc",
+                   Name + "_OL1",
+                   Name + "_OL_2",
+                   Name + "_OL3",
+                   Name + "_minacc",
+                   Name + "_IL",
+                   Name + "_OL1",
+                   Name + "_OL1_G",
+                   Name + "_OL1_G_Clu",
+                   Name + "_OL1_G_Clu_maxacc",
+                   Name + "_IL1",
+                   Name + "_OL1_G_Clu_IL_SubId",
+                   Name + "_IL_v_c",
+    ]
+    grass.run_command(
+        "g.remove",
+        type="raster",
+        name=un_used_map,
+        flags="f",
+    )
     return Routing_info

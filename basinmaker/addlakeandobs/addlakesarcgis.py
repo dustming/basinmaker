@@ -98,5 +98,4 @@ def add_lakes_into_existing_watershed_delineation(
     arcpy.PolylineToRaster_conversion(lake_boundary + ".shp", lake_attributes[0], lake_boundary + ".tif",
                                  "MAXIMUM_COMBINED_LENGTH",lake_attributes[0], cellSize)
                                  
-    asdf 
     return

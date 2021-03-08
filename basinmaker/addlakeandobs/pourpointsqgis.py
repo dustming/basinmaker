@@ -421,4 +421,26 @@ def define_pour_points_with_lakes(
         CL_Id, Str_Id, routing_info
     )
 
+    un_used_map = [
+                   "sl_lakes_maxacc",
+                   lake_outflow_pourpoints+'t',
+                   lake_outflow_pourpoints+'t2',
+                   lake_outflow_pourpoints + 't3',
+                   "connect_lake_str",
+                   "unique_lake_str_inflow",
+                   "lake_inflow_str",
+                   "lake_inflow_seg_minacc",
+                   "lake_inflow_IL",
+                   "lake_inflow_IL_grow2",
+                   "lake_inflow_IL_grow",
+                   "extented_lake_inflow_seg",
+                   "extented_lake_inflow_seg_minacc",
+    ]
+    grass.run_command(
+        "g.remove",
+        type="raster",
+        name=un_used_map,
+        flags="f",
+    )
+    
     return Lakes_WIth_Multi_Outlet, Remove_Str
