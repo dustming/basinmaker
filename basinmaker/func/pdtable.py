@@ -186,7 +186,7 @@ def New_SubId_To_Dissolve(
     seg_order=-1,
 ):
     sub_colnm = "SubId"
-    routing_info = catchmentinfo[["SubId", "DowSubId"]].astype("float").values
+    routing_info = catchmentinfo[["SubId", "DowSubId"]].astype("int32").values
     if ismodifids < 0:
         Modify_subids1 = defcat(
             routing_info, subid
@@ -549,7 +549,6 @@ def streamorderanddrainagearea(catinfoall):
             if catinfoall["DA_Obs"].values[i] > 0:
                 catinfoall.loc[idx, "DA_error"] = (
                     catinfoall["DrainArea"].values[i] / 1000.0 / 1000.0
-                    - catinfoall["DA_Obs"].values[i]
                 ) / catinfoall["DA_Obs"].values[i]
     return catinfoall
 
@@ -848,6 +847,13 @@ def Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info):
                 #### updateAllCatinfo
                 AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "Strahler"] = newStrahler
                 AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "DrainArea"] = NewDA
+                
+                if AllCatinfo[AllCatinfo["SubId"] == csubid]["DA_Obs"].values[0] > 0:
+                    da_obs = AllCatinfo[AllCatinfo["SubId"] == csubid]["DA_Obs"].values[0]
+                    da_sim = AllCatinfo[AllCatinfo["SubId"] == csubid]["DrainArea"].values[0]/1000.0/1000.0
+                    if da_obs > 0:
+                        AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "DA_error"] = da_sim/da_obs
+                        AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "Use_region"] = 1
 
                 ####find next downsubbasin id
                 downsubid = C_sub_info["DowSubId"].values[0]
@@ -873,6 +879,8 @@ def Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info):
             ### update list for next loop
         Subregion_list = list(set(Subregion_list))
         iloop = iloop + 1
+        
+        
     print("Check drainage area:")
     print("Total basin area is              ", sum(AllCatinfo["BasArea"].values))
     print(
@@ -1827,6 +1835,7 @@ def Change_Attribute_Values_For_Catchments_Covered_By_Same_Lake(finalrivply_info
     sub_colnm = "SubId"
     mapoldnew_info = finalrivply_info.copy(deep=True)
     mapoldnew_info["nsubid"] = mapoldnew_info["SubId"].values
+    mapoldnew_info['nsubid'] = mapoldnew_info['nsubid'].astype('int32')
     AllConnectLakeIDS = finalrivply_info["HyLakeId"].values
     AllConnectLakeIDS = AllConnectLakeIDS[AllConnectLakeIDS > 0]
     AllConnectLakeIDS = np.unique(AllConnectLakeIDS)

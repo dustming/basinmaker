@@ -571,15 +571,23 @@ def Add_New_SubId_To_Subregion_shpfile(
         None
     """
 
-    qgis_vector_field_calculator(
+    layer2 = qgis_vector_field_calculator(
         processing=processing,
         context=context,
         FORMULA=str(int(Region_ID)),
         FIELD_NAME="Region_ID",
         INPUT=Layer,
+        OUTPUT="memory:",
+    )['OUTPUT']
+    qgis_vector_field_calculator(
+        processing=processing,
+        context=context,
+        FORMULA="0",
+        FIELD_NAME="Use_region",
+        INPUT=layer2,
         OUTPUT=OutputPath,
     )
-
+    
     layer_new = QgsVectorLayer(OutputPath, "")
 
     features = layer_new.getFeatures()

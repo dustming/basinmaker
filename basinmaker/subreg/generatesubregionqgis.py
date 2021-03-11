@@ -841,12 +841,13 @@ def Combine_Sub_Region_Results(
             )
             del layer_cat
 
-        if os.path.exists(Path_Con_Lake_ply) == 1:
+        if os.path.exists(Path_Con_Lake_ply) == 1 and os.stat(Path_Con_Lake_ply).st_size > 1:
             Paths_Con_Lake_ply.append(Path_Con_Lake_ply)
-        if os.path.exists(Path_None_Con_Lake_ply) == 1:
+        if os.path.exists(Path_None_Con_Lake_ply) == 1 and os.stat(Path_None_Con_Lake_ply).st_size > 1:
             Paths_None_Con_Lake_ply.append(Path_None_Con_Lake_ply)
-        if os.path.exists(Path_obs_point) == 1:
+        if os.path.exists(Path_obs_point) == 1 and os.stat(Path_obs_point).st_size > 1:
             Paths_obs_point.append(Path_obs_point)
+            
         print(
             "Subregion ID is ",
             isubregion,
@@ -936,23 +937,31 @@ def Combine_Sub_Region_Results(
             AllCatinfo, DownCatinfo, Sub_Region_info
         )
         AllCatinfo = Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info)
-
+        
+        AllCatinfo['Use_region'] = 0
+        Obs_names = AllCatinfo['Obs_NM'].copy(deep=True)
+        Obs_names = Obs_names.fillna('nan')
+        Obs_names = Obs_names.astype('string')
+        mask = Obs_names == 'nan'
+        AllCatinfo.loc[mask,'Has_Gauge'] = 0
+        
         Copy_Pddataframe_to_shpfile(
             os.path.join(tempfolder, "finalcat_info.shp"),
             AllCatinfo,
             link_col_nm_shp="SubId",
             link_col_nm_df="SubId",
-            UpdateColNM=["DowSubId", "DrainArea", "Strahler"],
+            UpdateColNM=["DowSubId", "DrainArea", "Strahler","DA_error","Has_Gauge","Use_region"],
         )
         Copy_Pddataframe_to_shpfile(
             os.path.join(tempfolder, "finalcat_info_riv.shp"),
             AllCatinfo,
             link_col_nm_shp="SubId",
             link_col_nm_df="SubId",
-            UpdateColNM=["DowSubId", "DrainArea", "Strahler"],
+            UpdateColNM=["DowSubId", "DrainArea", "Strahler","DA_error","Has_Gauge","Use_region"],
         )
-        COLUMN_NAMES_CONSTANT_Local = COLUMN_NAMES_CONSTANT
+        COLUMN_NAMES_CONSTANT_Local = COLUMN_NAMES_CONSTANT 
         COLUMN_NAMES_CONSTANT_Local.append("Region_ID")
+        COLUMN_NAMES_CONSTANT_Local.append("Use_region")
         processing.run(
             "native:dissolve",
             {
@@ -1026,21 +1035,34 @@ def Combine_Sub_Region_Results(
         AllCatinfo, Sub_Region_info = Connect_SubRegion_Update_DownSubId(
             AllCatinfo, DownCatinfo, Sub_Region_info
         )
+        AllCatinfo['Use_region'] = 0
         AllCatinfo = Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info)
+        Obs_names = AllCatinfo['Obs_NM'].copy(deep=True)
+        Obs_names = Obs_names.fillna('nan')
+        Obs_names = Obs_names.astype('string')
+        mask = Obs_names == 'nan'
+        AllCatinfo.loc[mask,'Has_Gauge'] = 0
+        
+        DA_obs = AllCatinfo['DA_Obs'].copy(deep=True)
+        DA_obs = DA_obs.fillna(0)
+        DA_obs = DA_obs.astype('int32')
+        mask = DA_obs <= 0
+        AllCatinfo.loc[mask,'DA_error'] = 0
 
+                
         Copy_Pddataframe_to_shpfile(
             os.path.join(tempfolder, "finalriv_info_ply.shp"),
             AllCatinfo,
             link_col_nm_shp="SubId",
             link_col_nm_df="SubId",
-            UpdateColNM=["DowSubId", "DrainArea", "Strahler"],
+            UpdateColNM=["DowSubId", "DrainArea", "Strahler","DA_error","Has_Gauge","Use_region"],
         )
         Copy_Pddataframe_to_shpfile(
             os.path.join(tempfolder, "finalriv_info.shp"),
             AllCatinfo,
             link_col_nm_shp="SubId",
             link_col_nm_df="SubId",
-            UpdateColNM=["DowSubId", "DrainArea", "Strahler"],
+            UpdateColNM=["DowSubId", "DrainArea", "Strahler","DA_error","Has_Gauge","Use_region"],
         )
 
         processing.run(
@@ -1052,8 +1074,11 @@ def Combine_Sub_Region_Results(
             },
             context=context,
         )
-        COLUMN_NAMES_CONSTANT_Local = COLUMN_NAMES_CONSTANT
+        COLUMN_NAMES_CONSTANT_Local = COLUMN_NAMES_CONSTANT 
         COLUMN_NAMES_CONSTANT_Local.append("Region_ID")
+        COLUMN_NAMES_CONSTANT_Local.append("Use_region")
+        print(COLUMN_NAMES_CONSTANT_Local)
+        print()
         Clean_Attribute_Name(
             os.path.join(OutputFolder, "catchment_without_merging_lakes.shp"), COLUMN_NAMES_CONSTANT_Local
         )

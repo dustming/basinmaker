@@ -103,6 +103,8 @@ def combine_catchments_covered_by_the_same_lake_arcgis(
     # update topology for new attribute table
     mapoldnew_info = update_topology(mapoldnew_info, UpdateStreamorder=-1)    
     
+    mapoldnew_info['DowSubId'] = mapoldnew_info['DowSubId'].astype('int32')
+
     save_modified_attributes_to_outputs(
         mapoldnew_info=mapoldnew_info,
         tempfolder=tempfolder,
