@@ -841,11 +841,13 @@ def Combine_Sub_Region_Results(
             )
             del layer_cat
 
-        if os.path.exists(Path_Con_Lake_ply) == 1 and os.stat(Path_Con_Lake_ply).st_size > 1:
+        if os.path.exists(Path_Con_Lake_ply) == 1 and os.stat(Path_Con_Lake_ply).st_size > 100:
             Paths_Con_Lake_ply.append(Path_Con_Lake_ply)
-        if os.path.exists(Path_None_Con_Lake_ply) == 1 and os.stat(Path_None_Con_Lake_ply).st_size > 1:
+        if os.path.exists(Path_None_Con_Lake_ply) == 1 and os.stat(Path_None_Con_Lake_ply).st_size > 100:
             Paths_None_Con_Lake_ply.append(Path_None_Con_Lake_ply)
-        if os.path.exists(Path_obs_point) == 1 and os.stat(Path_obs_point).st_size > 1:
+        if os.path.exists(Path_obs_point) == 1 and os.stat(Path_obs_point).st_size > 100:
+            print(os.stat(Path_obs_point).st_size)
+            print(isubregion)
             Paths_obs_point.append(Path_obs_point)
             
         print(
