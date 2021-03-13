@@ -566,9 +566,9 @@ class basinmaker:
             output_folder=output_folder,
         )
 
-    def combine_catchments_covered_by_the_same_lake_method(
+    def combine_catchments_covered_by_the_same_lake(
         self,
-        OutputFolder="#",
+        Routing_Product_Folder='#',
         Path_final_rivply="#",
         Path_final_riv="#",
         gis_platform="qgis",
@@ -618,11 +618,11 @@ class basinmaker:
 
         """
         from postprocessing.postprocessingfunctions import (
-            combine_catchments_covered_by_the_same_lake,
+            combine_catchments_covered_by_the_same_lake_method,
         )
 
-        combine_catchments_covered_by_the_same_lake(
-            OutputFolder=OutputFolder,
+        combine_catchments_covered_by_the_same_lake_method(
+            Routing_Product_Folder = Routing_Product_Folder,
             Path_final_rivply=Path_final_rivply,
             Path_final_riv=Path_final_riv,
             qgis_prefix_path=self.qgispp,

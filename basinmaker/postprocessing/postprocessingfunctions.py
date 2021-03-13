@@ -1,10 +1,10 @@
 import os
 
 
-def combine_catchments_covered_by_the_same_lake(
-    OutputFolder="#",
+def combine_catchments_covered_by_the_same_lake_method(
     Path_final_rivply="#",
     Path_final_riv="#",
+    Routing_Product_Folder = '#',
     qgis_prefix_path="#",
     gis_platform="qgis",
 ):
@@ -18,9 +18,9 @@ def combine_catchments_covered_by_the_same_lake(
         )
 
         combine_catchments_covered_by_the_same_lake_qgis(
-            OutputFolder=OutputFolder,
-            Path_final_rivply=Path_final_rivply,
-            Path_final_riv=Path_final_riv,
+            # Path_final_rivply=Path_final_rivply,
+            # Path_final_riv=Path_final_riv,
+            Routing_Product_Folder = Routing_Product_Folder,
             qgis_prefix_path=qgis_prefix_path,
         )
     if gis_platform == "arcgis":

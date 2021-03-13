@@ -8,7 +8,11 @@ import tempfile
 
 
 def combine_catchments_covered_by_the_same_lake_qgis(
-    OutputFolder, Path_final_rivply="#", Path_final_riv="#", qgis_prefix_path="#"
+    # OutputFolder, 
+    # Path_final_rivply="#", 
+    # Path_final_riv="#", 
+    Routing_Product_Folder = '#',
+    qgis_prefix_path="#"
 ):
     """Define final lake river routing structure
 
@@ -68,9 +72,42 @@ def combine_catchments_covered_by_the_same_lake_qgis(
     context = dataobjects.createContext()
     context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
 
+
+    Path_Catchment_Polygon="#",
+    Path_River_Polyline="#",
+    Path_Con_Lake_ply="#",
+    Path_NonCon_Lake_ply="#",
+    Path_obs_gauge_point="#",
+    Path_final_cat_ply="#",
+    Path_final_cat_riv="#",
+
+    ##define input files from routing prodcut 
+    for file in os.listdir(Routing_Product_Folder):
+        if file.endswith(".shp"):
+            if 'catchment_without_merging_lakes' in file:
+                Path_Catchment_Polygon = os.path.join(Routing_Product_Folder, file)
+            if 'river_without_merging_lakes' in file:
+                Path_River_Polyline = os.path.join(Routing_Product_Folder, file)
+            if 'sl_connected_lake' in file:
+                Path_Con_Lake_ply = os.path.join(Routing_Product_Folder, file)
+            if 'sl_non_connected_lake' in file:
+                Path_NonCon_Lake_ply = os.path.join(Routing_Product_Folder, file)
+            if 'obs_gauges' in file:
+                Path_obs_gauge_point = os.path.join(Routing_Product_Folder, file)
+            if 'finalcat_info' in file:
+                Path_final_cat_ply = os.path.join(Routing_Product_Folder, file)
+            if 'finalcat_info_riv' in file:
+                Path_final_cat_riv = os.path.join(Routing_Product_Folder, file)                
+
+    if Path_Catchment_Polygon == '#' or  Path_River_Polyline =='#':
+        print("Invalid routing product folder ")
+
+
+    OutputFolder = Routing_Product_Folder
+
     sub_colnm = "SubId"
-    Path_final_rviply = Path_final_rivply
-    Path_final_riv = Path_final_riv
+    Path_final_rviply = Path_Catchment_Polygon
+    Path_final_riv = Path_River_Polyline
 
     if not os.path.exists(OutputFolder):
         os.makedirs(OutputFolder)
@@ -135,6 +172,7 @@ def combine_catchments_covered_by_the_same_lake_qgis(
     )
 
     # dissolve shpfile based on new subid
+    
     Path_final_rviply = os.path.join(OutputFolder, "finalcat_info.shp")
     Path_final_rvi = os.path.join(OutputFolder, "finalcat_info_riv.shp")
     qgis_vector_dissolve(
