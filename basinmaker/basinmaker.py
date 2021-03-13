@@ -629,15 +629,15 @@ class basinmaker:
             gis_platform=gis_platform,
         )
 
-    def simplify_routing_structure_by_filter_lakes_method(
+    def simplify_routing_structure_by_filter_lakes(
         self,
         Path_final_riv_ply="#",
         Path_final_riv="#",
         Path_Con_Lake_ply="#",
         Path_NonCon_Lake_ply="#",
+        Routing_Product_Folder = '#',
         Thres_Area_Conn_Lakes=-1,
         Thres_Area_Non_Conn_Lakes=-1,
-        Selection_Method="ByArea",
         Selected_Lake_List_in=[],
         OutputFolder="#",
         gis_platform="qgis",
@@ -711,17 +711,17 @@ class basinmaker:
 
         """
         from postprocessing.postprocessingfunctions import (
-            simplify_routing_structure_by_filter_lakes,
+            simplify_routing_structure_by_filter_lakes_method,
         )
         
-        simplify_routing_structure_by_filter_lakes(
+        simplify_routing_structure_by_filter_lakes_method(
             Path_final_riv_ply=Path_final_riv_ply,
             Path_final_riv=Path_final_riv,
             Path_Con_Lake_ply=Path_Con_Lake_ply,
             Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,
+            Routing_Product_Folder = Routing_Product_Folder,
             Thres_Area_Conn_Lakes=Thres_Area_Conn_Lakes,
             Thres_Area_Non_Conn_Lakes=Thres_Area_Non_Conn_Lakes,
-            Selection_Method=Selection_Method,
             Selected_Lake_List_in=Selected_Lake_List_in,
             OutputFolder=OutputFolder,
             qgis_prefix_path=self.qgispp,

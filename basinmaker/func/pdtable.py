@@ -1522,7 +1522,6 @@ def Return_Selected_Lakes_Attribute_Table_And_Id(
     finalcat_info,
     Thres_Area_Conn_Lakes,
     Thres_Area_Non_Conn_Lakes,
-    Selection_Method,
     Selected_Lake_List_in,
 ):
     """Retrun selected lake's attribute table and ID
@@ -1542,68 +1541,57 @@ def Return_Selected_Lakes_Attribute_Table_And_Id(
     Non_ConnL_info = finalcat_info.loc[finalcat_info["Lake_Cat"] == 2].copy(deep=True)
     ConnL_info = finalcat_info.loc[finalcat_info["Lake_Cat"] == 1].copy(deep=True)
 
-    if Selection_Method == "ByArea":
-        ### process connected lakes first
-        Selected_ConnLakes = ConnL_info.loc[
-            (ConnL_info["Has_Gauge"] > 0)
-            | (ConnL_info["LakeArea"] >= Thres_Area_Conn_Lakes)
-        ]["HyLakeId"].values
-        
-        Selected_ConnLakes = Selected_ConnLakes[Selected_ConnLakes > 0]
-        Selected_ConnLakes = np.unique(Selected_ConnLakes)
-        
-        Un_Selected_ConnLakes_info = ConnL_info.loc[
-            ~ConnL_info["HyLakeId"].isin(Selected_ConnLakes)
-        ]
-        
-        ### process non connected selected lakes
-        if Thres_Area_Non_Conn_Lakes >= 0:
-            Selected_Non_ConnLakes = Non_ConnL_info[
-                (Non_ConnL_info["LakeArea"] >= Thres_Area_Non_Conn_Lakes) | 
-                (Non_ConnL_info["Has_Gauge"] > 0)
-            ]["HyLakeId"].values
-            Selected_Non_ConnLakes = Selected_Non_ConnLakes[Selected_Non_ConnLakes > 0]
-            Selected_Non_ConnLakes = np.unique(Selected_Non_ConnLakes)
-            
-            Un_Selected_Non_ConnL_info = Non_ConnL_info[
-                ~Non_ConnL_info["HyLakeId"].isin(Selected_Non_ConnLakes)
-            ]
-        else:
-            Selected_Non_ConnLakes = Non_ConnL_info[
-                (Non_ConnL_info["LakeArea"] >= 99999999999) | 
-                (Non_ConnL_info["Has_Gauge"] > 0)
-            ]["HyLakeId"].values
-            Selected_Non_ConnLakes = Selected_Non_ConnLakes[Selected_Non_ConnLakes > 0]
-            Selected_Non_ConnLakes = np.unique(Selected_Non_ConnLakes)
-            
-            Un_Selected_Non_ConnL_info = Non_ConnL_info[
-                ~Non_ConnL_info["HyLakeId"].isin(Selected_Non_ConnLakes)
-            ]
-
-    elif Selection_Method == "ByLakelist":
-        All_ConnL = ConnL_info["HyLakeId"].values
-        All_Non_ConnL = Non_ConnL_info["HyLakeId"].values
-        Selected_Lake_List_in_array = np.array(Selected_Lake_List_in)
-
-        mask_CL = np.in1d(All_ConnL, Selected_Lake_List_in_array)
-        mask_NCL = np.in1d(All_Non_ConnL, Selected_Lake_List_in_array)
-
-        Selected_ConnLakes = All_ConnL[mask_CL]
-        Selected_ConnLakes = np.unique(Selected_ConnLakes)
-        Selected_Non_ConnLakes = All_Non_ConnL[mask_NCL]
-        Selected_Non_ConnLakes = np.unique(Selected_Non_ConnLakes)
-
-        Un_Selected_ConnLakes_info = finalcat_info.loc[
-            (finalcat_info["Lake_Cat"] == 1)
-            & (np.logical_not(finalcat_info["HyLakeId"].isin(Selected_ConnLakes)))
-        ]
-        Un_Selected_Non_ConnL_info = finalcat_info.loc[
-            (finalcat_info["Lake_Cat"] == 2)
-            & (np.logical_not(finalcat_info["HyLakeId"].isin(Selected_Non_ConnLakes)))
-        ]
-
+    # first obtain selected lakes based on lake area         
+    ### process connected lakes first
+    Selected_ConnLakes = ConnL_info.loc[
+        (ConnL_info["Has_Gauge"] > 0)
+        | (ConnL_info["LakeArea"] >= Thres_Area_Conn_Lakes)
+    ]["HyLakeId"].values
+    
+    Selected_ConnLakes = Selected_ConnLakes[Selected_ConnLakes > 0]
+    Selected_ConnLakes = np.unique(Selected_ConnLakes)
+    
+    
+    ### process non connected selected lakes
+    Selected_Non_ConnLakes = Non_ConnL_info[
+        (Non_ConnL_info["LakeArea"] >= Thres_Area_Non_Conn_Lakes) | 
+        (Non_ConnL_info["Has_Gauge"] > 0)
+    ]["HyLakeId"].values
+    Selected_Non_ConnLakes = Selected_Non_ConnLakes[Selected_Non_ConnLakes > 0]
+    Selected_Non_ConnLakes = np.unique(Selected_Non_ConnLakes)
+    
+    
+    # selecte lake by list 
+    if len(Selected_Lake_List_in) > 0:
+        Selected_Lake_List = Selected_Lake_List_in
     else:
-        print(todo)
+        # invalide lake id, no lake will be selected by list 
+        Selected_Lake_List  = [-9999999]
+    All_ConnL = ConnL_info["HyLakeId"].values
+    All_Non_ConnL = Non_ConnL_info["HyLakeId"].values
+    Selected_Lake_List_in_array = np.array(Selected_Lake_List)
+
+    mask_CL = np.in1d(All_ConnL, Selected_Lake_List_in_array)
+    mask_NCL = np.in1d(All_Non_ConnL, Selected_Lake_List_in_array)
+
+    Selected_ConnLakes_List = All_ConnL[mask_CL]
+    Selected_ConnLakes_List = np.unique(Selected_ConnLakes_List)
+    Selected_Non_ConnLakes_List = All_Non_ConnL[mask_NCL]
+    Selected_Non_ConnLakes_List = np.unique(Selected_Non_ConnLakes_List)
+
+    # combine lake from list and area 
+    Selected_Non_ConnLakes = np.concatenate((Selected_Non_ConnLakes, Selected_Non_ConnLakes_List), axis=0)
+    Selected_ConnLakes = np.concatenate((Selected_ConnLakes, Selected_ConnLakes_List), axis=0)
+
+    Un_Selected_ConnLakes_info = finalcat_info.loc[
+        (finalcat_info["Lake_Cat"] == 1)
+        & (np.logical_not(finalcat_info["HyLakeId"].isin(Selected_ConnLakes)))
+    ]
+    Un_Selected_Non_ConnL_info = finalcat_info.loc[
+        (finalcat_info["Lake_Cat"] == 2)
+        & (np.logical_not(finalcat_info["HyLakeId"].isin(Selected_Non_ConnLakes)))
+    ]
+        
     return (
         Selected_Non_ConnLakes,
         Selected_ConnLakes,

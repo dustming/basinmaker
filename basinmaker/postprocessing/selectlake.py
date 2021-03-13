@@ -4,18 +4,14 @@ from func.rarray import *
 from utilities.utilities import *
 import pandas as pd
 import numpy as np
-
+import shutil
 import tempfile
 
 
 def simplify_routing_structure_by_filter_lakes_qgis(
-    Path_final_riv_ply="#",
-    Path_final_riv="#",
-    Path_Con_Lake_ply="#",
-    Path_NonCon_Lake_ply="#",
+    Routing_Product_Folder = '#',
     Thres_Area_Conn_Lakes=-1,
     Thres_Area_Non_Conn_Lakes=-1,
-    Selection_Method="ByArea",
     Selected_Lake_List_in=[],
     OutputFolder="#",
     qgis_prefix_path="#",
@@ -102,6 +98,7 @@ def simplify_routing_structure_by_filter_lakes_qgis(
     context = dataobjects.createContext()
     context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
 
+    
     if not os.path.exists(OutputFolder):
         os.makedirs(OutputFolder)
 
@@ -111,6 +108,45 @@ def simplify_routing_structure_by_filter_lakes_qgis(
     )
     if not os.path.exists(tempfolder):
         os.makedirs(tempfolder)
+
+
+    Path_Catchment_Polygon="#",
+    Path_River_Polyline="#",
+    Path_Con_Lake_ply="#",
+    Path_NonCon_Lake_ply="#",
+    Path_obs_gauge_point="#",
+    Path_final_cat_ply="#",
+    Path_final_cat_riv="#",
+
+    ##define input files from routing prodcut 
+    for file in os.listdir(Routing_Product_Folder):
+        if file.endswith(".shp"):
+            if 'catchment_without_merging_lakes' in file:
+                Path_Catchment_Polygon = os.path.join(Routing_Product_Folder, file)
+            if 'river_without_merging_lakes' in file:
+                Path_River_Polyline = os.path.join(Routing_Product_Folder, file)
+            if 'sl_connected_lake' in file:
+                Path_Con_Lake_ply = os.path.join(Routing_Product_Folder, file)
+            if 'sl_non_connected_lake' in file:
+                Path_NonCon_Lake_ply = os.path.join(Routing_Product_Folder, file)
+            if 'obs_gauges' in file:
+                Path_obs_gauge_point = os.path.join(Routing_Product_Folder, file)
+            if 'finalcat_info' in file:
+                Path_final_cat_ply = os.path.join(Routing_Product_Folder, file)
+            if 'finalcat_info_riv' in file:
+                Path_final_cat_riv = os.path.join(Routing_Product_Folder, file)                
+
+    if Path_Catchment_Polygon == '#' or  Path_River_Polyline =='#':
+        print("Invalid routing product folder ")
+
+    Path_final_riv_ply = Path_Catchment_Polygon
+    Path_final_riv = Path_River_Polyline
+    
+    ## copy obs_gauges to output folder 
+    for file in os.listdir(Routing_Product_Folder):
+        if 'obs_gauges' in file:
+            shutil.copy(os.path.join(Routing_Product_Folder, file), os.path.join(OutputFolder, file))
+
 
     ### read attribute table
     finalcat_info = Dbf_To_Dataframe(Path_final_riv_ply)
@@ -126,7 +162,6 @@ def simplify_routing_structure_by_filter_lakes_qgis(
         finalcat_info,
         Thres_Area_Conn_Lakes*1000*1000,
         Thres_Area_Non_Conn_Lakes*1000*1000,
-        Selection_Method,
         Selected_Lake_List_in,
     )
 
@@ -147,8 +182,6 @@ def simplify_routing_structure_by_filter_lakes_qgis(
             Attri_NM="Hylak_id",
             Values=Selected_ConnLakes,
         )
-
-    print(" Obtain selected Lake IDs done")
 
     ### create a copy of shapfiles in temp folder
     Path_Temp_final_rviply = os.path.join(
