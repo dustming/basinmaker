@@ -134,7 +134,7 @@ def simplify_routing_structure_by_drainage_area(
 
 
 
-def select_part_of_routing_product(
+def select_part_of_routing_product_method(
     Path_Points,
     Gauge_NMS,
     OutputFolder,
@@ -145,6 +145,7 @@ def select_part_of_routing_product(
     Path_Con_Lake_ply="#",
     Path_NonCon_Lake_ply="#",
     qgis_prefix_path="#",
+    Routing_Product_Folder = '#',
     gis_platform="qgis",
 ):
 
@@ -180,12 +181,13 @@ def select_part_of_routing_product(
         else:
             Select_Routing_product_based_SubId_qgis(
                 OutputFolder=OutputFolder,
-                Path_Catchment_Polygon=Path_Catchment_Polygon,
-                Path_River_Polyline=Path_River_Polyline,
-                Path_Con_Lake_ply=Path_Con_Lake_ply,
-                Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,
+                # Path_Catchment_Polygon=Path_Catchment_Polygon,
+                # Path_River_Polyline=Path_River_Polyline,
+                # Path_Con_Lake_ply=Path_Con_Lake_ply,
+                # Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,
                 mostdownid=mostdownid,
                 mostupstreamid=mostupid,
+                Routing_Product_Folder = Routing_Product_Folder,
                 qgis_prefix_path=qgis_prefix_path,
             )
         

@@ -811,7 +811,7 @@ class basinmaker:
             qgis_prefix_path=self.qgispp,
         )
 
-    def select_part_of_routing_product_methods(
+    def select_part_of_routing_product(
         self,
         Path_Points="#",
         Gauge_NMS="#",
@@ -823,6 +823,7 @@ class basinmaker:
         Path_Con_Lake_ply="#",
         Path_NonCon_Lake_ply="#",
         qgis_prefix_path="#",
+        Routing_Product_Folder = '#',
         gis_platform="qgis",
     ):
         """Extract region of interest based on provided pourpoints or gauge name
@@ -871,9 +872,9 @@ class basinmaker:
 
         """
         from postprocessing.postprocessingfunctions import (
-            select_part_of_routing_product,
+            select_part_of_routing_product_method,
         )
-        select_part_of_routing_product(
+        select_part_of_routing_product_method(
             Path_Points=Path_Points,
             Gauge_NMS=Gauge_NMS,
             OutputFolder=OutputFolder,
@@ -884,6 +885,7 @@ class basinmaker:
             Path_Con_Lake_ply=Path_Con_Lake_ply,
             Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,
             qgis_prefix_path=qgis_prefix_path,
+            Routing_Product_Folder = Routing_Product_Folder,
             gis_platform=gis_platform,
         )
 

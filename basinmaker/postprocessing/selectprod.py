@@ -118,12 +118,13 @@ def Locate_subid_needsbyuser_qgis(
 
 def Select_Routing_product_based_SubId_qgis(
     OutputFolder,
-    Path_Catchment_Polygon="#",
-    Path_River_Polyline="#",
-    Path_Con_Lake_ply="#",
-    Path_NonCon_Lake_ply="#",
+    # Path_Catchment_Polygon="#",
+    # Path_River_Polyline="#",
+    # Path_Con_Lake_ply="#",
+    # Path_NonCon_Lake_ply="#",
     mostdownid=-1,
     mostupstreamid=-1,
+    Routing_Product_Folder = '#',
     qgis_prefix_path="#",
 ):
     """Extract region of interest based on provided Subid
@@ -193,6 +194,36 @@ def Select_Routing_product_based_SubId_qgis(
     Processing.initialize()
     QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
 
+
+    Path_Catchment_Polygon="#",
+    Path_River_Polyline="#",
+    Path_Con_Lake_ply="#",
+    Path_NonCon_Lake_ply="#",
+    Path_obs_gauge_point="#",
+    Path_final_cat_ply="#",
+    Path_final_cat_riv="#",
+
+    ##define input files from routing prodcut 
+    for file in os.listdir(Routing_Product_Folder):
+        if file.endswith(".shp"):
+            if 'catchment_without_merging_lakes' in file:
+                Path_Catchment_Polygon = os.path.join(Routing_Product_Folder, file)
+            if 'river_without_merging_lakes' in file:
+                Path_River_Polyline = os.path.join(Routing_Product_Folder, file)
+            if 'sl_connected_lake' in file:
+                Path_Con_Lake_ply = os.path.join(Routing_Product_Folder, file)
+            if 'sl_non_connected_lake' in file:
+                Path_NonCon_Lake_ply = os.path.join(Routing_Product_Folder, file)
+            if 'obs_gauges' in file:
+                Path_obs_gauge_point = os.path.join(Routing_Product_Folder, file)
+            if 'finalcat_info' in file:
+                Path_final_cat_ply = os.path.join(Routing_Product_Folder, file)
+            if 'finalcat_info_riv' in file:
+                Path_final_cat_riv = os.path.join(Routing_Product_Folder, file)                
+
+    if Path_Catchment_Polygon == '#' or  Path_River_Polyline =='#':
+        print("Invalid routing product folder ")
+    
     sub_colnm = "SubId"
     down_colnm = "DowSubId"
     ##3
@@ -201,24 +232,31 @@ def Select_Routing_product_based_SubId_qgis(
     )
     hyshdinfo = hyshdinfo2[[sub_colnm, down_colnm]].astype("int32").values
 
-    ### Loop for each downstream id
-    OutHyID = mostdownid
-    OutHyID2 = mostupstreamid
 
     if not os.path.exists(OutputFolder):
         os.makedirs(OutputFolder)
+        
+    for i_down in range(0,len(mostdownid)):
+        ### Loop for each downstream id
+        OutHyID = mostdownid[i_down]
+        OutHyID2 = mostupstreamid[i_down]
+            
+        ## find all subid control by this subid
+        HydroBasins1 = defcat(hyshdinfo, OutHyID)
+        if OutHyID2 > 0:
+            HydroBasins2 = defcat(hyshdinfo, OutHyID2)
+            ###  exculde the Ids in HydroBasins2 from HydroBasins1
+            for i in range(len(HydroBasins2)):
+                rows = np.argwhere(HydroBasins1 == HydroBasins2[i])
+                HydroBasins1 = np.delete(HydroBasins1, rows)
+            HydroBasins = HydroBasins1
+        else:
+            HydroBasins = HydroBasins1
 
-    ## find all subid control by this subid
-    HydroBasins1 = defcat(hyshdinfo, OutHyID)
-    if OutHyID2 > 0:
-        HydroBasins2 = defcat(hyshdinfo, OutHyID2)
-        ###  exculde the Ids in HydroBasins2 from HydroBasins1
-        for i in range(len(HydroBasins2)):
-            rows = np.argwhere(HydroBasins1 == HydroBasins2[i])
-            HydroBasins1 = np.delete(HydroBasins1, rows)
-        HydroBasins = HydroBasins1
-    else:
-        HydroBasins = HydroBasins1
+        if i_down == 0:
+            HydroBasins_All = HydroBasins
+        else:
+            HydroBasins_All = np.concatenate((HydroBasins_All, HydroBasins), axis=0)
 
     Outputfilename_cat = os.path.join(
         OutputFolder, os.path.basename(Path_Catchment_Polygon)
@@ -228,7 +266,7 @@ def Select_Routing_product_based_SubId_qgis(
         Input=Path_Catchment_Polygon,
         Output=Outputfilename_cat,
         Attri_NM="SubId",
-        Values=HydroBasins,
+        Values=HydroBasins_All,
     )
     if Path_River_Polyline != "#":
         Outputfilename_cat_riv = os.path.join(
@@ -239,7 +277,7 @@ def Select_Routing_product_based_SubId_qgis(
             Input=Path_River_Polyline,
             Output=Outputfilename_cat_riv,
             Attri_NM="SubId",
-            Values=HydroBasins,
+            Values=HydroBasins_All,
         )
 
     finalcat_csv = Outputfilename_cat[:-3] + "dbf"
@@ -255,6 +293,7 @@ def Select_Routing_product_based_SubId_qgis(
     NConnect_Lake_info = finalcat_info.loc[finalcat_info["Lake_Cat"] == 2]
     NonCL_Lakeids = np.unique(NConnect_Lake_info["HyLakeId"].values)
     NonCL_Lakeids = NonCL_Lakeids[NonCL_Lakeids > 0]
+
 
     if len(Connect_Lakeids) > 0 and Path_Con_Lake_ply != "#":
         Selectfeatureattributes(
@@ -273,4 +312,17 @@ def Select_Routing_product_based_SubId_qgis(
             Values=NonCL_Lakeids,
         )
 
+    Gauge_info = finalcat_info.loc[finalcat_info["Has_Gauge"] > 0]
+    Gauge_NMs = np.unique(Gauge_info["Obs_NM"].values)
+
+    if len(Gauge_NMs) > 0 and Path_obs_gauge_point != "#":
+        Selectfeatureattributes(
+            processing,
+            Input=Path_obs_gauge_point,
+            Output=os.path.join(OutputFolder, os.path.basename(Path_obs_gauge_point)),
+            Attri_NM="Obs_NM",
+            Values=Gauge_NMs,
+            Is_str = True,
+        )
+    
     Qgs.exit()
