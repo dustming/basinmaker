@@ -77,11 +77,7 @@ basinmaker.add_attributes_to_catchments_method(
 #############################################
 # combine catchments covered by the same lakes
 #############################################
-basinmaker.combine_catchments_covered_by_the_same_lake_method(
-    OutputFolder=path_output_folder,
-    Path_final_rivply=os.path.join(
-        path_output_folder, "catchment_without_merging_lakes.shp"
-    ),
-    Path_final_riv=os.path.join(path_output_folder, "river_without_merging_lakes.shp"),
+basinmaker.combine_catchments_covered_by_the_same_lake(
+    Routing_Product_Folder=path_output_folder,
     gis_platform="qgis",
 )
