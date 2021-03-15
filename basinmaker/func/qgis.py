@@ -1112,10 +1112,10 @@ def Clean_Attribute_Name(
         return max_subbasin_id
 
 def change_neg_value_to_null_in_attribute_table(processing,Path_input_Layer,Path_output_layer):
-    
+        
     col_Name = 'Obs_NM'
     formular = 'CASE \r\n  WHEN \"%s\" =-9999 THEN NULL\r\n  ELSE \"%s\"\r\nEND' %(col_Name,col_Name)
-    memout1 = processing.run("native:fieldcalculator", {
+    memout1 = processing.run("qgis:fieldcalculator", {
                    'INPUT':Path_input_Layer,
                    'FIELD_NAME':col_Name,
                    'FIELD_TYPE':2,
@@ -1127,7 +1127,7 @@ def change_neg_value_to_null_in_attribute_table(processing,Path_input_Layer,Path
 
     col_Name = 'SRC_obs'
     formular = 'CASE \r\n  WHEN \"%s\" =-9999 THEN NULL\r\n  ELSE \"%s\"\r\nEND' %(col_Name,col_Name)
-    memout1 = processing.run("native:fieldcalculator", {
+    memout1 = processing.run("qgis:fieldcalculator", {
                    'INPUT':memout1,
                    'FIELD_NAME':col_Name,
                    'FIELD_TYPE':2,
