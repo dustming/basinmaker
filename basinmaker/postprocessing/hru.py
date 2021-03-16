@@ -309,7 +309,6 @@ def GenerateHRUS_qgis(
 
     fieldnames = set(fieldnames_list)
 
-    print("begin union")
     #### uniion polygons in the Merge_layer_list
     mem_union = Union_Ply_Layers_And_Simplify(
         processing,

@@ -202,7 +202,7 @@ def select_part_of_routing_product_method(
     return
 
 
-def generate_hrus(
+def generate_hrus_method(
     Path_Subbasin_Ply,
     Landuse_info,
     Soil_info,

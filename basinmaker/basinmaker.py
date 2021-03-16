@@ -891,7 +891,7 @@ class basinmaker:
             gis_platform=gis_platform,
         )
 
-    def generate_hrus_methods(
+    def generate_hrus(
         self,
         Path_Subbasin_Ply,
         Landuse_info,
@@ -1075,10 +1075,10 @@ class basinmaker:
 
         """
         from postprocessing.postprocessingfunctions import (
-            generate_hrus,
+            generate_hrus_method,
         )
 
-        generate_hrus(
+        generate_hrus_method(
             Path_Subbasin_Ply=Path_Subbasin_Ply,
             Landuse_info=Landuse_info,
             Soil_info=Soil_info,
@@ -1181,7 +1181,7 @@ class basinmaker:
             start_sub_id = start_sub_id,
         )
 
-    def generate_raven_model_inputs_method(
+    def generate_raven_model_inputs(
         self,
         path_final_hru_info="#",
         startyear=-1,
