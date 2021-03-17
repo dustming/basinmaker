@@ -1295,7 +1295,7 @@ def Generate_Raven_Channel_rvp_rvh_String(
         catid = int(catinfo_sub["SubId"].values[i])
         downcatid = int(catinfo_sub["DowSubId"].values[i])
         temp = catinfo_sub["RivLength"].values[i]
-
+        
         if float(temp) > lenThres:
             catlen = float(temp) / 1000  #### in km
             strRlen = str(catlen)
@@ -1303,7 +1303,7 @@ def Generate_Raven_Channel_rvp_rvh_String(
             catlen = -9999
             strRlen = "ZERO-"
         if (
-            catinfo_sub["Lake_Cat"].values[i] >= 0
+            catinfo_sub["Lake_Cat"].values[i] > 0
         ):  # and catinfo_sub['HRU_Type'].values[i] == 1:
             strRlen = "ZERO-"
         #####################################################3
@@ -1357,7 +1357,7 @@ def Generate_Raven_Channel_rvp_rvh_String(
         if catinfo_sub["Has_Gauge"].values[i] > 0:
             Guage = "1"
         elif (
-            catinfo_sub["Lake_Cat"].values[i] >= 0 and Lake_As_Gauge == True
+            catinfo_sub["Lake_Cat"].values[i] > 0 and Lake_As_Gauge == True
         ):  # and catinfo_sub['HRU_Type'].values[i] == 1:
             Guage = "1"
         else:

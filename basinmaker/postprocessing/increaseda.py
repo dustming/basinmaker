@@ -99,13 +99,13 @@ def simplify_routing_structure_by_drainage_area_qgis(
     if not os.path.exists(tempfolder):
         os.makedirs(tempfolder)
 
-    Path_Catchment_Polygon="#",
-    Path_River_Polyline="#",
-    Path_Con_Lake_ply="#",
-    Path_NonCon_Lake_ply="#",
-    Path_obs_gauge_point="#",
-    Path_final_cat_ply="#",
-    Path_final_cat_riv="#",
+    Path_Catchment_Polygon="#"
+    Path_River_Polyline="#"
+    Path_Con_Lake_ply="#"
+    Path_NonCon_Lake_ply="#"
+    Path_obs_gauge_point="#"
+    Path_final_cat_ply="#"
+    Path_final_cat_riv="#"
 
     ##define input files from routing prodcut 
     for file in os.listdir(Routing_Product_Folder):
@@ -156,10 +156,13 @@ def simplify_routing_structure_by_drainage_area_qgis(
     finalriv_info = Dbf_To_Dataframe(Path_final_rviply).drop_duplicates(
         sub_colnm, keep="first"
     )
-    Conn_Lakes_ply = Dbf_To_Dataframe(Path_Conl_ply).drop_duplicates(
-        "Hylak_id", keep="first"
-    )
 
+    if Path_Conl_ply != '#':
+        Conn_Lakes_ply = Dbf_To_Dataframe(Path_Conl_ply).drop_duplicates(
+            "Hylak_id", keep="first"
+        )
+    else: 
+        Conn_Lakes_ply = pd.DataFrame(np.full((10,1),-9999),columns=["Hylak_id"])
     # change attribute table
     (
         mapoldnew_info,
@@ -215,33 +218,35 @@ def simplify_routing_structure_by_drainage_area_qgis(
         os.makedirs(outputfolder_subid)
 
     # export lake polygons
-
-    Selectfeatureattributes(
-        processing,
-        Input=Path_Conl_ply,
-        Output=os.path.join(outputfolder_subid, os.path.basename(Path_Conl_ply)),
-        Attri_NM="Hylak_id",
-        Values=Connected_Lake_Mainriv,
-    )
-    Selectfeatureattributes(
-        processing,
-        Input=Path_Non_ConL_ply,
-        Output=os.path.join(outputfolder_subid, os.path.basename(Path_Non_ConL_ply)),
-        Attri_NM="Hylak_id",
-        Values=Old_Non_Connect_LakeIds,
-    )
+    if Path_Conl_ply != '#':
+        Selectfeatureattributes(
+            processing,
+            Input=Path_Conl_ply,
+            Output=os.path.join(outputfolder_subid, os.path.basename(Path_Conl_ply)),
+            Attri_NM="Hylak_id",
+            Values=Connected_Lake_Mainriv,
+        )
+    if Path_Non_ConL_ply != '#':
+        Selectfeatureattributes(
+            processing,
+            Input=Path_Non_ConL_ply,
+            Output=os.path.join(outputfolder_subid, os.path.basename(Path_Non_ConL_ply)),
+            Attri_NM="Hylak_id",
+            Values=Old_Non_Connect_LakeIds,
+        )
 
     # Copy connected lakes that are transfered into non-connected
     # lake to non connected lake polygon
-    Copyfeature_to_another_shp_by_attribute(
-        Source_shp=Path_Conl_ply,
-        Target_shp=os.path.join(
-            outputfolder_subid, os.path.basename(Path_Non_ConL_ply)
-        ),
-        Col_NM="Hylak_id",
-        Values=Conn_To_NonConlakeids,
-        Attributes=Conn_Lakes_ply,
-    )
+    if len(Conn_To_NonConlakeids) > 0 and Path_Conl_ply !='#':
+        Copyfeature_to_another_shp_by_attribute(
+            Source_shp=Path_Conl_ply,
+            Target_shp=os.path.join(
+                outputfolder_subid, os.path.basename(Path_Non_ConL_ply)
+            ),
+            Col_NM="Hylak_id",
+            Values=Conn_To_NonConlakeids,
+            Attributes=Conn_Lakes_ply,
+        )
 
     # dissolve subbasin polygon based on new subbasin id
     Path_out_final_rviply = os.path.join(

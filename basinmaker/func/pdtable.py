@@ -1383,12 +1383,13 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
         )
 
         ####################3 for rest of the polygons dissolve to main river
+    
     for iseg in range(0, len(Seg_IDS)):
         #            print('#########################################################################################33333')
         i_seg_id = Seg_IDS[iseg]
         i_seg_info = Selected_riv.loc[Selected_riv["Seg_ID"] == i_seg_id].copy()
         i_seg_info = i_seg_info.sort_values(["Seg_order"], ascending=(True))
-
+        sum_area = 0
         modifysubids = []
         seg_order = 1
         for iorder in range(0, len(i_seg_info)):
@@ -1398,9 +1399,10 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
             processed_subid = np.unique(
                 mapoldnew_info.loc[mapoldnew_info["nsubid"] > 0][sub_colnm].values
             )
-
+            sum_area = sum_area + i_seg_info["BasArea"].values[iorder]
             ### two seg has the same HyLakeId id, can be merged
             if iorder == len(i_seg_info) - 1:
+                sum_area = 0
                 seg_sub_ids = np.asarray(modifysubids)
                 ## if needs to add lake sub around the main stream
                 if iorder_Lakeid > 0:
@@ -1454,9 +1456,11 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
                 i_seg_info["HyLakeId"].values[iorder]
                 == i_seg_info["HyLakeId"].values[iorder + 1]
                 and i_seg_info["Has_Gauge"].values[iorder] <= 0
+                and sum_area < Area_Min * 1000 * 1000
             ):
                 continue
             else:
+                sum_area = 0
                 seg_sub_ids = np.asarray(modifysubids)
                 ## if needs to add lake sub around the main stream
                 if iorder_Lakeid > 0:

@@ -422,7 +422,7 @@ def GenerateHRUS_qgis(
         context=context,
         INPUT=HRU_draf_final,
         FIELD_NAME="HRU_ID",
-        FORMULA=" @row_number",
+        FORMULA=" @row_number + 1",
         FIELD_PRECISION=0,
         NEW_FIELD=False,
         OUTPUT=output_hru_shp,
