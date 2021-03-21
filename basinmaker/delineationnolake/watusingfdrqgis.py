@@ -21,7 +21,8 @@ def delineate_watershed_no_lake_using_fdr(
     max_memroy,
 ):
     mask = input_geo_names["mask"]
-
+    dem = input_geo_names["dem"]
+    
     import grass.script as grass
     import grass.script.setup as gsetup
     from grass.pygrass.modules import Module
@@ -38,7 +39,7 @@ def delineate_watershed_no_lake_using_fdr(
     PERMANENT.open(gisdb=grassdb, location=grass_location, create_opts="")
 
     write_grass_and_arcgis_fdr_rules(grassdb)
-
+    print("using fder dataset     ")
     grass_raster_r_in_gdal(grass, raster_path=fdr_path, output_nm="fdr_arcgis_temp")
     # reclassify it into grass flow direction data
     grass_raster_r_reclass(
