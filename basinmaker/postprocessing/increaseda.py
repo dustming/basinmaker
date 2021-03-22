@@ -237,17 +237,28 @@ def simplify_routing_structure_by_drainage_area_qgis(
 
     # Copy connected lakes that are transfered into non-connected
     # lake to non connected lake polygon
+    print(Conn_To_NonConlakeids)
+    print(Path_Conl_ply)
     if len(Conn_To_NonConlakeids) > 0 and Path_Conl_ply !='#':
-        Copyfeature_to_another_shp_by_attribute(
-            Source_shp=Path_Conl_ply,
-            Target_shp=os.path.join(
-                outputfolder_subid, os.path.basename(Path_Non_ConL_ply)
-            ),
-            Col_NM="Hylak_id",
-            Values=Conn_To_NonConlakeids,
-            Attributes=Conn_Lakes_ply,
-        )
-
+        if Path_Non_ConL_ply != '#':
+            Copyfeature_to_another_shp_by_attribute(
+                Source_shp=Path_Conl_ply,
+                Target_shp=os.path.join(
+                    outputfolder_subid, os.path.basename(Path_Non_ConL_ply)
+                ),
+                Col_NM="Hylak_id",
+                Values=Conn_To_NonConlakeids,
+                Attributes=Conn_Lakes_ply,
+            )
+        else:
+            Selectfeatureattributes(
+                processing,
+                Input=Path_Conl_ply,
+                Output=os.path.join(outputfolder_subid, 'sl_non_connected_lake' + os.path.basename(Path_Conl_ply).split('_')[3]),
+                Attri_NM="Hylak_id",
+                Values=Conn_To_NonConlakeids,
+            )
+                    
     # dissolve subbasin polygon based on new subbasin id
     Path_out_final_rviply = os.path.join(
         outputfolder_subid, os.path.basename(Path_final_riv_ply)
