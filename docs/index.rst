@@ -5,12 +5,19 @@ Welcome to BasinMaker and Routing product's documentation!
    :maxdepth: 1
    :caption: Contents:
 
+   
 .. toctree::
-   :maxdepth: 1
-   :caption: Post processing tools
+   :maxdepth: 2
+   :caption: BasinMaker
   
-   post_processing_tools
-      
+   basinmaker 
+
+.. toctree::
+  :maxdepth: 2
+  :caption: Routing Product
+   
+  routing_product
+  
 Credits
 =======
 

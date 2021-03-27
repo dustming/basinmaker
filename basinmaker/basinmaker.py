@@ -536,7 +536,7 @@ class postproc:
         )
 
 
-class genroutingprod:
+class basinmaker:
 
     """
     QGIS/GRASSToolsets to delelineate lake river routing structure
