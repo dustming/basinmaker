@@ -50,7 +50,7 @@ def delineate_watershed_no_lake_using_fdr(
     )
     # calcuate flow accumulation from provided dir
     grass_raster_r_accumulate(
-        grass, direction="fdr_grass_temp", accumulation=acc, flags="r"
+        grass, direction="fdr_grass_temp", accumulation=acc
     )
 
     grass_raster_r_stream_extract(

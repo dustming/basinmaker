@@ -110,14 +110,13 @@ def simplify_routing_structure_by_filter_lakes_qgis(
         os.makedirs(tempfolder)
 
 
-    Path_Catchment_Polygon="#",
-    Path_River_Polyline="#",
-    Path_Con_Lake_ply="#",
-    Path_NonCon_Lake_ply="#",
-    Path_obs_gauge_point="#",
-    Path_final_cat_ply="#",
-    Path_final_cat_riv="#",
-
+    Path_Catchment_Polygon="#"
+    Path_River_Polyline="#"
+    Path_Con_Lake_ply="#"
+    Path_NonCon_Lake_ply="#"
+    Path_obs_gauge_point="#"
+    Path_final_cat_ply="#"
+    Path_final_cat_riv="#"
     ##define input files from routing prodcut 
     for file in os.listdir(Routing_Product_Folder):
         if file.endswith(".shp"):
@@ -147,7 +146,7 @@ def simplify_routing_structure_by_filter_lakes_qgis(
         if 'obs_gauges' in file:
             shutil.copy(os.path.join(Routing_Product_Folder, file), os.path.join(OutputFolder, file))
 
-
+    
     ### read attribute table
     finalcat_info = Dbf_To_Dataframe(Path_final_riv_ply)
     finalcat_info = finalcat_info.fillna(-9999)

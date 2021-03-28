@@ -155,7 +155,7 @@ def grass_raster_r_stream_basins(grass, direction, stream, basins, memory):
 ###
 
 
-def grass_raster_r_accumulate(grass, direction, accumulation, flags):
+def grass_raster_r_accumulate(grass, direction, accumulation):
     """calculate flow accumulation from flow direction dataset
     Parameters
     ----------
@@ -168,7 +168,6 @@ def grass_raster_r_accumulate(grass, direction, accumulation, flags):
         "r.accumulate",
         direction=direction,
         accumulation=accumulation,
-        flags=flags,
         overwrite=True,
     )
 
