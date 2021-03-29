@@ -691,7 +691,7 @@ def Connect_SubRegion_Update_DownSubId(AllCatinfo, DownCatinfo, Sub_Region_info)
     return AllCatinfo, Sub_Region_info
 
 
-def Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info):
+def Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info,k,c):
     """Update Drainage area, strahler order of subbains
 
     Update drainage area and strahler order for combined routing product
@@ -716,6 +716,8 @@ def Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info):
         Downstream DA and strahler order of each subregion along the flow
         pathway between subregions will be updated.
     """
+    min_manning_n = 0.01
+    max_manning_n = 0.15    
     ### start from head subregions with no upstream subregion
     Subregion_list = Sub_Region_info[Sub_Region_info["N_Up_SubRegion"] == 1][
         "Sub_Reg_ID"
@@ -773,7 +775,6 @@ def Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info):
         for i in range(0, len(current_loop_list)):
             ### current subregion id
             c_subr_id = current_loop_list[i]
-
             ### down subregion id of current subregion
             if c_subr_id == 79999:
                 continue
@@ -812,7 +813,9 @@ def Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info):
             downsub_reg_id = AllCatinfo.loc[AllCatinfo["SubId"] == downsubid][
                 "Region_ID"
             ].values[0]
-
+            
+            print("Subregion:   ", c_subr_id,downsub_reg_id,d_subr_id,downsubid)
+            
             if downsub_reg_id != d_subr_id:
                 print(
                     "Subregion:   ",
@@ -824,7 +827,7 @@ def Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info):
 
             while downsub_reg_id == d_subr_id:
                 csubid = downsubid  ### update DA and Strahler for this subbasin
-
+                print("Subregion:   ", c_subr_id,downsub_reg_id,d_subr_id,downsubid,csubid)
                 ### current subid info
                 C_sub_info = AllCatinfo.loc[AllCatinfo["SubId"] == csubid].copy()
                 ### find all subbasin drainge to this csubid
@@ -854,6 +857,24 @@ def Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info):
                     if da_obs > 0:
                         AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "DA_error"] = da_sim/da_obs
                         AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "Use_region"] = 1
+
+                da = AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "DrainArea"].values[0] / 1000 / 1000  # m2 to km2                
+                q = func_Q_DA(da, k, c)
+                bk_w= 7.2 * q ** 0.5
+                bk_d = 0.27 * q ** 0.3
+                bk_q = q
+                bk_slope = AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "RivSlope"].values[0]
+                n_rch = calculateChannaln(bk_w, bk_d, bk_q, bk_slope)
+                if n_rch < min_manning_n:
+                    n_rch = 0.01
+                if n_rch > max_manning_n:
+                    nrch = max_manning_n          
+                AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "BkfWidth"] = 7.2 * q ** 0.5
+                AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "BkfDepth"] = 0.27 * q ** 0.3
+                AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "Q_Mean"] = q
+                AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "Ch_n"] = n_rch
+
+
 
                 ####find next downsubbasin id
                 downsubid = C_sub_info["DowSubId"].values[0]

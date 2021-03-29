@@ -1,6 +1,6 @@
 
 .. toctree::
-   :caption: installation 
+   :caption: Installation 
   
    installation.rst
    
@@ -10,7 +10,7 @@
    basinmaker_examples.rst
       
 .. toctree::
-   :caption: basinmaker_tools
+   :caption: Basinmaker_tools
   
    basinmaker_tools.rst
    

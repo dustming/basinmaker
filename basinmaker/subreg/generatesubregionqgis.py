@@ -614,6 +614,8 @@ def Combine_Sub_Region_Results(
     qgis_prefix_path,
     subregion_inlet,
     start_sub_id = 0,
+    k = 1,
+    c = 1,
 ):
     """Combine subregion watershed delineation results
 
@@ -717,7 +719,7 @@ def Combine_Sub_Region_Results(
         isubregion = Sub_Region_info["Sub_Reg_ID"].values[i]
         ProjectNM = Sub_Region_info["ProjectNM"].values[i]
         SubFolder = os.path.join(Sub_Region_OutputFolder, ProjectNM)
-
+    
         ### define path of the output file in this sub region
         Path_Finalcat_ply = os.path.join(SubFolder, "finalcat_info.shp")
         Path_Finalcat_line = os.path.join(SubFolder, "finalcat_info_riv.shp")
@@ -728,9 +730,9 @@ def Combine_Sub_Region_Results(
         Path_Con_Lake_ply = os.path.join(SubFolder, "sl_connected_lake.shp")
         Path_None_Con_Lake_ply = os.path.join(SubFolder, "sl_non_connected_lake.shp")
         Path_obs_point = os.path.join(SubFolder, "obs_gauges.shp")
-
-
-
+    
+    
+    
         ### For each subregion, add new subid to each polygon files,
         ### and append result file in the merge list
         if Is_Final_Result == True:
@@ -747,7 +749,7 @@ def Combine_Sub_Region_Results(
             SubID_info = SubID_info.reset_index()
             SubID_info["nSubId"] = SubID_info.index + subid_strat_iregion + start_sub_id
             SubID_info["nSeg_ID"] = SubID_info["Seg_ID"] + seg_id_strat_iregion+ start_sub_id
-
+    
             layer_cat = QgsVectorLayer(Path_Finalcat_ply, "")
             Add_New_SubId_To_Subregion_shpfile(
                 processing,
@@ -767,7 +769,7 @@ def Combine_Sub_Region_Results(
                 )
             )
             del layer_cat
-
+    
             layer_cat = QgsVectorLayer(Path_Finalcat_line, "")
             Add_New_SubId_To_Subregion_shpfile(
                 processing,
@@ -787,7 +789,7 @@ def Combine_Sub_Region_Results(
                 )
             )
             del layer_cat
-
+    
         else:
             if os.path.exists(Path_Finalriv_ply) != 1:
                 continue
@@ -820,7 +822,7 @@ def Combine_Sub_Region_Results(
                 )
             )
             del layer_cat
-
+    
             layer_cat = QgsVectorLayer(Path_Finalriv_line, "")
             Add_New_SubId_To_Subregion_shpfile(
                 processing,
@@ -840,7 +842,7 @@ def Combine_Sub_Region_Results(
                 )
             )
             del layer_cat
-
+    
         if os.path.exists(Path_Con_Lake_ply) == 1 and os.stat(Path_Con_Lake_ply).st_size > 100:
             Paths_Con_Lake_ply.append(Path_Con_Lake_ply)
         if os.path.exists(Path_None_Con_Lake_ply) == 1 and os.stat(Path_None_Con_Lake_ply).st_size > 100:
@@ -849,7 +851,7 @@ def Combine_Sub_Region_Results(
             print(os.stat(Path_obs_point).st_size)
             print(isubregion)
             Paths_obs_point.append(Path_obs_point)
-            
+    
         print(
             "Subregion ID is ",
             isubregion,
@@ -858,7 +860,7 @@ def Combine_Sub_Region_Results(
             " The end of subid is ",
             max(SubID_info["nSubId"]),
         )
-
+    
         subid_strat_iregion = max(SubID_info["nSubId"]) + 10 - start_sub_id
         seg_id_strat_iregion = max(SubID_info["nSeg_ID"]) + 10 - start_sub_id
     
@@ -871,7 +873,7 @@ def Combine_Sub_Region_Results(
             INPUT_Layer_List=Paths_Con_Lake_ply,
             OUTPUT=os.path.join(OutputFolder, "sl_connected_lake.shp"),
         )
-
+    
     # merge non connected lake polygon
     if len(Paths_None_Con_Lake_ply) > 0 and not os.path.exists(os.path.join(OutputFolder, "sl_non_connected_lake.shp")):
         qgis_vector_merge_vector_layers(
@@ -880,7 +882,7 @@ def Combine_Sub_Region_Results(
             INPUT_Layer_List=Paths_None_Con_Lake_ply,
             OUTPUT=os.path.join(OutputFolder, "sl_non_connected_lake.shp"),
         )
-
+    
     # merge observation points
     if len(Paths_obs_point) > 0 and not os.path.exists(os.path.join(OutputFolder, "obs_gauges.shp")):
         qgis_vector_merge_vector_layers(
@@ -938,7 +940,7 @@ def Combine_Sub_Region_Results(
         AllCatinfo, Sub_Region_info = Connect_SubRegion_Update_DownSubId(
             AllCatinfo, DownCatinfo, Sub_Region_info
         )
-        AllCatinfo = Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info)
+        AllCatinfo = Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info,k,c)
         
         AllCatinfo['Use_region'] = 0
         Obs_names = AllCatinfo['Obs_NM'].copy(deep=True)
@@ -1038,7 +1040,7 @@ def Combine_Sub_Region_Results(
             AllCatinfo, DownCatinfo, Sub_Region_info
         )
         AllCatinfo['Use_region'] = 0
-        AllCatinfo = Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info)
+        AllCatinfo = Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info,k,c)
         Obs_names = AllCatinfo['Obs_NM'].copy(deep=True)
         Obs_names = Obs_names.fillna('nan')
         Obs_names = Obs_names.astype('string')
@@ -1079,8 +1081,6 @@ def Combine_Sub_Region_Results(
         COLUMN_NAMES_CONSTANT_Local = COLUMN_NAMES_CONSTANT 
         COLUMN_NAMES_CONSTANT_Local.append("Region_ID")
         COLUMN_NAMES_CONSTANT_Local.append("Use_region")
-        print(COLUMN_NAMES_CONSTANT_Local)
-        print()
         Clean_Attribute_Name(
             os.path.join(OutputFolder, "catchment_without_merging_lakes.shp"), COLUMN_NAMES_CONSTANT_Local
         )

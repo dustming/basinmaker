@@ -1056,7 +1056,7 @@ class basinmaker:
             lake_attributes=lake_attributes,
             outlet_obs_id=outlet_obs_id,
             path_sub_reg_outlets_v=path_sub_reg_outlets_v,
-            output_folder=OutputFolder,
+            output_folder=output_folder,
         )
 
     def divide_domain_into_sub_regions_method(
@@ -1117,6 +1117,8 @@ class basinmaker:
         path_subregion_inlet,
         gis_platform="qgis",
         start_sub_id = 0,
+        k =1,
+        c = 1,
     ):
 
         from subreg.defsubreg import (
@@ -1131,6 +1133,8 @@ class basinmaker:
             qgis_prefix_path=self.qgispp,
             path_subregion_inlet=path_subregion_inlet,
             start_sub_id = start_sub_id,
+            k = k,
+            c = c
         )
 
     def combine_catchments_covered_by_the_same_lake(

@@ -19,8 +19,8 @@
 import basinmaker 
 
 project = 'BasinMaker and Routing product'
-copyright = '2021, Ming Han'
-author = 'Ming Han'
+copyright = '2021, BasinMaker develop team'
+author = 'Hydrology research group at the University of Waterloo'
 
 # The full version, including alpha/beta/rc tags
 release = '0.0.1'
@@ -38,6 +38,8 @@ extensions = [
     "sphinx.ext.napoleon",
     "nbsphinx",
     "sphinx_click",
+    'recommonmark',
+    'sphinx.ext.autosectionlabel',
 ]
 autosummary_generate = True
 nbsphinx_execute = "auto"
@@ -50,7 +52,11 @@ templates_path = ['_templates']
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
-
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.txt': 'markdown',
+    '.md': 'markdown',
+}
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
