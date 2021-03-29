@@ -20,7 +20,7 @@ arcpy.env.overwriteOutput = True
 arcpy.CheckOutExtension("Spatial")
 
 def combine_catchments_covered_by_the_same_lake_arcgis(
-    OutputFolder, Path_final_rivply="#", Path_final_riv="#"
+    Routing_Product_Folder
 ):
     """Define final lake river routing structure
 
@@ -69,8 +69,42 @@ def combine_catchments_covered_by_the_same_lake_arcgis(
 
 
     sub_colnm = "SubId"
-    Path_final_rviply = Path_final_rivply
-    Path_final_riv = Path_final_riv
+
+    Path_Catchment_Polygon="#"
+    Path_River_Polyline="#"
+    Path_Con_Lake_ply="#"
+    Path_NonCon_Lake_ply="#"
+    Path_obs_gauge_point="#"
+    Path_final_cat_ply="#"
+    Path_final_cat_riv="#"
+
+    ##define input files from routing prodcut 
+    for file in os.listdir(Routing_Product_Folder):
+        if file.endswith(".shp"):
+            if 'catchment_without_merging_lakes' in file:
+                Path_Catchment_Polygon = os.path.join(Routing_Product_Folder, file)
+            if 'river_without_merging_lakes' in file:
+                Path_River_Polyline = os.path.join(Routing_Product_Folder, file)
+            if 'sl_connected_lake' in file:
+                Path_Con_Lake_ply = os.path.join(Routing_Product_Folder, file)
+            if 'sl_non_connected_lake' in file:
+                Path_NonCon_Lake_ply = os.path.join(Routing_Product_Folder, file)
+            if 'obs_gauges' in file:
+                Path_obs_gauge_point = os.path.join(Routing_Product_Folder, file)
+            if 'finalcat_info' in file:
+                Path_final_cat_ply = os.path.join(Routing_Product_Folder, file)
+            if 'finalcat_info_riv' in file:
+                Path_final_cat_riv = os.path.join(Routing_Product_Folder, file)                
+
+    if Path_Catchment_Polygon == '#' or  Path_River_Polyline =='#':
+        print("Invalid routing product folder ")
+
+
+    OutputFolder = Routing_Product_Folder
+
+
+    Path_final_rivply = Path_Catchment_Polygon
+    Path_final_riv = Path_River_Polyline
 
     if not os.path.exists(OutputFolder):
         os.makedirs(OutputFolder)

@@ -73,13 +73,13 @@ def combine_catchments_covered_by_the_same_lake_qgis(
     context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
 
 
-    Path_Catchment_Polygon="#",
-    Path_River_Polyline="#",
-    Path_Con_Lake_ply="#",
-    Path_NonCon_Lake_ply="#",
-    Path_obs_gauge_point="#",
-    Path_final_cat_ply="#",
-    Path_final_cat_riv="#",
+    Path_Catchment_Polygon="#"
+    Path_River_Polyline="#"
+    Path_Con_Lake_ply="#"
+    Path_NonCon_Lake_ply="#"
+    Path_obs_gauge_point="#"
+    Path_final_cat_ply="#"
+    Path_final_cat_riv="#"
 
     ##define input files from routing prodcut 
     for file in os.listdir(Routing_Product_Folder):

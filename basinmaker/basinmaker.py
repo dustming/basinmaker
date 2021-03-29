@@ -242,8 +242,6 @@ class postproc:
 
         combine_catchments_covered_by_the_same_lake_method(
             Routing_Product_Folder = OutputFolder,
-            Path_final_rivply='#',
-            Path_final_riv='#',
             qgis_prefix_path=self.qgispp,
             gis_platform=gis_platform,
         )
@@ -319,8 +317,6 @@ class postproc:
 
         combine_catchments_covered_by_the_same_lake_method(
             Routing_Product_Folder = OutputFolder,
-            Path_final_rivply='#',
-            Path_final_riv='#',
             qgis_prefix_path=self.qgispp,
             gis_platform=gis_platform,
         )
@@ -398,8 +394,6 @@ class postproc:
 
         combine_catchments_covered_by_the_same_lake_method(
             Routing_Product_Folder = OutputFolder,
-            Path_final_rivply='#',
-            Path_final_riv='#',
             qgis_prefix_path=self.qgispp,
             gis_platform=gis_platform,
         )
@@ -1170,8 +1164,6 @@ class basinmaker:
 
         combine_catchments_covered_by_the_same_lake_method(
             Routing_Product_Folder = Routing_Product_Folder,
-            Path_final_rivply='#',
-            Path_final_riv='#',
             qgis_prefix_path=self.qgispp,
             gis_platform=gis_platform,
         )

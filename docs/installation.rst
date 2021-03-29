@@ -25,35 +25,37 @@ QGIS with anaconda
     The installer of anaconda can be installed from `here <https://www.anaconda.com/>`_
 
 
-#. Create an empty python environment and active it::  
+#. Create an empty python environment and tjen active it  
 
-    conda create --name <any_name_for_env>
-    conda activate <any_name_for_env>
+    .. code-block::
+      
+      conda create --name <any_name_for_env>
+      conda activate <any_name_for_env>
    
    
-#. Install qgis:: 
+#. Install QGIS
 
-    conda install -c conda-forge qgis
-   
-   
-#. Install BasinMaker:: 
+    .. code-block:: 
 
-    git clone https://github.com/dustming/basinmaker.git basinmaker
-   
-    cd ./basinmaker
-   
-    python setup.py develop
+      conda install -c conda-forge qgis
    
    
-#. Install dependent packages:: 
+#. Install BasinMaker
 
-    pip install pandas pytest scipy simpledbf netCDF4
-
-         
-#. Note: following packages are only installed for purpose of plotting, not required by BasinMaker:: 
+    .. code-block::
+    
+      git clone https://github.com/dustming/basinmaker.git basinmaker
    
-    conda install ipyleaflet geopandas matplotlib
+      cd ./basinmaker
+   
+      python setup.py develop
+   
+   
+#. Install dependent packages 
 
+    .. code-block::
+  
+      pip install pandas pytest scipy simpledbf netCDF4
 
 
 ArcGIS pro with anaconda (Windows only)
@@ -65,35 +67,37 @@ ArcGIS pro with anaconda (Windows only)
     The installer of anaconda can be installed from `here <https://www.anaconda.com/>`_
 
 
-#. Create an empty python environment and active it::  
+#. Create an empty python environment and then active it 
 
-    conda create --name <any_name_for_env>
-    conda activate <any_name_for_env>
-   
-   
-#. Install arcpy and arcgis:: 
-
-    conda install -c esri arcpy arcgis
-   
-   
-#. Install BasinMaker:: 
-
-    git clone https://github.com/dustming/basinmaker.git basinmaker
-   
-    cd ./basinmaker
-   
-    python setup.py develop
-   
-   
-#. Install dependent packages:: 
-
-    pip install pandas pytest scipy simpledbf netCDF4
-
-         
-#. Note: following packages are only installed for purpose of plotting, not required by BasinMaker:: 
-   
-    conda install ipyleaflet geopandas matplotlib
+    .. code-block::
     
+      conda create --name <any_name_for_env>
+      conda activate <any_name_for_env>
+   
+   
+#. Install arcpy and arcgis 
+
+    .. code-block::
+    
+      conda install -c esri arcpy arcgis
+   
+   
+#. Install BasinMaker 
+
+    .. code-block::
+    
+      git clone https://github.com/dustming/basinmaker.git basinmaker
+   
+      cd ./basinmaker
+   
+      python setup.py develop
+   
+   
+#. Install dependent packages 
+
+    .. code-block::
+    
+      pip install pandas pytest scipy simpledbf netCDF4
 
 
 Full installation
@@ -112,21 +116,20 @@ QGIS and GRASS in Windows
     
     We would suggest to install QGIS and GRASS outside the **C/:Program Files**. Better to install them into a folder path without space in the folder name.
 
-#. Install BasinMaker:: 
+#. Install BasinMaker 
 
-    git clone https://github.com/dustming/basinmaker.git basinmaker
+    .. code-block::
     
-    or 
-    
-    download the repository from https://github.com/dustming/basinmaker
+      git clone https://github.com/dustming/basinmaker.git basinmaker
             
 #. Setup GRASS and QGIS python environment
 
-    The python environment for QGIS and GRASS GIS in Windows can be set up by modifying the following .bat file. 
+    The python environment for QGIS and GRASS GIS in Windows can be set up by modifying the following basinmaker.bat file. 
     
     * Please change OSGEO4W_ROOT to your OSGEO4W installation folder at line 3.
     * Please change the grass78.* in line 11 and 13 to your GRASS GIS version number.
-    * Copy the .bat file into path_to_basinmaker_folder/basinmaker
+    * Please double check the paths defined in the basinamker.bat file exists in your machine
+    * Copy the basinmaker.bat file into path_to_basinmaker_folder/basinmaker/basinmaker.bat
 
     .. code-block::
       :linenos:
@@ -167,7 +170,7 @@ QGIS and GRASS in Windows
     
 #. Validate the GRASS and QGIS python environment
      
-    * Run the saved .bat file in step 3.
+    * Run the saved basinmaker.bat file in step 3.
     * Try to load following packages
 
     .. code-block::
@@ -205,6 +208,7 @@ QGIS and GRASS in Windows
     Following GRASS GIS addons(r.accumulate,r.clip,r.stream.basins and r.stream.snap) needs to be installed. How to install GRASS GIS addon 
     can be found in `here <https://grass.osgeo.org/download/addons/>`_. 
   
+#. Run basinmaker.bat everytime you want to use basinmaker python packages
 
 
 QGIS and GRASS in Ubuntu
@@ -213,52 +217,37 @@ QGIS and GRASS in Ubuntu
 #. Installation of QGIS and GRASS 
     
     For ubuntu system, both QGIS and GRASS GIS can be installed at the same time by installing the QGIS with GRASS addon. 
-    The installation procedure is the following
-    
-    Check system default python3 path and it's version, better be python3.8. 
+    The installation procedure is the following comes from `here <https://qgis.org/en/site/forusers/alldownloads.html#debian-ubuntu>`_. 
     
     .. code-block::
     
-      ~$which python3 
-      /user/bin/python3
-      python 
-      [GCC 9.3.0] on linux
-      Type "help", "copyright", "credits" or "license" for more information.
-    
-    * Install QGIS with grass plugin 
-    
-        Following instruction comes from `here <https://qgis.org/en/site/forusers/alldownloads.html#debian-ubuntu>`_. 
-    
-    .. code-block::
-    
-      sudo apt install gnupg software-properties-common
-      wget -qO - https://qgis.org/downloads/qgis-2020.gpg.key | sudo gpg --no-default-keyring --keyring gnupg-ring:/etc/apt/trusted.gpg.d/qgis-archive.gpg --import
-      sudo chmod a+r /etc/apt/trusted.gpg.d/qgis-archive.gpg
-      sudo add-apt-repository "deb https://qgis.org/debian `lsb_release -c -s` main"
-      sudo apt update
-      sudo apt install qgis qgis-plugin-grass
+      $sudo apt install gnupg software-properties-common
+      $wget -qO - https://qgis.org/downloads/qgis-2020.gpg.key | sudo gpg --no-default-keyring --keyring gnupg-ring:/etc/apt/trusted.gpg.d/qgis-archive.gpg --import
+      $sudo chmod a+r /etc/apt/trusted.gpg.d/qgis-archive.gpg
+      $sudo add-apt-repository "deb https://qgis.org/debian `lsb_release -c -s` main"
+      $sudo apt update
+      $sudo apt install qgis qgis-plugin-grass
       
     * Install GRASS GIS GUI and development packages 
     
-    .. code-block::bash
+    .. code-block::
       
-      sudo apt install grass-gui ### install grass GUI 
-      sudo apt install grass-dev ### install grass development package        
+      $sudo apt install grass-gui 
+      $sudo apt install grass-dev        
 
 #. Install BasinMaker::
 
-    git clone https://github.com/dustming/basinmaker.git basinmaker
+    $git clone https://github.com/dustming/basinmaker.git basinmaker
+    $cd basinmaker
+    $sudo python3 ./basinmaker/setup.py develop 
     
-    or 
-    
-    download the repository from https://github.com/dustming/basinmaker
-
 #. Setup GRASS and QGIS python environment
 
-    The python environment for QGIS and GRASS GIS in Ubuntu can be set up by modifying the following .sh file. 
+    The python environment for QGIS and GRASS GIS in Ubuntu can be set up by modifying the basinmaker.sh file 
     
-    * Please change the grass78.* in line 11 and 13 to your GRASS GIS version number.
-    * Copy the .sh file into path_to_basinmaker_folder/basinmaker
+    * Please change the grass78.* in line 1 and 4 to your GRASS GIS version number.
+    * Please double check the paths defined in the basinamker.sh file exists in your machine
+    * Copy the basinmaker.sh file into path_to_basinmaker_folder/basinmaker/basinmaker.sh
 
     .. code-block::
       :linenos:
@@ -269,21 +258,20 @@ QGIS and GRASS in Ubuntu
       export PYTHONPATH=$PYTHONPATH:'/usr/lib/grass78/etc/python'  ### folder has a grass folder
       export PYTHONPATH=$PYTHONPATH:'/usr/share/qgis/python/plugins' ## folder has db_manager and processing
       export PYTHONPATH=$PYTHONPATH:'/usr/share/qgis/python' ## folder has plugin and console 
-            
-      cd ..
-      python setup.py develop 
       
 #. Validate the GRASS and QGIS python environment
      
-    * Run the saved .bat file in step 3.
+    * Run the saved basinmaker.sh file in step 3.
+    
+    .. code-block::
+
+      $source ./basinmaker.sh
+    
     * Try to load following packages
 
     .. code-block::
-       
-      >where python    
-      >C:\QGIS310\apps\Python37\python.exe
-  
-      >python
+         
+      $python3
       >>>from qgis.core import *
       >>>import qgis
       >>>from qgis.analysis import QgsNativeAlgorithms
@@ -311,4 +299,6 @@ QGIS and GRASS in Ubuntu
 
     Following GRASS GIS addons(r.accumulate,r.clip,r.stream.basins and r.stream.snap) needs to be installed. How to install GRASS GIS addon 
     can be found in `here <https://grass.osgeo.org/download/addons/>`_.     
+
+#. Run basinmaker.sh everytime you want to use basinmaker python packages
 
