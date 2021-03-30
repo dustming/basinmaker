@@ -16,7 +16,6 @@
 
 
 # -- Project information -----------------------------------------------------
-import basinmaker 
 
 project = 'BasinMaker and Routing product'
 copyright = '2021, BasinMaker develop team'

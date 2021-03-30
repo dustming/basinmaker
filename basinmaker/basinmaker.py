@@ -560,7 +560,10 @@ class dlidem:
         os.makedirs(self.path_working_folder, exist_ok=True)
 
         # obtain qgis prefix path
-        self.qgispp = os.environ["QGIS_PREFIX_PATH"]
+        if os.getenv("QGIS_PREFIX_PATH"):
+            self.qgispp = os.environ["QGIS_PREFIX_PATH"]
+        else:
+            self.qgispp = '#'
         # obtain basinmaker path
         # define grass database folder
         self.grassdb = os.path.join(self.path_working_folder, "grassdb")
