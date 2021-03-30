@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from grass.script import array as garray
 
-from func.pdtable import Check_If_Lake_Have_Multi_OutLet
+from basinmaker.func.pdtable import Check_If_Lake_Have_Multi_OutLet
 
 
 ####

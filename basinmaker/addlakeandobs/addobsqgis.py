@@ -1,10 +1,10 @@
-from func.grassgis import *
-from func.qgis import *
-from func.pdtable import *
-from func.rarray import *
-from utilities.utilities import *
+from basinmaker.func.grassgis import *
+from basinmaker.func.qgis import *
+from basinmaker.func.pdtable import *
+from basinmaker.func.rarray import *
+from basinmaker.utilities.utilities import *
 import sqlite3
-from preprocessing.preprocessingobs import preprocessing_obs_point
+from basinmaker.preprocessing.preprocessingobs import preprocessing_obs_point
 
 
 def add_obs_into_existing_watershed_delineation(

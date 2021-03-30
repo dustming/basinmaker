@@ -3,7 +3,7 @@ import copy
 import numpy as np
 import pandas as pd
 from scipy.optimize import curve_fit
-from utilities.utilities import *
+from basinmaker.utilities.utilities import *
 
 
 def update_non_connected_catchment_info(catinfo):

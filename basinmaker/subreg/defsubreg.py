@@ -1,4 +1,4 @@
-from utilities.utilities import Internal_Constant_Names
+from basinmaker.utilities.utilities import Internal_Constant_Names
 
 
 def divide_domain_into_sub_regions(
@@ -39,7 +39,7 @@ def divide_domain_into_sub_regions(
         assert (
             qgis_prefix_path != "#"
         ), "qgis prefix path is needed, when gis_platform = qgis"
-        from subreg.generatesubregionqgis import (
+        from basinmaker.subreg.generatesubregionqgis import (
             Generatesubdomain,
             generatesubdomainmaskandinfo,
         )
@@ -97,7 +97,7 @@ def combine_sub_region(
         assert (
             qgis_prefix_path != "#"
         ), "qgis prefix path is needed, when gis_platform = qgis"
-        from subreg.generatesubregionqgis import Combine_Sub_Region_Results
+        from basinmaker.subreg.generatesubregionqgis import Combine_Sub_Region_Results
 
         Combine_Sub_Region_Results(
             Sub_Region_info=path_sub_region_info,

@@ -1,7 +1,7 @@
-from func.qgis import *
-from func.pdtable import *
-from func.rarray import *
-from utilities.utilities import *
+from basinmaker.func.qgis import *
+from basinmaker.func.pdtable import *
+from basinmaker.func.rarray import *
+from basinmaker.utilities.utilities import *
 import pandas as pd
 import numpy as np
 import shutil

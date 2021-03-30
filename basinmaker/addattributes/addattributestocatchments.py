@@ -1,5 +1,5 @@
-from utilities.utilities import *
-from func.pdtable import *
+from basinmaker.utilities.utilities import *
+from basinmaker.func.pdtable import *
 
 
 def add_attributes_to_catchments(
@@ -156,20 +156,20 @@ def add_attributes_to_catchments(
         assert (
             qgis_prefix_path != "#"
         ), "qgis prefix path is needed, when gis_platform = qgis"
-        from addattributes.createattributestemplateqgis import (
+        from basinmaker.addattributes.createattributestemplateqgis import (
             create_catchments_attributes_template_table,
         )
-        from addattributes.calculatebasicattributesqgis import (
+        from basinmaker.addattributes.calculatebasicattributesqgis import (
             calculate_basic_attributes,
         )
-        from addattributes.addlakeattributesqgis import add_lake_attributes
-        from addattributes.joinpandastoattributesqgis import (
+        from basinmaker.addattributes.addlakeattributesqgis import add_lake_attributes
+        from basinmaker.addattributes.joinpandastoattributesqgis import (
             join_pandas_table_to_vector_attributes,
         )
-        from addattributes.exportoutputsqgis import export_files_to_output_folder
-        from addattributes.addgaugeattributesqgis import add_gauge_attributes
-        from addattributes.calfloodmanningnqgis import calculate_flood_plain_manning_n
-        from addattributes.calbkfwidthdepthqgis import (
+        from basinmaker.addattributes.exportoutputsqgis import export_files_to_output_folder
+        from basinmaker.addattributes.addgaugeattributesqgis import add_gauge_attributes
+        from basinmaker.addattributes.calfloodmanningnqgis import calculate_flood_plain_manning_n
+        from basinmaker.addattributes.calbkfwidthdepthqgis import (
             calculate_bankfull_width_depth_from_polyline,
         )
 

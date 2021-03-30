@@ -1,11 +1,11 @@
-from func.grassgis import *
-from func.qgis import *
-from func.pdtable import *
-from func.rarray import *
-from utilities.utilities import *
+from basinmaker.func.grassgis import *
+from basinmaker.func.qgis import *
+from basinmaker.func.pdtable import *
+from basinmaker.func.rarray import *
+from basinmaker.utilities.utilities import *
 import sqlite3
 import pandas as pd
-from preprocessing.preprocessrasterqgis import preprocess_raster
+from basinmaker.preprocessing.preprocessrasterqgis import preprocess_raster
 
 
 def calculate_flood_plain_manning_n(

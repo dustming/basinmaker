@@ -1,7 +1,7 @@
 import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from postprocessing.increasedaarcgis import simplify_routing_structure_by_drainage_area_arcgis
-from postprocessing.combinearcgis import combine_catchments_covered_by_the_same_lake_arcgis
+from basinmaker.basinmaker.postprocessing.increasedaarcgis import simplify_routing_structure_by_drainage_area_arcgis
+from basinmaker.basinmaker.postprocessing.combinearcgis import combine_catchments_covered_by_the_same_lake_arcgis
 
 Path_final_riv_ply=sys.argv[1]
 Path_final_riv=sys.argv[2]

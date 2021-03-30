@@ -11,7 +11,7 @@ def combine_catchments_covered_by_the_same_lake_method(
         assert (
             qgis_prefix_path != "#"
         ), "qgis prefix path is needed, when gis_platform = qgis"
-        from postprocessing.combine import (
+        from basinmaker.postprocessing.combine import (
             combine_catchments_covered_by_the_same_lake_qgis,
         )
 
@@ -22,7 +22,7 @@ def combine_catchments_covered_by_the_same_lake_method(
             qgis_prefix_path=qgis_prefix_path,
         )
     if gis_platform == "arcgis":
-        from postprocessing.combinearcgis import (
+        from basinmaker.postprocessing.combinearcgis import (
             combine_catchments_covered_by_the_same_lake_arcgis,
         )
 
@@ -49,7 +49,7 @@ def simplify_routing_structure_by_filter_lakes_method(
         assert (
             qgis_prefix_path != "#"
         ), "qgis prefix path is needed, when gis_platform = qgis"
-        from postprocessing.selectlake import (
+        from basinmaker.postprocessing.selectlake import (
             simplify_routing_structure_by_filter_lakes_qgis,
         )
 
@@ -63,7 +63,7 @@ def simplify_routing_structure_by_filter_lakes_method(
             gis_platform=gis_platform,
         )
     if gis_platform == "arcgis":
-        from postprocessing.selectlakearcgis import (
+        from basinmaker.postprocessing.selectlakearcgis import (
             simplify_routing_structure_by_filter_lakes_arcgis,
         )
 
@@ -93,7 +93,7 @@ def simplify_routing_structure_by_drainage_area_method(
         assert (
             qgis_prefix_path != "#"
         ), "qgis prefix path is needed, when gis_platform = qgis"
-        from postprocessing.increaseda import (
+        from basinmaker.postprocessing.increaseda import (
             simplify_routing_structure_by_drainage_area_qgis,
         )
 
@@ -105,7 +105,7 @@ def simplify_routing_structure_by_drainage_area_method(
         )
 
     if gis_platform == "arcgis":
-        from postprocessing.increasedaarcgis import (
+        from basinmaker.postprocessing.increasedaarcgis import (
             simplify_routing_structure_by_drainage_area_arcgis,
         )
 
@@ -132,7 +132,7 @@ def select_part_of_routing_product_method(
 ):
 
     if gis_platform == "qgis":
-        from postprocessing.selectprod import (
+        from basinmaker.postprocessing.selectprod import (
             Locate_subid_needsbyuser_qgis,
             Select_Routing_product_based_SubId_qgis,
         )
@@ -174,7 +174,7 @@ def select_part_of_routing_product_method(
             )
         
     if gis_platform == "arcgis":
-        from postprocessing.selectprodarcgis import (
+        from basinmaker.postprocessing.selectprodarcgis import (
         Select_Routing_product_based_SubId_arcgis
         )
         Select_Routing_product_based_SubId_arcgis(
@@ -219,7 +219,7 @@ def generate_hrus_method(
     gis_platform="qgis",
 ):
     if gis_platform == "qgis":
-        from postprocessing.hru import GenerateHRUS_qgis
+        from basinmaker.postprocessing.hru import GenerateHRUS_qgis
 
         GenerateHRUS_qgis(
             Path_Subbasin_Ply=Path_Subbasin_Ply,
@@ -248,7 +248,7 @@ def generate_hrus_method(
         )
 
     if gis_platform == "arcgis":
-        from postprocessing.hruarcgis import GenerateHRUS_arcgis
+        from basinmaker.postprocessing.hruarcgis import GenerateHRUS_arcgis
 
         GenerateHRUS_arcgis(
             Path_Subbasin_Ply=Path_Subbasin_Ply,
@@ -299,7 +299,7 @@ def obtain_grids_polygon_from_netcdf_file(
 
 
     if gis_platform == "qgis":
-        from postprocessing.gridweight import (
+        from basinmaker.postprocessing.gridweight import (
             Generate_Grid_Poly_From_NetCDF_QGIS,
         )
         Generate_Grid_Poly_From_NetCDF_QGIS(
@@ -328,7 +328,7 @@ def generate_area_weight_of_two_polygons(
 ):
     
     if gis_platform == "qgis":
-        from postprocessing.gridweight import (
+        from basinmaker.postprocessing.gridweight import (
             Area_Weighted_Mapping_Between_Two_Polygons_QGIS,
         )
         Area_Weighted_Mapping_Between_Two_Polygons_QGIS(

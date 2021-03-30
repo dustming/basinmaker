@@ -22,14 +22,14 @@ def preprocessing_obs_point(
         assert (
             qgis_prefix_path != "#"
         ), "qgis prefix path is needed, when gis_platform = qgis"
-        from preprocessing.preinputpolygonqgis import preprocessing_input_polygon
-        from preprocessing.reprojectandclipvectorbyplyqgis import (
+        from basinmaker.preprocessing.preinputpolygonqgis import preprocessing_input_polygon
+        from basinmaker.preprocessing.reprojectandclipvectorbyplyqgis import (
             obtain_polygon_boundary,
         )
-        from preprocessing.rasterizevectorsandloadtodbqgis import (
+        from basinmaker.preprocessing.rasterizevectorsandloadtodbqgis import (
             rasterize_vectors_and_load_to_db,
         )
-        from func.grassgis import grass_raster_v_import
+        from basinmaker.func.grassgis import grass_raster_v_import
 
         preprocessing_input_polygon(
             grassdb=grassdb,

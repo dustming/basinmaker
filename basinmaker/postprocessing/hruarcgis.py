@@ -14,8 +14,8 @@ from arcpy.sa import *
 import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from func.arcgis import *
-from func.pdtable import *
+from basinmaker.func.arcgis import *
+from basinmaker.func.pdtable import *
 arcpy.env.overwriteOutput = True
 arcpy.CheckOutExtension("Spatial")
 

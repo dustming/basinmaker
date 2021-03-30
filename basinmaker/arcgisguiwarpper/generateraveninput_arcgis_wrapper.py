@@ -1,6 +1,6 @@
 import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from hymodin.raveninput import GenerateRavenInput
+from basinmaker.hymodin.raveninput import GenerateRavenInput
 
 Path_final_hru_info =sys.argv[1]
 Startyear=sys.argv[2]

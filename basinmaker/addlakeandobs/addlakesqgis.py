@@ -1,16 +1,16 @@
-from func.grassgis import *
-from func.qgis import *
-from func.pdtable import *
-from func.rarray import *
-from utilities.utilities import *
-from preprocessing.preprocessinglakeply import preprocessing_lake_polygon
+from basinmaker.func.grassgis import *
+from basinmaker.func.qgis import *
+from basinmaker.func.pdtable import *
+from basinmaker.func.rarray import *
+from basinmaker.utilities.utilities import *
+from basinmaker.preprocessing.preprocessinglakeply import preprocessing_lake_polygon
 import sqlite3
-from addlakeandobs.definelaketypeqgis import (
+from basinmaker.addlakeandobs.definelaketypeqgis import (
     define_connected_and_non_connected_lake_type,
 )
-from addlakeandobs.filterlakesqgis import select_lakes_by_area_r
-from addlakeandobs.pourpointsqgis import define_pour_points_with_lakes
-from addlakeandobs.modifyfdr import modify_lakes_flow_direction
+from basinmaker.addlakeandobs.filterlakesqgis import select_lakes_by_area_r
+from basinmaker.addlakeandobs.pourpointsqgis import define_pour_points_with_lakes
+from basinmaker.addlakeandobs.modifyfdr import modify_lakes_flow_direction
 
 
 def add_lakes_into_existing_watershed_delineation(

@@ -1,7 +1,7 @@
 import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from postprocessing.selectprodarcgis import Select_Routing_product_based_SubId_arcgis
-from postprocessing.combinearcgis import combine_catchments_covered_by_the_same_lake_arcgis
+from basinmaker.postprocessing.selectprodarcgis import Select_Routing_product_based_SubId_arcgis
+from basinmaker.postprocessing.combinearcgis import combine_catchments_covered_by_the_same_lake_arcgis
 
 OutputFolder =sys.argv[7]
 Path_Catchment_Polygon=sys.argv[1]

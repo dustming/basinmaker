@@ -114,14 +114,14 @@ def define_project_extent(
         assert (
             qgis_prefix_path != "#"
         ), "qgis prefix path is needed, when gis_platform = qgis"
-        from extent.usingdemqgis import define_project_extent_using_dem
-        from extent.usingoutletpointqgis import define_project_extent_using_outlet_point
-        from extent.usinginputplyqgis import define_project_extent_using_input_polygon
-        from extent.usinghybasinplyqgis import define_project_extent_using_hybasin_ply
+        from basinmaker.extent.usingdemqgis import define_project_extent_using_dem
+        from basinmaker.extent.usingoutletpointqgis import define_project_extent_using_outlet_point
+        from basinmaker.extent.usinginputplyqgis import define_project_extent_using_input_polygon
+        from basinmaker.extent.usinghybasinplyqgis import define_project_extent_using_hybasin_ply
     
     if gis_platform == "arcgis":
-        from extent.usingdemarcgis import define_project_extent_using_dem
-        from extent.usinghybasinplyarcgis import define_project_extent_using_hybasin_ply
+        from basinmaker.extent.usingdemarcgis import define_project_extent_using_dem
+        from basinmaker.extent.usinghybasinplyarcgis import define_project_extent_using_hybasin_ply
         
     if mode == "using_hybasin":
         assert (

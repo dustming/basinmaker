@@ -1,7 +1,7 @@
-from func.arcgis import *
-from func.pdtable import *
-from func.rarray import *
-from utilities.utilities import *
+from basinmaker.func.arcgis import *
+from basinmaker.func.pdtable import *
+from basinmaker.func.rarray import *
+from basinmaker.utilities.utilities import *
 
 
 def add_lakes_into_existing_watershed_delineation(

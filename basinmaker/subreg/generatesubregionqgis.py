@@ -1,15 +1,15 @@
-from func.grassgis import *
-from func.qgis import *
-from func.pdtable import *
-from func.rarray import *
-from utilities.utilities import *
-from delineationnolake.watdelineationwithoutlake import (
+from basinmaker.func.grassgis import *
+from basinmaker.func.qgis import *
+from basinmaker.func.pdtable import *
+from basinmaker.func.rarray import *
+from basinmaker.utilities.utilities import *
+from basinmaker.delineationnolake.watdelineationwithoutlake import (
     watershed_delineation_without_lake,
 )
-from addlakeandobs.addlakesqgis import (
+from basinmaker.addlakeandobs.addlakesqgis import (
     add_lakes_into_existing_watershed_delineation,
 )
-from addattributes.calbkfwidthdepthqgis import (
+from basinmaker.addattributes.calbkfwidthdepthqgis import (
     calculate_bankfull_width_depth_from_polyline,
 )
 import tempfile

@@ -1,6 +1,6 @@
-from func.pdtable import *
-from func.rarray import *
-from utilities.utilities import *
+from basinmaker.func.pdtable import *
+from basinmaker.func.rarray import *
+from basinmaker.utilities.utilities import *
 import os
 
 
@@ -30,11 +30,11 @@ def preprocessing_lake_polygon(
         assert (
             qgis_prefix_path != "#"
         ), "qgis prefix path is needed, when gis_platform = qgis"
-        from preprocessing.preinputpolygonqgis import preprocessing_input_polygon
-        from preprocessing.reprojectandclipvectorbyplyqgis import (
+        from basinmaker.preprocessing.preinputpolygonqgis import preprocessing_input_polygon
+        from basinmaker.preprocessing.reprojectandclipvectorbyplyqgis import (
             obtain_polygon_boundary,
         )
-        from preprocessing.rasterizevectorsandloadtodbqgis import (
+        from basinmaker.preprocessing.rasterizevectorsandloadtodbqgis import (
             rasterize_vectors_and_load_to_db,
             obtain_lake_vectors_larger_than_threstholds,
         )

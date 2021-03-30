@@ -112,20 +112,20 @@ def watershed_delineation_without_lake(
         assert (
             qgis_prefix_path != "#"
         ), "qgis prefix path is needed, when gis_platform = qgis"
-        from delineationnolake.watusingdemqgis import (
+        from basinmaker.delineationnolake.watusingdemqgis import (
             delineate_watershed_no_lake_using_dem,
         )
-        from delineationnolake.watusingfdrqgis import (
+        from basinmaker.delineationnolake.watusingfdrqgis import (
             delineate_watershed_no_lake_using_fdr,
         )
-        from delineationnolake.watusingsubregionddata import (
+        from basinmaker.delineationnolake.watusingsubregionddata import (
             delineate_watershed_no_lake_using_subregion_data,
         )
     elif gis_platform == "arcgis":
-        from delineationnolake.watusingdemarcgis import (
+        from basinmaker.delineationnolake.watusingdemarcgis import (
             delineate_watershed_no_lake_using_dem,
         )
-        from delineationnolake.watusingfdrarcgis import (
+        from basinmaker.delineationnolake.watusingfdrarcgis import (
             delineate_watershed_no_lake_using_fdr,
         )
     else:

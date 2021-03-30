@@ -1,11 +1,11 @@
-from func.grassgis import *
-from func.qgis import *
-from func.pdtable import *
-from func.rarray import *
-from utilities.utilities import *
+from basinmaker.func.grassgis import *
+from basinmaker.func.qgis import *
+from basinmaker.func.pdtable import *
+from basinmaker.func.rarray import *
+from basinmaker.utilities.utilities import *
 import sqlite3
 from scipy.optimize import curve_fit
-from preprocessing.reprojectandclipvectorbyplyqgis import (
+from basinmaker.preprocessing.reprojectandclipvectorbyplyqgis import (
     reproject_clip_vectors_by_polygon,
 )
 

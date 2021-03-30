@@ -7,9 +7,9 @@ Overview
 
 BasinMaker is a python package depends on several existing GIS platforms. So, the installation of BasinMaker includes two steps: 1) setup the python environment for the dependent GIS platforms; and 2) install BasinMaker itself.
 
-Two installation modes (light installation and full installation) are available. The light installation will allow user to use BasinMaker to post processing existing routing product, such as the North America routing product. But it cannot be used to delineate lake-river routing structure from DEM. The combination of BasinMaker light installation and North America routing product could generate the lake-river routing structure satisfying most of the modeling demands. While the full installation enable all functionalities of BasinMaker.
+Two installation modes (light installation and full installation) are available. The light installation will allow user to use BasinMaker to post process an existing routing product, such as the Basinmaker derived North American lake-river routing product. But it cannot be used to delineate a lake-river routing structure from DEM. The combination of BasinMaker light installation and the North American lake-river routing product could generate lake-river routing structures satisfying many user modeling demands. While the full installation of BasinMaker enables users to delineate a new lake-river routing structure from a user specified DEM.
 
-For light installation (recommended), only QGIS or ArcGIS pro is needed. The python environment for both QGIS and ArcGIS pro can be easily compiled within the anaconda environment under different OS systems. The instruction about light installation procedure can be found in :ref:`Light installation`.  
+For light installation (recommended unless users know for sure they need to delineate their watershed from scratch from a DEM), only QGIS or ArcGIS pro is needed. The python environment for both QGIS and ArcGIS pro can be easily compiled within the anaconda environment under different OS systems. The instruction about light installation procedure can be found in :ref:`Light installation`. Note that users can install both the light version and the full version on the same OS system.   
 
 For full installation, both GRASS GIS and QGIS are needed. It is quite a challenge to setup a python environment for QGIS and GRASS together. Here, two procedures are provided for Windows and Ubuntu OS systems, respectively. Two procedures have been tested on several machines. But it is possible that provided procedures are not working on your machine. Please feel free to create an issue on the GitHub or email m43han@uwaterloo.ca, we are happy to make it work on your machine. The instruction for Windows and Ubuntu system can be found in :ref:`Full installation`.
     
@@ -176,7 +176,7 @@ QGIS and GRASS in Windows
     .. code-block::
        
       >where python    
-      >C:\QGIS310\apps\Python37\python.exe
+      >C:\OSGeo4W64\apps\Python37\python.exe
   
       >python
       >>>from qgis.core import *

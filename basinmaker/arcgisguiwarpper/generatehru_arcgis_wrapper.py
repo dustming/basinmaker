@@ -1,6 +1,6 @@
 import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from postprocessing.hruarcgis import GenerateHRUS_arcgis
+from basinmaker.postprocessing.hruarcgis import GenerateHRUS_arcgis
 
 
 Path_Subbasin_Ply = arcpy.GetParameterAsText(0)

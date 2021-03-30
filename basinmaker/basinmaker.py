@@ -72,7 +72,7 @@ class postproc:
 
         """
 
-        from hymodin.raveninput import (
+        from basinmaker.hymodin.raveninput import (
             GenerateRavenInput,
         )
 
@@ -127,7 +127,7 @@ class postproc:
     ):
 
 
-        from postprocessing.postprocessingfunctions import (
+        from basinmaker.postprocessing.postprocessingfunctions import (
             obtain_grids_polygon_from_netcdf_file
         )
 
@@ -156,7 +156,7 @@ class postproc:
         gis_platform='qgis',
     ):
     
-        from postprocessing.postprocessingfunctions import (
+        from basinmaker.postprocessing.postprocessingfunctions import (
             generate_area_weight_of_two_polygons
         )
 
@@ -215,7 +215,7 @@ class postproc:
 
 
         """
-        from postprocessing.postprocessingfunctions import (
+        from basinmaker.postprocessing.postprocessingfunctions import (
             simplify_routing_structure_by_filter_lakes_method,
         )
         Path_final_riv_ply = '#'
@@ -236,7 +236,7 @@ class postproc:
             gis_platform=gis_platform,
         )
     
-        from postprocessing.postprocessingfunctions import (
+        from basinmaker.postprocessing.postprocessingfunctions import (
             combine_catchments_covered_by_the_same_lake_method,
         )
 
@@ -295,7 +295,7 @@ class postproc:
 
 
         """
-        from postprocessing.postprocessingfunctions import (
+        from basinmaker.postprocessing.postprocessingfunctions import (
             simplify_routing_structure_by_drainage_area_method,
         )
         
@@ -307,7 +307,7 @@ class postproc:
             qgis_prefix_path=self.qgispp,
         )
 
-        from postprocessing.postprocessingfunctions import (
+        from basinmaker.postprocessing.postprocessingfunctions import (
             combine_catchments_covered_by_the_same_lake_method,
         )
 
@@ -358,7 +358,7 @@ class postproc:
         -------
 
         """
-        from postprocessing.postprocessingfunctions import (
+        from basinmaker.postprocessing.postprocessingfunctions import (
             select_part_of_routing_product_method,
         )
         Path_Points="#",
@@ -384,7 +384,7 @@ class postproc:
             gis_platform=gis_platform,
         )
 
-        from postprocessing.postprocessingfunctions import (
+        from basinmaker.postprocessing.postprocessingfunctions import (
             combine_catchments_covered_by_the_same_lake_method,
         )
 
@@ -488,7 +488,7 @@ class postproc:
         -------
 
         """
-        from postprocessing.postprocessingfunctions import (
+        from basinmaker.postprocessing.postprocessingfunctions import (
             generate_hrus_method,
         )
         Sub_Lake_ID="HyLakeId",
@@ -530,7 +530,7 @@ class postproc:
         )
 
 
-class basinmaker:
+class dlidem:
 
     """
     QGIS/GRASSToolsets to delelineate lake river routing structure
@@ -693,7 +693,7 @@ class basinmaker:
         -------
         """
 
-        from extent.projectextent import define_project_extent
+        from basinmaker.extent.projectextent import define_project_extent
         up_hybasin_id = -1
         define_project_extent(
             grassdb=self.grassdb,
@@ -772,7 +772,7 @@ class basinmaker:
         Examples
         -------
         """
-        from delineationnolake.watdelineationwithoutlake import (
+        from basinmaker.delineationnolake.watdelineationwithoutlake import (
             watershed_delineation_without_lake,
         )
 
@@ -889,7 +889,7 @@ class basinmaker:
         -------
 
         """
-        from addlakeandobs.addlakeandobsintowatershed import (
+        from basinmaker.addlakeandobs.addlakeandobsintowatershed import (
             add_lakes_and_obs_into_existing_watershed_delineation,
         )
 
@@ -1025,7 +1025,7 @@ class basinmaker:
 
         """
 
-        from addattributes.addattributestocatchments import add_attributes_to_catchments
+        from basinmaker.addattributes.addattributestocatchments import add_attributes_to_catchments
 
         add_attributes_to_catchments(
             input_geo_names=self.geofilenames,
@@ -1067,7 +1067,7 @@ class basinmaker:
         gis_platform="qgis",
     ):
 
-        from subreg.defsubreg import (
+        from basinmaker.subreg.defsubreg import (
             divide_domain_into_sub_regions,
         )
 
@@ -1111,7 +1111,7 @@ class basinmaker:
         c = 1,
     ):
 
-        from subreg.defsubreg import (
+        from basinmaker.subreg.defsubreg import (
             combine_sub_region,
         )
 
@@ -1154,7 +1154,7 @@ class basinmaker:
         -------
 
         """
-        from postprocessing.postprocessingfunctions import (
+        from basinmaker.postprocessing.postprocessingfunctions import (
             combine_catchments_covered_by_the_same_lake_method,
         )
 

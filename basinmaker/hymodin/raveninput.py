@@ -6,7 +6,7 @@ import shutil
 
 import numpy as np
 import pandas as pd
-from utilities.utilities import *
+from basinmaker.utilities.utilities import *
 
 
 def GenerateRavenInput(
