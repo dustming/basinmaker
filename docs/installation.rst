@@ -1,6 +1,6 @@
-============
-Installation
-============
+=====================
+Installation overview
+=====================
 
 Overview
 ========
