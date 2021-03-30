@@ -82,10 +82,6 @@ def simplify_routing_structure_by_filter_lakes_method(
         
 
 def simplify_routing_structure_by_drainage_area_method(
-    Path_final_riv_ply="#",
-    Path_final_riv="#",
-    Path_Con_Lake_ply="#",
-    Path_NonCon_Lake_ply="#",
     Routing_Product_Folder='#',
     Area_Min=-1,
     OutputFolder="#",
@@ -114,10 +110,6 @@ def simplify_routing_structure_by_drainage_area_method(
         )
 
         simplify_routing_structure_by_drainage_area_arcgis(
-            Path_final_riv_ply=Path_final_riv_ply,
-            Path_final_riv=Path_final_riv,
-            Path_Con_Lake_ply=Path_Con_Lake_ply,
-            Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,
             Area_Min=Area_Min,
             OutputFolder=OutputFolder,
         )

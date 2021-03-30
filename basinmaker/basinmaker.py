@@ -300,10 +300,6 @@ class postproc:
         )
         
         simplify_routing_structure_by_drainage_area_method(
-            Path_final_riv_ply=Path_final_riv_ply,
-            Path_final_riv=Path_final_riv,
-            Path_Con_Lake_ply=Path_Con_Lake_ply,
-            Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,
             Routing_Product_Folder = Routing_Product_Folder,
             Area_Min=Drain_Area_Min,
             OutputFolder=OutputFolder,
