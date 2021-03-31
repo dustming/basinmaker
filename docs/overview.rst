@@ -10,7 +10,7 @@ Both connected lakes (CLs) and NCLs within a watershed are considered to be cont
 
 The only difference between CLs and NCLs is that CLs always drain into an explicitly represented river channel that is connected to the lake outlet while NCLs do not. NCLs exist because for smaller catchments, flow accumulation threshold settings can sometimes suppress the creation of a river channel at the lake outlet. As such, NCLs should drain directly, via a zero length flow path, into the next downstream catchment. Users need to ensure their hydrologic routing model accomplishes this. Specific hydrologic routing logic is as follows for NCLs: NCL catchment outflows need to be delivered to the next downstream river channel and if that river channel has a zero length (only possible if downstream catchment is also a lake catchment), that water must be delivered directly to the lake in this downstream catchment. 
 
-.. image:: _static/Figure1.png
+.. image:: https://github.com/dustming/RoutingTool/wiki/Figures/Figure1.png
   :width: 900
   :alt: Alternative text
   
