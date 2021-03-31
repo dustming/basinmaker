@@ -251,7 +251,7 @@ QGIS and GRASS in Ubuntu
     * r.stream.basins
     * r.stream.snap  
     
-    How to install GRASS GIS addon can be found in `here <https://grass.osgeo.org/download/addons/>`_. 
+    How to install GRASS GIS addon can be found in `open GRASS GIS gui <https://grass.osgeo.org/grass78/manuals/helptext.html>`_ and `add GRASS GIS addon <https://grass.osgeo.org/download/addons/>`_. 
 
 #. Users must run basinmaker.sh every time they wish to use functionalities from BasinMaker.
 
