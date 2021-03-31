@@ -11,8 +11,8 @@ set GRASSBIN=%OSGEO4W_ROOT%\bin\grass78.bat
 call "%GRASS_ROOT%\etc\env.bat"
 path %PATH%;%GRASS_ROOT%\lib
 path %PATH%;%GRASS_ROOT%\bin
-path %PATH%;%GRASS_ROOT%\script
-set PYTHONPATH=%GRASS_ROOT%\etc\python;%GRASS_ROOT%\etc\python\grass;%GRASS_ROOT%\etc\python\grass\script;%PYTHONPATH%
+path %PATH%;%GRASS_ROOT%\scripts
+set PYTHONPATH=%GRASS_ROOT%\etc\python;%GRASS_ROOT%\etc\python\grass;%GRASS_ROOT%\etc\python\grass\scripts;%PYTHONPATH%
 
 rem for qgis 
 path %OSGEO4W_ROOT%\apps\qgis\bin;%PATH%
