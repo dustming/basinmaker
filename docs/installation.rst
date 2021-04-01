@@ -108,7 +108,7 @@ QGIS and GRASS in Windows
                 
 #. Setup GRASS and QGIS python environment
 
-    The python environment for QGIS and GRASS GIS in Windows can be set up by modifying the following :download:`basinmaker.bat <_static/basinmaker.bat>`.
+    The python environment for QGIS and GRASS GIS in Windows can be set up by modifying the following :download:`basinmaker.bat <./_static/basinmaker.bat>`.
     
     * Please change OSGEO4W_ROOT to your OSGEO4W installation folder at line 2.
     * Please change the grass78.* in line 8 and 10 to your GRASS GIS version number.
@@ -200,7 +200,7 @@ QGIS and GRASS in Ubuntu
 
 #. Setup GRASS and QGIS python environment
 
-    The python environment for QGIS and GRASS GIS in Ubuntu can be set up by modifying the following :download:`basinmaker.sh <_static/basinmaker.sh>`.
+    The python environment for QGIS and GRASS GIS in Ubuntu can be set up by modifying the following :download:`basinmaker.sh <./_static/basinmaker.sh>`.
     
     * Please change the grass78.* in line 2 and 5 to your GRASS GIS version number.
     * Please double check the paths defined in the basinamker.sh file exists in your machine

@@ -17,7 +17,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'BasinMaker and Routing product'
+project = 'BasinMaker'
 copyright = '2021, BasinMaker develop team'
 author = 'Hydrology research group at the University of Waterloo'
 
