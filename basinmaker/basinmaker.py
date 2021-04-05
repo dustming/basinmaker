@@ -6,7 +6,6 @@ class postproc:
         self,
     ):
         self.qgispp = os.environ["QGIS_PREFIX_PATH"]
-        print("asdf ")
 
     def generate_raven_model_inputs(
         self,
@@ -628,69 +627,66 @@ class dlidem:
         }
 
     # first modulized methods
-    def define_project_extent_method(
+    def Define_Project_Spatial_Extent(
         self,
         mode,
-        path_dem_in,
-        outlet_pt=[-1, -1],
-        path_extent_ply="#",
+        path_to_dem_input,
+        watershed_outlet_coordinates = [-1, -1],
+        path_to_spatial_extent_polygon="#",
         buffer_distance=0.0,
-        hybasin_ply="#",
-        down_hybasin_id=-1,
+        path_to_hydrobasin_polygon="#",
+        hydrobasin_id_of_watershed_outlet=-1,
         gis_platform="qgis",
     ):
 
-        """Function that used to define project processing spatial extent (PSE).
-        BasinMaker will not process grids or features outside the processing spatial extent.
+        """This function is to define project spatial extent (PSE). Domain ouside 
+        of the PSE is not processed by BasinMaker functions.
 
         Parameters
         ----------
         mode                              : string (required)
-            It is a string indicate which method to define project processing
-            spatial extent
+            is a string indicating which to define PSE
             
-            | 'using_dem'            : the extent of input dem will be used
-            | 'using_hybasin'        : the extent will be defined using hydrobasin product
-            | 'using_outlet_pt'      : the extent will be defined with provided outlet point
-            | 'using_provided_ply'   : the extent will be defined by provided polygon    
-        path_dem_in                      : string (required)
-            It is the path to input dem
-        outlet_pt                        : list (optional)
-            It is list that indicate the outlet coordinates of the
-            region of interest. If it is provided, the PSE
-            will be defined as the drainage area controlled by this point.
-        path_extent_ply                  : string (optional)
-            It is the path of a subregion polygon. It is only used when the Region
-            of interest is very large and the resolution of the dem is very high.
-            toolbox will first divide the whole region into several small subregions.
-            And then using devided subregion polygon as PSE.
+            | 'using_dem'            : the extent of input dem is used
+            | 'using_hybasin'        : the extent is defined by subbasins that are 
+                                       drainage to the provided watershed outlet 
+                                       subbasins ID in HydroBASINS product
+            | 'using_outlet_pt'      : the extent is defined by the watershed  
+                                       generated from input dem and   
+                                       the watershed outlet coordinates 
+            | 'using_provided_ply'   : the extent of provided polygon is used   
+        path_to_dem_input            : string (required)
+            is the path to input dem
+        watershed_outlet_coordinates : list (optional)
+            is a list that indicate the outlet coordinates of the
+            region of interest in [lat, lon]. It is needed when mode = 'using_outlet_pt'.
+        path_to_spatial_extent_polygon                  : string (optional)
+            is the path of a polygon shapefile, the extent of which will be used 
+            as PSE.
         buffer_distance                  : float (optional)
-            It is a float number to increase the extent of the PSE
-            obtained from Hydrobasins. It is needed when input DEM is not from
-            HydroSHEDS. Then the extent of the watershed will be different
-            with PSE defined by HydroBASINS.
-        hybasin_ply                      : string (optional)
-            It is a path to hydrobasin routing product, If it is provided, the
-            PSE will be based on the OutHyID and OutHyID2 and
-            this HydroBASINS routing product.
-        down_hybasin_id                  : int (optional)
-            It is a HydroBASINS subbasin ID, which should be the ID of the most
-            downstream subbasin in the region of interest.
+            is a float number to enlarge the PSE. It is needed when mode = 'using_hybasin'
+            or mode = 'using_provided_ply'. It is the distance around the PSE from
+            HydroBASINS or provided polygons that will be buffered. The unit is the 
+            same with the spatial unit of input DEM.
+        path_to_hydrobasin_polygon                      : string (optional)
+            is a path to the HydroBASINs product. It is needed when mode = 'using_hybasin'
+        hydrobasin_id_of_watershed_outlet               : int (optional)
+            is a HydroBASINS subbasin ID of the watershed outlet. It is needed 
+            when mode = 'using_hybasin'
 
         Returns
         -------
 
         Notes
         -------
-        Outputs are following files in grass database loacated in 
-        os.path.join(grassdb, grass_location) 
+        Outputs are following files in GRASS GIS database loacated in 
+        os.path.join(path_working_folder,'grassdb') 
         
-        MASK.*        : raster  
-            it is a mask raster stored in grass database, which indicate the PSE.
-            The grass database is located at 
-        dem.*         : raster 
+        MASK.*        : raster/shp  
+            it is a mask raster stored in grass database, which indicate the PSE. 
+        dem.*         : raster/shp 
             it is a dem raster stored in grass database, which is has the same extent 
-            with MASK. The grass database is located at os.path.join(grassdb, grass_location)
+            with MASK.
 
         Examples
         -------
@@ -703,23 +699,23 @@ class dlidem:
             grass_location=self.grass_location_geo,
             qgis_prefix_path=self.qgispp,
             mode=mode,
-            path_dem_in=path_dem_in,
-            outlet_pt=outlet_pt,
-            path_extent_ply=path_extent_ply,
+            path_dem_in=path_to_dem_input,
+            outlet_pt=watershed_outlet_coordinates,
+            path_extent_ply=path_to_spatial_extent_polygon,
             buffer_distance=buffer_distance,
-            hybasin_ply=hybasin_ply,
-            down_hybasin_id=down_hybasin_id,
+            hybasin_ply=path_to_hydrobasin_polygon,
+            down_hybasin_id=hydrobasin_id_of_watershed_outlet,
             up_hybasin_id=up_hybasin_id,
             mask=self.geofilenames["mask"],
             dem=self.geofilenames["dem"],
             gis_platform=gis_platform,
         )
 
-    def watershed_delineation_without_lake_method(
+    def Delineation_Initial_Subbasins_Without_Lakes(
         self,
-        acc_thresold=-1,
-        fdr_path="#",
-        mode="#",
+        flow_accumulation_thresold,
+        mode = 'using_dem',
+        path_flow_dirction_in="#",
         max_memroy=1024 * 4,
         gis_platform="qgis",
         subreg_fdr_path="#",
@@ -727,49 +723,51 @@ class dlidem:
         subreg_str_r_path="#",
         subreg_str_v_path="#",
     ):
-        """Function that used to Generate a routing structure with using user 
-        provied flow accumulation thresthold without considering lake.
+        """Function that used to generate a initial routing structure with 
+        user provied flow accumulation thresthold without considering lake.
 
         Parameters
         ----------
-        accthresold       : float
-            It is the flow accumulation thresthold, used to determine
-            subbsains and river network. Increasing of accthresold will
+        flow_accumulation_thresold       : float
+            is the flow accumulation thresthold, used to determine
+            subbsains and river network. Increasing of this paramter will
             increase the size of generated subbasins, reduce the number
-            subbasins and reduce the number of generated stream segments
-        fdr_path          : string (optional)
-            It is a string indicate path of flow direction dataset
+            subbasins and reduce the number of generated stream reaches
         mode              : string (required)
-            It is a string indicate which dataset will be used to delineate
+            is a string indicate which dataset will be used to delineate
             watershed.
-            | 'usingdem'             : dem is used for delineation
-            | 'usingfdr'             : flow direction data is used for delineation
-            | 'usingsubreg'          : predefined subregion inputs is used for delineation
+            
+            | 'using_dem' : dem is used for initial subbasin delineation
+            | 'using_fdr' : flow direction data is used for subbasin delineation
+        path_flow_dirction_in          : string (optional)
+            is a path indicating the path of flow direction input dataset
+            only needed when mode = 'using_fdr'
         max_memroy        : integer
-            It is the maximum memeory that allow to be used.
+            is the maximum memeory that allow to be used in MB.
 
         Returns
         -------
 
         Notes
         -------
-        Outputs are following files in the grass database
-
+        Outputs are following files in GRASS GIS database loacated in 
+        os.path.join(path_working_folder,'grassdb')
+        
         fdr_grass              : raster
-            it is a raster represent flow direction dataset, which is
+            is a raster represent flow direction dataset, which is
             using 1 - 8 to represent different directions
         fdr_arcgis             : raster
-            it is a raster represent flow direction dataset, which is
+            is a raster represent flow direction dataset, which is
             using 1,2,4,...64,128 to represent different directions
         str_v                  : vector
-            it is a river network in vector format
+            is a river network in vector format
         str_r                  : raster
-            it is a river network in raster format
+            is a river network in raster format
         cat_no_lake            : raster
-            it is the raster represent the delineated subbasins without
+            is the raster represent the delineated subbasins without
             considering lakes
         acc                    : raster
-            it is the raster represent the flow accumulation
+            is the raster represent the flow accumulation
 
 
         Examples
@@ -778,7 +776,11 @@ class dlidem:
         from basinmaker.delineationnolake.watdelineationwithoutlake import (
             watershed_delineation_without_lake,
         )
-
+        if mode == 'using_dem':
+            mode = 'usingdem'
+        else:
+            model = 'usingfdr'
+            
         watershed_delineation_without_lake(
             mode=mode,
             input_geo_names=self.geofilenames,
@@ -801,15 +803,15 @@ class dlidem:
             gis_platform=gis_platform,
         )
 
-    def watershed_delineation_add_lake_control_points(
+    def Add_New_Subbasin_Outlet_Points(
         self,
-        path_lakefile_in="#",
+        path_lake_polygon="#",
         lake_attributes=[],
-        threshold_con_lake=0,
-        threshold_non_con_lake=0,
+        connected_lake_area_thresthold=0,
+        non_connected_lake_area_thresthold=0,
         only_included_lake_at_river_interction = False,
-        path_obsfile_in="#",
-        obs_attributes=[],
+        path_point_of_interest="#",
+        point_of_interest_attributes=[],
         path_sub_reg_outlets_v="#",
         path_sub_reg_lake_r="#",
         path_sub_reg_lake_bd_r="#",
@@ -818,56 +820,61 @@ class dlidem:
         max_memroy=1024 * 4,
         gis_platform="qgis",
     ):
-        """ Update the subbasin delineation result generated by lake inflow and 
-        outflow points and observation gauges will be added into as a new subbasin
-        outlet. Result from this tool is not the final delineation result. Because 
-        some lake may cover several subbasins. these subbasin are not megered into 
-        one subbasin yet
+        """ Update the subbasin delineation result by adding lake inflow and 
+        outflow points and observation gauges as a new subbasin outlets. The output 
+        is not the final delineation result. because: 
+        
+        | 1) Hydrologcial related attributes for each subbasin are not calcuated yet. 
+        | 2) Some lakes may cover several subbasins. The output needs to be finalized 
+             by combing those subbasins with the same lake as one subbasin only.
 
 
         Parameters
         ----------
-        path_lakefile_in                   : string (optional)
-            It is a string to indicate the full path of the polygon 
-            shapefile that include lake data
+        path_lake_polygon                 : string (optional)
+            is a path of the lake polygon shapefile 
         lake_attributes                   : list (optional)
-            the columns names in the path_lakefile_in that indicate following 
-            items has to be included
+            the columns names in the input lake polygon that indicate following 
+            items (mandatory). It is needed only when path_lake_polygon_in is 
+            provided. Columns (2-4 in following list) in lake poylon can be fill
+            with any number, when these infomation is not avaiable.  
             
-            | 1) column name for the unique Id of each lake within the lake polygon shpfile
-            | 2) column name for type of the lake should be integer
-            | 3) column name for the volume of the lake in km3
-            | 4) column name for the average depth of the lake in m
-            | 5) column name for the area of the lake in km2
-        threshold_con_lake                 : float
-            It is a lake area thresthold for connected lakes in km2
-            Connected Lake with lake area below this value will be
-            not added into the subbasin delineation
-        threshold_non_con_lake             : float
-            It is a lake area thresthold for non-connected lakes in km2
-            Non connected Lake with lake area below this value will be
-            not added into the subbasin delineation
-        path_obsfile_in
-            It is a string to indicate the full path of the point
-            shapefile that indicate observation gauges
-        obs_attributes                    : list (optional)
-            the columns names in path_obsfile_in that indicate following items has 
-            to be included
+            | 1) column name for the unique Id of each lake, datatype is integer
+            | 2) column name for type of the lake, datatype is integer
+            | 3) column name for the volume of lakes in km3, datatype is float 
+            | 4) column name for the average depth of lakes in m, datatype is float
+            | 5) column name for the area of lakes in km2, datatype is float
+        connected_lake_area_thresthold                 : float (optional)
+            is a lake area thresthold for connected lakes in km2.
+            Connected lake with lake area below this value will not be considerd
+        non_connected_lake_area_thresthold             : float (optional)
+            is a lake area thresthold for non-connected lakes in km2
+            Non connected lake with lake area below this value will not be considered
+        path_point_of_interest
+            is a path of the point shapefile that indicate points of interest,which 
+            can include different observation gauges.
+        point_of_interest_attributes                    : list (optional)
+            the columns names in the point of interest shapefile that indicate 
+            following items (mandatory). It is needed only when path_point_of_interest 
+            is provided. Columns (2-4 in following list) in point shapefile can be 
+            fill with any value, when these infomation is not avaiable.
             
-            | 1) column name for the unique Id of each observation point
-            | 2) column name for the unique name of each observation point
-            | 3) column name for the drainage area of each observation point in km3
+            | 1) column name for the unique Id of each observation point, datatype is integer
+            | 2) column name for the unique name of each observation point, datatype is string
+            | 3) column name for the drainage area of each observation point in km3, datatype is float
             | 4) column name for the source of the observation point: 'CA' for observation in canada;
-                 'US' for observation in US, or any other names                      
-                  
+                 'US' for observation in US, or any user-provided names, datatype is string                       
+        max_memroy        : integer (optional)
+            is the maximum memeory that allow to be used in MB.
+                              
         Returns
         -------
 
         Notes
         -------
-        Raster and vector files that are generated by this function and
-        will be used by next step are list as following. All files are
-        stored at a grass database
+        Output raster and vector files that will be used by next step are list as 
+        following. All files are saved in GRASS GIS database loacated in 
+        os.path.join(path_working_folder,'grassdb')
 
         selected_lakes                    : raster
             it is a raster represent all lakes that are selected by two lake
@@ -876,7 +883,7 @@ class dlidem:
             it is a raster represent all non connected lakes that are selected
             by lake area threstholds
         sl_connected_lake           : raster
-            it is a raster represent allconnected lakes that are selected
+            it is a raster represent all connected lakes that are selected
             by lake area threstholds
         river_without_merging_lakes                         : raster/vector
             it is the updated river segment for each subbasin
@@ -885,7 +892,7 @@ class dlidem:
             and outflow points as new subbasin outlet.
         snapped_obs_points                                  : raster/vector
             it is a name of the point gis file represent successfully sanpped
-            observation points
+            point of interest points
 
 
         Examples
@@ -898,14 +905,14 @@ class dlidem:
 
         add_lakes_and_obs_into_existing_watershed_delineation(
             input_geo_names=self.geofilenames,
-            path_lakefile_in=path_lakefile_in,
+            path_lakefile_in=path_lake_polygon,
             lake_attributes=lake_attributes,
-            path_obsfile_in=path_obsfile_in,
-            obs_attributes=obs_attributes,
+            path_obsfile_in=path_point_of_interest,
+            obs_attributes=point_of_interest_attributes,
             path_sub_reg_outlets_v=path_sub_reg_outlets_v,
             threshold_con_lake=threshold_con_lake,
             only_included_lake_at_river_interction = only_included_lake_at_river_interction,
-            threshold_non_con_lake=threshold_non_con_lake,
+            threshold_non_con_lake=non_connected_lake_area_thresthold,
             search_radius=search_radius,
             path_sub_reg_lake_r=path_sub_reg_lake_r,
             path_sub_reg_lake_bd_r=path_sub_reg_lake_bd_r,
@@ -929,72 +936,86 @@ class dlidem:
             gis_platform=gis_platform,
         )
 
-    def add_attributes_to_catchments_method(
+    def Generate_Hydrologic_Routing_Attributes(
         self,
-        path_bkfwidthdepth="#",
+        path_output_folder ="#",
+        prjected_epsg_code ="EPSG:3573",
+        path_bkfwidthdepth_polyline ="#",
         bkfwd_attributes=[],
-        path_landuse="#",
-        path_landuse_info="#",
-        projection="EPSG:3573",
         k_in=-1,
-        c_in=-1,
-        gis_platform="qgis",
-        lake_attributes=[],
-        obs_attributes=[],
+        c_in=-1,        
+        path_landuse ="#",
+        path_landuse_and_manning_n_table="#",
+        lake_attributes =[],
+        point_of_interest_attributes =[],
         outlet_obs_id=-1,
         path_sub_reg_outlets_v="#",
-        output_folder="#",
+        gis_platform="qgis",
     ):
         """Calculate hydrological paramters for each subbasin. 
 
         Parameters
         ----------
-        path_bkfwidthdepth             : string
-            It is a string to indicate the full path of the
-            polyline shapefile that having bankfull width and
-            depth data
-        bkfwd_attributes               : list
-            the columns names that indicate following items has to be included
+        path_output_folder                  : string
+            The path to a folder to save outputs
+        prjected_epsg_code                     : string (optional)
+            is a EPSG code to indicate a projected coordinate system  
+        path_bkfwidthdepth_polyline             : string (optional)
+            is a path of the polyline shapefile that contains bankfull width (w) and
+            depth (d) data.Following the methodology in Andreadis et al. (2013), 
+            the w, and d of each subbasin can be calculated by these two equation
+            w= 7.2 Q**0.5 and d=0.27Q**0.39 , respectively. And the the bankfull 
+            discharge Q of each subbasin can be estimated using the relationship 
+            between Q and the drainage area (DA in [km2]), which is the Q=k×DA**c.
+            If the bankfull width and depth polyline data is provided, basinmaker
+            will use it to estimate the k and c for the entire watershed. 
+        bkfwd_attributes               : list (optional)
+            the columns names that indicate following items (mandatory).It is only 
+            needed with path_bkfwidthdepth is provided 
             
             | 1) column name for the Bankfull width in m;
             | 2) column name for the Bankfull depth in m;
             | 3) column name for the annual mean discharge in m3/s;
-        path_landuse                   : string
-            It is a string to indicate the full path of the landuse data.
-            It will be used to estimate the floodplain roughness
-            coefficient. Should have the same projection with the DEM data
-            in ".tif" format.
-        path_landuse_info              : string
-            It is a string to indicate the full path of the table in '.csv'
-            format.The table describe the floodplain roughness coefficient
-            correspond to a given landuse type. The table should have two
-            columns:
+            | 4) column name for the drainage area in km2;
+        k                              : float (optional)
+            the coefficient in Q=k×DA**c.if k and c is provided, the 
+            path_bkfwidthdepth_polyline will not be used 
+        c                              : float (optional)
+            the coefficient in Q=k×DA**c.if k and c is provided, the 
+            path_bkfwidthdepth_polyline will not be used 
+        path_landuse                   : string (optional)
+            is a path of the landuse raster.It is used to estimate the floodplain 
+            Manning's coefficient. Require the same projection with the DEM data
+            and formatted in ".tif".
+        path_landuse_and_manning_n_table              : string (optional)
+            is a path of the table in '.csv' format.The table describe the 
+            floodplain Manning's coefficient correspond to a given landuse type. 
+            The table should have two columns:
              
             | RasterV: is the landuse value in the landuse raster for each land use type
-            | MannV: is the roughness coefficient value for each landuse type.
-        projection                     : string
-            It is a string EPSG code to indicate a projected coordinate system,
-            which wiil be used to calcuate area, slope and aspect.            
+            | MannV: is the roughness coefficient value for each landuse type.          
         lake_attributes                   : list (optional)
-            the columns names in the path_lakefile_in that indicate following 
-            items has to be included
+            the columns names in the input lake polygon that indicate following 
+            items (mandatory). It is needed only when path_lake_polygon_in is 
+            provided. Columns (2-4 in following list) in lake poylon can be fill
+            with any number, when these infomation is not avaiable.  
             
-            | 1) column name for the unique Id of each lake within the lake polygon shpfile
-            | 2) column name for type of the lake should be integer
-            | 3) column name for the volume of the lake in km3
-            | 4) column name for the average depth of the lake in m
-            | 5) column name for the area of the lake in km2
-        obs_attributes                    : list (optional)
-            the columns names in path_obsfile_in that indicate following items has 
-            to be included
+            | 1) column name for the unique Id of each lake, datatype is integer
+            | 2) column name for type of the lake, datatype is integer
+            | 3) column name for the volume of lakes in km3, datatype is float 
+            | 4) column name for the average depth of lakes in m, datatype is float
+            | 5) column name for the area of lakes in km2, datatype is float
+        point_of_interest_attributes                    : list (optional)
+            the columns names in the point of interest shapefile that indicate 
+            following items (mandatory). It is needed only when path_point_of_interest 
+            is provided. Columns (2-4 in following list) in point shapefile can be 
+            fill with any value, when these infomation is not avaiable.
             
-            | 1) column name for the unique Id of each observation point
-            | 2) column name for the unique name of each observation point
-            | 3) column name for the drainage area of each observation point in km3
+            | 1) column name for the unique Id of each observation point, datatype is integer
+            | 2) column name for the unique name of each observation point, datatype is string
+            | 3) column name for the drainage area of each observation point in km3, datatype is float
             | 4) column name for the source of the observation point: 'CA' for observation in canada;
-                 'US' for observation in US, or any other names       
-        OutputFolder                  : string
-            The path to a folder to save outputs
+                 'US' for observation in US, or any user-provided names, datatype is string      
 
         Returns
         -------
@@ -1002,24 +1023,36 @@ class dlidem:
         Notes
         -------
         Five vector files will be generated in the output folder. these files
-        can be used to define final routing structure by "combine_catchments_covered_by_the_same_lake"
-        or be used as input for other postprocessing tools. All files
-        are stored at
-
+        can be further finalized as hydrologcial routing network by 
+        function "combine_catchments_covered_by_the_same_lake"
+        or be used as input for BasinMaker post processint tools.
+        The attributes included in each GIS file can be found in 
+        http://hydrology.uwaterloo.ca/basinmaker/index.html
+        
         catchment_without_merging_lakes.shp             : shapefile
-            It is the subbasin polygon before merging lakes catchments and
-            need to be processed before used.
+            The GIS layer containing subbasin polygons of an incomplete hydrologic 
+            routing network. In this incomplete hydrologic routing network subbasin 
+            polygons covered by the same lake are not merged into one lake subbasin 
+            yet. This incomplete hydrologic routing network is only intended as 
+            input to customize the routing network with our BasinMaker GIS toolbox 
+            (for example by defining new lake area thresholds and/or a new catchment 
+            minimum drainage area threshold)
         river_without_merging_lakes.shp                 : shapefile
-            It is the subbasin river segment before merging lakes catchments and
-            need to be processed before used.
+            The GIS layer containing river polylines of an incomplete hydrologic 
+            routing network. In this incomplete hydrologic routing network, the 
+            river polylines covered by the same lake are not merged into one river 
+            segment yet. This incomplete hydrologic routing network is only intended as 
+            input to customize the routing network with our BasinMaker GIS toolbox 
+            (for example by defining new lake area thresholds and/or a new catchment 
+            minimum drainage area threshold)
         sl_connected_lake.shp                           : shapefile
-            It is the connected lake polygon. Connected lakes are lakes that
-            are connected by  Path_final_riv.
+            the GIS layer containing the lake polygons of lakes that are connected 
+            by the river_without_merging_lakes.shp
         sl_non_connected_lake.shp                       : shapefile
-            It is the  non connected lake polygon. Connected lakes are lakes
-            that are not connected by Path_final_cat_riv or Path_final_riv.
+            the GIS layer containing the lake polygons of lakes that are not connected 
+            by the river_without_merging_lakes.shp
         obs_gauges                                      : shapefile
-            It is the point shapefile that represent the observation gauge
+            It is the point shapefile that represent the point of interest
             after snap to river network.
 
 
@@ -1032,24 +1065,24 @@ class dlidem:
 
         add_attributes_to_catchments(
             input_geo_names=self.geofilenames,
-            path_bkfwidthdepth=path_bkfwidthdepth,
+            path_bkfwidthdepth=path_bkfwidthdepth_polyline,
             bkfwd_attributes=bkfwd_attributes,
             path_landuse=path_landuse,
-            path_landuse_info=path_landuse_info,
-            projection=projection,
-            k_in=k_in,
-            c_in=k_in,
+            path_landuse_info=path_landuse_and_manning_n_table,
+            projection=prjected_epsg_code,
+            k_in=k,
+            c_in=c,
             out_cat_name=self.geofilenames["catchment_without_merging_lakes"],
             out_riv_name=self.geofilenames["river_without_merging_lakes"],
             grassdb=self.grassdb,
             grass_location=self.grass_location_geo,
             qgis_prefix_path=self.qgispp,
             gis_platform=gis_platform,
-            obs_attributes=obs_attributes,
+            obs_attributes=point_of_interest_attributes,
             lake_attributes=lake_attributes,
             outlet_obs_id=outlet_obs_id,
             path_sub_reg_outlets_v=path_sub_reg_outlets_v,
-            output_folder=output_folder,
+            output_folder=path_output_folder,
         )
 
     def divide_domain_into_sub_regions_method(
@@ -1130,17 +1163,17 @@ class dlidem:
             c = c
         )
 
-    def combine_catchments_covered_by_the_same_lake(
+    def Combine_Subbasins_Covered_by_The_Same_Lake(
         self,
-        Routing_Product_Folder='#',
+        routing_product_folder='#',
         gis_platform="qgis",
     ):
-        """Generate the final lake river routing structure by merging subbasin
+        """Finalize a incomplete hydrologic routing network by merging subbasin
         polygons that are covered by the same lake.
 
         Parameters
         ----------
-        Routing_Product_Folder         : string
+        routing_product_folder         : string
             is the folder where the input routing product is stored
         gis_platform                   : string
             It is the parameter indicate which gis platform is used. It can be 
@@ -1150,9 +1183,18 @@ class dlidem:
         
         Notes
         -----
-        This function has no return values, instead the generated routing product 
-        will be saved in OutputFolder
+        This function has no return values, two vector files will be generated in 
+        the routing_product_folder
         
+        finalcat_info.shp                     : shapefile
+            The finalized hydrologic routing network. the GIS layer containing 
+            subbasin polygons which respect the lake inflow and outflow routing 
+            structures. This layer contains all the necessary information for 
+            hydrologic routing through the lake-river network.
+        finalcat_info_riv.shp                 : shapefile
+            The finalized hydrologic routing network. the GIS layer containing 
+            river network polylines in the routing network.   
+               
         Examples
         -------
 
@@ -1162,7 +1204,7 @@ class dlidem:
         )
 
         combine_catchments_covered_by_the_same_lake_method(
-            Routing_Product_Folder = Routing_Product_Folder,
+            Routing_Product_Folder = routing_product_folder,
             qgis_prefix_path=self.qgispp,
             gis_platform=gis_platform,
         )

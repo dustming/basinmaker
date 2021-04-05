@@ -11,3 +11,7 @@ Welcome to BasinMaker documentation!
    
    installation.rst
       
+.. toctree::
+   :caption: API functions 
+  
+   basinmaker_tools.rst
