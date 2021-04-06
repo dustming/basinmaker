@@ -1164,9 +1164,8 @@ def Determine_HRU_Attributes(
     -------
         None,
     """
-
     Lake_HRU_IDS = np.unique(Attri_table["HRULake_ID"].values)
-
+    Lake_HRU_IDS = Lake_HRU_IDS[Lake_HRU_IDS > 0]
     ### landuse,soil,and veg and other properties for lake hrus
 
     for i in range(0, len(Lake_HRU_IDS)):
@@ -1312,8 +1311,7 @@ def Determine_HRU_Attributes(
         ].values[0]
         if Is_lake_hru > 0:
             Attri_table.loc[i, "SOIL_PROF"] = (
-                "Lake_"
-                + Soil_info_data.loc[
+                Soil_info_data.loc[
                     Soil_info_data[Soil_ID] == int(Soil_ID_num), "SOIL_PROF"
                 ].values[0]
             )

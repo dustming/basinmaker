@@ -328,16 +328,27 @@ def GenerateHRUS_qgis(
         fieldnames,
         OutputFolder,
     )
-
+    
+ 
     #####
 
     Landuse_info_data = pd.read_csv(Landuse_info)
     Soil_info_data = pd.read_csv(Soil_info)
     Veg_info_data = pd.read_csv(Veg_info)
 
+    # qgis_vector_field_calculator(
+    #     processing=processing,
+    #     context=context,
+    #     INPUT=mem_union,
+    #     FIELD_NAME='asdfd',
+    #     FORMULA='1',
+    #     FIELD_PRECISION=3,
+    #     OUTPUT=os.path.join(OutputFolder,'test3.shp'),
+    # )
+        
     # landuse polygon is not provided,landused id the same as IS_lake
     if Path_Landuse_Ply == "#":
-        formula = '- "%s" ' % "HRU_IsLake"
+        formula = "1"
         mem_union_landuse = qgis_vector_field_calculator(
             processing=processing,
             context=context,
@@ -362,7 +373,7 @@ def GenerateHRUS_qgis(
         
     # if soil is not provied, it the value,will be the same as land use
     if Path_Soil_Ply == "#":
-        formula = ' "%s" ' % Landuse_ID
+        formula = "1"
         mem_union_soil = qgis_vector_field_calculator(
             processing=processing,
             context=context,
@@ -387,7 +398,7 @@ def GenerateHRUS_qgis(
     
     # if no vegetation polygon is provide vegetation, will be the same as landuse
     if Path_Veg_Ply == "#":
-        formula = ' "%s" ' % Landuse_ID
+        formula = "1"
         mem_union_veg = qgis_vector_field_calculator(
             processing=processing,
             context=context,
@@ -413,7 +424,7 @@ def GenerateHRUS_qgis(
             
 
     if Path_Other_Ply_1 == "#":
-        formula = '- "%s" ' % "HRU_IsLake"
+        formula = "1"
         mem_union_o1 = qgis_vector_field_calculator(
             processing=processing,
             context=context,
@@ -438,7 +449,7 @@ def GenerateHRUS_qgis(
             
         
     if Path_Other_Ply_2 == "#":
-        formula = '- "%s" ' % "HRU_IsLake"
+        formula = "1"
         mem_union_o2 = qgis_vector_field_calculator(
             processing=processing,
             context=context,
@@ -467,6 +478,16 @@ def GenerateHRUS_qgis(
                    'CRS':None,'OUTPUT':"memory:"})["OUTPUT"]
 
 
+    # qgis_vector_field_calculator(
+    #     processing=processing,
+    #     context=context,
+    #     INPUT=hru_layer_draft,
+    #     FIELD_NAME='asdfd23',
+    #     FORMULA='1',
+    #     FIELD_PRECISION=3,
+    #     OUTPUT=os.path.join(OutputFolder,'test4.shp'),
+    # )
+    
  
 #    hru_layer_draft = mem_union_o2
 
@@ -872,24 +893,24 @@ def Union_Ply_Layers_And_Simplify(
             else:
                 mem_union_fix_temp = mem_union_fix_ext
                 del mem_union_fix_ext
-                mem_union = processing.run(
-                    "saga:polygonunion",
-                    {
-                        "A": mem_union_fix_temp,
-                        "B": Merge_layer_list[i],
-                        "SPLIT": True,
-                        "RESULT": "TEMPORARY_OUTPUT",
-                    },
-                    context=context,
-                )["RESULT"]
-                # mem_union = qgis_vector_union_two_layers(
-                #     processing,
-                #     context,
-                #     mem_union_fix_temp,
-                #     Merge_layer_list[i],
-                #     "memory:",
-                #     OVERLAY_FIELDS_PREFIX="",
-                # )["OUTPUT"]
+                # mem_union = processing.run(
+                #     "saga:polygonunion",
+                #     {
+                #         "A": mem_union_fix_temp,
+                #         "B": Merge_layer_list[i],
+                #         "SPLIT": True,
+                #         "RESULT": "TEMPORARY_OUTPUT",
+                #     },
+                #     context=context,
+                # )["RESULT"]
+                mem_union = qgis_vector_union_two_layers(
+                    processing,
+                    context,
+                    mem_union_fix_temp,
+                    Merge_layer_list[i],
+                    "memory:",
+                    OVERLAY_FIELDS_PREFIX="",
+                )["OUTPUT"]
                 mem_union_fix = qgis_vector_fix_geometries(
                     processing, context, INPUT=mem_union, OUTPUT="memory:"
                 )["OUTPUT"]
@@ -1059,7 +1080,7 @@ def Define_HRU_Attributes(
     layer_area_id = qgis_vector_field_calculator(
         processing=processing,
         context=context,
-        FORMULA=" @row_number",
+        FORMULA=" @row_number + 1",
         FIELD_NAME="HRU_ID",
         INPUT=layer_area,
         OUTPUT="memory:",
@@ -1084,6 +1105,7 @@ def Define_HRU_Attributes(
     Attri_table.to_csv(
         os.path.join(tempfile.gettempdir(), "attribute_pre.csv"), sep=","
     )
+    Attri_table = Attri_table.fillna(0)
     Attri_table = Determine_HRU_Attributes(
         Attri_table,
         Sub_ID,
@@ -1186,11 +1208,11 @@ def Define_HRU_Attributes(
     Attri_table = Obtain_Attribute_Table(processing, context, HRU_draft)
     Attri_table['HRU_Area'] = Attri_table['HRU_Area2']
     hruinfo = simplidfy_hrus(min_hru_pct_sub_area,Attri_table,importance_order)
-    
+    hruinfo = Attri_table
     #######
 
     layer_area_id = Copy_Pddataframe_to_shpfile(
-        Path_shpfile=layer_area_id,
+        Path_shpfile=HRU_draft,
         Pddataframe=hruinfo,
         link_col_nm_shp="HRU_ID",
         link_col_nm_df="HRU_ID",
