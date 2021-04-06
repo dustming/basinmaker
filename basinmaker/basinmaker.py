@@ -279,7 +279,7 @@ class postprocess:
         )
 
         combine_catchments_covered_by_the_same_lake_method(
-            Routing_Product_Folder = OutputFolder,
+            Routing_Product_Folder = path_output_folder,
             qgis_prefix_path=self.qgispp,
             gis_platform=gis_platform,
         )
@@ -366,9 +366,9 @@ class postprocess:
         )
         
         simplify_routing_structure_by_drainage_area_method(
-            Routing_Product_Folder = Routing_Product_Folder,
-            Area_Min=Drain_Area_Min,
-            OutputFolder=OutputFolder,
+            Routing_Product_Folder = routing_product_folder,
+            Area_Min=minimum_subbasin_drainage_area,
+            OutputFolder=path_output_folder,
             gis_platform=gis_platform,
             qgis_prefix_path=self.qgispp,
         )
@@ -378,7 +378,7 @@ class postprocess:
         )
 
         combine_catchments_covered_by_the_same_lake_method(
-            Routing_Product_Folder = OutputFolder,
+            Routing_Product_Folder = path_output_folder,
             qgis_prefix_path=self.qgispp,
             gis_platform=gis_platform,
         )
@@ -388,8 +388,8 @@ class postprocess:
         path_output_folder="#",
         routing_product_folder = '#',
         gis_platform="qgis",   
-        mostdownids=[-1],
-        mostupids=[-1],
+        most_down_stream_subbasin_ids=[-1],
+        most_up_stream_subbasin_ids=[-1],
     ):
         """Select subregion of hydrologic routing network based on provided subbasin IDs
                 
@@ -464,26 +464,25 @@ class postprocess:
         from basinmaker.postprocessing.postprocessingfunctions import (
             select_part_of_routing_product_method,
         )
-        Path_Points="#",
-        Gauge_NMS="#",
-        Path_Catchment_Polygon="#",
-        Path_River_Polyline="#",
-        Path_Con_Lake_ply="#",
-        Path_NonCon_Lake_ply="#",
-        qgis_prefix_path="#",
+        Path_Points="#"
+        Gauge_NMS=["#"]
+        Path_Catchment_Polygon="#"
+        Path_River_Polyline="#"
+        Path_Con_Lake_ply="#"
+        Path_NonCon_Lake_ply="#"
 
         select_part_of_routing_product_method(
             Path_Points=Path_Points,
             Gauge_NMS=Gauge_NMS,
-            OutputFolder=OutputFolder,
+            OutputFolder=path_output_folder,
             mostdownid=most_down_stream_subbasin_ids,
             mostupid=most_up_stream_subbasin_ids,
             Path_Catchment_Polygon=Path_Catchment_Polygon,
             Path_River_Polyline=Path_River_Polyline,
             Path_Con_Lake_ply=Path_Con_Lake_ply,
             Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,
-            qgis_prefix_path=qgis_prefix_path,
-            Routing_Product_Folder = path_output_folder,
+            qgis_prefix_path=self.qgispp,
+            Routing_Product_Folder = routing_product_folder,
             gis_platform=gis_platform,
         )
 
@@ -492,7 +491,7 @@ class postprocess:
         )
 
         combine_catchments_covered_by_the_same_lake_method(
-            Routing_Product_Folder = OutputFolder,
+            Routing_Product_Folder = path_output_folder,
             qgis_prefix_path=self.qgispp,
             gis_platform=gis_platform,
         )
@@ -602,31 +601,31 @@ class postprocess:
         Other_Ply_ID_2="O_ID_2",
 
         generate_hrus_method(
-            Path_Subbasin_Ply=Path_Subbasin_Ply,
-            Landuse_info=Landuse_info,
-            Soil_info=Soil_info,
-            Veg_info=Veg_info,
+            Path_Subbasin_Ply=path_subbasin_polygon,
+            Landuse_info=path_landuse_info,
+            Soil_info=path_soil_info,
+            Veg_info=path_veg_info,
             Sub_Lake_ID=Sub_Lake_ID,
             Sub_ID=Sub_ID,
-            Path_Connect_Lake_ply=Path_Connect_Lake_ply,
-            Path_Non_Connect_Lake_ply=Path_Non_Connect_Lake_ply,
+            Path_Connect_Lake_ply=path_connect_lake_polygon,
+            Path_Non_Connect_Lake_ply=path_non_connect_lake_polygon,
             Lake_Id=Lake_Id,
-            Path_Landuse_Ply=Path_Landuse_Ply,
+            Path_Landuse_Ply=path_landuse_polygon,
             Landuse_ID=Landuse_ID,
-            Path_Soil_Ply=Path_Soil_Ply,
+            Path_Soil_Ply=path_soil_polygon,
             Soil_ID=Soil_ID,
-            Path_Veg_Ply=Path_Veg_Ply,
+            Path_Veg_Ply=path_vegetation_polygon,
             Veg_ID=Veg_ID,
-            Path_Other_Ply_1=Path_Other_Ply_1,
+            Path_Other_Ply_1=path_other_polygon_1,
             Other_Ply_ID_1=Other_Ply_ID_1,
-            Path_Other_Ply_2=Path_Other_Ply_2,
+            Path_Other_Ply_2=path_other_polygon_2,
             Other_Ply_ID_2=Other_Ply_ID_2,
-            DEM=DEM,
-            Inmportance_order = Inmportance_order,
-            min_hru_area_pct_sub = min_hru_area_pct_sub,
-            Project_crs=Project_crs,
-            OutputFolder=OutputFolder,
-            qgis_prefix_path=qgis_prefix_path,
+            DEM=path_to_dem,
+            Inmportance_order = inmportance_order,
+            min_hru_area_pct_sub = min_hru_subbasin_area_ratio,
+            Project_crs=prjected_epsg_code,
+            OutputFolder=path_output_folder,
+            qgis_prefix_path=self.qgispp,
             gis_platform = gis_platform,
         )
 
