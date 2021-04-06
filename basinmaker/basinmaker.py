@@ -591,14 +591,14 @@ class postprocess:
         from basinmaker.postprocessing.postprocessingfunctions import (
             generate_hrus_method,
         )
-        Sub_Lake_ID="HyLakeId",
-        Sub_ID="SubId",
-        Lake_Id="Hylak_id",
-        Landuse_ID="Landuse_ID",
-        Soil_ID="Soil_ID",
-        Other_Ply_ID_1="O_ID_1",
-        Veg_ID="Veg_ID",
-        Other_Ply_ID_2="O_ID_2",
+        Sub_Lake_ID="HyLakeId"
+        Sub_ID="SubId"
+        Lake_Id="Hylak_id"
+        Landuse_ID="Landuse_ID"
+        Soil_ID="Soil_ID"
+        Other_Ply_ID_1="O_ID_1"
+        Veg_ID="Veg_ID"
+        Other_Ply_ID_2="O_ID_2"
 
         generate_hrus_method(
             Path_Subbasin_Ply=path_subbasin_polygon,
