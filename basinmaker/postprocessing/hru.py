@@ -223,6 +223,14 @@ def GenerateHRUS_qgis(
         Lake_Id=Lake_Id,
     )
 
+    All_HRUS = processing.run("native:extractbyexpression", {
+                     'INPUT':Sub_Lake_HRU_Layer,
+                     'EXPRESSION':'\"HRU_IsLake\"  =  1',
+                     'OUTPUT':"memory:",
+                     'FAIL_OUTPUT':"memory:"})
+    Lake_HRUs = All_HRUS['OUTPUT']
+    Land_HRUs = All_HRUS['FAIL_OUTPUT']
+    
     fieldnames_list.extend(
         [
             Landuse_ID,
@@ -237,7 +245,7 @@ def GenerateHRUS_qgis(
         ]
     )
     dissolve_filedname_list = ["HRULake_ID"]
-    Merge_layer_list.append(Sub_Lake_HRU_Layer)
+    Merge_layer_list.append(Land_HRUs)
 
     #### check which data will be inlucded to determine HRU
     if Path_Landuse_Ply != "#":
@@ -248,7 +256,7 @@ def GenerateHRUS_qgis(
             Project_crs,
             trg_crs,
             Landuse_ID,
-            Sub_Lake_HRU_Layer,
+            Land_HRUs,
         )
         Merge_layer_list.append(layer_landuse_dis)
         dissolve_filedname_list.append(Landuse_ID)
@@ -261,7 +269,7 @@ def GenerateHRUS_qgis(
             Project_crs,
             trg_crs,
             Soil_ID,
-            Sub_Lake_HRU_Layer,
+            Land_HRUs,
         )
         Merge_layer_list.append(layer_soil_dis)
         dissolve_filedname_list.append(Soil_ID)
@@ -274,7 +282,7 @@ def GenerateHRUS_qgis(
             Project_crs,
             trg_crs,
             Veg_ID,
-            Sub_Lake_HRU_Layer,
+            Land_HRUs,
         )
         Merge_layer_list.append(layer_veg_dis)
         dissolve_filedname_list.append(Veg_ID)
@@ -287,7 +295,7 @@ def GenerateHRUS_qgis(
             Project_crs,
             trg_crs,
             Other_Ply_ID_1,
-            Sub_Lake_HRU_Layer,
+            Land_HRUs,
         )
         Merge_layer_list.append(layer_other_1_dis)
         fieldnames_list.append(Other_Ply_ID_1)
@@ -301,7 +309,7 @@ def GenerateHRUS_qgis(
             Project_crs,
             trg_crs,
             Other_Ply_ID_2,
-            Sub_Lake_HRU_Layer,
+            Land_HRUs,
         )
         Merge_layer_list.append(layer_other_2_dis)
         fieldnames_list.append(Other_Ply_ID_2)
@@ -339,6 +347,17 @@ def GenerateHRUS_qgis(
         )["OUTPUT"]
     else:
         mem_union_landuse = mem_union
+
+    Lake_HRUs = qgis_vector_field_calculator(
+        processing=processing,
+        context=context,
+        INPUT=Lake_HRUs,
+        FIELD_NAME=Landuse_ID,
+        FORMULA="-1",
+        FIELD_PRECISION=3,
+        OUTPUT="memory:",
+    )["OUTPUT"]
+        
     # if soil is not provied, it the value,will be the same as land use
     if Path_Soil_Ply == "#":
         formula = ' "%s" ' % Landuse_ID
@@ -353,6 +372,17 @@ def GenerateHRUS_qgis(
         )["OUTPUT"]
     else:
         mem_union_soil = mem_union_landuse
+        
+    Lake_HRUs = qgis_vector_field_calculator(
+        processing=processing,
+        context=context,
+        INPUT=Lake_HRUs,
+        FIELD_NAME=Soil_ID,
+        FORMULA="-1",
+        FIELD_PRECISION=3,
+        OUTPUT="memory:",
+    )["OUTPUT"]
+    
     # if no vegetation polygon is provide vegetation, will be the same as landuse
     if Path_Veg_Ply == "#":
         formula = ' "%s" ' % Landuse_ID
@@ -367,6 +397,19 @@ def GenerateHRUS_qgis(
         )["OUTPUT"]
     else:
         mem_union_veg = mem_union_soil
+        
+    Lake_HRUs = qgis_vector_field_calculator(
+        processing=processing,
+        context=context,
+        INPUT=Lake_HRUs,
+        FIELD_NAME=Veg_ID,
+        FORMULA="-1",
+        FIELD_PRECISION=3,
+        OUTPUT="memory:",
+    )["OUTPUT"]
+    
+            
+
     if Path_Other_Ply_1 == "#":
         formula = '- "%s" ' % "HRU_IsLake"
         mem_union_o1 = qgis_vector_field_calculator(
@@ -380,6 +423,18 @@ def GenerateHRUS_qgis(
         )["OUTPUT"]
     else:
         mem_union_o1 = mem_union_veg
+        
+    Lake_HRUs = qgis_vector_field_calculator(
+        processing=processing,
+        context=context,
+        INPUT=Lake_HRUs,
+        FIELD_NAME=Other_Ply_ID_1,
+        FORMULA="-1",
+        FIELD_PRECISION=3,
+        OUTPUT="memory:",
+    )["OUTPUT"]
+            
+        
     if Path_Other_Ply_2 == "#":
         formula = '- "%s" ' % "HRU_IsLake"
         mem_union_o2 = qgis_vector_field_calculator(
@@ -394,7 +449,30 @@ def GenerateHRUS_qgis(
     else:
         mem_union_o2 = mem_union_o1
 
-    hru_layer_draft = mem_union_o2
+    Lake_HRUs = qgis_vector_field_calculator(
+        processing=processing,
+        context=context,
+        INPUT=Lake_HRUs,
+        FIELD_NAME=Other_Ply_ID_2,
+        FORMULA="-1",
+        FIELD_PRECISION=3,
+        OUTPUT="memory:",
+    )["OUTPUT"]
+    
+    
+    hru_layer_draft = processing.run("native:mergevectorlayers", {
+                   'LAYERS':[Lake_HRUs,mem_union_o2],
+                   'CRS':None,'OUTPUT':"memory:"})["OUTPUT"]
+
+    Sub_Lake_HRU2 = qgis_vector_dissolve(
+        processing,
+        context,
+        INPUT=hru_layer_draft,
+        FIELD=["HRULake_ID"],
+        OUTPUT=os.path.join(OutputFolder,'test.shp'),
+    )
+ 
+#    hru_layer_draft = mem_union_o2
 
     HRU_draf_final = Define_HRU_Attributes(
         processing,
@@ -429,7 +507,7 @@ def GenerateHRUS_qgis(
     )
 
     Clean_Attribute_Name(output_hru_shp, COLUMN_NAMES_CONSTANT_HRU)
-    del Sub_Lake_HRU_Layer, mem_union
+    del Land_HRUs, mem_union
     Qgs.exit()
 
 
