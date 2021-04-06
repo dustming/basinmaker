@@ -345,7 +345,7 @@ def GenerateHRUS_qgis(
     #     FIELD_PRECISION=3,
     #     OUTPUT=os.path.join(OutputFolder,'test3.shp'),
     # )
-        
+    # 
     # landuse polygon is not provided,landused id the same as IS_lake
     if Path_Landuse_Ply == "#":
         formula = "1"
@@ -903,11 +903,26 @@ def Union_Ply_Layers_And_Simplify(
                 #     },
                 #     context=context,
                 # )["RESULT"]
+                input_layer_i = qgis_vector_fix_geometries(
+                    processing, context, INPUT=Merge_layer_list[i], OUTPUT="memory:"
+                )["OUTPUT"]
+                                
+                adjusted_i = processing.run("native:snapgeometries", {
+                              'INPUT':input_layer_i,
+                              'REFERENCE_LAYER':mem_union_fix_temp,
+                              'TOLERANCE':0.000833333,
+                              'BEHAVIOR':0,
+                              'OUTPUT':"memory:"}
+                              )["OUTPUT"]
+                adjusted_i_fix = qgis_vector_fix_geometries(
+                    processing, context, INPUT = adjusted_i, OUTPUT="memory:"
+                )["OUTPUT"]
+                
                 mem_union = qgis_vector_union_two_layers(
                     processing,
                     context,
                     mem_union_fix_temp,
-                    Merge_layer_list[i],
+                    adjusted_i_fix,
                     "memory:",
                     OVERLAY_FIELDS_PREFIX="",
                 )["OUTPUT"]
