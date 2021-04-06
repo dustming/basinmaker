@@ -13,9 +13,9 @@ class postprocess:
         path_hru_polygon="#",
         aspect_from_gis = "grass",
         model_name="test",
-        subbasingroup_nm_channel=["Allsubbasins"],
+        subbasingroup_names_channel=["Allsubbasins"],
         subbasingroup_length_channel=[-1],
-        subbasingroup_nm_lake=["AllLakesubbasins"],
+        subbasingroup_name_lake=["AllLakesubbasins"],
         subbasingroup_area_lake=[-1],
     ):
         """This function is to generate Raven input files. A subfolder 'RavenInput'
@@ -79,15 +79,15 @@ class postprocess:
             GenerateRavenInput,
         )
 
-        startyear=-1,
-        endYear=-1,
-        CA_HYDAT="#",
-        warmup=0,
-        template_folder="#",
-        lake_as_gauge=False,
-        writeobsrvt=False,
-        downloadobsdata=False,
-        forcing_input_file="#",
+        startyear=-1
+        endYear=-1
+        CA_HYDAT="#"
+        warmup=0
+        template_folder="#"
+        lake_as_gauge=False
+        writeobsrvt=False
+        downloadobsdata=False
+        forcing_input_file="#"
 
 
         GenerateRavenInput(
