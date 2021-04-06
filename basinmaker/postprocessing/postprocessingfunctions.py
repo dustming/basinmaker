@@ -245,6 +245,8 @@ def generate_hrus_method(
             Project_crs=Project_crs,
             OutputFolder=OutputFolder,
             qgis_prefix_path=qgis_prefix_path,
+            importance_order = Inmportance_order,
+            min_hru_pct_sub_area = min_hru_area_pct_sub,
         )
 
     if gis_platform == "arcgis":

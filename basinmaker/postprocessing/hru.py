@@ -31,6 +31,8 @@ def GenerateHRUS_qgis(
     Project_crs="EPSG:3573",
     OutputFolder="#",
     qgis_prefix_path="#",
+    min_hru_pct_sub_area = 0,
+    importance_order = ['Landuse_ID'],        
 ):
 
     """Generate HRU polygons and their attributes needed by hydrological model
@@ -464,13 +466,7 @@ def GenerateHRUS_qgis(
                    'LAYERS':[Lake_HRUs,mem_union_o2],
                    'CRS':None,'OUTPUT':"memory:"})["OUTPUT"]
 
-    Sub_Lake_HRU2 = qgis_vector_dissolve(
-        processing,
-        context,
-        INPUT=hru_layer_draft,
-        FIELD=["HRULake_ID"],
-        OUTPUT=os.path.join(OutputFolder,'test.shp'),
-    )
+
  
 #    hru_layer_draft = mem_union_o2
 
@@ -493,6 +489,8 @@ def GenerateHRUS_qgis(
         DEM,
         Path_Subbasin_Ply,
         OutputFolder,
+        min_hru_pct_sub_area,
+        importance_order,        
     )
 
     qgis_vector_field_calculator(
@@ -943,6 +941,8 @@ def Define_HRU_Attributes(
     DEM,
     Path_Subbasin_Ply,
     OutputFolder,
+    min_hru_pct_sub_area,
+    importance_order,
 ):
 
     """Generate attributes of each HRU
@@ -1180,6 +1180,80 @@ def Define_HRU_Attributes(
         OUTPUT="memory:",
     )["OUTPUT"]
 
+    ###### simplify HRU
+
+
+    Attri_table = Obtain_Attribute_Table(processing, context, HRU_draft)
+    Attri_table['HRU_Area'] = Attri_table['HRU_Area2']
+    hruinfo = simplidfy_hrus(min_hru_pct_sub_area,Attri_table,importance_order)
+    
+    #######
+
+    layer_area_id = Copy_Pddataframe_to_shpfile(
+        Path_shpfile=layer_area_id,
+        Pddataframe=hruinfo,
+        link_col_nm_shp="HRU_ID",
+        link_col_nm_df="HRU_ID",
+        UpdateColNM=[
+            Sub_ID,
+            Landuse_ID,
+            Soil_ID,
+            Veg_ID,
+            Other_Ply_ID_1,
+            Other_Ply_ID_2,
+            "LAND_USE_C",
+            "SOIL_PROF",
+            "VEG_C",
+            "HRU_ID_New",
+        ],
+        Input_Is_Feature_In_Mem=True,
+    )
+
+    ### merge lake hru.
+    qgis_vector_dissolve(
+        processing,
+        context,
+        INPUT=layer_area_id,
+        FIELD="HRU_ID_New",
+        OUTPUT=os.path.join(tempfile.gettempdir(), num + "_dissolve_union2b.shp"),
+    )
+
+    qgis_vector_dissolve(
+        processing,
+        context,
+        INPUT=os.path.join(tempfile.gettempdir(), num + "_dissolve_union2b.shp"),
+        FIELD="HRU_ID_New",
+        OUTPUT=os.path.join(tempfile.gettempdir(), num + "_dissolve_union3b.shp"),
+    )
+
+    HRU_draft = qgis_vector_dissolve(
+        processing,
+        context,
+        os.path.join(tempfile.gettempdir(), num + "_dissolve_union3b.shp"),
+        "HRU_ID_New",
+        "memory:",
+    )["OUTPUT"]
+
+    HRU_draft = qgis_vector_fix_geometries(
+        processing, context, INPUT=HRU_draft, OUTPUT="memory:"
+    )["OUTPUT"]
+
+    formular = "area(transform($geometry, '%s','%s'))" % (
+        HRU_draft.crs().authid(),
+        Project_crs,
+    )
+
+    HRU_draft = qgis_vector_field_calculator(
+        processing=processing,
+        context=context,
+        FORMULA=formular,
+        FIELD_NAME="HRU_Area2",
+        INPUT=HRU_draft,
+        OUTPUT="memory:",
+    )["OUTPUT"]
+    
+    
+    
     HRU_draft = Add_centroid_to_feature(
         Path_feagure=HRU_draft,
         centroidx_nm="HRU_CenX",
