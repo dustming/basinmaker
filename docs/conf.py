@@ -16,7 +16,7 @@
 
 
 # -- Project information -----------------------------------------------------
-
+from basinmaker import basinmaker 
 project = 'BasinMaker'
 copyright = '2021, BasinMaker develop team'
 author = 'Hydrology research group at the University of Waterloo'
