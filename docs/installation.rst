@@ -26,7 +26,9 @@ QGIS with anaconda
 
 
 #. Create an empty python environment and then active it  
-
+    
+    For windows system, search and open "Anacoda Prompt" (Windows) to active a conda command line. Then
+   
     .. code-block::
       
       conda create --name <any_name_for_env>
@@ -65,6 +67,8 @@ QGIS with anaconda
       ####################################
       BasinMaker is successfully installed
       ####################################
+
+#. Users must active this conda environment when they wish to use functionalities from BasinMaker.
             
 
 ArcGIS pro with anaconda (Windows only)
@@ -118,6 +122,7 @@ ArcGIS pro with anaconda (Windows only)
       BasinMaker is successfully installed
       ####################################
 
+#. Users must active this conda environment when they wish to use functionalities from BasinMaker.
 
 
 Full installation

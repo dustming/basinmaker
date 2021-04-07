@@ -224,7 +224,16 @@ def GenerateHRUS_qgis(
         Sub_Lake_ID=Sub_Lake_ID,
         Lake_Id=Lake_Id,
     )
-
+    
+    check_crs = QgsCoordinateReferenceSystem(4326)
+    
+    crs_info = Sub_Lake_HRU_Layer.crs()
+    if crs_info.isGeographic():
+        union_snap_distance = 0.000833333 # 90 m 
+    else:
+        union_snap_distance = 90
+    
+    
     All_HRUS = processing.run("native:extractbyexpression", {
                      'INPUT':Sub_Lake_HRU_Layer,
                      'EXPRESSION':'\"HRU_IsLake\"  =  1',
@@ -337,6 +346,7 @@ def GenerateHRUS_qgis(
         dissolve_filedname_list,
         fieldnames,
         OutputFolder,
+        union_snap_distance,
     )
     
  
@@ -856,6 +866,7 @@ def Union_Ply_Layers_And_Simplify(
     dissolve_filedname_list,
     fieldnames,
     OutputFolder,
+    union_snap_distance,
 ):
     """Union input QGIS polygon layers
 
@@ -920,7 +931,7 @@ def Union_Ply_Layers_And_Simplify(
                 adjusted_i = processing.run("native:snapgeometries", {
                               'INPUT':input_layer_i,
                               'REFERENCE_LAYER':mem_union_fix_temp,
-                              'TOLERANCE':0.000833333,
+                              'TOLERANCE':union_snap_distance,
                               'BEHAVIOR':0,
                               'OUTPUT':"memory:"}
                               )["OUTPUT"]

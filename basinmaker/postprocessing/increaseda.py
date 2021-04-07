@@ -237,8 +237,7 @@ def simplify_routing_structure_by_drainage_area_qgis(
 
     # Copy connected lakes that are transfered into non-connected
     # lake to non connected lake polygon
-    print(Conn_To_NonConlakeids)
-    print(Path_Conl_ply)
+
     if len(Conn_To_NonConlakeids) > 0 and Path_Conl_ply !='#':
         if Path_Non_ConL_ply != '#':
             Copyfeature_to_another_shp_by_attribute(
@@ -254,7 +253,7 @@ def simplify_routing_structure_by_drainage_area_qgis(
             Selectfeatureattributes(
                 processing,
                 Input=Path_Conl_ply,
-                Output=os.path.join(outputfolder_subid, 'sl_non_connected_lake' + os.path.basename(Path_Conl_ply).split('_')[3]),
+                Output=os.path.join(outputfolder_subid, 'sl_non_connected_lake_' + os.path.basename(Path_Conl_ply).split('_')[3]),
                 Attri_NM="Hylak_id",
                 Values=Conn_To_NonConlakeids,
             )
