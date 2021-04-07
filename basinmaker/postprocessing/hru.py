@@ -262,7 +262,17 @@ def GenerateHRUS_qgis(
         )
         Merge_layer_list.append(layer_landuse_dis)
         dissolve_filedname_list.append(Landuse_ID)
-
+        
+    # qgis_vector_field_calculator(
+    #     processing=processing,
+    #     context=context,
+    #     INPUT=layer_landuse_dis,
+    #     FIELD_NAME='asdfd',
+    #     FORMULA='1',
+    #     FIELD_PRECISION=3,
+    #     OUTPUT=os.path.join(OutputFolder,'landuse_proj.shp'),
+    # )
+    
     if Path_Soil_Ply != "#":
         layer_soil_dis = Reproj_Clip_Dissolve_Simplify_Polygon(
             processing,
@@ -361,15 +371,15 @@ def GenerateHRUS_qgis(
     else:
         mem_union_landuse = mem_union
 
-    Lake_HRUs = qgis_vector_field_calculator(
-        processing=processing,
-        context=context,
-        INPUT=Lake_HRUs,
-        FIELD_NAME=Landuse_ID,
-        FORMULA="-1",
-        FIELD_PRECISION=3,
-        OUTPUT="memory:",
-    )["OUTPUT"]
+    # Lake_HRUs = qgis_vector_field_calculator(
+    #     processing=processing,
+    #     context=context,
+    #     INPUT=Lake_HRUs,
+    #     FIELD_NAME=Landuse_ID,
+    #     FORMULA="-1",
+    #     FIELD_PRECISION=3,
+    #     OUTPUT="memory:",
+    # )["OUTPUT"]
         
     # if soil is not provied, it the value,will be the same as land use
     if Path_Soil_Ply == "#":
@@ -398,13 +408,13 @@ def GenerateHRUS_qgis(
     
     # if no vegetation polygon is provide vegetation, will be the same as landuse
     if Path_Veg_Ply == "#":
-        formula = "1"
+
         mem_union_veg = qgis_vector_field_calculator(
             processing=processing,
             context=context,
             INPUT=mem_union_soil,
             FIELD_NAME=Veg_ID,
-            FORMULA=formula,
+            FORMULA=' \"Landuse_ID\" ',
             FIELD_PRECISION=3,
             OUTPUT="memory:",
         )["OUTPUT"]
