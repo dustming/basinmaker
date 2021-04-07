@@ -816,7 +816,7 @@ class delineate:
         self,
         fac_thresold,
         mode = 'using_dem',
-        path_flow_dirction_in="#",
+        path_flow_dirction="#",
         max_memroy=1024 * 4,
         gis_platform="qgis",
         subreg_fdr_path="#",
@@ -840,7 +840,7 @@ class delineate:
             
             | 'using_dem' : dem is used for initial subbasin delineation
             | 'using_fdr' : flow direction data is used for subbasin delineation
-        path_flow_dirction_in          : string (optional)
+        path_flow_dirction          : string (optional)
             is a path indicating the path of flow direction input dataset
             only needed when mode = 'using_fdr'
         max_memroy        : integer
@@ -886,7 +886,7 @@ class delineate:
             mode=mode,
             input_geo_names=self.geofilenames,
             acc_thresold=fac_thresold,
-            fdr_path=fdr_path,
+            fdr_path=path_flow_dirction,
             subreg_fdr_path=subreg_fdr_path,
             subreg_acc_path=subreg_acc_path,
             subreg_str_r_path=subreg_str_r_path,
@@ -1011,7 +1011,7 @@ class delineate:
             path_obsfile_in=path_point_of_interest,
             obs_attributes=point_of_interest_attributes,
             path_sub_reg_outlets_v=path_sub_reg_outlets_v,
-            threshold_con_lake=threshold_con_lake,
+            threshold_con_lake=connected_lake_area_thresthold,
             only_included_lake_at_river_interction = only_included_lake_at_river_interction,
             threshold_non_con_lake=non_connected_lake_area_thresthold,
             search_radius=search_radius,
@@ -1043,8 +1043,8 @@ class delineate:
         prjected_epsg_code ="EPSG:3573",
         path_bkfwidthdepth_polyline ="#",
         bkfwd_attributes=[],
-        k_in=-1,
-        c_in=-1,        
+        k =-1,
+        c =-1,        
         path_landuse ="#",
         path_landuse_and_manning_n_table="#",
         lake_attributes =[],
