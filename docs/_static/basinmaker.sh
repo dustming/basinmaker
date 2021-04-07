@@ -1,6 +1,6 @@
 #!/bin/sh
 export GISBASE='/usr/lib/grass78'
-export QGISPrefixPath='/usr'
+export QGIS_PREFIX_PATH='/usr'
 
 export PYTHONPATH=$PYTHONPATH:'/usr/lib/grass78/etc/python'  ### folder has a grass folder
 export PYTHONPATH=$PYTHONPATH:'/usr/share/qgis/python/plugins' ## folder has db_manager and processing

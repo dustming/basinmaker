@@ -50,8 +50,22 @@ QGIS with anaconda
 
     .. code-block::
   
-      pip install pandas pytest scipy simpledbf netCDF4
+      python - m pip install pandas pytest scipy simpledbf netCDF4 jupyter
 
+#. Test validation 
+     
+    Please download the test data and scripts from `here <https://github.com/dustming/RoutingTool/wiki/Files/test.zip>`_. and unzip it to a folder, the path of this folder will refer as path_test_data in following section. Then
+
+    .. code-block::
+     
+       
+      cd path_test_data/test
+      python test_light_installation.py
+      (... some messages)
+      ####################################
+      BasinMaker is successfully installed
+      ####################################
+            
 
 ArcGIS pro with anaconda (Windows only)
 ---------------------------------------
@@ -87,7 +101,23 @@ ArcGIS pro with anaconda (Windows only)
 
     .. code-block::
     
-      pip install pandas pytest scipy simpledbf netCDF4
+      python -m pip install pandas pytest scipy simpledbf netCDF4 jupyter
+
+
+#. Test validation 
+     
+    Please download the test data and scripts from `here <https://github.com/dustming/RoutingTool/wiki/Files/test.zip>`_. and unzip it to a folder, the path of this folder will refer as path_test_data in following section. Then
+
+    .. code-block::
+     
+       
+      cd path_test_data/test
+      python test_light_installation.py
+      (... some messages)
+      ####################################
+      BasinMaker is successfully installed
+      ####################################
+
 
 
 Full installation
@@ -108,8 +138,9 @@ QGIS and GRASS in Windows
                 
 #. Setup GRASS and QGIS python environment
 
-    The python environment for QGIS and GRASS GIS in Windows can be set up by modifying the following :download:`basinmaker.bat <./_static/basinmaker.bat>`.
-    
+    The python environment for QGIS and GRASS GIS in Windows can be set up by modifying the following :download:`basinmaker.txt <./_static/basinmaker.txt>`.
+
+    * Please rename 'basinmaker.txt' to 'basinmaker.bat'.    
     * Please change OSGEO4W_ROOT to your OSGEO4W installation folder at line 2.
     * Please change the grass78.* in line 8 and 10 to your GRASS GIS version number.
     * Please double check the paths defined in the basinamker.bat file exists in your machine
@@ -169,10 +200,24 @@ QGIS and GRASS in Windows
     * r.stream.basins
     * r.stream.snap  
     
-    How to install GRASS GIS addon can be found in `here <https://grass.osgeo.org/download/addons/>`_. 
+    How to install GRASS GIS addon can be found in `open GRASS GIS GUI <https://grass.osgeo.org/grass78/manuals/helptext.html>`_ and `add GRASS GIS addon <https://grass.osgeo.org/download/addons/>`_.  
   
+#. Test validation 
+     
+    * Please download the test data and scripts from `here <https://github.com/dustming/RoutingTool/wiki/Files/test.zip>`_. and unzip it to a folder, the path of this folder will refer as path_test_data in following section. Then
+    * run basinmaker.bat
+    
+    .. code-block::
+     
+       
+      cd path_test_data/test
+      python test_full_installation.py
+      (... some messages)
+      ####################################
+      BasinMaker is successfully installed
+      ####################################
+      
 #. Users must run basinmaker.bat every time they wish to use functionalities from BasinMaker.
-
 
 QGIS and GRASS in Ubuntu
 ------------------------
@@ -251,7 +296,23 @@ QGIS and GRASS in Ubuntu
     * r.stream.basins
     * r.stream.snap  
     
-    How to install GRASS GIS addon can be found in `open GRASS GIS gui <https://grass.osgeo.org/grass78/manuals/helptext.html>`_ and `add GRASS GIS addon <https://grass.osgeo.org/download/addons/>`_. 
+    How to install GRASS GIS addon can be found in `open GRASS GIS GUI <https://grass.osgeo.org/grass78/manuals/helptext.html>`_ and `add GRASS GIS addon <https://grass.osgeo.org/download/addons/>`_. 
 
+#. Test validation 
+     
+    * Please download the test data and scripts from `here <https://github.com/dustming/RoutingTool/wiki/Files/test.zip>`_. and unzip it to a folder, the path of this folder will refer as path_test_data in following section. Then
+    * run basinmaker.bat
+    
+    .. code-block::
+     
+       
+      cd path_test_data/test
+      python test_full_installation.py
+      (... some messages)
+      ####################################
+      BasinMaker is successfully installed
+      ####################################
+          
+  
 #. Users must run basinmaker.sh every time they wish to use functionalities from BasinMaker.
 
