@@ -7,5 +7,10 @@ Welcome to BasinMaker documentation!
    
 .. toctree::
    :caption: Overview 
+  
+   overview.rst  
    
-   overview.rst   
+.. toctree::
+   :caption: BasinMaker 
+   
+   basinmaker.rst   
