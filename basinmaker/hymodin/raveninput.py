@@ -902,40 +902,40 @@ def Generate_Raven_Channel_rvp_string_sub(
         sidwd = 0.5 * 0.5 * chwd
         zch = (chwd - botwd) / 2 / chdep
     if iscalmanningn == True:
-        mann = str(channeln)
+        mann = '{:>10.4f}'.format(channeln) #str(channeln)
     else:
-        mann = str(0.035)
+        mann = '{:>10.4f}'.format(0.035) #str(0.035)
     zfld = 4 + elev
     zbot = elev - chdep
     sidwdfp = 4 / 0.25
     Channame = ":ChannelProfile" + tab + chname + tab
     output_string_list.append(Channame)  # orchnl.write(Channame+"\n")
-    Chanslop = "  :Bedslope" + tab + str(chslope)
+    Chanslop = "  :Bedslope" + tab + '{:>15.10f}'.format(chslope) #str(chslope)
     output_string_list.append(Chanslop)  # orchnl.write(Chanslop+"\n")
     output_string_list.append("  :SurveyPoints")  # orchnl.write("  :SurveyPoints"+"\n")
     output_string_list.append(
-        "    0" + tab + str(zfld)
+        "    0" + tab + '{:>10.4f}'.format(zfld) #str(zfld)
     )  # orchnl.write("    0"+tab+str(zfld)+"\n")
     output_string_list.append(
-        "    " + str(sidwdfp) + tab + str(elev)
+        "    " + '{:>10.4f}'.format(sidwdfp) + tab + '{:>10.4f}'.format(elev)     #"    " + str(sidwdfp) + tab + str(elev)
     )  # orchnl.write("    "+str(sidwdfp)+tab+str(elev)+"\n")
     output_string_list.append(
-        "    " + str(sidwdfp + 2 * chwd) + tab + str(elev)
+        "    " + '{:>10.4f}'.format(sidwdfp + 2 * chwd) + tab + '{:>10.4f}'.format(elev)     #"    " + str(sidwdfp + 2 * chwd) + tab + str(elev)
     )  # orchnl.write("    "+str(sidwdfp + 2*chwd)+tab+str(elev)+"\n")
     output_string_list.append(
-        "    " + str(sidwdfp + 2 * chwd + sidwd) + tab + str(zbot)
+        "    " + '{:>10.4f}'.format(sidwdfp + 2 * chwd + sidwd) + tab + '{:>10.4f}'.format(zbot) #"    " + str(sidwdfp + 2 * chwd + sidwd) + tab + str(zbot)
     )  # orchnl.write("    "+str(sidwdfp + 2*chwd + sidwd)+tab+str(zbot)+"\n")
     output_string_list.append(
-        "    " + str(sidwdfp + 2 * chwd + sidwd + botwd) + tab + str(zbot)
+        "    " + '{:>10.4f}'.format(sidwdfp + 2 * chwd + sidwd + botwd) + tab + '{:>10.4f}'.format(zbot) #"    " + str(sidwdfp + 2 * chwd + sidwd + botwd) + tab + str(zbot)
     )  # orchnl.write("    "+str(sidwdfp + 2*chwd + sidwd + botwd)+tab+str(zbot)+"\n")
     output_string_list.append(
-        "    " + str(sidwdfp + 2 * chwd + 2 * sidwd + botwd) + tab + str(elev)
+        "    " + '{:>10.4f}'.format(sidwdfp + 2 * chwd + 2 * sidwd + botwd) + tab + '{:>10.4f}'.format(elev) #"    " + str(sidwdfp + 2 * chwd + 2 * sidwd + botwd) + tab + str(elev)
     )  # orchnl.write("    "+str(sidwdfp + 2*chwd + 2*sidwd + botwd)+tab+str(elev)+"\n")
     output_string_list.append(
-        "    " + str(sidwdfp + 4 * chwd + 2 * sidwd + botwd) + tab + str(elev)
+        "    " + '{:>10.4f}'.format(sidwdfp + 4 * chwd + 2 * sidwd + botwd) + tab + '{:>10.4f}'.format(elev) #"    " + str(sidwdfp + 4 * chwd + 2 * sidwd + botwd) + tab + str(elev)
     )  # orchnl.write("    "+str(sidwdfp + 4*chwd + 2*sidwd + botwd)+tab+str(elev)+"\n")
     output_string_list.append(
-        "    " + str(2 * sidwdfp + 4 * chwd + 2 * sidwd + botwd) + tab + str(zfld)
+        "    " + '{:>10.4f}'.format(2 * sidwdfp + 4 * chwd + 2 * sidwd + botwd) + tab + '{:>10.4f}'.format(zfld) # "    " + str(2 * sidwdfp + 4 * chwd + 2 * sidwd + botwd) + tab + str(zfld)
     )  # orchnl.write("    "+str(2*sidwdfp + 4*chwd + 2*sidwd + botwd)+tab+str(zfld)+"\n")
     output_string_list.append(
         "  :EndSurveyPoints"
@@ -944,13 +944,13 @@ def Generate_Raven_Channel_rvp_string_sub(
         "  :RoughnessZones"
     )  # orchnl.write("  :RoughnessZones"+"\n")
     output_string_list.append(
-        "    0" + tab + str(floodn)
+        "    0" + tab + '{:>10.8f}'.format(floodn) #str(floodn)
     )  # orchnl.write("    0" + tab + str(floodn) +"\n")
     output_string_list.append(
-        "    " + str(sidwdfp + 2 * chwd) + tab + mann
+        "    " + '{:>10.4f}'.format(sidwdfp + 2 * chwd) + tab + mann #"    " + str(sidwdfp + 2 * chwd) + tab + mann
     )  # orchnl.write("    " + str(sidwdfp + 2*chwd)+ tab + mann +"\n")
     output_string_list.append(
-        "    " + str(sidwdfp + 2 * chwd + 2 * sidwd + botwd) + tab + str(floodn)
+        "    " + '{:>10.4f}'.format(sidwdfp + 2 * chwd + 2 * sidwd + botwd) + tab + '{:>10.8f}'.format(floodn) #"    " + str(sidwdfp + 2 * chwd + 2 * sidwd + botwd) + tab + str(floodn)
     )  # orchnl.write("    " + str(sidwdfp + 2*chwd + 2*sidwd + botwd)+ tab + str(floodn) +"\n")
     output_string_list.append(
         "  :EndRoughnessZones"
@@ -1022,7 +1022,7 @@ def Generate_Raven_Lake_rvh_String(catinfo, Raveinputsfolder, Model_Name):
     tab = "       "
     Lake_rvh_string_list.append("#----------------------------------------------")
     Lake_rvh_string_list.append("# This is a Raven lake rvh file generated")
-    Lake_rvh_string_list.append("# by Routing toolbox")
+    Lake_rvh_string_list.append("# by BasinMaker v2.0")
     Lake_rvh_string_list.append("#----------------------------------------------")
 
     for i in range(0, len(catinfo.index)):
@@ -1035,9 +1035,18 @@ def Generate_Raven_Lake_rvh_String(catinfo, Raveinputsfolder, Model_Name):
             hruid = int(catinfo.iloc[i]["HRU_ID"])
             Crewd = catinfo.iloc[i]["BkfWidth"]  ##3 m
             #            if slakeinfo.iloc[0]['Wshd_area'] < 6000 and slakeinfo.iloc[0]['Wshd_area'] > 0:
+            Lake_rvh_string_list.append(
+                "#############################################"
+            )  # f2.write("#############################################"+"\n")
+            Lake_rvh_string_list.append(
+                "# New Lake starts"
+            )  # f2.write("###New Lake starts"+"\n")
+            Lake_rvh_string_list.append(
+                "#############################################"
+            )  # f2.write("#############################################"+"\n")
             ######write lake information to file
             Lake_rvh_string_list.append(
-                ":Reservoir" + "   Lake_" + str(int(lakeid)) + "   ######## "
+                ":Reservoir" + "   Lake_" + str(int(lakeid))
             )  # f2.write(":Reservoir"+ "   Lake_"+ str(int(lakeid))+ "   ######## " +"\n")
             Lake_rvh_string_list.append(
                 "  :SubBasinID  " + str(int(catid))
@@ -1052,7 +1061,7 @@ def Generate_Raven_Lake_rvh_String(catinfo, Raveinputsfolder, Model_Name):
                 "  :WeirCoefficient  " + str(WeirCoe)
             )  # f2.write("  :WeirCoefficient  "+str(WeirCoe)+ "\n")
             Lake_rvh_string_list.append(
-                "  :CrestWidth " + str(Crewd)
+                "  :CrestWidth " + '{:>10.4f}'.format(Crewd) #"{:.4f}".format(Crewd) #str(Crewd)
             )  # f2.write("  :CrestWidth "+str(Crewd)+ "\n")
             Lake_rvh_string_list.append(
                 "  :MaxDepth " + str(h0)
@@ -1063,12 +1072,6 @@ def Generate_Raven_Lake_rvh_String(catinfo, Raveinputsfolder, Model_Name):
             Lake_rvh_string_list.append(
                 ":EndReservoir   "
             )  # f2.write(":EndReservoir   "+"\n")
-            Lake_rvh_string_list.append(
-                "#############################################"
-            )  # f2.write("#############################################"+"\n")
-            Lake_rvh_string_list.append(
-                "###New Lake starts"
-            )  # f2.write("###New Lake starts"+"\n")
 
     Lake_rvh_string = "\n".join(Lake_rvh_string_list)
     return Lake_rvh_string, Lake_rvh_file_path
@@ -1249,12 +1252,12 @@ def Generate_Raven_Channel_rvp_rvh_String(
     Channel_rvp_string_list.append(
         "# This is a Raven channel properties file generated"
     )
-    Channel_rvp_string_list.append("# by Routing toolbox")
+    Channel_rvp_string_list.append("# by BasinMaker v2.0")
     Channel_rvp_string_list.append("#----------------------------------------------")
 
     Model_rvh_string_list.append("#----------------------------------------------")
     Model_rvh_string_list.append("# This is a Raven HRU rvh input file generated")
-    Model_rvh_string_list.append("# by Routing toolbox")
+    Model_rvh_string_list.append("# by BasinMaker v2.0")
     Model_rvh_string_list.append("#----------------------------------------------")
 
     catinfo_hru = copy.copy(ocatinfo)
@@ -1298,7 +1301,7 @@ def Generate_Raven_Channel_rvp_rvh_String(
         
         if float(temp) > lenThres:
             catlen = float(temp) / 1000  #### in km
-            strRlen = str(catlen)
+            strRlen = '{:>10.4f}'.format(catlen) #str(catlen)
         else:
             catlen = -9999
             strRlen = "ZERO-"
@@ -1403,23 +1406,23 @@ def Generate_Raven_Channel_rvp_rvh_String(
 
         catid = str(int(catinfo_hru["SubId"].values[i])) + tab
 
-        StrGidarea = str(catarea2) + tab
-        StrGidelev = str(catinfo_hru["HRU_E_mean"].values[i]) + tab
-        lat = str(catinfo_hru["HRU_CenY"].values[i]) + tab
-        lon = str(catinfo_hru["HRU_CenX"].values[i]) + tab
+        StrGidarea = '{:>10.4f}'.format(catarea2) + tab  #str(catarea2) + tab
+        StrGidelev = '{:>10.4f}'.format(catinfo_hru["HRU_E_mean"].values[i]) + tab #str(catinfo_hru["HRU_E_mean"].values[i]) + tab
+        lat = '{:>10.4f}'.format(catinfo_hru["HRU_CenY"].values[i])  + tab #str(catinfo_hru["HRU_CenY"].values[i]) + tab
+        lon = '{:>10.4f}'.format(catinfo_hru["HRU_CenX"].values[i])  + tab #str(catinfo_hru["HRU_CenX"].values[i]) + tab
         LAND_USE_CLASS = catinfo_hru["LAND_USE_C"].values[i] + tab
         VEG_CLASS = catinfo_hru["VEG_C"].values[i] + tab
         SOIL_PROFILE = catinfo_hru["SOIL_PROF"].values[i] + tab
         AQUIFER_PROFILE = "[NONE]" + tab
         TERRAIN_CLASS = "[NONE]" + tab
 
-        SLOPE = str(catslope) + tab
+        SLOPE = '{:>10.6f}'.format(catslope)  + tab #str(catslope) + tab
         
         if aspect_from_gis == 'grass':
             asp_temp = 270 + cataspect
             if asp_temp > 360:
                 asp_temp = asp_temp - 360
-            ASPECT = str(asp_temp) + tab
+            ASPECT = '{:>10.4f}'.format(asp_temp)  + tab # str(asp_temp) + tab
             
         elif aspect_from_gis == 'arcgis':
             asp_temp = -(-360 + cataspect)
@@ -1427,7 +1430,7 @@ def Generate_Raven_Channel_rvp_rvh_String(
                 asp_temp = asp_temp - 360
             ASPECT = str(asp_temp) + tab
         else:
-            ASPECT = str(cataspect) + tab
+            ASPECT = '{:>10.4f}'.format(cataspect)  + tab #str(cataspect) + tab
             
         Model_rvh_string_list.append(
             "  "

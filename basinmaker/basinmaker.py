@@ -93,7 +93,7 @@ class postprocess:
         GenerateRavenInput(
             Path_final_hru_info=path_hru_polygon,
             lenThres=0.2,
-            iscalmanningn=-1,
+            iscalmanningn=1,
             Startyear=startyear,
             EndYear=endYear,
             CA_HYDAT=CA_HYDAT,
