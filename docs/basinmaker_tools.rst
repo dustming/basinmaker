@@ -1,6 +1,6 @@
-================
-BasinMaker tools
-================
+==================================
+BasinMaker developer documentation
+==================================
 
 
 BasinMaker - postprocessing tools

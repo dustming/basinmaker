@@ -880,8 +880,8 @@ class delineate:
         if mode == 'using_dem':
             mode = 'usingdem'
         else:
-            model = 'usingfdr'
-            
+            mode = 'usingfdr'
+
         watershed_delineation_without_lake(
             mode=mode,
             input_geo_names=self.geofilenames,

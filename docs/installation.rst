@@ -24,7 +24,7 @@ QGIS with anaconda
 
 #. Install anaconda
 
-    The installer of anaconda can be installed from `here <https://www.anaconda.com/>`_
+    The installer of anaconda can be installed from `here <https://www.anaconda.com/>`_. Note for windows system, please activate the 'Register Anaconda3 as my default python 3.8' 
 
 
 #. Create an empty python environment and then active it  
@@ -145,7 +145,7 @@ QGIS and GRASS in Windows
                 
 #. Setup GRASS and QGIS python environment
 
-    The python environment for QGIS and GRASS GIS in Windows can be set up by modifying the following :download:`basinmaker.bat.txt <./_static/basinmaker.txt>`.
+    The python environment for QGIS and GRASS GIS in Windows can be set up by modifying the following :download:`basinmaker.bat.txt <./_static/basinmaker.bat.txt>`.
 
     * Please rename 'basinmaker.bat.txt' to 'basinmaker.bat'.    
     * Please change OSGEO4W_ROOT to your OSGEO4W installation folder at line 2.
