@@ -1359,14 +1359,42 @@ def Define_HRU_Attributes(
         OUTPUT="memory:",
     )["OUTPUT"]
     
-    
-    
-    HRU_draft = Add_centroid_to_feature(
-        Path_feagure=HRU_draft,
-        centroidx_nm="HRU_CenX",
-        centroidy_nm="HRU_CenY",
-        Input_Is_Feature_In_Mem=True,
+
+    formular = "x(centroid(transform($geometry,'%s','%s')))" % (
+        HRU_draft.crs().authid(),
+        "EPSG:4326",
     )
+
+    HRU_draft = qgis_vector_field_calculator(
+        processing=processing,
+        context=context,
+        FORMULA=formular,
+        FIELD_NAME="HRU_CenX",
+        INPUT=HRU_draft,
+        OUTPUT="memory:",
+    )["OUTPUT"]
+        
+
+    formular = "y(centroid(transform($geometry,'%s','%s')))" % (
+        HRU_draft.crs().authid(),
+        "EPSG:4326",
+    )
+
+    HRU_draft = qgis_vector_field_calculator(
+        processing=processing,
+        context=context,
+        FORMULA=formular,
+        FIELD_NAME="HRU_CenY",
+        INPUT=HRU_draft,
+        OUTPUT="memory:",
+    )["OUTPUT"]
+        
+    # HRU_draft = Add_centroid_to_feature(
+    #     Path_feagure=HRU_draft,
+    #     centroidx_nm="HRU_CenX",
+    #     centroidy_nm="HRU_CenY",
+    #     Input_Is_Feature_In_Mem=True,
+    # )
 
     ### add subbasin attribute back to hru polygons
 
