@@ -1424,7 +1424,7 @@ def Generate_Raven_Channel_rvp_rvh_String(
                 asp_temp = asp_temp - 360
             ASPECT = '{:>10.4f}'.format(asp_temp)  + tab # str(asp_temp) + tab
             
-        elif aspect_from_gis == 'arcgis':
+        elif aspect_from_gis == 'arcgis' or aspect_from_gis == 'qgis':
             asp_temp = -(-360 + cataspect)
             if asp_temp > 360:
                 asp_temp = asp_temp - 360
