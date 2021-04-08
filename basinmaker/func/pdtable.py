@@ -1369,7 +1369,7 @@ def Determine_HRU_Attributes(
         + Attri_table[Other_Ply_ID_1].astype(str)
         + Attri_table[Other_Ply_ID_2].astype(str)
     )
-    Attri_table["HRU_ID_New"] = pd.factorize(Attri_table["facters"])[0]
+    Attri_table["HRU_ID_New"] = pd.factorize(Attri_table["facters"])[0] + 1
     return Attri_table
 
 

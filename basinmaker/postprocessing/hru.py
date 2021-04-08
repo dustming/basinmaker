@@ -1126,7 +1126,7 @@ def Define_HRU_Attributes(
         layers and inlcude all needed attribue for hydrological model
         like RAVEN
     """
-    num = str(np.random.randint(1, 10000 + 1))
+    num = str(100) #str(np.random.randint(1, 10000 + 1))
     ### calcuate area of each feature
     formular = "area(transform($geometry, '%s','%s'))" % (
         hru_layer.crs().authid(),
@@ -1163,14 +1163,14 @@ def Define_HRU_Attributes(
         processing, context, INPUT_Layer=layer_area_id, attribute_list=attribute_list
     )
 
-    qgis_vector_field_calculator(
-        processing=processing,
-        context=context,
-        FORMULA=" @row_number + 1",
-        FIELD_NAME="HRU_ID3",
-        INPUT=layer_area_id,
-        OUTPUT=os.path.join(tempfile.gettempdir(),'tesdfdsfd.shp'),
-    )
+    # qgis_vector_field_calculator(
+    #     processing=processing,
+    #     context=context,
+    #     FORMULA=" @row_number + 1",
+    #     FIELD_NAME="HRU_ID6",
+    #     INPUT=layer_area_id,
+    #     OUTPUT=os.path.join(OutputFolder,'tesdfdsfd.shp'),
+    # )
     
     ### Determine HRU attribute HruID, LAND_USE_C,VEG_C,SOIL_PROF
     Attri_table = Obtain_Attribute_Table(processing, context, layer_area_id)
@@ -1212,7 +1212,7 @@ def Define_HRU_Attributes(
         ],
         Input_Is_Feature_In_Mem=True,
     )
-
+    
     ### merge lake hru.
     qgis_vector_dissolve(
         processing,
@@ -1238,18 +1238,18 @@ def Define_HRU_Attributes(
         "memory:",
     )["OUTPUT"]
 
-    HRU_draft = qgis_vector_fix_geometries(
-        processing, context, INPUT=HRU_draft, OUTPUT="memory:"
-    )["OUTPUT"]
+    # HRU_draft = qgis_vector_fix_geometries(
+    #     processing, context, INPUT=HRU_draft, OUTPUT="memory:"
+    # )["OUTPUT"]
 
-    qgis_vector_field_calculator(
-        processing=processing,
-        context=context,
-        FORMULA=" @row_number + 1",
-        FIELD_NAME="HRU_ID3",
-        INPUT=HRU_draft,
-        OUTPUT=os.path.join(tempfile.gettempdir(),'tesdfdsfd555555.shp'),
-    )
+    # qgis_vector_field_calculator(
+    #     processing=processing,
+    #     context=context,
+    #     FORMULA=" @row_number + 1",
+    #     FIELD_NAME="HRU_ID3",
+    #     INPUT=HRU_draft,
+    #     OUTPUT=os.path.join(OutputFolder,'tesdfdsfd555555.shp'),
+    # )
     
     formular = "area(transform($geometry, '%s','%s'))" % (
         HRU_draft.crs().authid(),
@@ -1344,7 +1344,6 @@ def Define_HRU_Attributes(
     HRU_draft = qgis_vector_fix_geometries(
         processing, context, INPUT=HRU_draft, OUTPUT="memory:"
     )["OUTPUT"]
-    print(HRU_draft.crs().authid())
      
     formular = "area(transform($geometry, '%s','%s'))" % (
         HRU_draft.crs().authid(),
