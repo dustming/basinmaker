@@ -54,7 +54,7 @@ QGIS with anaconda
 
     .. code-block::
   
-      python - m pip install pandas pytest scipy simpledbf netCDF4 jupyter
+      python -m pip install pandas pytest scipy simpledbf netCDF4 jupyter
 
 #. Test validation 
      
