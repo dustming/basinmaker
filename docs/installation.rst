@@ -50,7 +50,7 @@ QGIS with anaconda
       
       python -m pip install basinmaker   
    
-#. Install dependent packages 
+#. Install dependent packages (This may take a few minutes) 
 
     .. code-block::
   
