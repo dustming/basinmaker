@@ -174,10 +174,10 @@ def combine_catchments_covered_by_the_same_lake_qgis(
     # dissolve shpfile based on new subid
     if len(os.path.basename(Path_Catchment_Polygon).split('_')) == 5:
         Path_final_rviply = os.path.join(OutputFolder, "finalcat_info_"+os.path.basename(Path_Catchment_Polygon).split('_')[4])
-        Path_final_rvi = os.path.join(OutputFolder, "finalcat_info_"+os.path.basename(Path_Catchment_Polygon).split('_')[4])
+        Path_final_rvi = os.path.join(OutputFolder, "finalcat_info_riv_"+os.path.basename(Path_Catchment_Polygon).split('_')[4])
     else:
         Path_final_rviply = os.path.join(OutputFolder, "finalcat_info.shp")
-        Path_final_rvi = os.path.join(OutputFolder, "finalcat_info.shp")
+        Path_final_rvi = os.path.join(OutputFolder, "finalcat_info_riv.shp")
                 
     qgis_vector_dissolve(
         processing,
