@@ -39,7 +39,7 @@ def delineate_watershed_no_lake_using_fdr(
     PERMANENT.open(gisdb=grassdb, location=grass_location, create_opts="")
 
     write_grass_and_arcgis_fdr_rules(grassdb)
-    print("using fder dataset     ")
+    print("using fdr dataset     ")
     grass_raster_r_in_gdal(grass, raster_path=fdr_path, output_nm="fdr_arcgis_temp")
     # reclassify it into grass flow direction data
     grass_raster_r_reclass(
@@ -79,5 +79,13 @@ def delineate_watershed_no_lake_using_fdr(
         memory=max_memroy,
     )
 
+    grass.run_command(
+        "r.out.gdal",
+        input=cat_no_lake,
+        output=os.path.join(grassdb, "catchment_no_lake.tif"),
+        format="GTiff",
+        overwrite=True,
+    )
+        
     PERMANENT.close()
     return

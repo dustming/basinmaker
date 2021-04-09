@@ -504,7 +504,7 @@ class postprocess:
         path_landuse_info,
         path_soil_info,
         path_veg_info,
-        prjected_epsg_code='EPSG:3573',
+        projected_epsg_code='EPSG:3573',
         path_connect_lake_polygon="#",
         path_non_connect_lake_polygon="#",
         path_landuse_polygon="#",
@@ -623,7 +623,7 @@ class postprocess:
             DEM=path_to_dem,
             Inmportance_order = inmportance_order,
             min_hru_area_pct_sub = min_hru_subbasin_area_ratio,
-            Project_crs=prjected_epsg_code,
+            Project_crs=projected_epsg_code,
             OutputFolder=path_output_folder,
             qgis_prefix_path=self.qgispp,
             gis_platform = gis_platform,
@@ -1040,7 +1040,7 @@ class delineate:
     def Generate_Hydrologic_Routing_Attributes(
         self,
         path_output_folder ="#",
-        prjected_epsg_code ="EPSG:3573",
+        projected_epsg_code ="EPSG:3573",
         path_bkfwidthdepth_polyline ="#",
         bkfwd_attributes=[],
         k =-1,
@@ -1059,7 +1059,7 @@ class delineate:
         ----------
         path_output_folder                  : string
             The path to a folder to save outputs
-        prjected_epsg_code                     : string (optional)
+        projected_epsg_code                     : string (optional)
             is a EPSG code to indicate a projected coordinate system  
         path_bkfwidthdepth_polyline             : string (optional)
             is a path of the polyline shapefile that contains bankfull width (w) and
@@ -1170,7 +1170,7 @@ class delineate:
             bkfwd_attributes=bkfwd_attributes,
             path_landuse=path_landuse,
             path_landuse_info=path_landuse_and_manning_n_table,
-            projection=prjected_epsg_code,
+            projection=projected_epsg_code,
             k_in=k,
             c_in=c,
             out_cat_name=self.geofilenames["catchment_without_merging_lakes"],
