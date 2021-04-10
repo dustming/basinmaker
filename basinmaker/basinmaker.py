@@ -5,7 +5,10 @@ class postprocess:
     def __init__(
         self,
     ):
-        self.qgispp = os.environ["QGIS_PREFIX_PATH"]
+        if os.getenv("QGIS_PREFIX_PATH"):
+            self.qgispp = os.environ["QGIS_PREFIX_PATH"]
+        else:
+            self.qgispp = '#'
 
     def Generate_Raven_Model_Inputs(
         self,

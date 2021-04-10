@@ -103,10 +103,7 @@ def Locate_subid_needsbyuser_arcgis(
 
 def Select_Routing_product_based_SubId_arcgis(
     OutputFolder,
-    Path_Catchment_Polygon="#",
-    Path_River_Polyline="#",
-    Path_Con_Lake_ply="#",
-    Path_NonCon_Lake_ply="#",
+    Routing_Product_Folder,
     mostdownid=-1,
     mostupstreamid=-1,
 ):
@@ -167,38 +164,82 @@ def Select_Routing_product_based_SubId_arcgis(
     arcpy.env.workspace = tempfolder
 
 
+    Path_Catchment_Polygon="#"
+    Path_River_Polyline="#"
+    Path_Con_Lake_ply="#"
+    Path_NonCon_Lake_ply="#"
+    Path_obs_gauge_point="#"
+    Path_final_cat_ply="#"
+    Path_final_cat_riv="#"
+
+    ##define input files from routing prodcut 
+    for file in os.listdir(Routing_Product_Folder):
+        if file.endswith(".shp"):
+            if 'catchment_without_merging_lakes' in file:
+                Path_Catchment_Polygon = os.path.join(Routing_Product_Folder, file)
+            if 'river_without_merging_lakes' in file:
+                Path_River_Polyline = os.path.join(Routing_Product_Folder, file)
+            if 'sl_connected_lake' in file:
+                Path_Con_Lake_ply = os.path.join(Routing_Product_Folder, file)
+            if 'sl_non_connected_lake' in file:
+                Path_NonCon_Lake_ply = os.path.join(Routing_Product_Folder, file)
+            if 'obs_gauges' in file:
+                Path_obs_gauge_point = os.path.join(Routing_Product_Folder, file)
+            if 'finalcat_info' in file:
+                Path_final_cat_ply = os.path.join(Routing_Product_Folder, file)
+            if 'finalcat_info_riv' in file:
+                Path_final_cat_riv = os.path.join(Routing_Product_Folder, file)                
+
+    if Path_Catchment_Polygon == '#' or  Path_River_Polyline =='#':
+        print("Invalid routing product folder ")
+        arcpy.AddMessage(Path_Catchment_Polygon)
+        return()
+
+
+
     sub_colnm = "SubId"
     down_colnm = "DowSubId"
 
     ##3
+    
     cat_ply = pd.DataFrame.spatial.from_featureclass(Path_Catchment_Polygon)
 
     hyshdinfo = cat_ply[[sub_colnm, down_colnm]].astype("int32").values
 
     ### Loop for each downstream id
-    OutHyID = mostdownid
-    OutHyID2 = mostupstreamid
 
     if not os.path.exists(OutputFolder):
         os.makedirs(OutputFolder)
 
     ## find all subid control by this subid
-    HydroBasins1 = defcat(hyshdinfo, OutHyID)
-    if OutHyID2 > 0:
-        HydroBasins2 = defcat(hyshdinfo, OutHyID2)
-        ###  exculde the Ids in HydroBasins2 from HydroBasins1
-        for i in range(len(HydroBasins2)):
-            rows = np.argwhere(HydroBasins1 == HydroBasins2[i])
-            HydroBasins1 = np.delete(HydroBasins1, rows)
-        HydroBasins = HydroBasins1
-    else:
-        HydroBasins = HydroBasins1
+    for i_down in range(0,len(mostdownid)):
+        ### Loop for each downstream id
+        OutHyID = mostdownid[i_down]
+        OutHyID2 = mostupstreamid[i_down]
+            
+        ## find all subid control by this subid
+        HydroBasins1 = defcat(hyshdinfo, OutHyID)
+        if OutHyID2 > 0:
+            HydroBasins2 = defcat(hyshdinfo, OutHyID2)
+            ###  exculde the Ids in HydroBasins2 from HydroBasins1
+            for i in range(len(HydroBasins2)):
+                rows = np.argwhere(HydroBasins1 == HydroBasins2[i])
+                HydroBasins1 = np.delete(HydroBasins1, rows)
+            HydroBasins = HydroBasins1
+        else:
+            HydroBasins = HydroBasins1
+
+        if i_down == 0:
+            HydroBasins_All = HydroBasins
+        else:
+            HydroBasins_All = np.concatenate((HydroBasins_All, HydroBasins), axis=0)
 
     Outputfilename_cat = os.path.join(
         OutputFolder, os.path.basename(Path_Catchment_Polygon)
     )
 
-    cat_ply_select = cat_ply.loc[cat_ply['SubId'].isin(HydroBasins)]
+    cat_ply_select = cat_ply.loc[cat_ply['SubId'].isin(HydroBasins_All)]
+
     cat_ply_select.spatial.to_featureclass(location=Outputfilename_cat,overwrite=True,sanitize_columns=False) 
     Outputfilename_cat_riv = os.path.join(
         OutputFolder, os.path.basename(Path_River_Polyline)
@@ -231,7 +272,15 @@ def Select_Routing_product_based_SubId_arcgis(
         sl_non_con_lakes = pd.DataFrame.spatial.from_featureclass(Path_NonCon_Lake_ply)
         sl_non_con_lakes = sl_non_con_lakes.loc[sl_non_con_lakes['Hylak_id'].isin(NonCL_Lakeids)]
         sl_non_con_lakes.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply)),overwrite=True,sanitize_columns=False)
-         
+    
+    sl_gauge_info = cat_ply_select.loc[cat_ply_select["Has_Gauge"] > 0]
+    sl_gauge_nm = np.unique(sl_gauge_info["Obs_NM"].values)
+    sl_gauge_nm = sl_gauge_nm[sl_gauge_nm != 'nan']
+    if len(sl_gauge_nm) > 0 and Path_obs_gauge_point !='#':
+        all_gauge = pd.DataFrame.spatial.from_featureclass(Path_obs_gauge_point)
+        sl_gauge = all_gauge.loc[all_gauge['Obs_NM'].isin(sl_gauge_nm)]
+        sl_gauge.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_obs_gauge_point)),overwrite=True,sanitize_columns=False)
+    
     return 
 
 

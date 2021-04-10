@@ -212,7 +212,6 @@ def GenerateHRUS_arcgis(
         os.makedirs(tempfolder)
     prj_crs = int(Project_crs)
     Merge_layer_list = []
-
     ### First overlay the subbasin layer with lake polygon, the new unique
     # id will be 'HRULake_ID'
 
@@ -380,7 +379,7 @@ def GenerateHRUS_arcgis(
         ]
     )
     HRU_draf_final = clean_attribute_name_arcgis(HRU_draf_final,COLUMN_NAMES_CONSTANT_HRU)
-    HRU_draf_final.spatial.to_featureclass(location = os.path.join(OutputFolder,'final_hru_info.shp'),overwrite=True,sanitize_columns=False)
+    HRU_draf_final.spatial.to_featureclass(location = os.path.join(OutputFolder,'finalcat_hru_info.shp'),overwrite=True,sanitize_columns=False)
 
 def GeneratelandandlakeHRUS(
     OutputFolder,

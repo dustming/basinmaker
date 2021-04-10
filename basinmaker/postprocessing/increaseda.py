@@ -250,8 +250,8 @@ def simplify_routing_structure_by_drainage_area_qgis(
                 Attributes=Conn_Lakes_ply,
             )
         else:
-            if len(os.path.basename(Path_Conl_ply)) == 4:
-                outlake_name = os.path.join(outputfolder_subid, 'sl_non_connected_lake_' + os.path.basename(Path_Conl_ply).split('_')[3])
+            if len(os.path.basename(Path_Conl_ply).split('_')) == 4:
+                outlake_name = 'sl_non_connected_lake_' + os.path.basename(Path_Conl_ply).split('_')[3]
             else:
                 outlake_name = 'sl_non_connected_lake.shp'
             Selectfeatureattributes(

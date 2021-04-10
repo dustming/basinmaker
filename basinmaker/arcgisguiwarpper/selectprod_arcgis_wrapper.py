@@ -1,33 +1,47 @@
 import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from basinmaker.postprocessing.selectprodarcgis import Select_Routing_product_based_SubId_arcgis
-from basinmaker.postprocessing.combinearcgis import combine_catchments_covered_by_the_same_lake_arcgis
+from postprocessing.selectprodarcgis import Select_Routing_product_based_SubId_arcgis
+from postprocessing.combinearcgis import combine_catchments_covered_by_the_same_lake_arcgis
 
-OutputFolder =sys.argv[7]
-Path_Catchment_Polygon=sys.argv[1]
-Path_River_Polyline=sys.argv[2]
-Path_Con_Lake_ply=sys.argv[3]
-Path_NonCon_Lake_ply=sys.argv[4]
-mostdownid=int(sys.argv[5])
-mostupstreamid=int(sys.argv[6])
+OutputFolder =sys.argv[4]
+mostdownid_in=sys.argv[2]
+mostupstreamid_in=sys.argv[3]
+Routing_Product_Folder = sys.argv[1]
 
-arcpy.AddMessage(mostupstreamid)
-arcpy.AddMessage(Path_NonCon_Lake_ply)
-arcpy.AddMessage(OutputFolder)
+arcpy.AddMessage(Routing_Product_Folder)
 
+mostdownid_in = mostdownid_in.split(";")
+mostdownid = []
+for i in range(0,len(mostdownid_in)):
+    try:
+        mostdownid.append(int(mostdownid_in[i]))
+    except:
+        mostdownid = []
+        arcpy.AddMessage("Invalid input most down stream subbasin IDs  ", mostdownid_in)
+        exist()
+
+mostupstreamid_in = mostupstreamid_in.split(";")
+        
+mostupid = []
+for i in range(0,len(mostupstreamid_in)):
+    try:
+        mostupid.append(int(mostupstreamid_in[i]))
+    except:
+        mostupid = []
+        arcpy.AddMessage("Invalid input most up stream subbasin IDs  ", mostupid)
+        exist()
+
+arcpy.AddMessage(mostdownid)
+arcpy.AddMessage(mostupid)
+        
 Select_Routing_product_based_SubId_arcgis(
-    OutputFolder = OutputFolder,
-    Path_Catchment_Polygon=Path_Catchment_Polygon,
-    Path_River_Polyline=Path_River_Polyline,
-    Path_Con_Lake_ply=Path_Con_Lake_ply,
-    Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,
+    OutputFolder=OutputFolder,
     mostdownid=mostdownid,
-    mostupstreamid=mostupstreamid,
+    mostupstreamid=mostupid,
+    Routing_Product_Folder = Routing_Product_Folder,
 )
-
+        
 
 combine_catchments_covered_by_the_same_lake_arcgis(
-    OutputFolder = OutputFolder, 
-    Path_final_rivply=os.path.join(OutputFolder,"catchment_without_merging_lakes.shp"), 
-    Path_final_riv=os.path.join(OutputFolder,"river_without_merging_lakes.shp"),
-)
+    Routing_Product_Folder=OutputFolder,
+)  

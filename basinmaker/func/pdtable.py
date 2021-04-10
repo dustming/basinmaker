@@ -1131,7 +1131,7 @@ def Retrun_Validate_Attribute_Value(Attri_table_Lake_HRU_i, SubInfo, Col_NM, inf
     ):  # other part of this lake hru has validate soilid use the one with maximum area
         Updatevalue = info_lake_hru[Col_NM].values[0]
     else:  ### check if the subbasin has a valid soil id
-        SubInfo = SubInfo.loc[Col_NM != 0]
+        SubInfo = SubInfo.loc[SubInfo[Col_NM] != 0]
         SubInfo = SubInfo.sort_values(by="HRU_Area", ascending=False)
         if len(SubInfo) > 0:
             Updatevalue = SubInfo[Col_NM].values[0]

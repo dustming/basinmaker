@@ -138,13 +138,20 @@ def combine_catchments_covered_by_the_same_lake_arcgis(
     mapoldnew_info = update_topology(mapoldnew_info, UpdateStreamorder=-1)    
     
     mapoldnew_info['DowSubId'] = mapoldnew_info['DowSubId'].astype('int32')
-
+    
+    if len(os.path.basename(Path_Catchment_Polygon).split('_')) == 5:
+        cat_name = "finalcat_info_"+os.path.basename(Path_Catchment_Polygon).split('_')[4]
+        riv_name = "finalcat_info_riv_"+os.path.basename(Path_Catchment_Polygon).split('_')[4]
+    else:
+        cat_name =  "finalcat_info.shp"
+        riv_name =  "finalcat_info_riv.shp"
+              
     save_modified_attributes_to_outputs(
         mapoldnew_info=mapoldnew_info,
         tempfolder=tempfolder,
         OutputFolder=OutputFolder,
-        cat_name='finalcat_info.shp',
-        riv_name ='finalcat_info_riv.shp',
+        cat_name=cat_name,
+        riv_name =riv_name,
         Path_final_riv = Path_final_riv,
     )
     return 

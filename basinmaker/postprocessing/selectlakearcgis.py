@@ -9,7 +9,7 @@ from arcgis.features import GeoAccessor, GeoSeriesAccessor
 import arcpy
 from arcpy import env
 from arcpy.sa import *
-
+import shutil
 
 import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -20,15 +20,12 @@ arcpy.env.overwriteOutput = True
 arcpy.CheckOutExtension("Spatial")
 
 def simplify_routing_structure_by_filter_lakes_arcgis(
-    Path_final_riv_ply="#",
-    Path_final_riv="#",
-    Path_Con_Lake_ply="#",
-    Path_NonCon_Lake_ply="#",
+    Routing_Product_Folder = '#',
     Thres_Area_Conn_Lakes=-1,
     Thres_Area_Non_Conn_Lakes=-1,
-    Selection_Method="ByArea",
     Selected_Lake_List_in=[],
     OutputFolder="#",
+    qgis_prefix_path="#",
     gis_platform="arcgis",
 ):
     """Simplify the routing product by lake area
@@ -108,10 +105,48 @@ def simplify_routing_structure_by_filter_lakes_arcgis(
     )
     if not os.path.exists(tempfolder):
         os.makedirs(tempfolder)
+        
+    Path_Catchment_Polygon="#"
+    Path_River_Polyline="#"
+    Path_Con_Lake_ply="#"
+    Path_NonCon_Lake_ply="#"
+    Path_obs_gauge_point="#"
+    Path_final_cat_ply="#"
+    Path_final_cat_riv="#"
+    ##define input files from routing prodcut 
+    for file in os.listdir(Routing_Product_Folder):
+        if file.endswith(".shp"):
+            if 'catchment_without_merging_lakes' in file:
+                Path_Catchment_Polygon = os.path.join(Routing_Product_Folder, file)
+            if 'river_without_merging_lakes' in file:
+                Path_River_Polyline = os.path.join(Routing_Product_Folder, file)
+            if 'sl_connected_lake' in file:
+                Path_Con_Lake_ply = os.path.join(Routing_Product_Folder, file)
+            if 'sl_non_connected_lake' in file:
+                Path_NonCon_Lake_ply = os.path.join(Routing_Product_Folder, file)
+            if 'obs_gauges' in file:
+                Path_obs_gauge_point = os.path.join(Routing_Product_Folder, file)
+            if 'finalcat_info' in file:
+                Path_final_cat_ply = os.path.join(Routing_Product_Folder, file)
+            if 'finalcat_info_riv' in file:
+                Path_final_cat_riv = os.path.join(Routing_Product_Folder, file)                
+
+    if Path_Catchment_Polygon == '#' or  Path_River_Polyline =='#':
+        print("Invalid routing product folder ")
+
+    Path_final_riv_ply = Path_Catchment_Polygon
+    Path_final_riv = Path_River_Polyline
     
+    ## copy obs_gauges to output folder 
+    for file in os.listdir(Routing_Product_Folder):
+        if 'obs_gauges' in file:
+            shutil.copy(os.path.join(Routing_Product_Folder, file), os.path.join(OutputFolder, file))
+
+
     ### read attribute table
     finalcat_info = pd.DataFrame.spatial.from_featureclass(Path_final_riv_ply)
 
+    ### Obtain selected lake's attribute info
     ### Obtain selected lake's attribute info
     (
         Selected_Non_ConnLakes,
@@ -120,12 +155,11 @@ def simplify_routing_structure_by_filter_lakes_arcgis(
         Un_Selected_Non_ConnL_info,
     ) = Return_Selected_Lakes_Attribute_Table_And_Id(
         finalcat_info,
-        Thres_Area_Conn_Lakes*1000*1000,  # km2 to m2
-        Thres_Area_Non_Conn_Lakes*1000*1000, # km2 to m2
-        Selection_Method,
+        Thres_Area_Conn_Lakes*1000*1000,
+        Thres_Area_Non_Conn_Lakes*1000*1000,
         Selected_Lake_List_in,
     )
-
+    
     ### Extract lake polygons
     if len(Selected_Non_ConnLakes) > 0:
         sl_con_lakes = pd.DataFrame.spatial.from_featureclass(Path_NonCon_Lake_ply)

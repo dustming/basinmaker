@@ -68,15 +68,12 @@ def simplify_routing_structure_by_filter_lakes_method(
         )
 
         simplify_routing_structure_by_filter_lakes_arcgis(
-            Path_final_riv_ply=Path_final_riv_ply,
-            Path_final_riv=Path_final_riv,
-            Path_Con_Lake_ply=Path_Con_Lake_ply,
-            Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,
+            Routing_Product_Folder = Routing_Product_Folder,
             Thres_Area_Conn_Lakes=Thres_Area_Conn_Lakes,
             Thres_Area_Non_Conn_Lakes=Thres_Area_Non_Conn_Lakes,
-            Selection_Method=Selection_Method,
             Selected_Lake_List_in=Selected_Lake_List_in,
             OutputFolder=OutputFolder,
+            qgis_prefix_path=qgis_prefix_path,
             gis_platform=gis_platform,
         )
         
@@ -110,6 +107,7 @@ def simplify_routing_structure_by_drainage_area_method(
         )
 
         simplify_routing_structure_by_drainage_area_arcgis(
+            Routing_Product_Folder = Routing_Product_Folder,
             Area_Min=Area_Min,
             OutputFolder=OutputFolder,
         )
@@ -179,12 +177,9 @@ def select_part_of_routing_product_method(
         )
         Select_Routing_product_based_SubId_arcgis(
             OutputFolder=OutputFolder,
-            Path_Catchment_Polygon=Path_Catchment_Polygon,
-            Path_River_Polyline=Path_River_Polyline,
-            Path_Con_Lake_ply=Path_Con_Lake_ply,
-            Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,
             mostdownid=mostdownid,
             mostupstreamid=mostupid,
+            Routing_Product_Folder = Routing_Product_Folder,
         )
                         
     return

@@ -1,14 +1,14 @@
 import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from basinmaker.hymodin.raveninput import GenerateRavenInput
+from hymodin.raveninput import GenerateRavenInput
 
 Path_final_hru_info =sys.argv[1]
-Startyear=sys.argv[2]
-EndYear=sys.argv[3]
-CA_HYDAT=sys.argv[4]
-Lake_As_Gauge=sys.argv[5]
-Model_Name = sys.argv[6]
-OutputFolder = sys.argv[7]
+Startyear=-1
+EndYear=-1
+CA_HYDAT='#'
+Lake_As_Gauge=0
+Model_Name = sys.argv[2]
+OutputFolder = sys.argv[3]
 
 if Startyear != '#':
     Startyear = int(Startyear)
@@ -34,7 +34,7 @@ GenerateRavenInput(
     WarmUp=0,
     Template_Folder="#",
     Lake_As_Gauge=Lake_As_Gauge,
-    WriteObsrvt=True,
+    WriteObsrvt=False,
     DownLoadObsData=DownLoadObsData,
     Model_Name=Model_Name,
     Old_Product=False,
