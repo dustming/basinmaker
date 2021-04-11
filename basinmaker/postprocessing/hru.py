@@ -1126,7 +1126,7 @@ def Define_HRU_Attributes(
         layers and inlcude all needed attribue for hydrological model
         like RAVEN
     """
-    num = str(100) #str(np.random.randint(1, 10000 + 1))
+    num = str(np.random.randint(1, 10000 + 1))
     ### calcuate area of each feature
     formular = "area(transform($geometry, '%s','%s'))" % (
         hru_layer.crs().authid(),
