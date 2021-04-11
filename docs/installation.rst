@@ -170,8 +170,10 @@ QGIS and GRASS in Windows
     
 #. Validate the GRASS and QGIS python environment
      
-    * Check if the python executable comes from the OSGeo4W64 installation folder
-      by typing following commands after run basinmaker.bat
+    * Please check if the python executable comes from the OSGeo4W64 installation folder
+      by typing following commands after run basinmaker.bat. If the output is not 
+      similar to the output showed in following output block. Please go back to step 2 and check
+      the basinmaker.bat file  
 
     .. code-block::
        
