@@ -277,7 +277,8 @@ QGIS and GRASS in Ubuntu
       
 #. Validate the GRASS and QGIS python environment
      
-    * Try to load following packages
+    * Check if all dependent QGIS and GRASS libraries can be imported in current python 
+      environment by type following commands.
 
     .. code-block::
          
