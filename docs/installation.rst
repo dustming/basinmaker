@@ -141,7 +141,12 @@ QGIS and GRASS in Windows
     
     The OSGeo4W installer can be downloaded from `here <https://qgis.org/en/site/forusers/download.html>`_. Please using OSGeo4W Network Installer (64 bit).
     
-    We would suggest to install QGIS and GRASS outside the **C/:Program Files**. Better to install them into a folder path without space in the folder name.
+    We would suggest to 
+    
+    * Install QGIS and GRASS outside the **C/:Program Files**. Better to install them into a folder path without space in the folder name.
+    * Use ‘Express Desktop Install’ 
+    * Choose the default 3 packages
+    * Run the downloaded installation file 
                 
 #. Setup GRASS and QGIS python environment
 
@@ -151,25 +156,30 @@ QGIS and GRASS in Windows
     * Please change OSGEO4W_ROOT to your OSGEO4W installation folder at line 2.
     * Please change the grass78.* in line 8 and 10 to your GRASS GIS version number.
     * Please double check the paths defined in the basinamker.bat file exists in your machine
-    * Save the modified basinmaker.bat
+    * Save the modified basinmaker.bat to a handy directory.  Run basinmaker.bat every time before using basinmaker.
     
-#. Install BasinMaker 
+#. Install BasinMaker (do not activate anaconda) 
 
     .. code-block::
       
       >basinmaker.bat
+      Microsoft Windows [Version 10.0.19041.867]
+      (c) 2020 Microsoft Corporation. All rights reserved
+      >
       >python -m pip install basinmaker
     
 #. Validate the GRASS and QGIS python environment
      
-    * Check the python executable comes from the OSGeo4W64 installation folder
+    * Check if the python executable comes from the OSGeo4W64 installation folder
+      by typing following commands after run basinmaker.bat
 
     .. code-block::
        
       >where python    
-      >C:\OSGeo4W64\apps\Python37\python.exe
+      C:\OSGeo4W64\apps\Python37\python.exe
 
-    * Try to load following packages
+    * Check if all dependent QGIS and GRASS libraries can be imported in current python 
+      environment by type following commands. 
 
     .. code-block::
       
