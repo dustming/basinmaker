@@ -59,10 +59,12 @@ QGIS with anaconda
 #. Test validation 
      
     Please download the test data and scripts from `here <https://github.com/dustming/RoutingTool/wiki/Files/test.zip>`_. and unzip it to a folder, the path of this folder will refer as path_test_data in following section. Then
-
-    * PyTables is not installed. No support for HDF output.
-    * SQLalchemy is not installed. No support for SQL output.    
-    * Warnings
+    
+    Please ignore following output messages 
+    
+        * PyTables is not installed. No support for HDF output.
+        * SQLalchemy is not installed. No support for SQL output.    
+        * Warnings
     
     .. code-block::
      
@@ -120,9 +122,9 @@ ArcGIS pro with anaconda (Windows only)
     
     Please ignore following output messages 
     
-    * PyTables is not installed. No support for HDF output.
-    * SQLalchemy is not installed. No support for SQL output.    
-    * Warnings
+        * PyTables is not installed. No support for HDF output.
+        * SQLalchemy is not installed. No support for SQL output.    
+        * Warnings
 
     .. code-block::
      
@@ -238,12 +240,10 @@ QGIS and GRASS in Windows
     * Please ignore following output messages 
     
         PyTables is not installed. No support for HDF output.
-        SQLalchemy is not installed. No support for SQL output.    
+        
+        SQLalchemy is not installed. No support for SQL output.  
+          
         Warnings
-    
-    * PyTables is not installed. No support for HDF output.
-    * SQLalchemy is not installed. No support for SQL output.    
-    * Warnings
       
     .. code-block::
      
@@ -344,7 +344,9 @@ QGIS and GRASS in Ubuntu
     * Please ignore following output messages 
     
         PyTables is not installed. No support for HDF output.
+        
         SQLalchemy is not installed. No support for SQL output.    
+        
         Warnings
         
     .. code-block::
