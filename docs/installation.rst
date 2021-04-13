@@ -82,6 +82,7 @@ QGIS with anaconda
 ArcGIS pro with anaconda (Windows only)
 ---------------------------------------
 
+ArcGIS functions for delineating lake-river routing network from DEM are under development
 
 #. Install anaconda
 
