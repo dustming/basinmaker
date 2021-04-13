@@ -235,7 +235,12 @@ QGIS and GRASS in Windows
      
     * Please download the test data and scripts from `here <https://github.com/dustming/RoutingTool/wiki/Files/test.zip>`_. and unzip it to a folder, the path of this folder will refer as path_test_data in following section. Then
     * run basinmaker.bat
-
+    * Please ignore following output messages 
+    
+        PyTables is not installed. No support for HDF output.
+        SQLalchemy is not installed. No support for SQL output.    
+        Warnings
+    
     * PyTables is not installed. No support for HDF output.
     * SQLalchemy is not installed. No support for SQL output.    
     * Warnings
@@ -336,10 +341,11 @@ QGIS and GRASS in Ubuntu
      
     * Please download the test data and scripts from `here <https://github.com/dustming/RoutingTool/wiki/Files/test.zip>`_. and unzip it to a folder, the path of this folder will refer as path_test_data in following section. Then
     * run basinmaker.sh
-
-    * PyTables is not installed. No support for HDF output.
-    * SQLalchemy is not installed. No support for SQL output.    
-    * Warnings
+    * Please ignore following output messages 
+    
+        PyTables is not installed. No support for HDF output.
+        SQLalchemy is not installed. No support for SQL output.    
+        Warnings
         
     .. code-block::
      
