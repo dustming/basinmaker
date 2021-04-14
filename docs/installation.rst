@@ -233,7 +233,7 @@ QGIS and GRASS in Windows
     * r.stream.basins
     * r.stream.snap  
     
-    How to install GRASS GIS addon can be found in How to install GRASS GIS addon can be found in `here <https://github.com/dustming/RoutingTool/wiki/Files/GRASS GIS Addons Install Instruction.pdf>`_.  
+    How to install GRASS GIS addon can be found in How to install GRASS GIS addon can be found in `here <https://github.com/dustming/RoutingTool/wiki/Files/GRASS_GIS_Addons_Install_Instruction.pdf>`_.  
   
 #. Test validation 
      
@@ -338,7 +338,7 @@ QGIS and GRASS in Ubuntu
     * r.stream.basins
     * r.stream.snap  
     
-    How to install GRASS GIS addon can be found in `here <https://github.com/dustming/RoutingTool/wiki/Files/GRASS GIS Addons Install Instruction.pdf>`_
+    How to install GRASS GIS addon can be found in `here <https://github.com/dustming/RoutingTool/wiki/Files/GRASS_GIS_Addons_Install_Instruction.pdf>`_
 
 #. Test validation 
      
