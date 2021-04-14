@@ -233,7 +233,9 @@ QGIS and GRASS in Windows
     * r.stream.basins
     * r.stream.snap  
     
-    How to install GRASS GIS addon can be found in How to install GRASS GIS addon can be found in `here <https://github.com/dustming/RoutingTool/wiki/Files/GRASS_GIS_Addons_Install_Instruction.pdf>`_.  
+    For new GRASS users, see how to install GRASS GIS addon `here <https://github.com/dustming/RoutingTool/wiki/Files/GRASS_GIS_Addons_Install_Instruction.pdf>`_. 
+    
+    If you want to learn how to use GRASS for more than BasinMaker, `this site <https://grass.osgeo.org/download/addons/>`_.  may help you. 
   
 #. Test validation 
      
@@ -338,7 +340,9 @@ QGIS and GRASS in Ubuntu
     * r.stream.basins
     * r.stream.snap  
     
-    How to install GRASS GIS addon can be found in `here <https://github.com/dustming/RoutingTool/wiki/Files/GRASS_GIS_Addons_Install_Instruction.pdf>`_
+    For new GRASS users, see how to install GRASS GIS addon `here <https://github.com/dustming/RoutingTool/wiki/Files/GRASS_GIS_Addons_Install_Instruction.pdf>`_. 
+    
+    If you want to learn how to use GRASS for more than BasinMaker, `this site <https://grass.osgeo.org/download/addons/>`_.  may help you.
 
 #. Test validation 
      
