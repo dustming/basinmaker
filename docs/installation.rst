@@ -214,6 +214,7 @@ QGIS and GRASS in Windows
       >>>from grass.pygrass.modules.shortcuts import general as g
       >>>from grass.pygrass.modules.shortcuts import raster as r
       >>>from grass.pygrass.modules import Module
+      >>>quit()
       
       
 #. Install dependent packages
@@ -232,7 +233,7 @@ QGIS and GRASS in Windows
     * r.stream.basins
     * r.stream.snap  
     
-    How to install GRASS GIS addon can be found in `open GRASS GIS GUI <https://grass.osgeo.org/grass78/manuals/helptext.html>`_ and `add GRASS GIS addon <https://grass.osgeo.org/download/addons/>`_.  
+    How to install GRASS GIS addon can be found in How to install GRASS GIS addon can be found in `here <https://github.com/dustming/RoutingTool/wiki/Files/GRASS GIS Addons Install Instruction.pdf>`_.  
   
 #. Test validation 
      
@@ -320,6 +321,7 @@ QGIS and GRASS in Ubuntu
       >>>from grass.pygrass.modules.shortcuts import general as g
       >>>from grass.pygrass.modules.shortcuts import raster as r
       >>>from grass.pygrass.modules import Module
+      >>>quit()
 
 #. Install dependent packages
 
@@ -336,7 +338,7 @@ QGIS and GRASS in Ubuntu
     * r.stream.basins
     * r.stream.snap  
     
-    How to install GRASS GIS addon can be found in `open GRASS GIS GUI <https://grass.osgeo.org/grass78/manuals/helptext.html>`_ and `add GRASS GIS addon <https://grass.osgeo.org/download/addons/>`_. 
+    How to install GRASS GIS addon can be found in `here <https://github.com/dustming/RoutingTool/wiki/Files/GRASS GIS Addons Install Instruction.pdf>`_
 
 #. Test validation 
      
