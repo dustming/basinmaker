@@ -485,6 +485,9 @@ def DownloadStreamflowdata_US(Station_NM, StartYear, EndYear):
     datarow = -1
     for i in range(0, len(stlistdata)):
         istlistdata = stlistdata[i].split()
+        if len(istlistdata) == 0:
+            return -1.2345,-1.2345, False
+            
         if istlistdata[0] == "#" or len(istlistdata) != 5:
             continue
         if istlistdata[1].decode("utf-8") == str(int(Station_NM)).zfill(8):
