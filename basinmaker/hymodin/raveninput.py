@@ -3,6 +3,7 @@ import os
 import sqlite3
 import urllib
 import shutil
+import urllib.request
 
 import numpy as np
 import pandas as pd
@@ -444,17 +445,25 @@ def DownloadStreamflowdata_US(Station_NM, StartYear, EndYear):
     stlistdata = stlistdata.splitlines()
     station_info_name = stlistdata[len(stlistdata) - 3].split()
     station_info_value = stlistdata[len(stlistdata) - 1].split()
-
     if (
         station_info_name[len(station_info_name) - 1].decode("utf-8")
         != "contrib_drain_area_va"
     ):
         obs_DA = -1.2345
     else:
-        obs_DA = (
-            float(station_info_value[len(station_info_value) - 1].decode("utf-8"))
-            * 2.58999
-        )  # square miles to square km
+        try:
+            obs_DA = (
+                float(station_info_value[len(station_info_value) - 1].decode("utf-8"))
+                * 2.58999
+            )  # square miles to square km
+        except:
+            try: 
+                obs_DA = (
+                    float(station_info_value[len(station_info_value) - 2].decode("utf-8"))
+                    * 2.58999
+                )  # square miles to square km
+            except:
+                obs_DA = -1.2345
 
     ## try to obtain data with in this period
     Date_ini = str(StartYear) + "-" + "01" + "-" + "01"
@@ -771,8 +780,9 @@ def Generate_Raven_Obs_rvt_String(
 
     obsnms = catinfo[["Obs_NM", "SRC_obs", "SubId", "DrainArea"]]
     obsnms = obsnms.drop_duplicates("Obs_NM", keep="first")
+    obsnms = obsnms.replace(np.nan, '-9999.0', regex=True)    
     obsnms = obsnms.loc[obsnms["Obs_NM"] != "-9999.0"]
-
+    
     obsnms.loc[:, "DrainArea"] = obsnms["DrainArea"].values / 1000 / 1000  # m2 to km2
     index = obsnms.index
     Date = pd.date_range(
@@ -794,9 +804,8 @@ def Generate_Raven_Obs_rvt_String(
         flowdata = pd.DataFrame(
             np.full((len(Date), 2), -1.2345), columns=["Flow", "QC"], index=Date
         )
-        if iobs_src[0] == "-":
-            Finddata = False
-        elif iobs_src == "US":
+
+        if iobs_src == "US":
             if DownLoadObsData == True:
                 flowdata_read, DA_obs_data, Finddata = DownloadStreamflowdata_US(
                     Station_NM=iobs_nm, StartYear=startyear, EndYear=endyear
