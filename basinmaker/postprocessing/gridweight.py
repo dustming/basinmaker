@@ -151,9 +151,14 @@ def Generate_Grid_Poly_From_NetCDF_QGIS(
 
             ### find mid point in row direction
             Polygon_Fea = QgsFeature()
-            
-            if i != 0 and j != 0 and i != nrows - 1 and j != ncols -1:
+   
+            x1 = -1
+            x3 = -1 
+            x4 = -1
+            x2 = -1
+            if i != 0 and j != 0:
                 if Is_Rotated_Grid > 0:
+
                     # upper left x1,y1 
                     x1 = (dsin2.variables[Coor_x_NM][i, j] +
                          dsin2.variables[Coor_x_NM][i, j - 1] +
@@ -164,20 +169,22 @@ def Generate_Grid_Poly_From_NetCDF_QGIS(
                          dsin2.variables[Coor_y_NM][i, j - 1] +
                          dsin2.variables[Coor_y_NM][i-1, j] +
                          dsin2.variables[Coor_y_NM][i-1, j - 1]) / 4
+                         
+                         
+            if i!= 0 and j != ncols -1:
+                if Is_Rotated_Grid > 0:
 
-
-                    # upper right x2,y2 
                     x2 = (dsin2.variables[Coor_x_NM][i, j] +
                          dsin2.variables[Coor_x_NM][i-1, j] +
                          dsin2.variables[Coor_x_NM][i-1, j + 1] +
-                         dsin2.variables[Coor_x_NM][i, j + 1]) / 4 + x_add
-
+                         dsin2.variables[Coor_x_NM][i, j + 1]) / 4 + x_add              
                     y2 = (dsin2.variables[Coor_y_NM][i, j] +
                          dsin2.variables[Coor_y_NM][i-1, j] +
                          dsin2.variables[Coor_y_NM][i-1, j + 1] +
                          dsin2.variables[Coor_y_NM][i, j + 1]) / 4 
-                                                  
-
+            
+            if i != nrows - 1 and j != ncols -1:
+                if Is_Rotated_Grid > 0: 
                     # bot right x3,y3 
                     x3 = (dsin2.variables[Coor_x_NM][i, j] +
                          dsin2.variables[Coor_x_NM][i, j +1] +
@@ -189,7 +196,8 @@ def Generate_Grid_Poly_From_NetCDF_QGIS(
                          dsin2.variables[Coor_y_NM][i+1, j + 1] +
                          dsin2.variables[Coor_y_NM][i + 1, j]) / 4
                          
-                    # bot ;eft x4,y4 
+            if i != nrows - 1 and j != 0 :                            
+                if Is_Rotated_Grid > 0:
                     x4 = (dsin2.variables[Coor_x_NM][i, j] +
                          dsin2.variables[Coor_x_NM][i, j - 1] +
                          dsin2.variables[Coor_x_NM][i+1, j - 1] +
@@ -199,25 +207,162 @@ def Generate_Grid_Poly_From_NetCDF_QGIS(
                          dsin2.variables[Coor_y_NM][i, j - 1] +
                          dsin2.variables[Coor_y_NM][i+1, j - 1] +
                          dsin2.variables[Coor_y_NM][i + 1, j]) / 4
-                                                                                           
-                Point_1 = QgsPointXY(x1, y1)  ## lower left
-                Point_2 = QgsPointXY(x2, y2)
-                Point_3 = QgsPointXY(x3, y3)
-                Point_4 = QgsPointXY(x4, y4)
-                print("#########################################")
-                print(x1, y1)
-                print(x2, y2)
-                print(x3, y3)
-                print(x4, y4)
-                print(dsin2.variables[Coor_x_NM][i, j],dsin2.variables[Coor_y_NM][i, j])
-                print("#########################################")
-                
-                gPolygon = QgsGeometry.fromPolygonXY(
-                    [[Point_1, Point_2, Point_3, Point_4]]
-                )
-                Polygon_Fea.setGeometry(gPolygon)
-                Polygon_Fea.setAttributes(latlonrow[k, :].tolist())
-                DP_Nc_ply.addFeature(Polygon_Fea)
+            
+            # p4 and p1 and p2    
+            if i == 0 and j == 0:
+                if Is_Rotated_Grid > 0:
+                    # x1 = dsin2.variables[Coor_x_NM][i, j]+ x_add  
+                    # y1 = dsin2.variables[Coor_y_NM][i, j]
+                    
+                    x2_t = (dsin2.variables[Coor_x_NM][i, j] +
+                         dsin2.variables[Coor_x_NM][i, j + 1]) / 2 + x_add              
+                    y2_t = (dsin2.variables[Coor_y_NM][i, j] +
+                         dsin2.variables[Coor_y_NM][i, j + 1]) / 2 
+
+                    x2 = x2_t + (x2_t - x3)
+                    y2 = y2_t + (y2_t - y3)
+                    
+                    x4 = (dsin2.variables[Coor_x_NM][i, j] +
+                         dsin2.variables[Coor_x_NM][i + 1, j]) / 2 + x_add
+
+                    y4 = (dsin2.variables[Coor_y_NM][i, j] +
+                         dsin2.variables[Coor_y_NM][i + 1, j]) / 2
+
+            if i == 0 and j != 0 and j != ncols -1 :
+                if Is_Rotated_Grid > 0:
+                    x1 = (dsin2.variables[Coor_x_NM][i, j] +
+                         dsin2.variables[Coor_x_NM][i, j - 1]) / 2 + x_add
+                         
+                    y1 = (dsin2.variables[Coor_y_NM][i, j] +
+                         dsin2.variables[Coor_y_NM][i, j - 1]) / 2
+                    
+                    x2 = (dsin2.variables[Coor_x_NM][i, j] +
+                         dsin2.variables[Coor_x_NM][i, j + 1]) / 2 + x_add              
+                    y2 = (dsin2.variables[Coor_y_NM][i, j] +
+                         dsin2.variables[Coor_y_NM][i, j + 1]) / 2 
+                         
+            if i == 0 and j ==  ncols -1:
+                if Is_Rotated_Grid > 0:
+                    x1 = (dsin2.variables[Coor_x_NM][i, j] +
+                         dsin2.variables[Coor_x_NM][i, j - 1]) / 2 + x_add
+                         
+                    y1 = (dsin2.variables[Coor_y_NM][i, j] +
+                         dsin2.variables[Coor_y_NM][i, j - 1]) / 2
+
+                    x2 = dsin2.variables[Coor_x_NM][i, j]+ x_add  
+                    y2 = dsin2.variables[Coor_y_NM][i, j]                    
+
+                    x3 = (dsin2.variables[Coor_x_NM][i, j] +
+                         dsin2.variables[Coor_x_NM][i + 1, j]) / 2 + x_add
+
+                    y3 = (dsin2.variables[Coor_y_NM][i, j] +
+                         dsin2.variables[Coor_y_NM][i + 1, j]) / 2                                                                        
+            
+            if i == nrows - 1 and j != 0 and j != ncols -1:
+                if Is_Rotated_Grid > 0:
+                    x3 = (dsin2.variables[Coor_x_NM][i, j] +
+                         dsin2.variables[Coor_x_NM][i, j +1]) / 2 + x_add
+
+                    y3 = (dsin2.variables[Coor_y_NM][i, j] +
+                         dsin2.variables[Coor_y_NM][i, j +1] ) / 2   
+                                                                                        
+                    x4 = (dsin2.variables[Coor_x_NM][i, j] +
+                         dsin2.variables[Coor_x_NM][i, j - 1]) / 2 + x_add
+
+                    y4 = (dsin2.variables[Coor_y_NM][i, j] +
+                         dsin2.variables[Coor_y_NM][i, j - 1]) / 2
+
+            if i == nrows - 1 and j == 0:
+                if Is_Rotated_Grid > 0:
+            
+                    x4 = dsin2.variables[Coor_x_NM][i, j] + x_add
+            
+                    y4 = dsin2.variables[Coor_y_NM][i, j]
+            
+                    x1 = (dsin2.variables[Coor_x_NM][i, j] +
+                         dsin2.variables[Coor_x_NM][i-1, j]) / 2 + x_add
+                    y1 = (dsin2.variables[Coor_y_NM][i, j] +
+                         dsin2.variables[Coor_y_NM][i-1, j]) / 2
+            
+                    x3 = (dsin2.variables[Coor_x_NM][i, j] +
+                         dsin2.variables[Coor_x_NM][i, j +1]) / 2 + x_add
+            
+                    y3 = (dsin2.variables[Coor_y_NM][i, j] +
+                         dsin2.variables[Coor_y_NM][i, j +1]) / 2
+                                                                                                                                                              
+
+                         
+            if i == nrows - 1 and j == ncols -1:
+                if Is_Rotated_Grid > 0:
+            
+                    x3 = dsin2.variables[Coor_x_NM][i, j] + x_add
+            
+                    y3 = dsin2.variables[Coor_y_NM][i, j]
+            
+                    x2 = (dsin2.variables[Coor_x_NM][i, j] +
+                         dsin2.variables[Coor_x_NM][i-1, j]) / 2 + x_add              
+                    y2 = (dsin2.variables[Coor_y_NM][i, j] +
+                         dsin2.variables[Coor_y_NM][i-1, j]) / 2
+            
+                    x4 = (dsin2.variables[Coor_x_NM][i, j] +
+                         dsin2.variables[Coor_x_NM][i, j - 1]) / 2 + x_add
+            
+                    y4 = (dsin2.variables[Coor_y_NM][i, j] +
+                         dsin2.variables[Coor_y_NM][i, j - 1]) / 2
+
+
+            if i != nrows - 1 and i !=0 and j == 0:
+                if Is_Rotated_Grid > 0:
+
+                    x1 = (dsin2.variables[Coor_x_NM][i, j] +
+                         dsin2.variables[Coor_x_NM][i-1, j]) / 2 + x_add
+                         
+                    y1 = (dsin2.variables[Coor_y_NM][i, j] +
+                         dsin2.variables[Coor_y_NM][i-1, j]) / 2
+                                     
+                         
+                    x4 = (dsin2.variables[Coor_x_NM][i, j] +
+                         dsin2.variables[Coor_x_NM][i + 1, j]) / 2 + x_add
+
+                    y4 = (dsin2.variables[Coor_y_NM][i, j] +
+                         dsin2.variables[Coor_y_NM][i + 1, j]) / 2
+                         
+
+            if i != nrows - 1 and i !=0 and j == ncols -1:
+                if Is_Rotated_Grid > 0:
+
+                    x2 = (dsin2.variables[Coor_x_NM][i, j] +
+                         dsin2.variables[Coor_x_NM][i-1, j] ) / 2 + x_add              
+                    y2 = (dsin2.variables[Coor_y_NM][i, j] +
+                         dsin2.variables[Coor_y_NM][i-1, j]) / 2
+                                                                                                                                             
+                    x3 = (dsin2.variables[Coor_x_NM][i, j] +
+                         dsin2.variables[Coor_x_NM][i + 1, j]) / 2 + x_add
+
+                    y3 = (dsin2.variables[Coor_y_NM][i, j] +
+                         dsin2.variables[Coor_y_NM][i + 1, j]) / 2                    
+
+            if x1 == -1 or x3 == -1 or x4 == -1 or x2 == -1:
+                continue
+            Point_1 = QgsPointXY(x1, y1)  ## lower left
+            Point_2 = QgsPointXY(x2, y2)
+            Point_3 = QgsPointXY(x3, y3)
+            Point_4 = QgsPointXY(x4, y4)
+            # if i == nrows - 1:
+            #     print("#########################################")
+            #     print(x1, y1)
+            #     print(x2, y2)
+            #     print(x3, y3)
+            #     print(x4, y4)
+            #     print(dsin2.variables[Coor_x_NM][i, j] + x_add,dsin2.variables[Coor_y_NM][i, j])
+            #     print("#########################################")
+            
+            gPolygon = QgsGeometry.fromPolygonXY(
+                [[Point_1, Point_2, Point_3, Point_4]]
+            )
+            Polygon_Fea.setGeometry(gPolygon)
+            Polygon_Fea.setAttributes(latlonrow[k, :].tolist())
+            DP_Nc_ply.addFeature(Polygon_Fea)
 
     Point_Nc_Grid.commitChanges()
     Point_Nc_Grid.updateExtents()
