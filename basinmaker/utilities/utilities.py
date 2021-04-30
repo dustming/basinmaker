@@ -178,8 +178,15 @@ COLUMN_TYPES_CONSTANT = [
     "Real",
 ]
 
-DEFALUT_FLOOD_N = 0.29
-
+DEFALUT_FLOOD_N = 0.09
+min_manning_n = 0.025
+max_manning_n = 0.15
+min_riv_slope = 0.000001
+max_riv_slope = 1
+min_bkf_width = 0.1
+min_bkf_depth = 0.1
+min_riv_lenth = 90
+    
 def Dbf_To_Dataframe(file_path):
     """Transfer an input dbf file to dataframe
 
