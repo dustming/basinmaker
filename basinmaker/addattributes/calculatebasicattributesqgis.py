@@ -210,14 +210,6 @@ def calculate_basic_attributes(
         overwrite=True,
     )
 
-    ### calcuate averaged DEM in each subbasin
-    grass.run_command(
-        "v.rast.stats",
-        map=cat_ply_info,
-        raster="dem_proj",
-        column_prefix="d",
-        method="average",
-    )
     ### calcuate averaged slope and aspect of each subbasin
     grass.run_command(
         "v.rast.stats",
@@ -233,6 +225,15 @@ def calculate_basic_attributes(
         column_prefix="a",
         method="average",
     )
+    
+    grass.run_command(
+        "v.rast.stats",
+        map=cat_ply_info,
+        raster="dem_proj",
+        column_prefix="d",
+        method="average",
+    )
+    
     ### calcuate minimum and maximum dem along the channel
     grass.run_command(
         "v.rast.stats",
@@ -253,7 +254,7 @@ def calculate_basic_attributes(
         mapset="PERMANENT",
         input=cat_riv_info,
         overwrite=True,
-    )
+    )        
     grass.run_command(
         "v.proj",
         location=grass_location + "_proj",
@@ -261,7 +262,25 @@ def calculate_basic_attributes(
         input=cat_ply_info,
         overwrite=True,
     )
-
+    
+    ### calcuate averaged DEM in each subbasin
+    # grass.run_command(
+    #     "v.rast.stats",
+    #     map=cat_ply_info,
+    #     raster="dem",
+    #     column_prefix="d",
+    #     method="average",
+    # )
+    # 
+    # ### calcuate minimum and maximum dem along the channel
+    # grass.run_command(
+    #     "v.rast.stats",
+    #     map=cat_riv_info,
+    #     raster="dem",
+    #     column_prefix="d",
+    #     method=["minimum", "maximum"],
+    # )
+    
     ## get routing structure
 
     exp = "%s = int(%s)" % (fdr, fdr)

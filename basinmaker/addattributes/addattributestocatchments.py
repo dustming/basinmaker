@@ -8,6 +8,7 @@ def add_attributes_to_catchments(
     bkfwd_attributes=[],
     path_landuse="#",
     path_landuse_info="#",
+    path_k_c_zone_polygon = '#',
     k_in=-1,
     c_in=-1,
     out_cat_name="catchment_without_merging_lakes",
@@ -243,12 +244,13 @@ def add_attributes_to_catchments(
         
         attr_da = streamorderanddrainagearea(attr_landuse)
         
-        if path_bkfwidthdepth != "#" or k_in != -1:
+        if path_bkfwidthdepth != "#" or k_in != -1 or path_k_c_zone_polygon != '#':
             attr_bkf = calculate_bankfull_width_depth_from_polyline(
                 grassdb=grassdb,
                 grass_location=grass_location,
                 qgis_prefix_path=qgis_prefix_path,
                 path_bkfwidthdepth=path_bkfwidthdepth,
+                path_k_c_zone_polygon = path_k_c_zone_polygon,
                 bkfwd_attributes=bkfwd_attributes,
                 catinfo=attr_da,
                 input_geo_names=input_geo_names,

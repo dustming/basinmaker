@@ -66,6 +66,12 @@ def reproject_clip_vectors_by_polygon(
             INTERSECT=mask,
             OUTPUT=os.path.join(grassdb, ply_name + ".shp"),
         )
+        if ply_name == 'kc_zone':
+            processing.run("native:clip", {
+                           'INPUT':os.path.join(grassdb, ply_name + "_project.shp"),
+                           'OVERLAY':mask,
+                           'OUTPUT':os.path.join(grassdb, ply_name + "_clip.shp")})
+
     except:
         print("Need fix lake boundary geometry to speed up")
         qgis_vector_fix_geometries(
@@ -74,11 +80,25 @@ def reproject_clip_vectors_by_polygon(
             INPUT=os.path.join(grassdb, ply_name + "_project.shp"),
             OUTPUT=os.path.join(grassdb, ply_name + "_fixgeo.shp"),
         )
+        qgis_vector_fix_geometries(
+            processing,
+            context,
+            INPUT=mask,
+            OUTPUT=os.path.join(grassdb, "mask_fixgeo.shp"),
+        )
+        
         qgis_vector_ectract_by_location(
             processing,
             context,
             INPUT=os.path.join(grassdb, ply_name + "_fixgeo.shp"),
-            INTERSECT=mask,
+            INTERSECT=os.path.join(grassdb, "mask_fixgeo.shp"),
             OUTPUT=os.path.join(grassdb, ply_name + ".shp"),
         )
+
+        if ply_name == 'kc_zone':
+            processing.run("native:clip", {
+                           'INPUT':os.path.join(grassdb, ply_name + "_fixgeo.shp"),
+                           'OVERLAY':os.path.join(grassdb, "mask_fixgeo.shp"),
+                           'OUTPUT':os.path.join(grassdb, ply_name + "_clip.shp")})
+                       
     Qgs.exit()

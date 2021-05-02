@@ -890,6 +890,8 @@ class delineate:
         )
         if mode == 'using_dem':
             mode = 'usingdem'
+        elif mode == 'using_sub_reg':
+            mode = 'usingsubreg' 
         else:
             mode = 'usingfdr'
 
@@ -1054,6 +1056,7 @@ class delineate:
         projected_epsg_code ="EPSG:3573",
         path_bkfwidthdepth_polyline ="#",
         bkfwd_attributes=[],
+        path_k_c_zone_polygon = '#',
         k =-1,
         c =-1,        
         path_landuse ="#",
@@ -1188,6 +1191,7 @@ class delineate:
             path_landuse=path_landuse,
             path_landuse_info=path_landuse_and_manning_n_table,
             projection=projected_epsg_code,
+            path_k_c_zone_polygon = path_k_c_zone_polygon,
             k_in=k,
             c_in=c,
             out_cat_name=self.geofilenames["catchment_without_merging_lakes"],

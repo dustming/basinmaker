@@ -30,6 +30,7 @@ def calculate_flood_plain_manning_n(
     )
 
     cat_riv_info = input_geo_names["cat_riv_info"]
+    outlet_pt_info = input_geo_names["outlet_pt_info"]
 
     import grass.script as grass
     import grass.script.setup as gsetup
@@ -85,15 +86,37 @@ def calculate_flood_plain_manning_n(
         method=["average"],
     )
 
+    grass.run_command(
+        "v.what.rast", map=outlet_pt_info, raster= "landuse_Manning", column="mn_average"
+    )
+        
+    # grass.run_command(
+    #     "v.rast.stats",
+    #     map=cat_ply_info,
+    #     raster="landuse_Manning",
+    #     column_prefix="mn",
+    #     method=["average"],
+    # )    
+
     ### read length and maximum and minimum dem along channel
     sqlstat = "SELECT Gridcode,mn_average FROM %s" % (cat_riv_info)
     rivleninfo = pd.read_sql_query(sqlstat, con)
     rivleninfo = rivleninfo.fillna(-9999)
+    
+    ### read length and maximum and minimum dem along channel
+    sqlstat = "SELECT SubId,mn_average FROM %s" % (outlet_pt_info)
+    outletpoint = pd.read_sql_query(sqlstat, con)
+    outletpoint = outletpoint.fillna(-9999)
 
     for i in range(0, len(rivleninfo)):
         catid = rivleninfo["Gridcode"].values[i]
         catrow = catinfo["SubId"] == catid
-        catinfo.loc[catrow, "FloodP_n"] = rivleninfo["mn_average"].values[i]
+        floodn = rivleninfo["mn_average"].values[i]
+        
+        if floodn < 0:
+            floodn = outletpoint.loc[outletpoint['SubId'] ==catid, "mn_average"].values[0]
+                        
+        catinfo.loc[catrow, "FloodP_n"] = floodn
 
     PERMANENT.close()
     return catinfo
