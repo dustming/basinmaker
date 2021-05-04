@@ -111,13 +111,13 @@ def update_non_connected_catchment_info(catinfo):
 
         lc_subid = d_subid
 
-        Upstreamcats = defcat(routing_info, c_subid)  ### alll subuds
-
-        Up_cat_info = catinfo.loc[catinfo["SubId"].isin(Upstreamcats)].copy()
-
-        DA = sum(Up_cat_info["BasArea"].values)
-
-        catinfo.loc[catinfo["SubId"] == c_subid, "DrainArea"] = DA
+        # Upstreamcats = defcat(routing_info, c_subid)  ### alll subuds
+        # 
+        # Up_cat_info = catinfo.loc[catinfo["SubId"].isin(Upstreamcats)].copy()
+        # 
+        # DA = sum(Up_cat_info["BasArea"].values)
+        # 
+        # catinfo.loc[catinfo["SubId"] == c_subid, "DrainArea"] = DA
 
         if len(d_sub_info) < 1:
             continue
@@ -143,15 +143,15 @@ def update_non_connected_catchment_info(catinfo):
             "RivSlope"
         ].values[0]
         catinfo.loc[catinfo["SubId"] == c_subid, "Ch_n"] = d_sub_info["Ch_n"].values[0]
-        catinfo.loc[catinfo["SubId"] == c_subid, "Q_Mean"] = d_sub_info[
-            "Q_Mean"
-        ].values[0]
-        catinfo.loc[catinfo["SubId"] == c_subid, "BkfWidth"] = d_sub_info[
-            "BkfWidth"
-        ].values[0]
-        catinfo.loc[catinfo["SubId"] == c_subid, "BkfDepth"] = d_sub_info[
-            "BkfDepth"
-        ].values[0]
+        # catinfo.loc[catinfo["SubId"] == c_subid, "Q_Mean"] = d_sub_info[
+        #     "Q_Mean"
+        # ].values[0]
+        # catinfo.loc[catinfo["SubId"] == c_subid, "BkfWidth"] = d_sub_info[
+        #     "BkfWidth"
+        # ].values[0]
+        # catinfo.loc[catinfo["SubId"] == c_subid, "BkfDepth"] = d_sub_info[
+        #     "BkfDepth"
+        # ].values[0]
         catinfo.loc[catinfo["SubId"] == c_subid, "Strahler"] = d_sub_info[
             "Strahler"
         ].values[0]
@@ -638,6 +638,18 @@ def streamorderanddrainagearea(catinfoall):
                 catinfoall.loc[idx, "DA_error"] = (
                     catinfoall["DrainArea"].values[i] / 1000.0 / 1000.0
                 ) / catinfoall["DA_Obs"].values[i]
+        
+        # calcuate drainage area of each non connected lake 
+        
+        if catinfoall["Lake_Cat"].values[i] == 2:
+            catid = catinfoall["SubId"].values[i]
+
+            Upstreamcats = defcat(routing_ncl, catid)  ### ncl subs to this ncl sub
+            Up_cat_info = catinfo_ncl.loc[catinfo_ncl["SubId"].isin(Upstreamcats)].copy(deep=True)
+            DA = sum(Up_cat_info["BasArea"].values)
+            catinfoall.loc[idx, "DrainArea"] = DA
+            
+            
     return catinfoall
 
 

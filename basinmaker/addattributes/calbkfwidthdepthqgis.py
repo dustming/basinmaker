@@ -181,7 +181,7 @@ def calculate_bankfull_width_depth_from_polyline(
             catinfo.loc[idx_i, "BkfWidth"] = default_bkf_width
             catinfo.loc[idx_i, "BkfDepth"] = default_bkf_depth
             catinfo.loc[idx_i, "Q_Mean"] = default_bkf_q
-         
+                
         if catinfo.loc[idx_i, "Lake_Cat"] < 2:
             if catinfo.loc[idx_i, "Max_DEM"] < 0:
                 catinfo.loc[idx_i, "Max_DEM"] = catinfo.loc[idx_i, "MeanElev"]
