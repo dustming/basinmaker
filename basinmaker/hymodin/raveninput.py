@@ -30,7 +30,8 @@ def GenerateRavenInput(
     SubBasinGroup_Area_Lake=[-1],
     OutputFolder="#",
     Forcing_Input_File="#",
-    aspect_from_gis = 'grass'
+    aspect_from_gis = 'grass',
+    lake_out_flow_method = 'broad_crest',
 ):
 
     """Generate Raven input files.
@@ -242,10 +243,11 @@ def GenerateRavenInput(
     WriteStringToFile(Channel_rvp_string + '\n \n', Channel_rvp_file_path, "w")
     WriteStringToFile(Model_rvh_string + '\n \n', Model_rvh_file_path, "w")
     WriteStringToFile(Model_rvp_string_modify + '\n \n', Model_rvp_file_path, "a")
-
+    
     Lake_rvh_string, Lake_rvh_file_path = Generate_Raven_Lake_rvh_String(
-        ncatinfo2, Raveinputsfolder, Model_Name
+        ncatinfo2, Raveinputsfolder, Model_Name,lake_out_flow_method
     )
+            
     WriteStringToFile(Lake_rvh_string, Lake_rvh_file_path, "w")
 
     if WriteObsrvt > 0:
@@ -982,7 +984,7 @@ def Generate_Raven_Channel_rvp_string_sub(
 #########################################################################################################33
 
 
-def Generate_Raven_Lake_rvh_String(catinfo, Raveinputsfolder, Model_Name):
+def Generate_Raven_Lake_rvh_String(catinfo, Raveinputsfolder, Model_Name,lake_out_flow_method):
     """Generate string of raven lake rvh input
 
     Function that used to generate the content for
@@ -1046,50 +1048,130 @@ def Generate_Raven_Lake_rvh_String(catinfo, Raveinputsfolder, Model_Name):
             WeirCoe = 0.6
             hruid = int(catinfo.iloc[i]["HRU_ID"])
             Crewd = catinfo.iloc[i]["BkfWidth"]  ##3 m
+            has_obs = catinfo.iloc[i]["Has_Gauge"]  ##3 m
             #            if slakeinfo.iloc[0]['Wshd_area'] < 6000 and slakeinfo.iloc[0]['Wshd_area'] > 0:
-            Lake_rvh_string_list.append(
-                "#############################################"
-            )  # f2.write("#############################################"+"\n")
-            Lake_rvh_string_list.append(
-                "# New Lake starts"
-            )  # f2.write("###New Lake starts"+"\n")
-            Lake_rvh_string_list.append(
-                "#############################################"
-            )  # f2.write("#############################################"+"\n")
-            ######write lake information to file
-            Lake_rvh_string_list.append(
-                ":Reservoir" + "   Lake_" + str(int(lakeid))
-            )  # f2.write(":Reservoir"+ "   Lake_"+ str(int(lakeid))+ "   ######## " +"\n")
-            Lake_rvh_string_list.append(
-                "  :SubBasinID  " + str(int(catid))
-            )  # f2.write("  :SubBasinID  "+str(int(catid))+ "\n")
-            Lake_rvh_string_list.append(
-                "  :HRUID   " + str(int(hruid))
-            )  # f2.write("  :HRUID   "+str(int(hruid))+ "\n")
-            Lake_rvh_string_list.append(
-                "  :Type RESROUTE_STANDARD   "
-            )  # f2.write("  :Type RESROUTE_STANDARD   "+"\n")
-            Lake_rvh_string_list.append(
-                "  :WeirCoefficient  " + str(WeirCoe)
-            )  # f2.write("  :WeirCoefficient  "+str(WeirCoe)+ "\n")
-            Lake_rvh_string_list.append(
-                "  :CrestWidth " + '{:>10.4f}'.format(Crewd) #"{:.4f}".format(Crewd) #str(Crewd)
-            )  # f2.write("  :CrestWidth "+str(Crewd)+ "\n")
-            Lake_rvh_string_list.append(
-                "  :MaxDepth " + str(h0)
-            )  # f2.write("  :MaxDepth "+str(h0)+ "\n")
-            Lake_rvh_string_list.append(
-                "  :LakeArea    " + str(A)
-            )  # f2.write("  :LakeArea    "+str(A)+ "\n")
-            Lake_rvh_string_list.append(
-                ":EndReservoir   "
-            )  # f2.write(":EndReservoir   "+"\n")
+            if has_obs < 1 or lake_out_flow_method == 'broad_crest':
+                Lake_rvh_string_list.append(
+                    "#############################################"
+                )  # f2.write("#############################################"+"\n")
+                Lake_rvh_string_list.append(
+                    "# New Lake starts"
+                )  # f2.write("###New Lake starts"+"\n")
+                Lake_rvh_string_list.append(
+                    "#############################################"
+                )  # f2.write("#############################################"+"\n")
+                ######write lake information to file
+                Lake_rvh_string_list.append(
+                    ":Reservoir" + "   Lake_" + str(int(lakeid))
+                )  # f2.write(":Reservoir"+ "   Lake_"+ str(int(lakeid))+ "   ######## " +"\n")
+                Lake_rvh_string_list.append(
+                    "  :SubBasinID  " + str(int(catid))
+                )  # f2.write("  :SubBasinID  "+str(int(catid))+ "\n")
+                Lake_rvh_string_list.append(
+                    "  :HRUID   " + str(int(hruid))
+                )  # f2.write("  :HRUID   "+str(int(hruid))+ "\n")
+                Lake_rvh_string_list.append(
+                    "  :Type RESROUTE_STANDARD   "
+                )  # f2.write("  :Type RESROUTE_STANDARD   "+"\n")
+                Lake_rvh_string_list.append(
+                    "  :WeirCoefficient  " + str(WeirCoe)
+                )  # f2.write("  :WeirCoefficient  "+str(WeirCoe)+ "\n")
+                Lake_rvh_string_list.append(
+                    "  :CrestWidth " + '{:>10.4f}'.format(Crewd) #"{:.4f}".format(Crewd) #str(Crewd)
+                )  # f2.write("  :CrestWidth "+str(Crewd)+ "\n")
+                Lake_rvh_string_list.append(
+                    "  :MaxDepth " + str(h0)
+                )  # f2.write("  :MaxDepth "+str(h0)+ "\n")
+                Lake_rvh_string_list.append(
+                    "  :LakeArea    " + str(A)
+                )  # f2.write("  :LakeArea    "+str(A)+ "\n")
 
+                Lake_rvh_string_list.append(
+                    "  :SeepageParameters   0   0 "
+                )  # f2.write("  :LakeArea    "+str(A)+ "\n")            
+                
+                Lake_rvh_string_list.append(
+                    ":EndReservoir   "
+                )  # f2.write(":EndReservoir   "+"\n")
+            elif has_obs >= 1 and lake_out_flow_method == 'power_law':
+                Lake_rvh_string_list.append(
+                    "#############################################"
+                )  # f2.write("#############################################"+"\n")
+                Lake_rvh_string_list.append(
+                    "# New Lake starts"
+                )  # f2.write("###New Lake starts"+"\n")
+                Lake_rvh_string_list.append(
+                    "#############################################"
+                )  # f2.write("#############################################"+"\n")
+                ######write lake information to file
+                Lake_rvh_string_list.append(
+                    ":Reservoir" + "   Lake_" + str(int(lakeid))
+                )  # f2.write(":Reservoir"+ "   Lake_"+ str(int(lakeid))+ "   ######## " +"\n")
+                Lake_rvh_string_list.append(
+                    "  :SubBasinID  " + str(int(catid))
+                )  # f2.write("  :SubBasinID  "+str(int(catid))+ "\n")
+                Lake_rvh_string_list.append(
+                    "  :HRUID   " + str(int(hruid))
+                )  # f2.write("  :HRUID   "+str(int(hruid))+ "\n")
+                Lake_rvh_string_list.append(
+                    "  :Type RESROUTE_STANDARD   "
+                )  # f2.write("  :Type RESROUTE_STANDARD   "+"\n")
+                Lake_rvh_string_list.append(
+                    "  :MaxDepth " + str(h0)
+                )  # f2.write("  :MaxDepth "+str(h0)+ "\n")
+                Lake_rvh_string_list.append(
+                    "  :SeepageParameters   0   0 "
+                )  # f2.write("  :LakeArea    "+str(A)+ "\n")            
+
+                Lake_rvh_string_list.append(
+                    "  :OutflowStageRelation POWER_LAW "
+                )           
+
+                Lake_rvh_string_list.append(
+                    "  %s   %s " %(str(Crewd*2/3*(9.80616**(0.5))),str(1.5))
+                ) 
+                
+                Lake_rvh_string_list.append(
+                    "  :EndOutflowStageRelation "
+                ) 
+                            
+
+                Lake_rvh_string_list.append(
+                    "  :VolumeStageRelation POWER_LAW "
+                )           
+
+                Lake_rvh_string_list.append(
+                    "  %s   %s " %(str(A),str(1))
+                ) 
+                
+                Lake_rvh_string_list.append(
+                    "  :EndVolumeStageRelation "
+                ) 
+                
+                
+                Lake_rvh_string_list.append(
+                    "  :AreaStageRelation POWER_LAW "
+                )           
+
+                Lake_rvh_string_list.append(
+                    "  %s   %s " %(str(A),str(0))
+                ) 
+                
+                Lake_rvh_string_list.append(
+                    "  :EndAreaStageRelation "
+                ) 
+                            
+                            
+                Lake_rvh_string_list.append(
+                    ":EndReservoir   "
+                )  # f2.write(":EndReservoir   "+"\n")
+                
     Lake_rvh_string = "\n".join(Lake_rvh_string_list)
     return Lake_rvh_string, Lake_rvh_file_path
     #### write lake input files for different lake zone
 
 
+#########################
 def Return_Group_Name_Based_On_Value(value, GroupNames, Group_Thresthold_Values):
     """Return group name
     It is a function to return group name in GroupNames, based on value and

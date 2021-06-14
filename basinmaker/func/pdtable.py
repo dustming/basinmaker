@@ -958,21 +958,21 @@ def Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info,k,c):
                         AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "DA_error"] = da_sim/da_obs
                         AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "Use_region"] = 1
 
-                da = AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "DrainArea"].values[0] / 1000 / 1000  # m2 to km2                
-                q = func_Q_DA(da, k, c)
-                bk_w= 7.2 * q ** 0.5
-                bk_d = 0.27 * q ** 0.3
-                bk_q = q
-                bk_slope = AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "RivSlope"].values[0]
-                n_rch = calculateChannaln(bk_w, bk_d, bk_q, bk_slope)
-                if n_rch < min_manning_n:
-                    n_rch = 0.01
-                if n_rch > max_manning_n:
-                    nrch = max_manning_n          
-                AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "BkfWidth"] = 7.2 * q ** 0.5
-                AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "BkfDepth"] = 0.27 * q ** 0.3
-                AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "Q_Mean"] = q
-                AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "Ch_n"] = n_rch
+                # da = AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "DrainArea"].values[0] / 1000 / 1000  # m2 to km2                
+                # q = func_Q_DA(da, k, c)
+                # bk_w= 7.2 * q ** 0.5
+                # bk_d = 0.27 * q ** 0.3
+                # bk_q = q
+                # bk_slope = AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "RivSlope"].values[0]
+                # n_rch = calculateChannaln(bk_w, bk_d, bk_q, bk_slope)
+                # if n_rch < min_manning_n:
+                #     n_rch = 0.01
+                # if n_rch > max_manning_n:
+                #     nrch = max_manning_n          
+                # AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "BkfWidth"] = 7.2 * q ** 0.5
+                # AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "BkfDepth"] = 0.27 * q ** 0.3
+                # AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "Q_Mean"] = q
+                # AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "Ch_n"] = n_rch
 
 
 

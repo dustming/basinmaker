@@ -495,7 +495,7 @@ def Area_Weighted_Mapping_Between_Two_Polygons_QGIS(
     qgis_vector_field_calculator(
         processing=processing,
         context=context,
-        FORMULA="area(transform($geometry, 'EPSG:4326','EPSG:3573'))",
+        FORMULA="area(transform($geometry, 'EPSG:3161','EPSG:3161'))",
         FIELD_NAME="s_area",
         INPUT=Path_finalcat_hru_temp_dissolve,
         OUTPUT=Path_finalcat_hru_temp_dissolve_area,

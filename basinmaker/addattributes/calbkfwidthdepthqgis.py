@@ -166,12 +166,17 @@ def calculate_bankfull_width_depth_from_polyline(
             catinfo.loc[idx_i, "BkfDepth"] =  max(0.27 * q ** 0.3,min_bkf_depth)
             catinfo.loc[idx_i, "Q_Mean"] = q
         elif 'k_c_sub' in locals():
-            k_sub = k_c_sub.loc[k_c_sub["b_Gridcode"] == catid]["a_k"].values[0]
-            c_sub = k_c_sub.loc[k_c_sub["b_Gridcode"] == catid]["a_c"].values[0]
-            if k_sub < 0:
+            if len(k_c_sub.loc[k_c_sub["b_Gridcode"] == catid]) < 1:
                 k_sub =  0.00450718
                 c_sub =  0.98579699  
-        
+                print("k_sub not found .....")
+            else:
+                k_sub = k_c_sub.loc[k_c_sub["b_Gridcode"] == catid]["a_k"].values[0]
+                c_sub = k_c_sub.loc[k_c_sub["b_Gridcode"] == catid]["a_c"].values[0]
+                if k_sub < 0:
+                    k_sub =  0.00450718
+                    c_sub =  0.98579699
+                        
             q = func_Q_DA(da, k_sub, c_sub)
             catinfo.loc[idx_i, "BkfWidth"] =  max(7.2 * q ** 0.5,min_bkf_width)
             catinfo.loc[idx_i, "BkfDepth"] =  max(0.27 * q ** 0.3,min_bkf_depth)
