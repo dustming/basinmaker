@@ -6,7 +6,7 @@ import qgis
 from qgis.analysis import QgsNativeAlgorithms
 from qgis.core import *
 from qgis.PyQt.QtCore import *
-
+from joblib import Parallel, delayed
 
 def qgis_raster_gdal_warpreproject(processing, Input, TARGET_CRS, Output):
     """Functions reproject raster layer
@@ -405,6 +405,175 @@ def Copy_Pddataframe_to_shpfile(
         del layer_cat
         return
 
+def copy_data_and_dissolve(all_subids,tempfolder,processing,Path_Temp_final_rviply,Path_Temp_final_rvi,
+    mapoldnew_info,COLUMN_NAMES_CONSTANT,OutputFolder,Path_Catchment_Polygon,context):    
+    
+    if len(all_subids) > 5000:
+
+        Path_final_rviply = os.path.join(
+            tempfolder,
+            "temp_finalriv_ply"  + ".shp",
+        )
+        Path_final_rvi = os.path.join(
+            tempfolder,
+            "temp_finalriv"  + ".shp",
+        )
+    
+        Copy_Pddataframe_to_shpfile_main(
+            Path_shpfile = Path_Temp_final_rviply,
+            Pddataframe = mapoldnew_info,
+            all_subids = all_subids,
+            tempfolder = tempfolder,
+            processing = processing,
+            output = Path_final_rviply,
+            link_col_nm_shp="SubId",
+            link_col_nm_df="Old_SubId",
+            UpdateColNM=["#"],
+        )  
+        
+        Copy_Pddataframe_to_shpfile_main(
+            Path_shpfile = Path_Temp_final_rvi,
+            Pddataframe = mapoldnew_info,
+            all_subids = all_subids,
+            tempfolder = tempfolder,
+            processing = processing,  
+            output =   Path_final_rvi,    
+            link_col_nm_shp="SubId",
+            link_col_nm_df="Old_SubId",
+            UpdateColNM=["#"],
+        )    
+                              
+    else:
+            
+        Path_final_rviply = Path_Temp_final_rviply
+        Path_final_rvi = Path_Temp_final_rvi
+                    
+        Copy_Pddataframe_to_shpfile(
+            Path_Temp_final_rviply,
+            mapoldnew_info,
+            link_col_nm_shp="SubId",
+            link_col_nm_df="Old_SubId",
+            UpdateColNM=["#"],
+        )
+        Copy_Pddataframe_to_shpfile(
+            Path_Temp_final_rvi,
+            mapoldnew_info,
+            link_col_nm_shp="SubId",
+            link_col_nm_df="Old_SubId",
+            UpdateColNM=["#"],
+        )
+
+    # dissolve shpfile based on new subid
+    if len(os.path.basename(Path_Catchment_Polygon).split('_')) == 5:
+        Path_final_rviply_out = os.path.join(OutputFolder, "finalcat_info_"+os.path.basename(Path_Catchment_Polygon).split('_')[4])
+        Path_final_rvi_out = os.path.join(OutputFolder, "finalcat_info_riv_"+os.path.basename(Path_Catchment_Polygon).split('_')[4])
+    else:
+        Path_final_rviply_out = os.path.join(OutputFolder, "finalcat_info.shp")
+        Path_final_rvi_out = os.path.join(OutputFolder, "finalcat_info_riv.shp")
+
+
+    Clean_Attribute_Name(Path_final_rvi, COLUMN_NAMES_CONSTANT)
+    Clean_Attribute_Name(Path_final_rviply, COLUMN_NAMES_CONSTANT)
+    
+                    
+    qgis_vector_dissolve(
+        processing,
+        context,
+        INPUT=Path_final_rvi,
+        FIELD=["SubId"],
+        OUTPUT=Path_final_rvi_out,
+    )
+    ply_draft = qgis_vector_dissolve(
+        processing,
+        context,
+        INPUT=Path_final_rviply,
+        FIELD=["SubId"],
+        OUTPUT="memory:",
+    )["OUTPUT"]
+    
+    # clean attribute table of shpfile
+    Clean_Attribute_Name(Path_final_rvi_out, COLUMN_NAMES_CONSTANT)
+    ply_draft,tempnum = Clean_Attribute_Name(ply_draft, COLUMN_NAMES_CONSTANT,Input_Is_Feature_In_Mem = True)
+
+    # add centroid to new drived polygons
+    
+    formular = "x(centroid(transform($geometry,'%s','%s')))" % (
+        ply_draft.crs().authid(),
+        "EPSG:4326",
+    )
+
+    ply_draft = qgis_vector_field_calculator(
+        processing=processing,
+        context=context,
+        FORMULA=formular,
+        FIELD_NAME="centroid_x",
+        INPUT=ply_draft,
+        OUTPUT="memory:",
+    )["OUTPUT"]
+
+    formular = "y(centroid(transform($geometry,'%s','%s')))" % (
+        ply_draft.crs().authid(),
+        "EPSG:4326",
+    )
+
+    qgis_vector_field_calculator(
+        processing=processing,
+        context=context,
+        FORMULA=formular,
+        FIELD_NAME="centroid_y",
+        INPUT=ply_draft,
+        OUTPUT=Path_final_rviply_out,
+    )
+    
+    return 
+
+def Copy_Pddataframe_to_shpfile_main(
+    Path_shpfile,
+    Pddataframe,
+    all_subids,
+    tempfolder,
+    processing,
+    output,
+    link_col_nm_shp="SubId",
+    link_col_nm_df="SubId",
+    UpdateColNM=["#"],
+    Input_Is_Feature_In_Mem=False,
+):
+
+    path_to_temp_files = []
+    ncores = 3
+    feature_per_file = int(len(all_subids)/ncores)
+    
+    for i in range(0,ncores):
+        num_random = str(np.random.randint(1, 10000 + 1)) +'_'+str(i)
+        path_of_i_temp_file = os.path.join(
+            tempfolder,
+            "temp_finalriv_ply" + num_random + ".shp",
+        )
+        if i != ncores - 1:
+            subids_of_i_temp_file = all_subids[i*feature_per_file:(i+1)*feature_per_file]
+        else:
+            subids_of_i_temp_file = all_subids[i*feature_per_file:len(all_subids)]
+                
+        Selectfeatureattributes(
+            processing,
+            Input=Path_shpfile,
+            Output=path_of_i_temp_file,
+            Attri_NM="SubId",
+            Values=subids_of_i_temp_file,
+        )
+        path_to_temp_files.append(path_of_i_temp_file)
+
+    print(path_to_temp_files)
+    Parallel(n_jobs=ncores, verbose=1, backend="threading")(
+        delayed(Copy_Pddataframe_to_shpfile)(temp_file,Pddataframe,
+        link_col_nm_shp="SubId",link_col_nm_df="Old_SubId",UpdateColNM=["#"]
+        ) for temp_file in path_to_temp_files)
+    
+    processing.run("native:mergevectorlayers", {'LAYERS':path_to_temp_files,'CRS':None,'OUTPUT':output})
+    
+    return 
+    
 
 def Remove_Unselected_Lake_Attribute_In_Finalcatinfo(Path_Finalcatinfo, Conn_Lake_Ids):
     """Functions will set lake id not in Conn_Lake_Ids to -1.2345 in attribute
@@ -492,10 +661,21 @@ def Selectfeatureattributes(processing, Input="#", Output="#", Attri_NM="#", Val
             exp =  exp + " , \'%s\'" %(Values[i])
         exp = exp + ")"
     else:
+        ncores = 3
+        nvalues_per_group = 1000
+        k = 0
         exp = Attri_NM + "  IN  (  " + str(int(Values[0]))
         for i in range(1, len(Values)):
-            exp = exp + " , " + str(int(Values[i]))
+            k = k + 1
+            if k != 0:
+                exp = exp + " , " + str(int(Values[i]))
+            if k == nvalues_per_group and k < len(Values) - 3:
+                k = 0
+                exp = exp + ")"
+                exp = exp + ' OR ' + Attri_NM + "  IN  (  " + str(int(Values[i]))
+        
         exp = exp + ")"
+    
     processing.run(
         "native:extractbyexpression",
         {"INPUT": Input, "EXPRESSION": exp, "OUTPUT": Output},

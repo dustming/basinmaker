@@ -5,6 +5,7 @@ from basinmaker.utilities.utilities import *
 import pandas as pd
 import numpy as np
 import tempfile
+from joblib import Parallel, delayed
 
 
 def combine_catchments_covered_by_the_same_lake_qgis(
@@ -156,47 +157,9 @@ def combine_catchments_covered_by_the_same_lake_qgis(
     update_topology(mapoldnew_info, UpdateStreamorder=-1)
 
     # copy new attribute table to shpfile
-    Copy_Pddataframe_to_shpfile(
-        Path_Temp_final_rviply,
-        mapoldnew_info,
-        link_col_nm_shp="SubId",
-        link_col_nm_df="Old_SubId",
-        UpdateColNM=["#"],
-    )
-    Copy_Pddataframe_to_shpfile(
-        Path_Temp_final_rvi,
-        mapoldnew_info,
-        link_col_nm_shp="SubId",
-        link_col_nm_df="Old_SubId",
-        UpdateColNM=["#"],
-    )
-
-    # dissolve shpfile based on new subid
-    if len(os.path.basename(Path_Catchment_Polygon).split('_')) == 5:
-        Path_final_rviply = os.path.join(OutputFolder, "finalcat_info_"+os.path.basename(Path_Catchment_Polygon).split('_')[4])
-        Path_final_rvi = os.path.join(OutputFolder, "finalcat_info_riv_"+os.path.basename(Path_Catchment_Polygon).split('_')[4])
-    else:
-        Path_final_rviply = os.path.join(OutputFolder, "finalcat_info.shp")
-        Path_final_rvi = os.path.join(OutputFolder, "finalcat_info_riv.shp")
-                
-    qgis_vector_dissolve(
-        processing,
-        context,
-        INPUT=Path_Temp_final_rvi,
-        FIELD=["SubId"],
-        OUTPUT=Path_final_rvi,
-    )
-    qgis_vector_dissolve(
-        processing,
-        context,
-        INPUT=Path_Temp_final_rviply,
-        FIELD=["SubId"],
-        OUTPUT=Path_final_rviply,
-    )
-
-    # clean attribute table of shpfile
-    Clean_Attribute_Name(Path_final_rvi, COLUMN_NAMES_CONSTANT)
-    Clean_Attribute_Name(Path_final_rviply, COLUMN_NAMES_CONSTANT)
-
-    # add centroid to new drived polygons
-    Add_centroid_to_feature(Path_final_rviply, "centroid_x", "centroid_y")
+    all_subids = finalrivply_info['SubId'].values
+    
+    copy_data_and_dissolve(all_subids,tempfolder,processing,Path_Temp_final_rviply,Path_Temp_final_rvi,
+        mapoldnew_info,COLUMN_NAMES_CONSTANT,OutputFolder,Path_Catchment_Polygon,context)
+    
+    return 
