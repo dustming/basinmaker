@@ -406,7 +406,7 @@ def Copy_Pddataframe_to_shpfile(
         return
 
 def copy_data_and_dissolve(all_subids,tempfolder,processing,Path_Temp_final_rviply,Path_Temp_final_rvi,
-    mapoldnew_info,COLUMN_NAMES_CONSTANT,OutputFolder,Path_Catchment_Polygon,context):    
+    mapoldnew_info,COLUMN_NAMES_CONSTANT,OutputFolder,Path_Catchment_Polygon,context,Path_final_rviply_input = '#',Path_final_rvi_input = '#'):    
     
     if len(all_subids) > 5000:
 
@@ -471,7 +471,11 @@ def copy_data_and_dissolve(all_subids,tempfolder,processing,Path_Temp_final_rvip
         Path_final_rviply_out = os.path.join(OutputFolder, "finalcat_info.shp")
         Path_final_rvi_out = os.path.join(OutputFolder, "finalcat_info_riv.shp")
 
-
+    if Path_final_rviply_input != '#' and Path_final_rvi_input != '#':
+        Path_final_rviply_out = os.path.join(OutputFolder, os.path.basename(Path_final_rviply_input))
+        Path_final_rvi_out = os.path.join(OutputFolder, os.path.basename(Path_final_rvi_input))
+        
+                
     Clean_Attribute_Name(Path_final_rvi, COLUMN_NAMES_CONSTANT)
     Clean_Attribute_Name(Path_final_rviply, COLUMN_NAMES_CONSTANT)
     

@@ -238,46 +238,54 @@ def simplify_routing_structure_by_filter_lakes_qgis(
     UpdateTopology(mapoldnew_info, UpdateStreamorder=-1)
     mapoldnew_info = update_non_connected_catchment_info(mapoldnew_info)
 
-    # copy new attribute table to shpfiles
-    Copy_Pddataframe_to_shpfile(
-        Path_Temp_final_rviply,
-        mapoldnew_info,
-        link_col_nm_shp="SubId",
-        link_col_nm_df="Old_SubId",
-        UpdateColNM=["#"],
-    )
-    Copy_Pddataframe_to_shpfile(
-        Path_Temp_final_rvi,
-        mapoldnew_info,
-        link_col_nm_shp="SubId",
-        link_col_nm_df="Old_SubId",
-        UpdateColNM=["#"],
-    )
 
-    # disslove line and polygon based on new subid
-    qgis_vector_dissolve(
-        processing,
-        context,
-        INPUT=Path_Temp_final_rvi,
-        FIELD=["SubId"],
-        OUTPUT=os.path.join(OutputFolder, os.path.basename(Path_final_riv)),
-    )
-    qgis_vector_dissolve(
-        processing,
-        context,
-        INPUT=Path_Temp_final_rviply,
-        FIELD=["SubId"],
-        OUTPUT=os.path.join(OutputFolder, os.path.basename(Path_final_riv_ply)),
-    )
-
-    # clean attribute table
-    Clean_Attribute_Name(
-        os.path.join(OutputFolder, os.path.basename(Path_final_riv)),
-        COLUMN_NAMES_CONSTANT,
-    )
-    Clean_Attribute_Name(
-        os.path.join(OutputFolder, os.path.basename(Path_final_riv_ply)),
-        COLUMN_NAMES_CONSTANT,
-    )
+    all_subids = finalcat_info_temp['SubId'].values
+    
+    copy_data_and_dissolve(all_subids,tempfolder,processing,Path_Temp_final_rviply,Path_Temp_final_rvi,
+        mapoldnew_info,COLUMN_NAMES_CONSTANT,OutputFolder,Path_Catchment_Polygon,context,
+        Path_final_riv_ply,Path_final_riv)
+        
+        
+    # # copy new attribute table to shpfiles
+    # Copy_Pddataframe_to_shpfile(
+    #     Path_Temp_final_rviply,
+    #     mapoldnew_info,
+    #     link_col_nm_shp="SubId",
+    #     link_col_nm_df="Old_SubId",
+    #     UpdateColNM=["#"],
+    # )
+    # Copy_Pddataframe_to_shpfile(
+    #     Path_Temp_final_rvi,
+    #     mapoldnew_info,
+    #     link_col_nm_shp="SubId",
+    #     link_col_nm_df="Old_SubId",
+    #     UpdateColNM=["#"],
+    # )
+    # 
+    # # disslove line and polygon based on new subid
+    # qgis_vector_dissolve(
+    #     processing,
+    #     context,
+    #     INPUT=Path_Temp_final_rvi,
+    #     FIELD=["SubId"],
+    #     OUTPUT=os.path.join(OutputFolder, os.path.basename(Path_final_riv)),
+    # )
+    # qgis_vector_dissolve(
+    #     processing,
+    #     context,
+    #     INPUT=Path_Temp_final_rviply,
+    #     FIELD=["SubId"],
+    #     OUTPUT=os.path.join(OutputFolder, os.path.basename(Path_final_riv_ply)),
+    # )
+    # 
+    # # clean attribute table
+    # Clean_Attribute_Name(
+    #     os.path.join(OutputFolder, os.path.basename(Path_final_riv)),
+    #     COLUMN_NAMES_CONSTANT,
+    # )
+    # Clean_Attribute_Name(
+    #     os.path.join(OutputFolder, os.path.basename(Path_final_riv_ply)),
+    #     COLUMN_NAMES_CONSTANT,
+    # )
 
     return

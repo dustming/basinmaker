@@ -196,26 +196,35 @@ def simplify_routing_structure_by_drainage_area_qgis(
     UpdateTopology(mapoldnew_info)
     mapoldnew_info = update_non_connected_catchment_info(mapoldnew_info)
 
-    # copy new attribute table to subbasin polyline and polygon
-    Copy_Pddataframe_to_shpfile(
-        Path_Temp_final_rviply,
-        mapoldnew_info,
-        link_col_nm_shp="SubId",
-        link_col_nm_df="Old_SubId",
-        UpdateColNM=["#"],
-    )
-    Copy_Pddataframe_to_shpfile(
-        Path_Temp_final_rvi,
-        mapoldnew_info,
-        link_col_nm_shp="SubId",
-        link_col_nm_df="Old_SubId",
-        UpdateColNM=["#"],
-    )
-
     # create output folder
     outputfolder_subid = OutputFolder
     if not os.path.exists(outputfolder_subid):
         os.makedirs(outputfolder_subid)
+        
+    all_subids = finalriv_info['SubId'].values
+    
+    copy_data_and_dissolve(all_subids,tempfolder,processing,Path_Temp_final_rviply,Path_Temp_final_rvi,
+        mapoldnew_info,COLUMN_NAMES_CONSTANT,OutputFolder,Path_Catchment_Polygon,context,
+        Path_final_rviply,Path_final_riv)
+        
+        
+    # # copy new attribute table to subbasin polyline and polygon
+    # Copy_Pddataframe_to_shpfile(
+    #     Path_Temp_final_rviply,
+    #     mapoldnew_info,
+    #     link_col_nm_shp="SubId",
+    #     link_col_nm_df="Old_SubId",
+    #     UpdateColNM=["#"],
+    # )
+    # Copy_Pddataframe_to_shpfile(
+    #     Path_Temp_final_rvi,
+    #     mapoldnew_info,
+    #     link_col_nm_shp="SubId",
+    #     link_col_nm_df="Old_SubId",
+    #     UpdateColNM=["#"],
+    # )
+
+
 
     # export lake polygons
     if Path_Conl_ply != '#':
@@ -262,31 +271,31 @@ def simplify_routing_structure_by_drainage_area_qgis(
                 Values=Conn_To_NonConlakeids,
             )
                     
-    # dissolve subbasin polygon based on new subbasin id
-    Path_out_final_rviply = os.path.join(
-        outputfolder_subid, os.path.basename(Path_final_riv_ply)
-    )
-    Path_out_final_rvi = os.path.join(
-        outputfolder_subid, os.path.basename(Path_final_riv)
-    )
-
-    qgis_vector_dissolve(
-        processing,
-        context,
-        INPUT=Path_Temp_final_rviply,
-        FIELD=["SubId"],
-        OUTPUT=Path_out_final_rviply,
-    )
-    qgis_vector_dissolve(
-        processing,
-        context,
-        INPUT=Path_Temp_final_rvi,
-        FIELD=["SubId"],
-        OUTPUT=Path_out_final_rvi,
-    )
-
-    # clean attribute table and done
-    Clean_Attribute_Name(Path_out_final_rviply, COLUMN_NAMES_CONSTANT)
-    Clean_Attribute_Name(Path_out_final_rvi, COLUMN_NAMES_CONSTANT)
+    # # dissolve subbasin polygon based on new subbasin id
+    # Path_out_final_rviply = os.path.join(
+    #     outputfolder_subid, os.path.basename(Path_final_riv_ply)
+    # )
+    # Path_out_final_rvi = os.path.join(
+    #     outputfolder_subid, os.path.basename(Path_final_riv)
+    # )
+    # 
+    # qgis_vector_dissolve(
+    #     processing,
+    #     context,
+    #     INPUT=Path_Temp_final_rviply,
+    #     FIELD=["SubId"],
+    #     OUTPUT=Path_out_final_rviply,
+    # )
+    # qgis_vector_dissolve(
+    #     processing,
+    #     context,
+    #     INPUT=Path_Temp_final_rvi,
+    #     FIELD=["SubId"],
+    #     OUTPUT=Path_out_final_rvi,
+    # )
+    # 
+    # # clean attribute table and done
+    # Clean_Attribute_Name(Path_out_final_rviply, COLUMN_NAMES_CONSTANT)
+    # Clean_Attribute_Name(Path_out_final_rvi, COLUMN_NAMES_CONSTANT)
 
     Qgs.exit()
