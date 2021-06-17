@@ -20,6 +20,7 @@ class postprocess:
         subbasingroup_length_channel=[-1],
         subbasingroup_name_lake=["AllLakesubbasins"],
         subbasingroup_area_lake=[-1],
+        lake_out_flow_method = 'broad_crest'
     ):
         """This function is to generate Raven input files. A subfolder 'RavenInput'
         in path_output_folder is created to sotre resultant outputs.
@@ -113,7 +114,8 @@ class postprocess:
             SubBasinGroup_Area_Lake=subbasingroup_area_lake ,
             OutputFolder=path_output_folder,
             Forcing_Input_File=forcing_input_file,
-            aspect_from_gis = aspect_from_gis
+            aspect_from_gis = aspect_from_gis,
+            lake_out_flow_method = lake_out_flow_method,
         )
 
 
