@@ -22,7 +22,7 @@ copyright = '2021, BasinMaker develop team'
 author = 'Hydrology research group at the University of Waterloo'
 
 # The full version, including alpha/beta/rc tags
-release = '2.2.0'
+release = '2.2.1'
 
 
 # -- General configuration ---------------------------------------------------

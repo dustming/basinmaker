@@ -1562,6 +1562,89 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
             )
             sum_area = sum_area + i_seg_info["BasArea"].values[iorder]
             ### two seg has the same HyLakeId id, can be merged
+            
+            # if has the same lake attribute with down stream subasins
+            if iorder != len(i_seg_info) - 1:
+                con_lake = i_seg_info["HyLakeId"].values[iorder] == i_seg_info["HyLakeId"].values[iorder + 1]
+            else:
+                con_lake = False
+            # if do not have the gauge 
+            con_gauge = i_seg_info["Has_Gauge"].values[iorder] <= 0
+            
+            # if do not meet the drainage area thresthold 
+            if iorder <= len(i_seg_info) - 2:
+                if i_seg_info["BasArea"].values[iorder + 1] < 10 * 1000 * 1000:
+                    con_area = True
+                else:
+                    con_area = sum_area < Area_Min * 1000 * 1000
+            else:
+                con_area = sum_area < Area_Min * 1000 * 1000
+                                   
+            
+            con_area_lake = sum_area < 10 * 1000 * 1000
+            # conditions check if subbasin is between two lakes
+            if iorder >= 1 and iorder <= len(i_seg_info) - 2:
+                # if not havve the same attribute with upstream lake 
+                con_lake_up = i_seg_info["HyLakeId"].values[iorder - 1] != i_seg_info["HyLakeId"].values[iorder]
+                # if not havve the same attribute with down lake
+                con_lake_down = i_seg_info["HyLakeId"].values[iorder] != i_seg_info["HyLakeId"].values[iorder + 1]
+                # if this is not a lake subbasin
+                is_lake = i_seg_info["HyLakeId"].values[iorder] <= 0
+                
+                con_area_lake = i_seg_info["BasArea"].values[iorder] < 10 * 1000 * 1000
+                
+            if iorder == 0 and iorder < len(i_seg_info) - 1:
+                # if not havve the same attribute with upstream lake 
+                con_lake_up = True
+                # if not havve the same attribute with down lake
+                con_lake_down = i_seg_info["HyLakeId"].values[iorder] != i_seg_info["HyLakeId"].values[iorder + 1]
+                # if this is not a lake subbasin
+                is_lake = i_seg_info["HyLakeId"].values[iorder] <= 0
+                
+                con_area_lake = i_seg_info["BasArea"].values[iorder] < 10 * 1000 * 1000
+                                    
+            if iorder == len(i_seg_info) - 2 and i_seg_info["HyLakeId"].values[iorder] > 0:
+                # if not havve the same attribute with upstream lake 
+                con_lake_up = True
+                # if not havve the same attribute with down lake
+                con_lake_down = i_seg_info["HyLakeId"].values[iorder] != i_seg_info["HyLakeId"].values[iorder + 1]
+                # if this is not a lake subbasin
+                is_lake = i_seg_info["HyLakeId"].values[iorder] > 0 
+                
+                # if tsubid == 9023607:
+                #     print(con_lake_up,con_lake_down,is_lake,iorder,len(i_seg_info) - 2,i_seg_info["HyLakeId"].values[iorder] > 0)
+                # change add lake to downstream info 
+                downsubid = i_seg_info["DowSubId"].values[iorder]
+                
+                con_area_lake = i_seg_info["BasArea"].values[iorder +1] < 10 * 1000 * 1000
+                
+                if con_area_lake and con_lake_down:
+                    finalriv_info.loc[
+                        finalriv_info["SubId"] == downsubid,'HyLakeId'] = i_seg_info["HyLakeId"].values[iorder]
+                    finalriv_info.loc[
+                        finalriv_info["SubId"] == downsubid,'Lake_Cat'] = i_seg_info["Lake_Cat"].values[iorder]
+                    finalriv_info.loc[
+                        finalriv_info["SubId"] == downsubid,'LakeVol'] = i_seg_info["LakeVol"].values[iorder]
+                    finalriv_info.loc[
+                        finalriv_info["SubId"] == downsubid,'LakeDepth'] = i_seg_info["LakeDepth"].values[iorder]
+                    finalriv_info.loc[
+                        finalriv_info["SubId"] == downsubid,'LakeArea'] = i_seg_info["LakeArea"].values[iorder] 
+                    finalriv_info.loc[
+                        finalriv_info["SubId"] == downsubid,'Laketype'] = i_seg_info["Laketype"].values[iorder]                                                                                                    
+                                                   
+            if iorder == len(i_seg_info) - 1:
+                con_lake_up = True 
+                con_lake_down = False
+                is_lake = True
+                
+            # if tsubid == 9014502:
+            #     print(tsubid,con_area,)
+            # 
+            # if tsubid == 9020256:
+            #     print(con_lake_up,con_lake_down,is_lake,iorder,len(i_seg_info) - 2,i_seg_info["HyLakeId"].values[iorder] > 0)
+            #     asdf 
+                 
+                
             if iorder == len(i_seg_info) - 1:
                 sum_area = 0
                 seg_sub_ids = np.asarray(modifysubids)
@@ -1612,14 +1695,13 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
                 #                    New_NonConn_Lakes = ConnectLake_to_NonConnectLake_Updateinfo(NonC_Lakeinfo = New_NonConn_Lakes,finalriv_info = finalriv_info ,Merged_subids = seg_sub_ids,Connect_Lake_ply_info = Conn_Lakes_ply,ConLakeId = iorder_Lakeid)
                 modifysubids = []
                 seg_order = seg_order + 1
-
-            elif (
-                i_seg_info["HyLakeId"].values[iorder]
-                == i_seg_info["HyLakeId"].values[iorder + 1]
-                and i_seg_info["Has_Gauge"].values[iorder] <= 0
-                and sum_area < Area_Min * 1000 * 1000
-            ):
-                continue
+            
+            elif con_lake_up and con_lake_down and is_lake and con_gauge and con_area_lake:
+                continue 
+        
+            elif con_lake and con_gauge and con_area:
+                continue 
+                
             else:
                 sum_area = 0
                 seg_sub_ids = np.asarray(modifysubids)
@@ -1668,6 +1750,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
                 )
                 modifysubids = []
                 seg_order = seg_order + 1
+                
     mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'HyLakeId'] = 0
     mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'Lake_Cat'] = 0
     mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'LakeVol'] = 0
