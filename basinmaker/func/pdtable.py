@@ -1501,6 +1501,28 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
     Conn_To_NonConlake_info_outlet = Conn_To_NonConlake_info_outlet.sort_values(
         ["Strahler", "DrainArea"], ascending=[True, True]
     )
+    
+    
+    ### 
+    all_outlet_sub_info = finalriv_info[finalriv_info["DowSubId"] < 0 ].copy(deep=True)
+    
+    for i in range(0,len(all_outlet_sub_info)):
+        if all_outlet_sub_info['DrainArea'].values[i] <= Area_Min * 1000 * 1000:
+            tsubid = all_outlet_sub_info['SubId'].values[i]
+            All_up_subids = defcat(routing_info, tsubid)
+
+            mapoldnew_info = New_SubId_To_Dissolve(
+                subid=tsubid,
+                catchmentinfo=finalriv_info,
+                mapoldnew_info=mapoldnew_info,
+                ismodifids=1,
+                mainriv=finalriv_info,
+                modifiidin=All_up_subids,
+                Lake_Cat=-1,
+            )
+                    
+            
+    
     ### process fron upstream lake to down stream lake
     for i in range(0, len(Conn_To_NonConlake_info_outlet)):
         processed_subid = np.unique(
@@ -1532,7 +1554,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
             ]  ### combine two list not sum
 
         modifysubids = np.asarray(modifysubids)
-
+      
         mapoldnew_info = New_SubId_To_Dissolve(
             subid=tsubid,
             catchmentinfo=finalriv_info_ncl,
@@ -1637,10 +1659,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
                 con_lake_down = False
                 is_lake = True
                 
-            # if tsubid == 9014502:
-            #     print(tsubid,con_area,)
-            # 
-            # if tsubid == 9020256:
+            # if tsubid == 4703912:
             #     print(con_lake_up,con_lake_down,is_lake,iorder,len(i_seg_info) - 2,i_seg_info["HyLakeId"].values[iorder] > 0)
             #     asdf 
                  
@@ -1738,6 +1757,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
                 mask_old_nonLake = np.in1d(seg_sub_ids, Old_Non_Connect_SubIds)
                 seg_sub_ids = seg_sub_ids[np.logical_not(mask_old_nonLake)]
 
+                    
                 mapoldnew_info = New_SubId_To_Dissolve(
                     subid=tsubid,
                     catchmentinfo=finalriv_info,
@@ -1757,6 +1777,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
     mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'LakeDepth'] = 0
     mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'LakeArea'] = 0
     mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'Laketype'] = 0
+        
     return (
         mapoldnew_info,
         Selected_riv_ids,
