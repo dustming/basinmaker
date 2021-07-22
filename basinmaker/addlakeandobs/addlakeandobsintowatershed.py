@@ -174,7 +174,7 @@ def add_lakes_and_obs_into_existing_watershed_delineation(
     else:
         print('gis_platform    ',gis_platform,'   do not support') 
             
-    add_lakes_into_existing_watershed_delineation(
+    lake_outflow_pourpoints = add_lakes_into_existing_watershed_delineation(
         grassdb=grassdb,
         grass_location=grass_location,
         qgis_prefix_path=qgis_prefix_path,

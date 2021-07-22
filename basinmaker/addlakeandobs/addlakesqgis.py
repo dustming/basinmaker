@@ -89,9 +89,17 @@ def add_lakes_into_existing_watershed_delineation(
         grass.run_command(
             "g.copy", rast=("cat1_OL", pourpoints_with_lakes), overwrite=True
         )
-        grass.run_command("g.copy", rast=(fdr_grass, nfdr_grass), overwrite=True)
 
-        return
+        lake_outflow_pourpoints = '#'
+        grass.run_command(
+            "g.copy", rast=(cat_no_lake, cat_use_default_acc), overwrite=True
+        )
+        grass.run_command(
+            "g.copy", rast=(cat_no_lake, cat_add_lake), overwrite=True
+        )
+        grass.run_command("g.copy", rast=(fdr_grass, nfdr_grass), overwrite=True)
+        grass.run_command("g.copy", rast=(fdr_arcgis, nfdr_arcgis), overwrite=True)
+        return lake_outflow_pourpoints
 
     preprocessing_lake_polygon(
         path_lakefile_in=path_lakefile_in,
@@ -372,4 +380,4 @@ def add_lakes_into_existing_watershed_delineation(
     )
 
     PERMANENT.close()
-    return
+    return lake_outflow_pourpoints

@@ -205,7 +205,7 @@ def add_obs_into_existing_watershed_delineation(
 
     else:
         # combine obsoutlets and outlet from cat no lake
-        exp = "'%s' =if(isnull(%s),null(),%s)" % (
+        exp = "'%s' =if(isnull(int(%s)),%s,%s)" % (
             pourpoints_add_obs,
             pourpoints_with_lakes,
             obsname,
