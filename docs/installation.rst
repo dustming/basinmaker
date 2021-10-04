@@ -70,7 +70,7 @@ QGIS with anaconda
      
        
       cd path_test_data/test
-      python test_light_installation.py
+      python test_light_installation_qgis.py
       (... some messages)
       ####################################
       BasinMaker is successfully installed
