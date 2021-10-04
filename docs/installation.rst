@@ -168,7 +168,7 @@ QGIS and GRASS in Windows
     * Please rename 'basinmaker.bat.txt' to 'basinmaker.bat'.    
     * Please change OSGEO4W_ROOT to your OSGEO4W installation folder at line 2.
     * Please change the grass78.* in line 8 and 10 to your GRASS GIS version number.
-    * Please double check the paths defined in the basinamker.bat file exists in your machine
+    * Please double check the paths defined in the basinmaker.bat file exist in your machine
     * Save the modified basinmaker.bat to a handy directory.  Run basinmaker.bat every time before using basinmaker.
     
 #. Install BasinMaker (do not activate anaconda) 
