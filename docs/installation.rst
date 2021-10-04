@@ -290,7 +290,7 @@ QGIS and GRASS in Ubuntu
     The python environment for QGIS and GRASS GIS in Ubuntu can be set up by modifying the following :download:`basinmaker.sh <./_static/basinmaker.sh>`.
     
     * Please change the grass78.* in line 2 and 5 to your GRASS GIS version number.
-    * Please double check the paths defined in the basinamker.sh file exists in your machine
+    * Please double check the paths defined in the basinmaker.sh file exists in your machine
     * Save the modified basinmaker.sh
     
 #. Install BasinMaker 
