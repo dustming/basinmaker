@@ -152,7 +152,7 @@ QGIS and GRASS in Windows
     
     The OSGeo4W is a binary distribution of a broad set of open source geospatial software for Windows environments, including both GRASS GIS and QGIS.  
     
-    The OSGeo4W installer can be downloaded from `here <https://qgis.org/en/site/forusers/download.html>`_. Please using OSGeo4W Network Installer (64 bit), and using Desktop Express Install and choosing the second link. The installed GRASS GIS version should be >= GRASS 7.8.5. 
+    The OSGeo4W installer can be downloaded from `here <https://qgis.org/en/site/forusers/download.html>`_. Please using the long term released OSGeo4W Network Installer (64 bit), and using Desktop Express Install and choosing the second link. The installed GRASS GIS version should be >= GRASS 7.8.5. 
     
     We would suggest to 
     
