@@ -7,6 +7,8 @@ from qgis.analysis import QgsNativeAlgorithms
 from qgis.core import *
 from qgis.PyQt.QtCore import *
 from joblib import Parallel, delayed
+from basinmaker.utilities.utilities import *
+import tempfile
 
 def qgis_raster_gdal_warpreproject(processing, Input, TARGET_CRS, Output):
     """Functions reproject raster layer
@@ -306,6 +308,28 @@ def qgis_raster_gdal_rasterize(
 
 # os.system('gdal_rasterize -at -of GTiff -a_nodata -9999 -a Hylak_id -tr  '+ str(self.cellSize) + "  " +str(self.cellSize)+'  -te   '+ str(grsregion['w'])+"   " +str(grsregion['s'])+"   " +str(grsregion['e'])+"   " +str(grsregion['n'])+"   " + "\"" +  self.Path_allLakeply +"\""+ "    "+ "\""+self.Path_allLakeRas+"\"")
 
+def Copy_Pddataframe_to_shpfile_by_file(
+    Path_shpfile,
+    Pddataframe,
+    link_col_nm_shp="SubId",
+    link_col_nm_df="SubId",
+    UpdateColNM=["#"],
+    Input_Is_Feature_In_Mem=False,
+):
+
+    if Input_Is_Feature_In_Mem:
+        layer_cat = Path_shpfile
+    else:
+        layer_cat = QgsVectorLayer(Path_shpfile, "")
+    
+    # table to csv 
+    Attri_table.to_csv(os.path.join(tempfile.gettempdir(), "attribute.csv"),index = False)
+    csv_uri = 'file:///%s?delimiter=,'%(os.path.join(tempfile.gettempdir(), "attribute.csv"))
+    csv = QgsVectorLayer(csv_uri, 'attributes', 'delimitedtext')
+
+    
+    
+
 
 def Copy_Pddataframe_to_shpfile(
     Path_shpfile,
@@ -341,7 +365,7 @@ def Copy_Pddataframe_to_shpfile(
         layer_cat = Path_shpfile
     else:
         layer_cat = QgsVectorLayer(Path_shpfile, "")
-
+        
     Attri_Name = layer_cat.fields().names()
     features = layer_cat.getFeatures()
     with edit(layer_cat):
@@ -1231,27 +1255,39 @@ def Obtain_Attribute_Table(
     Attri_Tbl                  : Dataframe
        The attribute table in the input vector layer
     """
-
+    
     if Input_Is_Feature_In_Mem:
-        vec_layer = input_layer
+        
+        output_layer = os.path.join(tempfile.gettempdir(),'basinmaker_layer_'+str(np.random.randint(1, 10000 + 1))+".shp")
+        
+        _writer = QgsVectorFileWriter.writeAsVectorFormat(
+        input_layer,
+        output_layer,
+        'utf-8',
+        driverName='ESRI Shapefile'
+        )
+        vec_layer = output_layer
+
     else:
-        vec_layer = QgsVectorLayer(input_layer, "")
+        vec_layer = input_layer
+    
+    Attri_Tbl = Dbf_To_Dataframe(vec_layer)
 
-    N_new_features = vec_layer.featureCount()
-    field_names = []
-    for field in vec_layer.fields():
-        field_names.append(field.name())
-    Attri_Tbl = pd.DataFrame(
-        data=np.full((N_new_features, len(field_names)), np.nan), columns=field_names
-    )
-
-    src_features = vec_layer.getFeatures()
-    i_sf = 0
-    for sf in src_features:
-        for field in vec_layer.fields():
-            filednm = field.name()
-            Attri_Tbl.loc[Attri_Tbl.index[i_sf], filednm] = sf[filednm]
-        i_sf = i_sf + 1
+    # N_new_features = vec_layer.featureCount()
+    # field_names = []
+    # for field in vec_layer.fields():
+    #     field_names.append(field.name())
+    # Attri_Tbl = pd.DataFrame(
+    #     data=np.full((N_new_features, len(field_names)), np.nan), columns=field_names
+    # )
+    # 
+    # src_features = vec_layer.getFeatures()
+    # i_sf = 0
+    # for sf in src_features:
+    #     for field in vec_layer.fields():
+    #         filednm = field.name()
+    #         Attri_Tbl.loc[Attri_Tbl.index[i_sf], filednm] = sf[filednm]
+    #     i_sf = i_sf + 1
     return Attri_Tbl
 
 

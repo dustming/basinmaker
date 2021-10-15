@@ -206,10 +206,14 @@ def GenerateHRUS_qgis(
 
     if not os.path.exists(OutputFolder):
         os.makedirs(OutputFolder)
+
     tempfolder = os.path.join(
         tempfile.gettempdir(), "basinmaker_hru" + str(np.random.randint(1, 10000 + 1))
     )
 
+    if not os.path.exists(tempfolder):
+        os.makedirs(tempfolder)
+        
     Merge_layer_list = []
     output_hru_shp = os.path.join(OutputFolder, "finalcat_hru_info.shp")
     ### First overlay the subbasin layer with lake polygon, the new unique
@@ -355,9 +359,10 @@ def GenerateHRUS_qgis(
         fieldnames,
         OutputFolder,
         union_snap_distance,
+        tempfolder,
+        trg_crs,
     )
     
- 
     #####
     print(" End union") 
     Landuse_info_data = pd.read_csv(Landuse_info)
@@ -500,11 +505,13 @@ def GenerateHRUS_qgis(
         OUTPUT="memory:",
     )["OUTPUT"]
     
+    print("merge land and lake HRUs")
     
     hru_layer_draft = processing.run("native:mergevectorlayers", {
                    'LAYERS':[Lake_HRUs,mem_union_o2],
                    'CRS':None,'OUTPUT':"memory:"})["OUTPUT"]
-
+                   
+    print("Update HRU attributes ")
     hru_layer_draft = processing.run("native:refactorfields", {'INPUT':hru_layer_draft,'FIELDS_MAPPING':[
     {'expression': '\"SubId\"','length': 12,'name': 'SubId','precision': 0,'type': 4},
     {'expression': '\"HyLakeId\"','length': 12,'name': 'HyLakeId','precision': 0,'type': 4},
@@ -890,6 +897,8 @@ def Union_Ply_Layers_And_Simplify(
     fieldnames,
     OutputFolder,
     union_snap_distance,
+    tempfolder,
+    trg_crs,
 ):
     """Union input QGIS polygon layers
 
@@ -920,68 +929,164 @@ def Union_Ply_Layers_And_Simplify(
         layers
     """
     num = str(np.random.randint(1, 10000 + 1))
+    
+    if os.getenv("GISDBASE"):
+        
+        import grass.script as grass
+        import grass.script.setup as gsetup
+        from grass.pygrass.modules import Module
+        from grass.pygrass.modules.shortcuts import general as g
+        from grass.pygrass.modules.shortcuts import raster as r
+        from grass.script import array as garray
+        from grass.script import core as gcore
+        from grass_session import Session
+        import subprocess
+
+        os.environ.update(
+            dict(GRASS_COMPRESS_NULLS="1", GRASS_COMPRESSOR="ZSTD", GRASS_VERBOSE="1")
+        )
+
+        grassdb = os.getenv("GISDBASE")
+
+        if not os.path.exists(grassdb):
+            os.makedirs(grassdb)
+
+        grass_location = 'location_hru'
+                    
+        PERMANENT = Session()
+        PERMANENT.open(
+            gisdb=grassdb,
+            location=grass_location,
+            create_opts=trg_crs,
+        )                                              
+
+        sqlpath = os.path.join(
+            grassdb, grass_location, "PERMANENT", "sqlite", "sqlite.db"
+        )
+        
     ##union polygons
     if len(Merge_layer_list) == 1:
+                
         mem_union = Merge_layer_list[0]
         mem_union_fix_ext = qgis_vector_fix_geometries(
             processing, context, INPUT=mem_union, OUTPUT="memory:"
         )["OUTPUT"]
+        
     elif len(Merge_layer_list) > 1:
+        
         for i in range(0, len(Merge_layer_list)):
+            
             if i == 0:
+                
                 mem_union = Merge_layer_list[i]
                 mem_union_fix_ext = qgis_vector_fix_geometries(
                     processing, context, INPUT=mem_union, OUTPUT="memory:"
                 )["OUTPUT"]
                 qgis_vector_create_spatial_index(processing, context, mem_union_fix_ext)
+                
             else:
+                
                 mem_union_fix_temp = mem_union_fix_ext
                 del mem_union_fix_ext
                 print("union ith  layer ", i)
                 input_layer_i = qgis_vector_fix_geometries(
                     processing, context, INPUT=Merge_layer_list[i], OUTPUT="memory:"
                 )["OUTPUT"]
-                                
-                adjusted_i = processing.run("native:snapgeometries", {
-                              'INPUT':input_layer_i,
-                              'REFERENCE_LAYER':mem_union_fix_temp,
-                              'TOLERANCE':union_snap_distance,
-                              'BEHAVIOR':0,
-                              'OUTPUT':"memory:"}
-                              )["OUTPUT"]
+                
+                adjusted_i = input_layer_i              
                 adjusted_i_fix = qgis_vector_fix_geometries(
                     processing, context, INPUT = adjusted_i, OUTPUT="memory:"
                 )["OUTPUT"]
-
+                
+                
                 if os.getenv("GISDBASE"):
-                    mem_union = processing.run(
-                        "saga:polygonunion",
-                        {
-                            "A": mem_union_fix_temp,
-                            "B": adjusted_i_fix,
-                            "SPLIT": True,
-                            "RESULT": "TEMPORARY_OUTPUT",
-                        },
-                        context=context,
-                    )["RESULT"]
+
+                    grass_layer_1 = qgis_vector_fix_geometries(
+                        processing, context, INPUT=mem_union_fix_temp, OUTPUT=os.path.join(grassdb,'union_input_1_'+str(i)+'_.shp')
+                    )["OUTPUT"]
+                    
+                    grass_layer_2 = qgis_vector_fix_geometries(
+                        processing, context, INPUT=adjusted_i_fix, OUTPUT=os.path.join(grassdb,'union_input_2_'+str(i)+'_.shp')
+                    )["OUTPUT"]
+                                                       
+                    grass.run_command(
+                        "v.import",
+                        input=grass_layer_1,
+                        output='layer_1_'+str(i),
+                        overwrite=True,
+                    )
+
+                    grass.run_command(
+                        "v.import",
+                        input=grass_layer_2,
+                        output='layer_2_'+str(i),
+                        overwrite=True,
+                    )
+
+                    grass.run_command(
+                        "v.overlay",
+                        ainput='layer_1_'+str(i),
+                        atype = 'area',
+                        binput = 'layer_2_'+str(i),
+                        btype = 'area',
+                        operator = 'or',
+                        output = 'union_'+str(i),
+                        overwrite=True,
+                        olayer = '1,0,0',
+                    )
+                    # try to rename column names 
+                    
+                    #obtain current column names
+                    p = grass.start_command("db.columns",table = 'union_'+str(i),stdout=grass.PIPE)
+                    col_names = p.communicate()[0]
+                    col_names = str(col_names).rstrip().split('\\r\\n')
+                    
+                    # rename or delete the column
+                    exist_names = []     
+                    for icolnm in col_names:
+                        if 'cat' in icolnm or icolnm == "'":
+                            continue 
+                                                
+                        # avoid two same column
+                        if icolnm[2:].lower() not in exist_names:
+                            
+                            grass.run_command(
+                            'v.db.renamecolumn',
+                             map = 'union_'+str(i),
+                             column ="%s,%s"% (icolnm,icolnm[2:]),
+                            )     
+                                                       
+                        exist_names.append(icolnm[2:].lower())    
+
+                    grass.run_command(
+                        "v.out.ogr",
+                        input='union_'+str(i),
+                        output = os.path.join(grassdb,'union_'+str(i)+'_.shp'),
+                        format = 'ESRI_Shapefile',
+                        overwrite=True,
+                    )
+                    
+                    mem_union =  os.path.join(grassdb,'union_'+str(i)+'_.shp')                                           
                 else:                
-                    mem_union = qgis_vector_union_two_layers(
+
+                     mem_union = qgis_vector_union_two_layers(
                         processing,
                         context,
                         mem_union_fix_temp,
                         adjusted_i_fix,
                         "memory:",
                         OVERLAY_FIELDS_PREFIX="",
-                    )["OUTPUT"]
-                    
+                    )["OUTPUT"]    
+                                    
                 mem_union_fix = qgis_vector_fix_geometries(
                     processing, context, INPUT=mem_union, OUTPUT="memory:"
                 )["OUTPUT"]
+                
                 mem_union_fix_ext = mem_union_fix
                 qgis_vector_create_spatial_index(processing, context, mem_union_fix_ext)
     else:
         print("No polygon needs to be overlaied.........should not happen ")
-
+    
     ## remove non interested filed
     mem_union_fix_ext, temp_out_notused = Clean_Attribute_Name(
         mem_union_fix_ext, fieldnames, Input_Is_Feature_In_Mem=True
@@ -1003,6 +1108,9 @@ def Union_Ply_Layers_And_Simplify(
     #     OUTPUT="memory:",
     # )["OUTPUT"]
 
+    if os.getenv("GISDBASE"):
+        PERMANENT.close() 
+                    
     return mem_union_dis
 
 
@@ -1212,7 +1320,6 @@ def Define_HRU_Attributes(
         ],
         Input_Is_Feature_In_Mem=True,
     )
-    
     ### merge lake hru.
     qgis_vector_dissolve(
         processing,
