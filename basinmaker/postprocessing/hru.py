@@ -773,13 +773,13 @@ def GeneratelandandlakeHRUS(
         processing=processing,
         context=context,
         FORMULA=" @row_number",
-        FIELD_NAME="HRU_ID_Temp",
+        FIELD_NAME="HRU_ID_Tp",
         INPUT=layer_cat,
         OUTPUT="memory:",
     )["OUTPUT"]
 
     # create HRU_lAKE_ID
-
+    
     # obtain attribute table in vector
     Attri_table = Obtain_Attribute_Table(processing, context, layer_cat)
     # determine lake hru id
@@ -790,8 +790,8 @@ def GeneratelandandlakeHRUS(
     layer_cat = Copy_Pddataframe_to_shpfile(
         Path_shpfile=layer_cat,
         Pddataframe=Attri_table,
-        link_col_nm_shp="HRU_ID_Temp",
-        link_col_nm_df="HRU_ID_Temp",
+        link_col_nm_shp="HRU_ID_Tp",
+        link_col_nm_df="HRU_ID_Tp",
         UpdateColNM=["HRU_IsLake", "HRULake_ID", "SubId", "HyLakeId"],
         Input_Is_Feature_In_Mem=True,
     )
