@@ -54,7 +54,7 @@ QGIS with anaconda
 
     .. code-block::
   
-      python -m pip install pandas pytest scipy simpledbf netCDF4 jupyter
+      python -m pip install pandas pytest scipy simpledbf netCDF4 joblib jupyter
 
 #. Test validation 
      
@@ -114,7 +114,7 @@ ArcGIS functions for delineating lake-river routing network from DEM are under d
 
     .. code-block::
     
-      python -m pip install pandas pytest scipy simpledbf netCDF4 jupyter
+      python -m pip install pandas pytest scipy simpledbf netCDF4 joblib jupyter
 
 
 #. Test validation 
@@ -221,7 +221,7 @@ QGIS and GRASS in Windows
 
     .. code-block::
 
-      pip install simpledbf grass_session
+      pip install simpledbf grass_session joblib
 
 
 #. Install GRASS GIS addons
