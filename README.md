@@ -12,6 +12,7 @@ For both CL and NCL, the BasinMaker will use lake polygon to identify each lakeâ
 # Installation 
 
 Installation instructions for BasinMaker can be found [here](https://basinmaker.readthedocs.io/en/latest/installation.html)
+Examples for using BasinMaker can be found [here](http://hydrology.uwaterloo.ca/basinmaker/index.html)
 
 # Examples
 
