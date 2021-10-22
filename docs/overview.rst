@@ -13,4 +13,36 @@ The only difference between CLs and NCLs is that CLs always drain into an explic
 .. image:: https://github.com/dustming/RoutingTool/wiki/Figures/Figure1.png
   :width: 900
   :alt: Alternative text
+
+
+========  
+Examples
+========
   
+Examples of BasinMaker can be found [here](http://hydrology.uwaterloo.ca/basinmaker/index.html)
+  
+========  
+Authors
+========
+  
+BasinMaker and the associated river and lake routing product was developed by the hydrology research group at the University of Waterloo. Primary Contributors includes Ming Han, Hongren Shen, Bryan A. Tolson, James R. Craig, Juliane Mai, Simon Lin, Nandita B. Basu, Frezer Awol. We also want to thank Robert Chlumsky, Étienne Gaborit, Hongli Liu, Konhee Lee for their secondary support in development of this product and their contributions to our Pan-Canadian routing product.
+  
+========
+Citation
+========  
+    
+- Han, M., J. Mai, B. A. Tolson, J. R. Craig, É. Gaborit, H. Liu, and K. Lee, Subwatershed-based lake and river routing products for hydrologic and land surface models applied over Canada, Canadian Water Resources Journal, 2020 (paper)
+  
+and/or cite the zenodo dataset directly:
+  
+- Han, M., J. Mai, B. A. Tolson, J. R. Craig, É. Gaborit, H. Liu, and K. Lee. 2020. A Catchment-Based Lake and River Routing Product for Hydrologic and Land Surface Models in Canada. (routing product v1.0)
+   
+- Han, M., H. Shen, B. A. Tolson, J. R. Craig, J. Mai, S. Lin, N. B. Basu, F. Awol. 2021. North American Lake-River Routing Product v 2.0, derived by BasinMaker GIS Toolbox (routing product v2.0)
+  
+- Han, M., H. Shen, B. A. Tolson, J. R. Craig, J. Mai, S. Lin, N. B. Basu, F. Awol. 2021. North American Lake-River Routing Product v 2.1, derived by BasinMaker GIS Toolbox (routing product v2.1)
+  
+========  
+License
+========  
+
+BasinMaker is open-source under the [Artistic License 2.0](https://opensource.org/licenses/Artistic-2.0). This sofware is freely distributed ’as is’ without warranties or conditions of any kind, either express or implied, including, without limitation, any warranties or conditions of title, non-infringement, merchantability, or fitness for a particular purpose.
