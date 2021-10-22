@@ -20,6 +20,10 @@ Examples of BasinMaker can be found [here](http://hydrology.uwaterloo.ca/basinma
 
 
 
+# License
+
+BasinMaker is open-source under the [Artistic License 2.0](https://opensource.org/licenses/Artistic-2.0). This sofware is freely distributed ’as is’ without warranties or conditions of any kind, either express or implied, including, without limitation, any warranties or conditions of title, non-infringement, merchantability, or fitness for a particular purpose.
+
 <figure>
     <p align="center">
     <img src="https://github.com/dustming/RoutingTool/wiki/Figures/Figure1.png" width="100%" height="100%" />
