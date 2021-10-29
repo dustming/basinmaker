@@ -1813,8 +1813,7 @@ def Return_Selected_Lakes_Attribute_Table_And_Id(
     # first obtain selected lakes based on lake area         
     ### process connected lakes first
     Selected_ConnLakes = ConnL_info.loc[
-        (ConnL_info["Has_Gauge"] > 0)
-        | (ConnL_info["LakeArea"] >= Thres_Area_Conn_Lakes)
+       (ConnL_info["LakeArea"] >= Thres_Area_Conn_Lakes)
     ]["HyLakeId"].values
     
     Selected_ConnLakes = Selected_ConnLakes[Selected_ConnLakes > 0]
@@ -1823,8 +1822,7 @@ def Return_Selected_Lakes_Attribute_Table_And_Id(
     
     ### process non connected selected lakes
     Selected_Non_ConnLakes = Non_ConnL_info[
-        (Non_ConnL_info["LakeArea"] >= Thres_Area_Non_Conn_Lakes) | 
-        (Non_ConnL_info["Has_Gauge"] > 0)
+        (Non_ConnL_info["LakeArea"] >= Thres_Area_Non_Conn_Lakes) 
     ]["HyLakeId"].values
     Selected_Non_ConnLakes = Selected_Non_ConnLakes[Selected_Non_ConnLakes > 0]
     Selected_Non_ConnLakes = np.unique(Selected_Non_ConnLakes)
