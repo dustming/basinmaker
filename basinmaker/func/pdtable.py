@@ -518,6 +518,7 @@ def streamorderanddrainagearea(catinfoall):
             #### calculate DA of head watershed include None connected lakes
             if len(routing_ncl) == 0:
                 DA_ncl = 0.0
+                slp_ncl = 0.0
             else:
                 Upstreamcats = defcat(routing_ncl, catid)  ### alll subuds
                 Up_cat_info = catinfo_ncl.loc[
@@ -526,13 +527,26 @@ def streamorderanddrainagearea(catinfoall):
 
                 if len(Up_cat_info) > 0:
                     DA_ncl = sum(Up_cat_info["BasArea"].values)
+                    slp_ncl = np.average(Up_cat_info["BasSlope"].values,weights = Up_cat_info["BasArea"].values)
                 else:
                     DA_ncl = 0.0
-
+                    slp_ncl = 0.0
+            
             catinfo.loc[idx, "DrainArea"] = DA_ncl + catinfo["BasArea"].values[i]
             catinfo.loc[idx, "Strahler"] = 1
             catinfo.loc[idx, "Seg_order"] = 1
             catinfo.loc[idx, "Seg_ID"] = iseg
+            catinfo.loc[idx, "DA_Chn_L"] = catinfo["RivLength"].values[i]
+            catinfo.loc[idx, "DA_Chn_Slp"] = catinfo["RivSlope"].values[i]
+            catinfo.loc[idx, "DA_Slope"] = (catinfo["BasSlope"].values[i]*catinfo["BasArea"].values[i]+DA_ncl*slp_ncl)/catinfo.loc[idx, "DrainArea"]
+            
+            catinfo.loc[idx, "Tc_1"] = 0.675*(catinfo.loc[idx, "DrainArea"]/1000/1000)**0.5
+            catinfo.loc[idx, "Tc_2"] = 0.2426 * ( catinfo.loc[idx, "DA_Chn_L"]/1000 )*( (catinfo.loc[idx, "DrainArea"]/1000/1000)**(-0.1) ) * ( catinfo.loc[idx, "DA_Chn_Slp"]**(-0.2) )
+            catinfo.loc[idx, "Tc_3"] = 0.3 * ( (catinfo.loc[idx, "DA_Chn_L"]/1000)**0.76 ) * ( catinfo.loc[idx, "DA_Chn_Slp"]**(-0.19) )
+            catinfo.loc[idx, "Tc_4"] = (1/0.6)*2.8*( (catinfo.loc[idx, "DA_Chn_L"]/1000) / (catinfo.loc[idx, "DA_Chn_Slp"]**(0.5)) )**0.47
+            catinfo.loc[idx, "Tc_5"] = (1/0.6)*0.000326*( (catinfo.loc[idx, "DA_Chn_L"]) / (catinfo.loc[idx, "DA_Chn_Slp"]**(0.5)) )**0.79
+            
+            
             icat = icat + 1
             iseg = iseg + 1
 
@@ -555,6 +569,7 @@ def streamorderanddrainagearea(catinfoall):
             #### calculate DA of None connected lakes
             if len(routing_ncl) == 0:
                 DA_ncl = 0.0
+                slp_ncl = 0.0
             else:
                 #                print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
                 #                print(catid)
@@ -565,8 +580,10 @@ def streamorderanddrainagearea(catinfoall):
                 ].copy()
                 if len(Up_cat_info) > 0:
                     DA_ncl = sum(Up_cat_info["BasArea"].values)
+                    slp_ncl =  np.average(Up_cat_info["BasSlope"].values,weights = Up_cat_info["BasArea"].values)
                 else:
                     DA_ncl = 0.0
+                    slp_ncl = 0.0
 
             if (
                 len(cur_Reach_info) <= 0
@@ -585,18 +602,62 @@ def streamorderanddrainagearea(catinfoall):
                 catinfo.loc[curcat_idx, "Seg_order"] = (
                     Up_Reaches_info["Seg_order"].values[0] + 1
                 )
+                
+                
                 catinfo.loc[curcat_idx, "Seg_ID"] = Up_Reaches_info["Seg_ID"].values[0]
+
+                catinfo.loc[curcat_idx, "DA_Chn_L"] = Up_Reaches_info["DA_Chn_L"].values[0] + cur_Reach_info["RivLength"].values[0]
+
+                catinfo.loc[curcat_idx, "DA_Chn_Slp"] = (cur_Reach_info["RivSlope"].values[0] * cur_Reach_info["RivLength"].values[0]
+                                                       + Up_Reaches_info["DA_Chn_L"].values[0]*Up_Reaches_info["DA_Chn_Slp"].values[0])/catinfo.loc[curcat_idx, "DA_Chn_L"]
+                                                       
+                catinfo.loc[curcat_idx, "DA_Slope"] = (cur_Reach_info["BasSlope"].values[0]*cur_Reach_info["BasArea"].values[0]
+                                                       + DA_ncl * slp_ncl 
+                                                       + Up_Reaches_info["DA_Slope"].values[0] * Up_Reaches_info["DrainArea"].values[0]
+                                                       )/catinfo.loc[curcat_idx, "DrainArea"]
+
+                catinfo.loc[curcat_idx, "Tc_1"] = 0.675*(catinfo.loc[curcat_idx, "DrainArea"]/1000/1000)**0.5
+                catinfo.loc[curcat_idx, "Tc_2"] = 0.2426 * ( catinfo.loc[curcat_idx, "DA_Chn_L"]/1000 )*( (catinfo.loc[curcat_idx, "DrainArea"]/1000/1000)**(-0.1) ) * ( catinfo.loc[curcat_idx, "DA_Chn_Slp"]**(-0.2) )
+                catinfo.loc[curcat_idx, "Tc_3"] = 0.3 * ( (catinfo.loc[curcat_idx, "DA_Chn_L"]/1000)**0.76 ) * ( catinfo.loc[curcat_idx, "DA_Chn_Slp"]**(-0.19) )
+                catinfo.loc[curcat_idx, "Tc_4"] = (1/0.6)*2.8*( (catinfo.loc[curcat_idx, "DA_Chn_L"]/1000) / (catinfo.loc[curcat_idx, "DA_Chn_Slp"]**(0.5)) )**0.47
+                catinfo.loc[curcat_idx, "Tc_5"] = (1/0.6)*0.000326*( (catinfo.loc[curcat_idx, "DA_Chn_L"]) / (catinfo.loc[curcat_idx, "DA_Chn_Slp"]**(0.5)) )**0.79
+
+
+
+                
                 #                print('1',catid,catinfo.loc[curcat_idx,'DA'].values,catinfo.loc[curcat_idx,'Strahler'].values,catinfo.loc[curcat_idx,'Sub_order'].values)
                 catid = int(cur_Reach_info["DowSubId"].values[0])
             else:  ### has mutiple upstram
                 if (
                     np.min(Up_Reaches_info["Strahler"].values) > 0
                 ):  ### all upstream has been processed
-                    catinfo.loc[catinfo["SubId"] == catid, "DrainArea"] = (
+                
+                    Up_Reaches_info = Up_Reaches_info.sort_values(by='DA_Chn_L', ascending=False)
+                    
+                    catinfo.loc[curcat_idx, "DrainArea"] = (
                         cur_Reach_info["BasArea"].values[0]
                         + np.sum(Up_Reaches_info["DrainArea"].values)
                         + DA_ncl
                     )
+                    
+                    catinfo.loc[curcat_idx, "DA_Chn_L"] = Up_Reaches_info["DA_Chn_L"].values[0] + cur_Reach_info["RivLength"].values[0]
+
+                    catinfo.loc[curcat_idx, "DA_Chn_Slp"] = (cur_Reach_info["RivSlope"].values[0] * cur_Reach_info["RivLength"].values[0]
+                                                           + Up_Reaches_info["DA_Chn_L"].values[0]*Up_Reaches_info["DA_Chn_Slp"].values[0])/catinfo.loc[curcat_idx, "DA_Chn_L"]
+                                                           
+                    catinfo.loc[curcat_idx, "DA_Slope"] = (cur_Reach_info["BasSlope"].values[0]*cur_Reach_info["BasArea"].values[0]
+                                                           + DA_ncl * slp_ncl 
+                                                           + Up_Reaches_info["DA_Slope"].values[0] * Up_Reaches_info["DrainArea"].values[0]
+                                                           )/catinfo.loc[curcat_idx, "DrainArea"]
+
+
+                    catinfo.loc[curcat_idx, "Tc_1"] = 0.675*(catinfo.loc[curcat_idx, "DrainArea"]/1000/1000)**0.5
+                    catinfo.loc[curcat_idx, "Tc_2"] = 0.2426 * ( catinfo.loc[curcat_idx, "DA_Chn_L"]/1000 )*( (catinfo.loc[curcat_idx, "DrainArea"]/1000/1000)**(-0.1) ) * ( catinfo.loc[curcat_idx, "DA_Chn_Slp"]**(-0.2) )
+                    catinfo.loc[curcat_idx, "Tc_3"] = 0.3 * ( (catinfo.loc[curcat_idx, "DA_Chn_L"]/1000)**0.76 ) * ( catinfo.loc[curcat_idx, "DA_Chn_Slp"]**(-0.19) )
+                    catinfo.loc[curcat_idx, "Tc_4"] = (1/0.6)*2.8*( (catinfo.loc[curcat_idx, "DA_Chn_L"]/1000) / (catinfo.loc[curcat_idx, "DA_Chn_Slp"]**(0.5)) )**0.47
+                    catinfo.loc[curcat_idx, "Tc_5"] = (1/0.6)*0.000326*( (catinfo.loc[curcat_idx, "DA_Chn_L"]) / (catinfo.loc[curcat_idx, "DA_Chn_Slp"]**(0.5)) )**0.79
+
+                    
                     if np.min(Up_Reaches_info["Strahler"].values) == np.max(
                         Up_Reaches_info["Strahler"].values
                     ):  ### two reach has the same order
@@ -626,7 +687,16 @@ def streamorderanddrainagearea(catinfoall):
     catinfoall.loc[mask, "Strahler"] = catinfo["Strahler"].values
     catinfoall.loc[mask, "Seg_ID"] = catinfo["Seg_ID"].values
     catinfoall.loc[mask, "DrainArea"] = catinfo["DrainArea"].values
+    catinfoall.loc[mask, "DA_Chn_L"] = catinfo["DA_Chn_L"].values
+    catinfoall.loc[mask, "DA_Slope"] = catinfo["DA_Slope"].values
+    catinfoall.loc[mask, "DA_Chn_Slp"] = catinfo["DA_Chn_Slp"].values
 
+    catinfoall.loc[mask, "Tc_1"] = catinfo["Tc_1"].values
+    catinfoall.loc[mask, "Tc_2"] = catinfo["Tc_2"].values
+    catinfoall.loc[mask, "Tc_3"] = catinfo["Tc_3"].values
+    catinfoall.loc[mask, "Tc_4"] = catinfo["Tc_4"].values
+    catinfoall.loc[mask, "Tc_5"] = catinfo["Tc_5"].values
+    
     ### calcuate channel manning's coefficient
     for i in range(0, len(catinfoall)):
         idx = catinfoall.index[i]
@@ -648,6 +718,10 @@ def streamorderanddrainagearea(catinfoall):
             Up_cat_info = catinfo_ncl.loc[catinfo_ncl["SubId"].isin(Upstreamcats)].copy(deep=True)
             DA = sum(Up_cat_info["BasArea"].values)
             catinfoall.loc[idx, "DrainArea"] = DA
+            
+            catinfoall.loc[idx, "DA_Chn_L"] = 0.0
+            catinfoall.loc[idx, "DA_Slope"] = np.average(Up_cat_info["BasSlope"].values,weights = Up_cat_info["BasArea"].values)
+            catinfoall.loc[idx, "DA_Chn_Slp"] = 0.0
             
             
     return catinfoall

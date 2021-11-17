@@ -243,7 +243,7 @@ def add_attributes_to_catchments(
             attr_landuse = attr_select
         
         attr_da = streamorderanddrainagearea(attr_landuse)
-        
+         
         if path_bkfwidthdepth != "#" or k_in != -1 or path_k_c_zone_polygon != '#':
             attr_bkf = calculate_bankfull_width_depth_from_polyline(
                 grassdb=grassdb,

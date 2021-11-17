@@ -472,11 +472,17 @@ def calculate_basic_attributes(
             catinfo.loc[i, "Max_DEM"] = maxdem
             if rivlen[0] >= 0:
                 if max(0, float((maxdem - mindem)) / float(rivlen[0])) == 0:
-                    catinfo.loc[i, "RivSlope"] = -9999
+                    slope_rch = -9999
                 else:
-                    catinfo.loc[i, "RivSlope"] = max(
+                    slope_rch = max(
                         0, float((maxdem - mindem)) / float(rivlen[0])
                     )
+
+                slope_rch = max(slope_rch,min_riv_slope)  
+                slope_rch = min(slope_rch,max_riv_slope)
+                  
+                catinfo.loc[i, "RivSlope"] = slope_rch
+                
             else:
                 catinfo.loc[i, "RivSlope"] = -9999
         else:
