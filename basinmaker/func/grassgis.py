@@ -107,6 +107,7 @@ def grass_raster_r_stream_extract(
     stream_vector,
     direction,
     memory,
+    stream_length = -1,
 ):
     """using provided elevation, accumulation and threshold to derived
         stream_raster,and direction
@@ -117,17 +118,32 @@ def grass_raster_r_stream_extract(
     -------
 
     """
-    grass.run_command(
-        "r.stream.extract",
-        elevation=elevation,
-        accumulation=accumulation,
-        threshold=threshold,
-        stream_raster=stream_raster,
-        direction=direction,
-        stream_vector=stream_vector,
-        overwrite=True,
-        memory=memory,
-    )
+    if stream_length < 0:
+        grass.run_command(
+            "r.stream.extract",
+            elevation=elevation,
+            accumulation=accumulation,
+            threshold=threshold,
+            stream_raster=stream_raster,
+            direction=direction,
+            stream_vector=stream_vector,
+            overwrite=True,
+            memory=memory,
+        )
+    else:
+        grass.run_command(
+            "r.stream.extract",
+            elevation=elevation,
+            accumulation=accumulation,
+            threshold=threshold,
+            stream_raster=stream_raster,
+            direction=direction,
+            stream_vector=stream_vector,
+            overwrite=True,
+            stream_length = stream_length,
+            memory=memory,
+        )
+                
 
 
 ###

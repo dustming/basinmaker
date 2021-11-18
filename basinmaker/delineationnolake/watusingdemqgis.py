@@ -32,6 +32,10 @@ def delineate_watershed_no_lake_using_dem(
     from grass.script import core as gcore
     from grass_session import Session
 
+    from basinmaker.delineationnolake.modify_str_r_to_add_sub_in_head_str import (
+        modify_str_r_to_add_sub_in_head_str,
+    )
+        
     os.environ.update(
         dict(GRASS_COMPRESS_NULLS="1", GRASS_COMPRESSOR="ZSTD", GRASS_VERBOSE="1")
     )
@@ -72,7 +76,16 @@ def delineate_watershed_no_lake_using_dem(
         output=fdr_arcgis,
         rules=os.path.join(grassdb, "Grass2ArcgisDIR.txt"),
     )
-
+    
+    modify_str_r_to_add_sub_in_head_str(
+        grass,
+        grassdb,
+        grass_location,
+        str_r,
+        str_v,
+        max_memroy,
+        )
+        
     grass_raster_r_stream_basins(
         grass,
         direction=fdr_grass,
