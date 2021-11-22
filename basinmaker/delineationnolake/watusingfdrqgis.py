@@ -46,6 +46,7 @@ def delineate_watershed_no_lake_using_fdr(
     print("using fdr dataset     ")
     grass_raster_r_in_gdal(grass, raster_path=fdr_path, output_nm="fdr_arcgis_temp")
     # reclassify it into grass flow direction data
+    
     grass_raster_r_reclass(
         grass,
         input="fdr_arcgis_temp",
@@ -53,21 +54,72 @@ def delineate_watershed_no_lake_using_fdr(
         rules=os.path.join(grassdb, "Arcgis2GrassDIR.txt"),
     )
     # calcuate flow accumulation from provided dir
-    grass_raster_r_accumulate(
-        grass, direction="fdr_grass_temp", accumulation=acc
+    
+    grass.run_command(
+        "r.accumulate",
+        direction="fdr_grass_temp",
+        accumulation=acc,
+        overwrite=True,
     )
 
-    grass_raster_r_stream_extract(
-        grass,
-        elevation=dem,
-        accumulation=acc,
+    exp = "%s = %s - %s" % (
+        'dem_acc',
+        dem,
+        acc,
+    )        
+    grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+
+
+    # grass.run_command("r.terraflow", 
+    #                     elevation='dem_acc', 
+    #                     filled = 'dem_cc_filled',
+    #                     direction="fdr_grass_temp",
+    #                     overwrite=True,
+    #                     accumulation = acc,
+    #                     memory=max_memroy,
+    #                     flags='s')
+
+
+    # 
+    # exp = "%s = min(%s)" % (
+    #     'min_dem_acc',
+    #     'dem_acc',
+    # )    
+    # grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+    # 
+    # exp = "%s = max(%s)" % (
+    #     'max_dem_acc',
+    #     'dem_acc',
+    # )    
+    # grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+    # 
+    # 
+    # 
+    # exp = "%s = %s * ( %s - %s ) / ( %s - %s )" % (
+    #     'dem_scale',
+    #     str(acc_thresold),
+    #     'dem_acc',
+    #     'dem_acc',
+    #     'dem_acc',
+    #     'dem_acc',
+    # )    
+    # grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+    
+
+    grass.run_command(
+        "r.stream.extract",
+        elevation='dem_acc',
+#        accumulation=accumulation,
         threshold=int(acc_thresold),
         stream_raster=str_r,
-        stream_vector=str_v,
         direction=fdr_grass,
+        stream_vector=str_v,
+        overwrite=True,
         memory=max_memroy,
-        stream_length = 5,
+        stream_length = 10,
+        d8cut = 0,
     )
+                        
     # create a arcgis flow direction
     grass_raster_r_reclass(
         grass,
@@ -89,7 +141,7 @@ def delineate_watershed_no_lake_using_fdr(
         str_v,
         max_memroy,
         )
-        
+    
     grass_raster_r_stream_basins(
         grass,
         direction=fdr_grass,
@@ -104,7 +156,7 @@ def delineate_watershed_no_lake_using_fdr(
         output=os.path.join(grassdb, "catchment_no_lake.tif"),
         format="GTiff",
         overwrite=True,
-    )
-        
+    )     
+     
     PERMANENT.close()
     return

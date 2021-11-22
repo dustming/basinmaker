@@ -193,8 +193,10 @@ def calculate_bankfull_width_depth_from_polyline(
                 catinfo.loc[idx_i, "Min_DEM"] = catinfo.loc[idx_i, "MeanElev"]
                          
     # adjust channel parameters
+    
+    #remove ncl and headwater subbasins
+    catinfo_riv = catinfo.loc[(catinfo["Lake_Cat"] < 2) & (catinfo["RivLength"] != -1.2345)].copy(deep=True)
 
-    catinfo_riv = catinfo.loc[catinfo["Lake_Cat"] < 2].copy(deep=True)
     Seg_IDS = catinfo_riv["Seg_ID"].values
     Seg_IDS = np.unique(Seg_IDS)
 
@@ -310,6 +312,6 @@ def calculate_bankfull_width_depth_from_polyline(
                     catelv = catinfo['MeanElev'].values
                     catelv = catelv[catelv > 0]
                     catinfo.loc[catinfo["SubId"] == subid, "MeanElev"] =np.average(catelv)
-
+    print(catinfo[["SubId","FloodP_n"]])
     PERMANENT.close()
     return catinfo

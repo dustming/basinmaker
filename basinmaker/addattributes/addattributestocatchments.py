@@ -261,7 +261,11 @@ def add_attributes_to_catchments(
             attr_bkf = attr_da
         
         attr_ncl = update_non_connected_catchment_info(attr_bkf)
-        attr_ncl.loc[attr_ncl['RivLength'] < 0,'RivLength'] = 0
+        attr_ncl.loc[attr_ncl['RivLength'] == -1.2345,'RivSlope'] = -1.2345
+        attr_ncl.loc[attr_ncl['RivLength'] == -1.2345,'FloodP_n'] = -1.2345
+        attr_ncl.loc[attr_ncl['RivLength'] == -1.2345,'Max_DEM'] = -1.2345
+        attr_ncl.loc[attr_ncl['RivLength'] == -1.2345,'Min_DEM'] = -1.2345
+        attr_ncl.loc[attr_ncl['RivLength'] == -1.2345,'Ch_n'] = -1.2345
         
         join_pandas_table_to_vector_attributes(
             grassdb=grassdb,

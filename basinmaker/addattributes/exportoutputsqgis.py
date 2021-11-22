@@ -68,6 +68,36 @@ def export_files_to_output_folder(
         ],
     )
 
+    formular = "x(centroid(transform($geometry,'%s','%s')))" % (
+        layer_cat.crs().authid(),
+        "EPSG:4326",
+    )
+
+    layer_cat = qgis_vector_field_calculator(
+        processing=processing,
+        context=context,
+        FORMULA=formular,
+        FIELD_NAME="centroid_x",
+        INPUT=layer_cat,
+        OUTPUT="memory:",
+    )["OUTPUT"]
+        
+
+    formular = "y(centroid(transform($geometry,'%s','%s')))" % (
+        layer_cat.crs().authid(),
+        "EPSG:4326",
+    )
+
+    layer_cat = qgis_vector_field_calculator(
+        processing=processing,
+        context=context,
+        FORMULA=formular,
+        FIELD_NAME="centroid_y",
+        INPUT=layer_cat,
+        OUTPUT="memory:",
+    )["OUTPUT"]
+
+
     Selectfeatureattributes(
         processing,
         Input=layer_cat,
@@ -94,9 +124,9 @@ def export_files_to_output_folder(
                  os.path.join(output_folder, output_riv + ".shp")
     )
     
-    Add_centroid_to_feature(
-        os.path.join(output_folder, output_cat + ".shp"), "centroid_x", "centroid_y"
-    )
+    # Add_centroid_to_feature(
+    #     os.path.join(output_folder, output_cat + ".shp"), "centroid_x", "centroid_y"
+    # )
 
     subinfo = Dbf_To_Dataframe(os.path.join(output_folder, output_cat + ".shp"))
 

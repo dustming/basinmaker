@@ -78,11 +78,6 @@ COLUMN_NAMES_CONSTANT = [
     "DA_Chn_L",
     "DA_Slope",
     "DA_Chn_Slp",
-    "Tc_1",
-    "Tc_2",
-    "Tc_3",
-    "Tc_4",
-    "Tc_5",
 ]
 
 COLUMN_NAMES_With_NULL_Values = [
@@ -186,12 +181,7 @@ COLUMN_TYPES_CONSTANT = [
     "Real",
     "Real",
     "Real",
-    "Real",
-    "Real",
-    "Real",
-    "Real",
-    "Real",
-    "Real",    
+    "Real",  
 ]
 
 DEFALUT_FLOOD_N = 0.09
