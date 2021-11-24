@@ -11,6 +11,7 @@ from basinmaker.addlakeandobs.definelaketypeqgis import (
 from basinmaker.addlakeandobs.filterlakesqgis import select_lakes_by_area_r
 from basinmaker.addlakeandobs.pourpointsqgis import define_pour_points_with_lakes
 from basinmaker.addlakeandobs.modifyfdr import modify_lakes_flow_direction
+from basinmaker.addlakeandobs.modifystr import modify_str_r_to_add_sub_in_head_str
 
 
 def add_lakes_into_existing_watershed_delineation(
@@ -197,6 +198,18 @@ def add_lakes_into_existing_watershed_delineation(
         sl_non_connected_lake=sl_non_connected_lake,
         sl_lakes=sl_lakes,
         sl_str_connected_lake=sl_str_connected_lake,
+    )
+    
+    modify_str_r_to_add_sub_in_head_str(
+        grass = grass,
+        garray = garray,
+        con = con,
+        str_r = str_r,
+        str_v = str_v,
+        connected_lake = connected_lake,
+        cat_no_lake = cat_no_lake,
+        fdr_grass = fdr_grass,
+        max_memroy = max_memroy,      
     )
 
     Lakes_WIth_Multi_Outlet, Remove_Str = define_pour_points_with_lakes(
