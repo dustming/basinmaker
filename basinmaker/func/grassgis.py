@@ -17,7 +17,26 @@ def grass_raster_setnull(
     else:
         grass.run_command("r.null", map=raster_nm, setnull=null_values)
 
+def grass_raster_setnull_array(input,output,values,grass):
+    
+    raster_array = garray.array(mapname=input)
+    if (len(values) > 0):
+        mask = np.isin(raster_array, values)
+        raster_array[mask] = -9999
 
+    temparray = garray.array()
+    temparray[:, :] = raster_array[:, :]
+    temparray.write(mapname=output, overwrite=True)
+    grass.run_command("r.null", map=output, setnull=[-9999, 0])
+    exp = "%s = int(%s)" % (
+        output,
+        output,
+    )
+    grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+    del temparray
+    del raster_array
+
+    
 #####
 
 

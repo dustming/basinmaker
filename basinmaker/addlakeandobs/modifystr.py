@@ -31,20 +31,22 @@ def modify_str_r_to_add_sub_in_head_str(
         grass, mode=1, input_a='str_with_lake'
     )
 
-    str_without_lakes = garray.array(mapname=str_r)
-    if (len(str_id_with_lakes) > 0):
-        mask = np.isin(str_without_lakes, str_id_with_lakes)
-        str_without_lakes[mask] = -9999
-
-    temparray = garray.array()
-    temparray[:, :] = str_without_lakes[:, :]
-    temparray.write(mapname='str_without_lake', overwrite=True)
-    grass.run_command("r.null", map='str_without_lake', setnull=[-9999, 0])
-    exp = "%s = int(%s)" % (
-        'str_without_lake',
-        'str_without_lake',
-    )
-    grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+    grass_raster_setnull_array(input = str_r,output = 'str_without_lake',values = str_id_with_lakes,grass = grass)
+    
+    # str_without_lakes = garray.array(mapname=str_r)
+    # if (len(str_id_with_lakes) > 0):
+    #     mask = np.isin(str_without_lakes, str_id_with_lakes)
+    #     str_without_lakes[mask] = -9999
+    # 
+    # temparray = garray.array()
+    # temparray[:, :] = str_without_lakes[:, :]
+    # temparray.write(mapname='str_without_lake', overwrite=True)
+    # grass.run_command("r.null", map='str_without_lake', setnull=[-9999, 0])
+    # exp = "%s = int(%s)" % (
+    #     'str_without_lake',
+    #     'str_without_lake',
+    # )
+    # grass.run_command("r.mapcalc", expression=exp, overwrite=True)
     
     
     

@@ -59,18 +59,20 @@ def delineate_watershed_no_lake_using_fdr(
         overwrite=True,
     )
 
-    exp = "%s = %s - %s" % (
+    exp = "%s = %s - %s/%s" % (
         'dem_acc',
         dem,
         acc,
+        str(1),
     )        
     grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+
 
 
     grass.run_command(
         "r.stream.extract",
         elevation='dem_acc',
-#        accumulation=accumulation,
+        accumulation=acc,
         threshold=int(acc_thresold),
         stream_raster=str_r,
         direction=fdr_grass,

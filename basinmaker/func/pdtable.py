@@ -255,7 +255,120 @@ def Calculate_Longest_flowpath(mainriv_merg_info):
 
     return Longestpath
 
+def remove_possible_small_subbasins(mapoldnew_info, area_thresthold = 1):
+    mapoldnew_info_new = mapoldnew_info.copy(deep=True)    
+    small_sub_non_lake = mapoldnew_info[mapoldnew_info['BasArea']/1000/1000 < area_thresthold].copy(deep=True)
+    small_sub_non_lake = small_sub_non_lake[small_sub_non_lake['Lake_Cat'] == 0].copy(deep=True)
+    small_sub_non_lake_subid =small_sub_non_lake['SubId'].values 
+    ### process connected lakes  merge polygons
+    for i in range(0, len(small_sub_non_lake)):
+        small_sub_id = small_sub_non_lake['SubId'].values[i]
+        small_downsub_id = small_sub_non_lake['DowSubId'].values[i]
+        small_sub_seg_id = small_sub_non_lake['Seg_ID'].values[i]
+        
+        small_sub_is_head_water_sub = len(mapoldnew_info[mapoldnew_info['DowSubId'] == small_sub_id]) == 0
+        
+        small_sub_is_not_Lake = small_sub_non_lake['Lake_Cat'].values[i] == 0
+        small_sub_is_not_gauge = small_sub_non_lake['Has_Gauge'].values[i] == 0
+        
+        down_sub_info = mapoldnew_info[mapoldnew_info['SubId'] == small_downsub_id].copy(deep = True)
+        upstream_sub_info =  mapoldnew_info[mapoldnew_info['DowSubId'] == small_sub_id].copy(deep = True)
+        upstream_sub_info_same_seg = upstream_sub_info[upstream_sub_info['Seg_ID'] == small_sub_seg_id].copy(deep=True)
+        
+        if len(down_sub_info) > 0:
+            #it is a lake inlet subbasin, can be merged into the lake 
+            has_down_sub = True                
+            if down_sub_info['Seg_ID'].values[0] == small_sub_seg_id:
+                down_sub_has_same_seg_id = True
+            else:
+                down_sub_has_same_seg_id = False                
+        else:
+            has_down_sub = False
+            down_sub_has_same_seg_id = False
+        
+        if len(upstream_sub_info) > 0:
+            has_upstream = True
 
+            if len(upstream_sub_info_same_seg) > 0:
+                up_sub_has_same_seg_id = True
+            else:
+                up_sub_has_same_seg_id = False
+                
+        else:
+            has_upstream = False 
+            up_sub_has_same_seg_id = False
+                
+        if has_down_sub and down_sub_has_same_seg_id and small_sub_is_not_Lake and small_sub_is_not_gauge: 
+            tarinfo = down_sub_info
+            modify = True
+            ndown_subid = down_sub_info['DowSubId'].values[0]
+            
+        elif has_upstream and up_sub_has_same_seg_id and small_sub_is_not_Lake and small_sub_is_not_gauge:
+            tarinfo = upstream_sub_info_same_seg
+            modify = True
+            ndown_subid = small_downsub_id
+        
+        elif len(mapoldnew_info[mapoldnew_info['Seg_ID'] == small_sub_seg_id]) == 1 and has_down_sub:
+            tarinfo = down_sub_info
+            modify = True
+            ndown_subid = down_sub_info['DowSubId'].values[0]            
+         
+        else:
+            modify = False 
+            tarinfo = [] 
+            continue 
+            
+                   
+        if  modify:
+            target_sub_is_head_water_sub =  len(mapoldnew_info[mapoldnew_info['DowSubId'] == tarinfo['SubId'].values[0]]) == 0
+            target_sub_has_less_one_up_stream = len(mapoldnew_info[ (mapoldnew_info['DowSubId'] == tarinfo['SubId'].values[0]) & (mapoldnew_info['Lake_Cat']  < 2)]) <= 1
+
+            mask1 = mapoldnew_info['SubId'] == small_sub_id
+            mask2 = (
+                mapoldnew_info["nsubid"] == tarinfo["nsubid"].values[0]
+            )  ###for subbasin already processed to drainage into this target catchment
+            mask = np.logical_or(mask1, mask2)
+
+            if len(tarinfo) > 1 and len(np.unique(tarinfo['HyLakeId'].values)) > 1:
+                print(small_sub_id,small_sub_seg_id)
+                print(tarinfo[['SubId','DowSubId','Seg_ID','HyLakeId']])
+                
+                            
+            for col in tarinfo.columns:
+                if col == "BasArea":
+                
+                    mapoldnew_info_new.loc[mask, col] = np.sum(tarinfo["BasArea"].values[0] + small_sub_non_lake["BasArea"].values[0])
+                
+                elif col == 'SubId':
+                    
+                    mapoldnew_info_new.loc[mask,"nsubid"] = tarinfo["nsubid"].values[0] 
+                
+                elif col == 'DowSubId':
+                    mapoldnew_info_new.loc[mask,col] = ndown_subid
+                    
+                elif (
+                    col == "nsubid"
+                    or col == "ndownsubid"
+                    or col == "Old_SubId"
+                    or col == "Old_DowSubId"
+                    or col == "SHAPE"
+                ):
+                    continue
+                else:
+                    mapoldnew_info_new.loc[mask, col] = tarinfo[col].values[0]
+            
+            if target_sub_is_head_water_sub or small_sub_is_head_water_sub:
+                if target_sub_has_less_one_up_stream:
+                    mapoldnew_info_new.loc[mask, "RivSlope"] = -1.2345
+                    mapoldnew_info_new.loc[mask, "RivLength"] = -1.2345
+                    mapoldnew_info_new.loc[mask, "FloodP_n"] = -1.2345
+                    mapoldnew_info_new.loc[mask, "Ch_n"] = -1.2345
+                    mapoldnew_info_new.loc[mask, "DA_Chn_L"] = -1.2345
+                    mapoldnew_info_new.loc[mask, "DA_CHn_Slp"] = -1.2345
+         
+    return mapoldnew_info_new                    
+        
+    
 def New_SubId_To_Dissolve(
     subid,
     catchmentinfo,
@@ -2259,7 +2372,7 @@ def return_non_lake_inflow_segs_and_segs_within_lakes(
     riv_lake_cl = np.column_stack((riv_lake_id2, cl_id))
     riv_lake_cl = riv_lake_cl[riv_lake_cl[:, 0].argsort()]
     riv_lake = np.append(riv_lake, riv_lake_cl, axis=1)
-
+    
     # assign acc for each row
     str_id_unique = np.unique(np.array(riv_lake[:, 1]))
     cl_id_unique = np.unique(np.array(riv_lake[:, 3]))
