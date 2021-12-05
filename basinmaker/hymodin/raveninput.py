@@ -18,6 +18,7 @@ def GenerateRavenInput(
     EndYear=-1,
     CA_HYDAT="#",
     WarmUp=0,
+    time_step = 1,
     Template_Folder="#",
     Lake_As_Gauge=False,
     WriteObsrvt=False,
@@ -238,6 +239,7 @@ def GenerateRavenInput(
         SubBasinGroup_Area_Lake,
         SubBasinGroup_NM_Channel,
         SubBasinGroup_Length_Channel,
+        time_step,
         aspect_from_gis
     )
     WriteStringToFile(Channel_rvp_string + '\n \n', Channel_rvp_file_path, "w")
@@ -1228,6 +1230,7 @@ def Generate_Raven_Channel_rvp_rvh_String(
     SubBasinGroup_Area_Lake,
     SubBasinGroup_NM_Channel,
     SubBasinGroup_Length_Channel,
+    Tr = 1,
     aspect_from_gis = 'grass'
 ):  # Writervhchanl(ocatinfo,Raveinputsfolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM,Lake_As_Gauge = False,Model_Name = 'test'):
     """Generate string of raven chennel rvp input and rvh input
@@ -1507,6 +1510,36 @@ def Generate_Raven_Channel_rvp_rvh_String(
 
     Model_rvh_string_list.append(":EndSubBasins")  # orvh.write(":EndSubBasins"+"\n")
     Model_rvh_string_list.append("\n")  # orvh.write("\n")
+    ##########################################
+    
+    Model_rvh_string_list.append(":SubBasinProperties")
+    Model_rvh_string_list.append(":Parameters,  TIME_TO_PEAK,  TIME_CONC,   TIME_LAG,")
+    Model_rvh_string_list.append(":Units     ,  d           ,          d,          d,")
+    
+    
+    print(Tr)
+    for i in range(0, len(catinfo_sub)):
+        ### Get catchment width and dpeth
+        catid = int(catinfo_sub["SubId"].values[i])
+        subarea = int(catinfo_sub["BasArea"].values[i]/1000/1000)
+        if (catinfo_sub["Lake_Cat"].values[i] <= 0):  
+            routing_area = subarea
+        else:
+            routing_area = max(0.0001,subarea - catinfo_sub["LakeArea"].values[i]/1000/1000)
+        
+        Tc = 0.76*routing_area**0.38
+        Tl = 0.6*Tc
+        Tp = Tr/2 +Tl
+        
+        Tc = '{:>10.4f}'.format(Tc)  + "," + tab
+        Tl = '{:>10.4f}'.format(Tl)  + "," + tab 
+        Tp = '{:>10.4f}'.format(Tp)  + "," + tab 
+        Model_rvh_string_list.append(tab + str(catid) + "," + tab + Tp + Tc + Tl)
+            
+    Model_rvh_string_list.append(":EndSubBasinProperties")
+
+    Model_rvh_string_list.append("\n")  # orvh.write("\n")
+        
     ##########################################
     Model_rvh_string_list.append(":HRUs")  # orvh.write(":HRUs"+"\n")
     Model_rvh_string_list.append(

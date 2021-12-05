@@ -20,7 +20,8 @@ class postprocess:
         subbasingroup_length_channel=[-1],
         subbasingroup_name_lake=["AllLakesubbasins"],
         subbasingroup_area_lake=[-1],
-        lake_out_flow_method = 'broad_crest'
+        lake_out_flow_method = 'broad_crest',
+        model_time_step = 1,
     ):
         """This function is to generate Raven input files. A subfolder 'RavenInput'
         in path_output_folder is created to sotre resultant outputs.
@@ -102,6 +103,7 @@ class postprocess:
             EndYear=endYear,
             CA_HYDAT=CA_HYDAT,
             WarmUp=warmup,
+            time_step = model_time_step,
             Template_Folder=template_folder,
             Lake_As_Gauge=lake_as_gauge,
             WriteObsrvt=writeobsrvt,
