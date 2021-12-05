@@ -916,9 +916,9 @@ def Generate_Raven_Channel_rvp_string_sub(
         sidwd = 0.5 * 0.5 * chwd
         zch = (chwd - botwd) / 2 / chdep
     if iscalmanningn == True:
-        mann = '{:>10.4f}'.format(channeln) #str(channeln)
+        mann = '{:>10.8f}'.format(channeln) #str(channeln)
     else:
-        mann = '{:>10.4f}'.format(0.035) #str(0.035)
+        mann = '{:>10.8f}'.format(0.035) #str(0.035)
     zfld = 4 + elev
     zbot = elev - chdep
     sidwdfp = 4 / 0.25
@@ -961,10 +961,10 @@ def Generate_Raven_Channel_rvp_string_sub(
         "    0" + tab + '{:>10.8f}'.format(floodn) #str(floodn)
     )  # orchnl.write("    0" + tab + str(floodn) +"\n")
     output_string_list.append(
-        "    " + '{:>10.4f}'.format(sidwdfp + 2 * chwd) + tab + mann #"    " + str(sidwdfp + 2 * chwd) + tab + mann
+        "    " + '{:>10.8f}'.format(sidwdfp + 2 * chwd) + tab + mann #"    " + str(sidwdfp + 2 * chwd) + tab + mann
     )  # orchnl.write("    " + str(sidwdfp + 2*chwd)+ tab + mann +"\n")
     output_string_list.append(
-        "    " + '{:>10.4f}'.format(sidwdfp + 2 * chwd + 2 * sidwd + botwd) + tab + '{:>10.8f}'.format(floodn) #"    " + str(sidwdfp + 2 * chwd + 2 * sidwd + botwd) + tab + str(floodn)
+        "    " + '{:>10.8f}'.format(sidwdfp + 2 * chwd + 2 * sidwd + botwd) + tab + '{:>10.8f}'.format(floodn) #"    " + str(sidwdfp + 2 * chwd + 2 * sidwd + botwd) + tab + str(floodn)
     )  # orchnl.write("    " + str(sidwdfp + 2*chwd + 2*sidwd + botwd)+ tab + str(floodn) +"\n")
     output_string_list.append(
         "  :EndRoughnessZones"
@@ -1387,6 +1387,7 @@ def Generate_Raven_Channel_rvp_rvh_String(
         + "   "
         + "SubId"
     )
+    not_write_default_channel = True
     for i in range(0, len(catinfo_sub)):
         ### Get catchment width and dpeth
         catid = int(catinfo_sub["SubId"].values[i])
@@ -1420,45 +1421,74 @@ def Generate_Raven_Channel_rvp_rvh_String(
         )
         SubBasin_Group_Channel.loc[i, "SubId"] = catid
         SubBasin_Group_Channel.loc[i, "SubBasin_Group_NM"] = GroupName
+        
+        if strRlen != "ZERO-":
+            pronam = "Chn_" + Strcat
+        else:
+            pronam = "Chn_ZERO_LENGTH"
 
-        pronam = "Chn_" + Strcat
+        if strRlen != "ZERO-":
+            chslope = max(catinfo_sub["RivSlope"].values[i], min_riv_slope)
+        else:
+            chslope = 0.12345
 
-        chslope = max(catinfo_sub["RivSlope"].values[i], 0.00001)
-
-        if chslope < 0:
-            chslope = 0.0001234
-
-        if catinfo_sub["Ch_n"].values[i] > 0:
+        if strRlen != "ZERO-":
             nchn = catinfo_sub["Ch_n"].values[i]
         else:
-            nchn = 0.001234
+            nchn = 0.12345
 
-        if catinfo_sub["FloodP_n"].values[i] > 0:
+        if strRlen != "ZERO-":
             floodn = catinfo_sub["FloodP_n"].values[i]
         else:
-            floodn = 0.035
-
-        output_string_chn_rvp_sub = Generate_Raven_Channel_rvp_string_sub(
-            pronam,
-            max(catinfo_sub["BkfWidth"].values[i], 1),
-            max(catinfo_sub["BkfDepth"].values[i], 1),
-            chslope,
-            catinfo_sub["MeanElev"].values[i],
-            floodn,
-            nchn,
-            iscalmanningn,
-        )
-
+            floodn = 0.12345
+        
+        if strRlen != "ZERO-":
+            bkf_width = max(catinfo_sub["BkfWidth"].values[i], 1)
+            bkf_depth = max(catinfo_sub["BkfDepth"].values[i], 1)
+        else:
+            bkf_width = 0.12345
+            bkf_depth = 0.12345
+        
+        if strRlen != "ZERO-":
+            output_string_chn_rvp_sub = Generate_Raven_Channel_rvp_string_sub(
+                pronam,
+                bkf_width,
+                bkf_depth,
+                chslope,
+                catinfo_sub["MeanElev"].values[i],
+                floodn,
+                nchn,
+                iscalmanningn,
+            )
+        elif strRlen == "ZERO-" and not_write_default_channel:
+            output_string_chn_rvp_sub = Generate_Raven_Channel_rvp_string_sub(
+                pronam,
+                bkf_width,
+                bkf_depth,
+                chslope,
+                catinfo_sub["MeanElev"].values[i],
+                floodn,
+                nchn,
+                iscalmanningn,
+            )
+            not_write_default_channel = False
+        else:
+            output_string_chn_rvp_sub = [] 
+            output_string_chn_rvp_sub.append("#   Sub "+ Strcat + "  refer to  Chn_ZERO_LENGTH ")
+            output_string_chn_rvp_sub.append("##############new channel ##############################")
+            output_string_chn_rvp_sub = "\n".join(output_string_chn_rvp_sub)
+            
         Channel_rvp_string_list.append(output_string_chn_rvp_sub)
 
         if catinfo_sub["Has_Gauge"].values[i] > 0:
             Guage = "1"
         elif (
             catinfo_sub["Lake_Cat"].values[i] > 0 and Lake_As_Gauge == True
-        ):  # and catinfo_sub['HRU_Type'].values[i] == 1:
+        ): 
             Guage = "1"
         else:
             Guage = "0"
+        
         Model_rvh_string_list.append(
             "  "
             + Strcat
@@ -1473,7 +1503,7 @@ def Generate_Raven_Channel_rvp_rvh_String(
             + strRlen
             + tab
             + Guage
-        )  # orvh.write("  "+Strcat+tab+'sub'+Strcat+tab+StrDid+tab+pronam+tab+strRlen+tab+Guage+"\n")
+        )  
 
     Model_rvh_string_list.append(":EndSubBasins")  # orvh.write(":EndSubBasins"+"\n")
     Model_rvh_string_list.append("\n")  # orvh.write("\n")

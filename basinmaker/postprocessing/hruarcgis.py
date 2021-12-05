@@ -210,7 +210,8 @@ def GenerateHRUS_arcgis(
     )
     if not os.path.exists(tempfolder):
         os.makedirs(tempfolder)
-    prj_crs = int(Project_crs)
+    print(Project_crs[5:len(Project_crs)])
+    prj_crs = int(Project_crs[5:len(Project_crs)])
     Merge_layer_list = []
     ### First overlay the subbasin layer with lake polygon, the new unique
     # id will be 'HRULake_ID'

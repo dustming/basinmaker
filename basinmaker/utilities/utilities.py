@@ -143,6 +143,9 @@ COLUMN_NAMES_CONSTANT_HRU = [
     "HRU_A_mean",
     "HRU_E_mean",
     "SHAPE",
+    "DA_Chn_L",
+    "DA_Slope",
+    "DA_Chn_Slp",    
 ]
 
 
