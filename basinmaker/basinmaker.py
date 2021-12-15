@@ -614,7 +614,9 @@ class postprocess:
         Other_Ply_ID_1="O_ID_1"
         Veg_ID="Veg_ID"
         Other_Ply_ID_2="O_ID_2"
-
+        
+        os.environ["GISDBASE"] = path_output_folder
+        
         generate_hrus_method(
             Path_Subbasin_Ply=path_subbasin_polygon,
             Landuse_info=path_landuse_info,

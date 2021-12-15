@@ -1369,7 +1369,6 @@ def Generate_Raven_Channel_rvp_rvh_String(
     Model_rvh_string_list.append(
         "  :Units        none           none          none           km    none"
     )  # orvh.write("  :Units        none           none          none           km    none"+"\n")
-
     catinfo_sub = catinfo.drop_duplicates(
         "SubId", keep="first"
     )  ### remove duplicated subids, beacuse of including hrus in the dataframe
@@ -1512,33 +1511,32 @@ def Generate_Raven_Channel_rvp_rvh_String(
     Model_rvh_string_list.append("\n")  # orvh.write("\n")
     ##########################################
     
-    Model_rvh_string_list.append(":SubBasinProperties")
-    Model_rvh_string_list.append(":Parameters,  TIME_TO_PEAK,  TIME_CONC,   TIME_LAG,")
-    Model_rvh_string_list.append(":Units     ,  d           ,          d,          d,")
-    
-    
-    print(Tr)
-    for i in range(0, len(catinfo_sub)):
-        ### Get catchment width and dpeth
-        catid = int(catinfo_sub["SubId"].values[i])
-        subarea = int(catinfo_sub["BasArea"].values[i]/1000/1000)
-        if (catinfo_sub["Lake_Cat"].values[i] <= 0):  
-            routing_area = subarea
-        else:
-            routing_area = max(0.0001,subarea - catinfo_sub["LakeArea"].values[i]/1000/1000)
-        
-        Tc = 0.76*routing_area**0.38
-        Tl = 0.6*Tc
-        Tp = Tr/2 +Tl
-        
-        Tc = '{:>10.4f}'.format(Tc)  + "," + tab
-        Tl = '{:>10.4f}'.format(Tl)  + "," + tab 
-        Tp = '{:>10.4f}'.format(Tp)  + "," + tab 
-        Model_rvh_string_list.append(tab + str(catid) + "," + tab + Tp + Tc + Tl)
-            
-    Model_rvh_string_list.append(":EndSubBasinProperties")
-
-    Model_rvh_string_list.append("\n")  # orvh.write("\n")
+    # Model_rvh_string_list.append(":SubBasinProperties")
+    # Model_rvh_string_list.append(":Parameters,  TIME_TO_PEAK,  TIME_CONC,   TIME_LAG,")
+    # Model_rvh_string_list.append(":Units     ,  d           ,          d,          d,")
+    # 
+    # 
+    # for i in range(0, len(catinfo_sub)):
+    #     ### Get catchment width and dpeth
+    #     catid = int(catinfo_sub["SubId"].values[i])
+    #     subarea = int(catinfo_sub["BasArea"].values[i]/1000/1000)
+    #     if (catinfo_sub["Lake_Cat"].values[i] <= 0):  
+    #         routing_area = subarea
+    #     else:
+    #         routing_area = max(0.0001,subarea - catinfo_sub["LakeArea"].values[i]/1000/1000)
+    # 
+    #     Tc = max(0.01,0.76*routing_area**0.38/24)
+    #     Tl = 0.6*Tc
+    #     Tp = Tr/2 +Tl
+    # 
+    #     Tc = '{:>10.4f}'.format(Tc)  + "," + tab
+    #     Tl = '{:>10.4f}'.format(Tl)  + "," + tab 
+    #     Tp = '{:>10.4f}'.format(Tp)  + "," + tab 
+    #     Model_rvh_string_list.append(tab + str(catid) + "," + tab + Tp + Tc + Tl)
+    # 
+    # Model_rvh_string_list.append(":EndSubBasinProperties")
+    # 
+    # Model_rvh_string_list.append("\n")  # orvh.write("\n")
         
     ##########################################
     Model_rvh_string_list.append(":HRUs")  # orvh.write(":HRUs"+"\n")

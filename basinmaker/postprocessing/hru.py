@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 import tempfile
 import os
- 
+import importlib 
 
 
 def GenerateHRUS_qgis(
@@ -929,9 +929,7 @@ def Union_Ply_Layers_And_Simplify(
         layers
     """
     num = str(np.random.randint(1, 10000 + 1))
-    
-    if os.getenv("GISDBASE"):
-        
+    if importlib.util.find_spec("grass.script") is not None and importlib.util.find_spec("grass_session") is not None:
         import grass.script as grass
         import grass.script.setup as gsetup
         from grass.pygrass.modules import Module
@@ -999,7 +997,7 @@ def Union_Ply_Layers_And_Simplify(
                 )["OUTPUT"]
                 
                 
-                if os.getenv("GISDBASE"):
+                if importlib.util.find_spec("grass.script") is not None and importlib.util.find_spec("grass_session") is not None:
 
                     grass_layer_1 = qgis_vector_fix_geometries(
                         processing, context, INPUT=mem_union_fix_temp, OUTPUT=os.path.join(grassdb,'union_input_1_'+str(i)+'_.shp')
