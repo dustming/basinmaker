@@ -8,6 +8,7 @@ def watershed_delineation_without_lake(
     qgis_prefix_path="#",
     gis_platform="qgis",
     fdr_path="#",
+    fac_path = '#',
     subreg_fdr_path="#",
     subreg_acc_path="#",
     subreg_str_r_path="#",
@@ -118,6 +119,9 @@ def watershed_delineation_without_lake(
         from basinmaker.delineationnolake.watusingfdrqgis import (
             delineate_watershed_no_lake_using_fdr,
         )
+        from basinmaker.delineationnolake.watusingfacqgis import (
+            delineate_watershed_no_lake_using_fac,
+        )
         from basinmaker.delineationnolake.watusingsubregionddata import (
             delineate_watershed_no_lake_using_subregion_data,
         )
@@ -141,6 +145,11 @@ def watershed_delineation_without_lake(
             fdr_path != "#"
         ), "The path of the provided flow direction data is needed to delineate watershed from flow direction"
 
+    if mode == "usingfac":
+        assert (
+            fac_path != "#"
+        ), "The path of the provided flow direction data is needed to delineate watershed from flow direction"
+        
     if mode == "usingsubreg":
         assert (
             subreg_acc_path != "#"
@@ -190,7 +199,22 @@ def watershed_delineation_without_lake(
             cat_no_lake=cat_no_lake,
             max_memroy=max_memroy,
         )
-
+    if mode == "usingfac":
+        delineate_watershed_no_lake_using_fac(
+            grassdb=grassdb,
+            grass_location=grass_location,
+            qgis_prefix_path=qgis_prefix_path,
+            input_geo_names=input_geo_names,
+            fac_path=fac_path,
+            acc_thresold=acc_thresold,
+            fdr_arcgis=fdr_arcgis,
+            fdr_grass=fdr_grass,            
+            str_r=str_r,
+            str_v=str_v,
+            acc=acc,
+            cat_no_lake=cat_no_lake,
+            max_memroy=max_memroy,
+        )        
     if mode == "usingsubreg":
         delineate_watershed_no_lake_using_subregion_data(
             grassdb=grassdb,

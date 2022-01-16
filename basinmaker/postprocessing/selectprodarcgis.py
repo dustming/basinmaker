@@ -273,7 +273,7 @@ def Select_Routing_product_based_SubId_arcgis(
         sl_non_con_lakes = sl_non_con_lakes.loc[sl_non_con_lakes['Hylak_id'].isin(NonCL_Lakeids)]
         sl_non_con_lakes.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply)),overwrite=True,sanitize_columns=False)
     
-    sl_gauge_info = cat_ply_select.loc[cat_ply_select["Has_Gauge"] > 0]
+    sl_gauge_info = cat_ply_select.loc[cat_ply_select["Has_POI"] > 0]
     sl_gauge_nm = np.unique(sl_gauge_info["Obs_NM"].values)
     sl_gauge_nm = sl_gauge_nm[sl_gauge_nm != 'nan']
     if len(sl_gauge_nm) > 0 and Path_obs_gauge_point !='#':

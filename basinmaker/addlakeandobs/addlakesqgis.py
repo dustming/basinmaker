@@ -252,9 +252,12 @@ def add_lakes_into_existing_watershed_delineation(
 
 
     cat_withlake_array = garray.array(mapname=cat_add_lake_old_fdr)
+    cat_withlake_array = cat_withlake_array.astype(int)
     fdr_arcgis_array = garray.array(mapname=fdr_arcgis)
+    fdr_arcgis_array = fdr_arcgis_array.astype(int)
     str_r_array = garray.array(mapname=str_r)
     sl_lakes_array = garray.array(mapname=sl_lakes)
+    sl_lakes_array = sl_lakes_array.astype(int)
     acc_array = garray.array(mapname=acc)
     ncols = int(cat_withlake_array.shape[1])
     nrows = int(cat_withlake_array.shape[0])

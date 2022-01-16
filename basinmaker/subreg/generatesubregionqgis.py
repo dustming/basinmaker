@@ -947,21 +947,21 @@ def Combine_Sub_Region_Results(
         Obs_names = Obs_names.fillna('nan')
         Obs_names = Obs_names.astype('string')
         mask = Obs_names == 'nan'
-        AllCatinfo.loc[mask,'Has_Gauge'] = 0
+        AllCatinfo.loc[mask,'Has_POI'] = 0
         
         Copy_Pddataframe_to_shpfile(
             os.path.join(tempfolder, "finalcat_info.shp"),
             AllCatinfo,
             link_col_nm_shp="SubId",
             link_col_nm_df="SubId",
-            UpdateColNM=["DowSubId", "DrainArea", "Strahler","DA_error","Has_Gauge","Use_region"],
+            UpdateColNM=["DowSubId", "DrainArea", "Strahler","DA_error","Has_POI","Use_region"],
         )
         Copy_Pddataframe_to_shpfile(
             os.path.join(tempfolder, "finalcat_info_riv.shp"),
             AllCatinfo,
             link_col_nm_shp="SubId",
             link_col_nm_df="SubId",
-            UpdateColNM=["DowSubId", "DrainArea", "Strahler","DA_error","Has_Gauge","Use_region"],
+            UpdateColNM=["DowSubId", "DrainArea", "Strahler","DA_error","Has_POI","Use_region"],
         )
         COLUMN_NAMES_CONSTANT_Local = COLUMN_NAMES_CONSTANT 
         COLUMN_NAMES_CONSTANT_Local.append("Region_ID")
@@ -1045,7 +1045,7 @@ def Combine_Sub_Region_Results(
         Obs_names = Obs_names.fillna('nan')
         Obs_names = Obs_names.astype('string')
         mask = Obs_names == 'nan'
-        AllCatinfo.loc[mask,'Has_Gauge'] = 0
+        AllCatinfo.loc[mask,'Has_POI'] = 0
         
         DA_obs = AllCatinfo['DA_Obs'].copy(deep=True)
         DA_obs = DA_obs.fillna(0)
@@ -1059,14 +1059,14 @@ def Combine_Sub_Region_Results(
             AllCatinfo,
             link_col_nm_shp="SubId",
             link_col_nm_df="SubId",
-            UpdateColNM=["DowSubId", "DrainArea", "Strahler","DA_error","Has_Gauge","Use_region"],
+            UpdateColNM=["DowSubId", "DrainArea", "Strahler","DA_error","Has_POI","Use_region"],
         )
         Copy_Pddataframe_to_shpfile(
             os.path.join(tempfolder, "finalriv_info.shp"),
             AllCatinfo,
             link_col_nm_shp="SubId",
             link_col_nm_df="SubId",
-            UpdateColNM=["DowSubId", "DrainArea", "Strahler","DA_error","Has_Gauge","Use_region"],
+            UpdateColNM=["DowSubId", "DrainArea", "Strahler","DA_error","Has_POI","Use_region"],
         )
 
         processing.run(

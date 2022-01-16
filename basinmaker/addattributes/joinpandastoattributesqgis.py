@@ -21,8 +21,8 @@ def join_pandas_table_to_vector_attributes(
 
     str = ",".join(column_types)
     WriteStringToFile(str, os.path.join(grassdb, "catinfo_riv.csvt"), "w")
-    pd_table.loc[pd_table['Has_Gauge'] <= 0,'Has_Gauge'] = 0
-    pd_table.loc[pd_table['Has_Gauge'] > 0,'Has_Gauge'] = 1
+    pd_table.loc[pd_table['Has_POI'] <= 0,'Has_POI'] = 0
+    pd_table.loc[pd_table['Has_POI'] > 0,'Has_POI'] = 1
     pd_table.loc[pd_table['Lake_Cat'] <= 0,'Lake_Cat'] = 0
     pd_table.loc[pd_table['LakeArea'] <= 0,'LakeArea'] = 0
     pd_table.loc[pd_table['HyLakeId'] <= 0,'HyLakeId'] = 0
@@ -77,7 +77,7 @@ def join_pandas_table_to_vector_attributes(
         map=vector_name,
         column="DA_error",
         qcol="DrainArea/1000/1000/DA_Obs",
-        where="Has_Gauge > 0",
+        where="Has_POI > 0",
     )
 
     grass.run_command(

@@ -58,7 +58,7 @@ COLUMN_NAMES_CONSTANT = [
     "LakeDepth",
     "LakeArea",
     "Laketype",
-    "Has_Gauge",
+    "Has_POI",
     "MeanElev",
     "FloodP_n",
     "Q_Mean",
@@ -78,6 +78,8 @@ COLUMN_NAMES_CONSTANT = [
     "DA_Chn_L",
     "DA_Slope",
     "DA_Chn_Slp",
+    "outletLat",
+    "outletLng",
 ]
 
 COLUMN_NAMES_With_NULL_Values = [
@@ -109,7 +111,7 @@ COLUMN_NAMES_CONSTANT_HRU = [
     "LakeDepth",
     "LakeArea",
     "Laketype",
-    "Has_Gauge",
+    "Has_POI",
     "MeanElev",
     "FloodP_n",
     "Q_Mean",
@@ -184,7 +186,9 @@ COLUMN_TYPES_CONSTANT = [
     "Real",
     "Real",
     "Real",
-    "Real",  
+    "Real",
+    "Real",
+    "Real",
 ]
 
 DEFALUT_FLOOD_N = 0.09

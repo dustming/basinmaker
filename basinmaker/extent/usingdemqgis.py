@@ -104,6 +104,13 @@ def define_project_extent_using_dem(
     PERMANENT = Session()
     PERMANENT.open(gisdb=grassdb, location=grass_location, create_opts="")
 
+    exp = "%s = %s/%s" % (
+        dem,
+        dem,
+        str(1),
+    )        
+    grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+    
     # define mask of current working enviroments
     grass_raster_r_mask(grass, dem)
     # define processing extent of the current working enviroment

@@ -312,7 +312,7 @@ def Select_Routing_product_based_SubId_qgis(
             Values=NonCL_Lakeids,
         )
 
-    Gauge_info = finalcat_info.loc[finalcat_info["Has_Gauge"] > 0]
+    Gauge_info = finalcat_info.loc[finalcat_info["Has_POI"] > 0]
     Gauge_NMs = np.unique(Gauge_info["Obs_NM"].values)
 
     if len(Gauge_NMs) > 0 and Path_obs_gauge_point != "#":

@@ -878,7 +878,6 @@ def Define_HRU_Attributes_arcgis(
     ) 
    
     hruinfo_new = pd.DataFrame.spatial.from_featureclass(os.path.join(tempfolder,'finalcat_hru_info.shp'))
-    
     hruinfo_simple = simplidfy_hrus(
         min_hru_pct_sub_area = min_hru_area_pct_sub,
         hruinfo = hruinfo_new,

@@ -153,7 +153,7 @@ def export_files_to_output_folder(
 
     if (
         os.path.exists(os.path.join(grassdb, snapped_obs_points + ".shp"))
-        and len(subinfo.loc[subinfo["Has_Gauge"] > 0]["Has_Gauge"].values) > 0
+        and len(subinfo.loc[subinfo["Has_POI"] > 0]["Has_POI"].values) > 0
     ):
 
         Selectfeatureattributes(
@@ -161,7 +161,7 @@ def export_files_to_output_folder(
             Input=os.path.join(grassdb, snapped_obs_points + ".shp"),
             Output=os.path.join(output_folder, "obs_gauges.shp"),
             Attri_NM=obs_attributes[1],
-            Values=subinfo.loc[subinfo["Has_Gauge"] > 0]["Obs_NM"].values,
+            Values=subinfo.loc[subinfo["Has_POI"] > 0]["Obs_NM"].values,
             Is_str = True,
         )
 

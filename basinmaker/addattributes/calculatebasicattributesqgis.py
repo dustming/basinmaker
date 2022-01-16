@@ -348,8 +348,45 @@ def calculate_basic_attributes(
     nrows = int(cat_array.shape[0])
 
     grass.run_command("g.copy", vector=("Final_OL_v", outlet_pt_info), overwrite=True)
-    ### update dataframe
+    PERMANENT.close()
+    
+    
+    ## add coordinates to outlet point in wgs84 system
+    project_wgs84 = Session()
+    project_wgs84.open(
+        gisdb=grassdb, location=grass_location + "_wgs84", create_opts='EPSG:4326'
+    )
+    grass.run_command(
+        "v.proj",
+        location=grass_location,
+        mapset="PERMANENT",
+        input=outlet_pt_info,
+        overwrite=True,
+    )
+    grass.run_command(
+        "v.to.db",
+        map = outlet_pt_info,
+        type = 'point',
+        option = 'coor',
+        columns = ['outletLat','outletLng'],
+        overwrite=True,
+    )  
+    project_wgs84.close()
 
+    ## import updated outlet points after add coordinates in wgs84 system
+    PERMANENT = Session()
+    PERMANENT.open(gisdb=grassdb, location=grass_location, create_opts="")
+    grass.run_command("g.region", raster="dem")
+    grass.run_command(
+        "v.proj",
+        location=grass_location + "_wgs84",
+        mapset="PERMANENT",
+        input=outlet_pt_info,
+        overwrite=True,
+    )   
+ 
+    ### update dataframe
+    ###
     sqlstat = "SELECT Gridcode, Length_m, d_minimum, d_maximum FROM %s" % (cat_riv_info)
     leninfo = pd.read_sql_query(sqlstat, con)
     ### read catchment
@@ -359,7 +396,7 @@ def calculate_basic_attributes(
     areainfo = pd.read_sql_query(sqlstat, con)
 
     ### read catchment
-    sqlstat = "SELECT SubId, DowSubId,ILSubIdmax,ILSubIdmin FROM %s" % (outlet_pt_info)
+    sqlstat = "SELECT SubId, DowSubId,ILSubIdmax,ILSubIdmin,outletLat, outletLng FROM %s" % (outlet_pt_info)
     outletinfo = pd.read_sql_query(sqlstat, con)
     outletinfo = outletinfo.fillna(-9999)
     outletinfo = outletinfo.loc[outletinfo['SubId'] >= 0]
@@ -375,7 +412,12 @@ def calculate_basic_attributes(
     for i in range(0, len(outletinfo)):
         catid = outletinfo["SubId"].values[i]
         DownSubID_cat = outletinfo["DowSubId"].values[i]
+        outlet_lat = outletinfo["outletLat"].values[i]
+        outlet_lon = outletinfo["outletLng"].values[i]
+        
         catinfo.loc[i, "SubId"] = catid
+        catinfo.loc[i, "outletLat"] = outlet_lat
+        catinfo.loc[i, "outletLng"] = outlet_lon
 
         # load routing info based on str
         outlet_riv_info_i = outlet_riv_info.loc[outlet_riv_info['SubId'] == catid]

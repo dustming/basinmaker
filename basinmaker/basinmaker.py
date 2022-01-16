@@ -834,6 +834,7 @@ class delineate:
         fac_thresold,
         mode = 'using_dem',
         path_flow_dirction="#",
+        path_flow_accumulation='#',
         max_memroy=1024 * 4,
         gis_platform="qgis",
         subreg_fdr_path="#",
@@ -898,6 +899,8 @@ class delineate:
             mode = 'usingdem'
         elif mode == 'using_sub_reg':
             mode = 'usingsubreg' 
+        elif mode == 'using_fac':
+            mode = 'usingfac'
         else:
             mode = 'usingfdr'
 
@@ -906,6 +909,7 @@ class delineate:
             input_geo_names=self.geofilenames,
             acc_thresold=fac_thresold,
             fdr_path=path_flow_dirction,
+            fac_path = path_flow_accumulation,
             subreg_fdr_path=subreg_fdr_path,
             subreg_acc_path=subreg_acc_path,
             subreg_str_r_path=subreg_str_r_path,
