@@ -19,8 +19,8 @@ The only difference between CLs and NCLs is that CLs always drain into an explic
 Examples
 ========
   
-Examples of BasinMaker can be found [here](http://hydrology.uwaterloo.ca/basinmaker/index.html)
-  
+Examples demonstrating how BasinMaker may be used can be found `here <http://hydrology.uwaterloo.ca/basinmaker/index.html>`_.
+
 ========  
 Authors
 ========
@@ -45,4 +45,4 @@ and/or cite the zenodo dataset directly:
 License
 ========  
 
-BasinMaker is open-source under the [Artistic License 2.0](https://opensource.org/licenses/Artistic-2.0). This sofware is freely distributed ’as is’ without warranties or conditions of any kind, either express or implied, including, without limitation, any warranties or conditions of title, non-infringement, merchantability, or fitness for a particular purpose.
+BasinMaker is open-source under the `Artistic License 2.0 <https://opensource.org/licenses/Artistic-2.0>`_. This sofware is freely distributed ’as is’ without warranties or conditions of any kind, either express or implied, including, without limitation, any warranties or conditions of title, non-infringement, merchantability, or fitness for a particular purpose.
