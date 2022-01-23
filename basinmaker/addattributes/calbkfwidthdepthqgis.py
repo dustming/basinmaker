@@ -312,6 +312,5 @@ def calculate_bankfull_width_depth_from_polyline(
                     catelv = catinfo['MeanElev'].values
                     catelv = catelv[catelv > 0]
                     catinfo.loc[catinfo["SubId"] == subid, "MeanElev"] =np.average(catelv)
-    print(catinfo[["SubId","FloodP_n"]])
     PERMANENT.close()
     return catinfo

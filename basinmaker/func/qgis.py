@@ -42,7 +42,44 @@ def qgis_raster_gdal_warpreproject(processing, Input, TARGET_CRS, Output):
     )
     return out
 
-
+####
+def create_geo_jason_file(processing,Input_Polygon_path):
+    
+    # reproject to WGS84
+    input_wgs_84 = processing.run("native:reprojectlayer", {'INPUT':Input_Polygon_path,
+                                  'TARGET_CRS':QgsCoordinateReferenceSystem('EPSG:4326'),
+                                   'OUTPUT':"memory:"})['OUTPUT']
+    
+    
+    
+    TOLERANCEs = [0.0001,0.0005,0.001,0.005,0.01,0.05,0.1]
+    
+    for TOLERANCE in TOLERANCEs:                               
+        input_wgs_84_simplify = processing.run("native:simplifygeometries", {
+                                               'INPUT':input_wgs_84,
+                                               'METHOD':0,
+                                               'TOLERANCE':TOLERANCE,
+                                               'OUTPUT':"memory:"
+                                               }
+                                               )['OUTPUT']
+                                               
+        Names_in = os.path.basename(Input_Polygon_path).split('_')
+        n_charc = len(Names_in)
+        version  = Names_in[n_charc - 1][0:4]
+        if 'v' in version:
+            cat_name = "finalcat_info_"+version+'.geojson'
+        else:
+            cat_name =  "finalcat_info.geojson"
+        
+        Output_Geo_Jason = os.path.dirname(Input_Polygon_path)
+             
+        qgis.core.QgsVectorFileWriter.writeAsVectorFormat(input_wgs_84_simplify,os.path.join(Output_Geo_Jason,cat_name), 'utf-8', input_wgs_84_simplify.crs(), 'GeoJson',layerOptions=['COORDINATE_PRECISION=3'])
+        
+        json_file_size = os.stat(os.path.join(Output_Geo_Jason,cat_name)).st_size/1024/1024 #to MB
+        if json_file_size <= 20:
+            break
+    return 
+    
 ##############
 
 
@@ -430,7 +467,7 @@ def Copy_Pddataframe_to_shpfile(
         return
 
 def copy_data_and_dissolve(all_subids,tempfolder,processing,Path_Temp_final_rviply,Path_Temp_final_rvi,
-    mapoldnew_info,COLUMN_NAMES_CONSTANT,OutputFolder,Path_Catchment_Polygon,context,Path_final_rviply_input = '#',Path_final_rvi_input = '#'):    
+    mapoldnew_info,COLUMN_NAMES_CONSTANT_CLEAN,OutputFolder,Path_Catchment_Polygon,context,Path_final_rviply_input = '#',Path_final_rvi_input = '#'):    
     
     if len(all_subids) > 5000:
 
@@ -500,8 +537,8 @@ def copy_data_and_dissolve(all_subids,tempfolder,processing,Path_Temp_final_rvip
         Path_final_rvi_out = os.path.join(OutputFolder, os.path.basename(Path_final_rvi_input))
         
                 
-    Clean_Attribute_Name(Path_final_rvi, COLUMN_NAMES_CONSTANT)
-    Clean_Attribute_Name(Path_final_rviply, COLUMN_NAMES_CONSTANT)
+    Clean_Attribute_Name(Path_final_rvi, COLUMN_NAMES_CONSTANT_CLEAN)
+    Clean_Attribute_Name(Path_final_rviply, COLUMN_NAMES_CONSTANT_CLEAN)
     
                     
     qgis_vector_dissolve(
@@ -520,8 +557,8 @@ def copy_data_and_dissolve(all_subids,tempfolder,processing,Path_Temp_final_rvip
     )["OUTPUT"]
     
     # clean attribute table of shpfile
-    Clean_Attribute_Name(Path_final_rvi_out, COLUMN_NAMES_CONSTANT)
-    ply_draft,tempnum = Clean_Attribute_Name(ply_draft, COLUMN_NAMES_CONSTANT,Input_Is_Feature_In_Mem = True)
+    Clean_Attribute_Name(Path_final_rvi_out, COLUMN_NAMES_CONSTANT_CLEAN)
+    ply_draft,tempnum = Clean_Attribute_Name(ply_draft, COLUMN_NAMES_CONSTANT_CLEAN,Input_Is_Feature_In_Mem = True)
 
     # add centroid to new drived polygons
     
@@ -552,6 +589,8 @@ def copy_data_and_dissolve(all_subids,tempfolder,processing,Path_Temp_final_rvip
         INPUT=ply_draft,
         OUTPUT=Path_final_rviply_out,
     )
+    
+    create_geo_jason_file(processing,Path_final_rviply_out)
     
     return 
 

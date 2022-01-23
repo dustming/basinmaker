@@ -242,7 +242,7 @@ def simplify_routing_structure_by_filter_lakes_qgis(
     all_subids = finalcat_info_temp['SubId'].values
     
     copy_data_and_dissolve(all_subids,tempfolder,processing,Path_Temp_final_rviply,Path_Temp_final_rvi,
-        mapoldnew_info,COLUMN_NAMES_CONSTANT,OutputFolder,Path_Catchment_Polygon,context,
+        mapoldnew_info,COLUMN_NAMES_CONSTANT_CLEAN,OutputFolder,Path_Catchment_Polygon,context,
         Path_final_riv_ply,Path_final_riv)
         
         

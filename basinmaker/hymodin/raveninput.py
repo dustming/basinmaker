@@ -1041,6 +1041,10 @@ def Generate_Raven_Lake_rvh_String(catinfo, Raveinputsfolder, Model_Name,lake_ou
     Lake_rvh_string_list.append("# by BasinMaker v2.0")
     Lake_rvh_string_list.append("#----------------------------------------------")
 
+    Gauge_col_Name = "Has_POI"
+    if "Has_POI" not in catinfo.columns:
+        Gauge_col_Name = "Has_Gauge"
+        
     for i in range(0, len(catinfo.index)):
         if catinfo.iloc[i]["HRU_IsLake"] > 0:  ## lake hru
             lakeid = int(catinfo.iloc[i]["HyLakeId"])
@@ -1050,7 +1054,7 @@ def Generate_Raven_Lake_rvh_String(catinfo, Raveinputsfolder, Model_Name,lake_ou
             WeirCoe = 0.6
             hruid = int(catinfo.iloc[i]["HRU_ID"])
             Crewd = catinfo.iloc[i]["BkfWidth"]  ##3 m
-            has_obs = catinfo.iloc[i]["Has_POI"]  ##3 m
+            has_obs = catinfo.iloc[i][Gauge_col_Name]  ##3 m
             #            if slakeinfo.iloc[0]['Wshd_area'] < 6000 and slakeinfo.iloc[0]['Wshd_area'] > 0:
             if has_obs < 1 or lake_out_flow_method == 'broad_crest':
                 Lake_rvh_string_list.append(
@@ -1482,7 +1486,11 @@ def Generate_Raven_Channel_rvp_rvh_String(
             
         Channel_rvp_string_list.append(output_string_chn_rvp_sub)
 
-        if catinfo_sub["Has_POI"].values[i] > 0:
+        Gauge_col_Name = "Has_POI"
+        if "Has_POI" not in catinfo_sub.columns:
+            Gauge_col_Name = "Has_Gauge"
+        
+        if catinfo_sub[Gauge_col_Name].values[i] > 0:
             Guage = "1"
         elif (
             catinfo_sub["Lake_Cat"].values[i] > 0 and Lake_As_Gauge == True

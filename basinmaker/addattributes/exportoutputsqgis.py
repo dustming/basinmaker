@@ -166,10 +166,10 @@ def export_files_to_output_folder(
         )
 
     Clean_Attribute_Name(
-        os.path.join(output_folder, output_cat + ".shp"), COLUMN_NAMES_CONSTANT
+        os.path.join(output_folder, output_cat + ".shp"), COLUMN_NAMES_CONSTANT_CLEAN
     )
     Clean_Attribute_Name(
-        os.path.join(output_folder, output_riv + ".shp"), COLUMN_NAMES_CONSTANT
+        os.path.join(output_folder, output_riv + ".shp"), COLUMN_NAMES_CONSTANT_CLEAN
     )
 
     return

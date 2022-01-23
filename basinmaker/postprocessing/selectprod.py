@@ -233,6 +233,10 @@ def Select_Routing_product_based_SubId_qgis(
     hyshdinfo = hyshdinfo2[[sub_colnm, down_colnm]].astype("int32").values
 
 
+    Gauge_col_Name = "Has_POI"
+    if "Has_POI" not in hyshdinfo2.columns:
+        Gauge_col_Name = "Has_Gauge"
+        
     if not os.path.exists(OutputFolder):
         os.makedirs(OutputFolder)
         
@@ -312,7 +316,7 @@ def Select_Routing_product_based_SubId_qgis(
             Values=NonCL_Lakeids,
         )
 
-    Gauge_info = finalcat_info.loc[finalcat_info["Has_POI"] > 0]
+    Gauge_info = finalcat_info.loc[finalcat_info[Gauge_col_Name] > 0]
     Gauge_NMs = np.unique(Gauge_info["Obs_NM"].values)
 
     if len(Gauge_NMs) > 0 and Path_obs_gauge_point != "#":

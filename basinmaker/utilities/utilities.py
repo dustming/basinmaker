@@ -82,6 +82,48 @@ COLUMN_NAMES_CONSTANT = [
     "outletLng",
 ]
 
+COLUMN_NAMES_CONSTANT_CLEAN = [
+    "SubId",
+    "DowSubId",
+    "RivSlope",
+    "RivLength",
+    "BasSlope",
+    "BasAspect",
+    "BasArea",
+    "BkfWidth",
+    "BkfDepth",
+    "Lake_Cat",
+    "HyLakeId",
+    "LakeVol",
+    "LakeDepth",
+    "LakeArea",
+    "Laketype",
+    "Has_POI",
+    "MeanElev",
+    "FloodP_n",
+    "Q_Mean",
+    "Ch_n",
+    "DrainArea",
+    "Strahler",
+    "Seg_ID",
+    "Seg_order",
+    "Max_DEM",
+    "Min_DEM",
+    "DA_Obs",
+    "DA_error",
+    "Obs_NM",
+    "SRC_obs",
+    "centroid_x",
+    "centroid_y",
+    "DA_Chn_L",
+    "DA_Slope",
+    "DA_Chn_Slp",
+    "outletLat",
+    "outletLng",
+    "Has_Gauge"
+]
+
+
 COLUMN_NAMES_With_NULL_Values = [
     "Lake_Cat",
     "HyLakeId",
@@ -147,7 +189,8 @@ COLUMN_NAMES_CONSTANT_HRU = [
     "SHAPE",
     "DA_Chn_L",
     "DA_Slope",
-    "DA_Chn_Slp",    
+    "DA_Chn_Slp",
+    "Has_Gauge" ,   
 ]
 
 

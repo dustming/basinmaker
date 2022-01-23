@@ -160,6 +160,6 @@ def combine_catchments_covered_by_the_same_lake_qgis(
     all_subids = finalrivply_info['SubId'].values
     
     copy_data_and_dissolve(all_subids,tempfolder,processing,Path_Temp_final_rviply,Path_Temp_final_rvi,
-        mapoldnew_info,COLUMN_NAMES_CONSTANT,OutputFolder,Path_Catchment_Polygon,context)
-    
+        mapoldnew_info,COLUMN_NAMES_CONSTANT_CLEAN,OutputFolder,Path_Catchment_Polygon,context)
+        
     return 

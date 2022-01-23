@@ -259,7 +259,11 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold = 1):
     mapoldnew_info_new = mapoldnew_info.copy(deep=True)    
     small_sub_non_lake = mapoldnew_info[mapoldnew_info['BasArea']/1000/1000 < area_thresthold].copy(deep=True)
     small_sub_non_lake = small_sub_non_lake[small_sub_non_lake['Lake_Cat'] == 0].copy(deep=True)
-    small_sub_non_lake_subid =small_sub_non_lake['SubId'].values 
+    small_sub_non_lake_subid =small_sub_non_lake['SubId'].values
+    
+    Gauge_col_Name = "Has_POI"
+    if "Has_POI" not in mapoldnew_info.columns:
+        Gauge_col_Name = "Has_Gauge"
     ### process connected lakes  merge polygons
     for i in range(0, len(small_sub_non_lake)):
         small_sub_id = small_sub_non_lake['SubId'].values[i]
@@ -269,7 +273,7 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold = 1):
         small_sub_is_head_water_sub = len(mapoldnew_info[mapoldnew_info['DowSubId'] == small_sub_id]) == 0
         
         small_sub_is_not_Lake = small_sub_non_lake['Lake_Cat'].values[i] == 0
-        small_sub_is_not_gauge = small_sub_non_lake['Has_POI'].values[i] == 0
+        small_sub_is_not_gauge = small_sub_non_lake[Gauge_col_Name].values[i] == 0
         
         down_sub_info = mapoldnew_info[mapoldnew_info['SubId'] == small_downsub_id].copy(deep = True)
         upstream_sub_info =  mapoldnew_info[mapoldnew_info['DowSubId'] == small_sub_id].copy(deep = True)
@@ -609,6 +613,10 @@ def streamorderanddrainagearea(catinfoall):
     -------
         catinfoall
     """
+    Gauge_col_Name = "Has_POI"
+    if "Has_POI" not in catinfoall.columns:
+        Gauge_col_Name = "Has_Gauge"
+            
     catinfo = catinfoall.loc[
         catinfoall["Lake_Cat"] != 2
     ].copy()  ### remove none connected lake catchments, which do not connected to the river system
@@ -828,7 +836,7 @@ def streamorderanddrainagearea(catinfoall):
         # if catinfo['BkfWidth'].values[i] > 0 and catinfo['RivSlope'].values[i] > 0 :
         #     catinfo.loc[idx,'Ch_n'] = calculateChannaln(catinfo['BkfWidth'].values[i],catinfo['BkfDepth'].values[i],
         #                       catinfo['Q_Mean'].values[i],catinfo['RivSlope'].values[i])
-        if catinfoall["Has_POI"].values[i] > 0:
+        if catinfoall[Gauge_col_Name].values[i] > 0:
             if catinfoall["DA_Obs"].values[i] > 0:
                 catinfoall.loc[idx, "DA_error"] = (
                     catinfoall["DrainArea"].values[i] / 1000.0 / 1000.0
@@ -1612,6 +1620,11 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
     down_colnm = "DowSubId"
     DA_colnm = "DrainArea"
     SegID_colnm = "Seg_ID"
+    
+    Gauge_col_Name = "Has_POI"
+    if "Has_POI" not in finalriv_info.columns:
+        Gauge_col_Name = "Has_Gauge"
+            
     ### Modify attribute table mapoldnew_info, create new sub id for
     ### 1. catchment needs to be merged due to meet the drainage area thresthold
     ### 2. connected lake catchment are transfered into non-connected lake catchment
@@ -1652,7 +1665,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
     ## add removed gauges 
     unselected_gauges_subids = finalriv_info.loc[
         (~finalriv_info["SubId"].isin(Subid_main)) &
-        (finalriv_info["Has_POI"] > 0 )
+        (finalriv_info[Gauge_col_Name] > 0 )
     ]['SubId'].values
     finalriv_info_ncl = finalriv_info.copy(deep=True)
     # make unselected gauge to be a false lake 
@@ -1801,7 +1814,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
             else:
                 con_lake = False
             # if do not have the gauge 
-            con_gauge = i_seg_info["Has_POI"].values[iorder] <= 0
+            con_gauge = i_seg_info[Gauge_col_Name].values[iorder] <= 0
             
             # if do not meet the drainage area thresthold 
             if iorder <= len(i_seg_info) - 2:
@@ -2098,6 +2111,11 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_CL(
     mapoldnew_info.reset_index(drop=True, inplace=True)
     ### Loop each unselected lake stream seg
 
+    Gauge_col_Name = "Has_POI"
+    if "Has_POI" not in mapoldnew_info.columns:
+        Gauge_col_Name = "Has_Gauge"
+        
+        
     Seg_IDS = Un_Selected_ConnLakes_info["Seg_ID"].values
     Seg_IDS = np.unique(Seg_IDS)
     for iseg in range(0, len(Seg_IDS)):
@@ -2115,7 +2133,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_CL(
             continue
 
         ### All lakes in this segment are removed
-        if np.max(N_Hylakeid) and np.max(i_seg_info["Has_POI"].values) <= 0:  ##
+        if np.max(N_Hylakeid) and np.max(i_seg_info[Gauge_col_Name].values) <= 0:  ##
             tsubid = i_seg_info["SubId"].values[len(i_seg_info) - 1]
             seg_sub_ids = i_seg_info["SubId"].values
             mapoldnew_info = New_SubId_To_Dissolve(
@@ -2155,7 +2173,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_CL(
             elif (
                 i_seg_info["HyLakeId"].values[iorder]
                 == i_seg_info["HyLakeId"].values[iorder + 1]
-                and i_seg_info["Has_POI"].values[iorder] <= 0
+                and i_seg_info[Gauge_col_Name].values[iorder] <= 0
             ):
                 continue
             else:
@@ -2731,6 +2749,10 @@ def return_interest_catchments_info(catinfo, outlet_obs_id, path_sub_reg_outlets
 
     routing_info = catinfo[["SubId", "DowSubId"]].astype("float").values
 
+    Gauge_col_Name = "Has_POI"
+    if "Has_POI" not in catinfo.columns:
+        Gauge_col_Name = "Has_Gauge"
+        
     if path_sub_reg_outlets_v != "#":
 
         Sub_reg_outlets = Dbf_To_Dataframe(path_sub_reg_outlets_v)["reg_subid"].values
@@ -2738,7 +2760,7 @@ def return_interest_catchments_info(catinfo, outlet_obs_id, path_sub_reg_outlets
         Sub_reg_outlets_ids = Sub_reg_outlets_ids[Sub_reg_outlets_ids > 0]
 
         #### Find all obervation id that is subregion outlet
-        reg_outlet_info = catinfo.loc[catinfo["Has_POI"].isin(Sub_reg_outlets_ids)]
+        reg_outlet_info = catinfo.loc[catinfo[Gauge_col_Name].isin(Sub_reg_outlets_ids)]
 
         #### Define outlet ID
         outletid = -1
@@ -2747,7 +2769,7 @@ def return_interest_catchments_info(catinfo, outlet_obs_id, path_sub_reg_outlets
             print("To use subregion, the Subregion Id MUST provided as Outlet_Obs_ID")
             return catinfo
 
-        outletID_info = catinfo.loc[catinfo["Has_POI"] == outlet_obs_id]
+        outletID_info = catinfo.loc[catinfo[Gauge_col_Name] == outlet_obs_id]
         if len(outletID_info) > 0:
             outletid = outletID_info["SubId"].values[0]
         else:
@@ -2778,7 +2800,7 @@ def return_interest_catchments_info(catinfo, outlet_obs_id, path_sub_reg_outlets
     ### selected based on observation guage obs id
     else:
         outletid = -1
-        outletID_info = catinfo.loc[catinfo["Has_POI"] == outlet_obs_id]
+        outletID_info = catinfo.loc[catinfo[Gauge_col_Name] == outlet_obs_id]
         if len(outletID_info) > 0:
             outletid = outletID_info["SubId"].values[0]
             ##find upsteam catchment id

@@ -963,7 +963,7 @@ def Combine_Sub_Region_Results(
             link_col_nm_df="SubId",
             UpdateColNM=["DowSubId", "DrainArea", "Strahler","DA_error","Has_POI","Use_region"],
         )
-        COLUMN_NAMES_CONSTANT_Local = COLUMN_NAMES_CONSTANT 
+        COLUMN_NAMES_CONSTANT_Local = COLUMN_NAMES_CONSTANT_CLEAN 
         COLUMN_NAMES_CONSTANT_Local.append("Region_ID")
         COLUMN_NAMES_CONSTANT_Local.append("Use_region")
         processing.run(

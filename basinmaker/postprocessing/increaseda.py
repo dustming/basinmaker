@@ -204,7 +204,7 @@ def simplify_routing_structure_by_drainage_area_qgis(
     all_subids = finalriv_info['SubId'].values
     
     copy_data_and_dissolve(all_subids,tempfolder,processing,Path_Temp_final_rviply,Path_Temp_final_rvi,
-        mapoldnew_info,COLUMN_NAMES_CONSTANT,OutputFolder,Path_Catchment_Polygon,context,
+        mapoldnew_info,COLUMN_NAMES_CONSTANT_CLEAN,OutputFolder,Path_Catchment_Polygon,context,
         Path_final_rviply,Path_final_riv)
         
         
@@ -295,7 +295,7 @@ def simplify_routing_structure_by_drainage_area_qgis(
     # )
     # 
     # # clean attribute table and done
-    # Clean_Attribute_Name(Path_out_final_rviply, COLUMN_NAMES_CONSTANT)
-    # Clean_Attribute_Name(Path_out_final_rvi, COLUMN_NAMES_CONSTANT)
+    # Clean_Attribute_Name(Path_out_final_rviply, COLUMN_NAMES_CONSTANT_CLEAN)
+    # Clean_Attribute_Name(Path_out_final_rvi, COLUMN_NAMES_CONSTANT_CLEAN)
 
     Qgs.exit()
