@@ -66,10 +66,22 @@ def create_geo_jason_file(processing,Input_Polygon_path):
         Names_in = os.path.basename(Input_Polygon_path).split('_')
         n_charc = len(Names_in)
         version  = Names_in[n_charc - 1][0:4]
+        
+        print(os.path.basename(Input_Polygon_path))
+        if 'finalcat_info' in os.path.basename(Input_Polygon_path):
+            if 'finalcat_info_riv' not in os.path.basename(Input_Polygon_path):
+                head_name = "finalcat_info_"
+            else:
+                head_name = "finalcat_info_riv_"
+        if 'sl_connected_lake' in os.path.basename(Input_Polygon_path):
+            head_name = "sl_connected_lake_"
+        if 'sl_non_connected_lake' in os.path.basename(Input_Polygon_path):
+            head_name = "sl_non_connected_lake_"
+                                     
         if 'v' in version:
-            cat_name = "finalcat_info_"+version+'.geojson'
+            cat_name = head_name+version+'.geojson'
         else:
-            cat_name =  "finalcat_info.geojson"
+            cat_name =  head_name + ".geojson"
         
         Output_Geo_Jason = os.path.dirname(Input_Polygon_path)
              
