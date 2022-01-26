@@ -20,17 +20,20 @@ Update of the BasinMaker
 ==================
 For existing users who want to update the BasinMaker to the newest version. It can be done by the following steps:
 
+
 #. Active the BasinMaker working environment.
 
         * For the user with the light installation using Anaconda3, activate the python environment you created where QGIS and basinmaker is installed by running ‘conda activate <any_name_for_env>’. 
     
         * For the user with the full installation, run ‘basinmaker.bat/sh’.
 
+
 #. Uninstall the BasinMaker 
 
  .. code-block::
    
    python -m pip uninstall basinmaker 
+
    
 #. Reinstall the BasinMaker  
 
