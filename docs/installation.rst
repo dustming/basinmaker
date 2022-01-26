@@ -14,7 +14,30 @@ Two installation modes (light installation and full installation) are available.
 For light installation (recommended unless users know for sure they need to delineate their watershed from scratch from a DEM), only QGIS or ArcGIS pro is needed. The python environment for both QGIS and ArcGIS pro can be easily compiled within the anaconda environment under different OS systems. The instruction about light installation procedure can be found in :ref:`Light installation`. Note that users can install both the light version and the full version on the same OS system.   
 
 For full installation, both GRASS GIS and QGIS are needed. It is quite a challenge to setup a python environment for QGIS and GRASS together. Here, two procedures are provided for Windows and Ubuntu OS systems, respectively. Two procedures have been tested on several machines. But We can't guarantee install procedures work on every machine, even Windows or Ubuntu machines, but if you run into a problem create an issue on the GitHub and time permitting, we will try to help. The instruction for Windows and Ubuntu system can be found in :ref:`Full installation`. If you managed to do the full installation on a different operating system, we would be grateful if you could document and share the detailed installation procedure that was successful (email: m43han@uwaterloo.ca).
+
+
+Update of the BasinMaker 
+==================
+For existing users who want to update the BasinMaker to the newest version. It can be done by the following steps:
+
+#. Active the BasinMaker working environment.
+
+        * For the user with the light installation using Anaconda3, activate the python environment you created where QGIS and basinmaker is installed by running ‘conda activate <any_name_for_env>’. 
     
+        * For the user with the full installation, run ‘basinmaker.bat/sh’.
+
+#. Uninstall the BasinMaker 
+
+ .. code-block::
+   
+   python -m pip uninstall basinmaker 
+   
+#. Reinstall the BasinMaker  
+
+ .. code-block::
+   
+   python -m pip install basinmaker    
+
 
 Light installation
 ==================
@@ -152,7 +175,7 @@ QGIS and GRASS in Windows
     
     The OSGeo4W is a binary distribution of a broad set of open source geospatial software for Windows environments, including both GRASS GIS and QGIS.  
     
-    The OSGeo4W installer can be downloaded from `here <https://qgis.org/en/site/forusers/download.html>`_. Please using the long term released OSGeo4W Network Installer (64 bit), and using Desktop Express Install and choosing the second link. The installed GRASS GIS version should be >= GRASS 7.8.5. 
+    The OSGeo4W installer can be downloaded from `here <https://qgis.org/en/site/forusers/download.html>`_. Please using the **long term released OSGeo4W Network Installer (64 bit)**, and using Desktop Express Install and choosing the second link. The installed GRASS GIS version should be >= GRASS 7.8.5. 
     
     We would suggest to 
     
