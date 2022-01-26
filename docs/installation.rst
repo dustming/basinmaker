@@ -28,25 +28,11 @@ For existing users who want to update the BasinMaker to the newest version. It c
         * For the user with the full installation, run ‘basinmaker.bat/sh’.
 
 
-#. Uninstall the BasinMaker 
+#. Run the following command in the BasinMaker working environment. 
 
  .. code-block::
    
-   python -m pip uninstall basinmaker 
-
-
-#. Uninstall the BasinMaker 
-   
- .. code-block::
-      
-   python -m pip uninstall basinmaker
-      
-         
-#. Reinstall the BasinMaker  
-
- .. code-block::
-   
-   python -m pip install basinmaker    
+   python -m pip install basinmaker -U
 
 Light installation
 ==================
