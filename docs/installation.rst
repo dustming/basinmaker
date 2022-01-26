@@ -34,7 +34,14 @@ For existing users who want to update the BasinMaker to the newest version. It c
    
    python -m pip uninstall basinmaker 
 
+
+#. Uninstall the BasinMaker 
    
+ .. code-block::
+      
+   python -m pip uninstall basinmaker
+      
+         
 #. Reinstall the BasinMaker  
 
  .. code-block::
