@@ -569,7 +569,7 @@ def GenerateHRUS_qgis(
         context=context,
         INPUT=HRU_draf_final,
         FIELD_NAME="HRU_ID",
-        FORMULA=" @row_number + 1",
+        FORMULA="HRU_ID_New",
         FIELD_PRECISION=0,
         NEW_FIELD=False,
         OUTPUT=output_hru_shp,
@@ -929,7 +929,24 @@ def Union_Ply_Layers_And_Simplify(
         layers
     """
     num = str(np.random.randint(1, 10000 + 1))
-    if importlib.util.find_spec("grass.script") is not None and importlib.util.find_spec("grass_session") is not None:
+
+    has_grass = 1
+    has_grass_sec = 1
+    try:
+        import grass.script as grass
+    except ImportError or ModuleNotFoundError:
+        has_grass = 0
+    try:
+        from grass_session import Session
+    except ImportError or ModuleNotFoundError:
+        has_grass_sec = 0    
+    
+    if has_grass and has_grass_sec:
+        use_grass = 1
+    else:
+        use_grass = 0
+    
+    if use_grass:
         import grass.script as grass
         import grass.script.setup as gsetup
         from grass.pygrass.modules import Module
@@ -997,7 +1014,7 @@ def Union_Ply_Layers_And_Simplify(
                 )["OUTPUT"]
                 
                 
-                if importlib.util.find_spec("grass.script") is not None and importlib.util.find_spec("grass_session") is not None:
+                if use_grass:
 
                     grass_layer_1 = qgis_vector_fix_geometries(
                         processing, context, INPUT=mem_union_fix_temp, OUTPUT=os.path.join(grassdb,'union_input_1_'+str(i)+'_.shp')
@@ -1106,7 +1123,7 @@ def Union_Ply_Layers_And_Simplify(
     #     OUTPUT="memory:",
     # )["OUTPUT"]
 
-    if os.getenv("GISDBASE"):
+    if use_grass:
         PERMANENT.close() 
                     
     return mem_union_dis
@@ -1279,13 +1296,15 @@ def Define_HRU_Attributes(
     # )
     
     ### Determine HRU attribute HruID, LAND_USE_C,VEG_C,SOIL_PROF
-    Attri_table = Obtain_Attribute_Table(processing, context, layer_area_id)
+    Attri_table = Obtain_Attribute_Table(processing, context, layer_area_id)    
     Attri_table.to_csv(
         os.path.join(tempfile.gettempdir(), "attribute_pre.csv"), sep=","
     )
-
+        
     Attri_table = Attri_table.fillna(0)
     
+    Attri_table = Attri_table.sort_values(by=[Sub_ID,Soil_ID,Landuse_ID]).copy(deep=True).reset_index()
+        
     Attri_table = Determine_HRU_Attributes(
         Attri_table,
         Sub_ID,
@@ -1299,6 +1318,9 @@ def Define_HRU_Attributes(
         Veg_info_data,
     )
     Attri_table.to_csv(os.path.join(tempfile.gettempdir(), "attribute.csv"))
+    
+#    Attri_table = Attri_table.sort_values(by=[Sub_ID,Soil_ID]).copy(deep=True)
+    
     layer_area_id = Copy_Pddataframe_to_shpfile(
         Path_shpfile=layer_area_id,
         Pddataframe=Attri_table,
@@ -1396,9 +1418,11 @@ def Define_HRU_Attributes(
 
 
     Attri_table = Obtain_Attribute_Table(processing, context, HRU_draft)    
-    Attri_table['HRU_Area'] = Attri_table['HRU_Area2'] 
+    Attri_table['HRU_Area'] = Attri_table['HRU_Area2']     
     hruinfo = simplidfy_hrus(min_hru_pct_sub_area,Attri_table,importance_order)
-    hruinfo = Attri_table
+    
+#    hruinfo = hruinfo.sort_values(by=[Sub_ID,Soil_ID]).copy(deep=True)
+
     #######
     
     layer_area_id = Copy_Pddataframe_to_shpfile(

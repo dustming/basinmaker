@@ -215,7 +215,11 @@ def GenerateRavenInput(
     ncatinfo = tempinfo.to_dataframe()
     ncatinfo2 = ncatinfo.drop_duplicates("HRU_ID", keep="first")
     ncatinfo2 = ncatinfo2.loc[(ncatinfo2["HRU_ID"] > 0) & (ncatinfo2["SubId"] > 0)]
-    if Old_Product == True:
+    
+    if 'DrainArea' in ncatinfo2.columns:
+        ncatinfo2 = ncatinfo2.sort_values(by=['DrainArea','HRU_ID'])
+    
+    if 'Rivlen' in ncatinfo2.columns:
         ncatinfo2["RivLength"] = ncatinfo2["Rivlen"].values
     #            ncatinfo2['RivSlope'] = ncatinfo2['Rivlen'].values
     #            ncatinfo2['RivLength'] = ncatinfo2['Rivlen'].values

@@ -67,7 +67,6 @@ def create_geo_jason_file(processing,Input_Polygon_path):
         n_charc = len(Names_in)
         version  = Names_in[n_charc - 1][0:4]
         
-        print(os.path.basename(Input_Polygon_path))
         if 'finalcat_info' in os.path.basename(Input_Polygon_path):
             if 'finalcat_info_riv' not in os.path.basename(Input_Polygon_path):
                 head_name = "finalcat_info_"
