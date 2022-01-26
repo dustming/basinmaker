@@ -38,7 +38,6 @@ For existing users who want to update the BasinMaker to the newest version. It c
    
    python -m pip install basinmaker    
 
-
 Light installation
 ==================
 
