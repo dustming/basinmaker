@@ -9,6 +9,8 @@ from qgis.PyQt.QtCore import *
 from joblib import Parallel, delayed
 from basinmaker.utilities.utilities import *
 import tempfile
+from json import load, JSONEncoder
+import json
 
 def qgis_raster_gdal_warpreproject(processing, Input, TARGET_CRS, Output):
     """Functions reproject raster layer
@@ -44,51 +46,85 @@ def qgis_raster_gdal_warpreproject(processing, Input, TARGET_CRS, Output):
 
 ####
 def create_geo_jason_file(processing,Input_Polygon_path):
-    
-    # reproject to WGS84
-    input_wgs_84 = processing.run("native:reprojectlayer", {'INPUT':Input_Polygon_path,
-                                  'TARGET_CRS':QgsCoordinateReferenceSystem('EPSG:4326'),
-                                   'OUTPUT':"memory:"})['OUTPUT']
-    
-    
-    
+
+
+    product_dir = os.path.dirname(Input_Polygon_path)
+    Names_in = os.path.basename(Input_Polygon_path).split('_')
+    n_charc = len(Names_in)
+    version  = Names_in[n_charc - 1][0:4]
     TOLERANCEs = [0.0001,0.0005,0.001,0.005,0.01,0.05,0.1]
-    
-    for TOLERANCE in TOLERANCEs:                               
-        input_wgs_84_simplify = processing.run("native:simplifygeometries", {
-                                               'INPUT':input_wgs_84,
-                                               'METHOD':0,
-                                               'TOLERANCE':TOLERANCE,
-                                               'OUTPUT':"memory:"
-                                               }
-                                               )['OUTPUT']
+
+
+    head_name_cat = "finalcat_info"
+    head_name_riv = "finalcat_info_riv"
+    head_name_slake = "sl_connected_lake"
+    head_name_nlake = "sl_non_connected_lake"
+
+    Input_file_name = []
+    Output_file_name = []                            
+    if 'v' in version:
+        Input_file_name = [
+                           head_name_cat + "_"+version+'.shp',
+                           head_name_riv + "_"+version+'.shp',
+                           head_name_slake + "_"+version+'.shp',
+                           head_name_nlake + "_"+version+'.shp',
+                           ]
+        Output_file_name = [
+                           head_name_cat + "_"+version+'.geojson',
+                           head_name_riv + "_"+version+'.geojson',
+                           head_name_slake + "_"+version+'.geojson',
+                           head_name_nlake + "_"+version+'.geojson',
+                           ]
+    else:
+        Input_file_name = [
+                           head_name_cat +'.shp',
+                           head_name_riv +'.shp',
+                           head_name_slake +'.shp',
+                           head_name_nlake +'.shp',
+                           ]
+        Output_file_name = [
+                           head_name_cat +'.geojson',
+                           head_name_riv +'.geojson',
+                           head_name_slake +'.geojson',
+                           head_name_nlake +'.geojson',
+                           ]
+    created_jason_files = []   
+
+    for i  in  range(0,len(Input_file_name)):
+        input_path = os.path.join(product_dir,Input_file_name[i])
+        output_jason_path = os.path.join(product_dir,Output_file_name[i])
+        if not os.path.exists(input_path):
+            continue 
+        created_jason_files.append(output_jason_path)                   
+        # reproject to WGS84
+        input_wgs_84 = processing.run("native:reprojectlayer", {'INPUT':input_path,
+                                      'TARGET_CRS':QgsCoordinateReferenceSystem('EPSG:4326'),
+                                       'OUTPUT':"memory:"})['OUTPUT']    
+        for TOLERANCE in TOLERANCEs:                               
+            input_wgs_84_simplify = processing.run("native:simplifygeometries", {
+                                                   'INPUT':input_wgs_84,
+                                                   'METHOD':0,
+                                                   'TOLERANCE':TOLERANCE,
+                                                   'OUTPUT':"memory:"
+                                                   }
+                                                   )['OUTPUT']
                                                
-        Names_in = os.path.basename(Input_Polygon_path).split('_')
-        n_charc = len(Names_in)
-        version  = Names_in[n_charc - 1][0:4]
-        
-        if 'finalcat_info' in os.path.basename(Input_Polygon_path):
-            if 'finalcat_info_riv' not in os.path.basename(Input_Polygon_path):
-                head_name = "finalcat_info_"
+            qgis.core.QgsVectorFileWriter.writeAsVectorFormat(input_wgs_84_simplify,output_jason_path, 'utf-8', input_wgs_84_simplify.crs(), 'GeoJson',layerOptions=['COORDINATE_PRECISION=3'])
+            
+            json_file_size = os.stat(output_jason_path).st_size/1024/1024 #to MB
+            if json_file_size <= 20:
+                break
+    if len(created_jason_files) > 1:
+        for i in range(0,len(created_jason_files)):
+            injson = load(open(created_jason_files[i]))
+            if i == 0:
+                output_jason = injson
             else:
-                head_name = "finalcat_info_riv_"
-        if 'sl_connected_lake' in os.path.basename(Input_Polygon_path):
-            head_name = "sl_connected_lake_"
-        if 'sl_non_connected_lake' in os.path.basename(Input_Polygon_path):
-            head_name = "sl_non_connected_lake_"
-                                     
-        if 'v' in version:
-            cat_name = head_name+version+'.geojson'
-        else:
-            cat_name =  head_name + ".geojson"
-        
-        Output_Geo_Jason = os.path.dirname(Input_Polygon_path)
-             
-        qgis.core.QgsVectorFileWriter.writeAsVectorFormat(input_wgs_84_simplify,os.path.join(Output_Geo_Jason,cat_name), 'utf-8', input_wgs_84_simplify.crs(), 'GeoJson',layerOptions=['COORDINATE_PRECISION=3'])
-        
-        json_file_size = os.stat(os.path.join(Output_Geo_Jason,cat_name)).st_size/1024/1024 #to MB
-        if json_file_size <= 20:
-            break
+                output_jason['features'] += injson['features']
+                
+        with open(os.path.join(product_dir,'routing_product.geojson'), 'w', encoding='utf-8') as f:
+            json.dump(output_jason, f, ensure_ascii=False, indent=4)
+     
     return 
     
 ##############
@@ -600,9 +636,8 @@ def copy_data_and_dissolve(all_subids,tempfolder,processing,Path_Temp_final_rvip
         INPUT=ply_draft,
         OUTPUT=Path_final_rviply_out,
     )
-    
-    create_geo_jason_file(processing,Path_final_rviply_out)
-    
+    if 'finalcat_info' in Path_final_rviply_out:
+        create_geo_jason_file(processing,Path_final_rviply_out)
     return 
 
 def Copy_Pddataframe_to_shpfile_main(
