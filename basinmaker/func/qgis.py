@@ -99,10 +99,23 @@ def create_geo_jason_file(processing,Input_Polygon_path):
         # reproject to WGS84
         input_wgs_84 = processing.run("native:reprojectlayer", {'INPUT':input_path,
                                       'TARGET_CRS':QgsCoordinateReferenceSystem('EPSG:4326'),
-                                       'OUTPUT':"memory:"})['OUTPUT']    
+                                       'OUTPUT':"memory:"})['OUTPUT']  
+
+        # input_wgs_84_smth =  processing.run("native:smoothgeometry", {'INPUT':input_wgs_84,
+        #                                                         'ITERATIONS':5,'OFFSET':0.5,'MAX_ANGLE':180,
+        #                                                         'OUTPUT':"memory:"})['OUTPUT']
+
+        
+        if 'finalcat_info' in Input_file_name[i] or "finalcat_info_riv" in Input_file_name[i]:
+            input_tojson = processing.run("native:fieldcalculator", {'INPUT':input_wgs_84,
+                                                      'FIELD_NAME':'rvhName','FIELD_TYPE':2,'FIELD_LENGTH':20,'FIELD_PRECISION':0,
+                                                      'FORMULA':'\'sub\' +to_string(to_int(\"SubId\")) ','OUTPUT':"memory:"})['OUTPUT']
+        else:
+             input_tojson = input_tojson
+        
         for TOLERANCE in TOLERANCEs:                               
             input_wgs_84_simplify = processing.run("native:simplifygeometries", {
-                                                   'INPUT':input_wgs_84,
+                                                   'INPUT':input_tojson,
                                                    'METHOD':0,
                                                    'TOLERANCE':TOLERANCE,
                                                    'OUTPUT':"memory:"
