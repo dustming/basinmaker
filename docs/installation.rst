@@ -1,5 +1,5 @@
 =================
-Installation v2.1
+Installation v2.1.2
 =================
 
 
@@ -47,7 +47,7 @@ QGIS with anaconda
 
 #. Create an empty python environment and then active it  
     
-    For windows system, search and open "Anacoda Prompt" (Windows) to active a conda command line. Then
+    For windows system, search and open "Anacoda Prompt" (Windows) to active a conda command line. *Users must make sure that they have the proper privileges to create environment variables (run Anacoda Prompt as administrator if necessary).* Then
    
     .. code-block::
       
