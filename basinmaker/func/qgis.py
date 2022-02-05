@@ -52,7 +52,7 @@ def create_geo_jason_file(processing,Input_Polygon_path):
     Names_in = os.path.basename(Input_Polygon_path).split('_')
     n_charc = len(Names_in)
     version  = Names_in[n_charc - 1][0:4]
-    TOLERANCEs = [0.0001,0.0005,0.001,0.005,0.01,0.05,0.1]
+    TOLERANCEs = [0.0001,0.0005,0.001,0.005,0.01,0.05]
 
 
     head_name_cat = "finalcat_info"
@@ -125,7 +125,7 @@ def create_geo_jason_file(processing,Input_Polygon_path):
             qgis.core.QgsVectorFileWriter.writeAsVectorFormat(input_wgs_84_simplify,output_jason_path, 'utf-8', input_wgs_84_simplify.crs(), 'GeoJson',layerOptions=['COORDINATE_PRECISION=3'])
             
             json_file_size = os.stat(output_jason_path).st_size/1024/1024 #to MB
-            if json_file_size <= 20:
+            if json_file_size <= 100:
                 break
     if len(created_jason_files) > 1:
         for i in range(0,len(created_jason_files)):

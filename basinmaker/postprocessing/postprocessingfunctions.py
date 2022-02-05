@@ -30,6 +30,15 @@ def combine_catchments_covered_by_the_same_lake_method(
             Routing_Product_Folder=Routing_Product_Folder,
         )        
 
+    if gis_platform == "purepy":
+        from basinmaker.postprocessing.combinepurepy import (
+            combine_catchments_covered_by_the_same_lake_purepy,
+        )
+
+        combine_catchments_covered_by_the_same_lake_purepy(
+            Routing_Product_Folder=Routing_Product_Folder,
+        )   
+        
 
 def simplify_routing_structure_by_filter_lakes_method(
     Path_final_riv_ply="#",
@@ -77,7 +86,7 @@ def simplify_routing_structure_by_filter_lakes_method(
             gis_platform=gis_platform,
         )
         
-
+        
 def simplify_routing_structure_by_drainage_area_method(
     Routing_Product_Folder='#',
     Area_Min=-1,
@@ -181,9 +190,20 @@ def select_part_of_routing_product_method(
             mostupstreamid=mostupid,
             Routing_Product_Folder = Routing_Product_Folder,
         )
+                         
+    if gis_platform == "purepy":
+        from basinmaker.postprocessing.selectprodpurepy import (
+        Select_Routing_product_based_SubId_purepy
+        )
+        Select_Routing_product_based_SubId_purepy(
+            OutputFolder=OutputFolder,
+            mostdownid=mostdownid,
+            mostupstreamid=mostupid,
+            Routing_Product_Folder = Routing_Product_Folder,
+        )
                         
     return
-
+    
 
 def generate_hrus_method(
     Path_Subbasin_Ply,
