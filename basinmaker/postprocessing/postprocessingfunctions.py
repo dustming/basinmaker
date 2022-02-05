@@ -319,6 +319,37 @@ def generate_hrus_method(
         )
 
 
+    if gis_platform == "purepy":
+        from basinmaker.postprocessing.hrupurepy import GenerateHRUS_purepy
+
+        GenerateHRUS_purepy(
+            Path_Subbasin_Ply=Path_Subbasin_Ply,
+            Landuse_info=Landuse_info,
+            Soil_info=Soil_info,
+            Veg_info=Veg_info,
+            Sub_Lake_ID=Sub_Lake_ID,
+            Sub_ID=Sub_ID,
+            Path_Connect_Lake_ply=Path_Connect_Lake_ply,
+            Path_Non_Connect_Lake_ply=Path_Non_Connect_Lake_ply,
+            Lake_Id=Lake_Id,
+            Path_Landuse_Ply=Path_Landuse_Ply,
+            Landuse_ID=Landuse_ID,
+            Path_Soil_Ply=Path_Soil_Ply,
+            Soil_ID=Soil_ID,
+            Path_Veg_Ply=Path_Veg_Ply,
+            Veg_ID=Veg_ID,
+            Path_Other_Ply_1=Path_Other_Ply_1,
+            Other_Ply_ID_1=Other_Ply_ID_1,
+            Path_Other_Ply_2=Path_Other_Ply_2,
+            Other_Ply_ID_2=Other_Ply_ID_2,
+            Inmportance_order = Inmportance_order,
+            min_hru_area_pct_sub = min_hru_area_pct_sub,
+            DEM=DEM,
+            Project_crs=Project_crs,
+            OutputFolder=OutputFolder,
+        )
+        
+
     return
 
 
