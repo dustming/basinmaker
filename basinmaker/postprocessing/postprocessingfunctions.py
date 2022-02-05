@@ -85,7 +85,22 @@ def simplify_routing_structure_by_filter_lakes_method(
             qgis_prefix_path=qgis_prefix_path,
             gis_platform=gis_platform,
         )
-        
+
+    if gis_platform == "purepy":
+        from basinmaker.postprocessing.selectlakepurepy import (
+            simplify_routing_structure_by_filter_lakes_purepy,
+        )
+
+        simplify_routing_structure_by_filter_lakes_purepy(
+            Routing_Product_Folder = Routing_Product_Folder,
+            Thres_Area_Conn_Lakes=Thres_Area_Conn_Lakes,
+            Thres_Area_Non_Conn_Lakes=Thres_Area_Non_Conn_Lakes,
+            Selected_Lake_List_in=Selected_Lake_List_in,
+            OutputFolder=OutputFolder,
+            qgis_prefix_path=qgis_prefix_path,
+            gis_platform=gis_platform,
+        )
+                
         
 def simplify_routing_structure_by_drainage_area_method(
     Routing_Product_Folder='#',
