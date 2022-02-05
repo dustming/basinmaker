@@ -35,19 +35,18 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
         for subid in riv_pd_nncls_routing_info['SubId'].values:
             if subid not in riv_pd_nncls_routing_info['DowSubId'].values:
                 remove_channel.append(subid)                
-        riv_pd = riv_pd[~riv_pd.index.isin(remove_channel)]   
-                
+        riv_pd = riv_pd[~riv_pd.SubId.isin(remove_channel)]   
         cat_colnms = riv_pd.columns
         drop_cat_colnms = cat_colnms[cat_colnms.isin(NEED_TO_REMOVE_IDS)]
         riv_pd = riv_pd.drop(columns=drop_cat_colnms)
         riv_pd.to_file(os.path.join(OutputFolder,riv_name))
         
-        mapoldnew_info.loc[mapoldnew_info.index.isin(remove_channel),'RivSlope'] = -1.2345
-        mapoldnew_info.loc[mapoldnew_info.index.isin(remove_channel),'RivLength'] = -1.2345
-        mapoldnew_info.loc[mapoldnew_info.index.isin(remove_channel),'FloodP_n'] = -1.2345
-        mapoldnew_info.loc[mapoldnew_info.index.isin(remove_channel),'Ch_n'] = -1.2345
-        mapoldnew_info.loc[mapoldnew_info.index.isin(remove_channel),'Max_DEM'] = -1.2345
-        mapoldnew_info.loc[mapoldnew_info.index.isin(remove_channel),'Min_DEM'] = -1.2345
+        mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'RivSlope'] = -1.2345
+        mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'RivLength'] = -1.2345
+        mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'FloodP_n'] = -1.2345
+        mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'Ch_n'] = -1.2345
+        mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'Max_DEM'] = -1.2345
+        mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'Min_DEM'] = -1.2345
         
         cat_colnms = mapoldnew_info.columns
         drop_cat_colnms = cat_colnms[cat_colnms.isin(NEED_TO_REMOVE_IDS)]
@@ -60,22 +59,21 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
         mapoldnew_info = mapoldnew_info.dissolve(by=dis_col_name, aggfunc='first',as_index=False)
     
         if "centroid_y" in mapoldnew_info.columns:
-            mapoldnew_info["centroid_y"] = mapoldnew_info.geometry.centroid.y
-            mapoldnew_info["centroid_x"] = mapoldnew_info.geometry.centroid.x
 
-            mapoldnew_info["SubIdt2"] = mapoldnew_info.index
-            riv_pd_nncls_routing_info = mapoldnew_info[mapoldnew_info['Lake_Cat'] != 2][['SubIdt2','DowSubId']].copy(deep=True)
+            mapoldnew_info = add_centroid_in_wgs84(mapoldnew_info,"centroid_x","centroid_y")
+            mapoldnew_info["SubId"] = mapoldnew_info.index
+            riv_pd_nncls_routing_info = mapoldnew_info[mapoldnew_info['Lake_Cat'] != 2][['SubId','DowSubId']].copy(deep=True)
             remove_channel = []
-            for subid in riv_pd_nncls_routing_info['SubIdt2'].values:
+            for subid in riv_pd_nncls_routing_info['SubId'].values:
                 if subid not in riv_pd_nncls_routing_info['DowSubId'].values:
                     remove_channel.append(subid)                
                             
-            mapoldnew_info.loc[mapoldnew_info.index.isin(remove_channel),'RivSlope'] = -1.2345
-            mapoldnew_info.loc[mapoldnew_info.index.isin(remove_channel),'RivLength'] = -1.2345
-            mapoldnew_info.loc[mapoldnew_info.index.isin(remove_channel),'FloodP_n'] = -1.2345
-            mapoldnew_info.loc[mapoldnew_info.index.isin(remove_channel),'Ch_n'] = -1.2345
-            mapoldnew_info.loc[mapoldnew_info.index.isin(remove_channel),'Max_DEM'] = -1.2345
-            mapoldnew_info.loc[mapoldnew_info.index.isin(remove_channel),'Min_DEM'] = -1.2345
+            mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'RivSlope'] = -1.2345
+            mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'RivLength'] = -1.2345
+            mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'FloodP_n'] = -1.2345
+            mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'Ch_n'] = -1.2345
+            mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'Max_DEM'] = -1.2345
+            mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'Min_DEM'] = -1.2345
             
                 
         cat_colnms = mapoldnew_info.columns
