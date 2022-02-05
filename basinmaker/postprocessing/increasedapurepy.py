@@ -5,22 +5,17 @@ import csv
 import tempfile 
 import copy 
 import pandas as pd
-from arcgis.features import GeoAccessor, GeoSeriesAccessor
-import arcpy
-from arcpy import env
-from arcpy.sa import *
 import shutil
-
+import geopandas
 
 import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from basinmaker.func.arcgis import *
+from basinmaker.func.purepy import *
 from basinmaker.func.pdtable import *
-arcpy.env.overwriteOutput = True
-arcpy.CheckOutExtension("Spatial")
 
-def simplify_routing_structure_by_drainage_area_arcgis(
+
+def simplify_routing_structure_by_drainage_area_purepy(
     Routing_Product_Folder= '#',
     Area_Min=-1,
     OutputFolder="#",
@@ -151,9 +146,9 @@ def simplify_routing_structure_by_drainage_area_arcgis(
     Path_Conl_ply = Path_Con_Lake_ply
     Path_Non_ConL_ply = Path_NonCon_Lake_ply
 
-    finalriv_infoply = pd.DataFrame.spatial.from_featureclass(Path_final_rviply)
-    finalriv_inforiv = pd.DataFrame.spatial.from_featureclass(Path_final_riv)
-    Conn_Lakes_ply = pd.DataFrame.spatial.from_featureclass(Path_Conl_ply)
+    finalriv_infoply = geopandas.read_file(Path_final_rviply)
+    finalriv_inforiv = geopandas.read_file(Path_final_riv)
+    Conn_Lakes_ply = geopandas.read_file(Path_Conl_ply)
 
 
     # change attribute table
@@ -168,7 +163,7 @@ def simplify_routing_structure_by_drainage_area_arcgis(
     )
 
     finalriv_inforiv_main = finalriv_inforiv.loc[finalriv_inforiv['SubId'].isin(Selected_riv_ids)]
-    finalriv_inforiv_main.spatial.to_featureclass(location=os.path.join(tempfolder,'selected_riv.shp'),overwrite=True,sanitize_columns=False)
+    finalriv_inforiv_main.to_file(os.path.join(tempfolder,'selected_riv.shp'))
     
     UpdateTopology(mapoldnew_info)
     mapoldnew_info = update_non_connected_catchment_info(mapoldnew_info)
@@ -187,7 +182,7 @@ def simplify_routing_structure_by_drainage_area_arcgis(
         Conn_Lakes_ply_select = []
         Conn_Lakes_ply_not_select = []
     else:     
-        Conn_Lakes_ply = pd.DataFrame.spatial.from_featureclass(Path_Conl_ply)    
+        Conn_Lakes_ply = geopandas.read_file(Path_Conl_ply)    
         lake_mask = Conn_Lakes_ply['Hylak_id'].isin(Connected_Lake_Mainriv)
         Conn_Lakes_ply_select = Conn_Lakes_ply.loc[lake_mask].copy()
         Conn_Lakes_ply_not_select = Conn_Lakes_ply.loc[np.logical_not(lake_mask)].copy()
@@ -195,16 +190,16 @@ def simplify_routing_structure_by_drainage_area_arcgis(
     # export lake polygons
     # export connected lake polygon
     if len(Conn_Lakes_ply_select) > 0:
-        Conn_Lakes_ply_select.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_Conl_ply)),overwrite=True,sanitize_columns=False)
+        Conn_Lakes_ply_select.to_file(os.path.join(OutputFolder,os.path.basename(Path_Conl_ply)))
     
     # export non connected polygon 
     if len(Conn_Lakes_ply_not_select) >0 and Path_NonCon_Lake_ply != '#':
-        non_conn_Lakes_ply = pd.DataFrame.spatial.from_featureclass(Path_NonCon_Lake_ply)  
+        non_conn_Lakes_ply = geopandas.read_file(Path_NonCon_Lake_ply)  
         new_non_connected_lake = pd.concat([non_conn_Lakes_ply, Conn_Lakes_ply_not_select], ignore_index=True)
-        new_non_connected_lake.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply)),overwrite=True,sanitize_columns=False)
+        new_non_connected_lake.to_file(os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply)))
     if len(Conn_Lakes_ply_not_select) <= 0 and Path_NonCon_Lake_ply != '#':
-        non_conn_Lakes_ply = pd.DataFrame.spatial.from_featureclass(Path_NonCon_Lake_ply)
-        non_conn_Lakes_ply.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply)),overwrite=True,sanitize_columns=False)
+        non_conn_Lakes_ply = geopandas.read_file(Path_NonCon_Lake_ply)
+        non_conn_Lakes_ply.to_file(os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply)))
     if len(Conn_Lakes_ply_not_select) > 0 and Path_NonCon_Lake_ply == '#':
         
         if len(os.path.basename(Path_Conl_ply).split('_')) == 4:
@@ -212,6 +207,6 @@ def simplify_routing_structure_by_drainage_area_arcgis(
         else:
             outlake_name = 'sl_non_connected_lake.shp'
             
-        Conn_Lakes_ply_not_select.spatial.to_featureclass(location=os.path.join(OutputFolder,outlake_name),overwrite=True,sanitize_columns=False)
+        Conn_Lakes_ply_not_select.to_file(location=os.path.join(OutputFolder,outlake_name))
         
     return 

@@ -136,7 +136,16 @@ def simplify_routing_structure_by_drainage_area_method(
             OutputFolder=OutputFolder,
         )
 
+    if gis_platform == "purepy":
+        from basinmaker.postprocessing.increasedapurepy import (
+            simplify_routing_structure_by_drainage_area_purepy,
+        )
 
+        simplify_routing_structure_by_drainage_area_purepy(
+            Routing_Product_Folder = Routing_Product_Folder,
+            Area_Min=Area_Min,
+            OutputFolder=OutputFolder,
+        )
 
 def select_part_of_routing_product_method(
     Path_Points,
