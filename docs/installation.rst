@@ -42,13 +42,19 @@ QGIS with anaconda
 
 #. Install anaconda
 
-    The installer of anaconda can be installed from `here <https://www.anaconda.com/>`_. Note for windows system, please activate the 'Register Anaconda3 as my default python 3.8' 
+    The installer of anaconda can be installed from `here <https://www.anaconda.com/>`_. Note for windows system, please activate the 'Register Anaconda3 as my default python 3.9' 
 
 
 #. Create an empty python environment and then active it  
     
-    For windows system, search and open "Anacoda Prompt" (Windows) to active a conda command line. **Users must make sure that they have the proper privileges to create environment variables (e.g., run Anacoda Prompt as administrator will work)**. Then
-   
+    For windows system, search and open "Anacoda Prompt" (Windows) to active a conda command line. **Users must make sure:** 
+    
+    * They have the proper privileges to create environment variables (e.g., run Anacoda Prompt as administrator will work)
+  
+    * DO NOT USE Anaconda Powershell Prompt
+    
+    Then
+    
     .. code-block::
       
       conda create --name <any_name_for_env>
