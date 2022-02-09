@@ -94,10 +94,6 @@ def create_geo_jason_file(processing,Input_Polygon_path):
     for i  in  range(0,len(Input_file_name)):
         input_path = os.path.join(product_dir,Input_file_name[i])
         output_jason_path = os.path.join(product_dir,Output_file_name[i])
-        print('a')
-        print(input_path)
-        print(output_jason_path)
-        print('b')
         if not os.path.exists(input_path):
             continue 
         created_jason_files.append(output_jason_path) 
@@ -152,7 +148,13 @@ def create_geo_jason_file(processing,Input_Polygon_path):
     if len(created_jason_files_lake_riv) > 1:
         for i in range(0,len(created_jason_files_lake_riv)):
             injson2 = load(open(created_jason_files_lake_riv[i]))
-            print(created_jason_files_lake_riv[i])
+            if 'finalcat_info_riv' in created_jason_files_lake_riv[i]:
+                new_features = []
+                for element in injson2["features"]:
+                    if element["properties"]["Lake_Cat"] == 0:    
+                        new_features.append(element) 
+                injson2["features"] = new_features
+
             if i == 0:
                 output_jason_lake_riv = injson2
             else:
