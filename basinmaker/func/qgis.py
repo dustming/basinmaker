@@ -89,13 +89,22 @@ def create_geo_jason_file(processing,Input_Polygon_path):
                            head_name_nlake +'.geojson',
                            ]
     created_jason_files = []   
-
+    created_jason_files_lake_riv = [] 
+    
     for i  in  range(0,len(Input_file_name)):
         input_path = os.path.join(product_dir,Input_file_name[i])
         output_jason_path = os.path.join(product_dir,Output_file_name[i])
+        print('a')
+        print(input_path)
+        print(output_jason_path)
+        print('b')
         if not os.path.exists(input_path):
             continue 
-        created_jason_files.append(output_jason_path)                   
+        created_jason_files.append(output_jason_path) 
+        
+        if 'finalcat_info_riv' in Input_file_name[i] or 'connected_lake' in Input_file_name[i]:
+            created_jason_files_lake_riv.append(output_jason_path)  
+                            
         # reproject to WGS84
         input_wgs_84 = processing.run("native:reprojectlayer", {'INPUT':input_path,
                                       'TARGET_CRS':QgsCoordinateReferenceSystem('EPSG:4326'),
@@ -111,7 +120,7 @@ def create_geo_jason_file(processing,Input_Polygon_path):
                                                       'FIELD_NAME':'rvhName','FIELD_TYPE':2,'FIELD_LENGTH':20,'FIELD_PRECISION':0,
                                                       'FORMULA':'\'sub\' +to_string(to_int(\"SubId\")) ','OUTPUT':"memory:"})['OUTPUT']
         else:
-             input_tojson = input_tojson
+             input_tojson = input_wgs_84
         
         for TOLERANCE in TOLERANCEs:                               
             input_wgs_84_simplify = processing.run("native:simplifygeometries", {
@@ -137,7 +146,22 @@ def create_geo_jason_file(processing,Input_Polygon_path):
                 
         with open(os.path.join(product_dir,'routing_product.geojson'), 'w', encoding='utf-8') as f:
             json.dump(output_jason, f, ensure_ascii=False, indent=4)
-     
+    else:
+        shutil.copy(created_jason_files[0], os.path.join(product_dir,'routing_product.geojson')) 
+        
+    if len(created_jason_files_lake_riv) > 1:
+        for i in range(0,len(created_jason_files_lake_riv)):
+            injson2 = load(open(created_jason_files_lake_riv[i]))
+            print(created_jason_files_lake_riv[i])
+            if i == 0:
+                output_jason_lake_riv = injson2
+            else:
+                output_jason_lake_riv['features'] += injson2['features']
+                
+        with open(os.path.join(product_dir,'routing_product_lake_river.geojson'), 'w', encoding='utf-8') as f:
+            json.dump(output_jason_lake_riv, f, ensure_ascii=False, indent=4)
+    else:
+        shutil.copy(created_jason_files_lake_riv[0], os.path.join(product_dir,'routing_product_lake_river.geojson'))             
     return 
     
 ##############
