@@ -256,14 +256,18 @@ def Calculate_Longest_flowpath(mainriv_merg_info):
     return Longestpath
 
 def remove_possible_small_subbasins(mapoldnew_info, area_thresthold = 1):
-    mapoldnew_info_new = mapoldnew_info.copy(deep=True)    
+    mapoldnew_info_new = mapoldnew_info.copy(deep=True)
+    
+    # get small subbasin that is not lake     
     small_sub_non_lake = mapoldnew_info[mapoldnew_info['BasArea']/1000/1000 < area_thresthold].copy(deep=True)
     small_sub_non_lake = small_sub_non_lake[small_sub_non_lake['Lake_Cat'] == 0].copy(deep=True)
     small_sub_non_lake_subid =small_sub_non_lake['SubId'].values
     
+    # check the gauge column name, in case it is v2.1 using Has_Gauge
     Gauge_col_Name = "Has_POI"
     if "Has_POI" not in mapoldnew_info.columns:
         Gauge_col_Name = "Has_Gauge"
+        
     ### process connected lakes  merge polygons
     for i in range(0, len(small_sub_non_lake)):
         small_sub_id = small_sub_non_lake['SubId'].values[i]
@@ -273,14 +277,15 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold = 1):
         small_sub_is_head_water_sub = len(mapoldnew_info[mapoldnew_info['DowSubId'] == small_sub_id]) == 0
         
         small_sub_is_not_Lake = small_sub_non_lake['Lake_Cat'].values[i] == 0
-        small_sub_is_not_gauge = small_sub_non_lake[Gauge_col_Name].values[i] == 0
+        small_sub_is_not_gauge = small_sub_non_lake[Gauge_col_Name].values[i] <= 0
         
         down_sub_info = mapoldnew_info[mapoldnew_info['SubId'] == small_downsub_id].copy(deep = True)
         upstream_sub_info =  mapoldnew_info[mapoldnew_info['DowSubId'] == small_sub_id].copy(deep = True)
         upstream_sub_info_same_seg = upstream_sub_info[upstream_sub_info['Seg_ID'] == small_sub_seg_id].copy(deep=True)
         
+        
+        # check if it has the same segment id with downstream subbasin         
         if len(down_sub_info) > 0:
-            #it is a lake inlet subbasin, can be merged into the lake 
             has_down_sub = True                
             if down_sub_info['Seg_ID'].values[0] == small_sub_seg_id:
                 down_sub_has_same_seg_id = True
@@ -290,6 +295,7 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold = 1):
             has_down_sub = False
             down_sub_has_same_seg_id = False
         
+        # check if it has the same segment id with upstream subbasin 
         if len(upstream_sub_info) > 0:
             has_upstream = True
 
@@ -301,7 +307,8 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold = 1):
         else:
             has_upstream = False 
             up_sub_has_same_seg_id = False
-                
+        
+        # if down stream sub is a lake sub, the seg_id was changed to the lake outlet subid 
         if has_down_sub and down_sub_has_same_seg_id and small_sub_is_not_Lake and small_sub_is_not_gauge: 
             tarinfo = down_sub_info
             modify = True
@@ -321,15 +328,14 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold = 1):
             modify = False 
             tarinfo = [] 
             continue 
-            
-                   
+         
         if  modify:
             target_sub_is_head_water_sub =  len(mapoldnew_info[mapoldnew_info['DowSubId'] == tarinfo['SubId'].values[0]]) == 0
             target_sub_has_less_one_up_stream = len(mapoldnew_info[ (mapoldnew_info['DowSubId'] == tarinfo['SubId'].values[0]) & (mapoldnew_info['Lake_Cat']  < 2)]) <= 1
 
             mask1 = mapoldnew_info['SubId'] == small_sub_id
             mask2 = (
-                mapoldnew_info["nsubid"] == tarinfo["nsubid"].values[0]
+                mapoldnew_info_new["nsubid"] == tarinfo["nsubid"].values[0]
             )  ###for subbasin already processed to drainage into this target catchment
             mask = np.logical_or(mask1, mask2)
 
@@ -349,7 +355,6 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold = 1):
                 
                 elif col == 'DowSubId':
                     mapoldnew_info_new.loc[mask,col] = ndown_subid
-                    
                 elif (
                     col == "nsubid"
                     or col == "ndownsubid"
@@ -2670,13 +2675,16 @@ def update_topology(mapoldnew_info, UpdateStreamorder=1, UpdateSubId=1):
                 ].values[0]
             else:
                 mapoldnew_info.loc[idx[i], "ndownsubid"] = -1
-
+            
+            if nsubid == mapoldnew_info.loc[idx[i], "ndownsubid"]:
+                mapoldnew_info.loc[idx[i], "ndownsubid"] = -1
+        
         mapoldnew_info["Old_SubId"] = mapoldnew_info["SubId"].values
         mapoldnew_info["Old_DowSubId"] = mapoldnew_info["DowSubId"].values
         mapoldnew_info["SubId"] = mapoldnew_info["nsubid"].values
 
         mapoldnew_info["DowSubId"] = mapoldnew_info["ndownsubid"].values
-
+                    
     if UpdateStreamorder < 0:
         return mapoldnew_info
 
