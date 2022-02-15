@@ -195,7 +195,14 @@ def simplify_routing_structure_by_filter_lakes_arcgis(
             mapoldnew_info, finalcat_ply, Un_Selected_Non_ConnL_info
         )
     )
-    
+
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'HyLakeId'] = 0
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'Lake_Cat'] = 0
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'LakeVol'] = 0
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'LakeDepth'] = 0
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'LakeArea'] = 0
+    mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'Laketype'] = 0
+        
     # update topology for new attribute table
     mapoldnew_info = UpdateTopology(mapoldnew_info, UpdateStreamorder=-1)
     mapoldnew_info = update_non_connected_catchment_info(mapoldnew_info)

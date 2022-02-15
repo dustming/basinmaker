@@ -152,7 +152,17 @@ def combine_catchments_covered_by_the_same_lake_qgis(
         finalrivply_info
     )
     
-    mapoldnew_info.loc[mapoldnew_info['Lake_Cat'] > 0,'RivLength'] = 0
+    mapoldnew_info.loc[mapoldnew_info['Lake_Cat'] > 0,'RivLength'] = -1.2345
+    mapoldnew_info.loc[mapoldnew_info['Lake_Cat'] > 0,'RivSlope'] = -1.2345
+    mapoldnew_info.loc[mapoldnew_info['Lake_Cat'] > 0,'FloodP_n'] = -1.2345
+    mapoldnew_info.loc[mapoldnew_info['Lake_Cat'] > 0,'Ch_n'] = -1.2345
+    mapoldnew_info.loc[mapoldnew_info['Lake_Cat'] > 0,'Max_DEM'] = -1.2345
+    mapoldnew_info.loc[mapoldnew_info['Lake_Cat'] > 0,'Min_DEM'] = -1.2345
+    
+    if 'DA_Chn_L' in mapoldnew_info.columns:
+        mapoldnew_info.loc[mapoldnew_info['DA_Chn_L'] > 0,'RivLength'] = -1.2345
+        mapoldnew_info.loc[mapoldnew_info['DA_Chn_Slp'] > 0,'RivLength'] = -1.2345
+
     # update topology for new attribute table
     update_topology(mapoldnew_info, UpdateStreamorder=-1)
 

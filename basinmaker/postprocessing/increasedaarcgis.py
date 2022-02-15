@@ -153,8 +153,10 @@ def simplify_routing_structure_by_drainage_area_arcgis(
 
     finalriv_infoply = pd.DataFrame.spatial.from_featureclass(Path_final_rviply)
     finalriv_inforiv = pd.DataFrame.spatial.from_featureclass(Path_final_riv)
-    Conn_Lakes_ply = pd.DataFrame.spatial.from_featureclass(Path_Conl_ply)
-
+    if Path_Conl_ply != '#':
+        Conn_Lakes_ply = pd.DataFrame.spatial.from_featureclass(Path_Conl_ply)
+    else:
+        Conn_Lakes_ply = pd.DataFrame(np.full((10,1),-9999),columns=["Hylak_id"])
 
     # change attribute table
     (

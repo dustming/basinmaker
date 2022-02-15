@@ -11,6 +11,7 @@ from basinmaker.utilities.utilities import *
 import tempfile
 from json import load, JSONEncoder
 import json
+import shutil
 
 def qgis_raster_gdal_warpreproject(processing, Input, TARGET_CRS, Output):
     """Functions reproject raster layer
@@ -132,20 +133,20 @@ def create_geo_jason_file(processing,Input_Polygon_path):
             json_file_size = os.stat(output_jason_path).st_size/1024/1024 #to MB
             if json_file_size <= 100:
                 break
-    if len(created_jason_files) > 1:
-        for i in range(0,len(created_jason_files)):
-            injson = load(open(created_jason_files[i]))
-            if i == 0:
-                output_jason = injson
-            else:
-                output_jason['features'] += injson['features']
-                
-        with open(os.path.join(product_dir,'routing_product.geojson'), 'w', encoding='utf-8') as f:
-            json.dump(output_jason, f, ensure_ascii=False, indent=4)
-    else:
-        shutil.copy(created_jason_files[0], os.path.join(product_dir,'routing_product.geojson')) 
+    # if len(created_jason_files) > 1 and os.stat(os.path.join(product_dir,Output_file_name[0])).st_size/1024/1024 < 500::
+    #     for i in range(0,len(created_jason_files)):
+    #         injson = load(open(created_jason_files[i]))
+    #         if i == 0:
+    #             output_jason = injson
+    #         else:
+    #             output_jason['features'] += injson['features']
+    # 
+    #     with open(os.path.join(product_dir,'routing_product.geojson'), 'w', encoding='utf-8') as f:
+    #         json.dump(output_jason, f, ensure_ascii=False, indent=4)
+    # else:
+    #     shutil.copy(created_jason_files[0], os.path.join(product_dir,'routing_product.geojson')) 
         
-    if len(created_jason_files_lake_riv) > 1:
+    if len(created_jason_files_lake_riv) > 1 and os.stat(os.path.join(product_dir,Output_file_name[0])).st_size/1024/1024 < 500:
         for i in range(0,len(created_jason_files_lake_riv)):
             injson2 = load(open(created_jason_files_lake_riv[i]))
             if 'finalcat_info_riv' in created_jason_files_lake_riv[i]:
@@ -622,18 +623,27 @@ def copy_data_and_dissolve(all_subids,tempfolder,processing,Path_Temp_final_rvip
         Path_final_rviply_out = os.path.join(OutputFolder, os.path.basename(Path_final_rviply_input))
         Path_final_rvi_out = os.path.join(OutputFolder, os.path.basename(Path_final_rvi_input))
         
-                
-    Clean_Attribute_Name(Path_final_rvi, COLUMN_NAMES_CONSTANT_CLEAN)
+    COLUMN_NAMES_CONSTANT_CLEAN_RIV = COLUMN_NAMES_CONSTANT_CLEAN.copy()
+    COLUMN_NAMES_CONSTANT_CLEAN_RIV.remove('centroid_x') 
+    COLUMN_NAMES_CONSTANT_CLEAN_RIV.remove('centroid_y')  
+    Clean_Attribute_Name(Path_final_rvi, COLUMN_NAMES_CONSTANT_CLEAN_RIV)
     Clean_Attribute_Name(Path_final_rviply, COLUMN_NAMES_CONSTANT_CLEAN)
     
                     
-    qgis_vector_dissolve(
+    riv_dissolve = qgis_vector_dissolve(
         processing,
         context,
         INPUT=Path_final_rvi,
         FIELD=["SubId"],
-        OUTPUT=Path_final_rvi_out,
-    )
+        OUTPUT="memory:",# Path_final_rvi_out,
+    )["OUTPUT"]
+
+    processing.run("native:extractbyexpression", {
+                    'INPUT':riv_dissolve,
+                    'EXPRESSION':' \"Lake_Cat\" > 0  OR  \"RivLength\" > 0',
+                    'OUTPUT':Path_final_rvi_out}
+                    )
+
     ply_draft = qgis_vector_dissolve(
         processing,
         context,
@@ -716,7 +726,6 @@ def Copy_Pddataframe_to_shpfile_main(
         )
         path_to_temp_files.append(path_of_i_temp_file)
 
-    print(path_to_temp_files)
     Parallel(n_jobs=ncores, verbose=1, backend="threading")(
         delayed(Copy_Pddataframe_to_shpfile)(temp_file,Pddataframe,
         link_col_nm_shp="SubId",link_col_nm_df="Old_SubId",UpdateColNM=["#"]
