@@ -461,14 +461,22 @@ def Area_Weighted_Mapping_Between_Two_Polygons_QGIS(
     Path_finalcat_hru_temp_dissolve_area = os.path.join(
         Output_Folder, "Overlay_Polygons.shp"
     )
+    
+    Target_Ply_mem = qgis_vector_fix_geometries(
+        processing, context, INPUT=Target_Ply_Path, OUTPUT="memory:"
+    )["OUTPUT"]
 
+    Mapping_Ply_mem = qgis_vector_fix_geometries(
+        processing, context, INPUT=Mapping_Ply_Path, OUTPUT="memory:"
+    )["OUTPUT"]
+            
     ### create overlay betweeo two polygon and calcuate area of
     ### each new polygon in the overlay
     qgis_vector_union_two_layers(
         processing=processing,
         context=context,
-        INPUT=Target_Ply_Path,
-        OVERLAY=Mapping_Ply_Path,
+        INPUT=Target_Ply_mem,
+        OVERLAY=Mapping_Ply_mem,
         OVERLAY_FIELDS_PREFIX="Map_",
         OUTPUT=Path_finalcat_hru_temp,
     )["OUTPUT"]

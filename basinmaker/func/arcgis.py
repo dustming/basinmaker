@@ -90,8 +90,8 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
             ["SubId_1", "Id","nsubid2", "nsubid","ndownsubid","Old_SubId","Old_DowSub","Join_Count","TARGET_FID","Id","SubID_Oldr","HRU_ID_N_1","HRU_ID_N_2","facters"]
         )
     
-    if "finalcat_info" in cat_name:
-        create_geo_jason_file(os.path.join(OutputFolder,cat_name))
+    # if "finalcat_info" in cat_name:
+    #     create_geo_jason_file(os.path.join(OutputFolder,cat_name))
     
 def clean_attribute_name_arcgis(table,names):
     remove_column_names = table.columns[np.logical_not(np.isin(table.columns,names))]

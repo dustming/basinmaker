@@ -168,9 +168,7 @@ def update_non_connected_catchment_info(catinfo):
         catinfo.loc[catinfo["SubId"] == c_subid, "Seg_order"] = d_sub_info[
             "Seg_order"
         ].values[0]
-        catinfo.loc[catinfo["SubId"] == c_subid, "Max_DEM"] = -1.2345
-        catinfo.loc[catinfo["SubId"] == c_subid, "Min_DEM"] = -1.2345
-        catinfo.loc[catinfo["SubId"] == c_subid, "FloodP_n"] = -1.2345
+
     return catinfo
 
 
@@ -316,20 +314,26 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold = 1):
             up_sub_has_same_seg_id = False
         
         # if down stream sub is a lake sub, the seg_id was changed to the lake outlet subid 
-        if has_down_sub and down_sub_has_same_seg_id and small_sub_is_not_Lake and small_sub_is_not_gauge: 
-            tarinfo = down_sub_info
+        if has_down_sub and down_sub_has_same_seg_id and small_sub_is_not_Lake and small_sub_is_not_gauge:
+#            tarinfo = down_sub_info 
+            tarinfo =  mapoldnew_info_new[mapoldnew_info_new['SubId'] == down_sub_info['SubId'].values[0]].copy(deep = True) 
             modify = True
-            ndown_subid = down_sub_info['DowSubId'].values[0]
+            down_sub_info_2 = mapoldnew_info_new[mapoldnew_info_new['SubId'] == down_sub_info['SubId'].values[0]].copy(deep = True)
+            ndown_subid = down_sub_info_2['DowSubId'].values[0]
             
         elif has_upstream and up_sub_has_same_seg_id and small_sub_is_not_Lake and small_sub_is_not_gauge:
-            tarinfo = upstream_sub_info_same_seg
+#            tarinfo = upstream_sub_info_same_seg
+            tarinfo = mapoldnew_info_new[mapoldnew_info_new['SubId'] == upstream_sub_info_same_seg['SubId'].values[0]].copy(deep = True) 
             modify = True
-            ndown_subid = small_downsub_id
+            current_sub_info_2 = mapoldnew_info_new[mapoldnew_info_new['SubId'] == small_sub_id].copy(deep = True)
+            ndown_subid = current_sub_info_2['DowSubId'].values[0]
         
         elif len(mapoldnew_info[mapoldnew_info['Seg_ID'] == small_sub_seg_id]) == 1 and has_down_sub:
-            tarinfo = down_sub_info
+#            tarinfo = down_sub_info
+            tarinfo =  mapoldnew_info_new[mapoldnew_info_new['SubId'] == down_sub_info['SubId'].values[0]].copy(deep = True)             
             modify = True
-            ndown_subid = down_sub_info['DowSubId'].values[0]            
+            down_sub_info_2 = mapoldnew_info_new[mapoldnew_info_new['SubId'] == small_downsub_id].copy(deep = True)            
+            ndown_subid = down_sub_info_2['DowSubId'].values[0]            
          
         else:
             modify = False 
@@ -350,7 +354,17 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold = 1):
                 print(small_sub_id,small_sub_seg_id)
                 print(tarinfo[['SubId','DowSubId','Seg_ID','HyLakeId']])
                 
-                            
+            # if small_sub_id == 37567 or small_sub_id ==37185:
+            #     print("###################################a")
+            #     print(small_sub_id)
+            #     print(tarinfo["nsubid"].values[0])
+            #     print(mapoldnew_info_new.loc[mask,"nsubid"].values)                
+            #     print(mapoldnew_info_new.loc[mask,"SubId"].values)
+            #     print(mapoldnew_info_new.loc[mask,"DowSubId"].values)
+            #     print(mapoldnew_info_new.loc[mask,"BasArea"].values)
+            #     print(ndown_subid)                
+            #     print("###################################a") 
+                               
             for col in tarinfo.columns:
                 if col == "BasArea":
                 
@@ -384,6 +398,15 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold = 1):
                     if "DA_Chn_L" in mapoldnew_info_new.columns:
                         mapoldnew_info_new.loc[mask, "DA_Chn_L"] = -1.2345
                         mapoldnew_info_new.loc[mask, "DA_Chn_Slp"] = -1.2345
+                        
+            # if small_sub_id == 37567 or small_sub_id ==37185:
+            #     print("###################################b")
+            #     print(small_sub_id)
+            #     print(mapoldnew_info_new.loc[mask,"nsubid"].values)
+            #     print(mapoldnew_info_new.loc[mask,"SubId"].values)
+            #     print(mapoldnew_info_new.loc[mask,"DowSubId"].values)
+            #     print(mapoldnew_info_new.loc[mask,"BasArea"].values)
+            #     print("###################################b") 
          
     return mapoldnew_info_new                    
         
