@@ -5,6 +5,8 @@ import pandas as pd
 from scipy.optimize import curve_fit
 from basinmaker.utilities.utilities import *
 import numbers
+from joblib import Parallel, delayed
+import tempfile
 
 def simplidfy_hrus(min_hru_pct_sub_area,hruinfo,importance_order):
     
@@ -2844,7 +2846,7 @@ def return_interest_catchments_info(catinfo, outlet_obs_id, path_sub_reg_outlets
     Gauge_col_Name = "Has_POI"
     if "Has_POI" not in catinfo.columns:
         Gauge_col_Name = "Has_Gauge"
-        
+    
     if path_sub_reg_outlets_v != "#":
 
         Sub_reg_outlets = Dbf_To_Dataframe(path_sub_reg_outlets_v)["reg_subid"].values
@@ -2902,3 +2904,111 @@ def return_interest_catchments_info(catinfo, outlet_obs_id, path_sub_reg_outlets
 
         catinfo = catinfo.loc[catinfo["SubId"].isin(HydroBasins)]
         return catinfo
+
+def create_grid_weight_main(Mapforcing,Forcinfo):
+    
+    grid_weight_string_list = []
+    hruids = Mapforcing["HRU_ID"].values
+    hruids = np.unique(hruids)
+    #    Lakeids = np.unique(Lakeids)
+    grid_weight_string_list = []
+    
+    os.environ["JOBLIB_TEMP_FOLDER"] = tempfile.gettempdir()    
+
+
+    grid_weight_string_list.append(":GridWeights")    
+    grid_weight_string_list.append("   #      ") 
+    grid_weight_string_list.append("   # [# HRUs]") 
+    
+    sNhru = len(hruids)
+    grid_weight_string_list.append("   :NumberHRUs       " + str(sNhru))     
+
+    sNcell = (max(Forcinfo["Row"].values) + 1) * (max(Forcinfo["Col"].values) + 1)
+    grid_weight_string_list.append("   :NumberGridCells  " + str(sNcell))
+    grid_weight_string_list.append("   #            ")
+    grid_weight_string_list.append("   # [HRU ID] [Cell #] [w_kl]")
+    max_col = max(Forcinfo["Col"].values)
+    Avafgid = Forcinfo["FGID"].values
+    # for id in hruids:
+    #     grid_weight_string_ihru = create_grid_weight_hru(i,Mapforcing,Forcinfo)
+    #     grid_weight_string_list.append(grid_weight_string_ihru)
+    n_hru_group = int(len(hruids)/10)
+    
+    if len(hruids) > 1000:
+        hru_ids_groups = np.array_split(hruids, n_hru_group)
+    else:
+        hru_ids_groups = [hruids]
+
+    for i in range(0,len(hru_ids_groups)):
+        i_hru_group = hru_ids_groups[i]
+        grid_weight_string_hrusi = Parallel(n_jobs=4)(delayed(create_grid_weight_hru)(i,Mapforcing.copy(deep=True),Avafgid,max_col) for i in i_hru_group)
+        grid_weight_string_list = grid_weight_string_list + grid_weight_string_hrusi
+    
+    grid_weight_string_list.append(":EndGridWeights")
+    grid_weight_string = "\n".join(grid_weight_string_list)
+    return grid_weight_string
+    
+def create_grid_weight_hru(hruid,Mapforcing,Avafgid,max_col):
+    
+    grid_weight_string_hru = ' '
+    
+    cats = Mapforcing.loc[Mapforcing["HRU_ID"] == hruid].copy(deep=True)
+
+#    cats = cats_hru[cats_hru["Map_FGID"].isin(Avafgid)].copy(deep=True)
+
+    if len(cats) <= 0:
+        cats = Mapforcing.loc[Mapforcing["HRU_ID"] == hruid].copy(deep=True)
+        print("Following Grid has to be inluded:.......")
+        print(cats["Map_FGID"])
+        return grid_weight_string_hru
+        
+    tarea = sum(cats["s_area"].values)
+    fids = cats["Map_FGID"].values
+    fids = np.unique(fids)
+    sumwt = 0.0
+    for j in range(0, len(fids)):
+        scat = cats[cats["Map_FGID"] == fids[j]]
+        if j < len(fids) - 1:
+            sarea = sum(scat["s_area"].values)
+            wt = float(sarea) / float(tarea)
+            sumwt = sumwt + wt
+        else:
+            wt = 1 - sumwt
+
+        if len(scat["Map_Row"].values) > 1:  ## should be 1
+            print(
+                str(catid)
+                + "error: 1 hru, 1 grid, produce muti polygon need to be merged "
+            )
+            Strcellid = (
+                str(
+                    int(
+                        scat["Map_Row"].values[0]
+                        * (max_col + 1)
+                        + scat["Map_Col"].values[0]
+                    )
+                )
+                + "      "
+            )
+        else:
+            Strcellid = (
+                str(
+                    int(
+                        scat["Map_Row"].values[0]
+                        * (max_col + 1)
+                        + scat["Map_Col"].values[0]
+                    )
+                )
+                + "      "
+            )
+        if len(fids) == 1:
+            grid_weight_string_hru = grid_weight_string_hru + "    " + str(int(hruid)) + "     " + Strcellid + "      " + str(wt)
+        else:
+            if j  == len(fids) - 1:
+                grid_weight_string_hru = grid_weight_string_hru + "    " + str(int(hruid)) + "     " + Strcellid + "      " + str(wt) 
+            else:
+                grid_weight_string_hru = grid_weight_string_hru + "    " + str(int(hruid)) + "     " + Strcellid + "      " + str(wt) + "\n"
+                
+    return grid_weight_string_hru
+
+    

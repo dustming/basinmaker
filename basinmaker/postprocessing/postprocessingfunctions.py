@@ -411,5 +411,16 @@ def generate_area_weight_of_two_polygons(
             qgis_prefix_path = qgis_prefix_path,
         )
 
+    if gis_platform == "arcgis":
+        from basinmaker.postprocessing.gridweightarcgis import (
+            Area_Weighted_Mapping_Between_Two_Polygons_Arcgis,
+        )
+        Area_Weighted_Mapping_Between_Two_Polygons_Arcgis(
+            Target_Ply_Path=target_polygon_path,
+            Mapping_Ply_Path=mapping_polygon_path,
+            Col_NM=col_nm,
+            Output_Folder=output_folder,
+        )
+        
 
 

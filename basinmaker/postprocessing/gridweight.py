@@ -481,16 +481,27 @@ def Area_Weighted_Mapping_Between_Two_Polygons_QGIS(
         OUTPUT=Path_finalcat_hru_temp,
     )["OUTPUT"]
 
-    processing.run(
+    finalcat_hru_temp2 = processing.run(
         "native:extractbyattribute",
         {
             "INPUT": Path_finalcat_hru_temp,
             "FIELD": "HRU_ID",
             "OPERATOR": 2,
             "VALUE": "0",
+            "OUTPUT": "memory:",
+        },
+    )["OUTPUT"]
+    processing.run(
+        "native:extractbyattribute",
+        {
+            "INPUT": finalcat_hru_temp2,
+            "FIELD": "Map_FGID",
+            "OPERATOR": 2,
+            "VALUE": "0",
             "OUTPUT": Path_finalcat_hru_temp2,
         },
     )
+        
     processing.run(
         "native:dissolve",
         {
@@ -519,92 +530,9 @@ def Area_Weighted_Mapping_Between_Two_Polygons_QGIS(
     dbf2 = Dbf5(Path_finalcat_hru_temp_dissolve_area[:-3] + "dbf")
     Mapforcing = dbf2.to_dataframe()
     Mapforcing = Mapforcing.loc[Mapforcing[Col_NM] > 0]  ### remove
-
-    ####
-    hruids = Mapforcing["HRU_ID"].values
-    hruids = np.unique(hruids)
-    #    Lakeids = np.unique(Lakeids)
-    ogridforc = open(os.path.join(Output_Folder, "GriddedForcings2.txt"), "w")
-    ogridforc.write(":GridWeights" + "\n")
-    ogridforc.write("   #      " + "\n")
-    ogridforc.write("   # [# HRUs]" + "\n")
-    sNhru = len(hruids)
-
-    ogridforc.write("   :NumberHRUs       " + str(sNhru) + "\n")
-    sNcell = (max(Forcinfo["Row"].values) + 1) * (max(Forcinfo["Col"].values) + 1)
-    ogridforc.write("   :NumberGridCells  " + str(sNcell) + "\n")
-    ogridforc.write("   #            " + "\n")
-    ogridforc.write("   # [HRU ID] [Cell #] [w_kl]" + "\n")
-
-    for i in range(len(hruids)):
-        hruid = hruids[i]
-        cats = Mapforcing.loc[Mapforcing["HRU_ID"] == hruid]
-        cats = cats[cats["Map_FGID"].isin(Avafgid)]
-
-        if len(cats) <= 0:
-            cats = Mapforcing.loc[Mapforcing["HRU_ID"] == hruid]
-            print("Following Grid has to be inluded:.......")
-            print(cats["Map_FGID"])
-        tarea = sum(cats["s_area"].values)
-        fids = cats["Map_FGID"].values
-        fids = np.unique(fids)
-        sumwt = 0.0
-        for j in range(0, len(fids)):
-            scat = cats[cats["Map_FGID"] == fids[j]]
-            if j < len(fids) - 1:
-                sarea = sum(scat["s_area"].values)
-                wt = float(sarea) / float(tarea)
-                sumwt = sumwt + wt
-            else:
-                wt = 1 - sumwt
-
-            if len(scat["Map_Row"].values) > 1:  ## should be 1
-                print(
-                    str(catid)
-                    + "error: 1 hru, 1 grid, produce muti polygon need to be merged "
-                )
-                Strcellid = (
-                    str(
-                        int(
-                            scat["Map_Row"].values[0]
-                            * (max(Forcinfo["Col"].values) + 1 + misscol)
-                            + scat["Map_Col"].values[0]
-                        )
-                    )
-                    + "      "
-                )
-            else:
-                Strcellid = (
-                    str(
-                        int(
-                            scat["Map_Row"].values
-                            * (max(Forcinfo["Col"].values) + 1)
-                            + scat["Map_Col"].values
-                        )
-                    )
-                    + "      "
-                )
-
-            ogridforc.write(
-                "    "
-                + str(int(hruid))
-                + "     "
-                + Strcellid
-                + "      "
-                + str(wt)
-                + "\n"
-            )
-    #        arcpy.AddMessage(cats)
-    ogridforc.write(":EndGridWeights")
-    ogridforc.close()
-    ########
-    # /* example of calcuate grid index
-    #           0    1    2    3    4
-    #       0    0    1    2    3    4
-    #       1    5    6    7    8    9
-    #       2    10    11    12    13    14
-    #       3    15    16    17    18    19
-    ##  we have 4 rows (0-3) and 5 cols (0-4), the index of each cell
-    #   should be calaulated by row*(max(colnums)+1) + colnum.
-    #   for example row =2, col=0, index = 2*(4+1)+0 = 10
-    #   for example row 3, col 3, index = 3*(4+1)+3 = 18
+    Mapforcing = Mapforcing.loc[Mapforcing["Map_FGID"] > 0]  ### remove
+    Mapforcing = Mapforcing.loc[Mapforcing["s_area"] > 0.000001]  ### remove
+    
+    grid_weight_string = create_grid_weight_main(Mapforcing,Forcinfo)
+    grid_weight_file_path = os.path.join(Output_Folder, "GriddedForcings2.txt")
+    WriteStringToFile(grid_weight_string, grid_weight_file_path, "w")
