@@ -58,7 +58,8 @@ def Download_Routing_Product_For_One_Gauge(gauge_name,product_name):
                 url_veiw = url_veiw.split("/")
                 url = "https://drive.google.com/u/0/uc?id=%s&export=download"%(url_veiw[5])
                 output = 'drainage_region_%s_%s_%s.zip' % (region_id,subreg_id,version)
-                gdown.download(url, output, quiet=False)
+                        
+                os.system('gdown %s -O %s' % (url_veiw[5],output))
                 
                 os.system('unzip drainage_region_%s_%s_%s.zip' % (region_id,subreg_id,version))
                 SubId =  gauge_info_sl['SubId'].values[0]
@@ -76,7 +77,8 @@ def Download_Routing_Product_For_One_Gauge(gauge_name,product_name):
                 url_veiw = url_veiw.split("/")
                 url = "https://drive.google.com/u/0/uc?id=%s&export=download"%(url_veiw[5])
                 output = 'drainage_region_%s_%s_%s.zip' % (region_id,subreg_id,version)
-                gdown.download(url, output, quiet=False)
+                
+                os.system('gdown %s -O %s' % (url_veiw[5],output))
                 
                 os.system('unzip drainage_region_%s_%s_%s.zip' % (region_id,subreg_id,version))
                 SubId =  gauge_info_sl['SubId'].values[0]
