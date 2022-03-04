@@ -201,12 +201,11 @@ def simplify_routing_structure_by_drainage_area_purepy(
         non_conn_Lakes_ply = geopandas.read_file(Path_NonCon_Lake_ply)
         non_conn_Lakes_ply.to_file(os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply)))
     if len(Conn_Lakes_ply_not_select) > 0 and Path_NonCon_Lake_ply == '#':
-        
         if len(os.path.basename(Path_Conl_ply).split('_')) == 4:
             outlake_name = 'sl_non_connected_lake_' + os.path.basename(Path_Conl_ply).split('_')[3]
         else:
             outlake_name = 'sl_non_connected_lake.shp'
             
-        Conn_Lakes_ply_not_select.to_file(location=os.path.join(OutputFolder,outlake_name))
+        Conn_Lakes_ply_not_select.to_file(os.path.join(OutputFolder,outlake_name))
         
     return 
