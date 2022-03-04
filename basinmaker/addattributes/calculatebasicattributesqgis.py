@@ -368,7 +368,7 @@ def calculate_basic_attributes(
         map = outlet_pt_info,
         type = 'point',
         option = 'coor',
-        columns = ['outletLat','outletLng'],
+        columns = ['outletLng','outletLat'],
         overwrite=True,
     )  
     project_wgs84.close()

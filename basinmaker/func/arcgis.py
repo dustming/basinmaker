@@ -68,7 +68,7 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
     
     
     if riv_name != '#':
-        arcpy.CalculateGeometryAttributes_management(os.path.join(OutputFolder, cat_name), [["centroid_x", "CENTROID_X"], ["centroid_y", "CENTROID_Y"]])
+        arcpy.CalculateGeometryAttributes_management(os.path.join(OutputFolder, cat_name), [["centroid_x", "CENTROID_X"], ["centroid_y", "CENTROID_Y"]],coordinate_system = arcpy.SpatialReference(4326))
         cat_colnms = mapoldnew_info.columns
         drop_cat_colnms = cat_colnms[cat_colnms.isin(["SHAPE","SubId_1", "Id","nsubid2", "nsubid","ndownsubid","Old_DowSub","Join_Count","TARGET_FID","Id","SubID_Oldr","HRU_ID_N_1","HRU_ID_N_2","facters","Old_DowSubId"])]
         cat_pd = mapoldnew_info.drop(columns=drop_cat_colnms)
@@ -87,7 +87,7 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
         arcpy.Dissolve_management(os.path.join(tempfolder,'riv_attri.shp'), os.path.join(OutputFolder,riv_name), ["SubId"])
         arcpy.JoinField_management(os.path.join(OutputFolder,riv_name), "SubId", os.path.join(tempfolder,'riv_attri.shp'), "SubId")
         arcpy.DeleteField_management(os.path.join(OutputFolder,riv_name), 
-            ["SubId_1", "Id","nsubid2", "nsubid","ndownsubid","Old_SubId","Old_DowSub","Join_Count","TARGET_FID","Id","SubID_Oldr","HRU_ID_N_1","HRU_ID_N_2","facters"]
+            ["SubId_1", "Id","nsubid2", "nsubid","ndownsubid","Old_SubId","Old_DowSub","Join_Count","TARGET_FID","Id","SubID_Oldr","HRU_ID_N_1","HRU_ID_N_2","facters",'centroid_x','centroid_y']
         )
     
     # if "finalcat_info" in cat_name:
@@ -163,7 +163,7 @@ def create_geo_jason_file(Input_Polygon_path):
 
         if 'finalcat_info' in Input_file_name[i] or "finalcat_info_riv" in Input_file_name[i]:
             arcpy.AddField_management(input_wgs_84, 'rvhName', "TEXT")
-            arcpy.CalculateField_management(input_wgs_84, 'rvhName', "'Sub' + str(int(\"!SubId!\"))", "PYTHON3")
+            arcpy.CalculateField_management(input_wgs_84, 'rvhName', "'sub' + str(int(\"!SubId!\"))", "PYTHON3")
 
         arcpy.RepairGeometry_management(input_wgs_84)
 
@@ -185,19 +185,6 @@ def create_geo_jason_file(Input_Polygon_path):
             if json_file_size <= 100:
                 break                                
 
-    # if len(created_jason_files) > 1 and os.stat(os.path.join(product_dir,Output_file_name[0])).st_size/1024/1024 < 500:
-    #     for i in range(0,len(created_jason_files)):
-    #         injson = load(open(created_jason_files[i]))
-    #         if i == 0:
-    #             output_jason = injson
-    #         else:
-    #             output_jason['features'] += injson['features']
-    # 
-    #     with open(os.path.join(product_dir,'routing_product.geojson'), 'w', encoding='utf-8') as f:
-    #         json.dump(output_jason, f, ensure_ascii=False, indent=4)
-    # else:
-    #     shutil.copy(created_jason_files[0], os.path.join(product_dir,'routing_product.geojson')) 
-        
     if len(created_jason_files_lake_riv) > 1 and os.stat(os.path.join(product_dir,Output_file_name[1])).st_size/1024/1024 < 500:
         for i in range(0,len(created_jason_files_lake_riv)):
             injson2 = load(open(created_jason_files_lake_riv[i]))
