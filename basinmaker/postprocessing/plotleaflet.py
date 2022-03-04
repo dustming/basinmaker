@@ -16,11 +16,15 @@ def plot_routing_product_with_ipyleaflet(path_to_product_folder,version_number =
 
     subbasin = geopandas.read_file(path_subbasin)
     river = geopandas.read_file(path_river)
+    subbasin = subbasin.to_crs("EPSG:4326")
+    river = river.to_crs("EPSG:4326")
+
     if os.path.exists(path_cllake):
         cllake = geopandas.read_file(path_cllake)
+        cllake = cllake.to_crs("EPSG:4326")
     if os.path.exists(path_ncllake):
         ncllake = geopandas.read_file(path_ncllake)
-
+        ncllake = ncllake.to_crs("EPSG:4326")
 
     cx = subbasin['centroid_x'].mean()
     cy = subbasin['centroid_y'].mean()
