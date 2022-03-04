@@ -63,7 +63,7 @@ def Download_Routing_Product_For_One_Gauge(gauge_name,product_name):
                 
                 os.system('unzip drainage_region_%s_%s_%s.zip' % (region_id,subreg_id,version))
                 SubId =  gauge_info_sl['SubId'].values[0]
-                product_name = output
+                product_name = 'drainage_region_%s_%s_%s' % (region_id,subreg_id,version)
                 product_path = os.path.join(os.getcwd(),product_name)
                 print("The needed product locates at:",product_path)
                 print("The Subbasin Id of the interested gauge is:",SubId)
@@ -82,7 +82,7 @@ def Download_Routing_Product_For_One_Gauge(gauge_name,product_name):
                 
                 os.system('unzip drainage_region_%s_%s_%s.zip' % (region_id,subreg_id,version))
                 SubId =  gauge_info_sl['SubId'].values[0]
-                product_name =output
+                product_name ='drainage_region_%s_%s_%s' % (region_id,subreg_id,version)
                 product_path = os.path.join(os.getcwd(),product_name)
                 print("The needed product locates at:",product_path)
                 print("The Subbasin Id of the interested gauge is:",SubId)
