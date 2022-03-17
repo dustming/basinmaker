@@ -384,6 +384,7 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold = 1):
                     or col == "Old_SubId"
                     or col == "Old_DowSubId"
                     or col == "SHAPE"
+                    or col == "geometry"
                 ):
                     continue
                 else:
