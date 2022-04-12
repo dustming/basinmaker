@@ -43,7 +43,7 @@ def Download_Routing_Product_For_One_Gauge(gauge_name,product_name):
         gauge_info = pd.read_csv("https://github.com/dustming/RoutingTool/wiki/Files/OIH_gauge_info.csv")
         productinfo = pd.read_csv("https://github.com/dustming/RoutingTool/wiki/Files/OLRRP.csv")
         gauge_info_sl = gauge_info[gauge_info['Obs_NM'] == gauge_name]
-        if len(gauge_info_sl) < 1:
+        if len(gauge_info_sl) < 1 or gauge_info_sl['SubId'].values[0] < 0:
             print("The gauge ",gauge_name,"is not included in the routing product ")
             SubId = -1 
             product_path = '#'
@@ -55,6 +55,7 @@ def Download_Routing_Product_For_One_Gauge(gauge_name,product_name):
                 mask2 = productinfo['Sub_Reg'] == subreg_id
                 mask = np.logical_and(mask1,mask2)
                 url_veiw = productinfo.loc[mask,'Download'].values[0]
+                
                 url_veiw = url_veiw.split("/")
                 url = "https://drive.google.com/u/0/uc?id=%s&export=download"%(url_veiw[5])
                 output = 'drainage_region_%s_%s_%s.zip' % (region_id,subreg_id,version)
