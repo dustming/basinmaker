@@ -29,7 +29,8 @@ def Download_Routing_Product_From_Points_Or_LatLon(product_name,Lat = [-1],Lon =
             data_gpd = data_gpd.to_crs(product.crs)
             data_pt = geopandas.overlay(data_gpd, product, how='identity')
             Subid = data_pt['SubId'].values[0]
-            
+            print("The needed product locates at:",product_path)
+            print("The Subbasin Id of the lat, lon is:",Subid)
             return Subid,product_path 
 
         else:
