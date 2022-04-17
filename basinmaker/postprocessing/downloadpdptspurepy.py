@@ -17,7 +17,7 @@ def Download_Routing_Product_From_Points_Or_LatLon(product_name,Lat = [-1],Lon =
     
     if product_name == 'OLRP':
         version = 'v1-0'
-        Drainage_region = geopandas.read_file("C:/Users/dustm/Downloads/test/OLRRP_drainage_region3.geojson")
+        Drainage_region = geopandas.read_file("https://github.com/dustming/RoutingTool/wiki/Files/OLRRP_drainage_region.geojson")
     
         data_dr = geopandas.overlay(data_gpd, Drainage_region, how='identity')
         if len(data_dr) >= 1:
