@@ -52,8 +52,9 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
         drop_cat_colnms = cat_colnms[cat_colnms.isin(NEED_TO_REMOVE_IDS)]
         mapoldnew_info = mapoldnew_info.drop(columns=drop_cat_colnms)
         mapoldnew_info.to_file(os.path.join(OutputFolder,cat_name))
+        
+        create_geo_jason_file(os.path.join(OutputFolder,cat_name))
   
-    
     else: 
 
         mapoldnew_info = mapoldnew_info.dissolve(by=dis_col_name, aggfunc='first',as_index=False)
@@ -150,7 +151,84 @@ def add_centroid_in_wgs84(data,colx,coly):
     return out
     
 
+def create_geo_jason_file(Input_Polygon_path):
+
+
+    product_dir = os.path.dirname(Input_Polygon_path)
+    Names_in = os.path.basename(Input_Polygon_path).split('_')
+    n_charc = len(Names_in)
+    version  = Names_in[n_charc - 1][0:4]
+    TOLERANCEs = [0.0001,0.0005,0.001,0.005,0.01,0.05]
+
+
+    head_name_cat = "finalcat_info"
+    head_name_riv = "finalcat_info_riv"
+    head_name_slake = "sl_connected_lake"
+    head_name_nlake = "sl_non_connected_lake"
+
+    Input_file_name = []
+    Output_file_name = []                            
+    if 'v' in version:
+        Input_file_name = [
+                           head_name_cat + "_"+version+'.shp',
+                           head_name_riv + "_"+version+'.shp',
+                           head_name_slake + "_"+version+'.shp',
+                           head_name_nlake + "_"+version+'.shp',
+                           ]
+        Output_file_name = [
+                           head_name_cat + "_"+version+'.geojson',
+                           head_name_riv + "_"+version+'.geojson',
+                           head_name_slake + "_"+version+'.geojson',
+                           head_name_nlake + "_"+version+'.geojson',
+                           ]
+    else:
+        Input_file_name = [
+                           head_name_cat +'.shp',
+                           head_name_riv +'.shp',
+                           head_name_slake +'.shp',
+                           head_name_nlake +'.shp',
+                           ]
+        Output_file_name = [
+                           head_name_cat +'.geojson',
+                           head_name_riv +'.geojson',
+                           head_name_slake +'.geojson',
+                           head_name_nlake +'.geojson',
+                           ]
+    created_jason_files = []   
+    created_jason_files_lake_riv = [] 
     
+    for i  in  range(0,len(Input_file_name)):
+        input_path = os.path.join(product_dir,Input_file_name[i])
+        output_jason_path = os.path.join(product_dir,Output_file_name[i])
+        if not os.path.exists(input_path):
+            continue 
+        created_jason_files.append(output_jason_path) 
+        
+        if 'finalcat_info_riv' in Input_file_name[i] or 'connected_lake' in Input_file_name[i]:
+            created_jason_files_lake_riv.append(output_jason_path)  
+                            
+        # reproject to WGS84
+        input_pd = geopandas.read_file(input_path)
+        
+        input_wgs_84 = input_pd.to_crs('EPSG:4326') 
+
+        
+        
+        if 'finalcat_info' in Input_file_name[i] or "finalcat_info_riv" in Input_file_name[i]:
+            input_wgs_84['rvhName'] = input_wgs_84['SubId'].astype(int).astype(str)
+            
+        
+        input_tojson = input_wgs_84
+        
+        for TOLERANCE in TOLERANCEs:                               
+            input_tojson['geometry'] = input_tojson.simplify(TOLERANCE)
+            input_tojson.to_file(output_jason_path, driver="GeoJSON") 
+
+            json_file_size = os.stat(output_jason_path).st_size/1024/1024 #to MB
+            if json_file_size <= 100:
+                break
+                                
+    return     
     
     
     
