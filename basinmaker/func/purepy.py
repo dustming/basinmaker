@@ -39,7 +39,8 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
         cat_colnms = riv_pd.columns
         drop_cat_colnms = cat_colnms[cat_colnms.isin(NEED_TO_REMOVE_IDS)]
         riv_pd = riv_pd.drop(columns=drop_cat_colnms)
-        riv_pd.to_file(os.path.join(OutputFolder,riv_name))
+        if len(riv_pd) > 0:
+            riv_pd.to_file(os.path.join(OutputFolder,riv_name))
         
         mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'RivSlope'] = -1.2345
         mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'RivLength'] = -1.2345
