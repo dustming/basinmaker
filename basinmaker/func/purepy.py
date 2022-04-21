@@ -4,13 +4,19 @@ import os
 import pandas as pd 
 from json import load, JSONEncoder
 import json
+import requests
 
 def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,cat_name,riv_name,Path_final_riv,dis_col_name='SubId'):
 
 
     NEED_TO_REMOVE_IDS = ["SubId_1", "Id","nsubid2", "nsubid","ndownsubid","Old_SubId","Old_DowSub","Join_Count","TARGET_FID","Id","SubID_Oldr","HRU_ID_N_1","HRU_ID_N_2","facters","Old_DowSubId","SubIdt2"]
 
-    
+    #obtain readme file    
+    url = 'https://github.com/dustming/RoutingTool/wiki/Files/README.pdf'
+
+    response = requests.get(url)
+    with open(os.path.join(OutputFolder,"README.pdf"), 'wb') as f:
+        f.write(response.content)
     
     if riv_name != '#':
 
