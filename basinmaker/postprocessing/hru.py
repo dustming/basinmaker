@@ -7,7 +7,7 @@ import numpy as np
 import tempfile
 import os
 import importlib 
-
+import sqlite3
 
 def GenerateHRUS_qgis(
     Path_Subbasin_Ply,
@@ -1015,7 +1015,10 @@ def Union_Ply_Layers_And_Simplify(
                 
                 
                 if use_grass:
-
+                    con = sqlite3.connect(
+                        os.path.join(grassdb, grass_location, "PERMANENT", "sqlite", "sqlite.db")
+                    )
+                    
                     grass_layer_1 = qgis_vector_fix_geometries(
                         processing, context, INPUT=mem_union_fix_temp, OUTPUT=os.path.join(grassdb,'union_input_1_'+str(i)+'_.shp')
                     )["OUTPUT"]
@@ -1052,10 +1055,12 @@ def Union_Ply_Layers_And_Simplify(
                     # try to rename column names 
                     
                     #obtain current column names
-                    p = grass.start_command("db.columns",table = 'union_'+str(i),stdout=grass.PIPE)
-                    col_names = p.communicate()[0]
-                    col_names = str(col_names).rstrip().split('\\r\\n')
-                    
+                    # p = grass.start_command("db.columns",table = 'union_'+str(i),stdout=grass.PIPE)
+                    # col_names = p.communicate()[0]
+                    # col_names = str(col_names).rstrip().split('\\r\\n')
+                    sqlstat="SELECT * FROM %s" %('union_'+str(i))
+                    union_pd = pd.read_sql_query(sqlstat, con)
+                    col_names = union_pd.columns
                     # rename or delete the column
                     exist_names = []     
                     for icolnm in col_names:
@@ -1072,6 +1077,7 @@ def Union_Ply_Layers_And_Simplify(
                             )     
                                                        
                         exist_names.append(icolnm[2:].lower())    
+                        # print(exist_names,icolnm)
 
                     grass.run_command(
                         "v.out.ogr",
@@ -1081,7 +1087,8 @@ def Union_Ply_Layers_And_Simplify(
                         overwrite=True,
                     )
                     
-                    mem_union =  os.path.join(grassdb,'union_'+str(i)+'_.shp')                                           
+                    mem_union =  os.path.join(grassdb,'union_'+str(i)+'_.shp')
+                    con.close()                                           
                 else:                
 
                      mem_union = qgis_vector_union_two_layers(
