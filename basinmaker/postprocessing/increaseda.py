@@ -227,7 +227,7 @@ def simplify_routing_structure_by_drainage_area_qgis(
 
 
     # export lake polygons
-    if Path_Conl_ply != '#':
+    if Path_Conl_ply != '#' and len(Connected_Lake_Mainriv) > 0:
         Selectfeatureattributes(
             processing,
             Input=Path_Conl_ply,
@@ -235,7 +235,7 @@ def simplify_routing_structure_by_drainage_area_qgis(
             Attri_NM="Hylak_id",
             Values=Connected_Lake_Mainriv,
         )
-    if Path_Non_ConL_ply != '#':
+    if Path_Non_ConL_ply != '#' and len(Old_Non_Connect_LakeIds) >0:
         Selectfeatureattributes(
             processing,
             Input=Path_Non_ConL_ply,
