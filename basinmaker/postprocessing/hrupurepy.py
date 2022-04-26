@@ -224,7 +224,9 @@ def GenerateHRUS_purepy(
     lakehruinfo = geopandas.read_file(Sub_Lake_HRU_Layer)
     hru_lake_info = lakehruinfo.loc[lakehruinfo['HRU_IsLake'] > 0].copy()
     lakehruinfo_landhrus = lakehruinfo.loc[lakehruinfo['HRU_IsLake'] <= 0].copy()
-
+    
+    hru_lake_info = clean_geometry_purepy(hru_lake_info)
+    lakehruinfo_landhrus = clean_geometry_purepy(lakehruinfo_landhrus)
     # lakehruinfo_landhrus = lakehruinfo_landhrus.spatial.to_featureclass(
     #     location=os.path.join(tempfolder,'land_hrus.shp'),
     #     overwrite=True,sanitize_columns=False,
@@ -255,71 +257,77 @@ def GenerateHRUS_purepy(
 
     #### check which data will be inlucded to determine HRU
     if Path_Landuse_Ply != "#":
-        layer_path = Reproj_Clip_Dissolve_Simplify_Polygon_arcgis(
+        land_landuse_clean = Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
             layer_path = Path_Landuse_Ply, 
             Class_Col = Landuse_ID, 
             tempfolder = tempfolder,
-            mask_layer = os.path.join(tempfolder,'land_hrus.shp')
+            mask_layer = lakehruinfo_landhrus,
         )
-        
-        land_landuse = geopandas.overlay(lakehruinfo_landhrus, layer_path, how='union',make_valid = True,keep_geom_type = True)
+        land_landuse_clean = clean_geometry_purepy(land_landuse_clean)
+    
+        land_landuse = geopandas.overlay(lakehruinfo_landhrus, land_landuse_clean, how='union',make_valid = True,keep_geom_type = True)
         land_landuse = clean_geometry_purepy(land_landuse)
         dissolve_filedname_list.append(Landuse_ID)
+        print("Union  landuse polygon done")
     else:
         land_landuse = lakehruinfo_landhrus
 
     if Path_Soil_Ply != "#":
-        layer_path = Reproj_Clip_Dissolve_Simplify_Polygon_arcgis(
+        land_soil_clean = Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
             layer_path = Path_Soil_Ply, 
             Class_Col = Soil_ID, 
             tempfolder = tempfolder,
-            mask_layer = os.path.join(tempfolder,'land_hrus.shp')
+            mask_layer = lakehruinfo_landhrus,
         )
         
-        land_soil = geopandas.overlay(land_landuse, layer_path, how='union',make_valid = True,keep_geom_type = True)
+        land_soil = geopandas.overlay(land_landuse, land_soil_clean, how='intersection',make_valid = True,keep_geom_type = True)
         land_soil = clean_geometry_purepy(land_soil)
         dissolve_filedname_list.append(Soil_ID)
+        print("Union  Soil polygon done")
     else:
         land_soil = land_landuse
         
     if Path_Veg_Ply != "#":
-        layer_path = Reproj_Clip_Dissolve_Simplify_Polygon_arcgis(
+        land_veg_clean = Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
             layer_path = Path_Veg_Ply, 
             Class_Col = Veg_ID, 
             tempfolder = tempfolder,
-            mask_layer = os.path.join(tempfolder,'land_hrus.shp')
+            mask_layer = lakehruinfo_landhrus
         )
-        land_veg = geopandas.overlay(land_soil, layer_path, how='union',make_valid = True,keep_geom_type = True)
+        land_veg = geopandas.overlay(land_soil, land_veg_clean, how='intersection',make_valid = True,keep_geom_type = True)
         land_veg = clean_geometry_purepy(land_veg)        
         dissolve_filedname_list.append(Veg_ID)
+        print("Union Veg polygon done")
     else:
         land_veg = land_soil
                 
     if Path_Other_Ply_1 != "#":
-        layer_path = Reproj_Clip_Dissolve_Simplify_Polygon_arcgis(
+        land_o1_clean = Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
             layer_path = Path_Other_Ply_1, 
             Class_Col = Other_Ply_ID_1, 
             tempfolder = tempfolder,
-            mask_layer = os.path.join(tempfolder,'land_hrus.shp')
+            mask_layer = lakehruinfo_landhrus
         )        
         
-        land_o1 = geopandas.overlay(land_veg, layer_path, how='union',make_valid = True,keep_geom_type = True) 
+        land_o1 = geopandas.overlay(land_veg, land_o1_clean, how='intersection',make_valid = True,keep_geom_type = True) 
         land_o1 = clean_geometry_purepy(land_o1)       
         dissolve_filedname_list.append(Other_Ply_ID_1)
+        print("Union Other ply1 polygon done")
     else:
         land_o1 = land_veg
         
     if Path_Other_Ply_2 != "#":
-        layer_path = Reproj_Clip_Dissolve_Simplify_Polygon_arcgis(
+        land_o2_clean = Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
             layer_path = Path_Other_Ply_2, 
             Class_Col = Other_Ply_ID_2, 
             tempfolder = tempfolder,
-            mask_layer = os.path.join(tempfolder,'land_hrus.shp')
+            mask_layer = lakehruinfo_landhrus
         )        
         
-        land_o2 = geopandas.overlay(land_o1, layer_path, how='union',make_valid = True,keep_geom_type = True)
+        land_o2 = geopandas.overlay(land_o1, land_o2_clean, how='intersection',make_valid = True,keep_geom_type = True)
         land_o2 = clean_geometry_purepy(land_o2)        
         dissolve_filedname_list.append(Other_Ply_ID_2)
+        print("Union Other ply2 polygon done")
     else:
         land_o2 = land_o1
         
@@ -328,7 +336,8 @@ def GenerateHRUS_purepy(
     print("union done ")
 
     hru_land_info = land_o2
-     
+    hru_land_info = hru_land_info.loc[(hru_land_info['HRULake_ID'] > 0) | (hru_land_info['SubId'] > 0)]
+ 
     #####
 
     Landuse_info_data = pd.read_csv(Landuse_info)
@@ -393,6 +402,9 @@ def GenerateHRUS_purepy(
         ]
     )
     HRU_draf_final = clean_attribute_name_purepy(HRU_draf_final,COLUMN_NAMES_CONSTANT_HRU)
+    for col in [Landuse_ID,Soil_ID,Veg_ID,Other_Ply_ID_1,Other_Ply_ID_2,'SubId']:
+        HRU_draf_final = HRU_draf_final.loc[HRU_draf_final[col] != 0]
+            
     HRU_draf_final.to_file(os.path.join(OutputFolder,'finalcat_hru_info.shp'))
 
 def GeneratelandandlakeHRUS(
@@ -564,172 +576,6 @@ def GeneratelandandlakeHRUS(
 
 
 ############
-
-
-def Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
-    layer_path, Class_Col, tempfolder,mask_layer
-):
-    """Preprocess user provided polygons
-
-    Function that will reproject clip input polygon with subbasin polygon
-    and will dissolve the input polygon based on their ID, such as landuse id
-    or soil id.
-
-    Parameters
-    ----------
-    processing                        : qgis object
-    context                           : qgis object
-    layer_path                        : string
-        The path to a specific polygon, for example path to landuse layer
-    Project_crs                       : string
-        the EPSG code of a projected coodinate system that will be used to
-        calcuate HRU area and slope.
-    trg_crs                           : string
-        the EPSG code of a  coodinate system that will be used to
-        calcuate reproject input polygon
-    Class_Col                         : string
-        the column name in the input polygon (layer_path) that contains
-        their ID, for example land use ID or soil ID.
-    Layer_clip                        : qgis object
-        A shpfile with extent of the watershed, will be used to clip input
-        input polygon
-    Notes
-    -------
-        # TODO: May be add some function to simplify the input polygons
-                for example, remove the landuse type with small areas
-                or merge small landuse polygon into the surrounding polygon
-
-    Returns:
-    -------
-        layer_dis                  : qgis object
-            it is a polygon after preprocess
-    """
-    arcpy.Project_management(
-        layer_path,
-        os.path.join(tempfolder,Class_Col+"_proj.shp"), 
-        arcpy.Describe(mask_layer).spatialReference,
-        )
-    arcpy.Clip_analysis(
-        os.path.join(tempfolder,Class_Col+"_proj.shp"), 
-        mask_layer, 
-        os.path.join(tempfolder,Class_Col+"_clip.shp")
-    )
-    
-    arcpy.Dissolve_management(
-        os.path.join(tempfolder,Class_Col+"_clip.shp"), 
-        os.path.join(tempfolder,Class_Col+"_dislve.shp"), 
-        [Class_Col]
-    )
-    
-    arcpy.RepairGeometry_management(os.path.join(tempfolder,Class_Col+"_dislve.shp"))
-    
-    arcpy.AddSpatialIndex_management(os.path.join(tempfolder,Class_Col+"_dislve.shp"))
-
-    return os.path.join(tempfolder,Class_Col+"_dislve.shp")
-
-
-def Union_Ply_Layers_And_Simplify(
-    processing,
-    context,
-    Merge_layer_list,
-    dissolve_filedname_list,
-    fieldnames,
-    OutputFolder,
-):
-    """Union input QGIS polygon layers
-
-    Function will union polygon layers in Merge_layer_list
-    dissove the union result based on field name in
-    dissolve_filedname_list
-    and remove all field names not in fieldnames
-
-    Parameters
-    ----------
-    processing                        : qgis object
-    context                           : qgis object
-    Merge_layer_list                  : list
-        a list contain polygons layers needs to be unioned
-    dissolve_filedname_list           : list
-        a list contain column name of ID in each polygon layer
-        in Merge_layer_list
-    fieldnames                        : list
-        a list contain column names that are needed in the return
-        QGIS polygon layers
-    OutputFolder                      : String
-        The path to a folder to save result during the processing
-
-    Returns:
-    -------
-    mem_union_dis                  : qgis object
-        it is a polygon object that generated by overlay all input
-        layers
-    """
-    num = str(np.random.randint(1, 10000 + 1))
-    ##union polygons
-    if len(Merge_layer_list) == 1:
-        mem_union = Merge_layer_list[0]
-        mem_union_fix_ext = qgis_vector_fix_geometries(
-            processing, context, INPUT=mem_union, OUTPUT="memory:"
-        )["OUTPUT"]
-    elif len(Merge_layer_list) > 1:
-        for i in range(0, len(Merge_layer_list)):
-            if i == 0:
-                mem_union = Merge_layer_list[i]
-                mem_union_fix_ext = qgis_vector_fix_geometries(
-                    processing, context, INPUT=mem_union, OUTPUT="memory:"
-                )["OUTPUT"]
-                qgis_vector_create_spatial_index(processing, context, mem_union_fix_ext)
-            else:
-                mem_union_fix_temp = mem_union_fix_ext
-                del mem_union_fix_ext
-                mem_union = processing.run(
-                    "saga:polygonunion",
-                    {
-                        "A": mem_union_fix_temp,
-                        "B": Merge_layer_list[i],
-                        "SPLIT": True,
-                        "RESULT": "TEMPORARY_OUTPUT",
-                    },
-                    context=context,
-                )["RESULT"]
-                # mem_union = qgis_vector_union_two_layers(
-                #     processing,
-                #     context,
-                #     mem_union_fix_temp,
-                #     Merge_layer_list[i],
-                #     "memory:",
-                #     OVERLAY_FIELDS_PREFIX="",
-                # )["OUTPUT"]
-                mem_union_fix = qgis_vector_fix_geometries(
-                    processing, context, INPUT=mem_union, OUTPUT="memory:"
-                )["OUTPUT"]
-                mem_union_fix_ext = mem_union_fix
-                qgis_vector_create_spatial_index(processing, context, mem_union_fix_ext)
-    else:
-        print("No polygon needs to be overlaied.........should not happen ")
-
-    ## remove non interested filed
-    mem_union_fix_ext, temp_out_notused = Clean_Attribute_Name(
-        mem_union_fix_ext, fieldnames, Input_Is_Feature_In_Mem=True
-    )
-    mem_union_dis = mem_union_fix_ext
-    # qgis_vector_dissolve(
-    #     processing,
-    #     context,
-    #     INPUT=mem_union_fix_ext,
-    #     FIELD=dissolve_filedname_list,
-    #     OUTPUT=os.path.join(tempfile.gettempdir(),num + "_dissolve_union.shp")
-    # )
-    #
-    # mem_union_dis = qgis_vector_dissolve(
-    #     processing,
-    #     context,
-    #     INPUT=os.path.join(tempfile.gettempdir(),num + "_dissolve_union.shp"),
-    #     FIELD=dissolve_filedname_list,
-    #     OUTPUT="memory:",
-    # )["OUTPUT"]
-
-    return mem_union_dis
 
 
 def Define_HRU_Attributes_purepy(

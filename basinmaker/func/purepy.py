@@ -5,6 +5,64 @@ import pandas as pd
 from json import load, JSONEncoder
 import json
 import requests
+import shapely.wkt
+
+
+def Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
+    layer_path, Class_Col, tempfolder,mask_layer
+):
+    """Preprocess user provided polygons
+
+    Function that will reproject clip input polygon with subbasin polygon
+    and will dissolve the input polygon based on their ID, such as landuse id
+    or soil id.
+
+    Parameters
+    ----------
+    processing                        : qgis object
+    context                           : qgis object
+    layer_path                        : string
+        The path to a specific polygon, for example path to landuse layer
+    Project_crs                       : string
+        the EPSG code of a projected coodinate system that will be used to
+        calcuate HRU area and slope.
+    trg_crs                           : string
+        the EPSG code of a  coodinate system that will be used to
+        calcuate reproject input polygon
+    Class_Col                         : string
+        the column name in the input polygon (layer_path) that contains
+        their ID, for example land use ID or soil ID.
+    Layer_clip                        : qgis object
+        A shpfile with extent of the watershed, will be used to clip input
+        input polygon
+    Notes
+    -------
+        # TODO: May be add some function to simplify the input polygons
+                for example, remove the landuse type with small areas
+                or merge small landuse polygon into the surrounding polygon
+
+    Returns:
+    -------
+        layer_dis                  : qgis object
+            it is a polygon after preprocess
+    """
+        
+    new_crs = mask_layer.crs
+    data = geopandas.read_file(layer_path)
+    
+    projected = data.to_crs(new_crs)
+    clipped = projected.clip(mask_layer)
+    dissolved = clipped.dissolve(by=[Class_Col], aggfunc='first',as_index=False)
+    
+    cleaned = clean_geometry_purepy(dissolved)    
+
+    
+#    arcpy.RepairGeometry_management(os.path.join(tempfolder,Class_Col+"_dislve.shp"))
+    
+#    arcpy.AddSpatialIndex_management(os.path.join(tempfolder,Class_Col+"_dislve.shp"))
+
+    return cleaned
+
 
 def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,cat_name,riv_name,Path_final_riv,dis_col_name='SubId'):
 
@@ -124,6 +182,9 @@ def clean_attribute_name_purepy(table,names):
     return table 
     
 def clean_geometry_purepy(data):
+
+    data["geometry"] = data["geometry"].apply(lambda x: shapely.wkt.loads(shapely.wkt.dumps(x, rounding_precision=5)))
+
     narow = ~data['geometry'].isna()
     emrow = ~data.is_empty
     arearow = data.area > 0.00000001

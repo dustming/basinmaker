@@ -1595,42 +1595,44 @@ def Determine_HRU_Attributes(
         if hruid == 0 or Landuse_ID_num == 0 or Soil_ID_num == 0 or Veg_ID_num == 0:
             continue
             
-        if not isinstance(hruid, numbers.Number):
+        if not isinstance(hruid, numbers.Number) and hruid != hruid:
             continue   
-        
-        if isinstance(Attri_table.loc[Attri_table["HRU_ID"] == hruid][Landuse_ID].values[0],numbers.Number):   
+            
+        val = Attri_table.loc[Attri_table["HRU_ID"] == hruid][Landuse_ID].values[0]
+        if isinstance(val,numbers.Number) and val == val:   
             Attri_table.loc[i, Landuse_ID] = int(
                 Attri_table.loc[Attri_table["HRU_ID"] == hruid][Landuse_ID].values[0]
             )      
         else:
             Attri_table.loc[i, Landuse_ID] = 0 
             Attri_table.loc[i, "SubId"] = int(0)
-        
-        if isinstance(Attri_table.loc[Attri_table["HRU_ID"] == hruid][Veg_ID].values[0],numbers.Number):              
+            
+        val = Attri_table.loc[Attri_table["HRU_ID"] == hruid][Veg_ID].values[0]
+        if isinstance(val,numbers.Number) and val == val:              
             Attri_table.loc[i, Veg_ID] = int(
                 Attri_table.loc[Attri_table["HRU_ID"] == hruid][Veg_ID].values[0]
             )    
         else:
             Attri_table.loc[i, Veg_ID] = 0 
             Attri_table.loc[i, "SubId"] = int(0)
-        
-        if isinstance(Attri_table.loc[Attri_table["HRU_ID"] == hruid][Soil_ID].values[0],numbers.Number):             
+        val = Attri_table.loc[Attri_table["HRU_ID"] == hruid][Soil_ID].values[0]
+        if isinstance(val,numbers.Number) and val == val:             
             Attri_table.loc[i, Soil_ID] = int(
                 Attri_table.loc[Attri_table["HRU_ID"] == hruid][Soil_ID].values[0]
             )  
         else:
             Attri_table.loc[i, Soil_ID] = 0 
             Attri_table.loc[i, "SubId"] = int(0)
-        
-        if isinstance(Attri_table.loc[Attri_table["HRU_ID"] == hruid][Other_Ply_ID_1].values[0],numbers.Number):                           
+        val = Attri_table.loc[Attri_table["HRU_ID"] == hruid][Other_Ply_ID_1].values[0]
+        if isinstance(val,numbers.Number) and val == val:                           
             Attri_table.loc[i, Other_Ply_ID_1] = int(
                 Attri_table.loc[Attri_table["HRU_ID"] == hruid][Other_Ply_ID_1].values[0]
             )
         else:
             Attri_table.loc[i, Other_Ply_ID_1] = 0 
             Attri_table.loc[i, "SubId"] = int(0)
-        
-        if isinstance(Attri_table.loc[Attri_table["HRU_ID"] == hruid][Other_Ply_ID_2].values[0],numbers.Number):
+        val = Attri_table.loc[Attri_table["HRU_ID"] == hruid][Other_Ply_ID_2].values[0]
+        if isinstance(val,numbers.Number) and val == val:
                             
             Attri_table.loc[i, Other_Ply_ID_2] = int(
                 Attri_table.loc[Attri_table["HRU_ID"] == hruid][Other_Ply_ID_2].values[0]
@@ -1639,7 +1641,7 @@ def Determine_HRU_Attributes(
             Attri_table.loc[i, Other_Ply_ID_2] = 0 
             Attri_table.loc[i, "SubId"] = int(0)            
         
-        if isinstance(Landuse_ID_num, numbers.Number): 
+        if isinstance(Landuse_ID_num, numbers.Number) and Landuse_ID_num ==Landuse_ID_num: 
             Attri_table.loc[i, "LAND_USE_C"] = Landuse_info_data.loc[
                 Landuse_info_data[Landuse_ID] == int(Landuse_ID_num), "LAND_USE_C"
             ].values[0]
@@ -1647,7 +1649,7 @@ def Determine_HRU_Attributes(
             Attri_table.loc[i, "LAND_USE_C"] = int(0)
             Attri_table.loc[i, "SubId"] = int(0)
         
-        if isinstance(Veg_ID_num, numbers.Number):
+        if isinstance(Veg_ID_num, numbers.Number) and Veg_ID_num == Veg_ID_num:
             Attri_table.loc[i, "VEG_C"] = Veg_info_data.loc[
                 Veg_info_data[Veg_ID] == int(Veg_ID_num), "VEG_C"
             ].values[0]
@@ -1655,7 +1657,7 @@ def Determine_HRU_Attributes(
             Attri_table.loc[i, "VEG_C"] = int(0)
             Attri_table.loc[i, "SubId"] = int(0)
             
-        if isinstance(Soil_ID_num, numbers.Number): 
+        if isinstance(Soil_ID_num, numbers.Number) and Soil_ID_num == Soil_ID_num: 
             Attri_table.loc[i, "SOIL_PROF"] = (
                 Soil_info_data.loc[
                     Soil_info_data[Soil_ID] == int(Soil_ID_num), "SOIL_PROF"
