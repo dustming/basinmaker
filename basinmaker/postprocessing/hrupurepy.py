@@ -6,7 +6,6 @@ import tempfile
 import copy 
 import pandas as pd
 import geopandas
-
 import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
@@ -263,12 +262,13 @@ def GenerateHRUS_purepy(
             tempfolder = tempfolder,
             mask_layer = lakehruinfo_landhrus,
         )
-        land_landuse_clean = clean_geometry_purepy(land_landuse_clean)
-    
         land_landuse = geopandas.overlay(lakehruinfo_landhrus, land_landuse_clean, how='union',make_valid = True,keep_geom_type = True)
         land_landuse = clean_geometry_purepy(land_landuse)
         dissolve_filedname_list.append(Landuse_ID)
-        print("Union  landuse polygon done")
+        
+        for col in dissolve_filedname_list:
+            land_landuse = land_landuse.loc[land_landuse[col] > 0]
+        print("Union  landuse polygon done",land_landuse.is_valid.all())
     else:
         land_landuse = lakehruinfo_landhrus
 
@@ -280,10 +280,10 @@ def GenerateHRUS_purepy(
             mask_layer = lakehruinfo_landhrus,
         )
         
-        land_soil = geopandas.overlay(land_landuse, land_soil_clean, how='intersection',make_valid = True,keep_geom_type = True)
+        land_soil = geopandas.overlay(land_landuse, land_soil_clean, how='union',make_valid = True,keep_geom_type = True)
         land_soil = clean_geometry_purepy(land_soil)
         dissolve_filedname_list.append(Soil_ID)
-        print("Union  Soil polygon done")
+        print("Union  Soil polygon done",land_soil.is_valid.all())
     else:
         land_soil = land_landuse
         
@@ -294,10 +294,11 @@ def GenerateHRUS_purepy(
             tempfolder = tempfolder,
             mask_layer = lakehruinfo_landhrus
         )
-        land_veg = geopandas.overlay(land_soil, land_veg_clean, how='intersection',make_valid = True,keep_geom_type = True)
+        
+        land_veg = geopandas.overlay(land_soil, land_veg_clean, how='union',make_valid = True,keep_geom_type = True)
         land_veg = clean_geometry_purepy(land_veg)        
         dissolve_filedname_list.append(Veg_ID)
-        print("Union Veg polygon done")
+        print("Union Veg polygon done",land_veg.is_valid.all())
     else:
         land_veg = land_soil
                 
@@ -309,10 +310,10 @@ def GenerateHRUS_purepy(
             mask_layer = lakehruinfo_landhrus
         )        
         
-        land_o1 = geopandas.overlay(land_veg, land_o1_clean, how='intersection',make_valid = True,keep_geom_type = True) 
+        land_o1 = geopandas.overlay(land_veg, land_o1_clean, how='union',make_valid = True,keep_geom_type = True) 
         land_o1 = clean_geometry_purepy(land_o1)       
         dissolve_filedname_list.append(Other_Ply_ID_1)
-        print("Union Other ply1 polygon done")
+        print("Union Other ply1 polygon done",land_o1.is_valid.all())
     else:
         land_o1 = land_veg
         
@@ -324,10 +325,10 @@ def GenerateHRUS_purepy(
             mask_layer = lakehruinfo_landhrus
         )        
         
-        land_o2 = geopandas.overlay(land_o1, land_o2_clean, how='intersection',make_valid = True,keep_geom_type = True)
+        land_o2 = geopandas.overlay(land_o1, land_o2_clean, how='union',make_valid = True,keep_geom_type = True)
         land_o2 = clean_geometry_purepy(land_o2)        
         dissolve_filedname_list.append(Other_Ply_ID_2)
-        print("Union Other ply2 polygon done")
+        print("Union Other ply2 polygon done",land_o2.is_valid.all())
     else:
         land_o2 = land_o1
         
@@ -337,7 +338,6 @@ def GenerateHRUS_purepy(
 
     hru_land_info = land_o2
     hru_land_info = hru_land_info.loc[(hru_land_info['HRULake_ID'] > 0) | (hru_land_info['SubId'] > 0)]
- 
     #####
 
     Landuse_info_data = pd.read_csv(Landuse_info)

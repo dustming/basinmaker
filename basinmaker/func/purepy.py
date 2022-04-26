@@ -5,7 +5,8 @@ import pandas as pd
 from json import load, JSONEncoder
 import json
 import requests
-import shapely.wkt
+#import shapely.wkt
+import pygeos as pg
 
 
 def Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
@@ -54,8 +55,7 @@ def Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
     clipped = projected.clip(mask_layer)
     dissolved = clipped.dissolve(by=[Class_Col], aggfunc='first',as_index=False)
     
-    cleaned = clean_geometry_purepy(dissolved)    
-
+    cleaned = clean_geometry_purepy(dissolved,1)    
     
 #    arcpy.RepairGeometry_management(os.path.join(tempfolder,Class_Col+"_dislve.shp"))
     
@@ -181,17 +181,24 @@ def clean_attribute_name_purepy(table,names):
     table = table.drop(columns=remove_column_names)
     return table 
     
-def clean_geometry_purepy(data):
+def clean_geometry_purepy(data,set_precision = -1):
 
-    data["geometry"] = data["geometry"].apply(lambda x: shapely.wkt.loads(shapely.wkt.dumps(x, rounding_precision=5)))
+#    data["geometry"] = data["geometry"].apply(lambda x: shapely.wkt.loads(shapely.wkt.dumps(x, rounding_precision=4)))
+    if set_precision > 0:
+        data.geometry = pg.set_precision(data.geometry.values.data, 1e-6)
+#        data["geometry"] = data["geometry"].apply(lambda x: shapely.wkt.loads(shapely.wkt.dumps(x, rounding_precision=4)))
+#        data['geometry'] = data['geometry'].buffer(0)
 
     narow = ~data['geometry'].isna()
     emrow = ~data.is_empty
     arearow = data.area > 0.00000001
+#    arevalid = data.is_valid
 
     row1 = np.logical_and(narow,emrow)
     rowselect = np.logical_and(arearow,row1)
-    data = data.loc[rowselect]
+    rowselect = np.logical_and(rowselect,arevalid)
+#    data = data.loc[rowselect]
+    data.sindex
 
     return data   
     
