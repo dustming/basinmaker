@@ -196,8 +196,8 @@ def clean_geometry_purepy(data,set_precision = -1):
 
     row1 = np.logical_and(narow,emrow)
     rowselect = np.logical_and(arearow,row1)
-    rowselect = np.logical_and(rowselect,arevalid)
-#    data = data.loc[rowselect]
+#    rowselect = np.logical_and(rowselect,arevalid)
+    data = data.loc[rowselect]
     data.sindex
 
     return data   
