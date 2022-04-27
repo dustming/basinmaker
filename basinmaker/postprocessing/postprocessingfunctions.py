@@ -256,6 +256,7 @@ def generate_hrus_method(
     OutputFolder="#",
     qgis_prefix_path="#",
     gis_platform="qgis",
+    pixel_size = 30,
 ):
     if gis_platform == "qgis":
         from basinmaker.postprocessing.hru import GenerateHRUS_qgis
@@ -347,6 +348,7 @@ def generate_hrus_method(
             DEM=DEM,
             Project_crs=Project_crs,
             OutputFolder=OutputFolder,
+            pixel_size = pixel_size,
         )
         
 

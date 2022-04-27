@@ -11,8 +11,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from basinmaker.func.purepy import *
 from basinmaker.func.pdtable import *
-
-
+from osgeo import gdal, ogr
 
 def GenerateHRUS_purepy(
     Path_Subbasin_Ply,
@@ -39,6 +38,7 @@ def GenerateHRUS_purepy(
     DEM="#",
     Project_crs = '3573',
     OutputFolder="#",
+    pixel_size = 30,
 ):
     """Generate HRU polygons and their attributes needed by hydrological model
 
@@ -203,9 +203,27 @@ def GenerateHRUS_purepy(
     )
     if not os.path.exists(tempfolder):
         os.makedirs(tempfolder)
-
+    
     prj_crs = Project_crs
     Merge_layer_list = []
+    Merge_layer_raster_list = []
+
+#    'sub':        100000,
+#    'landuse':      1000,
+#    'soil':           10,
+#    'o1':              1,
+                
+    # maximum number of subbasin 21474
+    raster_value_multi = {
+    #                   2147483647,
+    Sub_ID:                 100000,
+    Landuse_ID:               1000,
+    Soil_ID:                    10,
+    Veg_ID:                      1,
+    Other_Ply_ID_1:              1,
+    Other_Ply_ID_2:              1,
+    }
+ 
     ### First overlay the subbasin layer with lake polygon, the new unique
     # id will be 'HRULake_ID'
 
@@ -219,13 +237,51 @@ def GenerateHRUS_purepy(
         Sub_Lake_ID=Sub_Lake_ID,
         Lake_Id=Lake_Id,
     ) 
-
+    
     lakehruinfo = geopandas.read_file(Sub_Lake_HRU_Layer)
     hru_lake_info = lakehruinfo.loc[lakehruinfo['HRU_IsLake'] > 0].copy()
     lakehruinfo_landhrus = lakehruinfo.loc[lakehruinfo['HRU_IsLake'] <= 0].copy()
     
     hru_lake_info = clean_geometry_purepy(hru_lake_info)
     lakehruinfo_landhrus = clean_geometry_purepy(lakehruinfo_landhrus)
+    
+    path_to_sub_lake_raster = os.path.join(OutputFolder,'sub_lake.tif')
+    path_to_landuse_raster = os.path.join(OutputFolder,'landuse.tif')
+    path_to_soil_raster = os.path.join(OutputFolder,'soil.tif')
+    path_to_veg_raster = os.path.join(OutputFolder,'veg.tif')
+    path_to_other1_raster = os.path.join(OutputFolder,'o1.tif')
+    path_to_other2_raster = os.path.join(OutputFolder,'o2.tif')
+    path_to_hru_temp_raster = os.path.join(OutputFolder,'HRU.tif')
+
+    path_to_lake_mask_raster = os.path.join(OutputFolder,'lake_hru.tif')
+    path_to_land_mask_raster = os.path.join(OutputFolder,'land_hru.tif')
+
+    path_to_landhru_shp= os.path.join(OutputFolder,'land_hru.shp')
+    path_to_lakehru_shp= os.path.join(OutputFolder,'lake_hru.shp')
+    path_to_landuse_shp = os.path.join(OutputFolder,'landuse.shp')
+    path_to_soil_shp = os.path.join(OutputFolder,'soil.shp')
+    path_to_veg_shp = os.path.join(OutputFolder,'veg.shp')
+    path_to_other1_shp = os.path.join(OutputFolder,'o1.shp')
+    path_to_other2_shp = os.path.join(OutputFolder,'o2.shp')
+    path_to_hru_temp_shp = os.path.join(OutputFolder,'HRU.shp')
+    
+    lakehruinfo_landhrus.to_file(path_to_landhru_shp)
+    hru_lake_info.to_file(path_to_lakehru_shp)
+
+
+    # determine raster parameters        
+    vector_fn = Sub_Lake_HRU_Layer
+    source_ds = ogr.Open(vector_fn)
+    source_layer = source_ds.GetLayer()
+    x_min, x_max, y_min, y_max = source_layer.GetExtent()
+    ras_crs = source_layer.GetSpatialRef()
+    x_res = int((x_max - x_min) / pixel_size)
+    y_res = int((y_max - y_min) / pixel_size)
+    raster_par_list = [x_min, x_max, y_min, y_max,x_res,pixel_size,y_res,ras_crs]
+
+    # rasterize 
+    vector_to_raster(path_to_sub_lake_raster,Sub_Lake_HRU_Layer,'HRULake_ID',raster_par_list)
+               
     # lakehruinfo_landhrus = lakehruinfo_landhrus.spatial.to_featureclass(
     #     location=os.path.join(tempfolder,'land_hrus.shp'),
     #     overwrite=True,sanitize_columns=False,
@@ -248,98 +304,211 @@ def GenerateHRUS_purepy(
         ]
     )
     dissolve_filedname_list = ["HRULake_ID"]
-
-    print("begin union")
-
     
     Merge_layer_list.append(lakehruinfo_landhrus)
-
+    Merge_layer_raster_list.append(path_to_sub_lake_raster)
+    
+    
+    sub_raster = gdal.Open(path_to_sub_lake_raster)
+    sub_raster_a = np.array(sub_raster.GetRasterBand(1).ReadAsArray())
+    HRU_shape = sub_raster_a.shape
+    HRU_a = sub_raster_a * raster_value_multi[Sub_ID]
+        
+#    array_to_raster(os.path.join(OutputFolder,'test.tif'),HRU_a,raster_par_list,touch = "False",type = gdal.GDT_Int32)
     #### check which data will be inlucded to determine HRU
     if Path_Landuse_Ply != "#":
         land_landuse_clean = Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
             layer_path = Path_Landuse_Ply, 
             Class_Col = Landuse_ID, 
             tempfolder = tempfolder,
-            mask_layer = lakehruinfo_landhrus,
+            mask_layer = lakehruinfo,
         )
-        land_landuse = geopandas.overlay(lakehruinfo_landhrus, land_landuse_clean, how='union',make_valid = True,keep_geom_type = True)
-        land_landuse = clean_geometry_purepy(land_landuse)
-        dissolve_filedname_list.append(Landuse_ID)
         
-        for col in dissolve_filedname_list:
-            land_landuse = land_landuse.loc[land_landuse[col] > 0]
-        print("Union  landuse polygon done",land_landuse.is_valid.all())
-    else:
-        land_landuse = lakehruinfo_landhrus
+        if Landuse_ID not in land_landuse_clean.columns:
+            sys.exit("Landuse polygon attribute table do not contain: ",Landuse_ID)            
+        land_landuse_clean.to_file(path_to_landuse_shp)
+        vector_to_raster(path_to_landuse_raster,path_to_landuse_shp,Landuse_ID,raster_par_list)
+        dissolve_filedname_list.append(Landuse_ID)
+        Merge_layer_raster_list.append(path_to_landuse_raster)
+
+        land_raster = gdal.Open(path_to_landuse_raster)
+        land_raster_a = np.array(land_raster.GetRasterBand(1).ReadAsArray())
+        if land_raster_a.shape[0] == HRU_shape[0] and land_raster_a.shape[1] == HRU_shape[1]:
+            HRU_a = HRU_a + land_raster_a * raster_value_multi[Landuse_ID]
+        else:
+            sys.exit("Landuse polygon may not fully cover the subbasin domain ",land_raster_a.shape)
+        
+#        array_to_raster(os.path.join(OutputFolder,'test1.tif'),HRU_a,raster_par_list,touch = "False",type = gdal.GDT_Int32)    
+        # land_landuse = geopandas.overlay(lakehruinfo_landhrus, land_landuse_clean, how='union',make_valid = True,keep_geom_type = True)
+        # land_landuse = clean_geometry_purepy(land_landuse)
+#        dissolve_filedname_list.append(Landuse_ID)
+        # 
+        # for col in dissolve_filedname_list:
+        #     land_landuse = land_landuse.loc[land_landuse[col] > 0]
+#        print("Union  landuse polygon done",land_landuse.is_valid.all())
+    # else:
+    #     land_landuse = lakehruinfo_landhrus
 
     if Path_Soil_Ply != "#":
         land_soil_clean = Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
             layer_path = Path_Soil_Ply, 
             Class_Col = Soil_ID, 
             tempfolder = tempfolder,
-            mask_layer = lakehruinfo_landhrus,
+            mask_layer = lakehruinfo,
         )
-        
-        land_soil = geopandas.overlay(land_landuse, land_soil_clean, how='union',make_valid = True,keep_geom_type = True)
-        land_soil = clean_geometry_purepy(land_soil)
+
+        if Soil_ID not in land_soil_clean.columns:
+            sys.exit("Soil polygon attribute table do not contain: ",Soil_ID)            
+        land_soil_clean.to_file(path_to_soil_shp)
+        vector_to_raster(path_to_soil_raster,path_to_soil_shp,Soil_ID,raster_par_list)
         dissolve_filedname_list.append(Soil_ID)
-        print("Union  Soil polygon done",land_soil.is_valid.all())
-    else:
-        land_soil = land_landuse
+        Merge_layer_raster_list.append(path_to_soil_raster)
+        
+        soil_raster = gdal.Open(path_to_soil_raster)
+        soil_raster_a = np.array(soil_raster.GetRasterBand(1).ReadAsArray())
+        if soil_raster_a.shape[0] == HRU_shape[0] and soil_raster_a.shape[1] == HRU_shape[1]:
+            HRU_a = HRU_a + soil_raster_a * raster_value_multi[Soil_ID]
+        else:
+            sys.exit("Landuse polygon may not fully cover the subbasin domain ",soil_raster_a.shape)
+            
+#        array_to_raster(os.path.join(OutputFolder,'test2.tif'),soil_raster_a,raster_par_list,touch = "False",type = gdal.GDT_Int32) 
+#        array_to_raster(os.path.join(OutputFolder,'test2.tif'),HRU_a,raster_par_list,touch = "False",type = gdal.GDT_Int32)        
+        # land_soil = geopandas.overlay(land_landuse, land_soil_clean, how='union',make_valid = True,keep_geom_type = True)
+        # land_soil = clean_geometry_purepy(land_soil)
+        # dissolve_filedname_list.append(Soil_ID)
+        # print("Union  Soil polygon done",land_soil.is_valid.all())
+    # else:
+    #     land_soil = land_landuse
         
     if Path_Veg_Ply != "#":
         land_veg_clean = Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
             layer_path = Path_Veg_Ply, 
             Class_Col = Veg_ID, 
             tempfolder = tempfolder,
-            mask_layer = lakehruinfo_landhrus
+            mask_layer = lakehruinfo
         )
-        
-        land_veg = geopandas.overlay(land_soil, land_veg_clean, how='union',make_valid = True,keep_geom_type = True)
-        land_veg = clean_geometry_purepy(land_veg)        
+
+        if Veg_ID not in land_veg_clean.columns:
+            sys.exit("Veg polygon attribute table do not contain: ",Veg_ID)            
+        land_veg_clean.to_file(path_to_veg_shp)
+        vector_to_raster(path_to_veg_raster,path_to_veg_shp,Veg_ID,raster_par_list)
         dissolve_filedname_list.append(Veg_ID)
-        print("Union Veg polygon done",land_veg.is_valid.all())
-    else:
-        land_veg = land_soil
+        Merge_layer_raster_list.append(path_to_veg_raster)
+
+        veg_raster = gdal.Open(path_to_veg_raster)
+        veg_raster_a = np.array(veg_raster.GetRasterBand(1).ReadAsArray())
+        if veg_raster_a.shape[0] == HRU_shape[0] and veg_raster_a.shape[1] == HRU_shape[1]:
+            HRU_a = HRU_a + veg_raster_a * raster_value_multi[Veg_ID]
+        else:
+            sys.exit("Landuse polygon may not fully cover the subbasin domain ",veg_raster_a.shape)
+                            
+        # land_veg = geopandas.overlay(land_soil, land_veg_clean, how='union',make_valid = True,keep_geom_type = True)
+        # land_veg = clean_geometry_purepy(land_veg)        
+        # dissolve_filedname_list.append(Veg_ID)
+        # print("Union Veg polygon done",land_veg.is_valid.all())
+    # else:
+    #     land_veg = land_soil
                 
     if Path_Other_Ply_1 != "#":
         land_o1_clean = Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
             layer_path = Path_Other_Ply_1, 
             Class_Col = Other_Ply_ID_1, 
             tempfolder = tempfolder,
-            mask_layer = lakehruinfo_landhrus
+            mask_layer = lakehruinfo
         )        
-        
-        land_o1 = geopandas.overlay(land_veg, land_o1_clean, how='union',make_valid = True,keep_geom_type = True) 
-        land_o1 = clean_geometry_purepy(land_o1)       
+
+        if Other_Ply_ID_1 not in land_veg_clean.columns:
+            sys.exit("Other_Ply_1 polygon attribute table do not contain: ",Other_Ply_ID_1)            
+        land_o1_clean.to_file(path_to_other1_shp)
+        vector_to_raster(path_to_other1_raster,path_to_other1_shp,Other_Ply_ID_1,raster_par_list)
         dissolve_filedname_list.append(Other_Ply_ID_1)
-        print("Union Other ply1 polygon done",land_o1.is_valid.all())
-    else:
-        land_o1 = land_veg
+        Merge_layer_raster_list.append(path_to_other1_raster)
+        
+        o1_raster = gdal.Open(path_to_other1_raster)
+        o1_raster_a = np.array(o1_raster.GetRasterBand(1).ReadAsArray())
+        if o1_raster_a.shape[0] == HRU_shape[0] and o1_raster_a.shape[1] == HRU_shape[1]:
+            HRU_a = HRU_a + o1_raster_a * raster_value_multi[Other_Ply_ID_1]
+        else:
+            sys.exit("Landuse polygon may not fully cover the subbasin domain ",o1_raster_a.shape)
+            
+                            
+        # land_o1 = geopandas.overlay(land_veg, land_o1_clean, how='union',make_valid = True,keep_geom_type = True) 
+        # land_o1 = clean_geometry_purepy(land_o1)       
+        # dissolve_filedname_list.append(Other_Ply_ID_1)
+        # print("Union Other ply1 polygon done",land_o1.is_valid.all())
+    # else:
+    #     land_o1 = land_veg
         
     if Path_Other_Ply_2 != "#":
         land_o2_clean = Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
             layer_path = Path_Other_Ply_2, 
             Class_Col = Other_Ply_ID_2, 
             tempfolder = tempfolder,
-            mask_layer = lakehruinfo_landhrus
+            mask_layer = lakehruinfo
         )        
-        
-        land_o2 = geopandas.overlay(land_o1, land_o2_clean, how='union',make_valid = True,keep_geom_type = True)
-        land_o2 = clean_geometry_purepy(land_o2)        
+
+        if Other_Ply_ID_2 not in land_veg_clean.columns:
+            sys.exit("Other_Ply_1 polygon attribute table do not contain: ",Other_Ply_ID_2)            
+        land_o2_clean.to_file(path_to_other2_shp)
+        vector_to_raster(path_to_other2_raster,path_to_other2_shp,Other_Ply_ID_2,raster_par_list)
         dissolve_filedname_list.append(Other_Ply_ID_2)
-        print("Union Other ply2 polygon done",land_o2.is_valid.all())
-    else:
-        land_o2 = land_o1
+        Merge_layer_raster_list.append(path_to_other2_raster)
+
+
+        o2_raster = gdal.Open(path_to_other2_raster)
+        o2_raster_a = np.array(o2_raster.GetRasterBand(1).ReadAsArray())
+        if o2_raster_a.shape[0] == HRU_shape[0] and o2_raster_a.shape[1] == HRU_shape[1]:
+            HRU_a = HRU_a + o2_raster_a * raster_value_multi[Other_Ply_ID_2]
+        else:
+            sys.exit("Landuse polygon may not fully cover the subbasin domain ",o2_raster_a.shape)
+            
+                            
+        # land_o2 = geopandas.overlay(land_o1, land_o2_clean, how='union',make_valid = True,keep_geom_type = True)
+        # land_o2 = clean_geometry_purepy(land_o2)        
+        # dissolve_filedname_list.append(Other_Ply_ID_2)
+        # print("Union Other ply2 polygon done",land_o2.is_valid.all())
+    # else:
+    #     land_o2 = land_o1
         
     fieldnames = np.array(fieldnames_list)
+    HRU_a[HRU_a < raster_value_multi[Sub_ID]] = -9999
+    array_to_raster(path_to_hru_temp_raster,HRU_a,raster_par_list,touch = "False",type = gdal.GDT_Int32)
+    
+    raster_to_vector(path_to_hru_temp_shp,path_to_hru_temp_raster,raster_par_list)
 
-    print("union done ")
-
-    hru_land_info = land_o2
-    hru_land_info = hru_land_info.loc[(hru_land_info['HRULake_ID'] > 0) | (hru_land_info['SubId'] > 0)]
-    #####
-
+    print("union done")
+    
+    HRU_temp1 = geopandas.read_file(path_to_hru_temp_shp)
+    
+    lakehruinfo_id = lakehruinfo[['HRULake_ID','SubId','HRU_IsLake']]
+    # remove polygon outside of the subbasin 
+    HRU_temp1 = HRU_temp1[HRU_temp1['HRU_ID_T'] != -9999]
+    HRU_temp1['HRU_ID_T'] = HRU_temp1['HRU_ID_T'].astype(str)
+    HRU_temp1['HRU_ID_str'] = HRU_temp1['HRU_ID_T'].str.zfill(10)
+    
+    #          12345678910
+    #          0007422000,
+    #          2147483647,
+#    'sub':        100000,
+#    'landuse':      1000,
+#    'soil':           10,
+#    'o1':              1,
+       
+    HRU_temp1['HRULake_ID'] = HRU_temp1['HRU_ID_str'].str[0:5].astype(int)
+    HRU_temp1 = pd.merge(HRU_temp1, lakehruinfo_id, how='inner', on = 'HRULake_ID')
+    HRU_temp1[Landuse_ID] = HRU_temp1['HRU_ID_str'].str[5:7].astype(int)
+    HRU_temp1[Soil_ID] = HRU_temp1['HRU_ID_str'].str[7:9].astype(int)
+    HRU_temp1[Veg_ID] = HRU_temp1['HRU_ID_str'].str[7].astype(int)
+    HRU_temp1[Other_Ply_ID_1] = HRU_temp1['HRU_ID_str'].str[9].astype(int)
+    HRU_temp1[Other_Ply_ID_2] = HRU_temp1['HRU_ID_str'].str[9].astype(int)
+    
+    HRU_temp1 = HRU_temp1.loc[(HRU_temp1['HRULake_ID'] > 0) | (HRU_temp1['SubId'] > 0)]
+    
+#    print(HRU_temp1[HRU_temp1[Soil_ID] == 1])
+    #####     
+    hru_lake_info = HRU_temp1.loc[HRU_temp1['HRU_IsLake'] > 0].copy()
+    hru_land_info = HRU_temp1.loc[HRU_temp1['HRU_IsLake'] <= 0].copy()
+    
     Landuse_info_data = pd.read_csv(Landuse_info)
     Soil_info_data = pd.read_csv(Soil_info)
     Veg_info_data = pd.read_csv(Veg_info)
@@ -350,7 +519,7 @@ def GenerateHRUS_purepy(
     hru_lake_info[Landuse_ID] = -1
     # if soil is not provied, it the value,will be the same as land use
     if Path_Soil_Ply == "#":
-        hru_land_info[Soil_ID] = hru_land_info[Landuse_ID]
+        hru_land_info[Soil_ID] = -hru_land_info['HRU_IsLake']
     hru_lake_info[Soil_ID] = -1
     # if no vegetation polygon is provide vegetation, will be the same as landuse
     if Path_Veg_Ply == "#":
@@ -368,7 +537,11 @@ def GenerateHRUS_purepy(
 
     
     hruinfo = hru_lake_info.append(hru_land_info)
-           
+    
+    
+#    hruinfo.to_file(os.path.join(OutputFolder,'HRUtest.shp'))
+
+       
     HRU_draf_final = Define_HRU_Attributes_purepy(
         prj_crs = prj_crs,
         trg_crs = trg_crs,
