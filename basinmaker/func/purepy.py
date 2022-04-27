@@ -301,8 +301,11 @@ def add_centroid_in_wgs84(data,colx,coly):
     
 
 def create_geo_jason_file(Input_Polygon_path):
-
-
+ 
+    if "finalcat_info" not in Input_Polygon_path:
+        print(Input_Polygon_path)
+        return 
+    
     product_dir = os.path.dirname(Input_Polygon_path)
     Names_in = os.path.basename(Input_Polygon_path).split('_')
     n_charc = len(Names_in)
