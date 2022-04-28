@@ -176,7 +176,7 @@ QGIS and GRASS in Windows
     
     The OSGeo4W is a binary distribution of a broad set of open source geospatial software for Windows environments, including both GRASS GIS and QGIS.  
     
-    The OSGeo4W installer can be downloaded from `here <https://qgis.org/en/site/forusers/download.html>`_. Please using the **long term released OSGeo4W Network Installer (64 bit)**, and using Desktop Express Install and choosing the second link. The installed GRASS GIS version should be >= GRASS 7.8.5. 
+    The OSGeo4W installer can be downloaded from `here <https://qgis.org/en/site/forusers/download.html>`_., and using Desktop Express Install and choosing the second link. The installed GRASS GIS version should be >= GRASS 7.8.5. 
     
     We would suggest to 
     
@@ -247,19 +247,6 @@ QGIS and GRASS in Windows
 
       python -m pip install simpledbf grass_session scipy joblib
 
-
-#. Install GRASS GIS addons
-
-    Install following GRASS GIS addons: 
-    
-    * r.accumulate
-    * r.clip
-    * r.stream.basins
-    * r.stream.snap  
-    
-    For new GRASS users, see how to install GRASS GIS addon `here <https://github.com/dustming/RoutingTool/wiki/Files/GRASS_GIS_Addons_Install_Instruction.pdf>`_. 
-    
-    If you want to learn how to use GRASS for more than BasinMaker, `this site <https://grass.osgeo.org/download/addons/>`_.  may help you. 
   
 #. Test validation 
      
