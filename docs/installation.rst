@@ -245,7 +245,7 @@ QGIS and GRASS in Windows
 
     .. code-block::
 
-      pip install simpledbf grass_session joblib
+      python -m pip install simpledbf grass_session scipy joblib
 
 
 #. Install GRASS GIS addons
