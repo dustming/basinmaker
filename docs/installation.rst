@@ -176,13 +176,18 @@ QGIS and GRASS in Windows
     
     The OSGeo4W is a binary distribution of a broad set of open source geospatial software for Windows environments, including both GRASS GIS and QGIS.  
     
-    The OSGeo4W installer can be downloaded from `here <https://qgis.org/en/site/forusers/download.html>`_., and using Desktop Express Install and choosing the second link. The installed GRASS GIS version should be >= GRASS 7.8.5. 
+    The OSGeo4W installer can be downloaded from `here <https://qgis.org/en/site/forusers/download.html>`_.
+    
+    Please use the advanced install option and keep the default selection in all pop up pages, except in the 'select package page'. 
+    
+    In the select package: 
+    
+    * In the Desktop group, please select 1) grass: GRASS GIS 7.8; 2) qgis: QGIS DESKTOP; 3)qt5_tools:Qt5 tools (development)
+    * In the Libs group, please select 1)python3-geopandas; 2)python3-rtree 
     
     We would suggest to 
     
     * Install QGIS and GRASS outside the **C/:Program Files**. Better to install them into a folder path without space in the folder name.
-    * Use ‘Express Desktop Install’ 
-    * Choose the default 3 packages
     * Run the downloaded installation file 
                 
 #. Setup GRASS and QGIS python environment
@@ -246,6 +251,8 @@ QGIS and GRASS in Windows
     .. code-block::
 
       python -m pip install simpledbf grass_session scipy joblib
+      
+      python -m pip install geopandas -U
 
   
 #. Test validation 
