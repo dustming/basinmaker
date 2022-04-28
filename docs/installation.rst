@@ -180,11 +180,16 @@ QGIS and GRASS in Windows
     
     Please use the advanced install option and keep the default selection in all pop up pages, except in the 'select package page'. 
     
+  
     In the select package: 
     
+  
     * In the Desktop group, please select 1) grass: GRASS GIS 7.8; 2) qgis: QGIS DESKTOP; 3)qt5_tools:Qt5 tools (development)
+  
+  
     * In the Libs group, please select 1)python3-geopandas; 2)python3-rtree 
     
+  
     We would suggest to 
     
     * Install QGIS and GRASS outside the **C/:Program Files**. Better to install them into a folder path without space in the folder name.
