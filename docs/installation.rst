@@ -37,7 +37,7 @@ For existing users who want to update the BasinMaker to the newest version. It c
 Light installation
 ==================
 
-QGIS with anaconda
+Geopandas with anaconda
 ------------------
 
 #. Install anaconda
@@ -61,11 +61,11 @@ QGIS with anaconda
       conda activate <any_name_for_env>
    
    
-#. Install QGIS
+#. Install geopandas
 
     .. code-block:: 
 
-      conda install -c conda-forge qgis
+      conda install geopandas 
    
    
 #. Install BasinMaker 
