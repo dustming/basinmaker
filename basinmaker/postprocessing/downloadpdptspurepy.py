@@ -36,5 +36,28 @@ def Download_Routing_Product_From_Points_Or_LatLon(product_name,Lat = [-1],Lon =
         else:
             print("The point did not overlay with the routing product")
             return -1,-1
+
+    if product_name == 'NALRP':
+        version = 'v2-1'
+        Drainage_region = geopandas.read_file("https://github.com/dustming/RoutingTool/wiki/Files/NA_drainage_region.geojson")
+    
+        data_dr = geopandas.overlay(data_gpd, Drainage_region, how='identity')
+        if len(data_dr) >= 1:
+
+            dr = data_dr['Region'].values[0]
+            Subid,product_path = Download_Routing_Product_For_One_Gauge(gauge_name='#',product_name = product_name,region=dr,subreg = '#')
+            product_ply_path = os.path.join(product_path,'catchment_without_merging_lakes_'+version+'.shp')
+            product = geopandas.read_file(product_ply_path)
+            data_gpd = data_gpd.to_crs(product.crs)
+            data_pt = geopandas.overlay(data_gpd, product, how='identity')
+            Subid = data_pt['SubId'].values[0]
+            print("The needed product locates at:",product_path)
+            print("The Subbasin Id of the lat, lon is:",Subid)
+            return Subid,product_path 
+
+        else:
+            print("The point did not overlay with the routing product")
+            return -1,-1
             
+                        
     return -1, -1 
