@@ -519,7 +519,7 @@ class postprocess:
         path_vegetation_polygon="#",
         path_other_polygon_1="#",
         path_other_polygon_2="#",
-        inmportance_order = [],
+        importance_order = [],
         min_hru_subbasin_area_ratio = 0.0,
         path_to_dem="#",
         pixel_size = 30,

@@ -31,6 +31,7 @@ def simplidfy_hrus(min_hru_pct_sub_area,hruinfo,importance_order):
         hru_columns = good_hrus.columns
         # do not modify this columns 
         hru_columns = hru_columns[hru_columns != 'HRU_ID_New2']
+        hru_columns = hru_columns[hru_columns != 'geometry']
         # check if the need_remove_hru can merge togeher for importance order 
         # 1 
         colnm1 = importance_order[0]
@@ -87,7 +88,7 @@ def simplidfy_hrus(min_hru_pct_sub_area,hruinfo,importance_order):
                         columnname = hru_columns[i_nm]
                         if columnname == 'SHAPE':
                             continue 
-                        # modify the hru attributes to good hru attribute     
+                        # modify the hru attributes to good hru attribute
                         hruinfo.loc[hruinfo['HRU_ID_New2'] == hruid,columnname] = good_hrus_k[columnname].values[0]
                 else:
                     continue 
