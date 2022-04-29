@@ -193,13 +193,12 @@ def clean_geometry_purepy(data,set_precision = -1):
     emrow = ~data.is_empty
     arearow = data.area > 0.00000001
 #    arevalid = data.is_valid
-
     row1 = np.logical_and(narow,emrow)
     rowselect = np.logical_and(arearow,row1)
 #    rowselect = np.logical_and(rowselect,arevalid)
     data = data.loc[rowselect]
+    data = data.loc[data.geom_type != 'Point']
     data.sindex
-
     return data   
     
 def add_area_in_m2(data,prj_crs,area_col):
