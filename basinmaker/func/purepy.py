@@ -205,7 +205,7 @@ def clean_geometry_purepy(data,set_precision = -1):
         print(data.loc[data.geom_type == 'GeometryCollection'])
         print("###########################")
     
-    data = data.loc[data.geom_type != 'GeometryCollection'])
+    data = data.loc[data.geom_type != 'GeometryCollection']
     data.sindex
     return data   
     
