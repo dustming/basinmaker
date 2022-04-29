@@ -52,6 +52,7 @@ def Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
     data = geopandas.read_file(layer_path)
     
     projected = data.to_crs(new_crs)
+    projected = projected.explode(ignore_index=True)
     clipped = projected.clip(mask_layer)
 #    dissolved = clipped.dissolve(by=[Class_Col], aggfunc='first',as_index=False)
     
@@ -198,6 +199,7 @@ def clean_geometry_purepy(data,set_precision = -1):
 #    rowselect = np.logical_and(rowselect,arevalid)
     data = data.loc[rowselect]
     data = data.loc[data.geom_type != 'Point']
+    print(data)
     data.sindex
     return data   
     
