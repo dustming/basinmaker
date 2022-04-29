@@ -639,7 +639,7 @@ class postprocess:
             Path_Other_Ply_2=path_other_polygon_2,
             Other_Ply_ID_2=Other_Ply_ID_2,
             DEM=path_to_dem,
-            Inmportance_order = inmportance_order,
+            Inmportance_order = importance_order,
             min_hru_area_pct_sub = min_hru_subbasin_area_ratio,
             Project_crs=projected_epsg_code,
             OutputFolder=path_output_folder,
