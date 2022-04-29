@@ -12,29 +12,27 @@ from basinmaker.func.pdtable import *
 from osgeo import gdal, ogr
 
 def decode_hru_attri_ids(HRU_temp1,lakehruinfo,Landuse_ID,Soil_ID,Veg_ID,Other_Ply_ID_1,Other_Ply_ID_2):
-    #          12345678910
+    #     100000000000000, 
     #          0007422000,
     #          2147483647,
-#    'sub':        100000,
-#    'landuse':      1000,
-#    'soil':           10,
+#    'sub':       1000000,
+#    'landuse':     10000,
+#    'soil':          100,
 #    'o1':              1,
 
     lakehruinfo_id = lakehruinfo[['HRULake_ID','SubId','HRU_IsLake']]
     # remove polygon outside of the subbasin 
     HRU_temp1 = HRU_temp1[HRU_temp1['HRU_ID_T'] != -9999]
-    HRU_temp1['HRU_ID_T'] = HRU_temp1['HRU_ID_T'].astype(str)
-    HRU_temp1['HRU_ID_str'] = HRU_temp1['HRU_ID_T'].str.zfill(10)
-    
-
-       
-    HRU_temp1['HRULake_ID'] = HRU_temp1['HRU_ID_str'].str[0:5].astype(int)
+    HRU_temp1['HRU_ID_str'] = HRU_temp1['HRU_ID_T'].astype('int64').astype(str)
+#    HRU_temp1['HRU_ID_str'] = HRU_temp1['HRU_ID_T'].str.zfill(10)
+           
+    HRU_temp1['HRULake_ID'] = HRU_temp1['HRU_ID_str'].str[:-6].astype(int)
     HRU_temp1 = pd.merge(HRU_temp1, lakehruinfo_id, how='inner', on = 'HRULake_ID')
-    HRU_temp1[Landuse_ID] = HRU_temp1['HRU_ID_str'].str[5:7].astype(int)
-    HRU_temp1[Soil_ID] = HRU_temp1['HRU_ID_str'].str[7:9].astype(int)
-    HRU_temp1[Veg_ID] = HRU_temp1['HRU_ID_str'].str[7].astype(int)
-    HRU_temp1[Other_Ply_ID_1] = HRU_temp1['HRU_ID_str'].str[9].astype(int)
-    HRU_temp1[Other_Ply_ID_2] = HRU_temp1['HRU_ID_str'].str[9].astype(int)
+    HRU_temp1[Landuse_ID] = HRU_temp1['HRU_ID_str'].str[-6:-4].astype(int)
+    HRU_temp1[Veg_ID] = HRU_temp1['HRU_ID_str'].str[-6:-4].astype(int)
+    HRU_temp1[Soil_ID] = HRU_temp1['HRU_ID_str'].str[-4:-2].astype(int)
+    HRU_temp1[Other_Ply_ID_1] = HRU_temp1['HRU_ID_str'].str[-2:].astype(int)
+    HRU_temp1[Other_Ply_ID_2] = HRU_temp1['HRU_ID_str'].str[-2:].astype(int)
     HRU_temp1 = HRU_temp1.loc[(HRU_temp1['HRULake_ID'] > 0) | (HRU_temp1['SubId'] > 0)]
     
     return HRU_temp1
@@ -63,7 +61,7 @@ def raster_to_vector(output,input,raster_par_list):
 
     gdal.Polygonize( srcband, None, dst_layer, dst_field, [], callback=None)
         
-def vector_to_raster(output,input,attribute,raster_par_list,touch = "False",type = gdal.GDT_Int32):
+def vector_to_raster(output,input,attribute,raster_par_list,touch = "False",type = gdal.GDT_Float32):
     
     x_min = raster_par_list[0]
     x_max = raster_par_list[1]
@@ -139,13 +137,21 @@ def RasterHRUUnionInt32(OutputFolder,tempfolder,Merge_layer_shp_list,
 
     raster_value_multi = {
     #                   2147483647,
-    Sub_ID:                 100000,
-    Landuse_ID:               1000,
-    Soil_ID:                    10,
-    Veg_ID:                      1,
+    Sub_ID:                1000000,
+    Landuse_ID:              10000,
+    Soil_ID:                   100,
     Other_Ply_ID_1:              1,
+    Veg_ID:                      1,
     Other_Ply_ID_2:              1,
     }
+ 
+     #          12345678910
+     #          0007422000,
+     #          2147483647,
+ #    'sub':       1000000,
+ #    'landuse':     10000,
+ #    'soil':          100,
+ #    'o1':              1,
  
  
     # determine raster parameters        
