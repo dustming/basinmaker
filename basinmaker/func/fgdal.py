@@ -80,7 +80,7 @@ def vector_to_raster(output,input,attribute,raster_par_list,touch = "False",type
     target_ds = gdal.GetDriverByName('GTiff').Create(output, x_res, y_res, 1, type)
     target_ds.SetGeoTransform((x_min, pixel_size, 0, y_max, 0, -pixel_size))
     band = target_ds.GetRasterBand(1)
-    band.SetNoDataValue(-9999)
+    band.SetNoDataValue(0)
 
     target_ds.SetProjection(crs.ExportToWkt())
 

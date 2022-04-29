@@ -320,7 +320,7 @@ def GenerateHRUS_purepy(
             mask_layer = lakehruinfo
         )        
 
-        if Other_Ply_ID_1 not in land_veg_clean.columns:
+        if Other_Ply_ID_1 not in land_o1_clean.columns:
             sys.exit("Other_Ply_1 polygon attribute table do not contain: ",Other_Ply_ID_1)            
         land_o1_clean.to_file(path_to_other1_shp)
         dissolve_filedname_list.append(Other_Ply_ID_1)
@@ -335,7 +335,7 @@ def GenerateHRUS_purepy(
             mask_layer = lakehruinfo
         )        
 
-        if Other_Ply_ID_2 not in land_veg_clean.columns:
+        if Other_Ply_ID_2 not in land_o2_clean.columns:
             sys.exit("Other_Ply_1 polygon attribute table do not contain: ",Other_Ply_ID_2)            
         land_o2_clean.to_file(path_to_other2_shp)
         dissolve_filedname_list.append(Other_Ply_ID_2)
@@ -354,7 +354,8 @@ def GenerateHRUS_purepy(
     
     HRU_temp1 = decode_hru_attri_ids(HRU_temp1,lakehruinfo,Landuse_ID,Soil_ID,
                                      Veg_ID,Other_Ply_ID_1,Other_Ply_ID_2)
-    
+                                     
+    HRU_temp1.to_file(os.path.join(tempfolder,'HRU_DEDOCE.shp'))
     #####     
     hru_lake_info = HRU_temp1.loc[HRU_temp1['HRU_IsLake'] > 0].copy()
     hru_land_info = HRU_temp1.loc[HRU_temp1['HRU_IsLake'] <= 0].copy()
