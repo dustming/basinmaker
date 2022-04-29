@@ -53,9 +53,9 @@ def Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
     
     projected = data.to_crs(new_crs)
     clipped = projected.clip(mask_layer)
-    dissolved = clipped.dissolve(by=[Class_Col], aggfunc='first',as_index=False)
+#    dissolved = clipped.dissolve(by=[Class_Col], aggfunc='first',as_index=False)
     
-    cleaned = clean_geometry_purepy(dissolved,1)    
+    cleaned = clean_geometry_purepy(clipped,1)    
     
 #    arcpy.RepairGeometry_management(os.path.join(tempfolder,Class_Col+"_dislve.shp"))
     
