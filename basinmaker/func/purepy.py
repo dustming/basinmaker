@@ -199,7 +199,13 @@ def clean_geometry_purepy(data,set_precision = -1):
 #    rowselect = np.logical_and(rowselect,arevalid)
     data = data.loc[rowselect]
     data = data.loc[data.geom_type != 'Point']
-    print(data.loc[data.geom_type == 'GeometryCollection'])
+    if len(data.loc[data.geom_type == 'GeometryCollection']) > 0:
+        print("###########################")
+        print("check the following features")
+        print(data.loc[data.geom_type == 'GeometryCollection'])
+        print("###########################")
+    
+    data = data.loc[data.geom_type != 'GeometryCollection'])
     data.sindex
     return data   
     
