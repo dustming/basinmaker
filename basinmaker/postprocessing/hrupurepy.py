@@ -357,7 +357,7 @@ def GenerateHRUS_purepy(
     path_to_hru_temp_shp = RasterHRUUnionInt32(OutputFolder,tempfolder,Merge_layer_shp_list,
                             Merge_ID_list,Sub_Lake_HRU_Layer,Sub_ID,
                             Landuse_ID,Soil_ID,Veg_ID,Other_Ply_ID_1,
-                            Other_Ply_ID_2,pixel_size)
+                            Other_Ply_ID_2,pixel_size,lakehruinfo)
                             
     HRU_temp1 = geopandas.read_file(path_to_hru_temp_shp)
     

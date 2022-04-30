@@ -143,7 +143,7 @@ def proj_clip_raster(input,output,dst_src,cutlineDSName= '#'):
 def RasterHRUUnionInt32(OutputFolder,tempfolder,Merge_layer_shp_list,
                         Merge_ID_list,Sub_Lake_HRU_Layer,Sub_ID,
                         Landuse_ID,Soil_ID,Veg_ID,Other_Ply_ID_1,
-                        Other_Ply_ID_2,pixel_size):
+                        Other_Ply_ID_2,pixel_size,lakehruinfo):
                         
     path_to_sub_lake_raster = os.path.join(tempfolder,'sub_lake.tif')
     path_to_landuse_raster = os.path.join(tempfolder,'landuse.tif')
@@ -200,9 +200,24 @@ def RasterHRUUnionInt32(OutputFolder,tempfolder,Merge_layer_shp_list,
     
     sub_raster = gdal.Open(path_to_sub_lake_raster)
     sub_raster_a = np.array(sub_raster.GetRasterBand(1).ReadAsArray())
+    
+    #check if some subbasin is missing 
+    raster_unique_id = np.unique(sub_raster_a)
+    raster_unique_id = raster_unique_id[raster_unique_id > 0]
+    vector_unique_id = np.unique(lakehruinfo['HRULake_ID'].values)
+    vector_unique_id = vector_unique_id[vector_unique_id > 0]
+    
+    mask = np.isin(vector_unique_id,raster_unique_id)
+    
+    if len(vector_unique_id[~mask]) > 0:
+        print("Please increase the pixel_size parameter")
+        print("The following element in path_output_folder/finalcat_hru_lake_info.shp is lost ")
+        print(vector_unique_id[~mask])
+        sys.exit()
+        
+    
     HRU_shape = sub_raster_a.shape
     HRU_a = sub_raster_a * raster_value_multi[Sub_ID]
-    
     for i in range(0,len(Merge_layer_shp_list)):
         merge_shpfile = Merge_layer_shp_list[i]
         ID_shpfile = Merge_ID_list[i]
