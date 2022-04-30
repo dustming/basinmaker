@@ -798,11 +798,11 @@ def Define_HRU_Attributes_purepy(
         hru_proj= hruinfo_simple.to_crs(prj_crs)
         hru_proj.to_file(os.path.join(tempfolder,"hru_proj.shp"))
         proj_clip_raster(DEM,os.path.join(tempfolder,"demproj.tif"),prj_crs)
-        proj_clip_raster(os.path.join(tempfolder,"demproj.tif"),os.path.join(tempfolder,"demclip.tif"),prj_crs,os.path.join(tempfolder,"hru_proj.shp"))
-        gdal_slope_raster(os.path.join(tempfolder,"demclip.tif"),os.path.join(tempfolder,"demslope.tif"))
-        gdal_aspect_raster(os.path.join(tempfolder,"demclip.tif"),os.path.join(tempfolder,"demaspect.tif"))
+#        proj_clip_raster(os.path.join(tempfolder,"demproj.tif"),os.path.join(tempfolder,"demclip.tif"),prj_crs,os.path.join(tempfolder,"hru_proj.shp"))
+        gdal_slope_raster(os.path.join(tempfolder,"demproj.tif"),os.path.join(tempfolder,"demslope.tif"))
+        gdal_aspect_raster(os.path.join(tempfolder,"demproj.tif"),os.path.join(tempfolder,"demaspect.tif"))
         
-        table_elv = ZonalStats(hru_proj, os.path.join(tempfolder,"demclip.tif"), 'mean','HRU_ID_New')
+        table_elv = ZonalStats(hru_proj, os.path.join(tempfolder,"demproj.tif"), 'mean','HRU_ID_New')
         table_asp = ZonalStats(hru_proj, os.path.join(tempfolder,"demaspect.tif"), 'mean','HRU_ID_New')
         table_slp = ZonalStats(hru_proj, os.path.join(tempfolder,"demslope.tif"), 'mean','HRU_ID_New')
 
