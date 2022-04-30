@@ -795,67 +795,29 @@ def Define_HRU_Attributes_purepy(
 
     if DEM != "#":
         
-        arcpy.Project_management(
-            os.path.join(tempfolder,'hru_simple.shp'),
-            os.path.join(tempfolder,"hru_proj.shp"), 
-            arcpy.SpatialReference(int(prj_crs)),
-            )
+        hru_proj= hruinfo_simple.to_crs(prj_crs)
+        hru_proj.to_file(os.path.join(tempfolder,"hru_proj.shp"))
+        proj_clip_raster(DEM,os.path.join(tempfolder,"demproj.tif"),prj_crs)
+        proj_clip_raster(os.path.join(tempfolder,"demproj.tif"),os.path.join(tempfolder,"demclip.tif"),prj_crs,os.path.join(tempfolder,"hru_proj.shp"))
+        gdal_slope_raster(os.path.join(tempfolder,"demclip.tif"),os.path.join(tempfolder,"demslope.tif"))
+        gdal_aspect_raster(os.path.join(tempfolder,"demclip.tif"),os.path.join(tempfolder,"demaspect.tif"))
         
-        extract_dem = ExtractByMask(DEM, os.path.join(tempfolder,'hru_simple.shp'))
-        arcpy.ProjectRaster_management(
-            extract_dem, 
-            os.path.join(tempfolder,"demproj.tif"),
-            arcpy.SpatialReference(int(prj_crs)),
-            "NEAREST"
-        )
-        Slopeout = Slope(extract_dem, "DEGREE", 0.3043)
-        Slopeout.save(os.path.join(OutputFolder,'slope.tif'))
-        Aspectout = Aspect(extract_dem)
+        table_elv = ZonalStats(hru_proj, os.path.join(tempfolder,"demclip.tif"), 'mean','HRU_ID_New')
+        table_asp = ZonalStats(hru_proj, os.path.join(tempfolder,"demaspect.tif"), 'mean','HRU_ID_New')
+        table_slp = ZonalStats(hru_proj, os.path.join(tempfolder,"demslope.tif"), 'mean','HRU_ID_New')
 
-        # Save the output 
-        Aspectout.save(os.path.join(OutputFolder,'aspect.tif'))
-
-        table_zon_slope = ZonalStatisticsAsTable(
-            os.path.join(tempfolder,"hru_proj.shp"), 
-            'HRU_ID_New', 
-            Slopeout, 
-            os.path.join(tempfolder,"slope_zonal.dbf"), 
-            "DATA", 
-            "MEAN", 
-        ) 
-        table_zon_aspect = ZonalStatisticsAsTable(
-            os.path.join(tempfolder,"hru_proj.shp"), 
-            'HRU_ID_New', 
-            Aspectout, 
-            os.path.join(tempfolder,"asp_zonal.dbf"), 
-            "DATA", 
-            "MEAN", 
-        ) 
-        table_zon_elev = ZonalStatisticsAsTable(
-            os.path.join(tempfolder,"hru_proj.shp"), 
-            'HRU_ID_New', 
-            os.path.join(tempfolder,"demproj.tif"), 
-            os.path.join(tempfolder,"elv_zonal.dbf"), 
-            "DATA", 
-            "MEAN", 
-        ) 
-        hruinfo_add_slp_asp = pd.DataFrame.spatial.from_featureclass(os.path.join(tempfolder,'hru_simple.shp'))
-        table_slp = Dbf_To_Dataframe(os.path.join(tempfolder,"slope_zonal.dbf")) 
-        table_asp = Dbf_To_Dataframe(os.path.join(tempfolder,"asp_zonal.dbf"))
-        table_elv = Dbf_To_Dataframe(os.path.join(tempfolder,"elv_zonal.dbf"))
-        
-        table_slp['HRU_S_mean'] = table_slp['MEAN']
+        table_slp['HRU_S_mean'] = table_slp['mean']
         table_slp = table_slp[['HRU_ID_New','HRU_S_mean']]
-        table_asp['HRU_A_mean'] = table_asp['MEAN']
+        table_asp['HRU_A_mean'] = table_asp['mean']
         table_asp = table_asp[['HRU_ID_New','HRU_A_mean']]
-        table_elv['HRU_E_mean'] = table_elv['MEAN']
+        table_elv['HRU_E_mean'] = table_elv['mean']
         table_elv = table_elv[['HRU_ID_New','HRU_E_mean']]
-        
-        
-        hruinfo_add_slp_asp = pd.merge(hruinfo_add_slp_asp, table_slp, on='HRU_ID_New')          
-        hruinfo_add_slp_asp = pd.merge(hruinfo_add_slp_asp, table_asp, on='HRU_ID_New')          
-        hruinfo_add_slp_asp = pd.merge(hruinfo_add_slp_asp, table_elv, on='HRU_ID_New')          
-        hruinfo_add_slp_asp['HRU_ID'] = hruinfo_add_slp_asp['FID'] + 1
+        hru_proj = pd.merge(hru_proj, table_slp, on='HRU_ID_New')          
+        hru_proj = pd.merge(hru_proj, table_asp, on='HRU_ID_New')          
+        hru_proj = pd.merge(hru_proj, table_elv, on='HRU_ID_New') 
+        hruinfo_add_slp_asp = hru_proj.to_crs(trg_crs)
+        hruinfo_add_slp_asp = hruinfo_add_slp_asp.sort_values(by=[Sub_ID,Soil_ID,Landuse_ID]).copy(deep=True).reset_index()
+        hruinfo_add_slp_asp['HRU_ID'] = hruinfo_add_slp_asp.index + 1        
     else:
 
         hruinfo_add_slp_asp = hruinfo_simple.sort_values(by=[Sub_ID,Soil_ID,Landuse_ID]).copy(deep=True).reset_index()

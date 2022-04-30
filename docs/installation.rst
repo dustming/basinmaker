@@ -187,7 +187,7 @@ QGIS and GRASS in Windows
     * In the Desktop group, please select 1) grass: GRASS GIS 7.8; 2) qgis: QGIS DESKTOP; 3)qt5_tools:Qt5 tools (development)
   
   
-    * In the Libs group, please select 1)python3-geopandas; 2)python3-rtree 
+    * In the Libs group, please select 1)python3-geopandas; 2)python3-rtree; 3)rasterstats
     
   
     We would suggest to 

@@ -9,7 +9,24 @@ import sys
 #import shapely.wkt
 #import pygeos as pg
 from osgeo import gdal, ogr
+from rasterstats import zonal_stats
 
+
+def ZonalStats(shp_gpd, raster, stats,key):
+    # shape - shapefile path
+    # raster - raster path
+    # stats - stats as list, f.e. 'min mean max' ; 'min'
+    # the result is final_gdf as GeoDataFrame
+
+    result = zonal_stats(shp_gpd, raster, stats = stats,geojson_out=True)
+    
+    reault_list_dic = list(map(lambda x : {key:x['properties'][key],'mean':x['properties']['mean']}, result))
+
+    reault_pd = pd.DataFrame(reault_list_dic)
+
+    return reault_pd
+    
+    
 def Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
     layer_path, Class_Col, tempfolder,mask_layer,Class_NM_Col = '#',info_table = '#'
 ):

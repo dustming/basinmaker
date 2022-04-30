@@ -108,7 +108,35 @@ def array_to_raster(output,input,raster_par_list,touch = "False",type = gdal.GDT
     target_ds.GetRasterBand(1).WriteArray(input)
     target_ds.FlushCache()
     return 
-        
+
+def gdal_slope_raster(input,output):
+    gdal.DEMProcessing(output,input, 'slope')
+
+def gdal_aspect_raster(input,output):
+    
+    #This command outputs a 32-bit float raster with values 
+    #between 0° and 360° representing the azimuth that slopes are facing. 
+    #The definition of the azimuth is such that : 
+    #0° means that the slope is facing the North, 
+    #90° it’s facing the East, 180° it’s facing the South and 
+    #270° it’s facing the West (provided that the top of your input raster is north oriented). 
+    #The aspect value -9999 is used as the nodata value to indicate undefined 
+    #aspect in flat areas with slope=0.
+    
+    gdal.DEMProcessing(output,input, 'aspect')
+                
+def proj_clip_raster(input,output,dst_src,cutlineDSName= '#'):
+    
+    input_raster = gdal.Open(input)
+    output_raster = output
+    if cutlineDSName == '#':
+        warp = gdal.Warp(output_raster,input_raster,dstSRS=dst_src)    
+    else:
+        warp = gdal.Warp(output_raster, 
+                    input_raster, 
+                    cutlineDSName=cutlineDSName,
+                    cropToCutline=True,
+                    dstNodata = -9999)
 
 
 
