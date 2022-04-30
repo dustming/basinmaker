@@ -165,7 +165,7 @@ def RasterHRUUnionInt32(OutputFolder,tempfolder,Merge_layer_shp_list,
     raster_par_list = [x_min, x_max, y_min, y_max,x_res,pixel_size,y_res,ras_crs]
 
     # rasterize 
-    vector_to_raster(path_to_sub_lake_raster,Sub_Lake_HRU_Layer,'HRULake_ID',raster_par_list)
+    vector_to_raster(path_to_sub_lake_raster,Sub_Lake_HRU_Layer,'HRULake_ID',raster_par_list,touch='False')
                
     
     dissolve_filedname_list = ["HRULake_ID"]
@@ -179,7 +179,7 @@ def RasterHRUUnionInt32(OutputFolder,tempfolder,Merge_layer_shp_list,
         merge_shpfile = Merge_layer_shp_list[i]
         ID_shpfile = Merge_ID_list[i]
         out_raster = os.path.join(tempfolder,"%s_ras_layer.tif"%(ID_shpfile))
-        vector_to_raster(out_raster,merge_shpfile,ID_shpfile,raster_par_list)
+        vector_to_raster(out_raster,merge_shpfile,ID_shpfile,raster_par_list,touch='False')
 
         raster_layer_i = gdal.Open(out_raster)
         raster_layer_i_a = np.array(raster_layer_i.GetRasterBand(1).ReadAsArray())

@@ -263,7 +263,12 @@ def GenerateHRUS_purepy(
     dissolve_filedname_list = ["HRULake_ID"]
     
     Merge_layer_list.append(lakehruinfo_landhrus)
-            
+
+    Landuse_info_data = pd.read_csv(Landuse_info)
+    Soil_info_data = pd.read_csv(Soil_info)
+    Veg_info_data = pd.read_csv(Veg_info)
+    
+                
     #### check which data will be inlucded to determine HRU
     if Path_Landuse_Ply != "#":
         land_landuse_clean = Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
@@ -271,6 +276,8 @@ def GenerateHRUS_purepy(
             Class_Col = Landuse_ID, 
             tempfolder = tempfolder,
             mask_layer = lakehruinfo,
+            Class_NM_Col = "LAND_USE_C",
+            info_table = Landuse_info_data,
         )
         
         if Landuse_ID not in land_landuse_clean.columns:
@@ -287,6 +294,8 @@ def GenerateHRUS_purepy(
             Class_Col = Soil_ID, 
             tempfolder = tempfolder,
             mask_layer = lakehruinfo,
+            Class_NM_Col = "SOIL_PROF",
+            info_table = Soil_info_data,            
         )
 
         if Soil_ID not in land_soil_clean.columns:
@@ -360,10 +369,6 @@ def GenerateHRUS_purepy(
     hru_lake_info = HRU_temp1.loc[HRU_temp1['HRU_IsLake'] > 0].copy()
     hru_land_info = HRU_temp1.loc[HRU_temp1['HRU_IsLake'] <= 0].copy()
     
-    Landuse_info_data = pd.read_csv(Landuse_info)
-    Soil_info_data = pd.read_csv(Soil_info)
-    Veg_info_data = pd.read_csv(Veg_info)
-
     # landuse polygon is not provided,landused id the same as IS_lake
     if Path_Landuse_Ply == "#":
         hru_land_info[Landuse_ID] = -hru_land_info['HRU_IsLake']

@@ -5,12 +5,13 @@ import pandas as pd
 from json import load, JSONEncoder
 import json
 import requests
+import sys
 #import shapely.wkt
 #import pygeos as pg
 from osgeo import gdal, ogr
 
 def Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
-    layer_path, Class_Col, tempfolder,mask_layer
+    layer_path, Class_Col, tempfolder,mask_layer,Class_NM_Col = '#',info_table = '#'
 ):
     """Preprocess user provided polygons
 
@@ -56,12 +57,28 @@ def Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
     clipped = projected.clip(mask_layer)
 #    dissolved = clipped.dissolve(by=[Class_Col], aggfunc='first',as_index=False)
     
-    cleaned = clean_geometry_purepy(clipped,1)    
-    
-#    arcpy.RepairGeometry_management(os.path.join(tempfolder,Class_Col+"_dislve.shp"))
-    
-#    arcpy.AddSpatialIndex_management(os.path.join(tempfolder,Class_Col+"_dislve.shp"))
-
+    cleaned = clean_geometry_purepy(clipped,1)
+    if Class_NM_Col != '#':
+        if Class_Col not in clipped.columns:
+            sys.exit(Class_Col," not in the attribute table of provided shapefile") 
+        if Class_Col not in info_table.columns:
+            sys.exit(Class_Col," not in the attribute table of provided info table") 
+        if Class_NM_Col not in info_table.columns:
+            sys.exit(Class_NM_Col," not in the attribute table of provided info table")   
+        
+        info_table_copy = info_table.copy(deep=True)
+        info_table_copy = info_table_copy.drop_duplicates(subset=[Class_NM_Col], keep='last',ignore_index=True)
+        info_table_copy['New_ID'] = info_table_copy[Class_Col]
+        info_table_copy = info_table_copy[[Class_NM_Col,'New_ID']]
+        info_table_copy2 = pd.merge(info_table, info_table_copy, how='inner', on = Class_NM_Col).copy(deep=True)
+        
+        cleaned = pd.merge(cleaned, info_table_copy2, how='inner', on = Class_Col)
+        cleaned[Class_Col] = cleaned['New_ID']
+        #update 
+    #    clipped Class_Col based on the Class_NM_Col
+    #    arcpy.RepairGeometry_management(os.path.join(tempfolder,Class_Col+"_dislve.shp"))
+        
+    #    arcpy.AddSpatialIndex_management(os.path.join(tempfolder,Class_Col+"_dislve.shp")) 
     return cleaned
 
 
