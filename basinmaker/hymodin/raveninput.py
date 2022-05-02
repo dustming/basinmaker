@@ -1596,6 +1596,9 @@ def Generate_Raven_Channel_rvp_rvh_String(
             if asp_temp > 360:
                 asp_temp = asp_temp - 360
             ASPECT = str(asp_temp) + tab
+        elif aspect_from_gis == 'purepy':
+            asp_temp = 360 - cataspect
+            ASPECT = str(asp_temp) + tab            
         else:
             ASPECT = '{:>10.4f}'.format(cataspect)  + tab #str(cataspect) + tab
             
