@@ -65,7 +65,7 @@ Geopandas with anaconda
 
     .. code-block:: 
 
-      conda install geopandas 
+      conda install geopandas rasterstats 
    
    
 #. Install BasinMaker 
