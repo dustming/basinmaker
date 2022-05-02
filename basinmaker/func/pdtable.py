@@ -8,6 +8,56 @@ import numbers
 from joblib import Parallel, delayed
 import tempfile
 
+def remove_landuse_type_input_based_on_area(landuse_thres,hruinfo,sub_area,Landuse_ID):
+
+    if landuse_thres <= 0:
+        return hruinfo
+    print(Landuse_ID,landuse_thres)
+    # calculate the landuse area of each landuse group in each subbasin  
+    subinfo_lu = hruinfo[['SubId',Landuse_ID,'HRU_Area']].copy(deep=True)
+    subinfo_lu = subinfo_lu.rename(columns={"HRU_Area": "Input_A_G"})
+    subinfo_lu = subinfo_lu.groupby(['SubId',Landuse_ID],as_index = False).sum()
+    
+    #calcuate landuse area ratio 
+    subinfo_lu = pd.merge(subinfo_lu, sub_area, on='SubId')
+    subinfo_lu['Area_ratio'] = subinfo_lu["Input_A_G"]/subinfo_lu['Bas_A_G']
+    
+    # obtain dominated landuse ID        
+    subinfo_lu = subinfo_lu.sort_values(by=['SubId','Input_A_G'], ascending=False)
+    subinfo_lu_dominated = subinfo_lu.drop_duplicates(subset=['SubId'], keep='first').copy(deep=True)
+
+    # find sub 
+    subinfo_lu_need_change = subinfo_lu[subinfo_lu['Area_ratio'] < landuse_thres][['SubId',Landuse_ID]].copy(deep=True)
+    
+    for i in range(0,len(subinfo_lu_need_change)):
+        subid = subinfo_lu_need_change['SubId'].values[i]
+        landuse = subinfo_lu_need_change[Landuse_ID].values[i]
+        mask1 = hruinfo['SubId'] == subid
+        mask2 = hruinfo[Landuse_ID] == landuse
+        mask = np.logical_and(mask1,mask2)
+        hruinfo.loc[mask,Landuse_ID] = subinfo_lu_dominated.loc[subinfo_lu_dominated['SubId'] == subid][Landuse_ID].values[0]
+        
+    return hruinfo
+    
+def simplify_hrus_method2(area_ratio_thresholds,hruinfo, Landuse_ID,
+                          Soil_ID,Veg_ID,Other_Ply_ID_1,Other_Ply_ID_2):
+    
+    sub_area = hruinfo[['SubId','HRU_Area']].copy(deep=True)
+    sub_area = sub_area.rename(columns={"HRU_Area": "Bas_A_G"})
+    sub_area = sub_area.groupby(['SubId'],as_index = False).sum()
+#    hruinfo = pd.merge(hruinfo, subinfo, on='SubId')
+
+    landuse_thres = area_ratio_thresholds[0]
+    list = [Landuse_ID,Soil_ID,Other_Ply_ID_1]
+    for i in range(0,len(list)):
+        Item = list[i]
+        landuse_thres = area_ratio_thresholds[i]
+        remove_landuse_type_input_based_on_area(landuse_thres,hruinfo,sub_area,Item)
+        
+    return hruinfo
+                
+    
+
 def simplidfy_hrus(min_hru_pct_sub_area,hruinfo,importance_order):
     
     hruinfo['HRU_ID_New2'] = hruinfo['HRU_ID_New']

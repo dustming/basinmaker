@@ -257,6 +257,7 @@ def generate_hrus_method(
     qgis_prefix_path="#",
     gis_platform="qgis",
     pixel_size = 30,
+    area_ratio_thresholds = [0,0,0]
 ):
     if gis_platform == "qgis":
         from basinmaker.postprocessing.hru import GenerateHRUS_qgis
@@ -349,6 +350,7 @@ def generate_hrus_method(
             Project_crs=Project_crs,
             OutputFolder=OutputFolder,
             pixel_size = pixel_size,
+            area_ratio_thresholds = area_ratio_thresholds,
         )
         
 

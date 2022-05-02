@@ -523,6 +523,7 @@ class postprocess:
         min_hru_subbasin_area_ratio = 0.0,
         path_to_dem="#",
         pixel_size = 30,
+        area_ratio_thresholds = [0,0,0]
     ):
         """This function is to generate HRU map based on subbasin polygon, lake 
         polygon (optional), Land use polygon (optional), soil type polygon(optional),
@@ -646,6 +647,7 @@ class postprocess:
             qgis_prefix_path=self.qgispp,
             gis_platform = gis_platform,
             pixel_size = pixel_size,
+            area_ratio_thresholds = area_ratio_thresholds,
         )
 
 

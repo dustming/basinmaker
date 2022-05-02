@@ -206,7 +206,6 @@ def RasterHRUUnionInt32(OutputFolder,tempfolder,Merge_layer_shp_list,
     raster_unique_id = raster_unique_id[raster_unique_id > 0]
     vector_unique_id = np.unique(lakehruinfo['HRULake_ID'].values)
     vector_unique_id = vector_unique_id[vector_unique_id > 0]
-    
     mask = np.isin(vector_unique_id,raster_unique_id)
     
     if len(vector_unique_id[~mask]) > 0:

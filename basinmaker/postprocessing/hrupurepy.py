@@ -40,6 +40,7 @@ def GenerateHRUS_purepy(
     Project_crs = '3573',
     OutputFolder="#",
     pixel_size = 30,
+    area_ratio_thresholds = [0,0,0],
 ):
     """Generate HRU polygons and their attributes needed by hydrological model
 
@@ -241,7 +242,8 @@ def GenerateHRUS_purepy(
 
     
     lakehruinfo_landhrus.to_file(path_to_landhru_shp)
-    hru_lake_info.to_file(path_to_lakehru_shp)
+    if len(hru_lake_info) > 0:
+        hru_lake_info.to_file(path_to_lakehru_shp)
 
     
     fieldnames_list.extend(
@@ -418,6 +420,7 @@ def GenerateHRUS_purepy(
         Inmportance_order = Inmportance_order,
         OutputFolder = OutputFolder,
         tempfolder = tempfolder,
+        area_ratio_thresholds = area_ratio_thresholds,
     )    
     
     COLUMN_NAMES_CONSTANT_HRU_extend = COLUMN_NAMES_CONSTANT_HRU.extend(
@@ -428,6 +431,7 @@ def GenerateHRUS_purepy(
             Other_Ply_ID_1,
             Other_Ply_ID_2,
             'geometry',
+            'HRU_A_G'
         ]
     )
     HRU_draf_final = clean_attribute_name_purepy(HRU_draf_final,COLUMN_NAMES_CONSTANT_HRU)
@@ -531,7 +535,7 @@ def GeneratelandandlakeHRUS(
         
         cat_info = geopandas.read_file(Path_Subbasin_ply)
         cat_info['Hylak_id'] = -1
-        cat_info['HRULake_ID'] = cat_info['SubId']
+        cat_info['HRULake_ID'] = cat_info.index +1
         cat_info['HRU_IsLake'] = -1
         
         # remove column not in fieldnames
@@ -627,6 +631,7 @@ def Define_HRU_Attributes_purepy(
     min_hru_area_pct_sub,
     OutputFolder,
     tempfolder,
+    area_ratio_thresholds,
 ):
 
     """Generate attributes of each HRU
@@ -737,7 +742,9 @@ def Define_HRU_Attributes_purepy(
 
     hruinfo_area = add_area_in_m2(hruinfo,prj_crs,'HRU_Area')
     
-    
+    hruinfo_area = simplify_hrus_method2(area_ratio_thresholds,hruinfo_area, Landuse_ID,
+                          Soil_ID,Veg_ID,Other_Ply_ID_1,Other_Ply_ID_2)
+                              
     hruinfo_area = hruinfo_area.sort_values(by=[Sub_ID,Soil_ID,Landuse_ID]).copy(deep=True).reset_index()
 
  
@@ -768,12 +775,12 @@ def Define_HRU_Attributes_purepy(
     )
     hruinfo_new = add_area_in_m2(hruinfo_new,prj_crs,'HRU_Area')
     
-    hruinfo_simple = simplidfy_hrus(
-        min_hru_pct_sub_area = min_hru_area_pct_sub,
-        hruinfo = hruinfo_new,
-        importance_order = Inmportance_order,
-    )
-    
+    # hruinfo_simple = simplidfy_hrus(
+    #     min_hru_pct_sub_area = min_hru_area_pct_sub,
+    #     hruinfo = hruinfo_new,
+    #     importance_order = Inmportance_order,
+    # )
+    hruinfo_simple = hruinfo_new
     hruinfo_simple = save_modified_attributes_to_outputs(
         mapoldnew_info = hruinfo_simple,
         tempfolder = tempfolder,
@@ -825,8 +832,22 @@ def Define_HRU_Attributes_purepy(
         hruinfo_add_slp_asp['HRU_S_mean'] = hruinfo_add_slp_asp['BasSlope']
         hruinfo_add_slp_asp['HRU_A_mean'] = hruinfo_add_slp_asp['BasAspect']
         hruinfo_add_slp_asp['HRU_E_mean'] = hruinfo_add_slp_asp['MeanElev']
-        
+    
+    hruinfo_add_slp_asp = adjust_HRUs_area_based_on_ply_sub_area(hruinfo_add_slp_asp)
+            
     return hruinfo_add_slp_asp
 
-
+def adjust_HRUs_area_based_on_ply_sub_area(hruinfo):
+    hruinfo['HRU_A_G'] =hruinfo ['HRU_Area']
+    subinfo = hruinfo[['SubId','HRU_Area']].copy(deep=True)
+    subinfo = subinfo.rename(columns={"HRU_Area": "Bas_A_G"})
+    
+    subinfo = subinfo.groupby(['SubId'],as_index = False).sum()
+    hruinfo = pd.merge(hruinfo, subinfo, on='SubId')
+    hruinfo['Ratio_A'] = hruinfo['BasArea']/hruinfo['Bas_A_G'] 
+    hruinfo['HRU_Area'] = hruinfo['HRU_A_G'] * hruinfo['Ratio_A']
+    
+    return hruinfo
+    
+ 
         
