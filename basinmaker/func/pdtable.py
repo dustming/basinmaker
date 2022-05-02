@@ -12,7 +12,6 @@ def remove_landuse_type_input_based_on_area(landuse_thres,hruinfo,sub_area,Landu
 
     if landuse_thres <= 0:
         return hruinfo
-    print(Landuse_ID,landuse_thres)
     # calculate the landuse area of each landuse group in each subbasin  
     subinfo_lu = hruinfo[['SubId',Landuse_ID,'HRU_Area']].copy(deep=True)
     subinfo_lu = subinfo_lu.rename(columns={"HRU_Area": "Input_A_G"})
@@ -1744,9 +1743,9 @@ def Determine_HRU_Attributes(
         Attri_table["HRULake_ID"].astype(str)
         + Attri_table[Landuse_ID].astype(str)
         + Attri_table[Soil_ID].astype(str)
-        + Attri_table[Veg_ID].astype(str)
+#        + Attri_table[Veg_ID].astype(str)
         + Attri_table[Other_Ply_ID_1].astype(str)
-        + Attri_table[Other_Ply_ID_2].astype(str)
+#        + Attri_table[Other_Ply_ID_2].astype(str)
     )
     Attri_table["HRU_ID_New"] = pd.factorize(Attri_table["facters"])[0] + 1
     return Attri_table
