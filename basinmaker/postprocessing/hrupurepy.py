@@ -439,7 +439,18 @@ def GenerateHRUS_purepy(
         HRU_draf_final = HRU_draf_final.loc[HRU_draf_final[col] != 0]
             
     HRU_draf_final.to_file(os.path.join(OutputFolder,'finalcat_hru_info.shp'))
+    HRU_draf_final_wgs_84 = HRU_draf_final.to_crs('EPSG:4326')
+    HRU_draf_final_wgs_84 = HRU_draf_final_wgs_84[['HRU_ID','geometry']]
+    TOLERANCEs = [0.0001,0.0005,0.001,0.005,0.01,0.05]
+    output_jason_path = os.path.join(OutputFolder,'finalcat_hru_info.geojson')
+    for TOLERANCE in TOLERANCEs:                               
+        HRU_draf_final_wgs_84['geometry'] = HRU_draf_final_wgs_84.simplify(TOLERANCE)
+        HRU_draf_final_wgs_84.to_file(output_jason_path,driver="GeoJSON") 
 
+        json_file_size = os.stat(output_jason_path).st_size/1024/1024 #to MB
+        if json_file_size <= 100:
+            break
+    
 def GeneratelandandlakeHRUS(
     OutputFolder,
     tempfolder,

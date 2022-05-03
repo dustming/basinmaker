@@ -52,7 +52,7 @@ def simplify_hrus_method2(area_ratio_thresholds,hruinfo, Landuse_ID,
         Item = list[i]
         landuse_thres = area_ratio_thresholds[i]
         remove_landuse_type_input_based_on_area(landuse_thres,hruinfo,sub_area,Item)
-        
+    hruinfo[Veg_ID] = hruinfo[Landuse_ID]    
     return hruinfo
                 
     
