@@ -792,26 +792,27 @@ def Define_HRU_Attributes_purepy(
     )
     hruinfo_new = add_area_in_m2(hruinfo_new,prj_crs,'HRU_Area')
     
-    if len(Inmportance_order) > 0:
-        hruinfo_simple = simplidfy_hrus(
-            min_hru_pct_sub_area = min_hru_area_pct_sub,
-            hruinfo = hruinfo_new,
-            importance_order = Inmportance_order,
-        )
-    else:
-        hruinfo_simple = hruinfo_new
-    
-    hruinfo_simple = clean_geometry_purepy(hruinfo_simple,set_precision = -1)
-    
-    hruinfo_simple = save_modified_attributes_to_outputs(
-        mapoldnew_info = hruinfo_simple,
-        tempfolder = tempfolder,
-        OutputFolder = tempfolder,
-        cat_name = 'hru_simple.shp',
-        riv_name = '#',
-        Path_final_riv = '#',
-        dis_col_name='HRU_ID_New'
-    )
+    hruinfo_simple = hruinfo_new
+    # if len(Inmportance_order) > 0:
+    #     hruinfo_simple = simplidfy_hrus(
+    #         min_hru_pct_sub_area = min_hru_area_pct_sub,
+    #         hruinfo = hruinfo_new,
+    #         importance_order = Inmportance_order,
+    #     )
+    # else:
+    #     hruinfo_simple = hruinfo_new
+    # 
+    # hruinfo_simple = clean_geometry_purepy(hruinfo_simple,set_precision = -1)
+    # 
+    # hruinfo_simple = save_modified_attributes_to_outputs(
+    #     mapoldnew_info = hruinfo_simple,
+    #     tempfolder = tempfolder,
+    #     OutputFolder = tempfolder,
+    #     cat_name = 'hru_simple.shp',
+    #     riv_name = '#',
+    #     Path_final_riv = '#',
+    #     dis_col_name='HRU_ID_New'
+    # )
 
     hruinfo_simple = add_centroid_in_wgs84(hruinfo_simple,"HRU_CenX","HRU_CenY")
 
