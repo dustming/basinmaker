@@ -11,19 +11,38 @@ import sys
 from osgeo import gdal, ogr
 from rasterstats import zonal_stats
 
+def zonal_stats_pd(shp_gpd,raster,stats,key):
+
+    result = zonal_stats(shp_gpd, raster, stats = stats,geojson_out=True,all_touched=True)
+
+    reault_list_dic = list(map(lambda x : {key:x['properties'][key],'mean':x['properties']['mean']}, result))
+
+    reault_pd = pd.DataFrame(reault_list_dic)
+    
+    return reault_pd
+
+    
 
 def ZonalStats(shp_gpd, raster, stats,key):
     # shape - shapefile path
     # raster - raster path
     # stats - stats as list, f.e. 'min mean max' ; 'min'
     # the result is final_gdf as GeoDataFrame
-
-    result = zonal_stats(shp_gpd, raster, stats = stats,geojson_out=True)
     
-    reault_list_dic = list(map(lambda x : {key:x['properties'][key],'mean':x['properties']['mean']}, result))
-
-    reault_pd = pd.DataFrame(reault_list_dic)
-
+    nodata_pd = shp_gpd.copy(deep=True)
+    i = 0
+    while len(nodata_pd) >0:
+        temp_pd = zonal_stats_pd(nodata_pd,raster,stats,key)
+        bad_hru_values = temp_pd[~(temp_pd['mean'] > 0)]['HRU_ID_New']
+        nodata_pd = nodata_pd[nodata_pd['HRU_ID_New'].isin(bad_hru_values)].copy(deep=True)
+        if i == 0:
+            reault_pd = temp_pd[temp_pd['mean'] > 0]
+            i = i + 1
+        else:
+            i = i + 1
+            good_pd = temp_pd[temp_pd['mean'] > 0]
+            reault_pd = reault_pd.append(good_pd)
+     
     return reault_pd
     
     

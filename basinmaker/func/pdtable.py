@@ -41,6 +41,9 @@ def remove_landuse_type_input_based_on_area(landuse_thres,hruinfo,sub_area,Landu
 def simplify_hrus_method2(area_ratio_thresholds,hruinfo, Landuse_ID,
                           Soil_ID,Veg_ID,Other_Ply_ID_1,Other_Ply_ID_2):
     
+    hru_lake_info = hruinfo.loc[hruinfo['HRU_IsLake'] > 0].copy()
+    hru_land_info = hruinfo.loc[hruinfo['HRU_IsLake'] <= 0].copy()
+        
     sub_area = hruinfo[['SubId','HRU_Area']].copy(deep=True)
     sub_area = sub_area.rename(columns={"HRU_Area": "Bas_A_G"})
     sub_area = sub_area.groupby(['SubId'],as_index = False).sum()
@@ -51,8 +54,11 @@ def simplify_hrus_method2(area_ratio_thresholds,hruinfo, Landuse_ID,
     for i in range(0,len(list)):
         Item = list[i]
         landuse_thres = area_ratio_thresholds[i]
-        remove_landuse_type_input_based_on_area(landuse_thres,hruinfo,sub_area,Item)
-    hruinfo[Veg_ID] = hruinfo[Landuse_ID]    
+        hru_land_info = remove_landuse_type_input_based_on_area(landuse_thres,hru_land_info,sub_area,Item)
+    hru_land_info[Veg_ID] = hru_land_info[Landuse_ID] 
+    
+    hruinfo = hru_lake_info.append(hru_land_info)
+
     return hruinfo
                 
     

@@ -401,8 +401,7 @@ def GenerateHRUS_purepy(
     
     hruinfo = hru_lake_info.append(hru_land_info)
     
-    
-#    hruinfo.to_file(os.path.join(OutputFolder,'HRUtest.shp'))
+    hruinfo.to_file(os.path.join(tempfolder,'HRU_with_attributes.shp'))
 
        
     HRU_draf_final = Define_HRU_Attributes_purepy(
@@ -760,13 +759,13 @@ def Define_HRU_Attributes_purepy(
     
     hruinfo_area = simplify_hrus_method2(area_ratio_thresholds,hruinfo_area, Landuse_ID,
                           Soil_ID,Veg_ID,Other_Ply_ID_1,Other_Ply_ID_2)
-                              
+
     hruinfo_area = hruinfo_area.sort_values(by=[Sub_ID,Soil_ID,Landuse_ID]).copy(deep=True).reset_index()
 
  
     hruinfo_area['HRU_ID'] = hruinfo_area.index + 1
     hruinfo_area["HRU_ID_New"] = hruinfo_area.index + 1  
-    
+        
     hruinfo_area_update_attribute = Determine_HRU_Attributes(
         hruinfo_area,
         Sub_ID,
@@ -779,7 +778,7 @@ def Define_HRU_Attributes_purepy(
         Soil_info_data,
         Veg_info_data,
     )
-
+   
     hruinfo_new = save_modified_attributes_to_outputs(
         mapoldnew_info = hruinfo_area_update_attribute,
         tempfolder = tempfolder,
