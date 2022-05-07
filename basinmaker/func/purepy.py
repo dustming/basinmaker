@@ -77,11 +77,14 @@ def Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
     cleaned = clean_geometry_purepy(clipped,1)
     if Class_NM_Col != '#':
         if Class_Col not in clipped.columns:
-            sys.exit(Class_Col," not in the attribute table of provided shapefile") 
+            print(Class_Col," not in the attribute table of provided shapefile")
+            sys.exit() 
         if Class_Col not in info_table.columns:
-            sys.exit(Class_Col," not in the attribute table of provided info table") 
+            print(Class_Col," not in the attribute table of provided info table")
+            sys.exit() 
         if Class_NM_Col not in info_table.columns:
-            sys.exit(Class_NM_Col," not in the attribute table of provided info table")   
+            print(Class_NM_Col," not in the attribute table of provided info table")
+            sys.exit()   
         
         info_table_copy = info_table.copy(deep=True)
         info_table_copy = info_table_copy.drop_duplicates(subset=[Class_NM_Col], keep='last',ignore_index=True)

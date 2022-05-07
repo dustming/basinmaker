@@ -283,7 +283,8 @@ def GenerateHRUS_purepy(
         )
         
         if Landuse_ID not in land_landuse_clean.columns:
-            sys.exit("Landuse polygon attribute table do not contain: ",Landuse_ID)            
+            print("Landuse polygon attribute table do not contain: ",Landuse_ID)
+            sys.exit()            
         land_landuse_clean.to_file(path_to_landuse_shp)
 
         dissolve_filedname_list.append(Landuse_ID)
@@ -301,7 +302,8 @@ def GenerateHRUS_purepy(
         )
 
         if Soil_ID not in land_soil_clean.columns:
-            sys.exit("Soil polygon attribute table do not contain: ",Soil_ID)            
+            print("Soil polygon attribute table do not contain: ",Soil_ID)
+            sys.exit()            
         land_soil_clean.to_file(path_to_soil_shp)
         dissolve_filedname_list.append(Soil_ID)
         Merge_layer_shp_list.append(path_to_soil_shp)
@@ -316,7 +318,8 @@ def GenerateHRUS_purepy(
         )
 
         if Veg_ID not in land_veg_clean.columns:
-            sys.exit("Veg polygon attribute table do not contain: ",Veg_ID)            
+            print("Veg polygon attribute table do not contain: ",Veg_ID)
+            sys.exit()            
         land_veg_clean.to_file(path_to_veg_shp)
         dissolve_filedname_list.append(Veg_ID)
         Merge_layer_shp_list.append(path_to_veg_shp)
@@ -332,7 +335,8 @@ def GenerateHRUS_purepy(
         )        
 
         if Other_Ply_ID_1 not in land_o1_clean.columns:
-            sys.exit("Other_Ply_1 polygon attribute table do not contain: ",Other_Ply_ID_1)            
+            print("Other_Ply_1 polygon attribute table do not contain: ",Other_Ply_ID_1)
+            sys.exit()            
         land_o1_clean.to_file(path_to_other1_shp)
         dissolve_filedname_list.append(Other_Ply_ID_1)
         Merge_layer_shp_list.append(path_to_other1_shp)
@@ -347,7 +351,8 @@ def GenerateHRUS_purepy(
         )        
 
         if Other_Ply_ID_2 not in land_o2_clean.columns:
-            sys.exit("Other_Ply_1 polygon attribute table do not contain: ",Other_Ply_ID_2)            
+            print("Other_Ply_1 polygon attribute table do not contain: ",Other_Ply_ID_2)
+            sys.exit()            
         land_o2_clean.to_file(path_to_other2_shp)
         dissolve_filedname_list.append(Other_Ply_ID_2)
         Merge_layer_shp_list.append(path_to_other2_shp)

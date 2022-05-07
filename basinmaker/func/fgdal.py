@@ -228,7 +228,8 @@ def RasterHRUUnionInt32(OutputFolder,tempfolder,Merge_layer_shp_list,
         if raster_layer_i_a.shape[0] == HRU_shape[0] and raster_layer_i_a.shape[1] == HRU_shape[1]:
             HRU_a = HRU_a + raster_layer_i_a * raster_value_multi[ID_shpfile]
         else:
-            sys.exit(ID_shpfile,"polygon may not fully cover the subbasin domain ",land_raster_a.shape)
+            print(ID_shpfile,"polygon may not fully cover the subbasin domain ",land_raster_a.shape)
+            sys.exit()
         
 
     HRU_a[HRU_a < raster_value_multi[Sub_ID]] = -9999
