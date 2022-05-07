@@ -248,7 +248,7 @@ def clean_geometry_purepy(data,set_precision = -1):
 
     narow = ~data['geometry'].isna()
     emrow = ~data.is_empty
-    arearow = data.area > 0.00000001
+    arearow = data.area > 0.000000001
 #    arevalid = data.is_valid
     row1 = np.logical_and(narow,emrow)
     rowselect = np.logical_and(arearow,row1)

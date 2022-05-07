@@ -779,6 +779,8 @@ def Define_HRU_Attributes_purepy(
         Veg_info_data,
     )
    
+    hruinfo_area_update_attribute = clean_geometry_purepy(hruinfo_area_update_attribute,set_precision = -1)
+   
     hruinfo_new = save_modified_attributes_to_outputs(
         mapoldnew_info = hruinfo_area_update_attribute,
         tempfolder = tempfolder,
@@ -790,12 +792,14 @@ def Define_HRU_Attributes_purepy(
     )
     hruinfo_new = add_area_in_m2(hruinfo_new,prj_crs,'HRU_Area')
     
-    # hruinfo_simple = simplidfy_hrus(
-    #     min_hru_pct_sub_area = min_hru_area_pct_sub,
-    #     hruinfo = hruinfo_new,
-    #     importance_order = Inmportance_order,
-    # )
-    hruinfo_simple = hruinfo_new
+    hruinfo_simple = simplidfy_hrus(
+        min_hru_pct_sub_area = min_hru_area_pct_sub,
+        hruinfo = hruinfo_new,
+        importance_order = Inmportance_order,
+    )
+    
+    hruinfo_simple = clean_geometry_purepy(hruinfo_simple,set_precision = -1)
+    
     hruinfo_simple = save_modified_attributes_to_outputs(
         mapoldnew_info = hruinfo_simple,
         tempfolder = tempfolder,
