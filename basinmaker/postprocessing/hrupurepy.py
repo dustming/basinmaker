@@ -779,8 +779,7 @@ def Define_HRU_Attributes_purepy(
         Veg_info_data,
     )
    
-    hruinfo_area_update_attribute = clean_geometry_purepy(hruinfo_area_update_attribute,set_precision = -1)
-   
+      
     hruinfo_new = save_modified_attributes_to_outputs(
         mapoldnew_info = hruinfo_area_update_attribute,
         tempfolder = tempfolder,
