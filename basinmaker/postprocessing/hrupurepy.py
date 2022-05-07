@@ -792,11 +792,14 @@ def Define_HRU_Attributes_purepy(
     )
     hruinfo_new = add_area_in_m2(hruinfo_new,prj_crs,'HRU_Area')
     
-    hruinfo_simple = simplidfy_hrus(
-        min_hru_pct_sub_area = min_hru_area_pct_sub,
-        hruinfo = hruinfo_new,
-        importance_order = Inmportance_order,
-    )
+    if len(Inmportance_order) > 0:
+        hruinfo_simple = simplidfy_hrus(
+            min_hru_pct_sub_area = min_hru_area_pct_sub,
+            hruinfo = hruinfo_new,
+            importance_order = Inmportance_order,
+        )
+    else:
+        hruinfo_simple = hruinfo_new
     
     hruinfo_simple = clean_geometry_purepy(hruinfo_simple,set_precision = -1)
     
