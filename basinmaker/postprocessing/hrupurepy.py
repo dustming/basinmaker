@@ -778,8 +778,7 @@ def Define_HRU_Attributes_purepy(
         Soil_info_data,
         Veg_info_data,
     )
-   
-      
+         
     hruinfo_new = save_modified_attributes_to_outputs(
         mapoldnew_info = hruinfo_area_update_attribute,
         tempfolder = tempfolder,
@@ -856,7 +855,9 @@ def Define_HRU_Attributes_purepy(
         hruinfo_add_slp_asp['HRU_E_mean'] = hruinfo_add_slp_asp['MeanElev']
     
     hruinfo_add_slp_asp = adjust_HRUs_area_based_on_ply_sub_area(hruinfo_add_slp_asp)
-            
+
+    hruinfo_add_slp_asp = clean_geometry_purepy(hruinfo_add_slp_asp,set_precision = 1)
+    
     return hruinfo_add_slp_asp
 
 def adjust_HRUs_area_based_on_ply_sub_area(hruinfo):
