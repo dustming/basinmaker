@@ -135,13 +135,13 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
     
     if riv_name != '#':
         
-        if Path_final_riv != '#'
+        if Path_final_riv != '#':
             riv_pd = geopandas.read_file(Path_final_riv)
             riv_pd['Old_SubId'] = riv_pd['SubId']
         
         cat_pd = mapoldnew_info.drop(columns = 'geometry').copy(deep=True)
         # remove all columns 
-        if Path_final_riv != '#'        
+        if Path_final_riv != '#':        
             riv_pd = riv_pd[['geometry','Old_SubId']]        
             riv_pd = pd.merge(riv_pd, cat_pd, on='Old_SubId', how='left')             
             riv_pd = riv_pd.dissolve(by=dis_col_name, aggfunc='first',as_index=False)
@@ -151,7 +151,7 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
         mapoldnew_info = add_centroid_in_wgs84(mapoldnew_info,"centroid_x","centroid_y")
         
         cat_c_x_y = mapoldnew_info[["centroid_y","centroid_x"]].copy(deep=True)
-        if Path_final_riv != '#'                
+        if Path_final_riv != '#':                
             riv_pd = riv_pd.drop(columns = ["centroid_y","centroid_x"])
             riv_pd = riv_pd.join(cat_c_x_y) 
 
@@ -160,11 +160,11 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
         for subid in riv_pd_nncls_routing_info['SubId'].values:
             if subid not in riv_pd_nncls_routing_info['DowSubId'].values:
                 remove_channel.append(subid)    
-        if Path_final_riv != '#'                                    
+        if Path_final_riv != '#':                                    
             riv_pd = riv_pd[~riv_pd.SubId.isin(remove_channel)]   
         cat_colnms = riv_pd.columns
         drop_cat_colnms = cat_colnms[cat_colnms.isin(NEED_TO_REMOVE_IDS)]
-        if Path_final_riv != '#'                        
+        if Path_final_riv != '#':                        
             riv_pd = riv_pd.drop(columns=drop_cat_colnms)
             if len(riv_pd) > 0:
                 riv_pd.to_file(os.path.join(OutputFolder,riv_name))
