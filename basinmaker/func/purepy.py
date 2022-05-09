@@ -162,9 +162,8 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
                 remove_channel.append(subid)    
         if Path_final_riv != '#':                                    
             riv_pd = riv_pd[~riv_pd.SubId.isin(remove_channel)]   
-        cat_colnms = riv_pd.columns
-        drop_cat_colnms = cat_colnms[cat_colnms.isin(NEED_TO_REMOVE_IDS)]
-        if Path_final_riv != '#':                        
+            cat_colnms = riv_pd.columns
+            drop_cat_colnms = cat_colnms[cat_colnms.isin(NEED_TO_REMOVE_IDS)]                      
             riv_pd = riv_pd.drop(columns=drop_cat_colnms)
             if len(riv_pd) > 0:
                 riv_pd.to_file(os.path.join(OutputFolder,riv_name))
