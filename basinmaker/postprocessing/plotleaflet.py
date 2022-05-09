@@ -15,9 +15,12 @@ def plot_routing_product_with_ipyleaflet(path_to_product_folder,version_number =
     path_ncllake = os.path.join(product_folder,'sl_non_connected_lake'+version_number+'.shp')
 
     subbasin = geopandas.read_file(path_subbasin)
-    river = geopandas.read_file(path_river)
     subbasin = subbasin.to_crs("EPSG:4326")
-    river = river.to_crs("EPSG:4326")
+    
+    if os.path.exists(path_river):
+        river = geopandas.read_file(path_river)
+        river = river.to_crs("EPSG:4326")
+
 
     if os.path.exists(path_cllake):
         cllake = geopandas.read_file(path_cllake)
@@ -44,10 +47,10 @@ def plot_routing_product_with_ipyleaflet(path_to_product_folder,version_number =
         sub_ncllake_map = GeoData(geo_dataframe = subncllake,
                           style={'color': '#6E6E6E', 'fillColor': '#F5F57A', 'opacity':1, 'weight':1, 'dashArray':'2', 'fillOpacity':1},
                           name = 'Subbasin with connected lakes')
-
-    river_map = GeoData(geo_dataframe = river,
-                      style={'color': '#0070FF', 'fillColor': '#0070FF', 'opacity':1, 'weight':2, 'dashArray':'2', 'fillOpacity':1},
-                      name = 'River')
+    if os.path.exists(path_river):
+        river_map = GeoData(geo_dataframe = river,
+                          style={'color': '#0070FF', 'fillColor': '#0070FF', 'opacity':1, 'weight':2, 'dashArray':'2', 'fillOpacity':1},
+                          name = 'River')
     if os.path.exists(path_cllake):
         cllake_map = GeoData(geo_dataframe = cllake,
                             style={'color': '#6E6E6E', 'fillColor': '#0070FF', 'opacity':1, 'weight':1, 'dashArray':'2', 'fillOpacity':1},
@@ -62,7 +65,8 @@ def plot_routing_product_with_ipyleaflet(path_to_product_folder,version_number =
         m.add_layer(sub_cllake_map)
     if len(subncllake) > 0:
         m.add_layer(sub_ncllake_map)
-    m.add_layer(river_map)
+    if os.path.exists(path_river):
+        m.add_layer(river_map)
     if os.path.exists(path_cllake):
         m.add_layer(cllake_map)
     if os.path.exists(path_ncllake):
