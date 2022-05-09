@@ -134,35 +134,40 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
         f.write(response.content)
     
     if riv_name != '#':
-
-        riv_pd = geopandas.read_file(Path_final_riv)
-        riv_pd['Old_SubId'] = riv_pd['SubId']
+        
+        if Path_final_riv != '#'
+            riv_pd = geopandas.read_file(Path_final_riv)
+            riv_pd['Old_SubId'] = riv_pd['SubId']
         
         cat_pd = mapoldnew_info.drop(columns = 'geometry').copy(deep=True)
         # remove all columns 
-        riv_pd = riv_pd[['geometry','Old_SubId']]        
-        riv_pd = pd.merge(riv_pd, cat_pd, on='Old_SubId', how='left')             
-        riv_pd = riv_pd.dissolve(by=dis_col_name, aggfunc='first',as_index=False)
+        if Path_final_riv != '#'        
+            riv_pd = riv_pd[['geometry','Old_SubId']]        
+            riv_pd = pd.merge(riv_pd, cat_pd, on='Old_SubId', how='left')             
+            riv_pd = riv_pd.dissolve(by=dis_col_name, aggfunc='first',as_index=False)
         
         
         mapoldnew_info = mapoldnew_info.dissolve(by=dis_col_name, aggfunc='first',as_index=False)
         mapoldnew_info = add_centroid_in_wgs84(mapoldnew_info,"centroid_x","centroid_y")
         
         cat_c_x_y = mapoldnew_info[["centroid_y","centroid_x"]].copy(deep=True)
-        riv_pd = riv_pd.drop(columns = ["centroid_y","centroid_x"])
-        riv_pd = riv_pd.join(cat_c_x_y) 
+        if Path_final_riv != '#'                
+            riv_pd = riv_pd.drop(columns = ["centroid_y","centroid_x"])
+            riv_pd = riv_pd.join(cat_c_x_y) 
 
         riv_pd_nncls_routing_info = mapoldnew_info[mapoldnew_info['Lake_Cat'] != 2][['SubId','DowSubId']].copy(deep=True)
         remove_channel = []
         for subid in riv_pd_nncls_routing_info['SubId'].values:
             if subid not in riv_pd_nncls_routing_info['DowSubId'].values:
-                remove_channel.append(subid)                
-        riv_pd = riv_pd[~riv_pd.SubId.isin(remove_channel)]   
+                remove_channel.append(subid)    
+        if Path_final_riv != '#'                                    
+            riv_pd = riv_pd[~riv_pd.SubId.isin(remove_channel)]   
         cat_colnms = riv_pd.columns
         drop_cat_colnms = cat_colnms[cat_colnms.isin(NEED_TO_REMOVE_IDS)]
-        riv_pd = riv_pd.drop(columns=drop_cat_colnms)
-        if len(riv_pd) > 0:
-            riv_pd.to_file(os.path.join(OutputFolder,riv_name))
+        if Path_final_riv != '#'                        
+            riv_pd = riv_pd.drop(columns=drop_cat_colnms)
+            if len(riv_pd) > 0:
+                riv_pd.to_file(os.path.join(OutputFolder,riv_name))
         
         mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'RivSlope'] = -1.2345
         mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'RivLength'] = -1.2345
