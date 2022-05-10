@@ -130,7 +130,7 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
     if "DA_Chn_L" in  mapoldnew_info.columns:
         url = 'https://github.com/dustming/RoutingTool/wiki/Files/README_OIH.pdf'
     else:
-        url = 'https://github.com/dustming/RoutingTool/wiki/Files/README_NA.pdf.pdf'
+        url = 'https://github.com/dustming/RoutingTool/wiki/Files/README_NA.pdf'
 
     response = requests.get(url)
     with open(os.path.join(OutputFolder,"README.pdf"), 'wb') as f:
