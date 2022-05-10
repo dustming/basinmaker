@@ -126,8 +126,11 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
 
     NEED_TO_REMOVE_IDS = ["SubId_1", "Id","nsubid2", "nsubid","ndownsubid","Old_SubId","Old_DowSub","Join_Count","TARGET_FID","Id","SubID_Oldr","HRU_ID_N_1","HRU_ID_N_2","facters","Old_DowSubId","SubIdt2"]
 
-    #obtain readme file    
-    url = 'https://github.com/dustming/RoutingTool/wiki/Files/README.pdf'
+    #obtain readme file   
+    if "DA_Chn_L" in  mapoldnew_info.columns:
+        url = 'https://github.com/dustming/RoutingTool/wiki/Files/README_OIH.pdf'
+    else:
+        url = 'https://github.com/dustming/RoutingTool/wiki/Files/README_NA.pdf.pdf'
 
     response = requests.get(url)
     with open(os.path.join(OutputFolder,"README.pdf"), 'wb') as f:
