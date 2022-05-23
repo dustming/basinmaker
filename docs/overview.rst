@@ -25,7 +25,7 @@ Examples demonstrating how BasinMaker may be used can be found `here <http://hyd
 Authors
 ========
   
-BasinMaker and the associated river and lake routing product was developed by the hydrology research group at the University of Waterloo. Primary Contributors includes Ming Han, Hongren Shen, Bryan A. Tolson, James R. Craig, Juliane Mai, Simon Lin, Nandita B. Basu, Frezer Awol. We also want to thank Robert Chlumsky, Étienne Gaborit, Hongli Liu, Konhee Lee for their secondary support in development of this product and their contributions to our Pan-Canadian routing product.
+BasinMaker and the associated river and lake routing product was developed by the hydrology research group at the University of Waterloo. Primary Contributors are Ming Han, Hongren Shen, Bryan A. Tolson, James R. Craig and Juliane Mai. Secondary contributors are Simon Lin, Nandita B. Basu and Frezer Awol. 
   
 ========
 Citation
