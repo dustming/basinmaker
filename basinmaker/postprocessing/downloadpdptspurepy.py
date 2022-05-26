@@ -2,6 +2,7 @@ import pandas as pd
 import geopandas
 from basinmaker.postprocessing.downloadpd import Download_Routing_Product_For_One_Gauge
 import os
+import numpy as np 
 
 def Download_Routing_Product_From_Points_Or_LatLon(product_name,Lat = [-1],Lon = [-1]):
     
@@ -20,7 +21,7 @@ def Download_Routing_Product_From_Points_Or_LatLon(product_name,Lat = [-1],Lon =
         Drainage_region = geopandas.read_file("https://github.com/dustming/RoutingTool/wiki/Files/OLRRP_drainage_region.geojson")
     
         data_dr = geopandas.overlay(data_gpd, Drainage_region, how='identity')
-        if len(data_dr) >= 1:
+        if len(data_dr) >= 1 and data_dr['Region'].values[0] in np.unique(Drainage_region['Region'].values):
 
             dr = data_dr['Region'].values[0]
             Subid,product_path = Download_Routing_Product_For_One_Gauge(gauge_name='#',product_name = product_name,region=dr,subreg = '#')
