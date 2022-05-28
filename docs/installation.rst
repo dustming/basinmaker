@@ -78,7 +78,7 @@ Geopandas with anaconda
 
     .. code-block::
   
-      python -m pip install pandas pytest scipy simpledbf netCDF4 joblib jupyter
+      python -m pip install pandas pytest scipy simpledbf netCDF4 joblib jupyter requrest
 
 #. Test validation 
      
@@ -217,7 +217,7 @@ QGIS and GRASS in Windows
     
 #. Validate the GRASS and QGIS python environment
      
-    * Please check if the python executable comes from the OSGeo4W64 installation folder
+    * Please check if the python executable comes from the OSGeo4W installation folder
       by typing following commands after run basinmaker.bat. If the output is not 
       similar to the output showed in following output block. Please go back to step 2 and check
       the basinmaker.bat file  
@@ -225,7 +225,7 @@ QGIS and GRASS in Windows
     .. code-block::
        
       >where python    
-      C:\OSGeo4W64\apps\Python37\python.exe
+      C:\OSGeo4W\apps\Python37\python.exe
 
     * Check if all dependent QGIS and GRASS libraries can be imported in current python 
       environment by type following commands. 
