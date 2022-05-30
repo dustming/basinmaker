@@ -256,7 +256,7 @@ QGIS and GRASS in Windows
     .. code-block::
 
       python -m pip install simpledbf grass_session scipy joblib
-      
+      python -m pip install --upgrade pip
       python -m pip install geopandas -U
 
   
