@@ -21,6 +21,10 @@ Examples
   
 Examples demonstrating how BasinMaker may be used can be found `here <http://hydrology.uwaterloo.ca/basinmaker/index.html>`_.
 
+A post-processing example via google colab can be found at here `here <https://colab.research.google.com/drive/14OC8l4ZeabOGGi0bL0ZFK1QzTOY8M9yM?usp=sharing>`_. The google colab is an online python notebook dose not require installation. This example will show you how to discretize, simplify, and revise the provided routing product for your purposes. 
+
+
+
 ========  
 Authors
 ========
