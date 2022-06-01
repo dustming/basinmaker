@@ -18,21 +18,15 @@ For full installation, both GRASS GIS and QGIS are needed. It is quite a challen
 
 Update of the BasinMaker 
 ==================
-For existing users who want to update the BasinMaker to the newest version. It can be done by the following steps:
+For existing users who want to update the BasinMaker to the version v3.0.0. User need to following the reinstall basinmaker to a new basinmaker working environment. 
 
 
-#. Active the BasinMaker working environment.
 
-        * For the user with the light installation using Anaconda3, activate the python environment you created where QGIS and basinmaker is installed by running ‘conda activate <any_name_for_env>’. 
-    
-        * For the user with the full installation, run ‘basinmaker.bat/sh’.
+BasinMaker on Google Colab
+==================
+ 
+A post-processing example via google colab (no installation on your local machine necessary!) can be found at here `here <https://colab.research.google.com/drive/14OC8l4ZeabOGGi0bL0ZFK1QzTOY8M9yM?usp=sharing>`_. The google colab is an online python notebook dose not require installation. This example will show you how to discretize, simplify, and revise the provided routing product for your purposes. 
 
-
-#. Run the following command in the BasinMaker working environment. 
-
- .. code-block::
-   
-   python -m pip install basinmaker -U
 
 Light installation
 ==================

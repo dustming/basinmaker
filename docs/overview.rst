@@ -16,13 +16,17 @@ The only difference between CLs and NCLs is that CLs always drain into an explic
 
 
 ========  
-Examples
+Routing products from BasinMaker 
 ========
-  
-Examples demonstrating how BasinMaker may be used can be found `here <http://hydrology.uwaterloo.ca/basinmaker/index.html>`_.
 
+ - The North American Lake-River Routing Product v2.1 developed using BasinMaker is available at `here <http://hydrology.uwaterloo.ca/basinmaker/index.html>`_.
+ - BasinMaker generated Ontario Lake-River Routing Product v1 is available at `here <https://lake-river-routing-products-uwaterloo.hub.arcgis.com>`_. .
+
+========  
+BasinMaker on Google Colab
+========
+ 
 A post-processing example via google colab can be found at here `here <https://colab.research.google.com/drive/14OC8l4ZeabOGGi0bL0ZFK1QzTOY8M9yM?usp=sharing>`_. The google colab is an online python notebook dose not require installation. This example will show you how to discretize, simplify, and revise the provided routing product for your purposes. 
-
 
 
 ========  
