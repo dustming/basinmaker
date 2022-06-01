@@ -39,16 +39,14 @@ BasinMaker and the associated river and lake routing product was developed by th
 Citation
 ========  
     
-- Han, M., J. Mai, B. A. Tolson, J. R. Craig, É. Gaborit, H. Liu, and K. Lee, Subwatershed-based lake and river routing products for hydrologic and land surface models applied over Canada, Canadian Water Resources Journal, 2020 (paper)
+- Han, M., H. Shen, B. A. Tolson, J. R. Craig, J. Mai, S. Lin, N. B. Basu, F. Awol. 2021. BasinMaker 3.0: a GIS toolbox for distributed watershed delineation of complex lake-river routing networks. Submitted in June 2022 to Environmental Modelling and Software.
   
 and/or cite the zenodo dataset directly:
   
-- Han, M., J. Mai, B. A. Tolson, J. R. Craig, É. Gaborit, H. Liu, and K. Lee. 2020. A Catchment-Based Lake and River Routing Product for Hydrologic and Land Surface Models in Canada. (routing product v1.0)
+- Ming Han, Hongren Shen, Bryan A. Tolson, & Robert A. Metcalfe. (2022). Ontario Lake-River Routing Product version 1.0 (v1.0) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.6536085
    
-- Han, M., H. Shen, B. A. Tolson, J. R. Craig, J. Mai, S. Lin, N. B. Basu, F. Awol. 2021. North American Lake-River Routing Product v 2.0, derived by BasinMaker GIS Toolbox (routing product v2.0)
-  
-- Han, M., H. Shen, B. A. Tolson, J. R. Craig, J. Mai, S. Lin, N. B. Basu, F. Awol. 2021. North American Lake-River Routing Product v 2.1, derived by BasinMaker GIS Toolbox (routing product v2.1)
-  
+- Ming Han, Hongren Shen, Bryan A. Tolson, James R. Craig, Juliane Mai, Simon Lin, Nandita Basu, & Frezer Awol. (2020). North American Lake-River Routing Product v 2.1, derived by BasinMaker GIS Toolbox (v2.1) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.4728185
+    
 ========  
 License
 ========  
