@@ -71,7 +71,7 @@ Geopandas with anaconda
 
     .. code-block::
   
-      python -m pip install pandas pytest scipy simpledbf netCDF4 joblib jupyter requrest
+      python -m pip install pandas pytest scipy simpledbf netCDF4 joblib jupyter requests
 
 #. Test validation 
      
