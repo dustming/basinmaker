@@ -16,10 +16,9 @@ For light installation (recommended unless users know for sure they need to deli
 For full installation, both GRASS GIS and QGIS are needed. It is quite a challenge to setup a python environment for QGIS and GRASS together. Here, two procedures are provided for Windows OS systems, respectively. The procedure have been tested on several machines. But We can't guarantee install procedures work on every machin, but if you run into a problem create an issue on the GitHub and time permitting, we will try to help. The instruction for Windows system can be found in :ref:`Full installation`. If you managed to do the full installation on a different operating system, we would be grateful if you could document and share the detailed installation procedure that was successful (email: m43han@uwaterloo.ca).
 
 
-Update of the BasinMaker 
+Updating BasinMaker to v3.0 
 ==================
-For existing users who want to update the BasinMaker to the version v3.0.0. User need to following the reinstall basinmaker to a new basinmaker working environment. 
-
+For existing users of v2.0 who want to update BasinMaker to the version v3.0.0. Users should simply reinstall BasinMaker 3.0 to a new working environment (e.g., called 'Basinmaker3' perhaps).
 
 
 BasinMaker on Google Colab
