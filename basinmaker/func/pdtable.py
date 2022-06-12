@@ -1831,7 +1831,10 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
     ]['SubId'].values
     finalriv_info_ncl = finalriv_info.copy(deep=True)
     # make unselected gauge to be a false lake 
-    finalriv_info_ncl.loc[finalriv_info_ncl['SubId'].isin(unselected_gauges_subids),'HyLakeId'] = - finalriv_info_ncl.loc[finalriv_info_ncl['SubId'].isin(unselected_gauges_subids),'SubId']  
+    mask1 = finalriv_info_ncl['SubId'].isin(unselected_gauges_subids)
+    mask2 = finalriv_info_ncl['HyLakeId'] < 1
+    mask = np.logical_and(mask1,mask2)
+    finalriv_info_ncl.loc[mask,'HyLakeId'] = - finalriv_info_ncl.loc[finalriv_info_ncl['SubId'].isin(unselected_gauges_subids),'SubId']  
     fake_obs_hyalkeids =  finalriv_info_ncl.loc[finalriv_info_ncl['SubId'].isin(unselected_gauges_subids),'HyLakeId'].values
     ##
     ###
