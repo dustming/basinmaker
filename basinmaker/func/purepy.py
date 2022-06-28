@@ -23,7 +23,7 @@ def zonal_stats_pd(shp_gpd,raster,stats,key):
 
     
 
-def ZonalStats(shp_gpd, raster, stats,key):
+def ZonalStats(shp_gpd, raster, stats,key,col):
     # shape - shapefile path
     # raster - raster path
     # stats - stats as list, f.e. 'min mean max' ; 'min'
@@ -31,7 +31,7 @@ def ZonalStats(shp_gpd, raster, stats,key):
     
     nodata_pd = shp_gpd.copy(deep=True)
     i = 0
-    while len(nodata_pd) >0:
+    while len(nodata_pd) >0 and i <=5:
         temp_pd = zonal_stats_pd(nodata_pd,raster,stats,key)
         bad_hru_values = temp_pd[~(temp_pd['mean'] > 0)]['HRU_ID_New']
         nodata_pd = nodata_pd[nodata_pd['HRU_ID_New'].isin(bad_hru_values)].copy(deep=True)
@@ -42,7 +42,11 @@ def ZonalStats(shp_gpd, raster, stats,key):
             i = i + 1
             good_pd = temp_pd[temp_pd['mean'] > 0]
             reault_pd = reault_pd.append(good_pd)
-     
+
+    if len(nodata_pd) > 0:
+        nodata_pd['mean'] = nodata_pd[col]
+        reault_pd = reault_pd.append(nodata_pd)
+#    print(len(shp_gpd),len(nodata_pd),len(reault_pd))     
     return reault_pd
     
     
@@ -92,7 +96,7 @@ def Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
     projected = projected.explode(ignore_index=True)
     clipped = projected.clip(mask_layer)
 #    dissolved = clipped.dissolve(by=[Class_Col], aggfunc='first',as_index=False)
-    
+#    print(Class_Col,new_crs,clipped.crs)
     cleaned = clean_geometry_purepy(clipped,1)
     if Class_NM_Col != '#':
         if Class_Col not in clipped.columns:
@@ -249,19 +253,25 @@ def clean_geometry_purepy(data,set_precision = -1):
 
 #    data["geometry"] = data["geometry"].apply(lambda x: shapely.wkt.loads(shapely.wkt.dumps(x, rounding_precision=4)))
     if set_precision > 0:
-        data['geometry'] = data['geometry'].buffer(0.000001)
+        data['geometry'] = data['geometry'].buffer(0.00000000001)
         
 #        data.geometry = pg.set_precision(data.geometry.values.data, 1e-6)
 #        data["geometry"] = data["geometry"].apply(lambda x: shapely.wkt.loads(shapely.wkt.dumps(x, rounding_precision=4)))
 #        data['geometry'] = data['geometry'].buffer(0)
+#    print("aaaa")
     narow = ~data['geometry'].isna()
+#    print("a1",len(data.loc[narow]))
     emrow = ~data.is_empty
-    arearow = data.area > 0.000000001
+#    print("a2",len(data.loc[emrow]))
+    arearow = data.area > 0
+#    print("a3",len(data.loc[arearow]))
 #    arevalid = data.is_valid
     row1 = np.logical_and(narow,emrow)
     rowselect = np.logical_and(arearow,row1)
+#    print("a",len(data))
 #    rowselect = np.logical_and(rowselect,arevalid)
     data = data.loc[rowselect]
+#    print("b",len(data))
     data = data.loc[data.geom_type != 'Point']
     if len(data.loc[data.geom_type == 'GeometryCollection']) > 0:
         print("###########################")
@@ -271,6 +281,7 @@ def clean_geometry_purepy(data,set_precision = -1):
     
     data = data.loc[data.geom_type != 'GeometryCollection']
     data.sindex
+#    print("c",len(data))
     return data   
     
 def add_area_in_m2(data,prj_crs,area_col):

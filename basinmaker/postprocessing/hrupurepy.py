@@ -222,16 +222,20 @@ def GenerateHRUS_purepy(
         Sub_ID=Sub_ID,
         Sub_Lake_ID=Sub_Lake_ID,
         Lake_Id=Lake_Id,
+        prj_crs = prj_crs,
     ) 
     
     lakehruinfo = geopandas.read_file(Sub_Lake_HRU_Layer)
     hru_lake_info = lakehruinfo.loc[lakehruinfo['HRU_IsLake'] > 0].copy()
     lakehruinfo_landhrus = lakehruinfo.loc[lakehruinfo['HRU_IsLake'] <= 0].copy()
     
+    hru_lake_info = hru_lake_info.to_crs(prj_crs)
+    lakehruinfo_landhrus = lakehruinfo_landhrus.to_crs(prj_crs)
+    lakehruinfo = lakehruinfo.to_crs(prj_crs)
+     
     hru_lake_info = clean_geometry_purepy(hru_lake_info)
     lakehruinfo_landhrus = clean_geometry_purepy(lakehruinfo_landhrus)
     
-
     path_to_landhru_shp= os.path.join(tempfolder,'land_hru.shp')
     path_to_lakehru_shp= os.path.join(tempfolder,'lake_hru.shp')
     path_to_landuse_shp = os.path.join(tempfolder,'landuse.shp')
@@ -241,10 +245,12 @@ def GenerateHRUS_purepy(
     path_to_other2_shp = os.path.join(tempfolder,'o2.shp')
 
     
-    lakehruinfo_landhrus.to_file(path_to_landhru_shp)
+#    lakehruinfo_landhrus.to_file(path_to_landhru_shp)
     if len(hru_lake_info) > 0:
         hru_lake_info.to_file(path_to_lakehru_shp)
-
+        
+    if len(lakehruinfo_landhrus) > 0:
+        lakehruinfo_landhrus.to_file(path_to_landhru_shp)
     
     fieldnames_list.extend(
         [
@@ -464,6 +470,7 @@ def GeneratelandandlakeHRUS(
     Sub_ID="SubId",
     Sub_Lake_ID="HyLakeId",
     Lake_Id="Hylak_id",
+    prj_crs = "EPSG:3161",
 ):
 
     """Overlay subbasin polygon and lake polygons
@@ -555,8 +562,9 @@ def GeneratelandandlakeHRUS(
         
         # remove column not in fieldnames
         cat_info = clean_attribute_name_purepy(cat_info,fieldnames)
-        cat_info.to_file(os.path.join(OutputFolder,'finalcat_hru_lake_info.shp'))
+        cat_info = cat_info.to_crs(prj_crs)
         crs_id = cat_info.crs
+        cat_info.to_file(os.path.join(OutputFolder,'finalcat_hru_lake_info.shp'))
         return os.path.join(OutputFolder,'finalcat_hru_lake_info.shp'), crs_id, ["HRULake_ID", "HRU_IsLake", Sub_ID]
     else:
         cat_info = geopandas.read_file(Path_Subbasin_ply)
@@ -602,8 +610,6 @@ def GeneratelandandlakeHRUS(
     sub_lake_info['HRULake_ID'] = -9999
     sub_lake_info['HRU_IsLake'] = -9999
     
-    crs_id = sub_lake_info.crs
-
     sub_lake_info = sub_lake_info.sort_values(by=['SubId',Lake_Id]).copy(deep=True).reset_index()
     
     sub_lake_info['HRU_ID_Temp'] = sub_lake_info.index + 1
@@ -611,6 +617,8 @@ def GeneratelandandlakeHRUS(
     sub_lake_info = Determine_Lake_HRU_Id(sub_lake_info)
     # copy determined lake hru id to vector
     sub_lake_info = clean_attribute_name_purepy(sub_lake_info,fieldnames)
+    sub_lake_info = sub_lake_info.to_crs(prj_crs)
+    crs_id = sub_lake_info.crs
     save_modified_attributes_to_outputs(
         mapoldnew_info = sub_lake_info,
         tempfolder = tempfolder,
@@ -789,7 +797,7 @@ def Define_HRU_Attributes_purepy(
         dis_col_name='HRU_ID_New'
     )
     hruinfo_new = add_area_in_m2(hruinfo_new,prj_crs,'HRU_Area')
-    
+#    print(len(hruinfo_area_update_attribute),len(hruinfo_new))
     hruinfo_simple = hruinfo_new
     # if len(Inmportance_order) > 0:
     #     hruinfo_simple = simplidfy_hrus(
@@ -820,7 +828,7 @@ def Define_HRU_Attributes_purepy(
     hruinfo_simple = pd.merge(hruinfo_simple, cat_info, on='SubId', how='left')             
 
     hruinfo_simple = add_area_in_m2(hruinfo_simple,prj_crs,'HRU_Area')
-
+#    print(len(hruinfo_simple))
     if DEM != "#":
         
         hru_proj= hruinfo_simple.to_crs(prj_crs)
@@ -830,10 +838,10 @@ def Define_HRU_Attributes_purepy(
         gdal_slope_raster(os.path.join(tempfolder,"demproj.tif"),os.path.join(tempfolder,"demslope.tif"))
         gdal_aspect_raster(os.path.join(tempfolder,"demproj.tif"),os.path.join(tempfolder,"demaspect.tif"))
         
-        table_elv = ZonalStats(hru_proj, os.path.join(tempfolder,"demproj.tif"), 'mean','HRU_ID_New')
-        table_asp = ZonalStats(hru_proj, os.path.join(tempfolder,"demaspect.tif"), 'mean','HRU_ID_New')
-        table_slp = ZonalStats(hru_proj, os.path.join(tempfolder,"demslope.tif"), 'mean','HRU_ID_New')
-
+        table_elv = ZonalStats(hru_proj, os.path.join(tempfolder,"demproj.tif"), 'mean','HRU_ID_New','MeanElev')
+        table_asp = ZonalStats(hru_proj, os.path.join(tempfolder,"demaspect.tif"), 'mean','HRU_ID_New','BasAspect')
+        table_slp = ZonalStats(hru_proj, os.path.join(tempfolder,"demslope.tif"), 'mean','HRU_ID_New','BasSlope')
+        
         table_slp['HRU_S_mean'] = table_slp['mean']
         table_slp = table_slp[['HRU_ID_New','HRU_S_mean']]
         table_asp['HRU_A_mean'] = table_asp['mean']
@@ -845,7 +853,8 @@ def Define_HRU_Attributes_purepy(
         hru_proj = pd.merge(hru_proj, table_elv, on='HRU_ID_New') 
         hruinfo_add_slp_asp = hru_proj.to_crs(trg_crs)
         hruinfo_add_slp_asp = hruinfo_add_slp_asp.sort_values(by=[Sub_ID,Soil_ID,Landuse_ID]).copy(deep=True).reset_index()
-        hruinfo_add_slp_asp['HRU_ID'] = hruinfo_add_slp_asp.index + 1        
+        hruinfo_add_slp_asp['HRU_ID'] = hruinfo_add_slp_asp.index + 1   
+#        print(len(hruinfo_add_slp_asp))     
     else:
 
         hruinfo_add_slp_asp = hruinfo_simple.sort_values(by=[Sub_ID,Soil_ID,Landuse_ID]).copy(deep=True).reset_index()
@@ -857,7 +866,7 @@ def Define_HRU_Attributes_purepy(
     hruinfo_add_slp_asp = adjust_HRUs_area_based_on_ply_sub_area(hruinfo_add_slp_asp)
 
     hruinfo_add_slp_asp = clean_geometry_purepy(hruinfo_add_slp_asp,set_precision = 1)
-    
+#    print(len(hruinfo_add_slp_asp))
     return hruinfo_add_slp_asp
 
 def adjust_HRUs_area_based_on_ply_sub_area(hruinfo):
