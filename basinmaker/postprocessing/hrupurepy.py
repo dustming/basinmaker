@@ -563,8 +563,8 @@ def GeneratelandandlakeHRUS(
         
         # remove column not in fieldnames
         cat_info = clean_attribute_name_purepy(cat_info,fieldnames)
-        cat_info = cat_info.to_crs(prj_crs)
         crs_id = cat_info.crs
+        cat_info = cat_info.to_crs(prj_crs)
         cat_info.to_file(os.path.join(OutputFolder,'finalcat_hru_lake_info.shp'))
         return os.path.join(OutputFolder,'finalcat_hru_lake_info.shp'), crs_id, ["HRULake_ID", "HRU_IsLake", Sub_ID]
     else:
@@ -618,8 +618,8 @@ def GeneratelandandlakeHRUS(
     sub_lake_info = Determine_Lake_HRU_Id(sub_lake_info)
     # copy determined lake hru id to vector
     sub_lake_info = clean_attribute_name_purepy(sub_lake_info,fieldnames)
-    sub_lake_info = sub_lake_info.to_crs(prj_crs)
     crs_id = sub_lake_info.crs
+    sub_lake_info = sub_lake_info.to_crs(prj_crs)
     save_modified_attributes_to_outputs(
         mapoldnew_info = sub_lake_info,
         tempfolder = tempfolder,
