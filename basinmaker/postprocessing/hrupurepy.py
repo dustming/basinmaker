@@ -447,7 +447,8 @@ def GenerateHRUS_purepy(
     HRU_draf_final = clean_attribute_name_purepy(HRU_draf_final,COLUMN_NAMES_CONSTANT_HRU)
     for col in [Landuse_ID,Soil_ID,Veg_ID,Other_Ply_ID_1,Other_Ply_ID_2,'SubId']:
         HRU_draf_final = HRU_draf_final.loc[HRU_draf_final[col] != 0]
-            
+    
+    HRU_draf_final.to_crs(trg_crs)        
     HRU_draf_final.to_file(os.path.join(OutputFolder,'finalcat_hru_info.shp'))
     HRU_draf_final_wgs_84 = HRU_draf_final.to_crs('EPSG:4326')
     HRU_draf_final_wgs_84 = HRU_draf_final_wgs_84[['HRU_ID','geometry']]
