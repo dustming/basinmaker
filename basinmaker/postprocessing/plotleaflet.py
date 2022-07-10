@@ -156,5 +156,4 @@ def plot_routing_product_with_leafmap(path_to_product_folder,version_number = ''
         m.add_gdf(ncllake[lake_col], layer_name=name,style = style)
         
     m.add_legend(title='Legend', labels=labels, colors=colors)
-    m
-    return
+    return m
