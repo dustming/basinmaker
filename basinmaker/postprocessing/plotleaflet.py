@@ -101,10 +101,16 @@ def plot_routing_product_with_leafmap(path_to_product_folder,version_number = ''
         ncllake = geopandas.read_file(path_ncllake)
         ncllake = ncllake.to_crs("EPSG:4326")
 
-    subcol = ['SubId','geometry','DowSubId','BasArea','Lake_Cat','DrainArea','DA_Chn_L','DA_Slope','DA_Chn_Slp','BasSlope']
+    subcol_olrrp = ['SubId','geometry','DowSubId','BasArea','Lake_Cat','DrainArea','DA_Chn_L','DA_Slope','DA_Chn_Slp','BasSlope']
+    subcol_na = ['SubId','geometry','DowSubId','BasArea','Lake_Cat','DrainArea','BasSlope']
+
     rivcol = ['geometry','RivSlope','RivLength','BkfWidth','BkfDepth','Strahler','Q_Mean','FloodP_n','Ch_n']
     lake_col =  ['geometry','Hylak_id','Lake_type','Lake_area','Vol_total','Depth_avg']
 
+    if version_number == 'v1-0':
+        subcol = subcol_olrrp    
+    else:
+        subcol = subcol_na
         
     subnolake = subbasin[subbasin['Lake_Cat'] == 0].copy(deep=True)
 
