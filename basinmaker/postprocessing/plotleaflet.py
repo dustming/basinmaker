@@ -3,7 +3,7 @@ import geopandas
 import matplotlib.pyplot as plt ## only needed to plot figures
 from ipywidgets import HTML,Layout,IntSlider, ColorPicker, jslink ## only needed to plot figures
 from ipyleaflet import Map, GeoData, basemaps, LayersControl,Popup,Marker,Polygon,Choropleth,WidgetControl## only needed to plot figures
-import import leafmap.foliumap  as leafmap
+import leafmap.foliumap  as leafmap
 
 def plot_routing_product_with_ipyleaflet(path_to_product_folder,version_number = ''):
     product_folder = path_to_product_folder
