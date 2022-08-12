@@ -4,6 +4,7 @@ import os
 def combine_catchments_covered_by_the_same_lake_method(
     Routing_Product_Folder = '#',
     qgis_prefix_path="#",
+    area_thresthold = 10*30*30/1000/1000,
     gis_platform="qgis",
 ):
 
@@ -28,7 +29,7 @@ def combine_catchments_covered_by_the_same_lake_method(
 
         combine_catchments_covered_by_the_same_lake_arcgis(
             Routing_Product_Folder=Routing_Product_Folder,
-        )        
+        )
 
     if gis_platform == "purepy":
         from basinmaker.postprocessing.combinepurepy import (
@@ -37,8 +38,9 @@ def combine_catchments_covered_by_the_same_lake_method(
 
         combine_catchments_covered_by_the_same_lake_purepy(
             Routing_Product_Folder=Routing_Product_Folder,
-        )   
-        
+            area_thresthold = area_thresthold,
+        )
+
 
 def simplify_routing_structure_by_filter_lakes_method(
     Path_final_riv_ply="#",
@@ -100,8 +102,8 @@ def simplify_routing_structure_by_filter_lakes_method(
             qgis_prefix_path=qgis_prefix_path,
             gis_platform=gis_platform,
         )
-                
-        
+
+
 def simplify_routing_structure_by_drainage_area_method(
     Routing_Product_Folder='#',
     Area_Min=-1,
@@ -203,7 +205,7 @@ def select_part_of_routing_product_method(
                 Routing_Product_Folder = Routing_Product_Folder,
                 qgis_prefix_path=qgis_prefix_path,
             )
-        
+
     if gis_platform == "arcgis":
         from basinmaker.postprocessing.selectprodarcgis import (
         Select_Routing_product_based_SubId_arcgis
@@ -214,7 +216,7 @@ def select_part_of_routing_product_method(
             mostupstreamid=mostupid,
             Routing_Product_Folder = Routing_Product_Folder,
         )
-                         
+
     if gis_platform == "purepy":
         from basinmaker.postprocessing.selectprodpurepy import (
         Select_Routing_product_based_SubId_purepy
@@ -225,9 +227,9 @@ def select_part_of_routing_product_method(
             mostupstreamid=mostupid,
             Routing_Product_Folder = Routing_Product_Folder,
         )
-                        
+
     return
-    
+
 
 def generate_hrus_method(
     Path_Subbasin_Ply,
@@ -352,7 +354,7 @@ def generate_hrus_method(
             pixel_size = pixel_size,
             area_ratio_thresholds = area_ratio_thresholds,
         )
-        
+
 
     return
 
@@ -402,7 +404,7 @@ def generate_area_weight_of_two_polygons(
     qgis_prefix_path = '#',
     gis_platform = "qgis"
 ):
-    
+
     if gis_platform == "qgis":
         from basinmaker.postprocessing.gridweight import (
             Area_Weighted_Mapping_Between_Two_Polygons_QGIS,
@@ -425,6 +427,3 @@ def generate_area_weight_of_two_polygons(
             Col_NM=col_nm,
             Output_Folder=output_folder,
         )
-        
-
-

@@ -2,8 +2,8 @@ import numpy as np
 import sys
 import os
 import csv
-import tempfile 
-import copy 
+import tempfile
+import copy
 import pandas as pd
 import geopandas
 
@@ -14,7 +14,8 @@ from basinmaker.func.purepy import *
 from basinmaker.func.pdtable import *
 
 def combine_catchments_covered_by_the_same_lake_purepy(
-    Routing_Product_Folder
+    Routing_Product_Folder,
+    area_thresthold = 10*30*30/1000/1000,
 ):
     """Define final lake river routing structure
 
@@ -72,7 +73,7 @@ def combine_catchments_covered_by_the_same_lake_purepy(
     Path_final_cat_ply="#"
     Path_final_cat_riv="#"
 
-    ##define input files from routing prodcut 
+    ##define input files from routing prodcut
     for file in os.listdir(Routing_Product_Folder):
         if file.endswith(".shp"):
             if 'catchment_without_merging_lakes' in file:
@@ -88,7 +89,7 @@ def combine_catchments_covered_by_the_same_lake_purepy(
             if 'finalcat_info' in file:
                 Path_final_cat_ply = os.path.join(Routing_Product_Folder, file)
             if 'finalcat_info_riv' in file:
-                Path_final_cat_riv = os.path.join(Routing_Product_Folder, file)                
+                Path_final_cat_riv = os.path.join(Routing_Product_Folder, file)
 
     if Path_Catchment_Polygon == '#' or  Path_River_Polyline =='#':
         print("Invalid routing product folder ")
@@ -102,7 +103,7 @@ def combine_catchments_covered_by_the_same_lake_purepy(
 
     if not os.path.exists(OutputFolder):
         os.makedirs(OutputFolder)
-        
+
     tempfolder = os.path.join(
         tempfile.gettempdir(), "basinmaker_" + str(np.random.randint(1, 10000 + 1))
     )
@@ -111,12 +112,12 @@ def combine_catchments_covered_by_the_same_lake_purepy(
 
     ### create a copy of shapfiles in temp folder
     Path_Temp_final_rviply = os.path.join(OutputFolder,"temp_finalriv_ply" + str(np.random.randint(1, 10000 + 1)) + ".shp")
-    
+
     Path_Temp_final_rvi = os.path.join(OutputFolder,"temp_finalriv_riv" + str(np.random.randint(1, 10000 + 1)) + ".shp")
-    
+
     ### read riv ply info
     ### read attribute table
- 
+
     finalrivply_info = geopandas.read_file(Path_final_rivply)
     # change attribute table for lake covered catchments,
     finalrivply_info['SubId'] = finalrivply_info['SubId'].astype('int32')
@@ -128,19 +129,19 @@ def combine_catchments_covered_by_the_same_lake_purepy(
         finalrivply_info
     )
 
-    mapoldnew_info = remove_possible_small_subbasins(mapoldnew_info = mapoldnew_info, area_thresthold = 10*30*30/1000/1000)
+    mapoldnew_info = remove_possible_small_subbasins(mapoldnew_info = mapoldnew_info, area_thresthold = area_thresthold)
     # update topology for new attribute table
-    mapoldnew_info = update_topology(mapoldnew_info, UpdateStreamorder=-1)    
-    
+    mapoldnew_info = update_topology(mapoldnew_info, UpdateStreamorder=-1)
+
     mapoldnew_info['DowSubId'] = mapoldnew_info['DowSubId'].astype('int32')
-    
+
     if len(os.path.basename(Path_Catchment_Polygon).split('_')) == 5:
         cat_name = "finalcat_info_"+os.path.basename(Path_Catchment_Polygon).split('_')[4]
         riv_name = "finalcat_info_riv_"+os.path.basename(Path_Catchment_Polygon).split('_')[4]
     else:
         cat_name =  "finalcat_info.shp"
         riv_name =  "finalcat_info_riv.shp"
-           
+
     save_modified_attributes_to_outputs(
         mapoldnew_info=mapoldnew_info,
         tempfolder=tempfolder,
@@ -149,4 +150,4 @@ def combine_catchments_covered_by_the_same_lake_purepy(
         riv_name =riv_name,
         Path_final_riv = Path_final_riv,
     )
-    return 
+    return
