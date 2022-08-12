@@ -197,6 +197,7 @@ def Select_Routing_product_based_SubId_purepy(
     if len(sl_gauge_nm) > 0 and Path_obs_gauge_point !='#':
         all_gauge = geopandas.read_file(Path_obs_gauge_point)
         sl_gauge = all_gauge.loc[all_gauge['Obs_NM'].isin(sl_gauge_nm)]
+        sl_gauge['DrainArea'] = sl_gauge['DrainArea'].astype(int)
         sl_gauge.to_file(os.path.join(OutputFolder,os.path.basename(Path_obs_gauge_point)))
 
     return
