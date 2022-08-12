@@ -174,7 +174,7 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
             riv_pd = riv_pd.drop(columns=drop_cat_colnms)
             if len(riv_pd) > 0:
                 riv_pd['DrainArea'] = riv_pd['DrainArea'].astype(int)
-
+                riv_pd['DrainArea'] = riv_pd['DrainArea'].astype(int)
                 riv_pd.to_file(os.path.join(OutputFolder,riv_name))
 
         mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'RivSlope'] = -1.2345
