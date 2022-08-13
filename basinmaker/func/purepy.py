@@ -216,7 +216,8 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
         cat_colnms = mapoldnew_info.columns
         drop_cat_colnms = cat_colnms[cat_colnms.isin(["SHAPE","SubId_1", "Id","nsubid2", "nsubid","ndownsubid","Old_DowSub","Join_Count","TARGET_FID","Id","SubID_Oldr","HRU_ID_N_1","HRU_ID_N_2","facters","Old_DowSubId"])]
         mapoldnew_info = mapoldnew_info.drop(columns=drop_cat_colnms)
-        mapoldnew_info['DrainArea'] = mapoldnew_info['DrainArea'].astype(int)
+        if 'DrainArea' in mapoldnew_info.columns:
+            mapoldnew_info['DrainArea'] = mapoldnew_info['DrainArea'].astype(int)
         mapoldnew_info.to_file(os.path.join(OutputFolder,cat_name))
         return mapoldnew_info
 
