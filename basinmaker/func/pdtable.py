@@ -12,22 +12,22 @@ def remove_landuse_type_input_based_on_area(landuse_thres,hruinfo,sub_area,Landu
 
     if landuse_thres <= 0:
         return hruinfo
-    # calculate the landuse area of each landuse group in each subbasin  
+    # calculate the landuse area of each landuse group in each subbasin
     subinfo_lu = hruinfo[['SubId',Landuse_ID,'HRU_Area']].copy(deep=True)
     subinfo_lu = subinfo_lu.rename(columns={"HRU_Area": "Input_A_G"})
     subinfo_lu = subinfo_lu.groupby(['SubId',Landuse_ID],as_index = False).sum()
-    
-    #calcuate landuse area ratio 
+
+    #calcuate landuse area ratio
     subinfo_lu = pd.merge(subinfo_lu, sub_area, on='SubId')
     subinfo_lu['Area_ratio'] = subinfo_lu["Input_A_G"]/subinfo_lu['Bas_A_G']
-    
-    # obtain dominated landuse ID        
+
+    # obtain dominated landuse ID
     subinfo_lu = subinfo_lu.sort_values(by=['SubId','Input_A_G'], ascending=False)
     subinfo_lu_dominated = subinfo_lu.drop_duplicates(subset=['SubId'], keep='first').copy(deep=True)
 
-    # find sub 
+    # find sub
     subinfo_lu_need_change = subinfo_lu[subinfo_lu['Area_ratio'] < landuse_thres][['SubId',Landuse_ID]].copy(deep=True)
-    
+
     for i in range(0,len(subinfo_lu_need_change)):
         subid = subinfo_lu_need_change['SubId'].values[i]
         landuse = subinfo_lu_need_change[Landuse_ID].values[i]
@@ -35,15 +35,15 @@ def remove_landuse_type_input_based_on_area(landuse_thres,hruinfo,sub_area,Landu
         mask2 = hruinfo[Landuse_ID] == landuse
         mask = np.logical_and(mask1,mask2)
         hruinfo.loc[mask,Landuse_ID] = subinfo_lu_dominated.loc[subinfo_lu_dominated['SubId'] == subid][Landuse_ID].values[0]
-        
+
     return hruinfo
-    
+
 def simplify_hrus_method2(area_ratio_thresholds,hruinfo, Landuse_ID,
                           Soil_ID,Veg_ID,Other_Ply_ID_1,Other_Ply_ID_2):
-    
+
     hru_lake_info = hruinfo.loc[hruinfo['HRU_IsLake'] > 0].copy()
     hru_land_info = hruinfo.loc[hruinfo['HRU_IsLake'] <= 0].copy()
-        
+
     sub_area = hruinfo[['SubId','HRU_Area']].copy(deep=True)
     sub_area = sub_area.rename(columns={"HRU_Area": "Bas_A_G"})
     sub_area = sub_area.groupby(['SubId'],as_index = False).sum()
@@ -55,111 +55,111 @@ def simplify_hrus_method2(area_ratio_thresholds,hruinfo, Landuse_ID,
         Item = list[i]
         landuse_thres = area_ratio_thresholds[i]
         hru_land_info = remove_landuse_type_input_based_on_area(landuse_thres,hru_land_info,sub_area,Item)
-    hru_land_info[Veg_ID] = hru_land_info[Landuse_ID] 
-    
+    hru_land_info[Veg_ID] = hru_land_info[Landuse_ID]
+
     hruinfo = hru_lake_info.append(hru_land_info)
 
     return hruinfo
-                
-    
+
+
 
 def simplidfy_hrus(min_hru_pct_sub_area,hruinfo,importance_order):
-    
+
     hruinfo['HRU_ID_New2'] = hruinfo['HRU_ID_New']
-     
+
     subids = np.unique(hruinfo['SubId'].values)
-    
-    # loop for each subbasin 
+
+    # loop for each subbasin
     for i in range(0,len(subids)):
         subid = subids[i]
-        # hrus in this subbasin 
+        # hrus in this subbasin
         sub_hru_info = hruinfo.loc[hruinfo['SubId'] == subid].copy(deep = True)
-        # calculate area and subbasin minimum hur ares 
+        # calculate area and subbasin minimum hur ares
         subasrea = np.sum(sub_hru_info['HRU_Area'].values)
         subarea_thrs = min_hru_pct_sub_area * subasrea
-         
-        # obtain hru need to be removed 
+
+        # obtain hru need to be removed
         need_remove_hrus = sub_hru_info.loc[sub_hru_info['HRU_Area'] < subarea_thrs].copy()
-        # obtain hrus that will be keepted 
+        # obtain hrus that will be keepted
         good_hrus = sub_hru_info.loc[sub_hru_info['HRU_Area'] >= subarea_thrs].copy()
-        
+
         hru_columns = good_hrus.columns
-        # do not modify this columns 
+        # do not modify this columns
         hru_columns = hru_columns[hru_columns != 'HRU_ID_New2']
         hru_columns = hru_columns[hru_columns != 'geometry']
-        # check if the need_remove_hru can merge togeher for importance order 
-        # 1 
+        # check if the need_remove_hru can merge togeher for importance order
+        # 1
         colnm1 = importance_order[0]
         import1_Area_need_remove_hru = need_remove_hrus.copy(deep=True)
         unique_import1 = np.unique(import1_Area_need_remove_hru[colnm1].values)
         # if subid == 116:
         #     print(subarea_thrs,min_hru_pct_sub_area,subasrea)
-        #     print(need_remove_hrus[['HRU_ID_New2','HRU_Area',colnm1]]) 
-            
+        #     print(need_remove_hrus[['HRU_ID_New2','HRU_Area',colnm1]])
+
         for i_import in range(0,len(unique_import1)):
             i_colnm1 = unique_import1[i_import]
             i_import1_Area_need_remove_hru = import1_Area_need_remove_hru.loc[import1_Area_need_remove_hru[colnm1] == i_colnm1].copy(deep=True)
             total_area_i_import_in_need_remove_hrus = np.sum(i_import1_Area_need_remove_hru['HRU_Area'].values)
-            ## check total area of the most important column in the importance list 
+            ## check total area of the most important column in the importance list
             ## if it is larger than area threthold,
-            ## then merge them together 
+            ## then merge them together
             # if subid == 80000013:
             #     print(i_import1_Area_need_remove_hru[['SubId','HRU_Area','HRU_ID_New2','HRU_ID_New']])
             #     print(total_area_i_import_in_need_remove_hrus,i_colnm1)
             #     print()
-                        
+
             if i_colnm1 not in good_hrus[colnm1].values:
-                
-                #merge to the hru with largest area in the list 
+
+                #merge to the hru with largest area in the list
                 i_import1_Area_need_remove_hru = i_import1_Area_need_remove_hru.sort_values(by=['HRU_Area'],ascending=False)
                 for i_nm in range(0,len(hru_columns)):
                     columnname = hru_columns[i_nm]
                     if columnname == 'SHAPE':
-                        continue 
-                    # modify the hru attributes to good hru attribute     
+                        continue
+                    # modify the hru attributes to good hru attribute
                     hruinfo.loc[hruinfo['HRU_ID_New2'].isin(i_import1_Area_need_remove_hru['HRU_ID_New2'].values),columnname] = i_import1_Area_need_remove_hru[columnname].values[0]
-                    
-                # remove modified HRU from need removed hru list 
+
+                # remove modified HRU from need removed hru list
                 need_remove_hrus = need_remove_hrus[~need_remove_hrus['HRU_ID_New2'].isin(i_import1_Area_need_remove_hru['HRU_ID_New2'].values)]
 
         # if subid == 80000013:
         #     print(hruinfo.loc[hruinfo['SubId'] ==80000013][['SubId','HRU_Area','HRU_ID_New2','HRU_ID_New']])
-        #     print(unique_import1)  
-        # loop for each 
+        #     print(unique_import1)
+        # loop for each
         indexes = need_remove_hrus.index
         # if subid == 116:
-        #     print(need_remove_hrus[['HRU_ID_New2','HRU_Area',colnm1]])                    
+        #     print(need_remove_hrus[['HRU_ID_New2','HRU_Area',colnm1]])
 
         for j in range(0,len(indexes)):
             idx = indexes[j]
             hruid = need_remove_hrus.loc[idx,'HRU_ID_New2']
-            # find a target hru from good_hrus, and merge them by change attribute 
-            
-            # loop the importance_order, 
+            # find a target hru from good_hrus, and merge them by change attribute
+
+            # loop the importance_order,
             for k in range(0,len(importance_order)):
                 colnm = importance_order[k]
                 # find the attribute value of the problem hru for this column
                 attri_remove_hru = need_remove_hrus.loc[idx,colnm]
-                
-                # check if there is good hrus has the same attribute value 
+
+                # check if there is good hrus has the same attribute value
                 good_hrus_k  = good_hrus.loc[good_hrus[colnm] == attri_remove_hru].copy()
-                
+
                 if len(good_hrus_k) > 0:
                     # sort by hru areas
                     good_hrus_k = good_hrus_k.sort_values(by='HRU_Area', ascending=False)
                     for i_nm in range(0,len(hru_columns)):
                         columnname = hru_columns[i_nm]
                         if columnname == 'SHAPE':
-                            continue 
+                            continue
                         # modify the hru attributes to good hru attribute
                         hruinfo.loc[hruinfo['HRU_ID_New2'] == hruid,columnname] = good_hrus_k[columnname].values[0]
                 else:
-                    continue 
-    hruinfo = hruinfo.drop(columns=['HRU_ID_New2'])    
+                    continue
+    hruinfo = hruinfo.drop(columns=['HRU_ID_New2'])
     return hruinfo
-    
-    
-    
+
+
+
 def update_non_connected_catchment_info(catinfo):
     routing_info = catinfo[["SubId", "DowSubId"]].astype("float").values
     catinfo_non_connected = catinfo.loc[catinfo["Lake_Cat"] == 2].copy()
@@ -178,11 +178,11 @@ def update_non_connected_catchment_info(catinfo):
         lc_subid = d_subid
 
         # Upstreamcats = defcat(routing_info, c_subid)  ### alll subuds
-        # 
+        #
         # Up_cat_info = catinfo.loc[catinfo["SubId"].isin(Upstreamcats)].copy()
-        # 
+        #
         # DA = sum(Up_cat_info["BasArea"].values)
-        # 
+        #
         # catinfo.loc[catinfo["SubId"] == c_subid, "DrainArea"] = DA
 
         if len(d_sub_info) < 1:
@@ -215,7 +215,7 @@ def update_non_connected_catchment_info(catinfo):
             catinfo.loc[catinfo["SubId"] == c_subid, "DA_Chn_L"] = -1.2345
             catinfo.loc[catinfo["SubId"] == c_subid, "DA_Chn_Slp"] = -1.2345
 
-                    
+
         # catinfo.loc[catinfo["SubId"] == c_subid, "Q_Mean"] = d_sub_info[
         #     "Q_Mean"
         # ].values[0]
@@ -328,45 +328,45 @@ def Calculate_Longest_flowpath(mainriv_merg_info):
 
 def remove_possible_small_subbasins(mapoldnew_info, area_thresthold = 1):
     mapoldnew_info_new = mapoldnew_info.copy(deep=True)
-    
-    # get small subbasin that is not lake     
+
+    # get small subbasin that is not lake
     small_sub_non_lake = mapoldnew_info[mapoldnew_info['BasArea']/1000/1000 < area_thresthold].copy(deep=True)
     small_sub_non_lake = small_sub_non_lake[small_sub_non_lake['Lake_Cat'] == 0].copy(deep=True)
     small_sub_non_lake_subid =small_sub_non_lake['SubId'].values
-    
+
     # check the gauge column name, in case it is v2.1 using Has_Gauge
     Gauge_col_Name = "Has_POI"
     if "Has_POI" not in mapoldnew_info.columns:
         Gauge_col_Name = "Has_Gauge"
-        
+
     ### process connected lakes  merge polygons
     for i in range(0, len(small_sub_non_lake)):
         small_sub_id = small_sub_non_lake['SubId'].values[i]
         small_downsub_id = small_sub_non_lake['DowSubId'].values[i]
         small_sub_seg_id = small_sub_non_lake['Seg_ID'].values[i]
-        
+
         small_sub_is_head_water_sub = len(mapoldnew_info[mapoldnew_info['DowSubId'] == small_sub_id]) == 0
-        
+
         small_sub_is_not_Lake = small_sub_non_lake['Lake_Cat'].values[i] == 0
         small_sub_is_not_gauge = small_sub_non_lake[Gauge_col_Name].values[i] <= 0
-        
+
         down_sub_info = mapoldnew_info[mapoldnew_info['SubId'] == small_downsub_id].copy(deep = True)
         upstream_sub_info =  mapoldnew_info[mapoldnew_info['DowSubId'] == small_sub_id].copy(deep = True)
         upstream_sub_info_same_seg = upstream_sub_info[upstream_sub_info['Seg_ID'] == small_sub_seg_id].copy(deep=True)
-        
-        
-        # check if it has the same segment id with downstream subbasin         
+
+
+        # check if it has the same segment id with downstream subbasin
         if len(down_sub_info) > 0:
-            has_down_sub = True                
+            has_down_sub = True
             if down_sub_info['Seg_ID'].values[0] == small_sub_seg_id:
                 down_sub_has_same_seg_id = True
             else:
-                down_sub_has_same_seg_id = False                
+                down_sub_has_same_seg_id = False
         else:
             has_down_sub = False
             down_sub_has_same_seg_id = False
-        
-        # check if it has the same segment id with upstream subbasin 
+
+        # check if it has the same segment id with upstream subbasin
         if len(upstream_sub_info) > 0:
             has_upstream = True
 
@@ -374,38 +374,38 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold = 1):
                 up_sub_has_same_seg_id = True
             else:
                 up_sub_has_same_seg_id = False
-                
+
         else:
-            has_upstream = False 
+            has_upstream = False
             up_sub_has_same_seg_id = False
-        
-        # if down stream sub is a lake sub, the seg_id was changed to the lake outlet subid 
+
+        # if down stream sub is a lake sub, the seg_id was changed to the lake outlet subid
         if has_down_sub and down_sub_has_same_seg_id and small_sub_is_not_Lake and small_sub_is_not_gauge:
-#            tarinfo = down_sub_info 
-            tarinfo =  mapoldnew_info_new[mapoldnew_info_new['SubId'] == down_sub_info['SubId'].values[0]].copy(deep = True) 
+#            tarinfo = down_sub_info
+            tarinfo =  mapoldnew_info_new[mapoldnew_info_new['SubId'] == down_sub_info['SubId'].values[0]].copy(deep = True)
             modify = True
             down_sub_info_2 = mapoldnew_info_new[mapoldnew_info_new['SubId'] == down_sub_info['SubId'].values[0]].copy(deep = True)
             ndown_subid = down_sub_info_2['DowSubId'].values[0]
-            
+
         elif has_upstream and up_sub_has_same_seg_id and small_sub_is_not_Lake and small_sub_is_not_gauge:
 #            tarinfo = upstream_sub_info_same_seg
-            tarinfo = mapoldnew_info_new[mapoldnew_info_new['SubId'] == upstream_sub_info_same_seg['SubId'].values[0]].copy(deep = True) 
+            tarinfo = mapoldnew_info_new[mapoldnew_info_new['SubId'] == upstream_sub_info_same_seg['SubId'].values[0]].copy(deep = True)
             modify = True
             current_sub_info_2 = mapoldnew_info_new[mapoldnew_info_new['SubId'] == small_sub_id].copy(deep = True)
             ndown_subid = current_sub_info_2['DowSubId'].values[0]
-        
+
         elif len(mapoldnew_info[mapoldnew_info['Seg_ID'] == small_sub_seg_id]) == 1 and has_down_sub:
 #            tarinfo = down_sub_info
-            tarinfo =  mapoldnew_info_new[mapoldnew_info_new['SubId'] == down_sub_info['SubId'].values[0]].copy(deep = True)             
+            tarinfo =  mapoldnew_info_new[mapoldnew_info_new['SubId'] == down_sub_info['SubId'].values[0]].copy(deep = True)
             modify = True
-            down_sub_info_2 = mapoldnew_info_new[mapoldnew_info_new['SubId'] == small_downsub_id].copy(deep = True)            
-            ndown_subid = down_sub_info_2['DowSubId'].values[0]            
-         
+            down_sub_info_2 = mapoldnew_info_new[mapoldnew_info_new['SubId'] == small_downsub_id].copy(deep = True)
+            ndown_subid = down_sub_info_2['DowSubId'].values[0]
+
         else:
-            modify = False 
-            tarinfo = [] 
-            continue 
-         
+            modify = False
+            tarinfo = []
+            continue
+
         if  modify:
             target_sub_is_head_water_sub =  len(mapoldnew_info[mapoldnew_info['DowSubId'] == tarinfo['SubId'].values[0]]) == 0
             target_sub_has_less_one_up_stream = len(mapoldnew_info[ (mapoldnew_info['DowSubId'] == tarinfo['SubId'].values[0]) & (mapoldnew_info['Lake_Cat']  < 2)]) <= 1
@@ -419,27 +419,27 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold = 1):
             if len(tarinfo) > 1 and len(np.unique(tarinfo['HyLakeId'].values)) > 1:
                 print(small_sub_id,small_sub_seg_id)
                 print(tarinfo[['SubId','DowSubId','Seg_ID','HyLakeId']])
-                
+
             # if small_sub_id == 37567 or small_sub_id ==37185:
             #     print("###################################a")
             #     print(small_sub_id)
             #     print(tarinfo["nsubid"].values[0])
-            #     print(mapoldnew_info_new.loc[mask,"nsubid"].values)                
+            #     print(mapoldnew_info_new.loc[mask,"nsubid"].values)
             #     print(mapoldnew_info_new.loc[mask,"SubId"].values)
             #     print(mapoldnew_info_new.loc[mask,"DowSubId"].values)
             #     print(mapoldnew_info_new.loc[mask,"BasArea"].values)
-            #     print(ndown_subid)                
-            #     print("###################################a") 
-                               
+            #     print(ndown_subid)
+            #     print("###################################a")
+
             for col in tarinfo.columns:
                 if col == "BasArea":
-                
+
                     mapoldnew_info_new.loc[mask, col] = np.sum(tarinfo["BasArea"].values[0] + small_sub_non_lake["BasArea"].values[0])
-                
+
                 elif col == 'SubId':
-                    
-                    mapoldnew_info_new.loc[mask,"nsubid"] = tarinfo["nsubid"].values[0] 
-                
+
+                    mapoldnew_info_new.loc[mask,"nsubid"] = tarinfo["nsubid"].values[0]
+
                 elif col == 'DowSubId':
                     mapoldnew_info_new.loc[mask,col] = ndown_subid
                 elif (
@@ -453,7 +453,7 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold = 1):
                     continue
                 else:
                     mapoldnew_info_new.loc[mask, col] = tarinfo[col].values[0]
-            
+
             if target_sub_is_head_water_sub or small_sub_is_head_water_sub:
                 if target_sub_has_less_one_up_stream:
                     mapoldnew_info_new.loc[mask, "RivSlope"] = -1.2345
@@ -461,11 +461,11 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold = 1):
                     mapoldnew_info_new.loc[mask, "FloodP_n"] = -1.2345
                     mapoldnew_info_new.loc[mask, "Ch_n"] = -1.2345
                     mapoldnew_info_new.loc[mask, "Min_DEM"] = -1.2345
-                    mapoldnew_info_new.loc[mask, "Max_DEM"] = -1.2345                    
+                    mapoldnew_info_new.loc[mask, "Max_DEM"] = -1.2345
                     if "DA_Chn_L" in mapoldnew_info_new.columns:
                         mapoldnew_info_new.loc[mask, "DA_Chn_L"] = -1.2345
                         mapoldnew_info_new.loc[mask, "DA_Chn_Slp"] = -1.2345
-                        
+
             # if small_sub_id == 37567 or small_sub_id ==37185:
             #     print("###################################b")
             #     print(small_sub_id)
@@ -473,11 +473,11 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold = 1):
             #     print(mapoldnew_info_new.loc[mask,"SubId"].values)
             #     print(mapoldnew_info_new.loc[mask,"DowSubId"].values)
             #     print(mapoldnew_info_new.loc[mask,"BasArea"].values)
-            #     print("###################################b") 
-         
-    return mapoldnew_info_new                    
-        
-    
+            #     print("###################################b")
+
+    return mapoldnew_info_new
+
+
 def New_SubId_To_Dissolve(
     subid,
     catchmentinfo,
@@ -539,7 +539,7 @@ def New_SubId_To_Dissolve(
 
         tarinfo.loc[idx, "Max_DEM"] = np.max(mainriv_merg_info["Max_DEM"].values)
         tarinfo.loc[idx, "Min_DEM"] = np.min(mainriv_merg_info["Min_DEM"].values)
-        
+
     tarinfo.loc[idx, "BasArea"] = np.sum(cbranch["BasArea"].values)
     #    tarinfo.loc[idx,'NonLDArea']     = np.sum(cbranch['NonLDArea'].values)
     if len(cbranch) > 0:
@@ -566,7 +566,7 @@ def New_SubId_To_Dissolve(
         if "DA_Chn_L" in tarinfo.columns:
             tarinfo.loc[idx, "DA_Chn_L"] = -1.2345  # Longestpath
             tarinfo.loc[idx, "DA_Chn_Slp"] = -1.2345  # Longestpath
-                                    
+
     elif Lake_Cat == 2:
         tarinfo.loc[idx, "RivSlope"] = -1.2345  # Longestpath
         tarinfo.loc[idx, "RivLength"] = -1.2345  # Longestpath
@@ -664,7 +664,7 @@ def UpdateTopology(mapoldnew_info, UpdateStreamorder=1, UpdateSubId=1):
     """
 
     idx = mapoldnew_info.index
-                
+
     if UpdateSubId > 0:
         for i in range(0, len(idx)):
             nsubid = mapoldnew_info.loc[idx[i], "nsubid"]
@@ -681,7 +681,7 @@ def UpdateTopology(mapoldnew_info, UpdateStreamorder=1, UpdateSubId=1):
                 ].values[0]
             else:
                 mapoldnew_info.loc[idx[i], "ndownsubid"] = -1
-                                
+
         mapoldnew_info["Old_SubId"] = mapoldnew_info["SubId"].values
         mapoldnew_info["Old_DowSubId"] = mapoldnew_info["DowSubId"].values
         mapoldnew_info["SubId"] = mapoldnew_info["nsubid"].values
@@ -721,7 +721,7 @@ def calculate_Tc(DrainArea,DA_Chn_L,DA_Chn_Slp):
     TC_5 = (1/0.6)*0.000326*( (DA_Chn_L) / (DA_Chn_Slp**(0.5)) )**0.79
     return TC_1,TC_2,TC_3,TC_4,TC_5
 
-    
+
 def streamorderanddrainagearea(catinfoall):
     """Functions will  calcuate stream order and
         update drainage area in the attribute table catinfoall
@@ -737,7 +737,7 @@ def streamorderanddrainagearea(catinfoall):
     Gauge_col_Name = "Has_POI"
     if "Has_POI" not in catinfoall.columns:
         Gauge_col_Name = "Has_Gauge"
-            
+
     catinfo = catinfoall.loc[
         catinfoall["Lake_Cat"] != 2
     ].copy()  ### remove none connected lake catchments, which do not connected to the river system
@@ -776,12 +776,12 @@ def streamorderanddrainagearea(catinfoall):
                 else:
                     DA_ncl = 0.0
                     slp_ncl = 0.0
-            
+
             catinfo.loc[idx, "DrainArea"] = DA_ncl + catinfo["BasArea"].values[i]
             catinfo.loc[idx, "Strahler"] = 1
             catinfo.loc[idx, "Seg_order"] = 1
             catinfo.loc[idx, "Seg_ID"] = iseg
-            #head watershed 
+            #head watershed
             if "DA_Chn_L" in catinfo.columns:
                 catinfo.loc[idx, "DA_Chn_L"] = -1.2345
                 catinfo.loc[idx, "DA_Chn_Slp"] = -1.2345
@@ -792,16 +792,16 @@ def streamorderanddrainagearea(catinfoall):
             catinfo.loc[idx, "Ch_n"] = -1.2345
             catinfo.loc[idx, "Max_DEM"] = -1.2345
             catinfo.loc[idx, "DA_Slope"] = (catinfo["BasSlope"].values[i]*catinfo["BasArea"].values[i]+DA_ncl*slp_ncl)/catinfo.loc[idx, "DrainArea"]
-            
+
             # TC_1,TC_2,TC_3,TC_4,TC_5 = calculate_Tc(catinfo.loc[idx, "DrainArea"],catinfo.loc[idx, "DA_Chn_L"],catinfo.loc[idx, "DA_Chn_Slp"])
-            # 
+            #
             # catinfo.loc[idx, "Tc_1"] = TC_1
             # catinfo.loc[idx, "Tc_2"] = TC_2
             # catinfo.loc[idx, "Tc_3"] = TC_3
             # catinfo.loc[idx, "Tc_4"] = TC_4
             # catinfo.loc[idx, "Tc_5"] = TC_5
-            
-            
+
+
             icat = icat + 1
             iseg = iseg + 1
 
@@ -857,67 +857,67 @@ def streamorderanddrainagearea(catinfoall):
                 catinfo.loc[curcat_idx, "Seg_order"] = (
                     Up_Reaches_info["Seg_order"].values[0] + 1
                 )
-                
-                
+
+
                 catinfo.loc[curcat_idx, "Seg_ID"] = Up_Reaches_info["Seg_ID"].values[0]
-                
+
                 if "DA_Chn_L" in catinfo.columns:
                     catinfo.loc[curcat_idx, "DA_Chn_L"] = np.max(Up_Reaches_info["DA_Chn_L"].values[0],0) + cur_Reach_info["RivLength"].values[0]
 
                     catinfo.loc[curcat_idx, "DA_Chn_Slp"] = (cur_Reach_info["RivSlope"].values[0] * np.max(Up_Reaches_info["DA_Chn_L"].values[0],0)
                                                            + Up_Reaches_info["DA_Chn_L"].values[0]*Up_Reaches_info["DA_Chn_Slp"].values[0])/catinfo.loc[curcat_idx, "DA_Chn_L"]
-                                                           
+
                     catinfo.loc[curcat_idx, "DA_Slope"] = (cur_Reach_info["BasSlope"].values[0]*cur_Reach_info["BasArea"].values[0]
-                                                           + DA_ncl * slp_ncl 
+                                                           + DA_ncl * slp_ncl
                                                            + Up_Reaches_info["DA_Slope"].values[0] * Up_Reaches_info["DrainArea"].values[0]
                                                            )/catinfo.loc[curcat_idx, "DrainArea"]
 
 
                 # TC_1,TC_2,TC_3,TC_4,TC_5 = calculate_Tc(catinfo.loc[curcat_idx, "DrainArea"],catinfo.loc[curcat_idx, "DA_Chn_L"],catinfo.loc[curcat_idx, "DA_Chn_Slp"])
-                # 
+                #
                 # catinfo.loc[curcat_idx, "Tc_1"] = TC_1
                 # catinfo.loc[curcat_idx, "Tc_2"] = TC_2
                 # catinfo.loc[curcat_idx, "Tc_3"] = TC_3
                 # catinfo.loc[curcat_idx, "Tc_4"] = TC_4
                 # catinfo.loc[curcat_idx, "Tc_5"] = TC_5
 
-                
+
                 #                print('1',catid,catinfo.loc[curcat_idx,'DA'].values,catinfo.loc[curcat_idx,'Strahler'].values,catinfo.loc[curcat_idx,'Sub_order'].values)
                 catid = int(cur_Reach_info["DowSubId"].values[0])
             else:  ### has mutiple upstram
                 if (
                     np.min(Up_Reaches_info["Strahler"].values) > 0
                 ):  ### all upstream has been processed
-                    
+
                     if 'DA_Chn_L' in Up_Reaches_info.columns:
                         Up_Reaches_info = Up_Reaches_info.sort_values(by='DA_Chn_L', ascending=False)
-                    
+
                     catinfo.loc[curcat_idx, "DrainArea"] = (
                         cur_Reach_info["BasArea"].values[0]
                         + np.sum(Up_Reaches_info["DrainArea"].values)
                         + DA_ncl
                     )
-                    
+
                     if "DA_Chn_L" in catinfo.columns:
                         catinfo.loc[curcat_idx, "DA_Chn_L"] = np.max(Up_Reaches_info["DA_Chn_L"].values[0],0) + cur_Reach_info["RivLength"].values[0]
 
                         catinfo.loc[curcat_idx, "DA_Chn_Slp"] = (cur_Reach_info["RivSlope"].values[0] * np.max(Up_Reaches_info["DA_Chn_L"].values[0],0)
                                                                + Up_Reaches_info["DA_Chn_L"].values[0]*Up_Reaches_info["DA_Chn_Slp"].values[0])/catinfo.loc[curcat_idx, "DA_Chn_L"]
-                                                               
+
                         catinfo.loc[curcat_idx, "DA_Slope"] = (cur_Reach_info["BasSlope"].values[0]*cur_Reach_info["BasArea"].values[0]
-                                                               + DA_ncl * slp_ncl 
+                                                               + DA_ncl * slp_ncl
                                                                + Up_Reaches_info["DA_Slope"].values[0] * Up_Reaches_info["DrainArea"].values[0]
                                                                )/catinfo.loc[curcat_idx, "DrainArea"]
 
 
                     # TC_1,TC_2,TC_3,TC_4,TC_5 = calculate_Tc(catinfo.loc[curcat_idx, "DrainArea"],catinfo.loc[curcat_idx, "DA_Chn_L"],catinfo.loc[curcat_idx, "DA_Chn_Slp"])
-                    # 
+                    #
                     # catinfo.loc[curcat_idx, "Tc_1"] = TC_1
                     # catinfo.loc[curcat_idx, "Tc_2"] = TC_2
                     # catinfo.loc[curcat_idx, "Tc_3"] = TC_3
                     # catinfo.loc[curcat_idx, "Tc_4"] = TC_4
                     # catinfo.loc[curcat_idx, "Tc_5"] = TC_5
-                    
+
                     if np.min(Up_Reaches_info["Strahler"].values) == np.max(
                         Up_Reaches_info["Strahler"].values
                     ):  ### two reach has the same order
@@ -959,7 +959,7 @@ def streamorderanddrainagearea(catinfoall):
     # catinfoall.loc[mask, "Tc_3"] = catinfo["Tc_3"].values
     # catinfoall.loc[mask, "Tc_4"] = catinfo["Tc_4"].values
     # catinfoall.loc[mask, "Tc_5"] = catinfo["Tc_5"].values
-    
+
     ### calcuate channel manning's coefficient
     for i in range(0, len(catinfoall)):
         idx = catinfoall.index[i]
@@ -971,9 +971,9 @@ def streamorderanddrainagearea(catinfoall):
                 catinfoall.loc[idx, "DA_error"] = (
                     catinfoall["DrainArea"].values[i] / 1000.0 / 1000.0
                 ) / catinfoall["DA_Obs"].values[i]
-        
-        # calcuate drainage area of each non connected lake 
-        
+
+        # calcuate drainage area of each non connected lake
+
         if catinfoall["Lake_Cat"].values[i] == 2:
             catid = catinfoall["SubId"].values[i]
 
@@ -981,9 +981,9 @@ def streamorderanddrainagearea(catinfoall):
             Up_cat_info = catinfo_ncl.loc[catinfo_ncl["SubId"].isin(Upstreamcats)].copy(deep=True)
             DA = sum(Up_cat_info["BasArea"].values)
             catinfoall.loc[idx, "DrainArea"] = DA
-            
+
             catinfoall.loc[idx, "DA_Slope"] = np.average(Up_cat_info["BasSlope"].values,weights = Up_cat_info["BasArea"].values)
-            
+
 
             catinfoall.loc[idx, "RivLength"] = -1.2345
             catinfoall.loc[idx, "RivSlope"] = -1.2345
@@ -991,21 +991,21 @@ def streamorderanddrainagearea(catinfoall):
             catinfoall.loc[idx, "Max_DEM"] = -1.2345
             catinfoall.loc[idx, "FloodP_n"] = -1.2345
             catinfoall.loc[idx, "Ch_n"] = -1.2345
-        
+
             if "DA_Chn_L" in catinfoall.columns:
                 catinfoall.loc[idx, "DA_Chn_Slp"] = -1.2345
                 catinfoall.loc[idx, "DA_Chn_L"] = -1.2345
 
-            
+
             # TC_1,TC_2,TC_3,TC_4,TC_5 = calculate_Tc(catinfoall.loc[idx, "DrainArea"],catinfoall.loc[idx, "DA_Chn_L"],catinfoall.loc[idx, "DA_Chn_Slp"])
-            # 
+            #
             # catinfoall.loc[idx, "Tc_1"] = TC_1
             # catinfoall.loc[idx, "Tc_2"] = TC_2
             # catinfoall.loc[idx, "Tc_3"] = TC_3
             # catinfoall.loc[idx, "Tc_4"] = TC_4
             # catinfoall.loc[idx, "Tc_5"] = TC_5
-                                
-            
+
+
     return catinfoall
 
 
@@ -1107,7 +1107,7 @@ def Connect_SubRegion_Update_DownSubId(AllCatinfo, DownCatinfo, Sub_Region_info)
         if len(Sub_Region_cat_info) <= 0:
             continue
 
-        ### Subregion outlet subbasin ID        
+        ### Subregion outlet subbasin ID
         outlet_mask = Sub_Region_cat_info["DowSubId"] == -1
         iReg_Outlet_Subid = Sub_Region_cat_info.loc[outlet_mask, "SubId"].values[0]
         # (isubregion - 80000) * 200000 - 1
@@ -1173,7 +1173,7 @@ def Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info,k,c):
         pathway between subregions will be updated.
     """
     min_manning_n = 0.01
-    max_manning_n = 0.15    
+    max_manning_n = 0.15
     ### start from head subregions with no upstream subregion
     Subregion_list = Sub_Region_info[Sub_Region_info["N_Up_SubRegion"] == 1][
         "Sub_Reg_ID"
@@ -1269,9 +1269,9 @@ def Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info,k,c):
             downsub_reg_id = AllCatinfo.loc[AllCatinfo["SubId"] == downsubid][
                 "Region_ID"
             ].values[0]
-            
+
             print("Subregion:   ", c_subr_id,downsub_reg_id,d_subr_id,downsubid)
-            
+
             if downsub_reg_id != d_subr_id:
                 print(
                     "Subregion:   ",
@@ -1306,7 +1306,7 @@ def Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info,k,c):
                 #### updateAllCatinfo
                 AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "Strahler"] = newStrahler
                 AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "DrainArea"] = NewDA
-                
+
                 if AllCatinfo[AllCatinfo["SubId"] == csubid]["DA_Obs"].values[0] > 0:
                     da_obs = AllCatinfo[AllCatinfo["SubId"] == csubid]["DA_Obs"].values[0]
                     da_sim = AllCatinfo[AllCatinfo["SubId"] == csubid]["DrainArea"].values[0]/1000.0/1000.0
@@ -1314,7 +1314,7 @@ def Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info,k,c):
                         AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "DA_error"] = da_sim/da_obs
                         AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "Use_region"] = 1
 
-                # da = AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "DrainArea"].values[0] / 1000 / 1000  # m2 to km2                
+                # da = AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "DrainArea"].values[0] / 1000 / 1000  # m2 to km2
                 # q = func_Q_DA(da, k, c)
                 # bk_w= 7.2 * q ** 0.5
                 # bk_d = 0.27 * q ** 0.3
@@ -1324,7 +1324,7 @@ def Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info,k,c):
                 # if n_rch < min_manning_n:
                 #     n_rch = 0.01
                 # if n_rch > max_manning_n:
-                #     nrch = max_manning_n          
+                #     nrch = max_manning_n
                 # AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "BkfWidth"] = 7.2 * q ** 0.5
                 # AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "BkfDepth"] = 0.27 * q ** 0.3
                 # AllCatinfo.loc[AllCatinfo["SubId"] == csubid, "Q_Mean"] = q
@@ -1356,8 +1356,8 @@ def Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info,k,c):
             ### update list for next loop
         Subregion_list = list(set(Subregion_list))
         iloop = iloop + 1
-        
-        
+
+
     print("Check drainage area:")
     print("Total basin area is              ", sum(AllCatinfo["BasArea"].values))
     print(
@@ -1404,10 +1404,10 @@ def Determine_Lake_HRU_Id(Attribute_Table):
     # 3 if the subbasin hylakeid >0, but subbasin hylake id != overlaied lake id
     #  then this feature is not covered by the lake the new hru id  = old subid
 
-    for i in range(0, len(Attribute_Table)):
-        subid_sf_obj = Attribute_Table[Sub_ID].values[i]
-        lakelakeid_sf_obj = Attribute_Table[Lake_Id].values[i]
-        Sub_Lakeid_sf_obj = Attribute_Table[Sub_Lake_ID].values[i]
+    for i in Attribute_Table.index:
+        subid_sf_obj = Attribute_Table.loc[i,Sub_ID]
+        lakelakeid_sf_obj = Attribute_Table.loc[i,Lake_Id]
+        Sub_Lakeid_sf_obj = Attribute_Table.loc[i,Sub_Lake_ID]
 
         ### the null value in the attribute table is not convertable try and set
         ### to -1
@@ -1467,10 +1467,10 @@ def Determine_Lake_HRU_Id(Attribute_Table):
     # use the Sub_Lake_ID to find subbasin id,
     # if Sub_Lake_ID from lake polygon is also sammller than zero
     #    report an error
-    for i in range(0, len(Attribute_Table)):
-        subid_sf = Attribute_Table[Sub_ID].values[i]
-        lakelakeid_sf = Attribute_Table[Lake_Id].values[i]
-        Sub_Lakeid_sf = Attribute_Table[Sub_Lake_ID].values[i]
+    for i in Attribute_Table.index:
+        subid_sf_obj = Attribute_Table.loc[i,Sub_ID]
+        lakelakeid_sf_obj = Attribute_Table.loc[i,Lake_Id]
+        Sub_Lakeid_sf_obj = Attribute_Table.loc[i,Sub_Lake_ID]
         if subid_sf > 0:
             continue
         if lakelakeid_sf <= 0:
@@ -1532,19 +1532,19 @@ def Determine_HRU_Attributes(
     -------
         None,
     """
-    
+
     # find invald rows
     inval_sub = Attri_table[Sub_ID] <= 0
-    inval_landuse = (Attri_table[Landuse_ID] <= 0) & (Attri_table[Landuse_ID] != -1) 
-    inval_soil = (Attri_table[Soil_ID] <= 0) & (Attri_table[Soil_ID] != -1) 
-    inval_veg = (Attri_table[Veg_ID] <= 0) & (Attri_table[Veg_ID] != -1) 
-    inval_o2 = (Attri_table[Other_Ply_ID_2] <= 0) & (Attri_table[Other_Ply_ID_2] != -1) 
-    
+    inval_landuse = (Attri_table[Landuse_ID] <= 0) & (Attri_table[Landuse_ID] != -1)
+    inval_soil = (Attri_table[Soil_ID] <= 0) & (Attri_table[Soil_ID] != -1)
+    inval_veg = (Attri_table[Veg_ID] <= 0) & (Attri_table[Veg_ID] != -1)
+    inval_o2 = (Attri_table[Other_Ply_ID_2] <= 0) & (Attri_table[Other_Ply_ID_2] != -1)
+
     inval_rows = inval_sub | inval_landuse | inval_soil | inval_veg | inval_o2
     Lake_HRU_IDS = np.unique(Attri_table.loc[inval_rows,"HRULake_ID"].values)
     Lake_HRU_IDS = Lake_HRU_IDS[Lake_HRU_IDS > 0]
     ### landuse,soil,and veg and other properties for lake hrus
-    
+
     for i in range(0, len(Lake_HRU_IDS)):
         ilake_hru_id = Lake_HRU_IDS[i]
         if ilake_hru_id == 0:
@@ -1655,11 +1655,11 @@ def Determine_HRU_Attributes(
                         Attri_table["HRU_ID"] == ihru_id, Other_Ply_ID_2
                     ] = Vali_Value
 
-    Attri_table = Attri_table.drop(columns=['LAND_USE_C', 'VEG_C','SOIL_PROF'])        
+    Attri_table = Attri_table.drop(columns=['LAND_USE_C', 'VEG_C','SOIL_PROF'])
     Attri_table = pd.merge(Attri_table, Landuse_info_data, how='inner', on = Landuse_ID).copy(deep=True)
     Attri_table = pd.merge(Attri_table, Soil_info_data, how='inner', on = Soil_ID).copy(deep=True)
     Attri_table = pd.merge(Attri_table, Veg_info_data, how='inner', on = Veg_ID).copy(deep=True)
-     
+
     # for i in range(0, len(Attri_table)):
     #     if Attri_table["HRULake_ID"].values[i] == 0:
     #         continue
@@ -1669,64 +1669,64 @@ def Determine_HRU_Attributes(
     #     Landuse_ID_num = Attri_table[Landuse_ID].values[i]
     #     Soil_ID_num = Attri_table[Soil_ID].values[i]
     #     Veg_ID_num = Attri_table[Veg_ID].values[i]
-    # 
+    #
     #     if hruid == 0 or Landuse_ID_num == 0 or Soil_ID_num == 0 or Veg_ID_num == 0:
     #         continue
-    # 
+    #
     #     if not isinstance(hruid, numbers.Number) and hruid != hruid:
-    #         continue   
-    # 
+    #         continue
+    #
     #     val = Attri_table.loc[Attri_table["HRU_ID"] == hruid][Landuse_ID].values[0]
-    #     if isinstance(val,numbers.Number) and val == val:   
+    #     if isinstance(val,numbers.Number) and val == val:
     #         Attri_table.loc[i, Landuse_ID] = int(
     #             Attri_table.loc[Attri_table["HRU_ID"] == hruid][Landuse_ID].values[0]
-    #         )      
+    #         )
     #     else:
-    #         Attri_table.loc[i, Landuse_ID] = 0 
+    #         Attri_table.loc[i, Landuse_ID] = 0
     #         Attri_table.loc[i, "SubId"] = int(0)
-    # 
+    #
     #     val = Attri_table.loc[Attri_table["HRU_ID"] == hruid][Veg_ID].values[0]
-    #     if isinstance(val,numbers.Number) and val == val:              
+    #     if isinstance(val,numbers.Number) and val == val:
     #         Attri_table.loc[i, Veg_ID] = int(
     #             Attri_table.loc[Attri_table["HRU_ID"] == hruid][Veg_ID].values[0]
-    #         )    
+    #         )
     #     else:
-    #         Attri_table.loc[i, Veg_ID] = 0 
+    #         Attri_table.loc[i, Veg_ID] = 0
     #         Attri_table.loc[i, "SubId"] = int(0)
     #     val = Attri_table.loc[Attri_table["HRU_ID"] == hruid][Soil_ID].values[0]
-    #     if isinstance(val,numbers.Number) and val == val:             
+    #     if isinstance(val,numbers.Number) and val == val:
     #         Attri_table.loc[i, Soil_ID] = int(
     #             Attri_table.loc[Attri_table["HRU_ID"] == hruid][Soil_ID].values[0]
-    #         )  
+    #         )
     #     else:
-    #         Attri_table.loc[i, Soil_ID] = 0 
+    #         Attri_table.loc[i, Soil_ID] = 0
     #         Attri_table.loc[i, "SubId"] = int(0)
     #     val = Attri_table.loc[Attri_table["HRU_ID"] == hruid][Other_Ply_ID_1].values[0]
-    #     if isinstance(val,numbers.Number) and val == val:                           
+    #     if isinstance(val,numbers.Number) and val == val:
     #         Attri_table.loc[i, Other_Ply_ID_1] = int(
     #             Attri_table.loc[Attri_table["HRU_ID"] == hruid][Other_Ply_ID_1].values[0]
     #         )
     #     else:
-    #         Attri_table.loc[i, Other_Ply_ID_1] = 0 
+    #         Attri_table.loc[i, Other_Ply_ID_1] = 0
     #         Attri_table.loc[i, "SubId"] = int(0)
     #     val = Attri_table.loc[Attri_table["HRU_ID"] == hruid][Other_Ply_ID_2].values[0]
     #     if isinstance(val,numbers.Number) and val == val:
-    # 
+    #
     #         Attri_table.loc[i, Other_Ply_ID_2] = int(
     #             Attri_table.loc[Attri_table["HRU_ID"] == hruid][Other_Ply_ID_2].values[0]
     #         )
     #     else:
-    #         Attri_table.loc[i, Other_Ply_ID_2] = 0 
-    #         Attri_table.loc[i, "SubId"] = int(0)            
-    # 
-    #     if isinstance(Landuse_ID_num, numbers.Number) and Landuse_ID_num ==Landuse_ID_num: 
+    #         Attri_table.loc[i, Other_Ply_ID_2] = 0
+    #         Attri_table.loc[i, "SubId"] = int(0)
+    #
+    #     if isinstance(Landuse_ID_num, numbers.Number) and Landuse_ID_num ==Landuse_ID_num:
     #         Attri_table.loc[i, "LAND_USE_C"] = Landuse_info_data.loc[
     #             Landuse_info_data[Landuse_ID] == int(Landuse_ID_num), "LAND_USE_C"
     #         ].values[0]
     #     else:
     #         Attri_table.loc[i, "LAND_USE_C"] = int(0)
     #         Attri_table.loc[i, "SubId"] = int(0)
-    # 
+    #
     #     if isinstance(Veg_ID_num, numbers.Number) and Veg_ID_num == Veg_ID_num:
     #         Attri_table.loc[i, "VEG_C"] = Veg_info_data.loc[
     #             Veg_info_data[Veg_ID] == int(Veg_ID_num), "VEG_C"
@@ -1734,8 +1734,8 @@ def Determine_HRU_Attributes(
     #     else:
     #         Attri_table.loc[i, "VEG_C"] = int(0)
     #         Attri_table.loc[i, "SubId"] = int(0)
-    # 
-    #     if isinstance(Soil_ID_num, numbers.Number) and Soil_ID_num == Soil_ID_num: 
+    #
+    #     if isinstance(Soil_ID_num, numbers.Number) and Soil_ID_num == Soil_ID_num:
     #         Attri_table.loc[i, "SOIL_PROF"] = (
     #             Soil_info_data.loc[
     #                 Soil_info_data[Soil_ID] == int(Soil_ID_num), "SOIL_PROF"
@@ -1744,7 +1744,7 @@ def Determine_HRU_Attributes(
     #     else:
     #         Attri_table.loc[i, "SOIL_PROF"] = int(0)
     #         Attri_table.loc[i, "SubId"] = int(0)
-            
+
     Attri_table["facters"] = (
         Attri_table["HRULake_ID"].astype(str)
         + Attri_table[Landuse_ID].astype(str)
@@ -1774,11 +1774,11 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
     down_colnm = "DowSubId"
     DA_colnm = "DrainArea"
     SegID_colnm = "Seg_ID"
-    
+
     Gauge_col_Name = "Has_POI"
     if "Has_POI" not in finalriv_info.columns:
         Gauge_col_Name = "Has_Gauge"
-            
+
     ### Modify attribute table mapoldnew_info, create new sub id for
     ### 1. catchment needs to be merged due to meet the drainage area thresthold
     ### 2. connected lake catchment are transfered into non-connected lake catchment
@@ -1789,14 +1789,14 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
     mapoldnew_info["ndownsubid"] = -1
     mapoldnew_info.reset_index(drop=True, inplace=True)
     max_da = np.max(mapoldnew_info['DrainArea'].values)
-    
+
     ## stupid larege drainage area are provied
     if Area_Min * 1000 * 1000 > max_da:
         Area_Min = max_da/1000.0/1000.0 - 1
         mapoldnew_info[Gauge_col_Name] =  -1
         finalriv_info[Gauge_col_Name] = -1
-        
-         
+
+
     # select catchment segment that meet the drainage area
     Selected_riv = finalriv_info.loc[
         finalriv_info[DA_colnm] >= Area_Min * 1000 * 1000
@@ -1824,21 +1824,21 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
     #####
 
     ###
-    ## add removed gauges 
+    ## add removed gauges
     unselected_gauges_subids = finalriv_info.loc[
         (~finalriv_info["SubId"].isin(Subid_main)) &
         (finalriv_info[Gauge_col_Name] > 0 )
     ]['SubId'].values
     finalriv_info_ncl = finalriv_info.copy(deep=True)
-    # make unselected gauge to be a false lake 
+    # make unselected gauge to be a false lake
     mask1 = finalriv_info_ncl['SubId'].isin(unselected_gauges_subids)
     mask2 = finalriv_info_ncl['HyLakeId'] < 1
     mask = np.logical_and(mask1,mask2)
-    finalriv_info_ncl.loc[mask,'HyLakeId'] = - finalriv_info_ncl.loc[finalriv_info_ncl['SubId'].isin(unselected_gauges_subids),'SubId']  
+    finalriv_info_ncl.loc[mask,'HyLakeId'] = - finalriv_info_ncl.loc[finalriv_info_ncl['SubId'].isin(unselected_gauges_subids),'SubId']
     fake_obs_hyalkeids =  finalriv_info_ncl.loc[finalriv_info_ncl['SubId'].isin(unselected_gauges_subids),'HyLakeId'].values
     ##
     ###
-        
+
     # identify which connected lake will be moved to non connected lake due to remove of river network
     All_Conn_Lakeids = Conn_Lakes_ply["Hylak_id"].values
     mask = np.in1d(All_Conn_Lakeids, Connected_Lake_Mainriv)
@@ -1850,8 +1850,8 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
 
 
 
-    
-    
+
+
     # Get origional non connected lake subid and lake id
     Old_Non_Connect_SubIds = finalriv_info.loc[finalriv_info["Lake_Cat"] == 2][
         "SubId"
@@ -1889,11 +1889,11 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
     Conn_To_NonConlake_info_outlet = Conn_To_NonConlake_info_outlet.sort_values(
         ["Strahler", "DrainArea"], ascending=[True, True]
     )
-    
-    
-    ### 
+
+
+    ###
     all_outlet_sub_info = finalriv_info[finalriv_info["DowSubId"] < 0 ].copy(deep=True)
-    
+
     for i in range(0,len(all_outlet_sub_info)):
         if all_outlet_sub_info['DrainArea'].values[i] <= Area_Min * 1000 * 1000:
             tsubid = all_outlet_sub_info['SubId'].values[i]
@@ -1908,9 +1908,9 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
                 modifiidin=All_up_subids,
                 Lake_Cat=-1,
             )
-                    
-            
-    
+
+
+
     ### process fron upstream lake to down stream lake
     for i in range(0, len(Conn_To_NonConlake_info_outlet)):
         processed_subid = np.unique(
@@ -1942,7 +1942,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
             ]  ### combine two list not sum
 
         modifysubids = np.asarray(modifysubids)
-      
+
         mapoldnew_info = New_SubId_To_Dissolve(
             subid=tsubid,
             catchmentinfo=finalriv_info_ncl,
@@ -1954,7 +1954,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
         )
 
         ####################3 for rest of the polygons dissolve to main river
-    
+
     for iseg in range(0, len(Seg_IDS)):
         #            print('#########################################################################################33333')
         i_seg_id = Seg_IDS[iseg]
@@ -1972,16 +1972,16 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
             )
             sum_area = sum_area + i_seg_info["BasArea"].values[iorder]
             ### two seg has the same HyLakeId id, can be merged
-            
+
             # if has the same lake attribute with down stream subasins
             if iorder != len(i_seg_info) - 1:
                 con_lake = i_seg_info["HyLakeId"].values[iorder] == i_seg_info["HyLakeId"].values[iorder + 1]
             else:
                 con_lake = False
-            # if do not have the gauge 
+            # if do not have the gauge
             con_gauge = i_seg_info[Gauge_col_Name].values[iorder] <= 0
-            
-            # if do not meet the drainage area thresthold 
+
+            # if do not meet the drainage area thresthold
             if iorder <= len(i_seg_info) - 2:
                 if i_seg_info["BasArea"].values[iorder + 1] < 10 * 1000 * 1000:
                     con_area = True
@@ -1989,45 +1989,45 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
                     con_area = sum_area < Area_Min * 1000 * 1000
             else:
                 con_area = sum_area < Area_Min * 1000 * 1000
-                                   
-            
+
+
             con_area_lake = sum_area < 10 * 1000 * 1000
             # conditions check if subbasin is between two lakes
             if iorder >= 1 and iorder <= len(i_seg_info) - 2:
-                # if not havve the same attribute with upstream lake 
+                # if not havve the same attribute with upstream lake
                 con_lake_up = i_seg_info["HyLakeId"].values[iorder - 1] != i_seg_info["HyLakeId"].values[iorder]
                 # if not havve the same attribute with down lake
                 con_lake_down = i_seg_info["HyLakeId"].values[iorder] != i_seg_info["HyLakeId"].values[iorder + 1]
                 # if this is not a lake subbasin
                 is_lake = i_seg_info["HyLakeId"].values[iorder] <= 0
-                
+
                 con_area_lake = i_seg_info["BasArea"].values[iorder] < 10 * 1000 * 1000
-                
+
             if iorder == 0 and iorder < len(i_seg_info) - 1:
-                # if not havve the same attribute with upstream lake 
+                # if not havve the same attribute with upstream lake
                 con_lake_up = True
                 # if not havve the same attribute with down lake
                 con_lake_down = i_seg_info["HyLakeId"].values[iorder] != i_seg_info["HyLakeId"].values[iorder + 1]
                 # if this is not a lake subbasin
                 is_lake = i_seg_info["HyLakeId"].values[iorder] <= 0
-                
+
                 con_area_lake = i_seg_info["BasArea"].values[iorder] < 10 * 1000 * 1000
-                                    
+
             if iorder == len(i_seg_info) - 2 and i_seg_info["HyLakeId"].values[iorder] > 0:
-                # if not havve the same attribute with upstream lake 
+                # if not havve the same attribute with upstream lake
                 con_lake_up = True
                 # if not havve the same attribute with down lake
                 con_lake_down = i_seg_info["HyLakeId"].values[iorder] != i_seg_info["HyLakeId"].values[iorder + 1]
                 # if this is not a lake subbasin
-                is_lake = i_seg_info["HyLakeId"].values[iorder] > 0 
-                
+                is_lake = i_seg_info["HyLakeId"].values[iorder] > 0
+
                 # if tsubid == 9023607:
                 #     print(con_lake_up,con_lake_down,is_lake,iorder,len(i_seg_info) - 2,i_seg_info["HyLakeId"].values[iorder] > 0)
-                # change add lake to downstream info 
+                # change add lake to downstream info
                 downsubid = i_seg_info["DowSubId"].values[iorder]
-                
+
                 con_area_lake = i_seg_info["BasArea"].values[iorder +1] < 10 * 1000 * 1000
-                
+
                 if con_area_lake and con_lake_down:
                     finalriv_info.loc[
                         finalriv_info["SubId"] == downsubid,'HyLakeId'] = i_seg_info["HyLakeId"].values[iorder]
@@ -2038,20 +2038,20 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
                     finalriv_info.loc[
                         finalriv_info["SubId"] == downsubid,'LakeDepth'] = i_seg_info["LakeDepth"].values[iorder]
                     finalriv_info.loc[
-                        finalriv_info["SubId"] == downsubid,'LakeArea'] = i_seg_info["LakeArea"].values[iorder] 
+                        finalriv_info["SubId"] == downsubid,'LakeArea'] = i_seg_info["LakeArea"].values[iorder]
                     finalriv_info.loc[
-                        finalriv_info["SubId"] == downsubid,'Laketype'] = i_seg_info["Laketype"].values[iorder]                                                                                                    
-                                                   
+                        finalriv_info["SubId"] == downsubid,'Laketype'] = i_seg_info["Laketype"].values[iorder]
+
             if iorder == len(i_seg_info) - 1:
-                con_lake_up = True 
+                con_lake_up = True
                 con_lake_down = False
                 is_lake = True
-                
+
             # if tsubid == 4703912:
             #     print(con_lake_up,con_lake_down,is_lake,iorder,len(i_seg_info) - 2,i_seg_info["HyLakeId"].values[iorder] > 0)
-            #     asdf 
-                 
-                
+            #     asdf
+
+
             if iorder == len(i_seg_info) - 1:
                 sum_area = 0
                 seg_sub_ids = np.asarray(modifysubids)
@@ -2102,13 +2102,13 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
                 #                    New_NonConn_Lakes = ConnectLake_to_NonConnectLake_Updateinfo(NonC_Lakeinfo = New_NonConn_Lakes,finalriv_info = finalriv_info ,Merged_subids = seg_sub_ids,Connect_Lake_ply_info = Conn_Lakes_ply,ConLakeId = iorder_Lakeid)
                 modifysubids = []
                 seg_order = seg_order + 1
-            
+
             elif con_lake_up and con_lake_down and is_lake and con_gauge and con_area_lake:
-                continue 
-        
+                continue
+
             elif con_lake and con_gauge and con_area:
-                continue 
-                
+                continue
+
             else:
                 sum_area = 0
                 seg_sub_ids = np.asarray(modifysubids)
@@ -2145,7 +2145,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
                 mask_old_nonLake = np.in1d(seg_sub_ids, Old_Non_Connect_SubIds)
                 seg_sub_ids = seg_sub_ids[np.logical_not(mask_old_nonLake)]
 
-                    
+
                 mapoldnew_info = New_SubId_To_Dissolve(
                     subid=tsubid,
                     catchmentinfo=finalriv_info,
@@ -2158,14 +2158,14 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
                 )
                 modifysubids = []
                 seg_order = seg_order + 1
-                
+
     mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'HyLakeId'] = 0
     mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'Lake_Cat'] = 0
     mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'LakeVol'] = 0
     mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'LakeDepth'] = 0
     mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'LakeArea'] = 0
     mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'Laketype'] = 0
-        
+
     return (
         mapoldnew_info,
         Selected_riv_ids,
@@ -2198,29 +2198,29 @@ def Return_Selected_Lakes_Attribute_Table_And_Id(
     Non_ConnL_info = finalcat_info.loc[finalcat_info["Lake_Cat"] == 2].copy(deep=True)
     ConnL_info = finalcat_info.loc[finalcat_info["Lake_Cat"] == 1].copy(deep=True)
 
-    # first obtain selected lakes based on lake area         
+    # first obtain selected lakes based on lake area
     ### process connected lakes first
     Selected_ConnLakes = ConnL_info.loc[
        (ConnL_info["LakeArea"] >= Thres_Area_Conn_Lakes)
     ]["HyLakeId"].values
-    
+
     Selected_ConnLakes = Selected_ConnLakes[Selected_ConnLakes > 0]
     Selected_ConnLakes = np.unique(Selected_ConnLakes)
-    
-    
+
+
     ### process non connected selected lakes
     Selected_Non_ConnLakes = Non_ConnL_info[
-        (Non_ConnL_info["LakeArea"] >= Thres_Area_Non_Conn_Lakes) 
+        (Non_ConnL_info["LakeArea"] >= Thres_Area_Non_Conn_Lakes)
     ]["HyLakeId"].values
     Selected_Non_ConnLakes = Selected_Non_ConnLakes[Selected_Non_ConnLakes > 0]
     Selected_Non_ConnLakes = np.unique(Selected_Non_ConnLakes)
-    
-    
-    # selecte lake by list 
+
+
+    # selecte lake by list
     if len(Selected_Lake_List_in) > 0:
         Selected_Lake_List = Selected_Lake_List_in
     else:
-        # invalide lake id, no lake will be selected by list 
+        # invalide lake id, no lake will be selected by list
         Selected_Lake_List  = [-9999999]
     All_ConnL = ConnL_info["HyLakeId"].values
     All_Non_ConnL = Non_ConnL_info["HyLakeId"].values
@@ -2234,7 +2234,7 @@ def Return_Selected_Lakes_Attribute_Table_And_Id(
     Selected_Non_ConnLakes_List = All_Non_ConnL[mask_NCL]
     Selected_Non_ConnLakes_List = np.unique(Selected_Non_ConnLakes_List)
 
-    # combine lake from list and area 
+    # combine lake from list and area
     Selected_Non_ConnLakes = np.concatenate((Selected_Non_ConnLakes, Selected_Non_ConnLakes_List), axis=0)
     Selected_ConnLakes = np.concatenate((Selected_ConnLakes, Selected_ConnLakes_List), axis=0)
 
@@ -2246,7 +2246,7 @@ def Return_Selected_Lakes_Attribute_Table_And_Id(
         (finalcat_info["Lake_Cat"] == 2)
         & (np.logical_not(finalcat_info["HyLakeId"].isin(Selected_Non_ConnLakes)))
     ]
-        
+
     return (
         Selected_Non_ConnLakes,
         Selected_ConnLakes,
@@ -2279,8 +2279,8 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_CL(
     Gauge_col_Name = "Has_POI"
     if "Has_POI" not in mapoldnew_info.columns:
         Gauge_col_Name = "Has_Gauge"
-        
-        
+
+
     Seg_IDS = Un_Selected_ConnLakes_info["Seg_ID"].values
     Seg_IDS = np.unique(Seg_IDS)
     for iseg in range(0, len(Seg_IDS)):
@@ -2547,7 +2547,7 @@ def Return_SubIds_Between_Two_Subbasins_In_Rouing_Network(
 def return_non_lake_inflow_segs_and_segs_within_lakes(
     riv_lake_id, str_id, riv_lake_id2, cl_id, routing_info, str_start_pt_lakeid
 ):
-    
+
     routing_info_rout = routing_info[["SubId", "DowSubId"]].astype("int").values
     # combine river lake id and str id and lake id
     riv_lake = np.column_stack((riv_lake_id, str_id))
@@ -2555,7 +2555,7 @@ def return_non_lake_inflow_segs_and_segs_within_lakes(
     riv_lake_cl = np.column_stack((riv_lake_id2, cl_id))
     riv_lake_cl = riv_lake_cl[riv_lake_cl[:, 0].argsort()]
     riv_lake = np.append(riv_lake, riv_lake_cl, axis=1)
-    
+
     # assign acc for each row
     str_id_unique = np.unique(np.array(riv_lake[:, 1]))
     cl_id_unique = np.unique(np.array(riv_lake[:, 3]))
@@ -2603,29 +2603,29 @@ def return_non_lake_inflow_segs_and_segs_within_lakes(
 
         strs_to_lake_outlet = defcat(routing_info_rout, outlet_str)
 
-        # excpet str of the lake outlet, all str covered by the lake 
-        # will be removed 
+        # excpet str of the lake outlet, all str covered by the lake
+        # will be removed
         # at the same time, all dwon str if it of each str coverd by the lakes
-        # when they are flow to the lake outlet 
-        # it will aslo be removed     
+        # when they are flow to the lake outlet
+        # it will aslo be removed
         unique_str_id_cv_by_lake = np.unique(riv_lake_il[:, 1])
-            
+
         for j in range(0, len(riv_lake_il)):
             str_id_cl_j = riv_lake_il[j, 1]
             # check if there is any upstream river id in the str covered by the lake and there is some upstream
             # and the begining of the str is not located in current lake
             if str_id_cl_j != outlet_str:
                 str_id_within_lakes.append(int(riv_lake_il[j, 1]))
-                # check down stream id of the currunt str covered by the lake 
+                # check down stream id of the currunt str covered by the lake
                 if len(routing_info.loc[routing_info['SubId'] == str_id_cl_j]) > 0:
-                    # get down stream of the corrent str covered by the lake 
+                    # get down stream of the corrent str covered by the lake
                     down_sun_of_lake_cover_str = routing_info.loc[routing_info['SubId'] == str_id_cl_j]['DowSubId'].values[0]
-                    # if the it is also flow to the lake outlet , remove it 
-                    # and it is not already in the list 
+                    # if the it is also flow to the lake outlet , remove it
+                    # and it is not already in the list
                     if down_sun_of_lake_cover_str in strs_to_lake_outlet and down_sun_of_lake_cover_str not in riv_lake_il[:, 1]:
                         # remove all dnow str unitl it reach to a lake coverd str_r
-                        # or a str already be removed 
-                        str_id_within_lakes.append(int(down_sun_of_lake_cover_str)) 
+                        # or a str already be removed
+                        str_id_within_lakes.append(int(down_sun_of_lake_cover_str))
                         #
                         cstrid = down_sun_of_lake_cover_str
                         k_d =0
@@ -2633,21 +2633,21 @@ def return_non_lake_inflow_segs_and_segs_within_lakes(
                             k_d = k_d + 1
                             if len(routing_info.loc[routing_info['SubId'] == cstrid]) > 0:
                                 dstr_id = routing_info.loc[routing_info['SubId'] == cstrid]['DowSubId'].values[0]
-                                # check if it reach a lake covered str id 
+                                # check if it reach a lake covered str id
                                 if dstr_id not in riv_lake_il[:, 1] and dstr_id in strs_to_lake_outlet:
                                     str_id_within_lakes.append(int(dstr_id))
-                                    cstrid = dstr_id 
+                                    cstrid = dstr_id
                                 else:
-                                    break 
+                                    break
                             else:
                                 break
-            
-            # obtain all upstream of current lake str 
+
+            # obtain all upstream of current lake str
             up_str_cl_j = defcat(routing_info_rout, str_id_cl_j)
-            
+
             if len(up_str_cl_j) > 0:
-                # check if there is more than 1 up stream is 
-                # covreed by the lake 
+                # check if there is more than 1 up stream is
+                # covreed by the lake
                 #
                 mask = np.isin(up_str_cl_j,unique_str_id_cv_by_lake)
                 if sum(mask) >= 2:
@@ -2656,7 +2656,7 @@ def return_non_lake_inflow_segs_and_segs_within_lakes(
                     has_up_str_inlake = False
             else:
                 has_up_str_inlake = False
-                
+
             if (
                 len(sub_routing_info.loc[sub_routing_info["DowSubId"] == str_id_cl_j])
                 > 0
@@ -2834,23 +2834,23 @@ def update_topology(mapoldnew_info, UpdateStreamorder=1, UpdateSubId=1):
                 ].values[0]
             else:
                 mapoldnew_info.loc[idx[i], "ndownsubid"] = -1
-            
+
             if nsubid == mapoldnew_info.loc[idx[i], "ndownsubid"]:
                 mapoldnew_info.loc[idx[i], "ndownsubid"] = -1
 
             if nsubid == mapoldnew_info.loc[idx[i], "ndownsubid"]:
                 mapoldnew_info.loc[idx[i], "ndownsubid"] = -1
-        
+
         mapoldnew_info["Old_SubId"] = mapoldnew_info["SubId"].values
         mapoldnew_info["Old_DowSubId"] = mapoldnew_info["DowSubId"].values
         mapoldnew_info["SubId"] = mapoldnew_info["nsubid"].values
 
         mapoldnew_info["DowSubId"] = mapoldnew_info["ndownsubid"].values
 
-                
+
         riv_pd_nncls_routing_info = mapoldnew_info[mapoldnew_info['Lake_Cat'] != 2].copy(deep=True)
         mask = ~mapoldnew_info['SubId'].isin(riv_pd_nncls_routing_info['DowSubId'])
-        
+
         if "DA_Chn_L" in mapoldnew_info.columns:
             mapoldnew_info.loc[mask, "DA_Chn_L"] = -1.2345
             mapoldnew_info.loc[mask, "DA_Chn_Slp"] = -1.2345
@@ -2861,7 +2861,7 @@ def update_topology(mapoldnew_info, UpdateStreamorder=1, UpdateSubId=1):
         mapoldnew_info.loc[mask, "Max_DEM"] = -1.2345
         mapoldnew_info.loc[mask, "Min_DEM"] = -1.2345
 
-                    
+
     if UpdateStreamorder < 0:
         return mapoldnew_info
 
@@ -2938,7 +2938,7 @@ def return_interest_catchments_info(catinfo, outlet_obs_id, path_sub_reg_outlets
     Gauge_col_Name = "Has_POI"
     if "Has_POI" not in catinfo.columns:
         Gauge_col_Name = "Has_Gauge"
-    
+
     if path_sub_reg_outlets_v != "#":
 
         Sub_reg_outlets = Dbf_To_Dataframe(path_sub_reg_outlets_v)["reg_subid"].values
@@ -2998,22 +2998,22 @@ def return_interest_catchments_info(catinfo, outlet_obs_id, path_sub_reg_outlets
         return catinfo
 
 def create_grid_weight_main(Mapforcing,Forcinfo):
-    
+
     grid_weight_string_list = []
     hruids = Mapforcing["HRU_ID"].values
     hruids = np.unique(hruids)
     #    Lakeids = np.unique(Lakeids)
     grid_weight_string_list = []
-    
-    os.environ["JOBLIB_TEMP_FOLDER"] = tempfile.gettempdir()    
+
+    os.environ["JOBLIB_TEMP_FOLDER"] = tempfile.gettempdir()
 
 
-    grid_weight_string_list.append(":GridWeights")    
-    grid_weight_string_list.append("   #      ") 
-    grid_weight_string_list.append("   # [# HRUs]") 
-    
+    grid_weight_string_list.append(":GridWeights")
+    grid_weight_string_list.append("   #      ")
+    grid_weight_string_list.append("   # [# HRUs]")
+
     sNhru = len(hruids)
-    grid_weight_string_list.append("   :NumberHRUs       " + str(sNhru))     
+    grid_weight_string_list.append("   :NumberHRUs       " + str(sNhru))
 
     sNcell = (max(Forcinfo["Row"].values) + 1) * (max(Forcinfo["Col"].values) + 1)
     grid_weight_string_list.append("   :NumberGridCells  " + str(sNcell))
@@ -3025,7 +3025,7 @@ def create_grid_weight_main(Mapforcing,Forcinfo):
     #     grid_weight_string_ihru = create_grid_weight_hru(i,Mapforcing,Forcinfo)
     #     grid_weight_string_list.append(grid_weight_string_ihru)
     n_hru_group = int(len(hruids)/10)
-    
+
     if len(hruids) > 1000:
         hru_ids_groups = np.array_split(hruids, n_hru_group)
     else:
@@ -3035,15 +3035,15 @@ def create_grid_weight_main(Mapforcing,Forcinfo):
         i_hru_group = hru_ids_groups[i]
         grid_weight_string_hrusi = Parallel(n_jobs=4)(delayed(create_grid_weight_hru)(i,Mapforcing.copy(deep=True),Avafgid,max_col) for i in i_hru_group)
         grid_weight_string_list = grid_weight_string_list + grid_weight_string_hrusi
-    
+
     grid_weight_string_list.append(":EndGridWeights")
     grid_weight_string = "\n".join(grid_weight_string_list)
     return grid_weight_string
-    
+
 def create_grid_weight_hru(hruid,Mapforcing,Avafgid,max_col):
-    
+
     grid_weight_string_hru = ' '
-    
+
     cats = Mapforcing.loc[Mapforcing["HRU_ID"] == hruid].copy(deep=True)
 
 #    cats = cats_hru[cats_hru["Map_FGID"].isin(Avafgid)].copy(deep=True)
@@ -3053,7 +3053,7 @@ def create_grid_weight_hru(hruid,Mapforcing,Avafgid,max_col):
         print("Following Grid has to be inluded:.......")
         print(cats["Map_FGID"])
         return grid_weight_string_hru
-        
+
     tarea = sum(cats["s_area"].values)
     fids = cats["Map_FGID"].values
     fids = np.unique(fids)
@@ -3097,10 +3097,8 @@ def create_grid_weight_hru(hruid,Mapforcing,Avafgid,max_col):
             grid_weight_string_hru = grid_weight_string_hru + "    " + str(int(hruid)) + "     " + Strcellid + "      " + str(wt)
         else:
             if j  == len(fids) - 1:
-                grid_weight_string_hru = grid_weight_string_hru + "    " + str(int(hruid)) + "     " + Strcellid + "      " + str(wt) 
+                grid_weight_string_hru = grid_weight_string_hru + "    " + str(int(hruid)) + "     " + Strcellid + "      " + str(wt)
             else:
                 grid_weight_string_hru = grid_weight_string_hru + "    " + str(int(hruid)) + "     " + Strcellid + "      " + str(wt) + "\n"
-                
-    return grid_weight_string_hru
 
-    
+    return grid_weight_string_hru
