@@ -2,8 +2,8 @@ import numpy as np
 import sys
 import os
 import csv
-import tempfile 
-import copy 
+import tempfile
+import copy
 import pandas as pd
 import geopandas
 import sys, os
@@ -199,13 +199,13 @@ def GenerateHRUS_purepy(
 
     if not os.path.exists(OutputFolder):
         os.makedirs(OutputFolder)
-        
+
     tempfolder = os.path.join(
         OutputFolder, "HRU_TEMP" + str(np.random.randint(1, 10000 + 1))
     )
     if not os.path.exists(tempfolder):
         os.makedirs(tempfolder)
-    
+
     prj_crs = Project_crs
     Merge_layer_list = []
     Merge_layer_raster_list = []
@@ -223,19 +223,19 @@ def GenerateHRUS_purepy(
         Sub_Lake_ID=Sub_Lake_ID,
         Lake_Id=Lake_Id,
         prj_crs = prj_crs,
-    ) 
-    
+    )
+
     lakehruinfo = geopandas.read_file(Sub_Lake_HRU_Layer)
     hru_lake_info = lakehruinfo.loc[lakehruinfo['HRU_IsLake'] > 0].copy()
     lakehruinfo_landhrus = lakehruinfo.loc[lakehruinfo['HRU_IsLake'] <= 0].copy()
-    
+
     hru_lake_info = hru_lake_info.to_crs(prj_crs)
     lakehruinfo_landhrus = lakehruinfo_landhrus.to_crs(prj_crs)
     lakehruinfo = lakehruinfo.to_crs(prj_crs)
-     
+
     hru_lake_info = clean_geometry_purepy(hru_lake_info)
     lakehruinfo_landhrus = clean_geometry_purepy(lakehruinfo_landhrus)
-    
+
     path_to_landhru_shp= os.path.join(tempfolder,'land_hru.shp')
     path_to_lakehru_shp= os.path.join(tempfolder,'lake_hru.shp')
     path_to_landuse_shp = os.path.join(tempfolder,'landuse.shp')
@@ -244,14 +244,14 @@ def GenerateHRUS_purepy(
     path_to_other1_shp = os.path.join(tempfolder,'o1.shp')
     path_to_other2_shp = os.path.join(tempfolder,'o2.shp')
 
-    
+
 #    lakehruinfo_landhrus.to_file(path_to_landhru_shp)
     if len(hru_lake_info) > 0:
         hru_lake_info.to_file(path_to_lakehru_shp)
-        
+
     if len(lakehruinfo_landhrus) > 0:
         lakehruinfo_landhrus.to_file(path_to_landhru_shp)
-    
+
     fieldnames_list.extend(
         [
             Landuse_ID,
@@ -269,28 +269,28 @@ def GenerateHRUS_purepy(
         ]
     )
     dissolve_filedname_list = ["HRULake_ID"]
-    
+
     Merge_layer_list.append(lakehruinfo_landhrus)
 
     Landuse_info_data = pd.read_csv(Landuse_info)
     Soil_info_data = pd.read_csv(Soil_info)
     Veg_info_data = pd.read_csv(Veg_info)
-    
-                
+
+
     #### check which data will be inlucded to determine HRU
     if Path_Landuse_Ply != "#":
         land_landuse_clean = Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
-            layer_path = Path_Landuse_Ply, 
-            Class_Col = Landuse_ID, 
+            layer_path = Path_Landuse_Ply,
+            Class_Col = Landuse_ID,
             tempfolder = tempfolder,
             mask_layer = lakehruinfo,
             Class_NM_Col = "LAND_USE_C",
             info_table = Landuse_info_data,
         )
-        
+
         if Landuse_ID not in land_landuse_clean.columns:
             print("Landuse polygon attribute table do not contain: ",Landuse_ID)
-            sys.exit()            
+            sys.exit()
         land_landuse_clean.to_file(path_to_landuse_shp)
 
         dissolve_filedname_list.append(Landuse_ID)
@@ -299,50 +299,50 @@ def GenerateHRUS_purepy(
 
     if Path_Soil_Ply != "#":
         land_soil_clean = Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
-            layer_path = Path_Soil_Ply, 
-            Class_Col = Soil_ID, 
+            layer_path = Path_Soil_Ply,
+            Class_Col = Soil_ID,
             tempfolder = tempfolder,
             mask_layer = lakehruinfo,
             Class_NM_Col = "SOIL_PROF",
-            info_table = Soil_info_data,            
+            info_table = Soil_info_data,
         )
 
         if Soil_ID not in land_soil_clean.columns:
             print("Soil polygon attribute table do not contain: ",Soil_ID)
-            sys.exit()            
+            sys.exit()
         land_soil_clean.to_file(path_to_soil_shp)
         dissolve_filedname_list.append(Soil_ID)
         Merge_layer_shp_list.append(path_to_soil_shp)
         Merge_ID_list.append(Soil_ID)
-        
+
     if Path_Veg_Ply != "#":
         land_veg_clean = Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
-            layer_path = Path_Veg_Ply, 
-            Class_Col = Veg_ID, 
+            layer_path = Path_Veg_Ply,
+            Class_Col = Veg_ID,
             tempfolder = tempfolder,
             mask_layer = lakehruinfo
         )
 
         if Veg_ID not in land_veg_clean.columns:
             print("Veg polygon attribute table do not contain: ",Veg_ID)
-            sys.exit()            
+            sys.exit()
         land_veg_clean.to_file(path_to_veg_shp)
         dissolve_filedname_list.append(Veg_ID)
         Merge_layer_shp_list.append(path_to_veg_shp)
         Merge_ID_list.append(Veg_ID)
-        
-                
+
+
     if Path_Other_Ply_1 != "#":
         land_o1_clean = Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
-            layer_path = Path_Other_Ply_1, 
-            Class_Col = Other_Ply_ID_1, 
+            layer_path = Path_Other_Ply_1,
+            Class_Col = Other_Ply_ID_1,
             tempfolder = tempfolder,
             mask_layer = lakehruinfo
-        )        
+        )
 
         if Other_Ply_ID_1 not in land_o1_clean.columns:
             print("Other_Ply_1 polygon attribute table do not contain: ",Other_Ply_ID_1)
-            sys.exit()            
+            sys.exit()
         land_o1_clean.to_file(path_to_other1_shp)
         dissolve_filedname_list.append(Other_Ply_ID_1)
         Merge_layer_shp_list.append(path_to_other1_shp)
@@ -350,38 +350,38 @@ def GenerateHRUS_purepy(
 
     if Path_Other_Ply_2 != "#":
         land_o2_clean = Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
-            layer_path = Path_Other_Ply_2, 
-            Class_Col = Other_Ply_ID_2, 
+            layer_path = Path_Other_Ply_2,
+            Class_Col = Other_Ply_ID_2,
             tempfolder = tempfolder,
             mask_layer = lakehruinfo
-        )        
+        )
 
         if Other_Ply_ID_2 not in land_o2_clean.columns:
             print("Other_Ply_1 polygon attribute table do not contain: ",Other_Ply_ID_2)
-            sys.exit()            
+            sys.exit()
         land_o2_clean.to_file(path_to_other2_shp)
         dissolve_filedname_list.append(Other_Ply_ID_2)
         Merge_layer_shp_list.append(path_to_other2_shp)
         Merge_ID_list.append(Other_Ply_ID_2)
-                
+
     fieldnames = np.array(fieldnames_list)
 
-       
+
     path_to_hru_temp_shp = RasterHRUUnionInt32(OutputFolder,tempfolder,Merge_layer_shp_list,
                             Merge_ID_list,Sub_Lake_HRU_Layer,Sub_ID,
                             Landuse_ID,Soil_ID,Veg_ID,Other_Ply_ID_1,
                             Other_Ply_ID_2,pixel_size,lakehruinfo)
-                            
+
     HRU_temp1 = geopandas.read_file(path_to_hru_temp_shp)
-    
+
     HRU_temp1 = decode_hru_attri_ids(HRU_temp1,lakehruinfo,Landuse_ID,Soil_ID,
                                      Veg_ID,Other_Ply_ID_1,Other_Ply_ID_2)
-                                     
+
     HRU_temp1.to_file(os.path.join(tempfolder,'HRU_DEDOCE.shp'))
-    #####     
+    #####
     hru_lake_info = HRU_temp1.loc[HRU_temp1['HRU_IsLake'] > 0].copy()
     hru_land_info = HRU_temp1.loc[HRU_temp1['HRU_IsLake'] <= 0].copy()
-    
+
     # landuse polygon is not provided,landused id the same as IS_lake
     if Path_Landuse_Ply == "#":
         hru_land_info[Landuse_ID] = -hru_land_info['HRU_IsLake']
@@ -404,12 +404,11 @@ def GenerateHRUS_purepy(
     hru_lake_info = clean_attribute_name_purepy(hru_lake_info,fieldnames)
     hru_land_info = clean_attribute_name_purepy(hru_land_info,fieldnames)
 
-    
+
     hruinfo = hru_lake_info.append(hru_land_info)
-    
     hruinfo.to_file(os.path.join(tempfolder,'HRU_with_attributes.shp'))
 
-       
+
     HRU_draf_final = Define_HRU_Attributes_purepy(
         prj_crs = prj_crs,
         trg_crs = trg_crs,
@@ -431,8 +430,8 @@ def GenerateHRUS_purepy(
         OutputFolder = OutputFolder,
         tempfolder = tempfolder,
         area_ratio_thresholds = area_ratio_thresholds,
-    )    
-    
+    )
+
     COLUMN_NAMES_CONSTANT_HRU_extend = COLUMN_NAMES_CONSTANT_HRU.extend(
         [
             Landuse_ID,
@@ -447,21 +446,22 @@ def GenerateHRUS_purepy(
     HRU_draf_final = clean_attribute_name_purepy(HRU_draf_final,COLUMN_NAMES_CONSTANT_HRU)
     for col in [Landuse_ID,Soil_ID,Veg_ID,Other_Ply_ID_1,Other_Ply_ID_2,'SubId']:
         HRU_draf_final = HRU_draf_final.loc[HRU_draf_final[col] != 0]
-    
-    HRU_draf_final.to_crs(trg_crs)        
+
+    HRU_draf_final['DrainArea'] = HRU_draf_final['DrainArea'].astype(int)
+    HRU_draf_final.to_crs(trg_crs)
     HRU_draf_final.to_file(os.path.join(OutputFolder,'finalcat_hru_info.shp'))
     HRU_draf_final_wgs_84 = HRU_draf_final.to_crs('EPSG:4326')
     HRU_draf_final_wgs_84 = HRU_draf_final_wgs_84[['HRU_ID','geometry']]
     TOLERANCEs = [0.0001,0.0005,0.001,0.005,0.01,0.05]
     output_jason_path = os.path.join(OutputFolder,'finalcat_hru_info.geojson')
-    for TOLERANCE in TOLERANCEs:                               
+    for TOLERANCE in TOLERANCEs:
         HRU_draf_final_wgs_84['geometry'] = HRU_draf_final_wgs_84.simplify(TOLERANCE)
-        HRU_draf_final_wgs_84.to_file(output_jason_path,driver="GeoJSON") 
+        HRU_draf_final_wgs_84.to_file(output_jason_path,driver="GeoJSON")
 
         json_file_size = os.stat(output_jason_path).st_size/1024/1024 #to MB
         if json_file_size <= 100:
             break
-    
+
 def GeneratelandandlakeHRUS(
     OutputFolder,
     tempfolder,
@@ -541,7 +541,7 @@ def GeneratelandandlakeHRUS(
 
     # Fix geometry errors in subbasin polygon
 #    arcpy.RepairGeometry_management(Path_Subbasin_ply)
-    
+
     # Create a file name list that will be strored in output attribute table
     fieldnames_list = [
         "HRULake_ID",
@@ -555,16 +555,18 @@ def GeneratelandandlakeHRUS(
 
     # if no lake polygon is provided, use subId as HRULake_ID.
     if Path_Connect_Lake_ply == "#" and Path_Non_Connect_Lake_ply == "#":
-        
+
         cat_info = geopandas.read_file(Path_Subbasin_ply)
         cat_info['Hylak_id'] = -1
         cat_info['HRULake_ID'] = cat_info.index +1
         cat_info['HRU_IsLake'] = -1
-        
+
         # remove column not in fieldnames
         cat_info = clean_attribute_name_purepy(cat_info,fieldnames)
         crs_id = cat_info.crs
         cat_info = cat_info.to_crs(prj_crs)
+        # if 'DrainArea' in cat_info.columns:
+        #     cat_info['DrainArea'] = cat_info['DrainArea'].astype(int)
         cat_info.to_file(os.path.join(OutputFolder,'finalcat_hru_lake_info.shp'))
         return os.path.join(OutputFolder,'finalcat_hru_lake_info.shp'), crs_id, ["HRULake_ID", "HRU_IsLake", Sub_ID]
     else:
@@ -578,11 +580,11 @@ def GeneratelandandlakeHRUS(
     if Path_Non_Connect_Lake_ply != "#":
 #        arcpy.RepairGeometry_management(Path_Non_Connect_Lake_ply)
         ncl_lake = geopandas.read_file(Path_Non_Connect_Lake_ply)
-        
+
     # Merge connected and non connected lake polygons first
     if Path_Connect_Lake_ply != "#" and Path_Non_Connect_Lake_ply != "#":
         merged_lake_ply = cl_lake.append(ncl_lake)
-#        arcpy.Merge_management([Path_Connect_Lake_ply, Path_Non_Connect_Lake_ply], os.path.join(tempfolder,'merged_lake_ply.shp'))   
+#        arcpy.Merge_management([Path_Connect_Lake_ply, Path_Non_Connect_Lake_ply], os.path.join(tempfolder,'merged_lake_ply.shp'))
     elif Path_Connect_Lake_ply != "#" and Path_Non_Connect_Lake_ply == "#":
 #        arcpy.CopyFeatures_management(Path_Connect_Lake_ply, os.path.join(tempfolder,'merged_lake_ply.shp'))
         merged_lake_ply = cl_lake
@@ -595,11 +597,11 @@ def GeneratelandandlakeHRUS(
     # union merged polygon and subbasin polygon
 #    cat_info.spatial.to_featureclass(location=os.path.join(tempfolder,'cat_ply.shp'))
 #    arcpy.RepairGeometry_management(os.path.join(tempfolder,'cat_ply.shp'))
-    
+
     inFeatures = [[Path_Subbasin_ply, 1], [os.path.join(tempfolder,'merged_lake_ply.shp'), 2]]
-    
+
     cat_lake_union = geopandas.overlay(cat_info, merged_lake_ply, how='union',make_valid = True,keep_geom_type = True)
-    
+
 #    cat_lake_union.to_file(os.path.join(tempfolder,'cat_lake_union.shp'))
 
 
@@ -610,11 +612,11 @@ def GeneratelandandlakeHRUS(
     sub_lake_info = cat_lake_union.copy(deep=True)
     sub_lake_info['HRULake_ID'] = -9999
     sub_lake_info['HRU_IsLake'] = -9999
-    
+
     sub_lake_info = sub_lake_info.sort_values(by=['SubId',Lake_Id]).copy(deep=True).reset_index()
-    
+
     sub_lake_info['HRU_ID_Temp'] = sub_lake_info.index + 1
-    
+
     sub_lake_info = Determine_Lake_HRU_Id(sub_lake_info)
     # copy determined lake hru id to vector
     sub_lake_info = clean_attribute_name_purepy(sub_lake_info,fieldnames)
@@ -628,7 +630,7 @@ def GeneratelandandlakeHRUS(
         riv_name = '#',
         Path_final_riv = '#',
         dis_col_name='HRULake_ID'
-    ) 
+    )
     return os.path.join(OutputFolder,'finalcat_hru_lake_info.shp'), crs_id, ["HRULake_ID", "HRU_IsLake", Sub_ID]
 
 
@@ -762,19 +764,19 @@ def Define_HRU_Attributes_purepy(
     hruinfo["HRU_CenX"] = -9999.9999
     hruinfo["HRU_CenY"] = -9999.9999
     hruinfo["HRU_ID_New"] = -9999
-    hruinfo["HRU_Area"] = -9999.99 
+    hruinfo["HRU_Area"] = -9999.99
 
     hruinfo_area = add_area_in_m2(hruinfo,prj_crs,'HRU_Area')
-    
+
     hruinfo_area = simplify_hrus_method2(area_ratio_thresholds,hruinfo_area, Landuse_ID,
                           Soil_ID,Veg_ID,Other_Ply_ID_1,Other_Ply_ID_2)
 
     hruinfo_area = hruinfo_area.sort_values(by=[Sub_ID,Soil_ID,Landuse_ID]).copy(deep=True).reset_index()
 
- 
+
     hruinfo_area['HRU_ID'] = hruinfo_area.index + 1
-    hruinfo_area["HRU_ID_New"] = hruinfo_area.index + 1  
-        
+    hruinfo_area["HRU_ID_New"] = hruinfo_area.index + 1
+
     hruinfo_area_update_attribute = Determine_HRU_Attributes(
         hruinfo_area,
         Sub_ID,
@@ -787,7 +789,7 @@ def Define_HRU_Attributes_purepy(
         Soil_info_data,
         Veg_info_data,
     )
-         
+
     hruinfo_new = save_modified_attributes_to_outputs(
         mapoldnew_info = hruinfo_area_update_attribute,
         tempfolder = tempfolder,
@@ -808,9 +810,9 @@ def Define_HRU_Attributes_purepy(
     #     )
     # else:
     #     hruinfo_simple = hruinfo_new
-    # 
+    #
     # hruinfo_simple = clean_geometry_purepy(hruinfo_simple,set_precision = -1)
-    # 
+    #
     # hruinfo_simple = save_modified_attributes_to_outputs(
     #     mapoldnew_info = hruinfo_simple,
     #     tempfolder = tempfolder,
@@ -824,38 +826,37 @@ def Define_HRU_Attributes_purepy(
     hruinfo_simple = add_centroid_in_wgs84(hruinfo_simple,"HRU_CenX","HRU_CenY")
 
     cat_info = geopandas.read_file(Path_Subbasin_Ply)
-    cat_info = cat_info.drop(columns = 'geometry').copy(deep=True) 
-    
-    hruinfo_simple = pd.merge(hruinfo_simple, cat_info, on='SubId', how='left')             
+    cat_info = cat_info.drop(columns = 'geometry').copy(deep=True)
+
+    hruinfo_simple = pd.merge(hruinfo_simple, cat_info, on='SubId', how='left')
 
     hruinfo_simple = add_area_in_m2(hruinfo_simple,prj_crs,'HRU_Area')
 #    print(len(hruinfo_simple))
     if DEM != "#":
-        
         hru_proj= hruinfo_simple.to_crs(prj_crs)
         hru_proj.to_file(os.path.join(tempfolder,"hru_proj.shp"))
         proj_clip_raster(DEM,os.path.join(tempfolder,"demproj.tif"),prj_crs)
 #        proj_clip_raster(os.path.join(tempfolder,"demproj.tif"),os.path.join(tempfolder,"demclip.tif"),prj_crs,os.path.join(tempfolder,"hru_proj.shp"))
         gdal_slope_raster(os.path.join(tempfolder,"demproj.tif"),os.path.join(tempfolder,"demslope.tif"))
         gdal_aspect_raster(os.path.join(tempfolder,"demproj.tif"),os.path.join(tempfolder,"demaspect.tif"))
-        
+
         table_elv = ZonalStats(hru_proj, os.path.join(tempfolder,"demproj.tif"), 'mean','HRU_ID_New','MeanElev')
         table_asp = ZonalStats(hru_proj, os.path.join(tempfolder,"demaspect.tif"), 'mean','HRU_ID_New','BasAspect')
         table_slp = ZonalStats(hru_proj, os.path.join(tempfolder,"demslope.tif"), 'mean','HRU_ID_New','BasSlope')
-        
+
         table_slp['HRU_S_mean'] = table_slp['mean']
         table_slp = table_slp[['HRU_ID_New','HRU_S_mean']]
         table_asp['HRU_A_mean'] = table_asp['mean']
         table_asp = table_asp[['HRU_ID_New','HRU_A_mean']]
         table_elv['HRU_E_mean'] = table_elv['mean']
         table_elv = table_elv[['HRU_ID_New','HRU_E_mean']]
-        hru_proj = pd.merge(hru_proj, table_slp, on='HRU_ID_New')          
-        hru_proj = pd.merge(hru_proj, table_asp, on='HRU_ID_New')          
-        hru_proj = pd.merge(hru_proj, table_elv, on='HRU_ID_New') 
+        hru_proj = pd.merge(hru_proj, table_slp, on='HRU_ID_New')
+        hru_proj = pd.merge(hru_proj, table_asp, on='HRU_ID_New')
+        hru_proj = pd.merge(hru_proj, table_elv, on='HRU_ID_New')
         hruinfo_add_slp_asp = hru_proj.to_crs(trg_crs)
         hruinfo_add_slp_asp = hruinfo_add_slp_asp.sort_values(by=[Sub_ID,Soil_ID,Landuse_ID]).copy(deep=True).reset_index()
-        hruinfo_add_slp_asp['HRU_ID'] = hruinfo_add_slp_asp.index + 1   
-#        print(len(hruinfo_add_slp_asp))     
+        hruinfo_add_slp_asp['HRU_ID'] = hruinfo_add_slp_asp.index + 1
+#        print(len(hruinfo_add_slp_asp))
     else:
 
         hruinfo_add_slp_asp = hruinfo_simple.sort_values(by=[Sub_ID,Soil_ID,Landuse_ID]).copy(deep=True).reset_index()
@@ -863,7 +864,7 @@ def Define_HRU_Attributes_purepy(
         hruinfo_add_slp_asp['HRU_S_mean'] = hruinfo_add_slp_asp['BasSlope']
         hruinfo_add_slp_asp['HRU_A_mean'] = hruinfo_add_slp_asp['BasAspect']
         hruinfo_add_slp_asp['HRU_E_mean'] = hruinfo_add_slp_asp['MeanElev']
-    
+
     hruinfo_add_slp_asp = adjust_HRUs_area_based_on_ply_sub_area(hruinfo_add_slp_asp)
 
     hruinfo_add_slp_asp = clean_geometry_purepy(hruinfo_add_slp_asp,set_precision = 1)
@@ -874,13 +875,10 @@ def adjust_HRUs_area_based_on_ply_sub_area(hruinfo):
     hruinfo['HRU_A_G'] =hruinfo ['HRU_Area']
     subinfo = hruinfo[['SubId','HRU_Area']].copy(deep=True)
     subinfo = subinfo.rename(columns={"HRU_Area": "Bas_A_G"})
-    
+
     subinfo = subinfo.groupby(['SubId'],as_index = False).sum()
     hruinfo = pd.merge(hruinfo, subinfo, on='SubId')
-    hruinfo['Ratio_A'] = hruinfo['BasArea']/hruinfo['Bas_A_G'] 
+    hruinfo['Ratio_A'] = hruinfo['BasArea']/hruinfo['Bas_A_G']
     hruinfo['HRU_Area'] = hruinfo['HRU_A_G'] * hruinfo['Ratio_A']
-    
+
     return hruinfo
-    
- 
-        

@@ -5,8 +5,8 @@ import sys
 import os
 import csv
 import pandas as pd
-import tempfile 
-import copy 
+import tempfile
+import copy
 
 import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -86,7 +86,7 @@ def Select_Routing_product_based_SubId_purepy(
     Path_final_cat_ply="#"
     Path_final_cat_riv="#"
 
-    ##define input files from routing prodcut 
+    ##define input files from routing prodcut
     for file in os.listdir(Routing_Product_Folder):
         if file.endswith(".shp"):
             if 'catchment_without_merging_lakes' in file:
@@ -102,7 +102,7 @@ def Select_Routing_product_based_SubId_purepy(
             if 'finalcat_info' in file:
                 Path_final_cat_ply = os.path.join(Routing_Product_Folder, file)
             if 'finalcat_info_riv' in file:
-                Path_final_cat_riv = os.path.join(Routing_Product_Folder, file)                
+                Path_final_cat_riv = os.path.join(Routing_Product_Folder, file)
 
     if Path_Catchment_Polygon == '#' or  Path_River_Polyline =='#':
         print("Invalid routing product folder ")
@@ -114,7 +114,7 @@ def Select_Routing_product_based_SubId_purepy(
     down_colnm = "DowSubId"
 
     ##3
-     
+
     cat_ply = geopandas.read_file(Path_Catchment_Polygon)
 
     hyshdinfo = cat_ply[[sub_colnm, down_colnm]].astype("int32").values
@@ -122,7 +122,7 @@ def Select_Routing_product_based_SubId_purepy(
     Gauge_col_Name = "Has_POI"
     if "Has_POI" not in cat_ply.columns:
         Gauge_col_Name = "Has_Gauge"
-        
+
     ### Loop for each downstream id
 
     if not os.path.exists(OutputFolder):
@@ -133,7 +133,7 @@ def Select_Routing_product_based_SubId_purepy(
         ### Loop for each downstream id
         OutHyID = mostdownid[i_down]
         OutHyID2 = mostupstreamid[i_down]
-            
+
         ## find all subid control by this subid
         HydroBasins1 = defcat(hyshdinfo, OutHyID)
         if OutHyID2 > 0:
@@ -156,25 +156,25 @@ def Select_Routing_product_based_SubId_purepy(
     )
 
     cat_ply_select = cat_ply.loc[cat_ply['SubId'].isin(HydroBasins_All)]
+    cat_ply_select['DrainArea'] = cat_ply_select['DrainArea'].astype(int)
+    cat_ply_select.to_file(Outputfilename_cat)
 
-    cat_ply_select.to_file(Outputfilename_cat) 
-     
     Outputfilename_cat_riv = os.path.join(
         OutputFolder, os.path.basename(Path_River_Polyline)
     )
 
     cat_riv = geopandas.read_file(Path_River_Polyline)
-    
+
 
     cat_riv_select = cat_riv.loc[cat_riv['SubId'].isin(HydroBasins)]
-    
-    cat_riv_select.to_file(Outputfilename_cat_riv) 
-    
+    cat_riv_select['DrainArea'] = cat_riv_select['DrainArea'].astype(int)
+    cat_riv_select.to_file(Outputfilename_cat_riv)
+
     cat_ply_select = geopandas.read_file(Outputfilename_cat)
     Connect_Lake_info = cat_ply_select.loc[cat_ply_select["Lake_Cat"] == 1]
     Connect_Lakeids = np.unique(Connect_Lake_info["HyLakeId"].values)
     Connect_Lakeids = Connect_Lakeids[Connect_Lakeids > 0]
-    
+
     NConnect_Lake_info = cat_ply_select.loc[cat_ply_select["Lake_Cat"] == 2]
     NonCL_Lakeids = np.unique(NConnect_Lake_info["HyLakeId"].values)
     NonCL_Lakeids = NonCL_Lakeids[NonCL_Lakeids > 0]
@@ -190,16 +190,17 @@ def Select_Routing_product_based_SubId_purepy(
         sl_non_con_lakes = geopandas.read_file(Path_NonCon_Lake_ply)
         sl_non_con_lakes = sl_non_con_lakes.loc[sl_non_con_lakes['Hylak_id'].isin(NonCL_Lakeids)]
         sl_non_con_lakes.to_file(os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply)))
-    
+
     sl_gauge_info = cat_ply_select.loc[cat_ply_select[Gauge_col_Name] > 0]
     sl_gauge_nm = np.unique(sl_gauge_info["Obs_NM"].values)
     sl_gauge_nm = sl_gauge_nm[sl_gauge_nm != 'nan']
     if len(sl_gauge_nm) > 0 and Path_obs_gauge_point !='#':
         all_gauge = geopandas.read_file(Path_obs_gauge_point)
         sl_gauge = all_gauge.loc[all_gauge['Obs_NM'].isin(sl_gauge_nm)]
+        sl_gauge['DrainArea'] = sl_gauge['DrainArea'].astype(int)
         sl_gauge.to_file(os.path.join(OutputFolder,os.path.basename(Path_obs_gauge_point)))
-    
-    return 
+
+    return
 
 
 ################################################################
