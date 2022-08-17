@@ -1482,7 +1482,9 @@ def Determine_Lake_HRU_Id(Attribute_Table):
             (Attribute_Table[Lake_Id] == lakelakeid_sf)
             & (Attribute_Table["HRU_IsLake"] > 0)
         ]
-
+        if len(tar_info) <= 0:
+            print('Lakeid do not exist   ', lakelakeid_sf)
+            continue
         Attribute_Table.loc[i, Sub_ID] = tar_info[Sub_ID].values[0]
         Attribute_Table.loc[i, "HRU_IsLake"] = tar_info["HRU_IsLake"].values[0]
         Attribute_Table.loc[i, "HRULake_ID"] = tar_info["HRULake_ID"].values[0]
