@@ -1405,9 +1405,9 @@ def Determine_Lake_HRU_Id(Attribute_Table):
     #  then this feature is not covered by the lake the new hru id  = old subid
 
     for i in Attribute_Table.index:
-        subid_sf_obj = Attribute_Table.loc[i,Sub_ID]
-        lakelakeid_sf_obj = Attribute_Table.loc[i,Lake_Id]
-        Sub_Lakeid_sf_obj = Attribute_Table.loc[i,Sub_Lake_ID]
+        subid_sf = Attribute_Table.loc[i,Sub_ID]
+        lakelakeid_sf = Attribute_Table.loc[i,Lake_Id]
+        Sub_Lakeid_sf = Attribute_Table.loc[i,Sub_Lake_ID]
 
         ### the null value in the attribute table is not convertable try and set
         ### to -1
@@ -1468,9 +1468,9 @@ def Determine_Lake_HRU_Id(Attribute_Table):
     # if Sub_Lake_ID from lake polygon is also sammller than zero
     #    report an error
     for i in Attribute_Table.index:
-        subid_sf_obj = Attribute_Table.loc[i,Sub_ID]
-        lakelakeid_sf_obj = Attribute_Table.loc[i,Lake_Id]
-        Sub_Lakeid_sf_obj = Attribute_Table.loc[i,Sub_Lake_ID]
+        subid_sf = Attribute_Table.loc[i,Sub_ID]
+        lakelakeid_sf = Attribute_Table.loc[i,Lake_Id]
+        Sub_Lakeid_sf = Attribute_Table.loc[i,Sub_Lake_ID]
         if subid_sf > 0:
             continue
         if lakelakeid_sf <= 0:
