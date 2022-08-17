@@ -1,7 +1,7 @@
-import geopandas
+import geopandas 
 import numpy as np
 import os
-import pandas as pd
+import pandas as pd 
 from json import load, JSONEncoder
 import json
 import requests
@@ -18,17 +18,17 @@ def zonal_stats_pd(shp_gpd,raster,stats,key):
     reault_list_dic = list(map(lambda x : {key:x['properties'][key],'mean':x['properties']['mean']}, result))
 
     reault_pd = pd.DataFrame(reault_list_dic)
-
+    
     return reault_pd
 
-
+    
 
 def ZonalStats(shp_gpd, raster, stats,key,col):
     # shape - shapefile path
     # raster - raster path
     # stats - stats as list, f.e. 'min mean max' ; 'min'
     # the result is final_gdf as GeoDataFrame
-
+    
     nodata_pd = shp_gpd.copy(deep=True)
     i = 0
     while len(nodata_pd) >0 and i <=5:
@@ -46,10 +46,10 @@ def ZonalStats(shp_gpd, raster, stats,key,col):
     if len(nodata_pd) > 0:
         nodata_pd['mean'] = nodata_pd[col]
         reault_pd = reault_pd.append(nodata_pd)
-#    print(len(shp_gpd),len(nodata_pd),len(reault_pd))
+#    print(len(shp_gpd),len(nodata_pd),len(reault_pd))     
     return reault_pd
-
-
+    
+    
 def Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
     layer_path, Class_Col, tempfolder,mask_layer,Class_NM_Col = '#',info_table = '#'
 ):
@@ -88,10 +88,10 @@ def Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
         layer_dis                  : qgis object
             it is a polygon after preprocess
     """
-
+        
     new_crs = mask_layer.crs
     data = geopandas.read_file(layer_path)
-
+    
     projected = data.to_crs(new_crs)
     projected = projected.explode(ignore_index=True)
     clipped = projected.clip(mask_layer)
@@ -101,27 +101,27 @@ def Reproj_Clip_Dissolve_Simplify_Polygon_purepy(
     if Class_NM_Col != '#':
         if Class_Col not in clipped.columns:
             print(Class_Col," not in the attribute table of provided shapefile")
-            sys.exit()
+            sys.exit() 
         if Class_Col not in info_table.columns:
             print(Class_Col," not in the attribute table of provided info table")
-            sys.exit()
+            sys.exit() 
         if Class_NM_Col not in info_table.columns:
             print(Class_NM_Col," not in the attribute table of provided info table")
-            sys.exit()
-
+            sys.exit()   
+        
         info_table_copy = info_table.copy(deep=True)
         info_table_copy = info_table_copy.drop_duplicates(subset=[Class_NM_Col], keep='last',ignore_index=True)
         info_table_copy['New_ID'] = info_table_copy[Class_Col]
         info_table_copy = info_table_copy[[Class_NM_Col,'New_ID']]
         info_table_copy2 = pd.merge(info_table, info_table_copy, how='inner', on = Class_NM_Col).copy(deep=True)
-
+        
         cleaned = pd.merge(cleaned, info_table_copy2, how='inner', on = Class_Col)
         cleaned[Class_Col] = cleaned['New_ID']
-        #update
+        #update 
     #    clipped Class_Col based on the Class_NM_Col
     #    arcpy.RepairGeometry_management(os.path.join(tempfolder,Class_Col+"_dislve.shp"))
-
-    #    arcpy.AddSpatialIndex_management(os.path.join(tempfolder,Class_Col+"_dislve.shp"))
+        
+    #    arcpy.AddSpatialIndex_management(os.path.join(tempfolder,Class_Col+"_dislve.shp")) 
     return cleaned
 
 
@@ -130,7 +130,7 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
 
     NEED_TO_REMOVE_IDS = ["SubId_1", "Id","nsubid2", "nsubid","ndownsubid","Old_SubId","Old_DowSub","Join_Count","TARGET_FID","Id","SubID_Oldr","HRU_ID_N_1","HRU_ID_N_2","facters","Old_DowSubId","SubIdt2"]
 
-    #obtain readme file
+    #obtain readme file   
     if "DA_Chn_L" in  mapoldnew_info.columns:
         url = 'https://github.com/dustming/RoutingTool/wiki/Files/README_OIH.pdf'
     else:
@@ -139,86 +139,81 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
     response = requests.get(url)
     with open(os.path.join(OutputFolder,"README.pdf"), 'wb') as f:
         f.write(response.content)
-
+    
     if riv_name != '#':
-
+        
         if Path_final_riv != '#':
             riv_pd = geopandas.read_file(Path_final_riv)
             riv_pd['Old_SubId'] = riv_pd['SubId']
-
+        
         cat_pd = mapoldnew_info.drop(columns = 'geometry').copy(deep=True)
-        # remove all columns
-        if Path_final_riv != '#':
-            riv_pd = riv_pd[['geometry','Old_SubId']]
-            riv_pd = pd.merge(riv_pd, cat_pd, on='Old_SubId', how='left')
+        # remove all columns 
+        if Path_final_riv != '#':        
+            riv_pd = riv_pd[['geometry','Old_SubId']]        
+            riv_pd = pd.merge(riv_pd, cat_pd, on='Old_SubId', how='left')             
             riv_pd = riv_pd.dissolve(by=dis_col_name, aggfunc='first',as_index=False)
-
-
+        
+        
         mapoldnew_info = mapoldnew_info.dissolve(by=dis_col_name, aggfunc='first',as_index=False)
-        mapoldnew_info = clean_geometry_purepy(mapoldnew_info,set_precision = 1)
         mapoldnew_info = add_centroid_in_wgs84(mapoldnew_info,"centroid_x","centroid_y")
-
+        
         cat_c_x_y = mapoldnew_info[["centroid_y","centroid_x"]].copy(deep=True)
-        if Path_final_riv != '#':
+        if Path_final_riv != '#':                
             riv_pd = riv_pd.drop(columns = ["centroid_y","centroid_x"])
-            riv_pd = riv_pd.join(cat_c_x_y)
+            riv_pd = riv_pd.join(cat_c_x_y) 
 
         riv_pd_nncls_routing_info = mapoldnew_info[mapoldnew_info['Lake_Cat'] != 2][['SubId','DowSubId']].copy(deep=True)
         remove_channel = []
         for subid in riv_pd_nncls_routing_info['SubId'].values:
             if subid not in riv_pd_nncls_routing_info['DowSubId'].values:
-                remove_channel.append(subid)
-        if Path_final_riv != '#':
-            riv_pd = riv_pd[~riv_pd.SubId.isin(remove_channel)]
+                remove_channel.append(subid)    
+        if Path_final_riv != '#':                                    
+            riv_pd = riv_pd[~riv_pd.SubId.isin(remove_channel)]   
             cat_colnms = riv_pd.columns
-            drop_cat_colnms = cat_colnms[cat_colnms.isin(NEED_TO_REMOVE_IDS)]
+            drop_cat_colnms = cat_colnms[cat_colnms.isin(NEED_TO_REMOVE_IDS)]                      
             riv_pd = riv_pd.drop(columns=drop_cat_colnms)
             if len(riv_pd) > 0:
-                riv_pd['DrainArea'] = riv_pd['DrainArea'].astype(int)
                 riv_pd.to_file(os.path.join(OutputFolder,riv_name))
-
+        
         mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'RivSlope'] = -1.2345
         mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'RivLength'] = -1.2345
         mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'FloodP_n'] = -1.2345
         mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'Ch_n'] = -1.2345
         mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'Max_DEM'] = -1.2345
         mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'Min_DEM'] = -1.2345
-
+        
         cat_colnms = mapoldnew_info.columns
         drop_cat_colnms = cat_colnms[cat_colnms.isin(NEED_TO_REMOVE_IDS)]
         mapoldnew_info = mapoldnew_info.drop(columns=drop_cat_colnms)
-        mapoldnew_info['DrainArea'] = mapoldnew_info['DrainArea'].astype(int)
         mapoldnew_info.to_file(os.path.join(OutputFolder,cat_name))
-
+        
         create_geo_jason_file(os.path.join(OutputFolder,cat_name))
-
-    else:
+  
+    else: 
 
         mapoldnew_info = mapoldnew_info.dissolve(by=dis_col_name, aggfunc='first',as_index=False)
-
+    
         if "centroid_y" in mapoldnew_info.columns:
-            mapoldnew_info = clean_geometry_purepy(mapoldnew_info,set_precision = 1)
+
             mapoldnew_info = add_centroid_in_wgs84(mapoldnew_info,"centroid_x","centroid_y")
             mapoldnew_info["SubId"] = mapoldnew_info.index
             riv_pd_nncls_routing_info = mapoldnew_info[mapoldnew_info['Lake_Cat'] != 2][['SubId','DowSubId']].copy(deep=True)
             remove_channel = []
             for subid in riv_pd_nncls_routing_info['SubId'].values:
                 if subid not in riv_pd_nncls_routing_info['DowSubId'].values:
-                    remove_channel.append(subid)
-
+                    remove_channel.append(subid)                
+                            
             mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'RivSlope'] = -1.2345
             mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'RivLength'] = -1.2345
             mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'FloodP_n'] = -1.2345
             mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'Ch_n'] = -1.2345
             mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'Max_DEM'] = -1.2345
             mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'Min_DEM'] = -1.2345
-
-
+            
+                
         cat_colnms = mapoldnew_info.columns
         drop_cat_colnms = cat_colnms[cat_colnms.isin(["SHAPE","SubId_1", "Id","nsubid2", "nsubid","ndownsubid","Old_DowSub","Join_Count","TARGET_FID","Id","SubID_Oldr","HRU_ID_N_1","HRU_ID_N_2","facters","Old_DowSubId"])]
         mapoldnew_info = mapoldnew_info.drop(columns=drop_cat_colnms)
-        if 'DrainArea' in mapoldnew_info.columns:
-            mapoldnew_info['DrainArea'] = mapoldnew_info['DrainArea'].astype(int)
         mapoldnew_info.to_file(os.path.join(OutputFolder,cat_name))
         return mapoldnew_info
 
@@ -235,31 +230,31 @@ def Remove_Unselected_Lake_Attribute_In_Finalcatinfo_purepy(finalcat_ply, Conn_L
     -------
         None, the attribute table of Path_shpfile will be updated
     """
-
+    
     mask1 = np.logical_not(finalcat_ply['HyLakeId'].isin(Conn_Lake_Ids))
     mask2 = finalcat_ply['Lake_Cat'] != 2
     mask = np.logical_and(mask1,mask2)
-
+    
     finalcat_ply.loc[mask,'HyLakeId'] = 0
     finalcat_ply.loc[mask,'LakeVol'] = 0
     finalcat_ply.loc[mask,'LakeArea'] = 0
     finalcat_ply.loc[mask,'LakeDepth'] = 0
     finalcat_ply.loc[mask,'Laketype'] =0
     finalcat_ply.loc[mask,'Lake_Cat'] = 0
-
+    
     return finalcat_ply
-
+    
 def clean_attribute_name_purepy(table,names):
     remove_column_names = table.columns[np.logical_not(np.isin(table.columns,names))]
     table = table.drop(columns=remove_column_names)
-    return table
-
+    return table 
+    
 def clean_geometry_purepy(data,set_precision = -1):
 
 #    data["geometry"] = data["geometry"].apply(lambda x: shapely.wkt.loads(shapely.wkt.dumps(x, rounding_precision=4)))
     if set_precision > 0:
         data['geometry'] = data['geometry'].buffer(0.00000000001)
-
+        
 #        data.geometry = pg.set_precision(data.geometry.values.data, 1e-6)
 #        data["geometry"] = data["geometry"].apply(lambda x: shapely.wkt.loads(shapely.wkt.dumps(x, rounding_precision=4)))
 #        data['geometry'] = data['geometry'].buffer(0)
@@ -283,43 +278,43 @@ def clean_geometry_purepy(data,set_precision = -1):
         print("check the following features")
         print(data.loc[data.geom_type == 'GeometryCollection'])
         print("###########################")
-
+    
     data = data.loc[data.geom_type != 'GeometryCollection']
     data.sindex
 #    print("c",len(data))
-    return data
-
+    return data   
+    
 def add_area_in_m2(data,prj_crs,area_col):
     src_src = data.crs
     tost = data.copy()
 
     tost= data.to_crs(prj_crs)
     tost[area_col] = tost.area
-
+    
     out= tost.copy(deep=True).to_crs(src_src)
 
-    return out
+    return out 
 
 def add_centroid_in_wgs84(data,colx,coly):
     src_src = data.crs
     tost = data.copy()
-
+    
     tost= tost.to_crs('EPSG:4326')
 
     tost[coly] = tost.geometry.centroid.y
     tost[colx] = tost.geometry.centroid.x
-
+    
     out= tost.copy(deep=True).to_crs(src_src)
-
+    
     return out
-
+    
 
 def create_geo_jason_file(Input_Polygon_path):
-
+ 
     if "finalcat_info" not in Input_Polygon_path:
 #        print(Input_Polygon_path)
-        return
-
+        return 
+    
     product_dir = os.path.dirname(Input_Polygon_path)
     Names_in = os.path.basename(Input_Polygon_path).split('_')
     n_charc = len(Names_in)
@@ -333,7 +328,7 @@ def create_geo_jason_file(Input_Polygon_path):
     head_name_nlake = "sl_non_connected_lake"
 
     Input_file_name = []
-    Output_file_name = []
+    Output_file_name = []                            
     if 'v' in version:
         Input_file_name = [
                            head_name_cat + "_"+version+'.shp',
@@ -360,35 +355,35 @@ def create_geo_jason_file(Input_Polygon_path):
                            head_name_slake +'.geojson',
                            head_name_nlake +'.geojson',
                            ]
-    created_jason_files = []
-    created_jason_files_lake_riv = []
-
+    created_jason_files = []   
+    created_jason_files_lake_riv = [] 
+    
     for i  in  range(0,len(Input_file_name)):
         input_path = os.path.join(product_dir,Input_file_name[i])
         output_jason_path = os.path.join(product_dir,Output_file_name[i])
         if not os.path.exists(input_path):
-            continue
-        created_jason_files.append(output_jason_path)
-
+            continue 
+        created_jason_files.append(output_jason_path) 
+        
         if 'finalcat_info_riv' in Input_file_name[i] or 'connected_lake' in Input_file_name[i]:
-            created_jason_files_lake_riv.append(output_jason_path)
-
+            created_jason_files_lake_riv.append(output_jason_path)  
+                            
         # reproject to WGS84
         input_pd = geopandas.read_file(input_path)
+        
+        input_wgs_84 = input_pd.to_crs('EPSG:4326') 
 
-        input_wgs_84 = input_pd.to_crs('EPSG:4326')
-
-
-
+        
+        
         if 'finalcat_info' in Input_file_name[i] or "finalcat_info_riv" in Input_file_name[i]:
             input_wgs_84['rvhName'] = input_wgs_84['SubId'].astype(int).astype(str)
-
-
+            
+        
         input_tojson = input_wgs_84
-
-        for TOLERANCE in TOLERANCEs:
+        
+        for TOLERANCE in TOLERANCEs:                               
             input_tojson['geometry'] = input_tojson.simplify(TOLERANCE)
-            input_tojson.to_file(output_jason_path, driver="GeoJSON")
+            input_tojson.to_file(output_jason_path, driver="GeoJSON") 
 
             json_file_size = os.stat(output_jason_path).st_size/1024/1024 #to MB
             if json_file_size <= 100:
@@ -400,16 +395,19 @@ def create_geo_jason_file(Input_Polygon_path):
             if 'finalcat_info_riv' in created_jason_files_lake_riv[i]:
                 new_features = []
                 for element in injson2["features"]:
-                    if element["properties"]["Lake_Cat"] == 0:
-                        new_features.append(element)
+                    if element["properties"]["Lake_Cat"] == 0:    
+                        new_features.append(element) 
                 injson2["features"] = new_features
 
             if i == 0:
                 output_jason_lake_riv = injson2
             else:
                 output_jason_lake_riv['features'] += injson2['features']
-
+                
         with open(os.path.join(product_dir,'routing_product_lake_river.geojson'), 'w', encoding='utf-8') as f:
             json.dump(output_jason_lake_riv, f, ensure_ascii=False, indent=4)
-
-    return
+                                    
+    return     
+    
+    
+    
