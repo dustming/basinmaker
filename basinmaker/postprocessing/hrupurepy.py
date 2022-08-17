@@ -565,8 +565,8 @@ def GeneratelandandlakeHRUS(
         cat_info = clean_attribute_name_purepy(cat_info,fieldnames)
         crs_id = cat_info.crs
         cat_info = cat_info.to_crs(prj_crs)
-        if 'DrainArea' in cat_info.columns:
-            cat_info['DrainArea'] = cat_info['DrainArea'].astype(int)
+        # if 'DrainArea' in cat_info.columns:
+        #     cat_info['DrainArea'] = cat_info['DrainArea'].astype(int)
         cat_info.to_file(os.path.join(OutputFolder,'finalcat_hru_lake_info.shp'))
         return os.path.join(OutputFolder,'finalcat_hru_lake_info.shp'), crs_id, ["HRULake_ID", "HRU_IsLake", Sub_ID]
     else:
