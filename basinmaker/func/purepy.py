@@ -155,6 +155,7 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
 
 
         mapoldnew_info = mapoldnew_info.dissolve(by=dis_col_name, aggfunc='first',as_index=False)
+        mapoldnew_info = clean_geometry_purepy(mapoldnew_info,set_precision = -1)
         mapoldnew_info = add_centroid_in_wgs84(mapoldnew_info,"centroid_x","centroid_y")
 
         cat_c_x_y = mapoldnew_info[["centroid_y","centroid_x"]].copy(deep=True)
@@ -196,7 +197,7 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
         mapoldnew_info = mapoldnew_info.dissolve(by=dis_col_name, aggfunc='first',as_index=False)
 
         if "centroid_y" in mapoldnew_info.columns:
-
+            mapoldnew_info = clean_geometry_purepy(mapoldnew_info,set_precision = -1)
             mapoldnew_info = add_centroid_in_wgs84(mapoldnew_info,"centroid_x","centroid_y")
             mapoldnew_info["SubId"] = mapoldnew_info.index
             riv_pd_nncls_routing_info = mapoldnew_info[mapoldnew_info['Lake_Cat'] != 2][['SubId','DowSubId']].copy(deep=True)
