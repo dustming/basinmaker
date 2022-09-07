@@ -2,8 +2,8 @@ import numpy as np
 import sys
 import os
 import csv
-import tempfile 
-import copy 
+import tempfile
+import copy
 import pandas as pd
 from arcgis.features import GeoAccessor, GeoSeriesAccessor
 import arcpy
@@ -204,7 +204,7 @@ def GenerateHRUS_arcgis(
 
     if not os.path.exists(OutputFolder):
         os.makedirs(OutputFolder)
-        
+
     tempfolder = os.path.join(
         tempfile.gettempdir(), "basinmaker_hru" + str(np.random.randint(1, 10000 + 1))
     )
@@ -225,7 +225,7 @@ def GenerateHRUS_arcgis(
         Sub_ID=Sub_ID,
         Sub_Lake_ID=Sub_Lake_ID,
         Lake_Id=Lake_Id,
-    ) 
+    )
 
     lakehruinfo = pd.DataFrame.spatial.from_featureclass(Sub_Lake_HRU_Layer)
     hru_lake_info = lakehruinfo.loc[lakehruinfo['HRU_IsLake'] > 0].copy()
@@ -235,7 +235,7 @@ def GenerateHRUS_arcgis(
         location=os.path.join(tempfolder,'land_hrus.shp'),
         overwrite=True,sanitize_columns=False,
     )
-    
+
     fieldnames_list.extend(
         [
             Landuse_ID,
@@ -253,14 +253,14 @@ def GenerateHRUS_arcgis(
         ]
     )
     dissolve_filedname_list = ["HRULake_ID"]
-    
+
     Merge_layer_list.append([os.path.join(tempfolder,'land_hrus.shp'),1])
 
     #### check which data will be inlucded to determine HRU
     if Path_Landuse_Ply != "#":
         layer_path = Reproj_Clip_Dissolve_Simplify_Polygon_arcgis(
-            layer_path = Path_Landuse_Ply, 
-            Class_Col = Landuse_ID, 
+            layer_path = Path_Landuse_Ply,
+            Class_Col = Landuse_ID,
             tempfolder = tempfolder,
             mask_layer = os.path.join(tempfolder,'land_hrus.shp')
         )
@@ -269,8 +269,8 @@ def GenerateHRUS_arcgis(
 
     if Path_Soil_Ply != "#":
         layer_path = Reproj_Clip_Dissolve_Simplify_Polygon_arcgis(
-            layer_path = Path_Soil_Ply, 
-            Class_Col = Soil_ID, 
+            layer_path = Path_Soil_Ply,
+            Class_Col = Soil_ID,
             tempfolder = tempfolder,
             mask_layer = os.path.join(tempfolder,'land_hrus.shp')
         )
@@ -279,31 +279,31 @@ def GenerateHRUS_arcgis(
 
     if Path_Veg_Ply != "#":
         layer_path = Reproj_Clip_Dissolve_Simplify_Polygon_arcgis(
-            layer_path = Path_Veg_Ply, 
-            Class_Col = Veg_ID, 
+            layer_path = Path_Veg_Ply,
+            Class_Col = Veg_ID,
             tempfolder = tempfolder,
             mask_layer = os.path.join(tempfolder,'land_hrus.shp')
         )
         Merge_layer_list.append([layer_path,2])
         dissolve_filedname_list.append(Veg_ID)
-        
+
     if Path_Other_Ply_1 != "#":
         layer_path = Reproj_Clip_Dissolve_Simplify_Polygon_arcgis(
-            layer_path = Path_Other_Ply_1, 
-            Class_Col = Other_Ply_ID_1, 
+            layer_path = Path_Other_Ply_1,
+            Class_Col = Other_Ply_ID_1,
             tempfolder = tempfolder,
             mask_layer = os.path.join(tempfolder,'land_hrus.shp')
-        )        
+        )
         Merge_layer_list.append([layer_path,2])
         dissolve_filedname_list.append(Other_Ply_ID_1)
 
     if Path_Other_Ply_2 != "#":
         layer_path = Reproj_Clip_Dissolve_Simplify_Polygon_arcgis(
-            layer_path = Path_Other_Ply_2, 
-            Class_Col = Other_Ply_ID_2, 
+            layer_path = Path_Other_Ply_2,
+            Class_Col = Other_Ply_ID_2,
             tempfolder = tempfolder,
             mask_layer = os.path.join(tempfolder,'land_hrus.shp')
-        )        
+        )
         Merge_layer_list.append([layer_path,2])
         dissolve_filedname_list.append(Other_Ply_ID_2)
 
@@ -316,7 +316,7 @@ def GenerateHRUS_arcgis(
     print("union done ")
 
     hru_land_info = pd.DataFrame.spatial.from_featureclass( os.path.join(tempfolder,'hrus_land_union.shp'))
-    
+
     #####
 
     Landuse_info_data = pd.read_csv(Landuse_info)
@@ -345,9 +345,9 @@ def GenerateHRUS_arcgis(
     hru_lake_info = clean_attribute_name_arcgis(hru_lake_info,fieldnames)
     hru_land_info = clean_attribute_name_arcgis(hru_land_info,fieldnames)
 
-    
+
     hruinfo = pd.concat([hru_lake_info, hru_land_info], ignore_index=True)
-       
+
     HRU_draf_final = Define_HRU_Attributes_arcgis(
         prj_crs = prj_crs,
         trg_crs = trg_crs,
@@ -368,8 +368,8 @@ def GenerateHRUS_arcgis(
         Inmportance_order = Inmportance_order,
         OutputFolder = OutputFolder,
         tempfolder = tempfolder,
-    )    
-    
+    )
+
     COLUMN_NAMES_CONSTANT_HRU_extend = COLUMN_NAMES_CONSTANT_HRU.extend(
         [
             Landuse_ID,
@@ -460,7 +460,7 @@ def GeneratelandandlakeHRUS(
 
     # Fix geometry errors in subbasin polygon
     arcpy.RepairGeometry_management(Path_Subbasin_ply)
-    
+
     # Create a file name list that will be strored in output attribute table
     fieldnames_list = [
         "HRULake_ID",
@@ -474,12 +474,12 @@ def GeneratelandandlakeHRUS(
 
     # if no lake polygon is provided, use subId as HRULake_ID.
     if Path_Connect_Lake_ply == "#" and Path_Non_Connect_Lake_ply == "#":
-        
+
         cat_info = pd.DataFrame.spatial.from_featureclass(Path_Subbasin_ply)
         cat_info['Hylak_id'] = -1
         cat_info['HRULake_ID'] = cat_info['SubId']
         cat_info['HRU_IsLake'] = -1
-        
+
         # remove column not in fieldnames
         cat_info = clean_attribute_name_arcgis(cat_info,fieldnames)
         cat_info.spatial.to_featureclass(location=os.path.join(OutputFolder,'finalcat_hru_lake_info.shp'),overwrite=True,sanitize_columns=False)
@@ -494,7 +494,7 @@ def GeneratelandandlakeHRUS(
         arcpy.RepairGeometry_management(Path_Non_Connect_Lake_ply)
     # Merge connected and non connected lake polygons first
     if Path_Connect_Lake_ply != "#" and Path_Non_Connect_Lake_ply != "#":
-        arcpy.Merge_management([Path_Connect_Lake_ply, Path_Non_Connect_Lake_ply], os.path.join(tempfolder,'merged_lake_ply.shp'))    
+        arcpy.Merge_management([Path_Connect_Lake_ply, Path_Non_Connect_Lake_ply], os.path.join(tempfolder,'merged_lake_ply.shp'))
     elif Path_Connect_Lake_ply != "#" and Path_Non_Connect_Lake_ply == "#":
         arcpy.CopyFeatures_management(Path_Connect_Lake_ply, os.path.join(tempfolder,'merged_lake_ply.shp'))
     elif Path_Connect_Lake_ply == "#" and Path_Non_Connect_Lake_ply != "#":
@@ -505,20 +505,20 @@ def GeneratelandandlakeHRUS(
     # union merged polygon and subbasin polygon
 #    cat_info.spatial.to_featureclass(location=os.path.join(tempfolder,'cat_ply.shp'))
 #    arcpy.RepairGeometry_management(os.path.join(tempfolder,'cat_ply.shp'))
-    
+
     inFeatures = [[Path_Subbasin_ply, 1], [os.path.join(tempfolder,'merged_lake_ply.shp'), 2]]
-    
+
     arcpy.Union_analysis(inFeatures, os.path.join(tempfolder,'cat_lake_union.shp'))
-    
+
     arcpy.RepairGeometry_management(os.path.join(tempfolder,'cat_lake_union.shp'))
     sub_lake_info = pd.DataFrame.spatial.from_featureclass(location=os.path.join(tempfolder,'cat_lake_union.shp'))
     sub_lake_info['HRULake_ID'] = -9999
     sub_lake_info['HRU_IsLake'] = -9999
-    
+
     crs_id = arcpy.Describe(os.path.join(tempfolder,'cat_lake_union.shp')).spatialReference.factoryCode
 
     sub_lake_info['HRU_ID_Temp'] = sub_lake_info['FID'] + 1
-    
+
     sub_lake_info = Determine_Lake_HRU_Id(sub_lake_info)
     # copy determined lake hru id to vector
     sub_lake_info = clean_attribute_name_arcgis(sub_lake_info,fieldnames)
@@ -531,7 +531,7 @@ def GeneratelandandlakeHRUS(
         Path_final_riv = '#',
         dis_col_name='HRULake_ID'
     )
-    
+
     return os.path.join(OutputFolder,'finalcat_hru_lake_info.shp'), crs_id, ["HRULake_ID", "HRU_IsLake", Sub_ID]
 
 
@@ -578,23 +578,23 @@ def Reproj_Clip_Dissolve_Simplify_Polygon_arcgis(
     """
     arcpy.Project_management(
         layer_path,
-        os.path.join(tempfolder,Class_Col+"_proj.shp"), 
+        os.path.join(tempfolder,Class_Col+"_proj.shp"),
         arcpy.Describe(mask_layer).spatialReference,
         )
     arcpy.Clip_analysis(
-        os.path.join(tempfolder,Class_Col+"_proj.shp"), 
-        mask_layer, 
+        os.path.join(tempfolder,Class_Col+"_proj.shp"),
+        mask_layer,
         os.path.join(tempfolder,Class_Col+"_clip.shp")
     )
-    
+
     arcpy.Dissolve_management(
-        os.path.join(tempfolder,Class_Col+"_clip.shp"), 
-        os.path.join(tempfolder,Class_Col+"_dislve.shp"), 
+        os.path.join(tempfolder,Class_Col+"_clip.shp"),
+        os.path.join(tempfolder,Class_Col+"_dislve.shp"),
         [Class_Col]
     )
-    
+
     arcpy.RepairGeometry_management(os.path.join(tempfolder,Class_Col+"_dislve.shp"))
-    
+
     arcpy.AddSpatialIndex_management(os.path.join(tempfolder,Class_Col+"_dislve.shp"))
 
     return os.path.join(tempfolder,Class_Col+"_dislve.shp")
@@ -830,7 +830,7 @@ def Define_HRU_Attributes_arcgis(
     hruinfo["HRU_CenX"] = -9999.9999
     hruinfo["HRU_CenY"] = -9999.9999
     hruinfo["HRU_ID_New"] = -9999
-    hruinfo["HRU_Area"] = -9999.99 
+    hruinfo["HRU_Area"] = -9999.99
     hruinfo.spatial.to_featureclass(location=os.path.join(tempfolder,'hru_add_area.shp'),overwrite=True,sanitize_columns=False)
 
     arcpy.CalculateGeometryAttributes_management(
@@ -838,13 +838,13 @@ def Define_HRU_Attributes_arcgis(
         [["HRU_Area", "AREA_GEODESIC"]],
         area_unit = 'SQUARE_METERS',
         coordinate_system = arcpy.SpatialReference(prj_crs)
-    ) 
+    )
     ### calcuate area of each feature
     hruinfo_area = pd.DataFrame.spatial.from_featureclass(os.path.join(tempfolder,'hru_add_area.shp'))
 
     hruinfo_area['HRU_ID'] = hruinfo_area['FID'] + 1
-    hruinfo_area["HRU_ID_New"] = hruinfo_area["FID"] + 1  
-    
+    hruinfo_area["HRU_ID_New"] = hruinfo_area["FID"] + 1
+
     hruinfo_area_update_attribute = Determine_HRU_Attributes(
         hruinfo_area,
         Sub_ID,
@@ -857,7 +857,7 @@ def Define_HRU_Attributes_arcgis(
         Soil_info_data,
         Veg_info_data,
     )
-
+    hruinfo_area_update_attribute['HRU_ID_New'] = hruinfo_area_update_attribute['HRU_ID_New'].astype(int)
     save_modified_attributes_to_outputs(
         mapoldnew_info = hruinfo_area_update_attribute,
         tempfolder = tempfolder,
@@ -875,15 +875,15 @@ def Define_HRU_Attributes_arcgis(
         [["HRU_Area", "AREA_GEODESIC"]],
         area_unit = 'SQUARE_METERS',
         coordinate_system = arcpy.SpatialReference(prj_crs)
-    ) 
-   
+    )
+
     hruinfo_new = pd.DataFrame.spatial.from_featureclass(os.path.join(tempfolder,'finalcat_hru_info.shp'))
     hruinfo_simple = simplidfy_hrus(
         min_hru_pct_sub_area = min_hru_area_pct_sub,
         hruinfo = hruinfo_new,
         importance_order = Inmportance_order,
     )
-    
+
     save_modified_attributes_to_outputs(
         mapoldnew_info = hruinfo_simple,
         tempfolder = tempfolder,
@@ -893,18 +893,18 @@ def Define_HRU_Attributes_arcgis(
         Path_final_riv = '#',
         dis_col_name='HRU_ID_New'
     )
-    
+
     arcpy.CalculateGeometryAttributes_management(
-        os.path.join(tempfolder,'hru_simple.shp'), 
-        [["HRU_CenX", "CENTROID_X"], 
+        os.path.join(tempfolder,'hru_simple.shp'),
+        [["HRU_CenX", "CENTROID_X"],
         ["HRU_CenY", "CENTROID_Y"]],
         coordinate_system = arcpy.SpatialReference(4326)
     )
-    # 
+    #
     arcpy.JoinField_management(
-        os.path.join(tempfolder,'hru_simple.shp'), 
-        'SubId', 
-        os.path.join(Path_Subbasin_Ply), 
+        os.path.join(tempfolder,'hru_simple.shp'),
+        'SubId',
+        os.path.join(Path_Subbasin_Ply),
         'SubId',
     )
     arcpy.CalculateGeometryAttributes_management(
@@ -912,19 +912,19 @@ def Define_HRU_Attributes_arcgis(
         [["HRU_Area", "AREA_GEODESIC"]],
         area_unit = 'SQUARE_METERS',
         coordinate_system = arcpy.SpatialReference(prj_crs)
-    ) 
+    )
 
     if DEM != "#":
-        
+
         arcpy.Project_management(
             os.path.join(tempfolder,'hru_simple.shp'),
-            os.path.join(tempfolder,"hru_proj.shp"), 
+            os.path.join(tempfolder,"hru_proj.shp"),
             arcpy.SpatialReference(int(prj_crs)),
             )
-        
+
         extract_dem = ExtractByMask(DEM, os.path.join(tempfolder,'hru_simple.shp'))
         arcpy.ProjectRaster_management(
-            extract_dem, 
+            extract_dem,
             os.path.join(tempfolder,"demproj.tif"),
             arcpy.SpatialReference(int(prj_crs)),
             "NEAREST"
@@ -933,49 +933,48 @@ def Define_HRU_Attributes_arcgis(
         Slopeout.save(os.path.join(OutputFolder,'slope.tif'))
         Aspectout = Aspect(extract_dem)
 
-        # Save the output 
+        # Save the output
         Aspectout.save(os.path.join(OutputFolder,'aspect.tif'))
-
         table_zon_slope = ZonalStatisticsAsTable(
-            os.path.join(tempfolder,"hru_proj.shp"), 
-            'HRU_ID_New', 
-            Slopeout, 
-            os.path.join(tempfolder,"slope_zonal.dbf"), 
-            "DATA", 
-            "MEAN", 
-        ) 
+            os.path.join(tempfolder,"hru_proj.shp"),
+            'HRU_ID_New',
+            Slopeout,
+            os.path.join(tempfolder,"slope_zonal.dbf"),
+            "DATA",
+            "MEAN",
+        )
         table_zon_aspect = ZonalStatisticsAsTable(
-            os.path.join(tempfolder,"hru_proj.shp"), 
-            'HRU_ID_New', 
-            Aspectout, 
-            os.path.join(tempfolder,"asp_zonal.dbf"), 
-            "DATA", 
-            "MEAN", 
-        ) 
+            os.path.join(tempfolder,"hru_proj.shp"),
+            'HRU_ID_New',
+            Aspectout,
+            os.path.join(tempfolder,"asp_zonal.dbf"),
+            "DATA",
+            "MEAN",
+        )
         table_zon_elev = ZonalStatisticsAsTable(
-            os.path.join(tempfolder,"hru_proj.shp"), 
-            'HRU_ID_New', 
-            os.path.join(tempfolder,"demproj.tif"), 
-            os.path.join(tempfolder,"elv_zonal.dbf"), 
-            "DATA", 
-            "MEAN", 
-        ) 
+            os.path.join(tempfolder,"hru_proj.shp"),
+            'HRU_ID_New',
+            os.path.join(tempfolder,"demproj.tif"),
+            os.path.join(tempfolder,"elv_zonal.dbf"),
+            "DATA",
+            "MEAN",
+        )
         hruinfo_add_slp_asp = pd.DataFrame.spatial.from_featureclass(os.path.join(tempfolder,'hru_simple.shp'))
-        table_slp = Dbf_To_Dataframe(os.path.join(tempfolder,"slope_zonal.dbf")) 
+        table_slp = Dbf_To_Dataframe(os.path.join(tempfolder,"slope_zonal.dbf"))
         table_asp = Dbf_To_Dataframe(os.path.join(tempfolder,"asp_zonal.dbf"))
         table_elv = Dbf_To_Dataframe(os.path.join(tempfolder,"elv_zonal.dbf"))
-        
+
         table_slp['HRU_S_mean'] = table_slp['MEAN']
         table_slp = table_slp[['HRU_ID_New','HRU_S_mean']]
         table_asp['HRU_A_mean'] = table_asp['MEAN']
         table_asp = table_asp[['HRU_ID_New','HRU_A_mean']]
         table_elv['HRU_E_mean'] = table_elv['MEAN']
         table_elv = table_elv[['HRU_ID_New','HRU_E_mean']]
-        
-        
-        hruinfo_add_slp_asp = pd.merge(hruinfo_add_slp_asp, table_slp, on='HRU_ID_New')          
-        hruinfo_add_slp_asp = pd.merge(hruinfo_add_slp_asp, table_asp, on='HRU_ID_New')          
-        hruinfo_add_slp_asp = pd.merge(hruinfo_add_slp_asp, table_elv, on='HRU_ID_New')          
+
+
+        hruinfo_add_slp_asp = pd.merge(hruinfo_add_slp_asp, table_slp, on='HRU_ID_New')
+        hruinfo_add_slp_asp = pd.merge(hruinfo_add_slp_asp, table_asp, on='HRU_ID_New')
+        hruinfo_add_slp_asp = pd.merge(hruinfo_add_slp_asp, table_elv, on='HRU_ID_New')
         hruinfo_add_slp_asp['HRU_ID'] = hruinfo_add_slp_asp['FID'] + 1
     else:
         arcpy.AddMessage(os.path.join(tempfolder,'hru_simple.shp'))
@@ -984,8 +983,5 @@ def Define_HRU_Attributes_arcgis(
         hruinfo_add_slp_asp['HRU_S_mean'] = hruinfo_add_slp_asp['BasSlope']
         hruinfo_add_slp_asp['HRU_A_mean'] = hruinfo_add_slp_asp['BasAspect']
         hruinfo_add_slp_asp['HRU_E_mean'] = hruinfo_add_slp_asp['MeanElev']
-        
+
     return hruinfo_add_slp_asp
-
-
-        
