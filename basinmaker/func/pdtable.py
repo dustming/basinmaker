@@ -86,7 +86,6 @@ def simplidfy_hrus(min_hru_pct_sub_area,hruinfo,importance_order):
         hru_columns = good_hrus.columns
         # do not modify this columns
         hru_columns = hru_columns[hru_columns != 'HRU_ID_New2']
-        hru_columns = hru_columns[hru_columns != 'geometry']
         # check if the need_remove_hru can merge togeher for importance order
         # 1
         colnm1 = importance_order[0]
@@ -103,12 +102,8 @@ def simplidfy_hrus(min_hru_pct_sub_area,hruinfo,importance_order):
             ## check total area of the most important column in the importance list
             ## if it is larger than area threthold,
             ## then merge them together
-            # if subid == 80000013:
-            #     print(i_import1_Area_need_remove_hru[['SubId','HRU_Area','HRU_ID_New2','HRU_ID_New']])
-            #     print(total_area_i_import_in_need_remove_hrus,i_colnm1)
-            #     print()
 
-            if i_colnm1 not in good_hrus[colnm1].values:
+            if total_area_i_import_in_need_remove_hrus >= subarea_thrs:
 
                 #merge to the hru with largest area in the list
                 i_import1_Area_need_remove_hru = i_import1_Area_need_remove_hru.sort_values(by=['HRU_Area'],ascending=False)
@@ -121,10 +116,6 @@ def simplidfy_hrus(min_hru_pct_sub_area,hruinfo,importance_order):
 
                 # remove modified HRU from need removed hru list
                 need_remove_hrus = need_remove_hrus[~need_remove_hrus['HRU_ID_New2'].isin(i_import1_Area_need_remove_hru['HRU_ID_New2'].values)]
-
-        # if subid == 80000013:
-        #     print(hruinfo.loc[hruinfo['SubId'] ==80000013][['SubId','HRU_Area','HRU_ID_New2','HRU_ID_New']])
-        #     print(unique_import1)
         # loop for each
         indexes = need_remove_hrus.index
         # if subid == 116:
@@ -157,7 +148,6 @@ def simplidfy_hrus(min_hru_pct_sub_area,hruinfo,importance_order):
                     continue
     hruinfo = hruinfo.drop(columns=['HRU_ID_New2'])
     return hruinfo
-
 
 
 def update_non_connected_catchment_info(catinfo):
