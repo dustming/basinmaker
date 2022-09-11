@@ -1,7 +1,7 @@
 
-import os 
-import wget 
-import pandas as pd 
+import os
+import wget
+import pandas as pd
 import numpy as np
 import gdown
 # define function two download routing product for a given gauge
@@ -13,10 +13,12 @@ def Download_Routing_Product_For_One_Gauge(gauge_name,product_name,region='#',su
             gauge_info_sl = gauge_info[gauge_info['Obs_NM'] == gauge_name]
             if len(gauge_info_sl) < 1:
                 print("The gauge ",gauge_name,"is not included in the routing product ")
-                SubId = -1 
+                SubId = -1
                 product_path = '#'
             else:
                 if gauge_info_sl['Use_region'].values[0] < 1:
+#                    print(gauge_info_sl)
+#                    print(gauge_info_sl['Region'].values[0],gauge_info_sl['Sub_Reg'].values[0])
                     region_id = int(gauge_info_sl['Region'].values[0])
                     subreg_id = int(gauge_info_sl['Sub_Reg'].values[0])
                     url = "http://hydrology.uwaterloo.ca/basinmaker/data/original/drainage_region_%s_%s_v2-1.zip" % (str(region_id).zfill(4),str(subreg_id).zfill(5))
@@ -28,8 +30,10 @@ def Download_Routing_Product_For_One_Gauge(gauge_name,product_name,region='#',su
                     print("The needed product locates at:",product_path)
                     print("The Subbasin Id of the interested gauge is:",SubId)
                 else:
+#                    print(gauge_info_sl)
+#                    print(gauge_info_sl['Region'].values[0],gauge_info_sl['Sub_Reg'].values[0])
                     region_id = int(gauge_info_sl['Region'].values[0])
-                    subreg_id = int(gauge_info_sl['Sub_Reg'].values[0])
+#                    subreg_id = int(gauge_info_sl['Sub_Reg'].values[0])
                     url = "http://hydrology.uwaterloo.ca/basinmaker/data/original/drainage_region_%s_v2-1.zip" % (str(region_id).zfill(4))
                     wget.download(url)
                     os.system('unzip drainage_region_%s_v2-1.zip' % (str(region_id).zfill(4)))
@@ -48,13 +52,13 @@ def Download_Routing_Product_For_One_Gauge(gauge_name,product_name,region='#',su
             product_name =  "drainage_region_%s_v2-1" % (str(region_id).zfill(4))
             product_path = os.path.join(os.getcwd(),product_name)
             SubId =  -1
-            
+
         elif region != '#' and subreg !='#':
             print("todo")
         else:
             print("Wrong option provided")
-                        
-                
+
+
     if product_name == 'OLRP':
         version = 'v1-0'
         gauge_info = pd.read_csv("https://github.com/dustming/RoutingTool/wiki/Files/OIH_gauge_info.csv")
@@ -63,7 +67,7 @@ def Download_Routing_Product_For_One_Gauge(gauge_name,product_name,region='#',su
             gauge_info_sl = gauge_info[gauge_info['Obs_NM'] == gauge_name]
             if len(gauge_info_sl) < 1 or gauge_info_sl['SubId'].values[0] < 0:
                 print("The gauge ",gauge_name,"is not included in the routing product ")
-                SubId = -1 
+                SubId = -1
                 product_path = '#'
             else:
                 if gauge_info_sl['Use_region'].values[0] < 1:
@@ -73,13 +77,13 @@ def Download_Routing_Product_For_One_Gauge(gauge_name,product_name,region='#',su
                     mask2 = productinfo['Sub_Reg'] == subreg_id
                     mask = np.logical_and(mask1,mask2)
                     url_veiw = productinfo.loc[mask,'Download'].values[0]
-                    
+
                     url_veiw = url_veiw.split("/")
                     url = "https://drive.google.com/u/0/uc?id=%s&export=download"%(url_veiw[5])
                     output = 'drainage_region_%s_%s_%s.zip' % (region_id,subreg_id,version)
-                            
+
                     os.system('gdown %s -O %s' % (url_veiw[5],output))
-                    
+
                     os.system('unzip drainage_region_%s_%s_%s.zip' % (region_id,subreg_id,version))
                     SubId =  gauge_info_sl['SubId'].values[0]
                     product_name = 'drainage_region_%s_%s_%s' % (region_id,subreg_id,version)
@@ -96,16 +100,16 @@ def Download_Routing_Product_For_One_Gauge(gauge_name,product_name,region='#',su
                     url_veiw = url_veiw.split("/")
                     url = "https://drive.google.com/u/0/uc?id=%s&export=download"%(url_veiw[5])
                     output = 'drainage_region_%s_%s.zip' % (region_id,version)
-                    
+
                     os.system('gdown %s -O %s' % (url_veiw[5],output))
-                    
+
                     os.system('unzip drainage_region_%s_%s.zip' % (region_id,version))
                     SubId =  gauge_info_sl['SubId'].values[0]
                     product_name ='drainage_region_%s_%s' % (region_id,version)
                     product_path = os.path.join(os.getcwd(),product_name)
                     print("The needed product locates at:",product_path)
                     print("The Subbasin Id of the interested gauge is:",SubId)
-                    
+
         elif region != '#' and subreg =='#':
             region_id = region
             subreg_id = '-'
@@ -116,17 +120,17 @@ def Download_Routing_Product_For_One_Gauge(gauge_name,product_name,region='#',su
             url_veiw = url_veiw.split("/")
             url = "https://drive.google.com/u/0/uc?id=%s&export=download"%(url_veiw[5])
             output = 'drainage_region_%s_%s.zip' % (region_id,version)
-            
+
             os.system('gdown %s -O %s' % (url_veiw[5],output))
-            
+
             os.system('unzip drainage_region_%s_%s.zip' % (region_id,version))
             SubId =  -1
             product_name ='drainage_region_%s_%s' % (region_id,version)
             product_path = os.path.join(os.getcwd(),product_name)
-            
+
         elif region != '#' and subreg !='#':
             print("todo")
         else:
             print("Wrong option provided")
-                    
+
     return SubId,product_path
