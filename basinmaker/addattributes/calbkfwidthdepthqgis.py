@@ -25,7 +25,7 @@ def calculate_bankfull_width_depth_from_polyline(
 ):
     mask = input_geo_names["mask"]
     cat_ply_info = input_geo_names["cat_ply_info"]
-    
+
     default_slope = min_riv_slope
     min_manning_n = 0.025
     max_manning_n = 0.15
@@ -51,8 +51,8 @@ def calculate_bankfull_width_depth_from_polyline(
             mask=os.path.join(grassdb, mask + ".shp"),
             path_polygon=path_k_c_zone_polygon,
             ply_name="kc_zone",
-        )    
-    
+        )
+
     import grass.script as grass
     import grass.script.setup as gsetup
     from grass.pygrass.modules import Module
@@ -106,8 +106,8 @@ def calculate_bankfull_width_depth_from_polyline(
             units="meters",
             overwrite=True,
         )
-          
-        
+
+
     if k_in < 0 and c_in < 0:
         ### read catchment
         if path_bkfwidthdepth != '#':
@@ -134,16 +134,16 @@ def calculate_bankfull_width_depth_from_polyline(
             else:
                 k = -1
                 c = -1
-                
+
         if path_k_c_zone_polygon != '#':
-            k = -1 
-            c = -1 
+            k = -1
+            c = -1
             sqlstat = "SELECT a_k, a_c,b_Gridcode, Area_kc FROM %s" % (cat_ply_info + "kc")
             k_c_sub = pd.read_sql_query(sqlstat, con)
             k_c_sub = k_c_sub.fillna(-9999)
             k_c_sub = k_c_sub.sort_values(by='Area_kc', ascending=False)
             k_c_sub = k_c_sub.drop_duplicates(subset=['b_Gridcode'])
-            
+
     else:
         k = k_in
         c = c_in
@@ -151,10 +151,10 @@ def calculate_bankfull_width_depth_from_polyline(
     if return_k_c_only:
         return k, c
 
-    
+
     if 'k_c_sub' not in locals() and k == -1:
-        return 
-    
+        return
+
     idx = catinfo.index
     for i in range(0, len(idx)):
         idx_i = idx[i]
@@ -168,7 +168,7 @@ def calculate_bankfull_width_depth_from_polyline(
         elif 'k_c_sub' in locals():
             if len(k_c_sub.loc[k_c_sub["b_Gridcode"] == catid]) < 1:
                 k_sub =  0.00450718
-                c_sub =  0.98579699  
+                c_sub =  0.98579699
                 print("k_sub not found .....")
             else:
                 k_sub = k_c_sub.loc[k_c_sub["b_Gridcode"] == catid]["a_k"].values[0]
@@ -176,24 +176,24 @@ def calculate_bankfull_width_depth_from_polyline(
                 if k_sub < 0:
                     k_sub =  0.00450718
                     c_sub =  0.98579699
-                        
+
             q = func_Q_DA(da, k_sub, c_sub)
             catinfo.loc[idx_i, "BkfWidth"] =  max(7.2 * q ** 0.5,min_bkf_width)
             catinfo.loc[idx_i, "BkfDepth"] =  max(0.27 * q ** 0.3,min_bkf_depth)
-            catinfo.loc[idx_i, "Q_Mean"] = q            
-              
-        else: 
+            catinfo.loc[idx_i, "Q_Mean"] = q
+
+        else:
             catinfo.loc[idx_i, "BkfWidth"] = default_bkf_width
             catinfo.loc[idx_i, "BkfDepth"] = default_bkf_depth
             catinfo.loc[idx_i, "Q_Mean"] = default_bkf_q
-                
+
         if catinfo.loc[idx_i, "Lake_Cat"] < 2:
             if catinfo.loc[idx_i, "Max_DEM"] < 0:
                 catinfo.loc[idx_i, "Max_DEM"] = catinfo.loc[idx_i, "MeanElev"]
                 catinfo.loc[idx_i, "Min_DEM"] = catinfo.loc[idx_i, "MeanElev"]
-                         
+
     # adjust channel parameters
-    
+
     #remove ncl and headwater subbasins
     catinfo_riv = catinfo.loc[(catinfo["Lake_Cat"] < 2) & (catinfo["RivLength"] != -1.2345)].copy(deep=True)
 
@@ -214,14 +214,14 @@ def calculate_bankfull_width_depth_from_polyline(
         basslp_Seg = np.average(i_seg_info["BasSlope"].values[i_seg_info["BasSlope"].values > 0])
         basasp_Seg = np.average(i_seg_info["BasAspect"].values[i_seg_info["BasAspect"].values > 0])
         baselv_Seg = np.average(i_seg_info["MeanElev"].values[i_seg_info["MeanElev"].values > 0])
-        
-        if len(i_seg_info["Max_DEM"].values[i_seg_info["Max_DEM"].values > -9999]) > 0:            
-            max_elve_seg = np.max(i_seg_info["Max_DEM"].values[i_seg_info["Max_DEM"].values > -9999])
-            min_elve_seg = np.min(i_seg_info["Min_DEM"].values[i_seg_info["Min_DEM"].values > -9999])
+
+        if len(i_seg_info["Max_DEM"].values[i_seg_info["Max_DEM"].values > -999999999999999999]) > 0:
+            max_elve_seg = np.max(i_seg_info["Max_DEM"].values[i_seg_info["Max_DEM"].values > -9999999999999999])
+            min_elve_seg = np.min(i_seg_info["Min_DEM"].values[i_seg_info["Min_DEM"].values > -9999999999999999])
         else:
             max_elve_seg = baselv_Seg
             min_elve_seg = baselv_Seg
-            
+
         slope_seg = (max_elve_seg - min_elve_seg) / length_seg
         if slope_seg < 0.000000001:
             slope_seg = min_riv_slope  #### Needs to update later
@@ -237,29 +237,29 @@ def calculate_bankfull_width_depth_from_polyline(
             width_rch = i_seg_info["BkfWidth"].values[i]
             depth_rch = i_seg_info["BkfDepth"].values[i]
             floodn_rch = i_seg_info["FloodP_n"].values[i]
-            
+
             if min_elve_rch < -2000:
                 if i_seg_info["MeanElev"].values[i] > -2000:
                     min_elve_rch = i_seg_info["MeanElev"].values[i]
                 else:
                     min_elve_rch = baselv_Seg
-                    
+
             if max_elve_rch < -2000:
                 if i_seg_info["MeanElev"].values[i] > -2000:
                     max_elve_rch = i_seg_info["MeanElev"].values[i]
                 else:
-                    max_elve_rch = baselv_Seg            
-            
+                    max_elve_rch = baselv_Seg
+
             slope_rch = (max_elve_rch - min_elve_rch) / length_rch
 
-            
+
             if slope_rch < min_riv_slope or slope_rch > max_riv_slope:
                 if slope_seg >= min_riv_slope and slope_seg <= max_riv_slope:
                     slope_rch = slope_seg
 
-            slope_rch = max(slope_rch,min_riv_slope)  
-            slope_rch = min(slope_rch,max_riv_slope)  
-            
+            slope_rch = max(slope_rch,min_riv_slope)
+            slope_rch = min(slope_rch,max_riv_slope)
+
             n_rch = calculateChannaln(width_rch, depth_rch, qmean_rch, slope_rch)
 
             if n_rch < min_manning_n or n_rch > max_manning_n:
@@ -268,7 +268,7 @@ def calculate_bankfull_width_depth_from_polyline(
 
             n_rch = max(n_rch,min_manning_n)
             n_rch = min(n_rch,max_manning_n)
-            
+
             catinfo.loc[catinfo["SubId"] == subid, "RivSlope"] = slope_rch
             catinfo.loc[catinfo["SubId"] == subid, "Ch_n"] = n_rch
             catinfo.loc[catinfo["SubId"] == subid, "RivLength"] = length_rch
@@ -276,14 +276,14 @@ def calculate_bankfull_width_depth_from_polyline(
 
             if subid == 504:
                 print(floodn_rch)
-                 
-            
+
+
             if floodn_rch < 0:
                 if floodn_Seg > 0:
                     floodn_rch = floodn_Seg
                 else:
                     floodn_rch = DEFALUT_FLOOD_N
-                    
+
             floodn_rch = max(floodn_rch,n_rch)
             catinfo.loc[catinfo["SubId"] == subid, "FloodP_n"] = floodn_rch
             catinfo.loc[catinfo["SubId"] == subid, "Max_DEM"] = max_elve_rch
@@ -291,7 +291,7 @@ def calculate_bankfull_width_depth_from_polyline(
 
             # if subid == 504:
             #     print(floodn_rch)
-            #     asdf 
+            #     asdf
 
             if i_seg_info["BasSlope"].values[i] <= 0:
                 if basslp_Seg > 0:
