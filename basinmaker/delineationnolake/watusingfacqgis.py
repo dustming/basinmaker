@@ -13,7 +13,7 @@ def delineate_watershed_no_lake_using_fac(
     fac_path,
     acc_thresold,
     fdr_arcgis,
-    fdr_grass,    
+    fdr_grass,
     str_r,
     str_v,
     acc,
@@ -22,7 +22,7 @@ def delineate_watershed_no_lake_using_fac(
 ):
     mask = input_geo_names["mask"]
     dem = input_geo_names["dem"]
-    
+
     import grass.script as grass
     import grass.script.setup as gsetup
     from grass.pygrass.modules import Module
@@ -32,7 +32,7 @@ def delineate_watershed_no_lake_using_fac(
     from grass.script import core as gcore
     from grass_session import Session
 
-    
+
     os.environ.update(
         dict(GRASS_COMPRESS_NULLS="1", GRASS_COMPRESSOR="ZSTD", GRASS_VERBOSE="1")
     )
@@ -44,15 +44,15 @@ def delineate_watershed_no_lake_using_fac(
     grass_raster_r_in_gdal(grass, raster_path=fac_path, output_nm="fac_in")
 
 
-    # burn in DEM based on input flow accumulation raster 
+    # burn in DEM based on input flow accumulation raster
 
     exp = "%s = int(%s)" % (
         "fac_in",
         "fac_in",
     )
     grass.run_command("r.mapcalc", expression=exp, overwrite=True)
-        
-    exp = "%s = if( %s > 100 ,-%s, %s - %s/%s)" % (
+
+    exp = "%s = if( %s >= 1 ,-%s-1000, %s - 0*%s/%s)" % (
           "dem_acc",
           "fac_in",
           "fac_in",
@@ -67,7 +67,7 @@ def delineate_watershed_no_lake_using_fac(
     #       "fac_in",
     #       "1",
     #       )
-        
+
     grass.run_command("r.mapcalc", expression=exp, overwrite=True)
 
 
@@ -84,7 +84,7 @@ def delineate_watershed_no_lake_using_fac(
         stream_length = 10,
         d8cut = 0,
     )
-                        
+
     # create a arcgis flow direction
     grass_raster_r_reclass(
         grass,
@@ -93,12 +93,12 @@ def delineate_watershed_no_lake_using_fac(
         rules=os.path.join(grassdb, "Grass2ArcgisDIR.txt"),
     )
 
-    # update acc with new flow direction 
+    # update acc with new flow direction
     grass_raster_r_accumulate(
         grass, direction=fdr_grass, accumulation=acc
     )
-    
-    
+
+
     grass_raster_r_stream_basins(
         grass,
         direction=fdr_grass,
@@ -113,7 +113,7 @@ def delineate_watershed_no_lake_using_fac(
         output=os.path.join(grassdb, "catchment_no_lake.tif"),
         format="GTiff",
         overwrite=True,
-    )     
-     
+    )
+
     PERMANENT.close()
     return
