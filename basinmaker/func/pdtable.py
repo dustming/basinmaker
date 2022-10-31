@@ -372,6 +372,7 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold = 1):
         # if down stream sub is a lake sub, the seg_id was changed to the lake outlet subid
         if has_down_sub and down_sub_has_same_seg_id and small_sub_is_not_Lake and small_sub_is_not_gauge:
 #            tarinfo = down_sub_info
+            # merge to downstream subbasin id
             tarinfo =  mapoldnew_info_new[mapoldnew_info_new['SubId'] == down_sub_info['SubId'].values[0]].copy(deep = True)
             modify = True
             down_sub_info_2 = mapoldnew_info_new[mapoldnew_info_new['SubId'] == down_sub_info['SubId'].values[0]].copy(deep = True)
@@ -379,12 +380,14 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold = 1):
 
         elif has_upstream and up_sub_has_same_seg_id and small_sub_is_not_Lake and small_sub_is_not_gauge:
 #            tarinfo = upstream_sub_info_same_seg
+            # merge to upstream subbasin id
             tarinfo = mapoldnew_info_new[mapoldnew_info_new['SubId'] == upstream_sub_info_same_seg['SubId'].values[0]].copy(deep = True)
             modify = True
             current_sub_info_2 = mapoldnew_info_new[mapoldnew_info_new['SubId'] == small_sub_id].copy(deep = True)
             ndown_subid = current_sub_info_2['DowSubId'].values[0]
 
         elif len(mapoldnew_info[mapoldnew_info['Seg_ID'] == small_sub_seg_id]) == 1 and has_down_sub:
+            # merge to downstream subbasin id
 #            tarinfo = down_sub_info
             tarinfo =  mapoldnew_info_new[mapoldnew_info_new['SubId'] == down_sub_info['SubId'].values[0]].copy(deep = True)
             modify = True
@@ -400,31 +403,30 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold = 1):
             target_sub_is_head_water_sub =  len(mapoldnew_info[mapoldnew_info['DowSubId'] == tarinfo['SubId'].values[0]]) == 0
             target_sub_has_less_one_up_stream = len(mapoldnew_info[ (mapoldnew_info['DowSubId'] == tarinfo['SubId'].values[0]) & (mapoldnew_info['Lake_Cat']  < 2)]) <= 1
 
-            mask1 = mapoldnew_info['SubId'] == small_sub_id
-            mask2 = (
-                mapoldnew_info_new["nsubid"] == tarinfo["nsubid"].values[0]
-            )  ###for subbasin already processed to drainage into this target catchment
-            mask = np.logical_or(mask1, mask2)
+            mask1 = mapoldnew_info_new['SubId'] == small_sub_id
+            mask3 = mapoldnew_info_new['nsubid'] == small_sub_id
+            mask2 = (mapoldnew_info_new["nsubid"] == tarinfo["nsubid"].values[0])  ###for subbasin already processed to drainage into this target catchment
+            masktemp = np.logical_or(mask1, mask2)
+            mask = np.logical_or(masktemp,mask3)
 
             if len(tarinfo) > 1 and len(np.unique(tarinfo['HyLakeId'].values)) > 1:
                 print(small_sub_id,small_sub_seg_id)
                 print(tarinfo[['SubId','DowSubId','Seg_ID','HyLakeId']])
 
-            # if small_sub_id == 37567 or small_sub_id ==37185:
-            #     print("###################################a")
-            #     print(small_sub_id)
-            #     print(tarinfo["nsubid"].values[0])
-            #     print(mapoldnew_info_new.loc[mask,"nsubid"].values)
-            #     print(mapoldnew_info_new.loc[mask,"SubId"].values)
-            #     print(mapoldnew_info_new.loc[mask,"DowSubId"].values)
-            #     print(mapoldnew_info_new.loc[mask,"BasArea"].values)
-            #     print(ndown_subid)
-            #     print("###################################a")
+            # print("###################################a")
+            # print(small_sub_id)
+            # print(tarinfo["nsubid"].values[0])
+            # print(mapoldnew_info_new.loc[mask,"nsubid"].values)
+            # print(mapoldnew_info_new.loc[mask,"SubId"].values)
+            # print(mapoldnew_info_new.loc[mask,"DowSubId"].values)
+            # print(mapoldnew_info_new.loc[mask,"BasArea"].values)
+            # print(ndown_subid)
+            # print("###################################a")
 
             for col in tarinfo.columns:
                 if col == "BasArea":
 
-                    mapoldnew_info_new.loc[mask, col] = np.sum(tarinfo["BasArea"].values[0] + small_sub_non_lake["BasArea"].values[0])
+                    mapoldnew_info_new.loc[mask, col] = np.sum(tarinfo["BasArea"].values[0] + mapoldnew_info_new.loc[mask1,"BasArea"].values[0])
 
                 elif col == 'SubId':
 
@@ -456,14 +458,13 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold = 1):
                         mapoldnew_info_new.loc[mask, "DA_Chn_L"] = -1.2345
                         mapoldnew_info_new.loc[mask, "DA_Chn_Slp"] = -1.2345
 
-            # if small_sub_id == 37567 or small_sub_id ==37185:
-            #     print("###################################b")
-            #     print(small_sub_id)
-            #     print(mapoldnew_info_new.loc[mask,"nsubid"].values)
-            #     print(mapoldnew_info_new.loc[mask,"SubId"].values)
-            #     print(mapoldnew_info_new.loc[mask,"DowSubId"].values)
-            #     print(mapoldnew_info_new.loc[mask,"BasArea"].values)
-            #     print("###################################b")
+            # print("###################################b")
+            # print(small_sub_id)
+            # print(mapoldnew_info_new.loc[mask,"nsubid"].values)
+            # print(mapoldnew_info_new.loc[mask,"SubId"].values)
+            # print(mapoldnew_info_new.loc[mask,"DowSubId"].values)
+            # print(mapoldnew_info_new.loc[mask,"BasArea"].values)
+            # print("###################################b")
 
     return mapoldnew_info_new
 
@@ -2860,7 +2861,7 @@ def update_topology(mapoldnew_info, UpdateStreamorder=1, UpdateSubId=1):
     mapoldnew_info_unique = mapoldnew_info.drop_duplicates("SubId", keep="first")
 
     mapoldnew_info_unique = Streamorderanddrainagearea(mapoldnew_info_unique)
-
+    
     for i in range(0, len(mapoldnew_info_unique)):
         isubid = mapoldnew_info_unique["SubId"].values[i]
         mapoldnew_info.loc[
