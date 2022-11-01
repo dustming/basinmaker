@@ -1817,11 +1817,13 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
     #####
 
     ###
-    ## add removed gauges
-    unselected_gauges_subids = finalriv_info.loc[
+    ## add removed gauges and remove gauge if gauge located within a lake on the main river
+    unselected_gauges_subids_info = finalriv_info.loc[
         (~finalriv_info["SubId"].isin(Subid_main)) &
         (finalriv_info[Gauge_col_Name] > 0 )
-    ]['SubId'].values
+    ].copy(deep=True)
+    unselected_gauges_subids = unselected_gauges_subids_info.loc[~unselected_gauges_subids_info["HyLakeId"].isin(Connected_Lake_Mainriv)]["SubId"].values
+
     finalriv_info_ncl = finalriv_info.copy(deep=True)
     # make unselected gauge to be a false lake
     mask1 = finalriv_info_ncl['SubId'].isin(unselected_gauges_subids)
@@ -1831,7 +1833,6 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
     fake_obs_hyalkeids =  finalriv_info_ncl.loc[finalriv_info_ncl['SubId'].isin(unselected_gauges_subids),'HyLakeId'].values
     ##
     ###
-
     # identify which connected lake will be moved to non connected lake due to remove of river network
     All_Conn_Lakeids = Conn_Lakes_ply["Hylak_id"].values
     mask = np.in1d(All_Conn_Lakeids, Connected_Lake_Mainriv)
@@ -1945,7 +1946,6 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
             modifiidin=modifysubids,
             Lake_Cat=2,
         )
-
         ####################3 for rest of the polygons dissolve to main river
 
     for iseg in range(0, len(Seg_IDS)):
@@ -2861,7 +2861,7 @@ def update_topology(mapoldnew_info, UpdateStreamorder=1, UpdateSubId=1):
     mapoldnew_info_unique = mapoldnew_info.drop_duplicates("SubId", keep="first")
 
     mapoldnew_info_unique = Streamorderanddrainagearea(mapoldnew_info_unique)
-    
+
     for i in range(0, len(mapoldnew_info_unique)):
         isubid = mapoldnew_info_unique["SubId"].values[i]
         mapoldnew_info.loc[
