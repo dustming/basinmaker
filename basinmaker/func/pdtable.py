@@ -1822,7 +1822,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
         (~finalriv_info["SubId"].isin(Subid_main)) &
         (finalriv_info[Gauge_col_Name] > 0 )
     ].copy(deep=True)
-    unselected_gauges_subids = unselected_gauges_subids_info.loc[~unselected_gauges_subids_info["HyLakeId"].isin(Connected_Lake_Mainriv)]["SubId"].values
+    unselected_gauges_subids = unselected_gauges_subids_info.loc[unselected_gauges_subids_info["HyLakeId"] <= 0]["SubId"].values
 
     finalriv_info_ncl = finalriv_info.copy(deep=True)
     # make unselected gauge to be a false lake
