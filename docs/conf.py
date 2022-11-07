@@ -16,13 +16,13 @@
 
 
 # -- Project information -----------------------------------------------------
-from basinmaker import basinmaker 
+from basinmaker import basinmaker
 project = 'BasinMaker'
 copyright = '2021, BasinMaker develop team'
 author = 'Hydrology research group at the University of Waterloo'
 
 # The full version, including alpha/beta/rc tags
-release = '2.2.4'
+release = '3.0.1'
 
 
 # -- General configuration ---------------------------------------------------
