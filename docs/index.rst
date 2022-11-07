@@ -1,30 +1,30 @@
-Welcome to BasinMaker v3.0.0 installation and developer documentation!
+Welcome to BasinMaker v3.0.1 installation and developer documentation!
 ====================================================================
 
 
 .. toctree::
    :maxdepth: 1
    :caption: Contents:
-   
+
 `User Documentation and examples <http://hydrology.uwaterloo.ca/basinmaker/>`_.
-   
+
 .. toctree::
-   :caption: Overview 
-  
-   overview.rst  
-      
-            
+   :caption: Overview
+
+   overview.rst
+
+
 .. toctree::
-   :caption: Installation 
- 
+   :caption: Installation
+
    installation.rst
 
-   
+
 .. toctree::
    :caption: BasinMaker developer documentation
- 
-   basinmaker_tools.rst 
-   
+
+   basinmaker_tools.rst
+
 
 
 Useful links
@@ -34,4 +34,4 @@ Useful links
 * `RavenR <https://github.com/rchlumsk/RavenR/>`_.
 * `OSTRICH - Optimization Software Toolkit <http://www.civil.uwaterloo.ca/envmodelling/Ostrich.html>`_.
 * `PAVICS <https://ouranosinc.github.io/pavics-sdi/>`_.
-* `Ravenpy <https://ravenpy.readthedocs.io/en/latest//>`_. 
+* `Ravenpy <https://ravenpy.readthedocs.io/en/latest//>`_.
