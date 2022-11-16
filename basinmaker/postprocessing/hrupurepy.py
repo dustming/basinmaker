@@ -462,6 +462,11 @@ def GenerateHRUS_purepy(
         if json_file_size <= 100:
             break
 
+    src_geojson = os.path.join(os.path.dirname(Path_Subbasin_Ply),os.path.basename(Path_Subbasin_Ply)[:-3]+".geojson")
+    tar_geojson = os.path.join(OutputFolder,"finalcat_info.geojson")
+    if os.path.exists(src_geojson):
+        shutil.copyfile(src_geojson, tar_geojson)
+
 def GeneratelandandlakeHRUS(
     OutputFolder,
     tempfolder,

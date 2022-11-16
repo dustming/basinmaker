@@ -215,10 +215,10 @@ def GenerateRavenInput(
     ncatinfo = tempinfo.to_dataframe()
     ncatinfo2 = ncatinfo.drop_duplicates("HRU_ID", keep="first")
     ncatinfo2 = ncatinfo2.loc[(ncatinfo2["HRU_ID"] > 0) & (ncatinfo2["SubId"] > 0)]
-    
+
     if 'DrainArea' in ncatinfo2.columns:
         ncatinfo2 = ncatinfo2.sort_values(by=['DrainArea','HRU_ID'])
-    
+
     if 'Rivlen' in ncatinfo2.columns:
         ncatinfo2["RivLength"] = ncatinfo2["Rivlen"].values
     #            ncatinfo2['RivSlope'] = ncatinfo2['Rivlen'].values
@@ -249,11 +249,11 @@ def GenerateRavenInput(
     WriteStringToFile(Channel_rvp_string + '\n \n', Channel_rvp_file_path, "w")
     WriteStringToFile(Model_rvh_string + '\n \n', Model_rvh_file_path, "w")
     WriteStringToFile(Model_rvp_string_modify + '\n \n', Model_rvp_file_path, "a")
-    
+
     Lake_rvh_string, Lake_rvh_file_path = Generate_Raven_Lake_rvh_String(
         ncatinfo2, Raveinputsfolder, Model_Name,lake_out_flow_method
     )
-            
+
     WriteStringToFile(Lake_rvh_string, Lake_rvh_file_path, "w")
 
     if WriteObsrvt > 0:
@@ -284,6 +284,11 @@ def GenerateRavenInput(
             )
         obsnms.to_csv(os.path.join(Obs_Folder, "obsinfo.csv"))
 
+
+    src_geojson = os.path.join(os.path.dirname(Path_final_hru_info),"finalcat_info.geojson")
+    tar_geojson = os.path.join(Raveinputsfolder,"finalcat_info.geojson")
+    if os.path.exists(src_geojson):
+        shutil.copyfile(src_geojson, tar_geojson)
 
 ####
 # Inputs
@@ -465,7 +470,7 @@ def DownloadStreamflowdata_US(Station_NM, StartYear, EndYear):
                 * 2.58999
             )  # square miles to square km
         except:
-            try: 
+            try:
                 obs_DA = (
                     float(station_info_value[len(station_info_value) - 2].decode("utf-8"))
                     * 2.58999
@@ -495,7 +500,7 @@ def DownloadStreamflowdata_US(Station_NM, StartYear, EndYear):
         istlistdata = stlistdata[i].split()
         if len(istlistdata) == 0:
             return -1.2345,-1.2345, False
-            
+
         if istlistdata[0] == "#" or len(istlistdata) != 5:
             continue
         if istlistdata[1].decode("utf-8") == str(int(Station_NM)).zfill(8):
@@ -791,9 +796,9 @@ def Generate_Raven_Obs_rvt_String(
 
     obsnms = catinfo[["Obs_NM", "SRC_obs", "SubId", "DrainArea"]]
     obsnms = obsnms.drop_duplicates("Obs_NM", keep="first")
-    obsnms = obsnms.replace(np.nan, '-9999.0', regex=True)    
+    obsnms = obsnms.replace(np.nan, '-9999.0', regex=True)
     obsnms = obsnms.loc[obsnms["Obs_NM"] != "-9999.0"]
-    
+
     obsnms.loc[:, "DrainArea"] = obsnms["DrainArea"].values / 1000 / 1000  # m2 to km2
     index = obsnms.index
     Date = pd.date_range(
@@ -1048,7 +1053,7 @@ def Generate_Raven_Lake_rvh_String(catinfo, Raveinputsfolder, Model_Name,lake_ou
     Gauge_col_Name = "Has_POI"
     if "Has_POI" not in catinfo.columns:
         Gauge_col_Name = "Has_Gauge"
-        
+
     for i in range(0, len(catinfo.index)):
         if catinfo.iloc[i]["HRU_IsLake"] > 0:  ## lake hru
             lakeid = int(catinfo.iloc[i]["HyLakeId"])
@@ -1098,8 +1103,8 @@ def Generate_Raven_Lake_rvh_String(catinfo, Raveinputsfolder, Model_Name,lake_ou
 
                 Lake_rvh_string_list.append(
                     "  :SeepageParameters   0   0 "
-                )  # f2.write("  :LakeArea    "+str(A)+ "\n")            
-                
+                )  # f2.write("  :LakeArea    "+str(A)+ "\n")
+
                 Lake_rvh_string_list.append(
                     ":EndReservoir   "
                 )  # f2.write(":EndReservoir   "+"\n")
@@ -1131,51 +1136,51 @@ def Generate_Raven_Lake_rvh_String(catinfo, Raveinputsfolder, Model_Name,lake_ou
                 )  # f2.write("  :MaxDepth "+str(h0)+ "\n")
                 Lake_rvh_string_list.append(
                     "  :SeepageParameters   0   0 "
-                )  # f2.write("  :LakeArea    "+str(A)+ "\n")            
+                )  # f2.write("  :LakeArea    "+str(A)+ "\n")
 
                 Lake_rvh_string_list.append(
                     "  :OutflowStageRelation POWER_LAW "
-                )           
+                )
 
                 Lake_rvh_string_list.append(
                     "  %s   %s " %(str(Crewd*2/3*(9.80616**(0.5))),str(1.5))
-                ) 
-                
+                )
+
                 Lake_rvh_string_list.append(
                     "  :EndOutflowStageRelation "
-                ) 
-                            
+                )
+
 
                 Lake_rvh_string_list.append(
                     "  :VolumeStageRelation POWER_LAW "
-                )           
+                )
 
                 Lake_rvh_string_list.append(
                     "  %s   %s " %(str(A),str(1))
-                ) 
-                
+                )
+
                 Lake_rvh_string_list.append(
                     "  :EndVolumeStageRelation "
-                ) 
-                
-                
+                )
+
+
                 Lake_rvh_string_list.append(
                     "  :AreaStageRelation POWER_LAW "
-                )           
+                )
 
                 Lake_rvh_string_list.append(
                     "  %s   %s " %(str(A),str(0))
-                ) 
-                
+                )
+
                 Lake_rvh_string_list.append(
                     "  :EndAreaStageRelation "
-                ) 
-                            
-                            
+                )
+
+
                 Lake_rvh_string_list.append(
                     ":EndReservoir   "
                 )  # f2.write(":EndReservoir   "+"\n")
-                
+
     Lake_rvh_string = "\n".join(Lake_rvh_string_list)
     return Lake_rvh_string, Lake_rvh_file_path
     #### write lake input files for different lake zone
@@ -1342,7 +1347,7 @@ def Generate_Raven_Channel_rvp_rvh_String(
     >>>
 
     """
-        
+
     Channel_rvp_file_path = os.path.join(Raveinputsfolder, "channel_properties.rvp")
     Channel_rvp_string_list = []
     Model_rvh_file_path = os.path.join(Raveinputsfolder, Model_Name + ".rvh")
@@ -1403,7 +1408,7 @@ def Generate_Raven_Channel_rvp_rvh_String(
         catid = int(catinfo_sub["SubId"].values[i])
         downcatid = int(catinfo_sub["DowSubId"].values[i])
         temp = catinfo_sub["RivLength"].values[i]
-        
+
         if float(temp) > lenThres:
             catlen = float(temp) / 1000  #### in km
             strRlen = '{:>10.4f}'.format(catlen) #str(catlen)
@@ -1431,7 +1436,7 @@ def Generate_Raven_Channel_rvp_rvh_String(
         )
         SubBasin_Group_Channel.loc[i, "SubId"] = catid
         SubBasin_Group_Channel.loc[i, "SubBasin_Group_NM"] = GroupName
-        
+
         if strRlen != "ZERO-":
             pronam = "Chn_" + Strcat
         else:
@@ -1451,14 +1456,14 @@ def Generate_Raven_Channel_rvp_rvh_String(
             floodn = catinfo_sub["FloodP_n"].values[i]
         else:
             floodn = 0.12345
-        
+
         if strRlen != "ZERO-":
             bkf_width = max(catinfo_sub["BkfWidth"].values[i], 1)
             bkf_depth = max(catinfo_sub["BkfDepth"].values[i], 1)
         else:
             bkf_width = 0.12345
             bkf_depth = 0.12345
-        
+
         if strRlen != "ZERO-":
             output_string_chn_rvp_sub = Generate_Raven_Channel_rvp_string_sub(
                 pronam,
@@ -1483,26 +1488,26 @@ def Generate_Raven_Channel_rvp_rvh_String(
             )
             not_write_default_channel = False
         else:
-            output_string_chn_rvp_sub = [] 
+            output_string_chn_rvp_sub = []
             output_string_chn_rvp_sub.append("#   Sub "+ Strcat + "  refer to  Chn_ZERO_LENGTH ")
             output_string_chn_rvp_sub.append("##############new channel ##############################")
             output_string_chn_rvp_sub = "\n".join(output_string_chn_rvp_sub)
-            
+
         Channel_rvp_string_list.append(output_string_chn_rvp_sub)
 
         Gauge_col_Name = "Has_POI"
         if "Has_POI" not in catinfo_sub.columns:
             Gauge_col_Name = "Has_Gauge"
-        
+
         if catinfo_sub[Gauge_col_Name].values[i] > 0:
             Guage = "1"
         elif (
             catinfo_sub["Lake_Cat"].values[i] > 0 and Lake_As_Gauge == True
-        ): 
+        ):
             Guage = "1"
         else:
             Guage = "0"
-        
+
         Model_rvh_string_list.append(
             "  "
             + Strcat
@@ -1517,39 +1522,39 @@ def Generate_Raven_Channel_rvp_rvh_String(
             + strRlen
             + tab
             + Guage
-        )  
+        )
 
     Model_rvh_string_list.append(":EndSubBasins")  # orvh.write(":EndSubBasins"+"\n")
     Model_rvh_string_list.append("\n")  # orvh.write("\n")
     ##########################################
-    
+
     # Model_rvh_string_list.append(":SubBasinProperties")
     # Model_rvh_string_list.append(":Parameters,  TIME_TO_PEAK,  TIME_CONC,   TIME_LAG,")
     # Model_rvh_string_list.append(":Units     ,  d           ,          d,          d,")
-    # 
-    # 
+    #
+    #
     # for i in range(0, len(catinfo_sub)):
     #     ### Get catchment width and dpeth
     #     catid = int(catinfo_sub["SubId"].values[i])
     #     subarea = int(catinfo_sub["BasArea"].values[i]/1000/1000)
-    #     if (catinfo_sub["Lake_Cat"].values[i] <= 0):  
+    #     if (catinfo_sub["Lake_Cat"].values[i] <= 0):
     #         routing_area = subarea
     #     else:
     #         routing_area = max(0.0001,subarea - catinfo_sub["LakeArea"].values[i]/1000/1000)
-    # 
+    #
     #     Tc = max(0.01,0.76*routing_area**0.38/24)
     #     Tl = 0.6*Tc
     #     Tp = Tr/2 +Tl
-    # 
+    #
     #     Tc = '{:>10.4f}'.format(Tc)  + "," + tab
-    #     Tl = '{:>10.4f}'.format(Tl)  + "," + tab 
-    #     Tp = '{:>10.4f}'.format(Tp)  + "," + tab 
+    #     Tl = '{:>10.4f}'.format(Tl)  + "," + tab
+    #     Tp = '{:>10.4f}'.format(Tp)  + "," + tab
     #     Model_rvh_string_list.append(tab + str(catid) + "," + tab + Tp + Tc + Tl)
-    # 
+    #
     # Model_rvh_string_list.append(":EndSubBasinProperties")
-    # 
+    #
     # Model_rvh_string_list.append("\n")  # orvh.write("\n")
-        
+
     ##########################################
     Model_rvh_string_list.append(":HRUs")  # orvh.write(":HRUs"+"\n")
     Model_rvh_string_list.append(
@@ -1584,13 +1589,13 @@ def Generate_Raven_Channel_rvp_rvh_String(
         TERRAIN_CLASS = "[NONE]" + tab
 
         SLOPE = '{:>10.6f}'.format(catslope)  + tab #str(catslope) + tab
-        
+
         if aspect_from_gis == 'grass':
             asp_temp = 270 + cataspect
             if asp_temp > 360:
                 asp_temp = asp_temp - 360
             ASPECT = '{:>10.4f}'.format(asp_temp)  + tab # str(asp_temp) + tab
-            
+
         elif aspect_from_gis == 'arcgis' or aspect_from_gis == 'qgis':
             asp_temp = -(-360 + cataspect)
             if asp_temp > 360:
@@ -1598,10 +1603,10 @@ def Generate_Raven_Channel_rvp_rvh_String(
             ASPECT = str(asp_temp) + tab
         elif aspect_from_gis == 'purepy':
             asp_temp = 360 - cataspect
-            ASPECT = str(asp_temp) + tab            
+            ASPECT = str(asp_temp) + tab
         else:
             ASPECT = '{:>10.4f}'.format(cataspect)  + tab #str(cataspect) + tab
-            
+
         Model_rvh_string_list.append(
             "  "
             + StrGid
