@@ -187,6 +187,8 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
         mapoldnew_info = mapoldnew_info.drop(columns=drop_cat_colnms)
         mapoldnew_info.to_file(os.path.join(OutputFolder,cat_name))
 
+        outline = create_watershed_boundary(mapoldnew_info)
+        outline.to_file(os.path.join(OutputFolder,"outline.shp"))
         create_geo_jason_file(os.path.join(OutputFolder,cat_name))
 
     else:
@@ -217,6 +219,11 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
         mapoldnew_info.to_file(os.path.join(OutputFolder,cat_name))
         return mapoldnew_info
 
+def create_watershed_boundary(mapoldnew_info):
+    wb = mapoldnew_info.copy(deep=True)[['geometry']]
+    wb["ID"] = 1
+    wb = wb.dissolve(by="ID", aggfunc='first',as_index=False)
+    return wb
 
 def Remove_Unselected_Lake_Attribute_In_Finalcatinfo_purepy(finalcat_ply, Conn_Lake_Ids):
     """Functions will set lake id not in Conn_Lake_Ids to -1.2345 in attribute
