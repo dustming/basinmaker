@@ -187,6 +187,7 @@ def GenerateRavenInput(
 
     Raveinputsfolder = os.path.join(OutputFolder, "RavenInput")
     Obs_Folder = os.path.join(Raveinputsfolder, "obs")
+    Json_Folder = os.path.join(Raveinputsfolder, "geojsons")
 
     if not os.path.exists(OutputFolder):
         os.makedirs(OutputFolder)
@@ -203,6 +204,10 @@ def GenerateRavenInput(
         os.makedirs(Raveinputsfolder)
     if not os.path.exists(Obs_Folder):
         os.makedirs(Obs_Folder)
+    if not os.path.exists(Json_Folder):
+        os.makedirs(Json_Folder)
+
+    copy_files_with_extension(os.path.dirname(Path_final_hru_info),Json_Folder,"*.geojson")
 
     if Forcing_Input_File != "#":
         fromDirectory = Forcing_Input_File

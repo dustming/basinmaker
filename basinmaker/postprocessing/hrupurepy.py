@@ -13,6 +13,7 @@ from basinmaker.func.purepy import *
 from basinmaker.func.pdtable import *
 from osgeo import gdal, ogr
 from basinmaker.func.fgdal import *
+from basinmaker.utilities.utilities import *
 
 def GenerateHRUS_purepy(
     Path_Subbasin_Ply,
@@ -212,6 +213,7 @@ def GenerateHRUS_purepy(
     Merge_layer_shp_list = []
     Merge_ID_list = []
 
+    copy_files_with_extension(os.path.dirname(Path_Subbasin_Ply),OutputFolder,"*.geojson")
 
     Sub_Lake_HRU_Layer, trg_crs, fieldnames_list = GeneratelandandlakeHRUS(
         OutputFolder,
@@ -462,10 +464,6 @@ def GenerateHRUS_purepy(
         if json_file_size <= 100:
             break
 
-    src_geojson = os.path.join(os.path.dirname(Path_Subbasin_Ply),os.path.basename(Path_Subbasin_Ply)[:-3]+".geojson")
-    tar_geojson = os.path.join(OutputFolder,"finalcat_info.geojson")
-    if os.path.exists(src_geojson):
-        shutil.copyfile(src_geojson, tar_geojson)
 
 def GeneratelandandlakeHRUS(
     OutputFolder,

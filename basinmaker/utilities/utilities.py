@@ -1,8 +1,15 @@
 import os
-
+import glob,shutil
 from simpledbf import Dbf5
 
 # define internal file names
+def copy_files_with_extension(src_folder,tar_folder,ext):
+
+    files = glob.iglob(os.path.join(src_folder, ext))
+    for file in files:
+        if os.path.isfile(file):
+            t = shutil.copy2(file, tar_folder)
+
 Internal_Constant_Names = {
     "cat_add_lake_old_fdr": "cat_add_lake_old_fdr",
     "cat_add_lake": "cat_add_lake",
@@ -190,7 +197,7 @@ COLUMN_NAMES_CONSTANT_HRU = [
     "DA_Chn_L",
     "DA_Slope",
     "DA_Chn_Slp",
-    "Has_Gauge" ,   
+    "Has_Gauge" ,
 ]
 
 
@@ -242,7 +249,7 @@ max_riv_slope = 1
 min_bkf_width = 0.1
 min_bkf_depth = 0.1
 min_riv_lenth = 90
-    
+
 def Dbf_To_Dataframe(file_path):
     """Transfer an input dbf file to dataframe
 
