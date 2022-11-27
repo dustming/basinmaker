@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="basinmaker",
-    version="3.0.1",
+    version="3.0.2",
     author="basinmaker development team",
     author_email="m43han@uwaterloo.ca",
     description="An automated GIS toolbox for watershed delineation with lakes",

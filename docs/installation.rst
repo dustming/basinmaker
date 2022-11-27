@@ -1,5 +1,5 @@
 =================
-Installation v3.0.1
+Installation v3.0.2
 =================
 
 
@@ -54,7 +54,7 @@ Geopandas with anaconda
       conda create --name <any_name_for_env> python==3.9.5
       conda activate <any_name_for_env>
 
-#. Install packages
+#. Install packages (may take some time)
 
     .. code-block::
 
@@ -71,11 +71,13 @@ Geopandas with anaconda
 #. Install BasinMaker
 
     stable:
+
     .. code-block::
 
       python -m pip install basinmaker
 
-    latest:
+    Or latest:
+
     .. code-block::
 
       python -m pip install https://github.com/dustming/basinmaker/archive/master.zip
