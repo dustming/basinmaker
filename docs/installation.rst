@@ -39,7 +39,6 @@ Geopandas with anaconda
 
     The installer of anaconda can be installed from `here <https://www.anaconda.com/>`_. Note for windows system, please activate the 'Register Anaconda3 as my default python 3.9'
 
-
 #. Create an empty python environment and then active it
 
     For windows system, search and open "Anacoda Prompt" (Windows) to active a conda command line. **Users must make sure:**
@@ -52,28 +51,34 @@ Geopandas with anaconda
 
     .. code-block::
 
-      conda create --name <any_name_for_env>
+      conda create --name <any_name_for_env> python==3.9.5
       conda activate <any_name_for_env>
 
-
-#. Install geopandas
+#. Install packages
 
     .. code-block::
 
-      conda install geopandas rasterstats
+      conda config --append channels conda-forge
 
+    .. code-block::
+
+      conda install numpy=1.21.6 pandas==1.3.5 rasterstats==0.17.0 geopandas==0.11.0 GDAL==3.5.1 Shapely==1.8.5 rasterio==1.2.10
+
+    .. code-block::
+
+      python -m pip install  pytest  simpledbf netCDF4 joblib jupyter requests wget gdown
 
 #. Install BasinMaker
 
+    stable:
     .. code-block::
 
       python -m pip install basinmaker
 
-#. Install dependent packages (This may take a few minutes)
-
+    latest:
     .. code-block::
 
-      python -m pip install pandas pytest scipy simpledbf netCDF4 joblib jupyter requests osgeo
+      python -m pip install https://github.com/dustming/basinmaker/archive/master.zip
 
 #. Test validation
 
@@ -96,68 +101,6 @@ Geopandas with anaconda
       ####################################
 
 #. Users must active this conda environment when they wish to use functionalities from BasinMaker.
-
-
-ArcGIS pro with anaconda (Windows only)
----------------------------------------
-
-ArcGIS functions for delineating lake-river routing network from DEM are under development
-
-#. Install anaconda
-
-    The installer of anaconda can be installed from `here <https://www.anaconda.com/>`_
-
-
-#. Create an empty python environment and then active it
-
-    .. code-block::
-
-      conda create --name <any_name_for_env>
-      conda activate <any_name_for_env>
-
-
-#. Install arcpy and arcgis
-
-    .. code-block::
-
-      conda install -c esri arcpy arcgis
-
-
-#. Install BasinMaker
-
-    .. code-block::
-
-      python -m pip install basinmaker
-
-#. Install dependent packages
-
-    .. code-block::
-
-      python -m pip install pandas pytest scipy simpledbf netCDF4 joblib jupyter
-
-
-#. Test validation
-
-    Please download the test data and scripts from `here <https://github.com/dustming/RoutingTool/wiki/Files/test.zip>`_. and unzip it to a folder, the path of this folder will refer as path_test_data in following section. Then
-
-    Please ignore following output messages
-
-        * PyTables is not installed. No support for HDF output.
-        * SQLalchemy is not installed. No support for SQL output.
-        * Warnings
-
-    .. code-block::
-
-
-      cd path_test_data/test
-      python test_light_installation_arcgis.py
-      (... some messages)
-      ####################################
-      BasinMaker is successfully installed
-      ####################################
-
-#. Users must active this conda environment when they wish to use functionalities from BasinMaker.
-
 
 Full installation
 ==================
