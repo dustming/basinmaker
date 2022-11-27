@@ -76,12 +76,6 @@ Geopandas with anaconda
 
       python -m pip install basinmaker
 
-    Or latest:
-
-    .. code-block::
-
-      python -m pip install https://github.com/dustming/basinmaker/archive/master.zip
-
 #. Test validation
 
     Please download the test data and scripts from `here <https://github.com/dustming/RoutingTool/wiki/Files/test.zip>`_. and unzip it to a folder, the path of this folder will refer as path_test_data in following section. Then
