@@ -87,6 +87,8 @@ COLUMN_NAMES_CONSTANT = [
     "DA_Chn_Slp",
     "outletLat",
     "outletLng",
+    "k",
+    "c",
 ]
 
 COLUMN_NAMES_CONSTANT_CLEAN = [
@@ -127,7 +129,9 @@ COLUMN_NAMES_CONSTANT_CLEAN = [
     "DA_Chn_Slp",
     "outletLat",
     "outletLng",
-    "Has_Gauge"
+    "Has_Gauge",
+    "k",
+    "c",
 ]
 
 
@@ -232,6 +236,8 @@ COLUMN_TYPES_CONSTANT = [
     "Real",
     "Character",
     "Character",
+    "Real",
+    "Real",
     "Real",
     "Real",
     "Real",

@@ -165,6 +165,9 @@ def calculate_bankfull_width_depth_from_polyline(
             catinfo.loc[idx_i, "BkfWidth"] =  max(7.2 * q ** 0.5,min_bkf_width)
             catinfo.loc[idx_i, "BkfDepth"] =  max(0.27 * q ** 0.3,min_bkf_depth)
             catinfo.loc[idx_i, "Q_Mean"] = q
+            catinfo.loc[idx_i, "k"] = k
+            catinfo.loc[idx_i, "c"] = c
+
         elif 'k_c_sub' in locals():
             if len(k_c_sub.loc[k_c_sub["b_Gridcode"] == catid]) < 1:
                 k_sub =  0.00450718
@@ -181,6 +184,8 @@ def calculate_bankfull_width_depth_from_polyline(
             catinfo.loc[idx_i, "BkfWidth"] =  max(7.2 * q ** 0.5,min_bkf_width)
             catinfo.loc[idx_i, "BkfDepth"] =  max(0.27 * q ** 0.3,min_bkf_depth)
             catinfo.loc[idx_i, "Q_Mean"] = q
+            catinfo.loc[idx_i, "k"] = k_sub
+            catinfo.loc[idx_i, "c"] = c_sub
 
         else:
             catinfo.loc[idx_i, "BkfWidth"] = default_bkf_width

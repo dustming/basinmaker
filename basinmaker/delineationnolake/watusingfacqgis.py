@@ -46,11 +46,11 @@ def delineate_watershed_no_lake_using_fac(
 
     # burn in DEM based on input flow accumulation raster
 
-    exp = "%s = int(%s)" % (
-        "fac_in",
-        "fac_in",
-    )
-    grass.run_command("r.mapcalc", expression=exp, overwrite=True)
+    # exp = "%s = int(%s)" % (
+    #     "fac_in",
+    #     "fac_in",
+    # )
+    # grass.run_command("r.mapcalc", expression=exp, overwrite=True)
 
     exp = "%s = if( %s >= 1 ,-%s-1000, %s - 0*%s/%s)" % (
           "dem_acc",
