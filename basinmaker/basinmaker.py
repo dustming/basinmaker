@@ -670,13 +670,14 @@ class delineate:
         self,
         path_output_folder="#",
         path_working_folder="#",
+        fac_thresold = 5000,
     ):
 
         # define drived values
         # create folders
         self.path_output_folder = path_output_folder
         self.path_working_folder = path_working_folder
-
+        self.fac_thresold = fac_thresold
         #        os.makedirs(self.path_output_folder, exist_ok=True)
         os.makedirs(self.path_working_folder, exist_ok=True)
 
@@ -708,7 +709,6 @@ class delineate:
         DEFAULT_CHN = 0.035
         # minimum channel slope
         MIN_RIV_SLP = 0.00001
-
         # default pre processed and well prepared spatial data name
         self.geofilenames = {
             "dem": "dem",
@@ -758,6 +758,7 @@ class delineate:
         buffer_distance=0.0,
         path_to_hydrobasin_polygon="#",
         hydrobasin_id_of_watershed_outlet=-1,
+        path_to_snap_raster = "#",
         gis_platform="qgis",
     ):
 
@@ -828,6 +829,7 @@ class delineate:
             hybasin_ply=path_to_hydrobasin_polygon,
             down_hybasin_id=hydrobasin_id_of_watershed_outlet,
             up_hybasin_id=up_hybasin_id,
+            path_to_snap_raster = path_to_snap_raster,
             mask=self.geofilenames["mask"],
             dem=self.geofilenames["dem"],
             gis_platform=gis_platform,
@@ -1057,6 +1059,7 @@ class delineate:
             cat_use_default_acc=self.geofilenames["cat_use_default_acc"],
             nfdr_arcgis=self.geofilenames["nfdr_arcgis"],
             nfdr_grass=self.geofilenames["nfdr_grass"],
+            fac_thresold = self.fac_thresold,
             max_memroy=max_memroy,
             grassdb=self.grassdb,
             grass_location=self.grass_location_geo,

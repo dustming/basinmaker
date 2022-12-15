@@ -6,7 +6,7 @@ from basinmaker.utilities.utilities import *
 
 
 def define_project_extent_using_dem(
-    grassdb, grass_location, qgis_prefix_path, path_dem_in, mask="MASK", dem="dem"
+    grassdb, grass_location, qgis_prefix_path, path_dem_in, mask="MASK", dem="dem",path_to_snap_raster="#",
 ):
 
     """Define processing extent
@@ -108,9 +108,9 @@ def define_project_extent_using_dem(
         dem,
         dem,
         str(1),
-    )        
+    )
     grass.run_command("r.mapcalc", expression=exp, overwrite=True)
-    
+
     # define mask of current working enviroments
     grass_raster_r_mask(grass, dem)
     # define processing extent of the current working enviroment

@@ -26,38 +26,38 @@ def delineate_watershed_no_lake_using_fdr(
     # read and define arcgis work enviroments
     if not os.path.exists(work_folder):
         os.makedirs(work_folder)
-    arcpy.env.workspace = work_folder
-     
+    arcpy.env.workspace = os.path.join(work_folder,"arcgis.gdb")
+
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("Spatial")
-    cellSize = float(arcpy.GetRasterProperties_management(dem+'.tif', "CELLSIZEX").getOutput(0))
-    SptailRef = arcpy.Describe(dem+'.tif').spatialReference
+    cellSize = float(arcpy.GetRasterProperties_management(dem, "CELLSIZEX").getOutput(0))
+    SptailRef = arcpy.Describe(dem).spatialReference
     arcpy.env.XYTolerance = cellSize
-    arcpy.arcpy.env.cellSize = cellSize    
+    arcpy.arcpy.env.cellSize = cellSize
     arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryCode)) ### WGS84
-    arcpy.env.extent = arcpy.Describe(dem + '.tif').extent
-    
-    
-    outFlowDirection = ExtractByMask(fdr_path, mask + ".shp")
+    arcpy.env.extent = arcpy.Describe(dem).extent
+    arcpy.env.snapRaster =  dem
+
+    outFlowDirection = ExtractByMask(fdr_path, mask)
     dirraster = SetNull(Raster(outFlowDirection) < 1, Raster(outFlowDirection))
-    dirraster.save(fdr_arcgis + '.tif')
+    dirraster.save(fdr_arcgis)
 
     outFlowAccumulation = FlowAccumulation(dirraster)
-    outFlowAccumulation.save(acc + ".tif")
+    outFlowAccumulation.save(acc)
 
     StreamRaster = SetNull(Raster(outFlowAccumulation) < acc_thresold, Raster(outFlowAccumulation))
     StreamRaster = Con(StreamRaster >= 0, 1, 0)
-    StreamRaster.save("str_1.tif")
-    
+    StreamRaster.save("str_1")
+
     Strlink = StreamLink(StreamRaster, dirraster)
-    Strlink.save(str_r + '.tif')
-    
+    Strlink.save(str_r)
+
     Catchment = Watershed(dirraster,Strlink)
 
-    Catchment.save(cat_no_lake+'.tif')
+    Catchment.save(cat_no_lake)
 
-    StreamToFeature(Strlink, dirraster, str_v + '.shp',"NO_SIMPLIFY")
-    
+    StreamToFeature(Strlink, dirraster, str_v,"NO_SIMPLIFY")
+
     # copyfile( OutputFolder + "/"+"dir.prj" ,  OutputFolder + "/"+"Cat1.prj")
     # StreamToFeature(Strlink, dirraster, "DrainL1","NO_SIMPLIFY")
     # copyfile( OutputFolder + "/"+"HyMask.prj" ,  OutputFolder + "/"+"DrainL1.prj")

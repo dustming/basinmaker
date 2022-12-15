@@ -23,6 +23,7 @@ def add_lakes_and_obs_into_existing_watershed_delineation(
     cat_use_default_acc="#",
     nfdr_arcgis="#",
     nfdr_grass="#",
+    fac_thresold = 5000,
     max_memroy=1024 * 4,
     grassdb="#",
     grass_location="#",
@@ -171,9 +172,15 @@ def add_lakes_and_obs_into_existing_watershed_delineation(
         from basinmaker.addlakeandobs.addlakesarcgis import (
             add_lakes_into_existing_watershed_delineation,
         )
+        from basinmaker.addlakeandobs.addobsarcgis import add_obs_into_existing_watershed_delineation
+
+        from basinmaker.addlakeandobs.definecatrivarcgis import (
+            define_cat_and_riv_without_merge_lake_cats,
+        )
+
     else:
-        print('gis_platform    ',gis_platform,'   do not support') 
-            
+        print('gis_platform    ',gis_platform,'   do not support')
+
     lake_outflow_pourpoints = add_lakes_into_existing_watershed_delineation(
         grassdb=grassdb,
         grass_location=grass_location,
