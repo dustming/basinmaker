@@ -149,6 +149,21 @@ def simplify_routing_structure_by_drainage_area_method(
             OutputFolder=OutputFolder,
         )
 
+def define_interest_sites_in_routing_product_method(
+    Routing_Product_Folder= '#',
+    path_to_interest_sites = '#',
+    gis_platform="qgis",
+):
+    if gis_platform == "purepy":
+        from basinmaker.postprocessing.assigninterestsites import (
+            define_interest_sites,
+        )
+        define_interest_sites(
+            Routing_Product_Folder= Routing_Product_Folder,
+            path_to_interest_sites = path_to_interest_sites,
+        )
+    return
+
 def select_part_of_routing_product_method(
     Path_Points,
     Gauge_NMS,

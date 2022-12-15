@@ -389,6 +389,21 @@ class postprocess:
             qgis_prefix_path=self.qgispp,
             gis_platform=gis_platform,
         )
+    def Define_interest_sites_in_routing_product(
+        self,
+        Routing_Product_Folder= '#',
+        path_to_interest_sites = '#',
+        gis_platform="qgis",
+    ):
+        from basinmaker.postprocessing.postprocessingfunctions import (
+            define_interest_sites_in_routing_product_method,
+        )
+
+        define_interest_sites_in_routing_product_method(
+            Routing_Product_Folder= Routing_Product_Folder,
+            path_to_interest_sites = path_to_interest_sites,
+            gis_platform=gis_platform,
+        )
 
     def Select_Subregion_Of_Routing_Structure(
         self,
