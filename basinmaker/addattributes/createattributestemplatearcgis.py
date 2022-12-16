@@ -321,7 +321,7 @@ def create_catchments_attributes_template_table(
     obs_clip = pd.DataFrame.spatial.from_featureclass("obs_clip")
     obs_v = pd.DataFrame.spatial.from_featureclass("obs_v")
     obs_v[obs_attributes[0]] = obs_v['grid_code']
-    obs_v = obs_v[[obs_attributes[0]] + "SHAPE"]
+    obs_v = obs_v[[obs_attributes[0]] + ["SHAPE"]]
     obs_clip = obs_clip[obs_attributes]
     obs_v = obs_v.merge(obs_clip,on=obs_attributes[0],how='left')
     obs_v.spatial.to_featureclass(location=os.path.join(output_folder,"obs_gauges.shp"),overwrite=True,sanitize_columns=False)
