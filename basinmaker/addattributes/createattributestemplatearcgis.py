@@ -130,37 +130,37 @@ def create_catchments_attributes_template_table(
                                                  geometry_property = [["centroid_x", "CENTROID_X"],["centroid_y", "CENTROID_Y"]],
                                                  coordinate_format = "DD",
                                                  )
-    #
-    # arcpy.management.CalculateGeometryAttributes(
-    #                                              in_features = "final_pourpoints_v",
-    #                                              geometry_property = [["outletLng", "POINT_X"],["outletLat", "POINT_Y"]],
-    #                                              coordinate_format = "DD",
-    #                                              )
-    #
-    # slope_degree = Slope(dem, "DEGREE")
-    # slope_degree.save("slope_degree")
-    # slope_pec = Slope(dem, "PERCENT_RISE")
-    # slope_pec.save("slope_pec")
-    # aspect = Aspect(dem)
-    # aspect.save("aspect")
-    #
-    # ZonalStatisticsAsTable(catchment_without_merging_lakes+"_r", "Value",slope_degree,
-    #                              "sub_degree", "NODATA", "MIN_MAX_MEAN")
-    # ZonalStatisticsAsTable(catchment_without_merging_lakes+"_r", "Value",aspect,
-    #                              "sub_aspect", "NODATA", "MIN_MAX_MEAN")
-    # ZonalStatisticsAsTable(catchment_without_merging_lakes+"_r", "Value",dem,
-    #                              "sub_dem", "NODATA", "MIN_MAX_MEAN")
-    # ZonalStatisticsAsTable(catchment_without_merging_lakes+"_r", "Value","k",
-    #                              "cat_k", "NODATA", "MIN_MAX_MEAN")
-    # ZonalStatisticsAsTable(catchment_without_merging_lakes+"_r", "Value","c",
-    #                              "cat_c", "NODATA", "MIN_MAX_MEAN")
-    # ZonalStatisticsAsTable(river_without_merging_lakes+"_r", "Value",slope_pec,
-    #                              "riv_slope", "NODATA", "MIN_MAX_MEAN")
-    # ZonalStatisticsAsTable(river_without_merging_lakes+"_r", "Value",dem,
-    #                              "riv_dem", "NODATA", "MIN_MAX_MEAN")
-    # ZonalStatisticsAsTable(river_without_merging_lakes+"_r", "Value","landuse",
-    #                              "riv_landuse", "NODATA", "MIN_MAX_MEAN")
-    # ExtractMultiValuesToPoints("final_pourpoints_v", [["sl_connected_lake_r","cl_lake_id"],["sl_nonconnect_lake_r","ncl_kake_id"],["obs_r","obsid"]], "NONE")
+
+    arcpy.management.CalculateGeometryAttributes(
+                                                 in_features = "final_pourpoints_v",
+                                                 geometry_property = [["outletLng", "POINT_X"],["outletLat", "POINT_Y"]],
+                                                 coordinate_format = "DD",
+                                                 )
+
+    slope_degree = Slope(dem, "DEGREE")
+    slope_degree.save("slope_degree")
+    slope_pec = Slope(dem, "PERCENT_RISE")
+    slope_pec.save("slope_pec")
+    aspect = Aspect(dem)
+    aspect.save("aspect")
+
+    ZonalStatisticsAsTable(catchment_without_merging_lakes+"_r", "Value",slope_degree,
+                                 "sub_degree", "NODATA", "MIN_MAX_MEAN")
+    ZonalStatisticsAsTable(catchment_without_merging_lakes+"_r", "Value",aspect,
+                                 "sub_aspect", "NODATA", "MIN_MAX_MEAN")
+    ZonalStatisticsAsTable(catchment_without_merging_lakes+"_r", "Value",dem,
+                                 "sub_dem", "NODATA", "MIN_MAX_MEAN")
+    ZonalStatisticsAsTable(catchment_without_merging_lakes+"_r", "Value","k",
+                                 "cat_k", "NODATA", "MIN_MAX_MEAN")
+    ZonalStatisticsAsTable(catchment_without_merging_lakes+"_r", "Value","c",
+                                 "cat_c", "NODATA", "MIN_MAX_MEAN")
+    ZonalStatisticsAsTable(river_without_merging_lakes+"_r", "Value",slope_pec,
+                                 "riv_slope", "NODATA", "MIN_MAX_MEAN")
+    ZonalStatisticsAsTable(river_without_merging_lakes+"_r", "Value",dem,
+                                 "riv_dem", "NODATA", "MIN_MAX_MEAN")
+    ZonalStatisticsAsTable(river_without_merging_lakes+"_r", "Value","landuse",
+                                 "riv_landuse", "NODATA", "MIN_MAX_MEAN")
+    ExtractMultiValuesToPoints("final_pourpoints_v", [["sl_connected_lake_r","cl_lake_id"],["sl_nonconnect_lake_r","ncl_kake_id"],["obs_r","obsid"]], "NONE")
 
     ## END gis calculations  GIS spatial calculations
 
@@ -315,8 +315,8 @@ def create_catchments_attributes_template_table(
     riv_line['SRC_obs'] = riv_line['SRC_obs'].astype('str')
     riv_line.spatial.to_featureclass(location=os.path.join(output_folder,river_without_merging_lakes+"_v"),overwrite=True,sanitize_columns=False)
 
-    arcpy.ExportTable_conversion("sl_connected_lake_v", os.path.join(output_folder,"sl_connected_lake.shp"))
-    arcpy.ExportTable_conversion("sl_nonconnect_lake_v", os.path.join(output_folder,"sl_nonconnect_lake.shp"))
+    arcpy.FeatureClassToFeatureClass_conversion("sl_connected_lake_v", output_folder,"sl_connected_lake.shp")
+    arcpy.FeatureClassToFeatureClass_conversion("sl_nonconnect_lake_v",output_folder,"sl_nonconnect_lake.shp")
 
     obs_clip = pd.DataFrame.spatial.from_featureclass("obs_clip")
     obs_v = pd.DataFrame.spatial.from_featureclass("obs_v")
