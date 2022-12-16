@@ -88,6 +88,17 @@ def define_cat_and_riv_without_merge_lake_cats(
     arcpy.CalculateField_management("str_v", "fld_div", '1', "PYTHON")
 
 
-    arcpy.RasterToPolygon_conversion(catchment_without_merging_lakes + "_r", catchment_without_merging_lakes + "_v", "NO_SIMPLIFY", "VALUE")
+    arcpy.RasterToPolygon_conversion(catchment_without_merging_lakes + "_r", os.path.join(work_folder,catchment_without_merging_lakes + "_vt.shp"), "NO_SIMPLIFY", "VALUE")
+
+    # arcpy.AlterField_management(in_table = os.path.join(work_folder,catchment_without_merging_lakes + "_vt.dbf"),
+    #                            field =  'gridcode',
+    #                            new_field_name = 'gridcode',
+    #                            field_type = 'LONG')
+    arcpy.Dissolve_management(os.path.join(work_folder,catchment_without_merging_lakes + "_vt.shp"), os.path.join(work_folder,catchment_without_merging_lakes + "_v.shp"), ["gridcode"])
+
+    StreamToFeature(river_without_merging_lakes+"_r", "fdr_arcgis", os.path.join(work_folder,river_without_merging_lakes + "_vt.shp"),"NO_SIMPLIFY")
+    arcpy.Dissolve_management(os.path.join(work_folder,river_without_merging_lakes + "_vt.shp"), os.path.join(work_folder,river_without_merging_lakes + "_v.shp"), ["grid_code"])
+
+
 
     return

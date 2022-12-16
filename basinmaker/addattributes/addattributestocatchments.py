@@ -309,4 +309,8 @@ def add_attributes_to_catchments(
             input_geo_names=input_geo_names,
             obs_attributes=obs_attributes,
             lake_attributes=lake_attributes,
+            path_landuse=path_landuse,
+            path_landuse_info=path_landuse_info,
+            path_k_c_zone_polygon = path_k_c_zone_polygon,
+            output_folder = output_folder,
         )
