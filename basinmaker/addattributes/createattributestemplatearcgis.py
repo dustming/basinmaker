@@ -315,4 +315,15 @@ def create_catchments_attributes_template_table(
     riv_line['SRC_obs'] = riv_line['SRC_obs'].astype('str')
     riv_line.spatial.to_featureclass(location=os.path.join(output_folder,river_without_merging_lakes+"_v"),overwrite=True,sanitize_columns=False)
 
+    arcpy.ExportTable_conversion("sl_connected_lake_v", os.path.join(output_folder,"sl_connected_lake.shp"))
+    arcpy.ExportTable_conversion("sl_nonconnect_lake_v", os.path.join(output_folder,"sl_nonconnect_lake.shp"))
+
+    obs_clip = pd.DataFrame.spatial.from_featureclass("obs_clip")
+    obs_v = pd.DataFrame.spatial.from_featureclass("obs_v")
+    obs_v[obs_attributes[0]] = obs_v['grid_code']
+    obs_v = obs_v[[obs_attributes[0]] + "SHAPE"]
+    obs_clip = obs_clip[obs_attributes]
+    obs_v = obs_v.merge(obs_clip,on=obs_attributes[0],how='left')
+    obs_v.spatial.to_featureclass(location=os.path.join(output_folder,"obs_gauges.shp"),overwrite=True,sanitize_columns=False)
+
     return
