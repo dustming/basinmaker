@@ -5,12 +5,13 @@ from basinmaker.utilities.utilities import *
 
 
 def define_project_extent_using_dem(
-    work_folder, 
+    work_folder,
     grass_location,
     qgis_prefix_path,
-    path_dem_in, 
-    mask="MASK", 
-    dem="dem"
+    path_dem_in,
+    mask="MASK",
+    dem="dem",
+    path_to_snap_raster = "#",
 ):
 
     """Define processing extent
@@ -59,28 +60,40 @@ def define_project_extent_using_dem(
     """
 
     print("Mask Region:   Using provided DEM : ")
-    
-    # read and define arcgis work enviroments 
+
+    # read and define arcgis work enviroments
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("Spatial")
     cellSize = float(arcpy.GetRasterProperties_management(path_dem_in, "CELLSIZEX").getOutput(0))
+    extent = arcpy.Describe(path_dem_in).extent
     SptailRef = arcpy.Describe(path_dem_in).spatialReference
-    arcpy.env.XYTolerance = cellSize
-    arcpy.arcpy.env.cellSize = cellSize    
-    arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryCode)) ### WGS84
+    arcgis_env = {
+        "extent":extent,
+        "georef":arcpy.SpatialReference(int(SptailRef.factoryCode)),
+        "cellSize":cellSize,
+        }
     if not os.path.exists(work_folder):
         os.makedirs(work_folder)
-    arcpy.env.workspace = work_folder
+    arcpy.CreateFileGDB_management(work_folder, "arcgis.gdb")
+
     
-    # copy dem to the work fokder 
-    arcpy.CopyRaster_management(path_dem_in,dem + '.tif')
-    arcpy.env.extent = arcpy.Describe(dem + '.tif').extent
-    
-    # create mask raster 
-    mask_raster = Con(dem + '.tif', 1, 1, "VALUE >= 0")
-    mask_raster.save(mask+'.tif')
-    
-    # create mask polygon 
-    arcpy.RasterToPolygon_conversion(mask_raster, mask+'.shp', "NO_SIMPLIFY", "VALUE")
+    arcpy.env.XYTolerance = arcgis_env["cellSize"]
+    arcpy.arcpy.env.cellSize = arcgis_env["cellSize"]
+    arcpy.env.outputCoordinateSystem = arcgis_env["georef"] ### WGS84
+    arcpy.env.extent = arcgis_env["extent"]
+    arcpy.env.workspace = os.path.join(work_folder,"arcgis.gdb")
+
+    if path_to_snap_raster != "#":
+        arcpy.env.snapRaster =  path_to_snap_raster
+
+    # copy dem to the work fokder
+    arcpy.CopyRaster_management(path_dem_in,dem )
+    arcpy.env.extent = arcpy.Describe(dem).extent
+
+    # create mask raster
+    mask_raster = Con(dem, 1, 1, "VALUE >= 0")
+    mask_raster.save(mask)
+    # create mask polygon
+    arcpy.RasterToPolygon_conversion(mask_raster, mask+'_ply', "NO_SIMPLIFY", "VALUE")
 
     return

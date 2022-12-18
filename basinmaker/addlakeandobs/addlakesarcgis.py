@@ -2,7 +2,7 @@ from basinmaker.func.arcgis import *
 from basinmaker.func.pdtable import *
 from basinmaker.func.rarray import *
 from basinmaker.utilities.utilities import *
-
+from basinmaker.addlakeandobs.modifyfdr import modify_lakes_flow_direction
 
 def add_lakes_into_existing_watershed_delineation(
     grassdb,
@@ -41,6 +41,7 @@ def add_lakes_into_existing_watershed_delineation(
     mask = input_geo_names["mask"]
     dem = input_geo_names["dem"]
 
+    lake_outflow_pourpoints=Internal_Constant_Names["lake_outflow_pourpoints"]
     # define internal file names
     lake_inflow_pourpoints = Internal_Constant_Names["lake_inflow_pourpoints"]
     catchment_pourpoints_outside_lake = Internal_Constant_Names[
@@ -50,52 +51,95 @@ def add_lakes_into_existing_watershed_delineation(
     str_connected_lake = Internal_Constant_Names["str_connected_lake"]
     alllake = Internal_Constant_Names["all_lakes"]
     lake_boundary = Internal_Constant_Names["lake_boundary"]
-    connected_lake = Internal_Constant_Names["connect_lake"]
-    non_connected_lake = Internal_Constant_Names["nonconnect_lake"]
     lakes_lg_cl_thres = "lakes_lg_cl_thres"
     lakes_lg_ncl_thres = "lakes_lg_ncl_thres"
 
 
     if not os.path.exists(work_folder):
         os.makedirs(work_folder)
-    arcpy.env.workspace = work_folder
-     
+    arcpy.env.workspace = os.path.join(work_folder,"arcgis.gdb")
+
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("Spatial")
-    cellSize = float(arcpy.GetRasterProperties_management(dem+'.tif', "CELLSIZEX").getOutput(0))
-    SptailRef = arcpy.Describe(dem+'.tif').spatialReference
+    cellSize = float(arcpy.GetRasterProperties_management(dem, "CELLSIZEX").getOutput(0))
+    SptailRef = arcpy.Describe(dem).spatialReference
     arcpy.env.XYTolerance = cellSize
-    arcpy.arcpy.env.cellSize = cellSize    
+    arcpy.arcpy.env.cellSize = cellSize
     arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(int(SptailRef.factoryCode)) ### WGS84
-    arcpy.env.extent = arcpy.Describe(dem + '.tif').extent
-    
-    ## processing lakes move to a function later 
-    
-    ## obtain lakes fully contained in the mask region 
-    ## any lake overlay with the mask boundary will be removed 
-    arcpy.Project_management(
-        path_lakefile_in,
-        "lake_proj.shp", 
-        arcpy.SpatialReference(int(SptailRef.factoryCode)),
-        )  
-        
-    arcpy.FeatureToLine_management(mask + '.shp', mask + '_line.shp')
-    arcpy.Clip_analysis("lake_proj.shp", mask + '.shp', "lake_clip.shp", "")
-    arcpy.Intersect_analysis(["lake_proj.shp",mask + '_line.shp'], 'lake_inter.shp')
-    inter_lake = pd.DataFrame.spatial.from_featureclass(os.path.join(work_folder,'lake_inter.shp'))
-    all_cliped_lakes = pd.DataFrame.spatial.from_featureclass(os.path.join(work_folder,'lake_clip.shp'))
-    lakeids_inter = inter_lake[lake_attributes[0]].values
-    select_lake = all_cliped_lakes.loc[~all_cliped_lakes[lake_attributes[0]].isin(lakeids_inter)]
-    select_lake.spatial.to_featureclass(location=os.path.join(work_folder,alllake + ".shp"),overwrite=True,sanitize_columns=False)    
-    ###
-    arcpy.FeatureToLine_management(alllake + '.shp', alllake + '_line.shp')
-    
-    arcpy.Dissolve_management(alllake + '_line.shp', lake_boundary + ".shp", [lake_attributes[0]])
-    
-    arcpy.PolygonToRaster_conversion(alllake + ".shp", lake_attributes[0], alllake + ".tif",
-                                 "MAXIMUM_COMBINED_AREA",lake_attributes[0], cellSize)
-                                 
-    arcpy.PolylineToRaster_conversion(lake_boundary + ".shp", lake_attributes[0], lake_boundary + ".tif",
-                                 "MAXIMUM_COMBINED_LENGTH",lake_attributes[0], cellSize)
-                                 
+    arcpy.env.extent = arcpy.Describe(dem).extent
+    arcpy.env.snapRaster =  dem
+    lowerLeft = arcpy.Point(arcpy.Describe(dem).extent.XMin,arcpy.Describe(dem).extent.YMin)
+
+    pre_process_lake_polygon(path_lakefile_in,alllake,lake_attributes,lake_boundary,mask,cellSize,SptailRef,work_folder,dem)
+
+
+    define_cl_and_ncl_lakes(str_r,alllake,str_connected_lake,sl_connected_lake,sl_non_connected_lake,sl_lakes,lake_attributes,threshold_con_lake,threshold_non_con_lake,cellSize,SptailRef,work_folder,dem)
+
+    Lakes_WIth_Multi_Outlet, Remove_Str = create_pour_points_with_lakes(str_r,str_v,cat_no_lake,sl_lakes,sl_connected_lake,acc,pourpoints_with_lakes,
+                                      lake_inflow_pourpoints,lake_outflow_pourpoints,
+                                      catchment_pourpoints_outside_lake,cellSize,SptailRef,work_folder,dem)
+
+    arcpy.PointToRaster_conversion(pourpoints_with_lakes+"_v", "SubId", pourpoints_with_lakes+"_r")
+    outWatershed = Watershed(fdr_arcgis, pourpoints_with_lakes+"_r", "VALUE")
+    outWatershed.save(cat_add_lake_old_fdr)
+
+    lakeinfo =  pd.DataFrame.spatial.from_featureclass(lake_outflow_pourpoints + "_v")
+    lakeinfo["cat"] = lakeinfo["grid_code"]
+    lakeinfo["lmax_acc"] = lakeinfo["acc"]
+
+    cat_withlake_array = arcpy.RasterToNumPyArray(cat_add_lake_old_fdr,nodata_to_value=-9999)
+    cat_withlake_array = cat_withlake_array.astype(int)
+    fdr_arcgis_array = arcpy.RasterToNumPyArray(fdr_arcgis,nodata_to_value=-9999)
+    fdr_arcgis_array = fdr_arcgis_array.astype(int)
+    str_r_array = arcpy.RasterToNumPyArray(str_r,nodata_to_value=-9999)
+    sl_lakes_array = arcpy.RasterToNumPyArray(sl_lakes+"_r",nodata_to_value=-9999)
+    sl_lakes_array = sl_lakes_array.astype(int)
+    acc_array = arcpy.RasterToNumPyArray(acc,nodata_to_value=-9999)
+    ncols = int(cat_withlake_array.shape[1])
+    nrows = int(cat_withlake_array.shape[0])
+    lake_boundary_array = arcpy.RasterToNumPyArray(lake_boundary+"_r",nodata_to_value=-9999)
+
+
+    maximumLakegrids = 1000000000
+    pec_grid_outlier = 1
+    un_modify_fdr_lakeids = []
+    outlakeids, chandir, ndir, bd_problem = modify_lakes_flow_direction(
+        cat_withlake_array,
+        sl_lakes_array,
+        acc_array,
+        fdr_arcgis_array,
+        str_r_array,
+        lakeinfo,
+        nrows,
+        ncols,
+        lake_boundary_array,
+        pec_grid_outlier,
+        maximumLakegrids,
+        un_modify_fdr_lakeids,
+    )
+
+    ndir_raster = arcpy.NumPyArrayToRaster(ndir,lowerLeft,cellSize,
+                                     value_to_nodata=-9999)
+    ndir_raster.save(nfdr_arcgis)
+
+    chandir_raster = arcpy.NumPyArrayToRaster(chandir,lowerLeft,cellSize,
+                                     value_to_nodata=-9999)
+    chandir_raster.save("chandir")
+
+    bd_problem_raster = arcpy.NumPyArrayToRaster(bd_problem,lowerLeft,cellSize,
+                                     value_to_nodata=-9999)
+    bd_problem_raster.save("bd_problem")
+
+    outWatershed2 = Watershed(nfdr_arcgis, pourpoints_with_lakes+"_r", "VALUE")
+    outWatershed2.save(cat_add_lake)
+
+    with open(os.path.join(work_folder,'log.txt'), 'a') as logfile:
+        if len(Lakes_WIth_Multi_Outlet) > 0:
+            logfile.write("Following lake have multi outlet \n")
+            for item in Lakes_WIth_Multi_Outlet:
+                logfile.write("%i\n" % item)
+        if len(Remove_Str) > 0:
+            logfile.write("following str are corrected to make one lake one outlet \n")
+            for item in Remove_Str:
+                logfile.write("%i\n" % item)
     return

@@ -180,7 +180,7 @@ def add_attributes_to_catchments(
             columns=columns,
             input_geo_names=input_geo_names,
         )
-        
+
         attr_basic = calculate_basic_attributes(
             grassdb=grassdb,
             grass_location=grass_location,
@@ -195,7 +195,7 @@ def add_attributes_to_catchments(
         input_geo_names["cat_ply_info"] = cat_ply_info
         input_geo_names["cat_riv_info"] = cat_riv_info
         input_geo_names["outlet_pt_info"] = outlet_pt_info
-        
+
         if len(lake_attributes) > 0:
             attr_lake = add_lake_attributes(
                 grassdb=grassdb,
@@ -207,7 +207,7 @@ def add_attributes_to_catchments(
             )
         else:
             attr_lake = attr_basic
-        
+
         if len(obs_attributes) > 0:
             attr_obs = add_gauge_attributes(
                 grassdb=grassdb,
@@ -219,7 +219,7 @@ def add_attributes_to_catchments(
             )
         else:
             attr_obs = attr_lake
-        
+
         if outlet_obs_id > 0:
             attr_select = return_interest_catchments_info(
                 catinfo=attr_obs,
@@ -228,7 +228,7 @@ def add_attributes_to_catchments(
             )
         else:
             attr_select = attr_obs
-        
+
         if path_landuse != "#":
             attr_landuse = calculate_flood_plain_manning_n(
                 grassdb=grassdb,
@@ -241,9 +241,9 @@ def add_attributes_to_catchments(
             )
         else:
             attr_landuse = attr_select
-        
+
         attr_da = streamorderanddrainagearea(attr_landuse)
-         
+
         if path_bkfwidthdepth != "#" or k_in != -1 or path_k_c_zone_polygon != '#':
             attr_bkf = calculate_bankfull_width_depth_from_polyline(
                 grassdb=grassdb,
@@ -259,14 +259,14 @@ def add_attributes_to_catchments(
             )
         else:
             attr_bkf = attr_da
-        
+
         attr_ncl = update_non_connected_catchment_info(attr_bkf)
         attr_ncl.loc[attr_ncl['RivLength'] == -1.2345,'RivSlope'] = -1.2345
         attr_ncl.loc[attr_ncl['RivLength'] == -1.2345,'FloodP_n'] = -1.2345
         attr_ncl.loc[attr_ncl['RivLength'] == -1.2345,'Max_DEM'] = -1.2345
         attr_ncl.loc[attr_ncl['RivLength'] == -1.2345,'Min_DEM'] = -1.2345
         attr_ncl.loc[attr_ncl['RivLength'] == -1.2345,'Ch_n'] = -1.2345
-        
+
         join_pandas_table_to_vector_attributes(
             grassdb=grassdb,
             grass_location=grass_location,
@@ -276,7 +276,7 @@ def add_attributes_to_catchments(
             column_types=coltypes,
             columns_names=columns,
         )
-        
+
         join_pandas_table_to_vector_attributes(
             grassdb=grassdb,
             grass_location=grass_location,
@@ -296,4 +296,21 @@ def add_attributes_to_catchments(
             output_cat=out_cat_name,
             output_folder=output_folder,
             obs_attributes = obs_attributes,
+        )
+    elif gis_platform == "arcgis":
+        from basinmaker.addattributes.createattributestemplatearcgis import (
+            create_catchments_attributes_template_table,
+        )
+
+        create_catchments_attributes_template_table(
+            grassdb=grassdb,
+            grass_location=grass_location,
+            columns=columns,
+            input_geo_names=input_geo_names,
+            obs_attributes=obs_attributes,
+            lake_attributes=lake_attributes,
+            path_landuse=path_landuse,
+            path_landuse_info=path_landuse_info,
+            path_k_c_zone_polygon = path_k_c_zone_polygon,
+            output_folder = output_folder,
         )

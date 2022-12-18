@@ -13,6 +13,7 @@ def define_project_extent(
     up_hybasin_id=-1,
     mask="MASK",
     dem="dem",
+    path_to_snap_raster = "#",
     grassdb="#",
     grass_location="#",
     qgis_prefix_path="#",
@@ -118,11 +119,11 @@ def define_project_extent(
         from basinmaker.extent.usingoutletpointqgis import define_project_extent_using_outlet_point
         from basinmaker.extent.usinginputplyqgis import define_project_extent_using_input_polygon
         from basinmaker.extent.usinghybasinplyqgis import define_project_extent_using_hybasin_ply
-    
+
     if gis_platform == "arcgis":
         from basinmaker.extent.usingdemarcgis import define_project_extent_using_dem
         from basinmaker.extent.usinghybasinplyarcgis import define_project_extent_using_hybasin_ply
-        
+
     if mode == "using_hybasin":
         assert (
             hybasin_ply != "#"
@@ -149,6 +150,7 @@ def define_project_extent(
             path_dem_in,
             mask=mask,
             dem=dem,
+            path_to_snap_raster = path_to_snap_raster,
         )
 
     if mode == "using_outlet_pt":
@@ -187,3 +189,4 @@ def define_project_extent(
             mask="MASK",
             dem="dem",
         )
+    return
