@@ -7,7 +7,7 @@ from basinmaker.utilities.utilities import *
 import numbers
 from joblib import Parallel, delayed
 import tempfile
-
+pd.options.mode.chained_assignment = None
 def remove_landuse_type_input_based_on_area(landuse_thres,hruinfo,sub_area,Landuse_ID):
 
     if landuse_thres <= 0:

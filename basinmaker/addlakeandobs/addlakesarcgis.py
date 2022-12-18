@@ -133,10 +133,13 @@ def add_lakes_into_existing_watershed_delineation(
     outWatershed2 = Watershed(nfdr_arcgis, pourpoints_with_lakes+"_r", "VALUE")
     outWatershed2.save(cat_add_lake)
 
-    print("Following lake have multi outlet ")
-    print(Lakes_WIth_Multi_Outlet)
-    print("following str are corrected to make one lake one outlet")
-    print(Remove_Str)
-
-
+    with open(os.path.join(work_folder,'log.txt'), 'a') as logfile:
+        if len(Lakes_WIth_Multi_Outlet) > 0:
+            logfile.write("Following lake have multi outlet \n")
+            for item in Lakes_WIth_Multi_Outlet:
+                logfile.write("%i\n" % item)
+        if len(Remove_Str) > 0:
+            logfile.write("following str are corrected to make one lake one outlet \n")
+            for item in Remove_Str:
+                logfile.write("%i\n" % item)
     return

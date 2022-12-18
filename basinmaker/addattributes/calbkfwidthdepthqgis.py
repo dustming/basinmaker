@@ -279,8 +279,8 @@ def calculate_bankfull_width_depth_from_polyline(
             catinfo.loc[catinfo["SubId"] == subid, "RivLength"] = length_rch
 
 
-            if subid == 504:
-                print(floodn_rch)
+            # if subid == 504:
+            #     print(floodn_rch)
 
 
             if floodn_rch < 0:

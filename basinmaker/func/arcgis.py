@@ -15,7 +15,7 @@ import copy
 from basinmaker.func.pdtable import *
 from basinmaker.func.rarray import *
 from basinmaker.utilities.utilities import *
-
+pd.options.mode.chained_assignment = None
 #####
 arcpy.env.overwriteOutput = True
 arcpy.CheckOutExtension("Spatial")
@@ -244,7 +244,10 @@ def find_zonal_maximum_or_minimum_point_on_the_raster(zonal_raster,val_raster,ou
         ExtractMultiValuesToPoints(outname + "_v", [[val_raster,val_raster]], "NONE")
         return outname+"_r",outname + "v"
     else:
-        print(outlets_dup)
+        with open(os.path.join(work_folder,'log.txt'), 'a') as logfile:
+            logfile.write("Check SubId and DownSubId of following subbasins \n")
+            for item in outlets_dup['grid_code'].values:
+                logfile.write("%i\n" % item)
         # remove duplicated outlet points based on
 
         ExtractMultiValuesToPoints(outname + "_v", [[val_raster,val_raster]], "NONE")
@@ -625,8 +628,8 @@ def calculate_bkf_width_depth(catinfo):
             catinfo.loc[catinfo["SubId"] == subid, "RivLength"] = length_rch
 
 
-            if subid == 504:
-                print(floodn_rch)
+            # if subid == 504:
+            #     print(floodn_rch)
 
 
             if floodn_rch < 0:

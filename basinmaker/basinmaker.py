@@ -681,6 +681,9 @@ class delineate:
         #        os.makedirs(self.path_output_folder, exist_ok=True)
         os.makedirs(self.path_working_folder, exist_ok=True)
 
+        file = open(os.path.join(path_working_folder, "log.txt"), 'w')
+        file.close()
+        
         # obtain qgis prefix path
         if os.getenv("QGIS_PREFIX_PATH"):
             self.qgispp = os.environ["QGIS_PREFIX_PATH"]

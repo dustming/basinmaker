@@ -225,7 +225,7 @@ def calculate_basic_attributes(
         column_prefix="a",
         method="average",
     )
-    
+
     grass.run_command(
         "v.rast.stats",
         map=cat_ply_info,
@@ -233,7 +233,7 @@ def calculate_basic_attributes(
         column_prefix="d",
         method="average",
     )
-    
+
     ### calcuate minimum and maximum dem along the channel
     grass.run_command(
         "v.rast.stats",
@@ -254,7 +254,7 @@ def calculate_basic_attributes(
         mapset="PERMANENT",
         input=cat_riv_info,
         overwrite=True,
-    )        
+    )
     grass.run_command(
         "v.proj",
         location=grass_location + "_proj",
@@ -262,7 +262,7 @@ def calculate_basic_attributes(
         input=cat_ply_info,
         overwrite=True,
     )
-    
+
     ### calcuate averaged DEM in each subbasin
     # grass.run_command(
     #     "v.rast.stats",
@@ -271,7 +271,7 @@ def calculate_basic_attributes(
     #     column_prefix="d",
     #     method="average",
     # )
-    # 
+    #
     # ### calcuate minimum and maximum dem along the channel
     # grass.run_command(
     #     "v.rast.stats",
@@ -280,7 +280,7 @@ def calculate_basic_attributes(
     #     column_prefix="d",
     #     method=["minimum", "maximum"],
     # )
-    
+
     ## get routing structure
 
     exp = "%s = int(%s)" % (fdr, fdr)
@@ -349,8 +349,8 @@ def calculate_basic_attributes(
 
     grass.run_command("g.copy", vector=("Final_OL_v", outlet_pt_info), overwrite=True)
     PERMANENT.close()
-    
-    
+
+
     ## add coordinates to outlet point in wgs84 system
     project_wgs84 = Session()
     project_wgs84.open(
@@ -370,7 +370,7 @@ def calculate_basic_attributes(
         option = 'coor',
         columns = ['outletLng','outletLat'],
         overwrite=True,
-    )  
+    )
     project_wgs84.close()
 
     ## import updated outlet points after add coordinates in wgs84 system
@@ -383,8 +383,8 @@ def calculate_basic_attributes(
         mapset="PERMANENT",
         input=outlet_pt_info,
         overwrite=True,
-    )   
- 
+    )
+
     ### update dataframe
     ###
     sqlstat = "SELECT Gridcode, Length_m, d_minimum, d_maximum FROM %s" % (cat_riv_info)
@@ -414,7 +414,7 @@ def calculate_basic_attributes(
         DownSubID_cat = outletinfo["DowSubId"].values[i]
         outlet_lat = outletinfo["outletLat"].values[i]
         outlet_lon = outletinfo["outletLng"].values[i]
-        
+
         catinfo.loc[i, "SubId"] = catid
         catinfo.loc[i, "outletLat"] = outlet_lat
         catinfo.loc[i, "outletLng"] = outlet_lon
@@ -439,8 +439,8 @@ def calculate_basic_attributes(
                    # get down subid of down subid of river
                    DSubId_DSubId_str = Down_id_of_downriv_info['DowSubId'].values[0]
                    # if down subid of down sub id of river  = down sub id from cat
-                   if catid == 10762:
-                       print(DSubId_DSubId_str,DownSubID_cat)
+                   # if catid == 10762:
+                   #     print(DSubId_DSubId_str,DownSubID_cat)
 
                    if DSubId_DSubId_str == DownSubID_cat:
                        DownSubID = DownSubID_riv
@@ -520,11 +520,11 @@ def calculate_basic_attributes(
                         0, float((maxdem - mindem)) / float(rivlen[0])
                     )
 
-                slope_rch = max(slope_rch,min_riv_slope)  
+                slope_rch = max(slope_rch,min_riv_slope)
                 slope_rch = min(slope_rch,max_riv_slope)
-                  
+
                 catinfo.loc[i, "RivSlope"] = slope_rch
-                
+
             else:
                 catinfo.loc[i, "RivSlope"] = -9999
         else:
