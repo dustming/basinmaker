@@ -145,21 +145,21 @@ def create_catchments_attributes_template_table(
     aspect.save("aspect")
 
     ZonalStatisticsAsTable(catchment_without_merging_lakes+"_r", "Value",slope_degree,
-                                 "sub_degree", "NODATA", "MIN_MAX_MEAN")
+                                 "sub_degree", "DATA", "MIN_MAX_MEAN")
     ZonalStatisticsAsTable(catchment_without_merging_lakes+"_r", "Value",aspect,
-                                 "sub_aspect", "NODATA", "MIN_MAX_MEAN")
+                                 "sub_aspect", "DATA", "MIN_MAX_MEAN")
     ZonalStatisticsAsTable(catchment_without_merging_lakes+"_r", "Value",dem,
-                                 "sub_dem", "NODATA", "MIN_MAX_MEAN")
+                                 "sub_dem", "DATA", "MIN_MAX_MEAN")
     ZonalStatisticsAsTable(catchment_without_merging_lakes+"_r", "Value","k",
-                                 "cat_k", "NODATA", "MIN_MAX_MEAN")
+                                 "cat_k", "DATA", "MIN_MAX_MEAN")
     ZonalStatisticsAsTable(catchment_without_merging_lakes+"_r", "Value","c",
-                                 "cat_c", "NODATA", "MIN_MAX_MEAN")
+                                 "cat_c", "DATA", "MIN_MAX_MEAN")
     ZonalStatisticsAsTable(river_without_merging_lakes+"_r", "Value",slope_pec,
-                                 "riv_slope", "NODATA", "MIN_MAX_MEAN")
+                                 "riv_slope", "DATA", "MIN_MAX_MEAN")
     ZonalStatisticsAsTable(river_without_merging_lakes+"_r", "Value",dem,
-                                 "riv_dem", "NODATA", "MIN_MAX_MEAN")
+                                 "riv_dem", "DATA", "MIN_MAX_MEAN")
     ZonalStatisticsAsTable(river_without_merging_lakes+"_r", "Value","landuse",
-                                 "riv_landuse", "NODATA", "MIN_MAX_MEAN")
+                                 "riv_landuse", "DATA", "MIN_MAX_MEAN")
     ExtractMultiValuesToPoints("final_pourpoints_v", [["sl_connected_lake_r","cl_lake_id"],["sl_nonconnect_lake_r","ncl_kake_id"],["obs_r","obsid"]], "NONE")
 
     ## END gis calculations  GIS spatial calculations
@@ -209,15 +209,15 @@ def create_catchments_attributes_template_table(
     attri_table['DowSubId'] = final_pourpoints['DowSubId'].fillna(0).astype(int)
     attri_table['HyLakeId'] = final_pourpoints['HyLakeId'].fillna(0).astype(int)
     attri_table['Lake_Cat'] = 0
-    attri_table['LakeVol']  = final_pourpoints[lake_attributes[3]].fillna(-1.2345)
-    attri_table['LakeDepth'] = final_pourpoints[lake_attributes[4]].fillna(-1.2345)
-    attri_table['LakeArea'] =final_pourpoints[lake_attributes[2]].fillna(-1.2345)
-    attri_table['Laketype'] = final_pourpoints[lake_attributes[1]].fillna(-1.2345)
+    attri_table['LakeVol']  = final_pourpoints[lake_attributes[3]].fillna(0)
+    attri_table['LakeDepth'] = final_pourpoints[lake_attributes[4]].fillna(0)
+    attri_table['LakeArea'] =final_pourpoints[lake_attributes[2]].fillna(0)
+    attri_table['Laketype'] = final_pourpoints[lake_attributes[1]].fillna(0)
     attri_table.loc[~final_pourpoints['ncl_kake_id'].isnull(),'Lake_Cat'] = 2
     attri_table.loc[~final_pourpoints['cl_lake_id'].isnull(),'Lake_Cat'] = 1
     attri_table['Has_POI'] = int(0)
     attri_table.loc[~final_pourpoints['obsid'].isnull(),'Has_POI'] = int(1)
-    attri_table['DA_Obs'] = final_pourpoints[obs_attributes[2]].fillna(-1.2345)
+    attri_table['DA_Obs'] = final_pourpoints[obs_attributes[2]].fillna(0)
     attri_table['Obs_NM'] = final_pourpoints[obs_attributes[1]].astype('str').fillna(" ")
     attri_table['SRC_obs'] = final_pourpoints[obs_attributes[3]].astype('str').fillna(" ")
     attri_table['outletLng'] = final_pourpoints['outletLng'].fillna(-1.2345)
@@ -296,6 +296,7 @@ def create_catchments_attributes_template_table(
     attri_table = calculate_bkf_width_depth(attri_table)
 
     attri_table = update_non_connected_catchment_info(attri_table)
+    attri_table.loc[attri_table['DA_Obs'] > 0,'DA_error'] = attri_table.loc[attri_table['DA_Obs'] > 0,'DrainArea']/attri_table.loc[attri_table['DA_Obs'] > 0,'DA_Obs']
     attri_table.loc[attri_table['RivLength'] == -1.2345,'RivSlope'] = -1.2345
     attri_table.loc[attri_table['RivLength'] == -1.2345,'FloodP_n'] = -1.2345
     attri_table.loc[attri_table['RivLength'] == -1.2345,'Max_DEM'] = -1.2345
@@ -307,24 +308,33 @@ def create_catchments_attributes_template_table(
     cat_ply = cat_ply.fillna(-1.2345)
     cat_ply['Obs_NM'] = cat_ply['Obs_NM'].astype('str')
     cat_ply['SRC_obs'] = cat_ply['SRC_obs'].astype('str')
-    cat_ply.spatial.to_featureclass(location=os.path.join(output_folder,catchment_without_merging_lakes+"_v"),overwrite=True,sanitize_columns=False)
+    cat_ply.spatial.to_featureclass(location=os.path.join(output_folder,catchment_without_merging_lakes+"_v1-0"),overwrite=True,sanitize_columns=False)
 
     riv_line= riv_line[['SubId','SHAPE']]
     riv_line = riv_line.merge(attri_table,on='SubId',how='left')
     riv_line = riv_line.fillna(-1.2345)
     riv_line['Obs_NM'] = riv_line['Obs_NM'].astype('str')
     riv_line['SRC_obs'] = riv_line['SRC_obs'].astype('str')
-    riv_line.spatial.to_featureclass(location=os.path.join(output_folder,river_without_merging_lakes+"_v"),overwrite=True,sanitize_columns=False)
+    riv_line.spatial.to_featureclass(location=os.path.join(output_folder,river_without_merging_lakes+"_v1-0"),overwrite=True,sanitize_columns=False)
 
-    arcpy.FeatureClassToFeatureClass_conversion("sl_connected_lake_v", output_folder,"sl_connected_lake.shp")
-    arcpy.FeatureClassToFeatureClass_conversion("sl_nonconnect_lake_v",output_folder,"sl_nonconnect_lake.shp")
+    arcpy.FeatureClassToFeatureClass_conversion("sl_connected_lake_v", output_folder,"sl_connected_lake_v1-0.shp")
+    arcpy.FeatureClassToFeatureClass_conversion("sl_nonconnect_lake_v",output_folder,"sl_nonconnect_lake_v1-0.shp")
 
-    obs_clip = pd.DataFrame.spatial.from_featureclass("obs_clip")
     obs_v = pd.DataFrame.spatial.from_featureclass("obs_v")
-    obs_v[obs_attributes[0]] = obs_v['grid_code']
-    obs_v = obs_v[[obs_attributes[0]] + ["SHAPE"]]
-    obs_clip = obs_clip[obs_attributes]
-    obs_v = obs_v.merge(obs_clip,on=obs_attributes[0],how='left')
-    obs_v.spatial.to_featureclass(location=os.path.join(output_folder,"obs_gauges.shp"),overwrite=True,sanitize_columns=False)
+    obs_v['obsid'] = obs_v['grid_code']
+    final_pourpoints_2 = final_pourpoints[['obsid','SubId']]
+    obs_v = obs_v.merge(final_pourpoints_2,on='obsid',how='left')
+    obs_v = obs_v[['SubId','SHAPE']]
+    cat_ply_att = cat_ply[['SubId','DA_Obs','SRC_obs','DrainArea','DA_error','Obs_NM']]
+    obs_v = obs_v.merge(cat_ply_att,on='SubId',how='left')
+    obs_v = obs_v[['SubId','DA_Obs','SRC_obs','DrainArea','DA_error','Obs_NM','SHAPE']]
+    obs_v.spatial.to_featureclass(location=os.path.join(output_folder,"obs_gauges_v1-0.shp"),overwrite=True,sanitize_columns=False)
+
+    arcpy.DeleteField_management(os.path.join(output_folder,"obs_gauges_v1-0.shp"),
+                             ["Id"])
+    arcpy.DeleteField_management(os.path.join(output_folder,catchment_without_merging_lakes+"_v1-0"),
+                             ["Id"])
+    arcpy.DeleteField_management(os.path.join(output_folder,river_without_merging_lakes+"_v1-0"),
+                             ["Id"])
 
     return
