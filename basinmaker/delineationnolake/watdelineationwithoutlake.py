@@ -133,8 +133,8 @@ def watershed_delineation_without_lake(
             delineate_watershed_no_lake_using_fdr,
         )
     else:
-        print('gis_platform    ',gis_platform,'   do not support')    
-        
+        print('gis_platform    ',gis_platform,'   do not support')
+
     if mode == "usingdem":
         assert (
             acc_thresold > 0
@@ -149,7 +149,7 @@ def watershed_delineation_without_lake(
         assert (
             fac_path != "#"
         ), "The path of the provided flow direction data is needed to delineate watershed from flow direction"
-        
+
     if mode == "usingsubreg":
         assert (
             subreg_acc_path != "#"
@@ -198,6 +198,7 @@ def watershed_delineation_without_lake(
             acc=acc,
             cat_no_lake=cat_no_lake,
             max_memroy=max_memroy,
+            fac_path=fac_path,
         )
     if mode == "usingfac":
         delineate_watershed_no_lake_using_fac(
@@ -208,13 +209,13 @@ def watershed_delineation_without_lake(
             fac_path=fac_path,
             acc_thresold=acc_thresold,
             fdr_arcgis=fdr_arcgis,
-            fdr_grass=fdr_grass,            
+            fdr_grass=fdr_grass,
             str_r=str_r,
             str_v=str_v,
             acc=acc,
             cat_no_lake=cat_no_lake,
             max_memroy=max_memroy,
-        )        
+        )
     if mode == "usingsubreg":
         delineate_watershed_no_lake_using_subregion_data(
             grassdb=grassdb,

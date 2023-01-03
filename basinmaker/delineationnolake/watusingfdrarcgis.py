@@ -18,6 +18,7 @@ def delineate_watershed_no_lake_using_fdr(
     acc,
     cat_no_lake,
     max_memroy,
+    fac_path,
 ):
     work_folder = grassdb
     mask = input_geo_names["mask"]
@@ -42,8 +43,12 @@ def delineate_watershed_no_lake_using_fdr(
     dirraster = SetNull(Raster(outFlowDirection) < 1, Raster(outFlowDirection))
     dirraster.save(fdr_arcgis)
 
-    outFlowAccumulation = FlowAccumulation(dirraster)
+    outFlowAccumulation= ExtractByMask(fac_path, mask)
     outFlowAccumulation.save(acc)
+
+    #
+    # outFlowAccumulation = FlowAccumulation(dirraster)
+    # outFlowAccumulation.save(acc)
 
     StreamRaster = SetNull(Raster(outFlowAccumulation) < acc_thresold, Raster(outFlowAccumulation))
     StreamRaster = Con(StreamRaster >= 0, 1, 0)
