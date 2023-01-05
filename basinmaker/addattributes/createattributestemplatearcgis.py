@@ -169,7 +169,7 @@ def create_catchments_attributes_template_table(
     routing_info_strs = return_routing_info_using_str_v("riv_link_v",cellSize,SptailRef,work_folder,dem)
     routing_info_strs = routing_info_strs.sort_values(by=['SubId','DowSubId'], ascending=True)
     routing_info_strs = routing_info_strs.drop_duplicates(subset=['SubId'], keep='last')
-
+    
     final_pourpoints = pd.DataFrame.spatial.from_featureclass("final_pourpoints_v")
     final_pourpoints["SubId"] = final_pourpoints["grid_code"].astype(int)
     final_pourpoints = final_pourpoints.merge(routing_info_strs,on='SubId',how='left')

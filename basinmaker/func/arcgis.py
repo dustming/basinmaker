@@ -391,7 +391,10 @@ def return_routing_info_using_str_v(str_v,cellSize,SptailRef,work_folder,snapRas
         dowsubinfo = str_v_pd[str_v_pd["from_node"] == to_node]
         upsubinfo = str_v_pd[str_v_pd["to_node"] == from_node]
         if len(dowsubinfo) == 1:
-            str_v_pd.loc[idx,"DowSubId"] = dowsubinfo["grid_code"].values[0]
+            if dowsubinfo["grid_code"].values[0] == str_v_pd.loc[idx,"SubId"]:
+               str_v_pd.loc[idx,"DowSubId"] = -1.2345
+            else:
+                str_v_pd.loc[idx,"DowSubId"] = dowsubinfo["grid_code"].values[0]
         else:
             str_v_pd.loc[idx,"DowSubId"] = -1
 
@@ -401,6 +404,8 @@ def return_routing_info_using_str_v(str_v,cellSize,SptailRef,work_folder,snapRas
             str_v_pd.loc[idx,"n_up_sub"] = 0
 
     str_v_pd.spatial.to_featureclass(location=os.path.join(work_folder,"arcgis.gdb",str_v + "_rout"),overwrite=True,sanitize_columns=False)
+    str_v_pd = str_v_pd[str_v_pd['DowSubId'] != -1.2345]
+
     return str_v_pd[['SubId','DowSubId','n_up_sub']]
 
 
