@@ -187,6 +187,7 @@ class postprocess:
         connected_lake_area_thresthold=-1,
         non_connected_lake_area_thresthold =-1,
         selected_lake_ids=[],
+        area_thresthold = 10*30*30/1000/1000,
         gis_platform="qgis",
     ):
         """This function is to simplify the hydrologic routing network by removing
@@ -288,6 +289,7 @@ class postprocess:
         combine_catchments_covered_by_the_same_lake_method(
             Routing_Product_Folder = path_output_folder,
             qgis_prefix_path=self.qgispp,
+            area_thresthold = area_thresthold,
             gis_platform=gis_platform,
         )
 
@@ -298,6 +300,7 @@ class postprocess:
         routing_product_folder = '#',
         gis_platform="qgis",
         minimum_subbasin_drainage_area=-1,
+        area_thresthold = 10*30*30/1000/1000,
     ):
         """ This function is to simplify the hydrologic routing network by
         removing subbasins/river reaches with their drainage area below user provided
@@ -387,6 +390,7 @@ class postprocess:
         combine_catchments_covered_by_the_same_lake_method(
             Routing_Product_Folder = path_output_folder,
             qgis_prefix_path=self.qgispp,
+            area_thresthold = area_thresthold,
             gis_platform=gis_platform,
         )
     def Define_interest_sites_in_routing_product(
@@ -698,7 +702,7 @@ class delineate:
 
         file = open(os.path.join(path_working_folder, "log.txt"), 'w')
         file.close()
-        
+
         # obtain qgis prefix path
         if os.getenv("QGIS_PREFIX_PATH"):
             self.qgispp = os.environ["QGIS_PREFIX_PATH"]
