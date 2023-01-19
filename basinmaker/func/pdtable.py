@@ -319,17 +319,17 @@ def Calculate_Longest_flowpath(mainriv_merg_info):
 def remove_possible_small_subbasins(mapoldnew_info, area_thresthold = 1):
     mapoldnew_info_new = mapoldnew_info.copy(deep=True)
 
-    # get small subbasin that is not lake
-    small_sub_non_lake = mapoldnew_info[mapoldnew_info['BasArea']/1000/1000 < area_thresthold].copy(deep=True)
-    small_sub_non_lake = small_sub_non_lake[small_sub_non_lake['Lake_Cat'] == 0].copy(deep=True)
-    small_sub_non_lake = small_sub_non_lake[small_sub_non_lake['Has_POI'] == 0].copy(deep=True)
-
-    small_sub_non_lake_subid =small_sub_non_lake['SubId'].values
-
     # check the gauge column name, in case it is v2.1 using Has_Gauge
     Gauge_col_Name = "Has_POI"
     if "Has_POI" not in mapoldnew_info.columns:
         Gauge_col_Name = "Has_Gauge"
+
+    # get small subbasin that is not lake
+    small_sub_non_lake = mapoldnew_info[mapoldnew_info['BasArea']/1000/1000 < area_thresthold].copy(deep=True)
+    small_sub_non_lake = small_sub_non_lake[small_sub_non_lake['Lake_Cat'] == 0].copy(deep=True)
+    small_sub_non_lake = small_sub_non_lake[small_sub_non_lake[Gauge_col_Name] == 0].copy(deep=True)
+
+    small_sub_non_lake_subid =small_sub_non_lake['SubId'].values
 
     ### process connected lakes  merge polygons
     for i in range(0, len(small_sub_non_lake)):
@@ -362,7 +362,7 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold = 1):
         if len(upstream_sub_info) > 0:
             has_upstream = True
 
-            if len(upstream_sub_info_same_seg) > 0 and upstream_sub_info_same_seg["Has_POI"].values[0] == 0:
+            if len(upstream_sub_info_same_seg) > 0 and upstream_sub_info_same_seg[Gauge_col_Name].values[0] == 0:
                 up_sub_has_same_seg_id = True
             else:
                 up_sub_has_same_seg_id = False
@@ -2200,7 +2200,7 @@ def Return_Selected_Lakes_Attribute_Table_And_Id(
     # first obtain selected lakes based on lake area
     ### process connected lakes first
     mask1 = ConnL_info["LakeArea"] >= Thres_Area_Conn_Lakes
-    mask2 = ConnL_info["Has_POI"] == 1
+    mask2 = ConnL_info[Gauge_col_Name] == 1
     mask = np.logical_or(mask1,mask2)
     Selected_ConnLakes = ConnL_info.loc[
        mask
@@ -2211,7 +2211,7 @@ def Return_Selected_Lakes_Attribute_Table_And_Id(
 
 
     mask1 = Non_ConnL_info["LakeArea"] >= Thres_Area_Non_Conn_Lakes
-    mask2 = Non_ConnL_info["Has_POI"] == 1
+    mask2 = Non_ConnL_info[Gauge_col_Name] == 1
     mask = np.logical_or(mask1,mask2)
     ### process non connected selected lakes
     Selected_Non_ConnLakes = Non_ConnL_info[
