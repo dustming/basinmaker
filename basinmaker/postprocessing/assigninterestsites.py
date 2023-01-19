@@ -77,7 +77,19 @@ def define_interest_sites(
     interest_site = interest_site.to_crs(finalriv_infoply.crs)
     interest_site = interest_site.sjoin(finalriv_infoply, how="left")
     interest_site_nolake = interest_site[interest_site["Lake_Cat"] == 0].copy(deep=True)
-    interest_subids = interest_site_nolake['SubId'].values
+    interest_subids_nolake = interest_site_nolake['SubId'].values
+
+    interest_site_haslake = interest_site[interest_site["Lake_Cat"] != 0].copy(deep=True)
+
+    lake_subid = np.unique(interest_site_haslake['HyLakeId'].values)
+    sub_of_interested_lake = finalriv_infoply[finalriv_infoply["HyLakeId"].isin(lake_subid)].copy(deep=True)
+    sub_of_interested_lake = sub_of_interested_lake.sort_values(by='DrainArea', ascending=False)
+    sub_of_interested_lake_outlet = sub_of_interested_lake.drop_duplicates(subset=['HyLakeId'],keep='first')
+    interest_subids_lake = sub_of_interested_lake_outlet["SubId"].values
+
+
+    interest_subids = np.concatenate([interest_subids_nolake, interest_subids_lake])
+
     finalriv_infoply["Has_POI"] = 0
     mask = finalriv_infoply["SubId"].isin(interest_subids)
     finalriv_infoply.loc[mask,"Has_POI"] = 1
