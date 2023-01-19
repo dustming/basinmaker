@@ -362,7 +362,7 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold = 1):
         if len(upstream_sub_info) > 0:
             has_upstream = True
 
-            if len(upstream_sub_info_same_seg) > 0:
+            if len(upstream_sub_info_same_seg) > 0 and upstream_sub_info_same_seg["Has_POI"].values[0] == 0:
                 up_sub_has_same_seg_id = True
             else:
                 up_sub_has_same_seg_id = False
@@ -2193,19 +2193,29 @@ def Return_Selected_Lakes_Attribute_Table_And_Id(
     Non_ConnL_info = finalcat_info.loc[finalcat_info["Lake_Cat"] == 2].copy(deep=True)
     ConnL_info = finalcat_info.loc[finalcat_info["Lake_Cat"] == 1].copy(deep=True)
 
+    if "Has_POI" in finalcat_info.columns:
+        Gauge_col_Name = "Has_POI"
+    else:
+        Gauge_col_Name = "Has_Gauge"
     # first obtain selected lakes based on lake area
     ### process connected lakes first
+    mask1 = ConnL_info["LakeArea"] >= Thres_Area_Conn_Lakes
+    mask2 = ConnL_info["Has_POI"] == 1
+    mask = np.logical_or(mask1,mask2)
     Selected_ConnLakes = ConnL_info.loc[
-       (ConnL_info["LakeArea"] >= Thres_Area_Conn_Lakes)
+       mask
     ]["HyLakeId"].values
 
     Selected_ConnLakes = Selected_ConnLakes[Selected_ConnLakes > 0]
     Selected_ConnLakes = np.unique(Selected_ConnLakes)
 
 
+    mask1 = Non_ConnL_info["LakeArea"] >= Thres_Area_Non_Conn_Lakes
+    mask2 = Non_ConnL_info["Has_POI"] == 1
+    mask = np.logical_or(mask1,mask2)
     ### process non connected selected lakes
     Selected_Non_ConnLakes = Non_ConnL_info[
-        (Non_ConnL_info["LakeArea"] >= Thres_Area_Non_Conn_Lakes)
+        mask
     ]["HyLakeId"].values
     Selected_Non_ConnLakes = Selected_Non_ConnLakes[Selected_Non_ConnLakes > 0]
     Selected_Non_ConnLakes = np.unique(Selected_Non_ConnLakes)
