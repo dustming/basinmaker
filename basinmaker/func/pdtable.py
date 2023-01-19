@@ -322,6 +322,8 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold = 1):
     # get small subbasin that is not lake
     small_sub_non_lake = mapoldnew_info[mapoldnew_info['BasArea']/1000/1000 < area_thresthold].copy(deep=True)
     small_sub_non_lake = small_sub_non_lake[small_sub_non_lake['Lake_Cat'] == 0].copy(deep=True)
+    small_sub_non_lake = small_sub_non_lake[small_sub_non_lake['Has_POI'] == 0].copy(deep=True)
+
     small_sub_non_lake_subid =small_sub_non_lake['SubId'].values
 
     # check the gauge column name, in case it is v2.1 using Has_Gauge
