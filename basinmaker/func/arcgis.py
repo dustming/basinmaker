@@ -301,6 +301,8 @@ def pre_process_lake_polygon(path_lakefile_in,alllake,lake_attributes,lake_bound
     OutRas = Con(IsNull(lake_boundary+"_r"), alllake+"_rt", lake_boundary+"_r")
     OutRas.save(alllake+"_r")
 
+    lake_at_lake_boundary = all_cliped_lakes[all_cliped_lakes[lake_attributes[0]].isin(lakeids_inter)]
+    lake_at_lake_boundary.spatial.to_featureclass(location=os.path.join(work_folder,"lakes_at_lake_watershed_boundary.shp"),overwrite=True,sanitize_columns=False)
 #    arcpy.management.Delete(r"'lake_proj';'lake_clip_bf';'lake_clip';'lake_inter'")
     return
 

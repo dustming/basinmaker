@@ -133,6 +133,21 @@ def add_lakes_into_existing_watershed_delineation(
     outWatershed2 = Watershed(nfdr_arcgis, pourpoints_with_lakes+"_r", "VALUE")
     outWatershed2.save(cat_add_lake)
 
+    arcpy.ia.ZonalStatisticsAsTable("all_lakes_r", "Value", "bd_problem",
+                                     os.path.join(work_folder,"number_of_adjusted_lake_boundary_grids.dbf"),
+                                     "DATA", "SUM",
+                                     "CURRENT_SLICE",
+                                     [90],
+                                     "AUTO_DETECT",
+                                     "ARITHMETIC",
+                                     360
+                                     )
+
+    if len(Lakes_WIth_Multi_Outlet) > 0:
+        all_lakes = pd.DataFrame.spatial.from_featureclass('all_lakes_v')
+        lake_multyple = all_lakes[all_lakes[lake_attributes[0]].isin(Lakes_WIth_Multi_Outlet)]
+        lake_multyple.spatial.to_featureclass(location=os.path.join(work_folder,"lakes_with_multi_outlet.shp"),overwrite=True,sanitize_columns=False)
+
     with open(os.path.join(work_folder,'log.txt'), 'a') as logfile:
         if len(Lakes_WIth_Multi_Outlet) > 0:
             logfile.write("Following lake have multi outlet \n")
