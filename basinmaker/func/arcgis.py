@@ -611,8 +611,7 @@ def calculate_bkf_width_depth(catinfo):
                 else:
                     max_elve_rch = baselv_Seg
 
-            slope_rch = (max_elve_rch - min_elve_rch) / length_rch
-
+            slope_rch = i_seg_info["RivSlope"].values[i]
 
             if slope_rch < min_riv_slope or slope_rch > max_riv_slope:
                 if slope_seg >= min_riv_slope and slope_seg <= max_riv_slope:
@@ -673,4 +672,12 @@ def calculate_bkf_width_depth(catinfo):
                     catelv = catinfo['MeanElev'].values
                     catelv = catelv[catelv > 0]
                     catinfo.loc[catinfo["SubId"] == subid, "MeanElev"] =np.average(catelv)
+
+            # print(subid,n_rch,n_seg,min_manning_n,max_manning_n)
+
+    mask1 = catinfo["DA_Chn_Slp"] < min_riv_slope
+    mask2 = catinfo["DA_Chn_Slp"] > max_riv_slope
+    mask = np.logical_or(mask1,mask2)
+    catinfo.loc[mask,"DA_Chn_Slp"] = catinfo.loc[mask,"RivSlope"]
+
     return catinfo

@@ -731,9 +731,7 @@ def streamorderanddrainagearea(catinfoall):
     if "Has_POI" not in catinfoall.columns:
         Gauge_col_Name = "Has_Gauge"
 
-    catinfo = catinfoall.loc[
-        catinfoall["Lake_Cat"] != 2
-    ].copy()  ### remove none connected lake catchments, which do not connected to the river system
+    catinfo = catinfoall.loc[catinfoall["Lake_Cat"] != 2].copy()  ### remove none connected lake catchments, which do not connected to the river system
     catinfo_ncl = catinfoall.loc[catinfoall["Lake_Cat"] == 2].copy()
     routing_ncl = catinfo_ncl[["SubId", "DowSubId"]].astype("float").values
 
@@ -746,12 +744,8 @@ def streamorderanddrainagearea(catinfoall):
         if catinfo["SubId"].values[i] == catinfo["DowSubId"].values[i]:
             catinfo.loc[idx, "DowSubId"] = -1
         catid = catinfo["SubId"].values[i]
-        if (
-            len(catinfo[catinfo["DowSubId"] == catid]) == 0
-        ):  ### the river seg has no upstream segment
-            catlist[icat] = int(
-                catinfo["DowSubId"].values[i]
-            )  #### store next reach segment
+        if (len(catinfo[catinfo["DowSubId"] == catid]) == 0):  ### the river seg has no upstream segment
+            catlist[icat] = int(catinfo["DowSubId"].values[i])  #### store next reach segment
 
             #### calculate DA of head watershed include None connected lakes
             if len(routing_ncl) == 0:
@@ -855,10 +849,11 @@ def streamorderanddrainagearea(catinfoall):
                 catinfo.loc[curcat_idx, "Seg_ID"] = Up_Reaches_info["Seg_ID"].values[0]
 
                 if "DA_Chn_L" in catinfo.columns:
-                    catinfo.loc[curcat_idx, "DA_Chn_L"] = np.max(Up_Reaches_info["DA_Chn_L"].values[0],0) + cur_Reach_info["RivLength"].values[0]
+                    catinfo.loc[curcat_idx, "DA_Chn_L"] = np.maximum(Up_Reaches_info["DA_Chn_L"].values[0],0) + cur_Reach_info["RivLength"].values[0]
 
-                    catinfo.loc[curcat_idx, "DA_Chn_Slp"] = (cur_Reach_info["RivSlope"].values[0] * np.max(Up_Reaches_info["DA_Chn_L"].values[0],0)
-                                                           + Up_Reaches_info["DA_Chn_L"].values[0]*Up_Reaches_info["DA_Chn_Slp"].values[0])/catinfo.loc[curcat_idx, "DA_Chn_L"]
+                    catinfo.loc[curcat_idx, "DA_Chn_Slp"] = ( cur_Reach_info["RivSlope"].values[0]  * np.maximum(cur_Reach_info["RivLength"].values[0],0)
+                                                           +  Up_Reaches_info["DA_Chn_L"].values[0] * np.maximum(Up_Reaches_info["DA_Chn_Slp"].values[0],0)
+                                                             ) / catinfo.loc[curcat_idx, "DA_Chn_L"]
 
                     catinfo.loc[curcat_idx, "DA_Slope"] = (cur_Reach_info["BasSlope"].values[0]*cur_Reach_info["BasArea"].values[0]
                                                            + DA_ncl * slp_ncl
@@ -878,9 +873,7 @@ def streamorderanddrainagearea(catinfoall):
                 #                print('1',catid,catinfo.loc[curcat_idx,'DA'].values,catinfo.loc[curcat_idx,'Strahler'].values,catinfo.loc[curcat_idx,'Sub_order'].values)
                 catid = int(cur_Reach_info["DowSubId"].values[0])
             else:  ### has mutiple upstram
-                if (
-                    np.min(Up_Reaches_info["Strahler"].values) > 0
-                ):  ### all upstream has been processed
+                if (np.min(Up_Reaches_info["Strahler"].values) > 0):  ### all upstream has been processed
 
                     if 'DA_Chn_L' in Up_Reaches_info.columns:
                         Up_Reaches_info = Up_Reaches_info.sort_values(by='DA_Chn_L', ascending=False)
@@ -892,10 +885,12 @@ def streamorderanddrainagearea(catinfoall):
                     )
 
                     if "DA_Chn_L" in catinfo.columns:
-                        catinfo.loc[curcat_idx, "DA_Chn_L"] = np.max(Up_Reaches_info["DA_Chn_L"].values[0],0) + cur_Reach_info["RivLength"].values[0]
+                        catinfo.loc[curcat_idx, "DA_Chn_L"] = np.maximum(Up_Reaches_info["DA_Chn_L"].values[0],0) + cur_Reach_info["RivLength"].values[0]
 
-                        catinfo.loc[curcat_idx, "DA_Chn_Slp"] = (cur_Reach_info["RivSlope"].values[0] * np.max(Up_Reaches_info["DA_Chn_L"].values[0],0)
-                                                               + Up_Reaches_info["DA_Chn_L"].values[0]*Up_Reaches_info["DA_Chn_Slp"].values[0])/catinfo.loc[curcat_idx, "DA_Chn_L"]
+                        catinfo.loc[curcat_idx, "DA_Chn_Slp"] = ( cur_Reach_info["RivSlope"].values[0]  * np.maximum(cur_Reach_info["RivLength"].values[0],0)
+                                                               +  Up_Reaches_info["DA_Chn_L"].values[0] * np.maximum(Up_Reaches_info["DA_Chn_Slp"].values[0],0)
+                                                                 ) /catinfo.loc[curcat_idx, "DA_Chn_L"]
+
 
                         catinfo.loc[curcat_idx, "DA_Slope"] = (cur_Reach_info["BasSlope"].values[0]*cur_Reach_info["BasArea"].values[0]
                                                                + DA_ncl * slp_ncl
@@ -1165,8 +1160,6 @@ def Update_DA_Strahler_For_Combined_Result(AllCatinfo, Sub_Region_info,k,c):
         Downstream DA and strahler order of each subregion along the flow
         pathway between subregions will be updated.
     """
-    min_manning_n = 0.01
-    max_manning_n = 0.15
     ### start from head subregions with no upstream subregion
     Subregion_list = Sub_Region_info[Sub_Region_info["N_Up_SubRegion"] == 1][
         "Sub_Reg_ID"

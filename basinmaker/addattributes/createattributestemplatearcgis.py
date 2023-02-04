@@ -169,7 +169,7 @@ def create_catchments_attributes_template_table(
     routing_info_strs = return_routing_info_using_str_v("riv_link_v",cellSize,SptailRef,work_folder,dem)
     routing_info_strs = routing_info_strs.sort_values(by=['SubId','DowSubId'], ascending=True)
     routing_info_strs = routing_info_strs.drop_duplicates(subset=['SubId'], keep='last')
-    
+
     final_pourpoints = pd.DataFrame.spatial.from_featureclass("final_pourpoints_v")
     final_pourpoints["SubId"] = final_pourpoints["grid_code"].astype(int)
     final_pourpoints = final_pourpoints.merge(routing_info_strs,on='SubId',how='left')
@@ -274,7 +274,7 @@ def create_catchments_attributes_template_table(
 
 
     riv_attri = read_table_as_pandas("riv_slope",['Value','MEAN'],work_folder)
-    riv_attri['RivSlope'] = riv_attri['MEAN'].fillna(-1.2345)
+    riv_attri['RivSlope'] = (riv_attri['MEAN']/100).fillna(-1.2345)
     riv_attri['SubId'] = riv_attri['Value']
     riv_attri = riv_attri.drop(columns=['MEAN', 'Value'])
     attri_table = attri_table.merge(riv_attri,on='SubId',how='left')
@@ -296,7 +296,7 @@ def create_catchments_attributes_template_table(
     attri_table = calculate_bkf_width_depth(attri_table)
 
     attri_table = update_non_connected_catchment_info(attri_table)
-    attri_table.loc[attri_table['DA_Obs'] > 0,'DA_error'] = attri_table.loc[attri_table['DA_Obs'] > 0,'DrainArea']*1000*1000/attri_table.loc[attri_table['DA_Obs'] > 0,'DA_Obs']
+    attri_table.loc[attri_table['DA_Obs'] > 0,'DA_error'] = (attri_table.loc[attri_table['DA_Obs'] > 0,'DrainArea']/1000/1000)/attri_table.loc[attri_table['DA_Obs'] > 0,'DA_Obs']
     attri_table.loc[attri_table['RivLength'] == -1.2345,'RivSlope'] = -1.2345
     attri_table.loc[attri_table['RivLength'] == -1.2345,'FloodP_n'] = -1.2345
     attri_table.loc[attri_table['RivLength'] == -1.2345,'Max_DEM'] = -1.2345
