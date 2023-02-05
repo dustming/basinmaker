@@ -149,9 +149,11 @@ def simplify_routing_structure_by_drainage_area_method(
             OutputFolder=OutputFolder,
         )
 
-def define_interest_sites_in_routing_product_method(
-    Routing_Product_Folder= '#',
-    path_to_interest_sites = '#',
+def add_point_of_interest_sites_in_routing_product_method(
+    routing_product_folder= '#',
+    path_to_points_of_interest_points = '#',
+    clean_exist_pois = True,
+    path_output_folder = "#",
     gis_platform="qgis",
 ):
     if gis_platform == "purepy":
@@ -159,8 +161,10 @@ def define_interest_sites_in_routing_product_method(
             define_interest_sites,
         )
         define_interest_sites(
-            Routing_Product_Folder= Routing_Product_Folder,
-            path_to_interest_sites = path_to_interest_sites,
+            routing_product_folder= routing_product_folder,
+            path_to_points_of_interest_points = path_to_points_of_interest_points,
+            clean_exist_pois = clean_exist_pois,
+            path_output_folder = path_output_folder,
         )
     return
 
