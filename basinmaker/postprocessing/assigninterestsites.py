@@ -169,7 +169,6 @@ def define_interest_sites(
             exist_poi = exist_poi.append(row[["Obs_NM","geometry"]])
 
             print("Add the POI : ",Obs_NM_in," into the routing product ")
-            print(exist_poi)
 
         else:
 
@@ -187,13 +186,11 @@ def define_interest_sites(
             exist_poi.loc[exist_poi["Obs_NM"] == Cur_Obs_NM ,"Obs_NM"] = Obs_NM_in
             exist_poi = exist_poi.append(row[["Obs_NM","geometry"]])
             print("Append the POI : ",Obs_NM_in," into the routing product ")
-            print(exist_poi)
 
     finalriv_infoply.to_file(os.path.join(OutputFolder,os.path.basename(Path_final_riv_ply)))
 
     cat_table = finalriv_infoply.drop(columns="geometry")
 
-    print(exist_poi)
     exist_poi = exist_poi.merge(cat_table,on='Obs_NM',how='left')
     exist_poi = exist_poi[["geometry",'DA_Obs','SRC_obs','Obs_NM','SubId','DrainArea']].copy(deep=True)
 

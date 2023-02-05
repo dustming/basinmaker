@@ -400,6 +400,7 @@ class postprocess:
         path_output_folder="#",
         clean_exist_pois = True,
         gis_platform="qgis",
+        area_thresthold = 10*30*30/1000/1000,
     ):
         from basinmaker.postprocessing.postprocessingfunctions import (
             add_point_of_interest_sites_in_routing_product_method,
@@ -410,6 +411,17 @@ class postprocess:
             path_to_points_of_interest_points = path_to_points_of_interest_points,
             path_output_folder = path_output_folder,
             clean_exist_pois = clean_exist_pois,
+            gis_platform=gis_platform,
+        )
+
+        from basinmaker.postprocessing.postprocessingfunctions import (
+            combine_catchments_covered_by_the_same_lake_method,
+        )
+
+        combine_catchments_covered_by_the_same_lake_method(
+            Routing_Product_Folder = path_output_folder,
+            qgis_prefix_path=self.qgispp,
+            area_thresthold = area_thresthold,
             gis_platform=gis_platform,
         )
 
