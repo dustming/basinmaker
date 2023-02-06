@@ -87,13 +87,14 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
         riv_pd = riv_pd.drop(columns=['Old_SubId'])
         mask = np.logical_or(riv_pd['RivLength'] > 0,riv_pd['Lake_Cat'] > 0)
         riv_pd = riv_pd[mask]
-        riv_pd.drop(columns=['centroid_x','centroid_y'])
-        riv_pd.spatial.to_featureclass(location=os.path.join(tempfolder,'riv_attri.shp'),overwrite=True,sanitize_columns=False)
-        arcpy.Dissolve_management(os.path.join(tempfolder,'riv_attri.shp'), os.path.join(OutputFolder,riv_name), ["SubId"])
-        arcpy.JoinField_management(os.path.join(OutputFolder,riv_name), "SubId", os.path.join(tempfolder,'riv_attri.shp'), "SubId")
-        arcpy.DeleteField_management(os.path.join(OutputFolder,riv_name),
-            ["SubId_1", "Id","nsubid2", "nsubid","ndownsubid","Old_SubId","Old_DowSub","Join_Count","TARGET_FID","Id","SubID_Oldr","HRU_ID_N_1","HRU_ID_N_2","facters",'centroid_x','centroid_y']
-        )
+        if len(riv_pd) > 0:
+            riv_pd.drop(columns=['centroid_x','centroid_y'])
+            riv_pd.spatial.to_featureclass(location=os.path.join(tempfolder,'riv_attri.shp'),overwrite=True,sanitize_columns=False)
+            arcpy.Dissolve_management(os.path.join(tempfolder,'riv_attri.shp'), os.path.join(OutputFolder,riv_name), ["SubId"])
+            arcpy.JoinField_management(os.path.join(OutputFolder,riv_name), "SubId", os.path.join(tempfolder,'riv_attri.shp'), "SubId")
+            arcpy.DeleteField_management(os.path.join(OutputFolder,riv_name),
+                ["SubId_1", "Id","nsubid2", "nsubid","ndownsubid","Old_SubId","Old_DowSub","Join_Count","TARGET_FID","Id","SubID_Oldr","HRU_ID_N_1","HRU_ID_N_2","facters",'centroid_x','centroid_y']
+            )
 
     # if "finalcat_info" in cat_name:
     #     create_geo_jason_file(os.path.join(OutputFolder,cat_name))

@@ -269,13 +269,15 @@ def Select_Routing_product_based_SubId_arcgis(
 
         sl_con_lakes = pd.DataFrame.spatial.from_featureclass(Path_Con_Lake_ply)
         sl_con_lakes = sl_con_lakes.loc[sl_con_lakes['Hylak_id'].isin(Connect_Lakeids)]
-        sl_con_lakes.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_Con_Lake_ply)),overwrite=True,sanitize_columns=False)
+        if len(sl_con_lakes) > 0:
+            sl_con_lakes.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_Con_Lake_ply)),overwrite=True,sanitize_columns=False)
 
 
     if len(NonCL_Lakeids) > 0 and Path_NonCon_Lake_ply != "#":
         sl_non_con_lakes = pd.DataFrame.spatial.from_featureclass(Path_NonCon_Lake_ply)
         sl_non_con_lakes = sl_non_con_lakes.loc[sl_non_con_lakes['Hylak_id'].isin(NonCL_Lakeids)]
-        sl_non_con_lakes.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply)),overwrite=True,sanitize_columns=False)
+        if len(sl_non_con_lakes) > 0:
+            sl_non_con_lakes.spatial.to_featureclass(location=os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply)),overwrite=True,sanitize_columns=False)
 
     sl_gauge_info = cat_ply_select.loc[cat_ply_select[Gauge_col_Name] > 0]
     sl_gauge_nm = np.unique(sl_gauge_info["Obs_NM"].values)
