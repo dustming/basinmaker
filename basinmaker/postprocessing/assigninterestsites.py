@@ -106,6 +106,7 @@ def define_interest_sites(
     lake["SubId"] = lake["Lake_Outlet"]
     lake = lake.drop(columns='Lake_Outlet')
     poi_subs = non_lake.append(lake)
+    poi_subs = poi_subs.reset_index()
 
     if Path_obs_gauge_point != "#":
         exist_poi = geopandas.read_file(Path_obs_gauge_point)
@@ -113,12 +114,13 @@ def define_interest_sites(
     else:
         exist_poi = poi_subs[["Obs_NM","geometry"]].copy(deep=True)
 
-    for index, row in poi_subs.iterrows():
+    for index in poi_subs.index:
 
-        trg_SubId = row["SubId"]
-        SRC_obs_in = row["SRC_obs"]
-        Obs_NM_in =  row["Obs_NM"]
-        DA_Obs_in =  row["DA_Obs"]
+        trg_SubId = poi_subs.loc[index,"SubId"]
+        SRC_obs_in = poi_subs.loc[index,"SRC_obs"]
+        Obs_NM_in =  poi_subs.loc[index,"Obs_NM"]
+        DA_Obs_in =  poi_subs.loc[index,"DA_Obs"]
+        row = poi_subs[poi_subs.index == index]
 
         trg_sub_info = finalriv_infoply[finalriv_infoply["SubId"] == trg_SubId].copy(deep=True)
         Cur_SRC_obs  =  trg_sub_info.loc[finalriv_infoply["SubId"] == trg_SubId,"SRC_obs"].values[0]
@@ -167,7 +169,6 @@ def define_interest_sites(
                 DAerror_in = finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,"DrainArea"]/1000/1000/DA_Obs_in
                 finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,"DA_error"] = DAerror_in
             exist_poi = exist_poi.append(row[["Obs_NM","geometry"]])
-
             print("Add the POI : ",Obs_NM_in," into the routing product ")
 
         else:
@@ -190,7 +191,6 @@ def define_interest_sites(
     finalriv_infoply.to_file(os.path.join(OutputFolder,os.path.basename(Path_final_riv_ply)))
 
     cat_table = finalriv_infoply.drop(columns="geometry")
-
     exist_poi = exist_poi.merge(cat_table,on='Obs_NM',how='left')
     exist_poi = exist_poi[["geometry",'DA_Obs','SRC_obs','Obs_NM','SubId','DrainArea']].copy(deep=True)
 

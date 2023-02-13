@@ -91,7 +91,7 @@ def combine_catchments_covered_by_the_same_lake_purepy(
             if 'finalcat_info_riv' in file:
                 Path_final_cat_riv = os.path.join(Routing_Product_Folder, file)
 
-    if Path_Catchment_Polygon == '#' or  Path_River_Polyline =='#':
+    if Path_Catchment_Polygon == '#':
         print("Invalid routing product folder ")
 
 
