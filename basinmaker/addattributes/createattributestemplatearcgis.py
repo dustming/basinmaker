@@ -174,11 +174,11 @@ def create_catchments_attributes_template_table(
     final_pourpoints["SubId"] = final_pourpoints["grid_code"].astype(int)
     final_pourpoints = final_pourpoints.merge(routing_info_strs,on='SubId',how='left')
     pourpoints_no_dowsubid = final_pourpoints[final_pourpoints['DowSubId'].isnull()]
-
     pourpoints_no_dowsubid.spatial.to_featureclass(location=os.path.join(work_folder,"arcgis.gdb","final_pp_no_downsubid"),overwrite=True,sanitize_columns=False)
     arcpy.analysis.Buffer(in_features = "final_pp_no_downsubid", out_feature_class = "final_pp_no_downsubid_bf",buffer_distance_or_field = str(2.5*cellSize) + "  Meters",method="PLANAR")
     ZonalStatisticsAsTable("final_pp_no_downsubid_bf", "SubId",catchment_without_merging_lakes+"_r" ,
-                                 "routing_table_not_on_river", "NODATA", "ALL")
+                                 "routing_table_not_on_river", "DATA", "ALL")
+
     routing_for_pp_not_on_river = read_table_as_pandas("routing_table_not_on_river",['SubId','MIN','MAX'],work_folder)
     mask = routing_for_pp_not_on_river['SubId'] == routing_for_pp_not_on_river['MIN']
     routing_for_pp_not_on_river['DowSubId2'] = routing_for_pp_not_on_river['SubId']
@@ -187,6 +187,9 @@ def create_catchments_attributes_template_table(
     routing_for_pp_not_on_river.loc[~mask,'DowSubId2'] = routing_for_pp_not_on_river.loc[~mask,'MIN']
     final_pourpoints = final_pourpoints.merge(routing_for_pp_not_on_river,on='SubId',how='left')
     final_pourpoints.loc[final_pourpoints['DowSubId'].isnull(),'DowSubId'] = final_pourpoints.loc[final_pourpoints['DowSubId'].isnull(),'DowSubId2']
+
+    outlet_mask = final_pourpoints['DowSubId'] == final_pourpoints['SubId']
+    final_pourpoints.loc[outlet_mask,'DowSubId'] = -1
 
     final_pourpoints["HyLakeId"] = final_pourpoints["cl_lake_id"]
     final_pourpoints.loc[final_pourpoints['HyLakeId'].isnull(),'HyLakeId'] = final_pourpoints.loc[final_pourpoints['HyLakeId'].isnull(),'ncl_kake_id']
