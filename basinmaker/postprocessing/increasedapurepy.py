@@ -211,6 +211,6 @@ def simplify_routing_structure_by_drainage_area_purepy(
         else:
             outlake_name = 'sl_non_connected_lake.shp'
 
-        Conn_Lakes_ply_not_select.to_file(os.path.join(OutputFolder,os.path.basename(Path_final_riv_ply)))
+        Conn_Lakes_ply_not_select.to_file(os.path.join(OutputFolder,outlake_name))
 
     return
