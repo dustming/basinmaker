@@ -177,14 +177,26 @@ def create_catchments_attributes_template_table(
     pourpoints_no_dowsubid.spatial.to_featureclass(location=os.path.join(work_folder,"arcgis.gdb","final_pp_no_downsubid"),overwrite=True,sanitize_columns=False)
     arcpy.analysis.Buffer(in_features = "final_pp_no_downsubid", out_feature_class = "final_pp_no_downsubid_bf",buffer_distance_or_field = str(2.5*cellSize) + "  Meters",method="PLANAR")
     ZonalStatisticsAsTable("final_pp_no_downsubid_bf", "SubId",catchment_without_merging_lakes+"_r" ,
-                                 "routing_table_not_on_river", "DATA", "ALL")
+                                 "routing_table_not_on_river", "DATA", "ALL",percentile_values = [90,80,70,60,50,40,30,20,10,5,1,0.1,0.01])
 
-    routing_for_pp_not_on_river = read_table_as_pandas("routing_table_not_on_river",['SubId','MIN','MAX'],work_folder)
-    mask = routing_for_pp_not_on_river['SubId'] == routing_for_pp_not_on_river['MIN']
-    routing_for_pp_not_on_river['DowSubId2'] = routing_for_pp_not_on_river['SubId']
-    routing_for_pp_not_on_river['DowSubId2'] = -1
-    routing_for_pp_not_on_river.loc[mask,'DowSubId2'] = routing_for_pp_not_on_river.loc[mask,'MAX']
-    routing_for_pp_not_on_river.loc[~mask,'DowSubId2'] = routing_for_pp_not_on_river.loc[~mask,'MIN']
+    routing_for_pp_not_on_river = read_table_as_pandas("routing_table_not_on_river",['SubId','VARIETY','PCT90','PCT80','PCT70','PCT60','PCT50','PCT40','PCT30','PCT20','PCT10','PCT5','PCT1','PCT0_1','PCT0_01','MIN','MAX'],work_folder)
+    routing_for_pp_not_on_river['DowSubId2'] = -1.2345
+    mask = routing_for_pp_not_on_river['VARIETY'] == 1
+    routing_for_pp_not_on_river.loc[mask,'DowSubId2'] = -1
+    loop_pct = ['PCT90','PCT80','PCT70','PCT60','PCT50','PCT40','PCT30','PCT20','PCT10','PCT5','PCT1','PCT0_1','PCT0_01','MIN','MAX']
+
+    for pct in loop_pct:
+        mask_notprocessed    = routing_for_pp_not_on_river['DowSubId2'] == -1.2345
+        mask_pck = routing_for_pp_not_on_river[pct] != routing_for_pp_not_on_river['SubId']
+        maskfinal = np.logical_and(mask_pck,mask_notprocessed)
+        routing_for_pp_not_on_river.loc[maskfinal,'DowSubId2'] = routing_for_pp_not_on_river.loc[maskfinal,pct]
+
+    not_processed = routing_for_pp_not_on_river[routing_for_pp_not_on_river['DowSubId2'] == -1.2345].copy(deep=True)
+    if len(not_processed) > 0:
+        print(not_processed)
+        print("contact Ming for this error")
+        quit()
+
     final_pourpoints = final_pourpoints.merge(routing_for_pp_not_on_river,on='SubId',how='left')
     final_pourpoints.loc[final_pourpoints['DowSubId'].isnull(),'DowSubId'] = final_pourpoints.loc[final_pourpoints['DowSubId'].isnull(),'DowSubId2']
 
