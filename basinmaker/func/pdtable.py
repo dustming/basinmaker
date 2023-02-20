@@ -155,7 +155,7 @@ def update_non_connected_catchment_info(catinfo):
     catinfo_non_connected = catinfo.loc[catinfo["Lake_Cat"] == 2].copy()
 
     catids_nc = catinfo_non_connected["SubId"].copy()
-
+    max_seg_id = catinfo["Seg_ID"].max()
     catinfo.loc[
         catinfo["SubId"].isin(catids_nc), "RivLength"
     ] = 0.0  ## no reiver length since not connected.
@@ -176,6 +176,9 @@ def update_non_connected_catchment_info(catinfo):
         # catinfo.loc[catinfo["SubId"] == c_subid, "DrainArea"] = DA
 
         if len(d_sub_info) < 1:
+            catinfo.loc[catinfo["SubId"] == c_subid, "Strahler"] = 1
+            catinfo.loc[catinfo["SubId"] == c_subid, "Seg_ID"] = max_seg_id + i + 1
+            catinfo.loc[catinfo["SubId"] == c_subid, "Seg_order"] = 1
             continue
 
         ## add nonconnected lake catchment area to downsubbasin drinage area
@@ -1989,7 +1992,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
                 # if this is not a lake subbasin
                 is_lake = i_seg_info["HyLakeId"].values[iorder] <= 0
 
-                con_area_lake = i_seg_info["BasArea"].values[iorder] < 10 * 1000 * 1000
+                con_area_lake = False #i_seg_info["BasArea"].values[iorder] < 10 * 1000 * 1000
 
             if iorder == 0 and iorder < len(i_seg_info) - 1:
                 # if not havve the same attribute with upstream lake
@@ -1999,7 +2002,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
                 # if this is not a lake subbasin
                 is_lake = i_seg_info["HyLakeId"].values[iorder] <= 0
 
-                con_area_lake = i_seg_info["BasArea"].values[iorder] < 10 * 1000 * 1000
+                con_area_lake = False #i_seg_info["BasArea"].values[iorder] < 10 * 1000 * 1000
 
             if iorder == len(i_seg_info) - 2 and i_seg_info["HyLakeId"].values[iorder] > 0:
                 # if not havve the same attribute with upstream lake
@@ -2014,7 +2017,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
                 # change add lake to downstream info
                 downsubid = i_seg_info["DowSubId"].values[iorder]
 
-                con_area_lake = i_seg_info["BasArea"].values[iorder +1] < 10 * 1000 * 1000
+                con_area_lake = False #i_seg_info["BasArea"].values[iorder +1] < 10 * 1000 * 1000
 
                 if con_area_lake and con_lake_down:
                     finalriv_info.loc[
