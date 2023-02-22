@@ -283,7 +283,7 @@ def pre_process_lake_polygon(path_lakefile_in,alllake,lake_attributes,lake_bound
         arcpy.SpatialReference(int(SptailRef.factoryCode)),
         )
     arcpy.FeatureToLine_management(mask + '_ply', mask + '_line')
-    arcpy.Clip_analysis("lake_proj", mask + '_ply', "lake_clip", "")
+    arcpy.analysis.PairwiseClip("lake_proj", mask + '_ply', "lake_clip", "")
 
     arcpy.analysis.Buffer(in_features = "lake_clip", out_feature_class = "lake_clip_bf",buffer_distance_or_field = str(cellSize*1/4) + "  Meters",method="GEODESIC")
 
