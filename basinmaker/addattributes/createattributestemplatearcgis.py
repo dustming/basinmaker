@@ -226,7 +226,7 @@ def create_catchments_attributes_template_table(
     attri_table['Lake_Cat'] = 0
     attri_table['LakeVol']  = final_pourpoints[lake_attributes[3]].fillna(0)
     attri_table['LakeDepth'] = final_pourpoints[lake_attributes[4]].fillna(0)
-    attri_table['LakeArea'] =final_pourpoints[lake_attributes[2]].fillna(0)
+    attri_table['LakeArea'] =final_pourpoints[lake_attributes[2]].fillna(0)*1000*1000
     attri_table['Laketype'] = final_pourpoints[lake_attributes[1]].fillna(0)
     attri_table.loc[~final_pourpoints['ncl_kake_id'].isnull(),'Lake_Cat'] = 2
     attri_table.loc[~final_pourpoints['cl_lake_id'].isnull(),'Lake_Cat'] = 1
