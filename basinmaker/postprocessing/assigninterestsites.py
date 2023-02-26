@@ -110,9 +110,12 @@ def define_interest_sites(
 
     if Path_obs_gauge_point != "#":
         exist_poi = geopandas.read_file(Path_obs_gauge_point)
-        exist_poi = exist_poi[["Obs_NM","geometry"]].copy(deep=True)
+        exist_poi = exist_poi[["Obs_NM","geometry",'DA_Obs','SRC_obs','DrainArea']].copy(deep=True)
+        cat_table = finalriv_infoply[['Obs_NM','SubId']].copy(deep=True)
+        exist_poi = exist_poi.merge(cat_table,on='Obs_NM',how='left')
+
     else:
-        exist_poi = poi_subs[["Obs_NM","geometry"]].copy(deep=True)
+        exist_poi = poi_subs[["Obs_NM","geometry",'DA_Obs','SRC_obs','DrainArea','SubId']].copy(deep=True)
 
     for index in poi_subs.index:
 
@@ -168,7 +171,7 @@ def define_interest_sites(
             if DA_Obs_in > 0 :
                 DAerror_in = finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,"DrainArea"]/1000/1000/DA_Obs_in
                 finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,"DA_error"] = DAerror_in
-            exist_poi = exist_poi.append(row[["Obs_NM","geometry"]])
+            exist_poi = exist_poi.append(row[["Obs_NM","geometry",'DA_Obs','SRC_obs','DrainArea','SubId']])
             print("Add the POI : ",Obs_NM_in," into the routing product ")
 
         else:
@@ -183,15 +186,15 @@ def define_interest_sites(
             finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,"SRC_obs"] = SRC_obs_in
             finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,"Obs_NM"] = Obs_NM_in
             finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,"Has_POI"] = 1
-            row["Obs_NM"] = Obs_NM_in
-            exist_poi.loc[exist_poi["Obs_NM"] == Cur_Obs_NM ,"Obs_NM"] = Obs_NM_in
-            exist_poi = exist_poi.append(row[["Obs_NM","geometry"]])
+#            row["Obs_NM"] = Obs_NM_in
+#            exist_poi.loc[exist_poi["Obs_NM"] == Cur_Obs_NM ,"Obs_NM"] = Obs_NM_in
+            exist_poi = exist_poi.append(row[["Obs_NM","geometry",'DA_Obs','SRC_obs','DrainArea','SubId']])
             print("Append the POI : ",Obs_NM_in," into the routing product ")
 
     finalriv_infoply.to_file(os.path.join(OutputFolder,os.path.basename(Path_final_riv_ply)))
 
-    cat_table = finalriv_infoply.drop(columns="geometry")
-    exist_poi = exist_poi.merge(cat_table,on='Obs_NM',how='left')
+    # cat_table = finalriv_infoply.drop(columns=["geometry",'DA_Obs','SRC_obs','DrainArea'])
+    # exist_poi = exist_poi.merge(cat_table,on='Obs_NM',how='left')
     exist_poi = exist_poi[["geometry",'DA_Obs','SRC_obs','Obs_NM','SubId','DrainArea']].copy(deep=True)
 
     if Path_obs_gauge_point != "#":
