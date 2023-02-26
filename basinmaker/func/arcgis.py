@@ -279,19 +279,31 @@ def pre_process_lake_polygon(path_lakefile_in,alllake,lake_attributes,lake_bound
 
     arcpy.Project_management(
         path_lakefile_in,
-        "lake_proj",
+        os.path.join(work_folder,"lake_proj.shp"),
         arcpy.SpatialReference(int(SptailRef.factoryCode)),
         )
     arcpy.FeatureToLine_management(mask + '_ply', mask + '_line')
-    arcpy.analysis.PairwiseClip("lake_proj", mask + '_ply', "lake_clip", "")
 
-    arcpy.analysis.Buffer(in_features = "lake_clip", out_feature_class = "lake_clip_bf",buffer_distance_or_field = str(cellSize*1/4) + "  Meters",method="GEODESIC")
+    arcpy.analysis.Buffer(mask + '_ply',os.path.join(work_folder,"mask_ply.shp"), str(-cellSize*0.5) + "  Meters", "FULL", "ROUND", "NONE", None, "PLANAR")
 
-    arcpy.Intersect_analysis(["lake_clip_bf",mask + '_line'], 'lake_inter')
-    inter_lake = pd.DataFrame.spatial.from_featureclass('lake_inter')
-    all_cliped_lakes = pd.DataFrame.spatial.from_featureclass('lake_clip_bf')
-    lakeids_inter = np.unique(inter_lake[lake_attributes[0]].values)
-    select_lake = all_cliped_lakes[~all_cliped_lakes[lake_attributes[0]].isin(lakeids_inter)]
+    arcpy.management.CalculateGeometryAttributes(os.path.join(work_folder,"lake_proj.shp"), "newarea1 AREA", '', "SQUARE_KILOMETERS", None, "SAME_AS_INPUT")
+    arcpy.analysis.PairwiseClip(os.path.join(work_folder,"lake_proj.shp"), os.path.join(work_folder,"mask_ply.shp"), os.path.join(work_folder,"lake_clip.shp"), "")
+
+    arcpy.management.CalculateGeometryAttributes(os.path.join(work_folder,"lake_clip.shp"), "newarea0 AREA", '', "SQUARE_KILOMETERS", None, "SAME_AS_INPUT")
+    arcpy.analysis.Buffer(in_features = os.path.join(work_folder,"lake_clip.shp"), out_feature_class = os.path.join(work_folder,"lake_clip_bf.shp"),buffer_distance_or_field = str(cellSize*1/4) + "  Meters",method="GEODESIC")
+    arcpy.analysis.PairwiseClip(os.path.join(work_folder,"lake_clip_bf.shp"), os.path.join(work_folder,"mask_ply.shp"), os.path.join(work_folder,"lake_clip_bf_clip.shp"), "")
+
+    arcpy.conversion.FeatureClassToGeodatabase(os.path.join(work_folder,"lake_clip_bf_clip.shp"), os.path.join(work_folder,"arcgis.gdb"))
+
+    # arcpy.Intersect_analysis(["lake_clip_bf",mask + '_line'], 'lake_inter')
+    # inter_lake = pd.DataFrame.spatial.from_featureclass('lake_inter')
+    all_cliped_lakes = pd.DataFrame.spatial.from_featureclass('lake_clip_bf_clip')
+    all_cliped_lakes['area_ratio'] = all_cliped_lakes['newarea0']/all_cliped_lakes['newarea1']
+    mask1 = all_cliped_lakes['area_ratio'] < 1.1
+    mask2 = all_cliped_lakes['area_ratio'] > 0.9
+    mask = np.logical_and(mask1,mask2)
+    select_lake = all_cliped_lakes[mask].copy(deep=True)
+
     select_lake.spatial.to_featureclass(location=os.path.join(work_folder,"arcgis.gdb",alllake+"_v"),overwrite=True,sanitize_columns=False)
     arcpy.FeatureToLine_management(alllake+"_v", lake_boundary+"_v","0.001 Meters")
 #    arcpy.Dissolve_management(alllake + '_line', lake_boundary+"_v", [lake_attributes[0]])
@@ -302,9 +314,8 @@ def pre_process_lake_polygon(path_lakefile_in,alllake,lake_attributes,lake_bound
 
     OutRas = Con(IsNull(lake_boundary+"_r"), alllake+"_rt", lake_boundary+"_r")
     OutRas.save(alllake+"_r")
-
-    lake_at_lake_boundary = all_cliped_lakes[all_cliped_lakes[lake_attributes[0]].isin(lakeids_inter)]
-    lake_at_lake_boundary.spatial.to_featureclass(location=os.path.join(work_folder,"lakes_at_lake_watershed_boundary.shp"),overwrite=True,sanitize_columns=False)
+#    lake_at_lake_boundary = all_cliped_lakes[all_cliped_lakes[lake_attributes[0]].isin(lakeids_inter)]
+#    lake_at_lake_boundary.spatial.to_featureclass(location=os.path.join(work_folder,"lakes_at_lake_watershed_boundary.shp"),overwrite=True,sanitize_columns=False)
 #    arcpy.management.Delete(r"'lake_proj';'lake_clip_bf';'lake_clip';'lake_inter'")
     return
 
