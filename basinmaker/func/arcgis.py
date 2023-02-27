@@ -70,6 +70,8 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
     arcpy.DeleteField_management(os.path.join(OutputFolder,cat_name),
         ["SubId_1", "Id","nsubid2", "nsubid","ndownsubid","Old_SubId","Old_DowSub","Join_Count","TARGET_FID","Id","SubID_Oldr","HRU_ID_N_1","HRU_ID_N_2","facters"]
     )
+    arcpy.management.CalculateField(os.path.join(tempfolder,'updateattri.shp'), "NID", "1", "PYTHON3", '', "TEXT", "NO_ENFORCE_DOMAINS")
+    arcpy.analysis.PairwiseDissolve(os.path.join(tempfolder,'updateattri.shp'), os.path.join(OutputFolder,'outline.shp'), "NID", None, "SINGLE_PART", '')
 
 
     if riv_name != '#':
