@@ -343,9 +343,9 @@ def create_catchments_attributes_template_table(
     cat_ply_att = cat_ply[['SubId','DA_Obs','SRC_obs','DrainArea','DA_error','Obs_NM']]
     obs_v = obs_v.merge(cat_ply_att,on='SubId',how='left')
     obs_v = obs_v[['SubId','DA_Obs','SRC_obs','DrainArea','DA_error','Obs_NM','SHAPE']]
-    obs_v.spatial.to_featureclass(location=os.path.join(output_folder,"obs_gauges_v1-0.shp"),overwrite=True,sanitize_columns=False)
+    obs_v.spatial.to_featureclass(location=os.path.join(output_folder,"POI_v1-0.shp"),overwrite=True,sanitize_columns=False)
 
-    arcpy.DeleteField_management(os.path.join(output_folder,"obs_gauges_v1-0.shp"),
+    arcpy.DeleteField_management(os.path.join(output_folder,"POI_v1-0.shp"),
                              ["Id"])
     arcpy.DeleteField_management(os.path.join(output_folder,catchment_without_merging_lakes+"_v1-0"),
                              ["Id"])
