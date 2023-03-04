@@ -183,7 +183,7 @@ def Select_Routing_product_based_SubId_arcgis(
                 Path_Con_Lake_ply = os.path.join(Routing_Product_Folder, file)
             if 'sl_non_connected_lake' in file:
                 Path_NonCon_Lake_ply = os.path.join(Routing_Product_Folder, file)
-            if 'obs_gauges' in file:
+            if 'obs_gauges' in file or 'poi' in file:
                 Path_obs_gauge_point = os.path.join(Routing_Product_Folder, file)
             if 'finalcat_info' in file:
                 Path_final_cat_ply = os.path.join(Routing_Product_Folder, file)

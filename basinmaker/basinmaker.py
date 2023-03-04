@@ -252,7 +252,7 @@ class postprocess:
         sl_non_connected_lake.shp                       : shapefile
             the GIS layer containing the lake polygons of lakes that are not connected
             by the river_without_merging_lakes.shp
-        obs_gauges                                      : shapefile
+        poi                                            : shapefile
             It is the point shapefile that represent the point of interest
             after snap to river network.
 
@@ -362,7 +362,7 @@ class postprocess:
         sl_non_connected_lake.shp                       : shapefile
             the GIS layer containing the lake polygons of lakes that are not connected
             by the river_without_merging_lakes.shp
-        obs_gauges                                      : shapefile
+        poi                                      : shapefile
             It is the point shapefile that represent the point of interest
             after snap to river network.
 
@@ -495,7 +495,7 @@ class postprocess:
         sl_non_connected_lake.shp                       : shapefile
             the GIS layer containing the lake polygons of lakes that are not connected
             by the river_without_merging_lakes.shp
-        obs_gauges                                      : shapefile
+        poi                                      : shapefile
             It is the point shapefile that represent the point of interest
             after snap to river network.
 
@@ -1227,7 +1227,7 @@ class delineate:
         sl_non_connected_lake.shp                       : shapefile
             the GIS layer containing the lake polygons of lakes that are not connected
             by the river_without_merging_lakes.shp
-        obs_gauges                                      : shapefile
+        poi                                       : shapefile
             It is the point shapefile that represent the point of interest
             after snap to river network.
 

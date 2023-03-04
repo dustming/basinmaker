@@ -333,7 +333,7 @@ def create_catchments_attributes_template_table(
     riv_line.spatial.to_featureclass(location=os.path.join(output_folder,river_without_merging_lakes+"_v1-0"),overwrite=True,sanitize_columns=False)
 
     arcpy.FeatureClassToFeatureClass_conversion("sl_connected_lake_v", output_folder,"sl_connected_lake_v1-0.shp")
-    arcpy.FeatureClassToFeatureClass_conversion("sl_nonconnect_lake_v",output_folder,"sl_nonconnect_lake_v1-0.shp")
+    arcpy.FeatureClassToFeatureClass_conversion("sl_nonconnect_lake_v",output_folder,"sl_non_connected_lake_v1-0.shp")
 
     obs_v = pd.DataFrame.spatial.from_featureclass("obs_v")
     obs_v['obsid'] = obs_v['grid_code']
@@ -343,9 +343,9 @@ def create_catchments_attributes_template_table(
     cat_ply_att = cat_ply[['SubId','DA_Obs','SRC_obs','DrainArea','DA_error','Obs_NM']]
     obs_v = obs_v.merge(cat_ply_att,on='SubId',how='left')
     obs_v = obs_v[['SubId','DA_Obs','SRC_obs','DrainArea','DA_error','Obs_NM','SHAPE']]
-    obs_v.spatial.to_featureclass(location=os.path.join(output_folder,"POI_v1-0.shp"),overwrite=True,sanitize_columns=False)
+    obs_v.spatial.to_featureclass(location=os.path.join(output_folder,"poi_v1-0.shp"),overwrite=True,sanitize_columns=False)
 
-    arcpy.DeleteField_management(os.path.join(output_folder,"POI_v1-0.shp"),
+    arcpy.DeleteField_management(os.path.join(output_folder,"poi_v1-0.shp"),
                              ["Id"])
     arcpy.DeleteField_management(os.path.join(output_folder,catchment_without_merging_lakes+"_v1-0"),
                              ["Id"])

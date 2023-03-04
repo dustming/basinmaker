@@ -9,9 +9,9 @@ from joblib import Parallel, delayed
 
 
 def combine_catchments_covered_by_the_same_lake_qgis(
-    # OutputFolder, 
-    # Path_final_rivply="#", 
-    # Path_final_riv="#", 
+    # OutputFolder,
+    # Path_final_rivply="#",
+    # Path_final_riv="#",
     Routing_Product_Folder = '#',
     qgis_prefix_path="#"
 ):
@@ -82,7 +82,7 @@ def combine_catchments_covered_by_the_same_lake_qgis(
     Path_final_cat_ply="#"
     Path_final_cat_riv="#"
 
-    ##define input files from routing prodcut 
+    ##define input files from routing prodcut
     for file in os.listdir(Routing_Product_Folder):
         if file.endswith(".shp"):
             if 'catchment_without_merging_lakes' in file:
@@ -93,12 +93,12 @@ def combine_catchments_covered_by_the_same_lake_qgis(
                 Path_Con_Lake_ply = os.path.join(Routing_Product_Folder, file)
             if 'sl_non_connected_lake' in file:
                 Path_NonCon_Lake_ply = os.path.join(Routing_Product_Folder, file)
-            if 'obs_gauges' in file:
+            if 'obs_gauges' in file or 'poi' in file:
                 Path_obs_gauge_point = os.path.join(Routing_Product_Folder, file)
             if 'finalcat_info' in file:
                 Path_final_cat_ply = os.path.join(Routing_Product_Folder, file)
             if 'finalcat_info_riv' in file:
-                Path_final_cat_riv = os.path.join(Routing_Product_Folder, file)                
+                Path_final_cat_riv = os.path.join(Routing_Product_Folder, file)
 
     if Path_Catchment_Polygon == '#' or  Path_River_Polyline =='#':
         print("Invalid routing product folder ")
@@ -151,14 +151,14 @@ def combine_catchments_covered_by_the_same_lake_qgis(
     mapoldnew_info = change_attribute_values_for_catchments_covered_by_same_lake(
         finalrivply_info
     )
-    
+
     mapoldnew_info.loc[mapoldnew_info['Lake_Cat'] > 0,'RivLength'] = -1.2345
     mapoldnew_info.loc[mapoldnew_info['Lake_Cat'] > 0,'RivSlope'] = -1.2345
     mapoldnew_info.loc[mapoldnew_info['Lake_Cat'] > 0,'FloodP_n'] = -1.2345
     mapoldnew_info.loc[mapoldnew_info['Lake_Cat'] > 0,'Ch_n'] = -1.2345
     mapoldnew_info.loc[mapoldnew_info['Lake_Cat'] > 0,'Max_DEM'] = -1.2345
     mapoldnew_info.loc[mapoldnew_info['Lake_Cat'] > 0,'Min_DEM'] = -1.2345
-    
+
     if 'DA_Chn_L' in mapoldnew_info.columns:
         mapoldnew_info.loc[mapoldnew_info['Lake_Cat'] > 0,'DA_Chn_L'] = -1.2345
         mapoldnew_info.loc[mapoldnew_info['Lake_Cat'] > 0,'DA_Chn_Slp'] = -1.2345
@@ -168,8 +168,8 @@ def combine_catchments_covered_by_the_same_lake_qgis(
 
     # copy new attribute table to shpfile
     all_subids = finalrivply_info['SubId'].values
-    
+
     copy_data_and_dissolve(all_subids,tempfolder,processing,Path_Temp_final_rviply,Path_Temp_final_rvi,
         mapoldnew_info,COLUMN_NAMES_CONSTANT_CLEAN,OutputFolder,Path_Catchment_Polygon,context)
-        
-    return 
+
+    return

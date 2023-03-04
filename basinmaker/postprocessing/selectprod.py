@@ -203,7 +203,7 @@ def Select_Routing_product_based_SubId_qgis(
     Path_final_cat_ply="#"
     Path_final_cat_riv="#"
 
-    ##define input files from routing prodcut 
+    ##define input files from routing prodcut
     for file in os.listdir(Routing_Product_Folder):
         if file.endswith(".shp"):
             if 'catchment_without_merging_lakes' in file:
@@ -214,16 +214,16 @@ def Select_Routing_product_based_SubId_qgis(
                 Path_Con_Lake_ply = os.path.join(Routing_Product_Folder, file)
             if 'sl_non_connected_lake' in file:
                 Path_NonCon_Lake_ply = os.path.join(Routing_Product_Folder, file)
-            if 'obs_gauges' in file:
+            if 'obs_gauges' in file or 'poi' in file:
                 Path_obs_gauge_point = os.path.join(Routing_Product_Folder, file)
             if 'finalcat_info' in file:
                 Path_final_cat_ply = os.path.join(Routing_Product_Folder, file)
             if 'finalcat_info_riv' in file:
-                Path_final_cat_riv = os.path.join(Routing_Product_Folder, file)                
+                Path_final_cat_riv = os.path.join(Routing_Product_Folder, file)
 
     if Path_Catchment_Polygon == '#' or  Path_River_Polyline =='#':
         print("Invalid routing product folder ")
-    
+
     sub_colnm = "SubId"
     down_colnm = "DowSubId"
     ##3
@@ -236,15 +236,15 @@ def Select_Routing_product_based_SubId_qgis(
     Gauge_col_Name = "Has_POI"
     if "Has_POI" not in hyshdinfo2.columns:
         Gauge_col_Name = "Has_Gauge"
-        
+
     if not os.path.exists(OutputFolder):
         os.makedirs(OutputFolder)
-        
+
     for i_down in range(0,len(mostdownid)):
         ### Loop for each downstream id
         OutHyID = mostdownid[i_down]
         OutHyID2 = mostupstreamid[i_down]
-            
+
         ## find all subid control by this subid
         HydroBasins1 = defcat(hyshdinfo, OutHyID)
         if OutHyID2 > 0:
@@ -328,5 +328,5 @@ def Select_Routing_product_based_SubId_qgis(
             Values=Gauge_NMs,
             Is_str = True,
         )
-    
+
     Qgs.exit()

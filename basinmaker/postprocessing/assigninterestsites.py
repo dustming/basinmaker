@@ -51,7 +51,7 @@ def define_interest_sites(
                 Path_Con_Lake_ply = os.path.join(routing_product_folder, file)
             if 'sl_non_connected_lake' in file:
                 Path_NonCon_Lake_ply = os.path.join(routing_product_folder, file)
-            if 'obs_gauges' in file:
+            if 'obs_gauges' in file or 'poi' in file:
                 Path_obs_gauge_point = os.path.join(routing_product_folder, file)
 
     if Path_Catchment_Polygon == '#' or  Path_River_Polyline =='#':
@@ -200,7 +200,7 @@ def define_interest_sites(
     if Path_obs_gauge_point != "#":
         exist_poi.to_file(os.path.join(OutputFolder,os.path.basename(Path_obs_gauge_point)))
     else:
-        exist_poi.to_file(os.path.join(OutputFolder,"obs_gauges"+"_v1-0"+".shp"))
+        exist_poi.to_file(os.path.join(OutputFolder,"poi"+"_v1-0"+".shp"))
 
 
     if Path_Con_Lake_ply != "#":

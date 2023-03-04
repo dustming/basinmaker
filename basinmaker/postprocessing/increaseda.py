@@ -107,7 +107,7 @@ def simplify_routing_structure_by_drainage_area_qgis(
     Path_final_cat_ply="#"
     Path_final_cat_riv="#"
 
-    ##define input files from routing prodcut 
+    ##define input files from routing prodcut
     for file in os.listdir(Routing_Product_Folder):
         if file.endswith(".shp"):
             if 'catchment_without_merging_lakes' in file:
@@ -118,12 +118,12 @@ def simplify_routing_structure_by_drainage_area_qgis(
                 Path_Con_Lake_ply = os.path.join(Routing_Product_Folder, file)
             if 'sl_non_connected_lake' in file:
                 Path_NonCon_Lake_ply = os.path.join(Routing_Product_Folder, file)
-            if 'obs_gauges' in file:
+            if 'obs_gauges' in file or 'poi' in file:
                 Path_obs_gauge_point = os.path.join(Routing_Product_Folder, file)
             if 'finalcat_info' in file:
                 Path_final_cat_ply = os.path.join(Routing_Product_Folder, file)
             if 'finalcat_info_riv' in file:
-                Path_final_cat_riv = os.path.join(Routing_Product_Folder, file)                
+                Path_final_cat_riv = os.path.join(Routing_Product_Folder, file)
 
     if Path_Catchment_Polygon == '#' or  Path_River_Polyline =='#':
         print("Invalid routing product folder ")
@@ -131,9 +131,9 @@ def simplify_routing_structure_by_drainage_area_qgis(
     Path_final_riv_ply = Path_Catchment_Polygon
     Path_final_riv = Path_River_Polyline
 
-    ## copy obs_gauges to output folder 
+    ## copy obs_gauges to output folder
     for file in os.listdir(Routing_Product_Folder):
-        if 'obs_gauges' in file:
+        if 'obs_gauges' in file or 'poi' in file:
             shutil.copy(os.path.join(Routing_Product_Folder, file), os.path.join(OutputFolder, file))
 
 
@@ -161,7 +161,7 @@ def simplify_routing_structure_by_drainage_area_qgis(
         Conn_Lakes_ply = Dbf_To_Dataframe(Path_Conl_ply).drop_duplicates(
             "Hylak_id", keep="first"
         )
-    else: 
+    else:
         Conn_Lakes_ply = pd.DataFrame(np.full((10,1),-9999),columns=["Hylak_id"])
     # change attribute table
     (
@@ -200,14 +200,14 @@ def simplify_routing_structure_by_drainage_area_qgis(
     outputfolder_subid = OutputFolder
     if not os.path.exists(outputfolder_subid):
         os.makedirs(outputfolder_subid)
-        
+
     all_subids = finalriv_info['SubId'].values
-    
+
     copy_data_and_dissolve(all_subids,tempfolder,processing,Path_Temp_final_rviply,Path_Temp_final_rvi,
         mapoldnew_info,COLUMN_NAMES_CONSTANT_CLEAN,OutputFolder,Path_Catchment_Polygon,context,
         Path_final_rviply,Path_final_riv)
-        
-        
+
+
     # # copy new attribute table to subbasin polyline and polygon
     # Copy_Pddataframe_to_shpfile(
     #     Path_Temp_final_rviply,
@@ -270,7 +270,7 @@ def simplify_routing_structure_by_drainage_area_qgis(
                 Attri_NM="Hylak_id",
                 Values=Conn_To_NonConlakeids,
             )
-                    
+
     # # dissolve subbasin polygon based on new subbasin id
     # Path_out_final_rviply = os.path.join(
     #     outputfolder_subid, os.path.basename(Path_final_riv_ply)
@@ -278,7 +278,7 @@ def simplify_routing_structure_by_drainage_area_qgis(
     # Path_out_final_rvi = os.path.join(
     #     outputfolder_subid, os.path.basename(Path_final_riv)
     # )
-    # 
+    #
     # qgis_vector_dissolve(
     #     processing,
     #     context,
@@ -293,7 +293,7 @@ def simplify_routing_structure_by_drainage_area_qgis(
     #     FIELD=["SubId"],
     #     OUTPUT=Path_out_final_rvi,
     # )
-    # 
+    #
     # # clean attribute table and done
     # Clean_Attribute_Name(Path_out_final_rviply, COLUMN_NAMES_CONSTANT_CLEAN)
     # Clean_Attribute_Name(Path_out_final_rvi, COLUMN_NAMES_CONSTANT_CLEAN)

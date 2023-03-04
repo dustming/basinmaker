@@ -98,7 +98,7 @@ def simplify_routing_structure_by_filter_lakes_qgis(
     context = dataobjects.createContext()
     context.setInvalidGeometryCheck(QgsFeatureRequest.GeometryNoCheck)
 
-    
+
     if not os.path.exists(OutputFolder):
         os.makedirs(OutputFolder)
 
@@ -117,7 +117,7 @@ def simplify_routing_structure_by_filter_lakes_qgis(
     Path_obs_gauge_point="#"
     Path_final_cat_ply="#"
     Path_final_cat_riv="#"
-    ##define input files from routing prodcut 
+    ##define input files from routing prodcut
     for file in os.listdir(Routing_Product_Folder):
         if file.endswith(".shp"):
             if 'catchment_without_merging_lakes' in file:
@@ -128,25 +128,25 @@ def simplify_routing_structure_by_filter_lakes_qgis(
                 Path_Con_Lake_ply = os.path.join(Routing_Product_Folder, file)
             if 'sl_non_connected_lake' in file:
                 Path_NonCon_Lake_ply = os.path.join(Routing_Product_Folder, file)
-            if 'obs_gauges' in file:
+            if 'obs_gauges' in file or 'poi' in file:
                 Path_obs_gauge_point = os.path.join(Routing_Product_Folder, file)
             if 'finalcat_info' in file:
                 Path_final_cat_ply = os.path.join(Routing_Product_Folder, file)
             if 'finalcat_info_riv' in file:
-                Path_final_cat_riv = os.path.join(Routing_Product_Folder, file)                
+                Path_final_cat_riv = os.path.join(Routing_Product_Folder, file)
 
     if Path_Catchment_Polygon == '#' or  Path_River_Polyline =='#':
         print("Invalid routing product folder ")
 
     Path_final_riv_ply = Path_Catchment_Polygon
     Path_final_riv = Path_River_Polyline
-    
-    ## copy obs_gauges to output folder 
+
+    ## copy obs_gauges to output folder
     for file in os.listdir(Routing_Product_Folder):
-        if 'obs_gauges' in file:
+        if 'obs_gauges' in file or 'poi' in file:
             shutil.copy(os.path.join(Routing_Product_Folder, file), os.path.join(OutputFolder, file))
 
-    
+
     ### read attribute table
     finalcat_info = Dbf_To_Dataframe(Path_final_riv_ply)
     finalcat_info = finalcat_info.fillna(-9999)
@@ -226,26 +226,26 @@ def simplify_routing_structure_by_filter_lakes_qgis(
             mapoldnew_info, finalcat_info_temp, Un_Selected_Non_ConnL_info
         )
     )
-    
+
     mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'HyLakeId'] = 0
     mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'Lake_Cat'] = 0
     mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'LakeVol'] = 0
     mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'LakeDepth'] = 0
     mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'LakeArea'] = 0
     mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'Laketype'] = 0
-    
+
     # update topology for new attribute table
     UpdateTopology(mapoldnew_info, UpdateStreamorder=-1)
     mapoldnew_info = update_non_connected_catchment_info(mapoldnew_info)
 
 
     all_subids = finalcat_info_temp['SubId'].values
-    
+
     copy_data_and_dissolve(all_subids,tempfolder,processing,Path_Temp_final_rviply,Path_Temp_final_rvi,
         mapoldnew_info,COLUMN_NAMES_CONSTANT_CLEAN,OutputFolder,Path_Catchment_Polygon,context,
         Path_final_riv_ply,Path_final_riv)
-        
-        
+
+
     # # copy new attribute table to shpfiles
     # Copy_Pddataframe_to_shpfile(
     #     Path_Temp_final_rviply,
@@ -261,7 +261,7 @@ def simplify_routing_structure_by_filter_lakes_qgis(
     #     link_col_nm_df="Old_SubId",
     #     UpdateColNM=["#"],
     # )
-    # 
+    #
     # # disslove line and polygon based on new subid
     # qgis_vector_dissolve(
     #     processing,
@@ -277,7 +277,7 @@ def simplify_routing_structure_by_filter_lakes_qgis(
     #     FIELD=["SubId"],
     #     OUTPUT=os.path.join(OutputFolder, os.path.basename(Path_final_riv_ply)),
     # )
-    # 
+    #
     # # clean attribute table
     # Clean_Attribute_Name(
     #     os.path.join(OutputFolder, os.path.basename(Path_final_riv)),

@@ -123,7 +123,7 @@ def add_attributes_to_catchments(
     sl_non_connected_lake.shp                       : shapefile
         It is the  non connected lake polygon. Connected lakes are lakes
         that are not connected by Path_final_cat_riv or Path_final_riv.
-    obs_gauges                                      : shapefile
+    poi                                             : shapefile
         It is the point shapefile that represent the observation gauge
         after snap to river network.
 

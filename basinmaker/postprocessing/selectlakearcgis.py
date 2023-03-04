@@ -2,8 +2,8 @@ import numpy as np
 import sys
 import os
 import csv
-import tempfile 
-import copy 
+import tempfile
+import copy
 import pandas as pd
 from arcgis.features import GeoAccessor, GeoSeriesAccessor
 import arcpy
@@ -105,7 +105,7 @@ def simplify_routing_structure_by_filter_lakes_arcgis(
     )
     if not os.path.exists(tempfolder):
         os.makedirs(tempfolder)
-        
+
     Path_Catchment_Polygon="#"
     Path_River_Polyline="#"
     Path_Con_Lake_ply="#"
@@ -113,7 +113,7 @@ def simplify_routing_structure_by_filter_lakes_arcgis(
     Path_obs_gauge_point="#"
     Path_final_cat_ply="#"
     Path_final_cat_riv="#"
-    ##define input files from routing prodcut 
+    ##define input files from routing prodcut
     for file in os.listdir(Routing_Product_Folder):
         if file.endswith(".shp"):
             if 'catchment_without_merging_lakes' in file:
@@ -124,22 +124,22 @@ def simplify_routing_structure_by_filter_lakes_arcgis(
                 Path_Con_Lake_ply = os.path.join(Routing_Product_Folder, file)
             if 'sl_non_connected_lake' in file:
                 Path_NonCon_Lake_ply = os.path.join(Routing_Product_Folder, file)
-            if 'obs_gauges' in file:
+            if 'obs_gauges' in file or 'poi' in file:
                 Path_obs_gauge_point = os.path.join(Routing_Product_Folder, file)
             if 'finalcat_info' in file:
                 Path_final_cat_ply = os.path.join(Routing_Product_Folder, file)
             if 'finalcat_info_riv' in file:
-                Path_final_cat_riv = os.path.join(Routing_Product_Folder, file)                
+                Path_final_cat_riv = os.path.join(Routing_Product_Folder, file)
 
     if Path_Catchment_Polygon == '#' or  Path_River_Polyline =='#':
         print("Invalid routing product folder ")
 
     Path_final_riv_ply = Path_Catchment_Polygon
     Path_final_riv = Path_River_Polyline
-    
-    ## copy obs_gauges to output folder 
+
+    ## copy obs_gauges to output folder
     for file in os.listdir(Routing_Product_Folder):
-        if 'obs_gauges' in file:
+        if 'obs_gauges' in file or 'poi' in file:
             shutil.copy(os.path.join(Routing_Product_Folder, file), os.path.join(OutputFolder, file))
 
 
@@ -159,7 +159,7 @@ def simplify_routing_structure_by_filter_lakes_arcgis(
         Thres_Area_Non_Conn_Lakes*1000*1000,
         Selected_Lake_List_in,
     )
-    
+
     ### Extract lake polygons
     if len(Selected_Non_ConnLakes) > 0:
         sl_con_lakes = pd.DataFrame.spatial.from_featureclass(Path_NonCon_Lake_ply)
@@ -173,7 +173,7 @@ def simplify_routing_structure_by_filter_lakes_arcgis(
 
     print(" Obtain selected Lake IDs done")
 
-   
+
     finalcat_ply = pd.DataFrame.spatial.from_featureclass(Path_final_riv_ply)
     # change lake related attribute for un selected connected lake
     # catchment to -1.2345
@@ -181,7 +181,7 @@ def simplify_routing_structure_by_filter_lakes_arcgis(
         finalcat_ply, Selected_ConnLakes
     )
     # remove lake attribute
-        
+
     # Modify attribute table to merge un selected lake catchment if needed
     # change attributes for catchment due to remove of connected lakes
     mapoldnew_info = (
@@ -202,11 +202,11 @@ def simplify_routing_structure_by_filter_lakes_arcgis(
     mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'LakeDepth'] = 0
     mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'LakeArea'] = 0
     mapoldnew_info.loc[mapoldnew_info['HyLakeId'] <= 0,'Laketype'] = 0
-        
+
     # update topology for new attribute table
     mapoldnew_info = UpdateTopology(mapoldnew_info, UpdateStreamorder=-1)
     mapoldnew_info = update_non_connected_catchment_info(mapoldnew_info)
-    
+
     save_modified_attributes_to_outputs(
         mapoldnew_info=mapoldnew_info,
         tempfolder=tempfolder,

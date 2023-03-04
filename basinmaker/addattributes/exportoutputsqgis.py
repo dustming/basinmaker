@@ -81,7 +81,7 @@ def export_files_to_output_folder(
         INPUT=layer_cat,
         OUTPUT="memory:",
     )["OUTPUT"]
-        
+
 
     formular = "y(centroid(transform($geometry,'%s','%s')))" % (
         layer_cat.crs().authid(),
@@ -112,7 +112,7 @@ def export_files_to_output_folder(
         Attri_NM="SubId",
         Values=subinfo[subinfo["SubId"] > 0]["SubId"].values,
     )
-    
+
     change_neg_value_to_null_in_attribute_table(
                  processing,
                  os.path.join(grassdb, output_cat + "withnegv.shp"),
@@ -123,7 +123,7 @@ def export_files_to_output_folder(
                  os.path.join(grassdb, output_riv + "withnegv.shp"),
                  os.path.join(output_folder, output_riv + ".shp")
     )
-    
+
     # Add_centroid_to_feature(
     #     os.path.join(output_folder, output_cat + ".shp"), "centroid_x", "centroid_y"
     # )
@@ -159,7 +159,7 @@ def export_files_to_output_folder(
         Selectfeatureattributes(
             processing,
             Input=os.path.join(grassdb, snapped_obs_points + ".shp"),
-            Output=os.path.join(output_folder, "obs_gauges.shp"),
+            Output=os.path.join(output_folder, "poi.shp"),
             Attri_NM=obs_attributes[1],
             Values=subinfo.loc[subinfo["Has_POI"] > 0]["Obs_NM"].values,
             Is_str = True,
