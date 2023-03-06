@@ -337,6 +337,10 @@ def create_catchments_attributes_template_table(
 
     obs_v = pd.DataFrame.spatial.from_featureclass("obs_v")
     obs_v['obsid'] = obs_v['grid_code']
+    obs_v2 = pd.DataFrame.spatial.from_featureclass("obs_clip")
+    obs_v2['obsid'] = obs_v2['Obs_ID']
+    obs_v_missing = obs_v2[~obs_v2['obsid'].isin(final_pourpoints['obsid'].values)].copy(deep=True)
+
     final_pourpoints_2 = final_pourpoints[['obsid','SubId']]
     obs_v = obs_v.merge(final_pourpoints_2,on='obsid',how='left')
     obs_v = obs_v[['SubId','SHAPE']]
@@ -344,6 +348,8 @@ def create_catchments_attributes_template_table(
     obs_v = obs_v.merge(cat_ply_att,on='SubId',how='left')
     obs_v = obs_v[['SubId','DA_Obs','SRC_obs','DrainArea','DA_error','Obs_NM','SHAPE']]
     obs_v.spatial.to_featureclass(location=os.path.join(output_folder,"poi_v1-0.shp"),overwrite=True,sanitize_columns=False)
+    if len(obs_v_missing) > 0:
+        obs_v_missing.spatial.to_featureclass(location=os.path.join(output_folder,"poi_missing.shp"),overwrite=True,sanitize_columns=False)
 
     arcpy.DeleteField_management(os.path.join(output_folder,"poi_v1-0.shp"),
                              ["Id"])
