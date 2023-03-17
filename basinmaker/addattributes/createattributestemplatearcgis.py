@@ -307,6 +307,8 @@ def create_catchments_attributes_template_table(
     riv_landuse['SubId'] = riv_landuse['Value']
     riv_landuse = riv_landuse.drop(columns=['MEAN','Value'])
     attri_table = attri_table.merge(riv_landuse,on='SubId',how='left')
+
+    attri_table = attri_table.drop_duplicates(subset=['SubId'], keep='first')
     attri_table = streamorderanddrainagearea(attri_table)
     attri_table = calculate_bkf_width_depth(attri_table)
 
@@ -323,6 +325,7 @@ def create_catchments_attributes_template_table(
     cat_ply = cat_ply.fillna(-1.2345)
     cat_ply['Obs_NM'] = cat_ply['Obs_NM'].astype('str')
     cat_ply['SRC_obs'] = cat_ply['SRC_obs'].astype('str')
+    cat_ply = cat_ply.drop_duplicates(subset=['SubId'], keep='first')
     cat_ply.spatial.to_featureclass(location=os.path.join(output_folder,catchment_without_merging_lakes+"_v1-0"),overwrite=True,sanitize_columns=False)
 
     riv_line= riv_line[['SubId','SHAPE']]
@@ -330,6 +333,7 @@ def create_catchments_attributes_template_table(
     riv_line = riv_line.fillna(-1.2345)
     riv_line['Obs_NM'] = riv_line['Obs_NM'].astype('str')
     riv_line['SRC_obs'] = riv_line['SRC_obs'].astype('str')
+    riv_line = riv_line.drop_duplicates(subset=['SubId'], keep='first')
     riv_line.spatial.to_featureclass(location=os.path.join(output_folder,river_without_merging_lakes+"_v1-0"),overwrite=True,sanitize_columns=False)
 
     arcpy.FeatureClassToFeatureClass_conversion("sl_connected_lake_v", output_folder,"sl_connected_lake_v1-0.shp")
