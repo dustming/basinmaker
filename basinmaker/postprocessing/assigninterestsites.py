@@ -214,6 +214,7 @@ def define_interest_sites(
     if Path_River_Polyline != "#":
         riv = geopandas.read_file(Path_River_Polyline)
         riv = riv[["SubId","geometry"]]
+        cat_table = finalriv_infoply.drop(columns=['geometry'])
         riv = riv.merge(cat_table,on='SubId',how='left')
         riv.to_file(os.path.join(OutputFolder,os.path.basename(Path_River_Polyline)))
 
