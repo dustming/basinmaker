@@ -117,6 +117,11 @@ def Select_Routing_product_based_SubId_purepy(
 
     ##3
 
+    if Path_sec_down_subinfo != "#":
+        sec_down_subinfo = pd.read_csv(Path_sec_down_subinfo)
+    else:
+        sec_down_subinfo = []
+
     cat_ply = geopandas.read_file(Path_Catchment_Polygon)
 
 
@@ -130,7 +135,7 @@ def Select_Routing_product_based_SubId_purepy(
         os.makedirs(OutputFolder)
 
 
-    HydroBasins_All,cat_ply = return_extracted_subids(cat_ply,mostdownid,mostupstreamid,Path_sec_down_subinfo)
+    HydroBasins_All,cat_ply = return_extracted_subids(cat_ply,mostdownid,mostupstreamid,sec_down_subinfo)
 
     ####
     Outputfilename_cat = os.path.join(

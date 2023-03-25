@@ -37,17 +37,11 @@ def update_selected_subid_using_sec_downsubid(sec_down_subinfo,HydroBasins_All):
         for subid in missing_subid_in_sec_table['SubId'].values:
             print(subid)
 
-def return_extracted_subids(cat_ply,mostdownid,mostupstreamid,Path_sec_down_subinfo):
+def return_extracted_subids(cat_ply,mostdownid,mostupstreamid,sec_down_subinfo):
 
     # flags for sec down subid
     has_sec_downsub = False
     update_downsubids_using_sec_downsubid = False
-
-    if Path_sec_down_subinfo != "#":
-        sec_down_subinfo = pd.read_csv(Path_sec_down_subinfo)
-        has_sec_downsub = True
-    else:
-        sec_down_subinfo = []
 
     hyshdinfo = cat_ply[['SubId', 'DowSubId']].astype("int32").values
 
@@ -56,7 +50,7 @@ def return_extracted_subids(cat_ply,mostdownid,mostupstreamid,Path_sec_down_subi
         ### Loop for each downstream id
         tar_subid = mostdownid[i_down]
 
-        upstream_subs = return_subids_drainage_to_subid(tar_subid,hyshdinfo,has_sec_downsub,sec_down_subinfo)
+        upstream_subs,cat_ply = return_subids_drainage_to_subid(tar_subid,hyshdinfo,sec_down_subinfo,cat_ply)
 
         if i_down == 0:
             selected_subs = upstream_subs
@@ -75,7 +69,7 @@ def return_extracted_subids(cat_ply,mostdownid,mostupstreamid,Path_sec_down_subi
         if tar_subid < 0:
             continue
 
-        upstream_subs = return_subids_drainage_to_subid(tar_subid,hyshdinfo,has_sec_downsub,sec_down_subinfo)
+        upstream_subs,cat_ply = return_subids_drainage_to_subid(tar_subid,hyshdinfo,sec_down_subinfo,cat_ply)
 
         if i_up == 0:
             remove_subs = upstream_subs
@@ -95,16 +89,16 @@ def return_extracted_subids(cat_ply,mostdownid,mostupstreamid,Path_sec_down_subi
 
 
 
-def return_subids_drainage_to_subid(tar_subid,hyshdinfo,has_sec_downsub,sec_down_subinfo):
+def return_subids_drainage_to_subid(tar_subid,hyshdinfo,sec_down_subinfo,cat_ply):
 
     ## find all subid control by this subid
     upstream_subs = defcat(hyshdinfo, tar_subid)
 
-    #check if has sencondary down subid
-    # if has_sec_downsub:
-    #     selected_subs_idown,update_downsubids_using_sec_downsubid = update_selected_subid_using_sec_downsubid(sec_down_subinfo,selected_subs_idown)
+    # check if has sencondary down subid
+    # if len(sec_down_subinfo) > 0:
+    #     upstream_subs,update_downsubids_using_sec_downsubid = update_selected_subid_using_sec_downsubid(sec_down_subinfo,upstream_subs)
 
-    return upstream_subs
+    return upstream_subs,cat_ply
 
 def remove_landuse_type_input_based_on_area(landuse_thres,hruinfo,sub_area,Landuse_ID):
 
