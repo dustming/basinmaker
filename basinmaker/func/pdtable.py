@@ -8,6 +8,104 @@ import numbers
 from joblib import Parallel, delayed
 import tempfile
 pd.options.mode.chained_assignment = None
+
+
+def update_selected_subid_using_sec_downsubid(sec_down_subinfo,HydroBasins_All):
+    is_sec_down_subid_in_selected_subid = False
+    is_subid_of_sec_downsubid_in_selected_subid = False
+    update_downsubids_using_sec_downsubid = False
+    sec_down_subid_in_selected_subid = sec_down_subinfo['Sec_DowSubId'].isin(HydroBasins_All).copy(deep=True)
+
+    # check if downsubid in the secondary downsubid list exist in the selected subbasin
+    # if not means the secondary downsubid has no impact on this area
+    # return the input directly
+    is_sec_down_subid_in_selected_subid = len(sec_down_subid_in_selected_subid) > 0
+    sec_down_subinfo_downsub_in_selected = sec_down_subinfo[sec_down_subid_in_selected_subid]
+
+    if not is_sec_down_subid_in_selected_subid:
+        return HydroBasins_All,update_downsubids_using_sec_downsubid
+
+    # check subid of secondary downsub id that are in the selected subids
+    # is in the selected subid or not
+    # if they all inlucded in the selected subid
+    # means the secondary downsubid has no impact on this area
+    # return the input directly
+    sec_subid_in_selected_subid = sec_down_subinfo_downsub_in_selected['SubId'].isin(HydroBasins_All).copy(deep=True)
+    missing_subid_in_sec_table = sec_down_subinfo_downsub_in_selected[~sec_subid_in_selected_subid]
+
+    if len(missing_subid_in_sec_table) > 0:
+        for subid in missing_subid_in_sec_table['SubId'].values:
+            print(subid)
+
+def return_extracted_subids(cat_ply,mostdownid,mostupstreamid,Path_sec_down_subinfo):
+
+    # flags for sec down subid
+    has_sec_downsub = False
+    update_downsubids_using_sec_downsubid = False
+
+    if Path_sec_down_subinfo != "#":
+        sec_down_subinfo = pd.read_csv(Path_sec_down_subinfo)
+        has_sec_downsub = True
+    else:
+        sec_down_subinfo = []
+
+    hyshdinfo = cat_ply[['SubId', 'DowSubId']].astype("int32").values
+
+    ## find all subid control by this subid
+    for i_down in range(0,len(mostdownid)):
+        ### Loop for each downstream id
+        tar_subid = mostdownid[i_down]
+
+        upstream_subs = return_subids_drainage_to_subid(tar_subid,hyshdinfo,has_sec_downsub,sec_down_subinfo)
+
+        if i_down == 0:
+            selected_subs = upstream_subs
+        else:
+            selected_subs = np.concatenate((selected_subs, upstream_subs), axis=0)
+
+    selected_subs = np.unique(selected_subs)
+
+    ## find all subid control by this subid
+    remove_subs = np.empty(0, dtype=int)
+
+    for i_up in range(0,len(mostupstreamid)):
+        ### Loop for each downstream id
+        tar_subid = mostupstreamid[i_up]
+
+        if tar_subid < 0:
+            continue
+
+        upstream_subs = return_subids_drainage_to_subid(tar_subid,hyshdinfo,has_sec_downsub,sec_down_subinfo)
+
+        if i_up == 0:
+            remove_subs = upstream_subs
+        else:
+            remove_subs = np.concatenate((remove_subs, upstream_subs), axis=0)
+
+    if len(remove_subs) > 0:
+        remove_subs = np.unique(remove_subs)
+
+        mask = ~np.in1d(selected_subs, remove_subs)
+
+        selected_subs = selected_subs[mask]
+
+    return selected_subs,cat_ply
+
+
+
+
+
+def return_subids_drainage_to_subid(tar_subid,hyshdinfo,has_sec_downsub,sec_down_subinfo):
+
+    ## find all subid control by this subid
+    upstream_subs = defcat(hyshdinfo, tar_subid)
+
+    #check if has sencondary down subid
+    # if has_sec_downsub:
+    #     selected_subs_idown,update_downsubids_using_sec_downsubid = update_selected_subid_using_sec_downsubid(sec_down_subinfo,selected_subs_idown)
+
+    return upstream_subs
+
 def remove_landuse_type_input_based_on_area(landuse_thres,hruinfo,sub_area,Landuse_ID):
 
     if landuse_thres <= 0:

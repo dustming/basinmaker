@@ -85,6 +85,7 @@ def Select_Routing_product_based_SubId_purepy(
     Path_obs_gauge_point="#"
     Path_final_cat_ply="#"
     Path_final_cat_riv="#"
+    Path_sec_down_subinfo = "#"
 
     ##define input files from routing prodcut
     for file in os.listdir(Routing_Product_Folder):
@@ -103,12 +104,13 @@ def Select_Routing_product_based_SubId_purepy(
                 Path_final_cat_ply = os.path.join(Routing_Product_Folder, file)
             if 'finalcat_info_riv' in file:
                 Path_final_cat_riv = os.path.join(Routing_Product_Folder, file)
+        if file.endswith(".csv"):
+            if 'secondary_downsubid' in file:
+                Path_sec_down_subinfo = os.path.join(Routing_Product_Folder, file)
 
     if Path_Catchment_Polygon == '#' or  Path_River_Polyline =='#':
         print("Invalid routing product folder ")
         return()
-
-
 
     sub_colnm = "SubId"
     down_colnm = "DowSubId"
@@ -117,7 +119,6 @@ def Select_Routing_product_based_SubId_purepy(
 
     cat_ply = geopandas.read_file(Path_Catchment_Polygon)
 
-    hyshdinfo = cat_ply[[sub_colnm, down_colnm]].astype("int32").values
 
     Gauge_col_Name = "Has_POI"
     if "Has_POI" not in cat_ply.columns:
@@ -128,29 +129,10 @@ def Select_Routing_product_based_SubId_purepy(
     if not os.path.exists(OutputFolder):
         os.makedirs(OutputFolder)
 
-    ## find all subid control by this subid
-    for i_down in range(0,len(mostdownid)):
-        ### Loop for each downstream id
-        OutHyID = mostdownid[i_down]
-        OutHyID2 = mostupstreamid[i_down]
 
-        ## find all subid control by this subid
-        HydroBasins1 = defcat(hyshdinfo, OutHyID)
-        if OutHyID2 > 0:
-            HydroBasins2 = defcat(hyshdinfo, OutHyID2)
-            ###  exculde the Ids in HydroBasins2 from HydroBasins1
-            for i in range(len(HydroBasins2)):
-                rows = np.argwhere(HydroBasins1 == HydroBasins2[i])
-                HydroBasins1 = np.delete(HydroBasins1, rows)
-            HydroBasins = HydroBasins1
-        else:
-            HydroBasins = HydroBasins1
+    HydroBasins_All,cat_ply = return_extracted_subids(cat_ply,mostdownid,mostupstreamid,Path_sec_down_subinfo)
 
-        if i_down == 0:
-            HydroBasins_All = HydroBasins
-        else:
-            HydroBasins_All = np.concatenate((HydroBasins_All, HydroBasins), axis=0)
-
+    ####
     Outputfilename_cat = os.path.join(
         OutputFolder, os.path.basename(Path_Catchment_Polygon)
     )
