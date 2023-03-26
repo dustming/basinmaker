@@ -115,7 +115,7 @@ def return_subids_drainage_to_subid(tar_subid,hyshdinfo,sec_down_subinfo,cat_ply
 
     ## find all subid control by this subid
     upstream_subs = defcat(hyshdinfo, tar_subid)
-
+    update_topology = 0
     # check if has sencondary down subid
     if len(sec_down_subinfo) > 0:
         upstream_subs,cat_ply,update_topology = update_selected_subid_using_sec_downsubid(sec_down_subinfo,upstream_subs,cat_ply,hyshdinfo)
