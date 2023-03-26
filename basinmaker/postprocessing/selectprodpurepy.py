@@ -135,7 +135,8 @@ def Select_Routing_product_based_SubId_purepy(
         os.makedirs(OutputFolder)
 
 
-    HydroBasins_All,cat_ply = return_extracted_subids(cat_ply,mostdownid,mostupstreamid,sec_down_subinfo)
+    HydroBasins_All,cat_ply,update_topology = return_extracted_subids(cat_ply,mostdownid,mostupstreamid,sec_down_subinfo)
+
 
     ####
     Outputfilename_cat = os.path.join(
@@ -144,14 +145,17 @@ def Select_Routing_product_based_SubId_purepy(
 
     cat_ply_select = cat_ply.loc[cat_ply['SubId'].isin(HydroBasins_All)]
 
-    cat_ply_select.to_file(Outputfilename_cat)
+    if update_topology:
+        cat_ply_select = UpdateTopology(cat_ply_select,UpdateStreamorder=1, UpdateSubId=-1)
+        cat_ply_select = update_non_connected_catchment_info(cat_ply_select)
 
+    cat_ply_select.to_file(Outputfilename_cat)
     Outputfilename_cat_riv = os.path.join(
         OutputFolder, os.path.basename(Path_River_Polyline)
     )
 
-    cat_riv = geopandas.read_file(Path_River_Polyline)
 
+    cat_riv = geopandas.read_file(Path_River_Polyline)
 
     cat_riv_select = cat_riv.loc[cat_riv['SubId'].isin(HydroBasins_All)]
 

@@ -10,32 +10,51 @@ import tempfile
 pd.options.mode.chained_assignment = None
 
 
-def update_selected_subid_using_sec_downsubid(sec_down_subinfo,HydroBasins_All):
+def update_selected_subid_using_sec_downsubid(sec_down_subinfo,upstream_subs,cat_ply,hyshdinfo):
     is_sec_down_subid_in_selected_subid = False
     is_subid_of_sec_downsubid_in_selected_subid = False
     update_downsubids_using_sec_downsubid = False
-    sec_down_subid_in_selected_subid = sec_down_subinfo['Sec_DowSubId'].isin(HydroBasins_All).copy(deep=True)
+    update_topology = False
+    # identify sec_down_subinfo subbains that downsubid is not in the subid list
+    sec_down_subinfo_mostdown = sec_down_subinfo[~sec_down_subinfo['Sec_DowSubId'].isin(sec_down_subinfo['SubId'].values)]
+    sec_down_subid_in_selected_subid = sec_down_subinfo_mostdown['Sec_DowSubId'].isin(upstream_subs).copy(deep=True)
 
     # check if downsubid in the secondary downsubid list exist in the selected subbasin
     # if not means the secondary downsubid has no impact on this area
     # return the input directly
-    is_sec_down_subid_in_selected_subid = len(sec_down_subid_in_selected_subid) > 0
-    sec_down_subinfo_downsub_in_selected = sec_down_subinfo[sec_down_subid_in_selected_subid]
+    sec_down_subinfo_downsub_in_selected = sec_down_subinfo_mostdown[sec_down_subid_in_selected_subid]
 
-    if not is_sec_down_subid_in_selected_subid:
-        return HydroBasins_All,update_downsubids_using_sec_downsubid
+    if len(sec_down_subinfo_downsub_in_selected) <= 0:
+        return upstream_subs,cat_ply,update_topology
 
     # check subid of secondary downsub id that are in the selected subids
     # is in the selected subid or not
     # if they all inlucded in the selected subid
     # means the secondary downsubid has no impact on this area
     # return the input directly
-    sec_subid_in_selected_subid = sec_down_subinfo_downsub_in_selected['SubId'].isin(HydroBasins_All).copy(deep=True)
-    missing_subid_in_sec_table = sec_down_subinfo_downsub_in_selected[~sec_subid_in_selected_subid]
+    missing_subid_in_sec_table = sec_down_subinfo_downsub_in_selected[~sec_down_subinfo_downsub_in_selected['SubId'].isin(upstream_subs)].copy(deep=True)
 
-    if len(missing_subid_in_sec_table) > 0:
-        for subid in missing_subid_in_sec_table['SubId'].values:
-            print(subid)
+    if len(missing_subid_in_sec_table) <= 0:
+        return upstream_subs,cat_ply,update_topology
+
+    # obtain routing topology for secondary table
+    hyshdinfo_sec = sec_down_subinfo[['SubId', 'Sec_DowSubId']].astype("int32").values
+    for subid_sec in missing_subid_in_sec_table['SubId'].values:
+        #obtain subids in the sec_down_subinfo drainage to this  subid_sec
+        upstream_subs_sec = defcat(hyshdinfo_sec, subid_sec)
+        sec_down_subinfoselect = sec_down_subinfo[sec_down_subinfo['SubId'].isin(upstream_subs_sec)]
+        # update the DownSubId in the cat_ply using using Sec_DowSubId for upstream_subs
+        cat_ply = cat_ply.merge(sec_down_subinfoselect,on='SubId',how='left')
+        mask = cat_ply['SubId'].isin(upstream_subs_sec)
+        cat_ply.loc[mask,'DowSubId'] = cat_ply.loc[mask,'Sec_DowSubId'].values
+        # update the routing topology and get the subbasin drainage to this subid_sec
+        hyshdinfo = cat_ply[['SubId', 'DowSubId']].astype("int32").values
+        upstream_subs_new_sub_sec = defcat(hyshdinfo, subid_sec)
+        # add the new subids into the eixisting upstream subids
+        upstream_subs = np.concatenate((upstream_subs, upstream_subs_new_sub_sec), axis=0)
+        cat_ply = cat_ply.drop(columns='Sec_DowSubId')
+    update_topology = True
+    return upstream_subs,cat_ply,update_topology
 
 def return_extracted_subids(cat_ply,mostdownid,mostupstreamid,sec_down_subinfo):
 
@@ -44,14 +63,14 @@ def return_extracted_subids(cat_ply,mostdownid,mostupstreamid,sec_down_subinfo):
     update_downsubids_using_sec_downsubid = False
 
     hyshdinfo = cat_ply[['SubId', 'DowSubId']].astype("int32").values
-
+    sum_update_topology = 0
     ## find all subid control by this subid
     for i_down in range(0,len(mostdownid)):
         ### Loop for each downstream id
         tar_subid = mostdownid[i_down]
 
-        upstream_subs,cat_ply = return_subids_drainage_to_subid(tar_subid,hyshdinfo,sec_down_subinfo,cat_ply)
-
+        upstream_subs,cat_ply,update_topology = return_subids_drainage_to_subid(tar_subid,hyshdinfo,sec_down_subinfo,cat_ply)
+        sum_update_topology = sum_update_topology + update_topology
         if i_down == 0:
             selected_subs = upstream_subs
         else:
@@ -69,7 +88,7 @@ def return_extracted_subids(cat_ply,mostdownid,mostupstreamid,sec_down_subinfo):
         if tar_subid < 0:
             continue
 
-        upstream_subs,cat_ply = return_subids_drainage_to_subid(tar_subid,hyshdinfo,sec_down_subinfo,cat_ply)
+        upstream_subs,cat_ply,update_topology = return_subids_drainage_to_subid(tar_subid,hyshdinfo,sec_down_subinfo,cat_ply)
 
         if i_up == 0:
             remove_subs = upstream_subs
@@ -82,8 +101,11 @@ def return_extracted_subids(cat_ply,mostdownid,mostupstreamid,sec_down_subinfo):
         mask = ~np.in1d(selected_subs, remove_subs)
 
         selected_subs = selected_subs[mask]
-
-    return selected_subs,cat_ply
+    if sum_update_topology >= 1:
+        update_topology = True
+    else:
+        update_topology = False
+    return selected_subs,cat_ply,update_topology
 
 
 
@@ -95,10 +117,10 @@ def return_subids_drainage_to_subid(tar_subid,hyshdinfo,sec_down_subinfo,cat_ply
     upstream_subs = defcat(hyshdinfo, tar_subid)
 
     # check if has sencondary down subid
-    # if len(sec_down_subinfo) > 0:
-    #     upstream_subs,update_downsubids_using_sec_downsubid = update_selected_subid_using_sec_downsubid(sec_down_subinfo,upstream_subs)
+    if len(sec_down_subinfo) > 0:
+        upstream_subs,cat_ply,update_topology = update_selected_subid_using_sec_downsubid(sec_down_subinfo,upstream_subs,cat_ply,hyshdinfo)
 
-    return upstream_subs,cat_ply
+    return upstream_subs,cat_ply,update_topology
 
 def remove_landuse_type_input_based_on_area(landuse_thres,hruinfo,sub_area,Landuse_ID):
 
