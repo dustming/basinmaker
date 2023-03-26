@@ -64,6 +64,7 @@ def return_extracted_subids(cat_ply,mostdownid,mostupstreamid,sec_down_subinfo):
 
     hyshdinfo = cat_ply[['SubId', 'DowSubId']].astype("int32").values
     sum_update_topology = 0
+    update_topology = 0
     ## find all subid control by this subid
     for i_down in range(0,len(mostdownid)):
         ### Loop for each downstream id
