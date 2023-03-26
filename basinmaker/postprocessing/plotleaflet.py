@@ -54,12 +54,12 @@ def plot_routing_product_with_ipyleaflet(path_to_product_folder,version_number =
     if os.path.exists(path_cllake):
         cllake_map = GeoData(geo_dataframe = cllake,
                             style={'color': '#6E6E6E', 'fillColor': '#0070FF', 'opacity':1, 'weight':1, 'dashArray':'2', 'fillOpacity':1},
-                            name = 'Non connected lakes')
+                            name = 'Connected lakes')
     if os.path.exists(path_ncllake):
         ncllake_map = GeoData(geo_dataframe = ncllake,
                              style={'color': '#6E6E6E', 'fillColor': '#0070FF', 'opacity':0, 'weight':1, 'dashArray':'2', 'fillOpacity':1},
-                             name = 'Connected lakes')
-
+                             name = 'Non connected lakes')
+    
     m.add_layer(sub_nolake_map)
     if len(subcllake) > 0:
         m.add_layer(sub_cllake_map)
