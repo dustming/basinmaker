@@ -186,11 +186,14 @@ def update_non_connected_catchment_info(catinfo):
         #            catinfo.loc[catinfo['SubId'] == d_subid,'DA'] = d_sub_info['DA'].values[0] + DA
 
         while d_sub_info["Lake_Cat"].values[0] == 2:
-
             lc_subid_info = catinfo.loc[catinfo["SubId"] == lc_subid].copy()
             d_subid = lc_subid_info["DowSubId"].values[0]
             d_sub_info = catinfo.loc[catinfo["SubId"] == d_subid].copy()
             if len(d_sub_info) < 1:
+                lc_subid = -1
+                break
+            if lc_subid == d_sub_info['DowSubId'].values[0]:
+                print(lc_subid,d_subid)
                 lc_subid = -1
                 break
             lc_subid = d_subid
@@ -2564,6 +2567,8 @@ def return_non_lake_inflow_segs_and_segs_within_lakes(
     acc_str_cl = np.full((len(riv_lake), 1), np.nan)
     for i in range(0, len(str_id_unique)):
         strid = str_id_unique[i]
+        # print(strid)
+        # print(routing_info.loc[routing_info["SubId"] == strid])
         maxacc = routing_info.loc[routing_info["SubId"] == strid]["MaxAcc_cat"].values[
             0
         ]

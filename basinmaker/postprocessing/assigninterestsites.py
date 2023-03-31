@@ -151,7 +151,7 @@ def define_interest_sites(
 
             mask_cat  = finalriv_infoply["Obs_NM"] == Obs_NM_in
 
-            exist_poi = exist_poi.reset_index()
+            exist_poi = exist_poi.reset_index(drop=True)
 
             mask_point = exist_poi["Obs_NM"] == Obs_NM_in
 
