@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import gdown
 # define function two download routing product for a given gauge
-def Download_Routing_Product_For_One_Gauge(gauge_name,product_name,region='#',subreg = '#'):
+def Download_Routing_Product_For_One_Gauge(product_name,gauge_name = "#",region='#',subreg = '#'):
     if product_name == 'NALRP':
         version = 'v2-1'
         if gauge_name != '#':
