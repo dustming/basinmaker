@@ -328,7 +328,7 @@ def create_geo_jason_file(Input_Polygon_path):
     Names_in = os.path.basename(Input_Polygon_path).split('_')
     n_charc = len(Names_in)
     version  = Names_in[n_charc - 1][0:4]
-    TOLERANCEs = [0.0001,0.0005,0.001,0.005,0.01,0.05]
+    TOLERANCEs = [0.0001,0.005]
 
 
     head_name_cat = "finalcat_info"

@@ -212,6 +212,13 @@ class postprocess:
             A list of lake IDs from in the hydrologic routing network (Column 'HyLakeId').
             Lakes with their lake ID in this list will be kept by the BasinMaker even
             if their area smaller than the lake area threstholds
+        area_thresthold             : float (optional)
+            This parameter sets a subbasin area threshold in square kilometers (km²). 
+            Subbasins with an area below this threshold will be merged with downstream 
+            or upstream subbasins, depending on their location within the river network. 
+            This can be useful for simplifying the river network and reducing computational
+            requirements. The parameter is optional and has a default value of 0.009 km2. 
+            If the parameter is set to 0, no subbasin merging will be performed.
 
         Returns
         -------
@@ -308,9 +315,6 @@ class postprocess:
 
         Parameters
         ----------
-
-        Parameters
-        ----------
         path_output_folder                   : string
             is the folder path that stores generated outputs
         routing_product_folder         : string
@@ -321,7 +325,13 @@ class postprocess:
         minimum_subbasin_drainage_area                 : float
             is a subbasin drainage area thresthold, subbasin with their
             drainage area smaller than this thresthold will be removed.
-
+        area_thresthold             : float (optional)
+            This parameter sets a subbasin area threshold in square kilometers (km²). 
+            Subbasins with an area below this threshold will be merged with downstream 
+            or upstream subbasins, depending on their location within the river network. 
+            This can be useful for simplifying the river network and reducing computational
+            requirements. The parameter is optional and has a default value of 0.009 km2. 
+            If the parameter is set to 0, no subbasin merging will be performed.
 
         Returns
         -------
@@ -393,15 +403,99 @@ class postprocess:
             area_thresthold = area_thresthold,
             gis_platform=gis_platform,
         )
+
     def Add_Point_Of_Interest_Sites_In_Routing_Product(
         self,
         routing_product_folder= '#',
         path_to_points_of_interest_points = '#',
         path_output_folder="#",
         clean_exist_pois = True,
-        gis_platform="qgis",
+        gis_platform="purepy",
         area_thresthold = 10*30*30/1000/1000,
     ):
+        """ The function allows the user to modify point of interest (POI) 
+        related attributes in the routing product. The function is particularly
+        useful when the user wants to add new POI sites, remove existing POI 
+        sites,or modify the location of existing POI sites in the developed 
+        routing products. If the user observes a small subbasin that cannot 
+        be removed by the Decrease_River_Network_Resolution function due 
+        to it representing an unexpected POI, they can use this function to 
+        remove the POI from the routing product and then 
+        apply the Decrease_River_Network_Resolution function.
+
+        Parameters
+        ----------
+        path_output_folder                   : string
+            is the folder path that stores generated outputs
+        routing_product_folder         : string
+            is the folder path where the input hydrologic routing network is stored
+        path_to_points_of_interest_points                : string
+            is the path to the point shapefile that contains the point of 
+            interest (POI) sites. The shapefile must have an attribute table that includes 
+            the following columns:
+              - Obs_NM (string): This column should contain the name or ID of the POI site.
+              - DA_Obs (float): This column should contain the drainage area of the POI site.
+              - SRC_obs (string): This column should contain the source of the POI site.
+        gis_platform                   : string
+            is the parameter indicating which gis platform is used. Currenly, only "purepy" 
+            is allowed for this parameter.
+        clean_exist_pois                : boolean
+            Indicate if user want to remove all existing POI in the input routing product.
+        area_thresthold             : float (optional)
+            This parameter sets a subbasin area threshold in square kilometers (km²). 
+            Subbasins with an area below this threshold will be merged with downstream 
+            or upstream subbasins, depending on their location within the river network. 
+            This can be useful for simplifying the river network and reducing computational
+            requirements. The parameter is optional and has a default value of 0.009 km2. 
+            If the parameter is set to 0, no subbasin merging will be performed.
+
+        Returns
+        -------
+
+        Notes
+        -----
+        This function has no return values, The modified hydrological routing
+        network will be generated in the path_output_folder including following
+        files:
+
+        finalcat_info.shp                     : shapefile
+            The finalized hydrologic routing network. the GIS layer containing
+            subbasin polygons which respect the lake inflow and outflow routing
+            structures. This layer contains all the necessary information for
+            hydrologic routing through the lake-river network.
+        finalcat_info_riv.shp                 : shapefile
+            The finalized hydrologic routing network. the GIS layer containing
+            river network polylines in the routing network.
+        catchment_without_merging_lakes.shp             : shapefile
+            The GIS layer containing subbasin polygons of an incomplete hydrologic
+            routing network. In this incomplete hydrologic routing network subbasin
+            polygons covered by the same lake are not merged into one lake subbasin
+            yet. This incomplete hydrologic routing network is only intended as
+            input to customize the routing network with our BasinMaker GIS toolbox
+            (for example by defining new lake area thresholds and/or a new catchment
+            minimum drainage area threshold)
+        river_without_merging_lakes.shp                 : shapefile
+            The GIS layer containing river polylines of an incomplete hydrologic
+            routing network. In this incomplete hydrologic routing network, the
+            river polylines covered by the same lake are not merged into one river
+            segment yet. This incomplete hydrologic routing network is only intended as
+            input to customize the routing network with our BasinMaker GIS toolbox
+            (for example by defining new lake area thresholds and/or a new catchment
+            minimum drainage area threshold)
+        sl_connected_lake.shp                           : shapefile
+            the GIS layer containing the lake polygons of lakes that are connected
+            by the river_without_merging_lakes.shp
+        sl_non_connected_lake.shp                       : shapefile
+            the GIS layer containing the lake polygons of lakes that are not connected
+            by the river_without_merging_lakes.shp
+        poi                                      : shapefile
+            It is the point shapefile that represent the point of interest
+            after snap to river network.
+
+        Examples
+        -------
+
+        """
         from basinmaker.postprocessing.postprocessingfunctions import (
             add_point_of_interest_sites_in_routing_product_method,
         )
@@ -448,13 +542,8 @@ class postprocess:
             A list of subbasin ID, the subbasin IDs in this list should
             be the most downstream subbasin ID of each interested watershed.
         most_up_stream_subbasin_ids                      : list
-            A list of subbasin ID, the subbasin IDs in this list should be
-            the most upstream subbasin ID of each interested watershed.
-            Value -1 is required to extracting the entire contribute subbains.
-            subbasins between most_down_stream_subbasin_ids[i] and
-            most_up_stream_subbasin_ids[i] are extracted when positive
-            most_up_stream_subbasin_ids[i] is provided. i represent ith time in
-            most_down_stream_subbasin_ids and  most_up_stream_subbasin_ids
+            A list of subbasin ID, the subbasins that drainage to the SubID in this list will be excluded.
+            Value [-1] is required to indicate no upstream subbasin needs to be removed.
 
         Returns
         -------
@@ -620,14 +709,13 @@ class postprocess:
         path_other_polygon_1                 : string (Optional)
             is the path to the other polygon that will be used to define HRU,
             such as elevation band, or aspect.
-        path_other_polygon_2                 : string (Optional)
-            is the path to the other polygon that will be used to define HRU,
-            such as elevation band, or aspect.
         DEM                              : string (optional)
             is the path to a raster elevation dataset, that is used to
             calcuate average apspect, elevation and slope within each HRU.
             if no data is provided, subbasin averaged value will be used for
             each HRU.
+        area_ratio_thresholds                  : list (optional)
+            It is a list of HRU area thresthold for landuse, soil and other_1 layer respectively. In BasinMaker HRU calculation, each layer will firstly be overlaid to the subbasin map. Attributes falling into each subbasin with their area ratios (i.e., the intersected area to the subbasin area) smaller than the defined threshold values will then be dissolved into the largest part. For example, if forest area ratio in a subbasin, say subbasin #10, is 0.05, while we set the area threshold for land cover is 0.1. The forest polygons will then be dissolved to the largest land cover type in subbasin #10. 
         Returns
         -------
 

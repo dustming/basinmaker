@@ -14,17 +14,22 @@ Extract the region of interest
 Filter lakes
 ------------
 
-.. autofunction:: basinmaker.basinmaker.postprocess.Remove_Small_Lakes(path_output_folder,routing_product_folder,gis_platform,connected_lake_area_thresthold = -1,non_connected_lake_area_thresthold = -1,selected_lake_ids=[])
+.. autofunction:: basinmaker.basinmaker.postprocess.Remove_Small_Lakes(path_output_folder,routing_product_folder,gis_platform,connected_lake_area_thresthold = -1,non_connected_lake_area_thresthold = -1,selected_lake_ids=[],area_thresthold = 0.009)
 
 Increase catchment area
 -----------------------
 
-.. autofunction:: basinmaker.basinmaker.postprocess.Decrease_River_Network_Resolution(path_output_folder,routing_product_folder,gis_platform,minimum_subbasin_drainage_area)
+.. autofunction:: basinmaker.basinmaker.postprocess.Decrease_River_Network_Resolution(path_output_folder,routing_product_folder,gis_platform,minimum_subbasin_drainage_area,area_thresthold)
+
+Modify point of interest in the routing product
+-----------------------
+
+.. autofunction:: basinmaker.basinmaker.postprocess.Add_Point_Of_Interest_Sites_In_Routing_Product(path_output_folder,routing_product_folder,gis_platform,clean_exist_pois,area_thresthold)
 
 Generate HRUs
 -------------
 
-.. autofunction:: basinmaker.basinmaker.postprocess.Generate_HRUs(path_output_folder,gis_platform,path_subbasin_polygon,path_landuse_info,path_soil_info,path_veg_info,prjected_epsg_code='EPSG:3573',path_connect_lake_polygon="#",path_non_connect_lake_polygon="#",path_landuse_polygon='#',path_soil_polygon="#",path_vegetation_polygon="#",path_other_polygon_1="#",path_other_polygon_2="#",inmportance_order = [],min_hru_subbasin_area_ratio = 0.0,path_to_dem)
+.. autofunction:: basinmaker.basinmaker.postprocess.Generate_HRUs(path_output_folder,gis_platform,path_subbasin_polygon,path_landuse_info,path_soil_info,path_veg_info,prjected_epsg_code='EPSG:3573',path_connect_lake_polygon="#",path_non_connect_lake_polygon="#",path_landuse_polygon='#',path_soil_polygon="#",path_vegetation_polygon="#",path_other_polygon_1="#",area_ratio_thresholds = [0,0,0],path_to_dem = "#")
 
 Generate Raven input files
 --------------------------

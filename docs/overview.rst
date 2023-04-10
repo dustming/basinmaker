@@ -19,14 +19,31 @@ The only difference between CLs and NCLs is that CLs always drain into an explic
 Routing products from BasinMaker 
 ========
 
- - The North American Lake-River Routing Product v2.1 developed using BasinMaker is available at `here <http://hydrology.uwaterloo.ca/basinmaker/index.html>`_.
- - BasinMaker generated Ontario Lake-River Routing Product v1 is available at `here <https://lake-river-routing-products-uwaterloo.hub.arcgis.com>`_. .
+- The North American Lake-River Routing Product v2.1 developed using BasinMaker is available at `here <http://hydrology.uwaterloo.ca/basinmaker/index.html>`_.
+  
+- BasinMaker generated Ontario Lake-River Routing Product v1 is available at `here <https://lake-river-routing-products-uwaterloo.hub.arcgis.com>`_. .
 
 ========  
 BasinMaker on Google Colab
 ========
  
 A post-processing example via google colab can be found at here `here <https://colab.research.google.com/drive/14OC8l4ZeabOGGi0bL0ZFK1QzTOY8M9yM?usp=sharing>`_. The google colab is an online python notebook dose not require installation. This example will show you how to discretize, simplify, and revise the provided routing product for your purposes. 
+
+====================  
+Version Update Notes
+====================
+We are excited to announce the release of version 3.0.3 of our software, which includes both major and minor updates.
+
+Major updates in version 3.0.3 include:
+=======================================
+
+- Developed BasinMaker delineation functions under the ArcGIS Pro python environment to improve the user experience.
+- Added a new function to the BasinMaker post-processing functions called `Add_Point_Of_Interest_Sites_In_Routing_Product`, which allows users to define the point of interest in the developed routing product.
+
+Minor updates in version 3.0.3 include:
+=======================================
+- Add an new parameter to function `Remove_Small_Lakes` and `Decrease_River_Network_Resolution` to allow users remove tiny subbasins in the routing network.  
+- Fixed the observed bugs in the previous version.
 
 
 ========  
@@ -39,14 +56,8 @@ BasinMaker and the associated river and lake routing product was developed by th
 Citation
 ========  
     
-- Han, M., H. Shen, B. A. Tolson, J. R. Craig, J. Mai, S. Lin, N. B. Basu, F. Awol. 2021. BasinMaker 3.0: a GIS toolbox for distributed watershed delineation of complex lake-river routing networks. Submitted in June 2022 to Environmental Modelling and Software.
-  
-and/or cite the zenodo dataset directly:
-  
-- Ming Han, Hongren Shen, Bryan A. Tolson, & Robert A. Metcalfe. (2022). Ontario Lake-River Routing Product version 1.0 (v1.0) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.6536085
-   
-- Ming Han, Hongren Shen, Bryan A. Tolson, James R. Craig, Juliane Mai, Simon Lin, Nandita Basu, & Frezer Awol. (2020). North American Lake-River Routing Product v 2.1, derived by BasinMaker GIS Toolbox (v2.1) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.4728185
-    
+- Han, M., Shen, H., Tolson, B. A., Craig, J. R., Mai, J., Lin, S. G. M., Basu, N. B., Awol, F. S. (2023). BasinMaker 3.0: A GIS toolbox for distributed watershed delineation of complex lake-river routing networks. Environmental Modelling &#38; Software, 105688. https://doi.org/10.1016/J.ENVSOFT.2023.105688. 
+      
 ========  
 License
 ========  

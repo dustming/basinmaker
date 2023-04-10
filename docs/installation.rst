@@ -1,7 +1,6 @@
-=================
-Installation v3.0.2
-=================
-
+===================
+Installation v3.0.3
+===================
 
 
 Overview
@@ -11,20 +10,20 @@ BasinMaker is a python package work on several existing GIS platforms. So, the i
 
 Two installation modes (light installation and full installation) are available. The light installation will allow user to use BasinMaker to post process an existing routing product, such as the Basinmaker derived North American lake-river routing product. But it cannot be used to delineate a lake-river routing structure from DEM. The combination of BasinMaker light installation and the North American lake-river routing product could generate lake-river routing structures satisfying many user modeling demands. While the full installation of BasinMaker enables users to delineate a new lake-river routing structure from a user specified DEM.
 
-For light installation (recommended unless users know for sure they need to delineate their watershed from scratch from a DEM), only geopandas or ArcGIS pro is needed. The python environment for both geopandas and ArcGIS pro can be easily compiled within the anaconda environment under windows OS environment. The instruction about light installation procedure can be found in :ref:`Light installation`. Note that users can install both the light version and the full version on the same OS system.
+For light installation (recommended unless users know for sure they need to delineate their watershed from scratch from a DEM), only geopandas or ArcGIS pro is needed. The python environment for both geopandas can be easily compiled within the anaconda environment under windows OS environment. The instruction about light installation procedure can be found in :ref:`Light installation`. Note that users can install both the light version and the full version on the same OS system.
 
 Users, who want to use BasinMaker post processing functions without a Windows OS system, could try BasinMaker on Google Colab in :ref:`BasinMaker on Google Colab`
 
-For full installation, both GRASS GIS and QGIS are needed. It is quite a challenge to setup a python environment for QGIS and GRASS together. Here, two procedures are provided for Windows OS systems, respectively. The procedure have been tested on several machines. But We can't guarantee install procedures work on every machin, but if you run into a problem create an issue on the GitHub and time permitting, we will try to help. The instruction for Windows system can be found in :ref:`Full installation`. If you managed to do the full installation on a different operating system, we would be grateful if you could document and share the detailed installation procedure that was successful (email: m43han@uwaterloo.ca).
+For full installation, BasinMaker can work under two python enviroments: the ArcGIS Pro and GRASS/QGIS GIS python enviroments. The instruction to install BasinMaker for each python enviroments are provided at :ref:`Full installation`.It is quite a challenge to setup a python environment for QGIS and GRASS together. Here, two procedures are provided for Windows OS systems, respectively. The procedure have been tested on several machines. But We can't guarantee install procedures work on every machin, but if you run into a problem create an issue on the GitHub and time permitting, we will try to help. If you managed to do the full installation on a different operating system, we would be grateful if you could document and share the detailed installation procedure that was successful (email: m43han@uwaterloo.ca).
 
 
 Updating BasinMaker to v3.0
-==================
+===========================
 For existing users of v2.0 who want to update BasinMaker to the version v3.0.0. Users should simply reinstall BasinMaker 3.0 to a new working environment (e.g., called 'Basinmaker3' perhaps).
 
 
 BasinMaker on Google Colab
-==================
+==========================
 
 A post-processing example via google colab (no installation on your local machine necessary!) can be found at here `here <https://colab.research.google.com/drive/14OC8l4ZeabOGGi0bL0ZFK1QzTOY8M9yM?usp=sharing>`_. The google colab is an online python notebook dose not require installation. This example will show you how to discretize, simplify, and revise the provided routing product for your purposes.
 
@@ -33,7 +32,7 @@ Light installation
 ==================
 
 Geopandas with anaconda
-------------------
+-----------------------
 
 #. Install anaconda
 
@@ -70,8 +69,6 @@ Geopandas with anaconda
 
 #. Install BasinMaker
 
-    stable:
-
     .. code-block::
 
       python -m pip install basinmaker
@@ -100,6 +97,66 @@ Geopandas with anaconda
 
 Full installation
 ==================
+
+    The BasinMaker watershed delineation mode can be used under both ArcGIS Pro and GRASS GIS environments. We recommend using BasinMaker under the ArcGIS Pro environment. However, installation instructions for both Python environments are provided in the following two sections.
+
+
+ArcGIS Pro in Windows
+-------------------------
+
+#. Install ArcGIS Pro
+
+    BasinMaker has been tested with ArcGIS Pro version 3.0.3. To use the software, please ensure that you have installed this version of ArcGIS Pro. If you need assistance with installing ArcGIS Pro, please contact your IT department for detailed instructions.
+
+#. Setup the python environment for BasinMaker in ArcGIS Pro
+
+    Below are the key steps to create an ArcGIS Python environment. For detailed instructions, please refer to this `link <https://pro.arcgis.com/en/pro-app/2.9/arcpy/get-started/work-with-python-environments.htm>`_ .
+
+    * Open ArcGIS Pro and click on the "Settings" icon in the upper left corner of the ArcGIS Pro window.
+    * Click the "Package Manager" tab. And then click the "Manage Environments" button in the upper right corner of the window.
+    * Clone the "ArcGIS Pro" environment and name it <any_name_for_env>. The clone process will take a few minutes.
+    * Select and active the newly created environment and restart ArcGIS Pro for the changes to take effect  
+
+#. Install BasinMaker in ArcGIS Pro
+
+    * Open the ArcGIS Pro Python command prompt. To open the ArcGIS Pro Python command prompt, navigate to the Windows program directory: Programs > ArcGIS > Python Command Prompt.
+    * Install BasinMaker and related pacakges using the following command:
+  
+    .. code-block::
+
+      > python -m pip install basinmaker
+
+
+#. Install dependent packages
+
+    .. code-block::
+
+      > python -m pip install pytest simpledbf netCDF4 joblib jupyter requests wget gdown 
+
+#. Validate the installation with the package of test files.
+
+    * Please download the `test data and script <https://github.com/dustming/RoutingTool/wiki/Files/test_arcgis_full.zip>`_ and unzip it to a folder, the path of this folder will refer as path_test_data in following section. Then
+    * Open the ArcGIS Pro Python command prompt and run the following command:
+  
+    .. code-block::
+
+      cd path_test_data
+      python test_full_delineation_arcgis.py
+      (... some messages)
+      ####################################
+      BasinMaker is successfully installed
+      ####################################
+
+    * Please ignore following output messages
+
+      PyTables is not installed. No support for HDF output.
+
+      SQLalchemy is not installed. No support for SQL output.
+
+      Warnings
+
+#. Users must Open the ArcGIS Pro Python command prompt every time they wish to use functionalities from BasinMaker.
+
 
 QGIS and GRASS in Windows
 -------------------------
