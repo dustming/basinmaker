@@ -112,7 +112,7 @@ ArcGIS Pro in Windows
 
     Below are the key steps to create an ArcGIS Python environment. For detailed instructions, please refer to this `link <https://pro.arcgis.com/en/pro-app/2.9/arcpy/get-started/work-with-python-environments.htm>`_ .
 
-    * Open ArcGIS Pro and click on the "Settings" icon in the upper left corner of the ArcGIS Pro window.
+    * Open ArcGIS Pro and click on the "Settings/Project" icon in the upper left corner of the ArcGIS Pro window.
     * Click the "Package Manager" tab. And then click the "Manage Environments" button in the upper right corner of the window.
     * Clone the "ArcGIS Pro" environment and name it <any_name_for_env>. The clone process will take a few minutes.
     * Select and active the newly created environment and restart ArcGIS Pro for the changes to take effect  
