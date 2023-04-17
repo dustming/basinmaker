@@ -336,8 +336,16 @@ def create_catchments_attributes_template_table(
     riv_line = riv_line.drop_duplicates(subset=['SubId'], keep='first')
     riv_line.spatial.to_featureclass(location=os.path.join(output_folder,river_without_merging_lakes+"_v1-0"),overwrite=True,sanitize_columns=False)
 
+    
     arcpy.FeatureClassToFeatureClass_conversion("sl_connected_lake_v", output_folder,"sl_connected_lake_v1-0.shp")
     arcpy.FeatureClassToFeatureClass_conversion("sl_nonconnect_lake_v",output_folder,"sl_non_connected_lake_v1-0.shp")
+
+    arcpy.DeleteField_management(os.path.join(output_folder,"sl_connected_lake_v1-0.shp"),
+        ["area_ratio", "Id","ORIG_FID", "BUFF_DIST","newarea0","newarea1","Shape_Leng","Shape_Area"]
+    )
+    arcpy.DeleteField_management(os.path.join(output_folder,"sl_non_connected_lake_v1-0.shp"),
+        ["area_ratio", "Id","ORIG_FID", "BUFF_DIST","newarea0","newarea1","Shape_Leng","Shape_Area"]
+    )
 
     obs_v = pd.DataFrame.spatial.from_featureclass("obs_v")
     obs_v['obsid'] = obs_v['grid_code']

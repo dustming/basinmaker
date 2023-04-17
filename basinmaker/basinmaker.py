@@ -1077,8 +1077,8 @@ class delineate:
         gis_platform="qgis",
     ):
         """ Update the subbasin delineation result by adding lake inflow and
-        outflow points and observation gauges as a new subbasin outlets. The output
-        is not the final delineation result. because:
+        outflow points and observation gauges as a new subbasin outlets. 
+        The output is not the final delineation result. because:
 
         | 1) Hydrologcial related attributes for each subbasin are not calcuated yet.
         | 2) Some lakes may cover several subbasins. The output needs to be finalized
