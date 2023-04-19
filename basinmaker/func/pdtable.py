@@ -2283,7 +2283,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
         Conn_To_NonConlakeids,
     )
 
-def Add_River_Segment_Between_Lakes_And_Observations(mapoldnew_info,Selected_riv_ids):
+def Add_River_Segment_Between_Lakes_And_Observations(mapoldnew_info,Selected_riv_ids,finalriv_infoply):
     # function to add river network between lake or poi subbasin to non lake/poi subbasins
     # used attributes in mapoldnew_info
     # nsubid the new sub id for each subbasin 
@@ -2309,32 +2309,36 @@ def Add_River_Segment_Between_Lakes_And_Observations(mapoldnew_info,Selected_riv
 
         # check if one of the upstream subbasin already have river network 
         upstream_sub_withriver = upstream_sub[upstream_sub['SubId'].isin(Selected_riv_ids)]
-        # if tsubid == 17313:
-        #     print(upstream_sub_withriver[['SubId','Old_SubId','DowSubId','Old_DowSubId','DrainArea']])
+ 
         # if one of the upstream subbasin already have river network, skip
         if len(upstream_sub_withriver) > 0:
             continue 
         
+        # remove channels all channels in this sub 
+        mask = np.isin(Selected_riv_ids,mapoldnew_info[mapoldnew_info['SubId'] == tsubid]['Old_SubId'].values)
+        Selected_riv_ids = Selected_riv_ids[~mask]
+         
+        # create new channel for this sub 
         # sort upstream subbasins by DrainArea
-
+        # the new channel start from a upstream subbasin with largest drainage area
         upstream_sub = upstream_sub.sort_values(by='DrainArea', ascending=False)
-
-        # print(tsubid)
-        # print(upstream_sub[['SubId','Old_SubId','DowSubId','Old_DowSubId','DrainArea']])
         cur_subid     = upstream_sub['SubId'].values[0]
-        cur_downsubid  = upstream_sub[ upstream_sub['Old_SubId'] == cur_subid ]['Old_DowSubId'].values[0]
-        
-        print(tsubid, cur_downsubid)
-        Selected_riv_ids = np.append(Selected_riv_ids,cur_downsubid)
-        while cur_downsubid not in Selected_riv_ids and cur_downsubid != tsubid and cur_downsubid != -1:
-            cur_subinfo = upstream_sub[upstream_sub['Old_SubId'] == cur_downsubid]
+        # if tsubid == 17313:
+        #     print(mapoldnew_info.columns)
+        #     print(Selected_riv_ids)
+        #     print(mapoldnew_info[mapoldnew_info['SubId'] == tsubid][['Old_SubId','Old_DowSubId','SubId','DowSubId','nsubid', 'ndownsubid']])
+        # get the first channel which is the downsubid if the 
+        cur_downsubid  = finalriv_infoply[ finalriv_infoply['SubId'] == cur_subid ]['DowSubId'].values[0]
+        # print(tsubid,cur_downsubid,cur_downsubid not in Selected_riv_ids)
+        while cur_downsubid not in Selected_riv_ids and cur_downsubid != -1:
+            # print(tsubid,cur_downsubid)
+            Selected_riv_ids = np.append(Selected_riv_ids,cur_downsubid)
+            cur_subinfo = finalriv_infoply[finalriv_infoply['SubId'] == cur_downsubid].copy(deep=True)
             if len(cur_subinfo) <=0:
                 print("check this subid ",cur_downsubid)
                 break
-            cur_downsubid = cur_subinfo['Old_DowSubId'].values[0]
-            Selected_riv_ids = np.append(Selected_riv_ids,cur_downsubid)
-            print(tsubid,cur_downsubid)
-    
+            cur_downsubid = cur_subinfo['DowSubId'].values[0]
+    # print(17313 in Selected_riv_ids)
     # remove all subid that are already included in the river network 
     return Selected_riv_ids
 

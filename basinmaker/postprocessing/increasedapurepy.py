@@ -167,11 +167,13 @@ def simplify_routing_structure_by_drainage_area_purepy(
         finalriv_infoply, Conn_Lakes_ply, Area_Min
     )
 
-    finalriv_inforiv_main = finalriv_inforiv.loc[finalriv_inforiv['SubId'].isin(Selected_riv_ids)]
-    finalriv_inforiv_main.to_file(os.path.join(tempfolder,'selected_riv.shp'))
-
     UpdateTopology(mapoldnew_info)
     mapoldnew_info = update_non_connected_catchment_info(mapoldnew_info)
+
+    Selected_riv_ids = Add_River_Segment_Between_Lakes_And_Observations(mapoldnew_info,Selected_riv_ids,finalriv_infoply)
+
+    finalriv_inforiv_main = finalriv_inforiv.loc[finalriv_inforiv['SubId'].isin(Selected_riv_ids)]
+    finalriv_inforiv_main.to_file(os.path.join(tempfolder,'selected_riv.shp'))
 
     save_modified_attributes_to_outputs(
         mapoldnew_info=mapoldnew_info,
