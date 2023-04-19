@@ -136,9 +136,9 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
     else:
         url = 'https://github.com/dustming/RoutingTool/wiki/Files/README_NA.pdf'
 
-    response = requests.get(url)
-    with open(os.path.join(OutputFolder,"README.pdf"), 'wb') as f:
-        f.write(response.content)
+    # response = requests.get(url)
+    # with open(os.path.join(OutputFolder,"README.pdf"), 'wb') as f:
+    #     f.write(response.content)
 
     if riv_name != '#':
 
@@ -161,12 +161,14 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
         if Path_final_riv != '#':
             riv_pd = riv_pd.drop(columns = ["centroid_y","centroid_x"])
             riv_pd = riv_pd.join(cat_c_x_y)
-
-        riv_pd_nncls_routing_info = mapoldnew_info[mapoldnew_info['Lake_Cat'] != 2][['SubId','DowSubId']].copy(deep=True)
-        remove_channel = []
-        for subid in riv_pd_nncls_routing_info['SubId'].values:
-            if subid not in riv_pd_nncls_routing_info['DowSubId'].values:
-                remove_channel.append(subid)
+        
+        remove_channel = [-1]
+        
+        if 'river_without_merging_lakes' not in riv_name:
+            riv_pd_nncls_routing_info = mapoldnew_info[mapoldnew_info['Lake_Cat'] != 2][['SubId','DowSubId']].copy(deep=True)
+            for subid in riv_pd_nncls_routing_info['SubId'].values:
+                if subid not in riv_pd_nncls_routing_info['DowSubId'].values:
+                    remove_channel.append(subid)
         if Path_final_riv != '#':
             riv_pd = riv_pd[~riv_pd.SubId.isin(remove_channel)]
             cat_colnms = riv_pd.columns

@@ -2283,6 +2283,62 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
         Conn_To_NonConlakeids,
     )
 
+def Add_River_Segment_Between_Lakes_And_Observations(mapoldnew_info,Selected_riv_ids):
+    # function to add river network between lake or poi subbasin to non lake/poi subbasins
+    # used attributes in mapoldnew_info
+    # nsubid the new sub id for each subbasin 
+    # ndownsubid the new dowsubid for each subbasin 
+    # Selected_riv_ids is the river segment already included in the network 
+        # mapoldnew_info["Old_SubId"] = mapoldnew_info["SubId"].values
+        # mapoldnew_info["Old_DowSubId"] = mapoldnew_info["DowSubId"].values
+        # mapoldnew_info["SubId"] = mapoldnew_info["nsubid"].values
+
+        # mapoldnew_info["DowSubId"] = mapoldnew_info["ndownsubid"].values
+
+    # target to find all subid has upstream subbasins 
+    # and none upstream subbains have river network 
+    # get all subbasins have a upstream subbasin
+    mask = mapoldnew_info['SubId'].isin(mapoldnew_info['DowSubId'].values)
+    sub_with_upstream = mapoldnew_info[mask].copy(deep=True)
+    
+    subid_with_upstream = np.unique(sub_with_upstream['SubId'].values)
+    for tsubid in subid_with_upstream:
+
+        # find all upstream subbasins 
+        upstream_sub = mapoldnew_info[mapoldnew_info['DowSubId'] == tsubid].copy(deep=True)
+
+        # check if one of the upstream subbasin already have river network 
+        upstream_sub_withriver = upstream_sub[upstream_sub['SubId'].isin(Selected_riv_ids)]
+        # if tsubid == 17313:
+        #     print(upstream_sub_withriver[['SubId','Old_SubId','DowSubId','Old_DowSubId','DrainArea']])
+        # if one of the upstream subbasin already have river network, skip
+        if len(upstream_sub_withriver) > 0:
+            continue 
+        
+        # sort upstream subbasins by DrainArea
+
+        upstream_sub = upstream_sub.sort_values(by='DrainArea', ascending=False)
+
+        # print(tsubid)
+        # print(upstream_sub[['SubId','Old_SubId','DowSubId','Old_DowSubId','DrainArea']])
+        cur_subid     = upstream_sub['SubId'].values[0]
+        cur_downsubid  = upstream_sub[ upstream_sub['Old_SubId'] == cur_subid ]['Old_DowSubId'].values[0]
+        
+        print(tsubid, cur_downsubid)
+        Selected_riv_ids = np.append(Selected_riv_ids,cur_downsubid)
+        while cur_downsubid not in Selected_riv_ids and cur_downsubid != tsubid and cur_downsubid != -1:
+            cur_subinfo = upstream_sub[upstream_sub['Old_SubId'] == cur_downsubid]
+            if len(cur_subinfo) <=0:
+                print("check this subid ",cur_downsubid)
+                break
+            cur_downsubid = cur_subinfo['Old_DowSubId'].values[0]
+            Selected_riv_ids = np.append(Selected_riv_ids,cur_downsubid)
+            print(tsubid,cur_downsubid)
+    
+    # remove all subid that are already included in the river network 
+    return Selected_riv_ids
+
+
 
 def Return_Selected_Lakes_Attribute_Table_And_Id(
     finalcat_info,
