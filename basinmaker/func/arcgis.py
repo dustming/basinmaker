@@ -518,7 +518,25 @@ def create_pour_points_with_lakes(str_r,str_v,cat_no_lake,sl_lakes,sl_connected_
     remove_value_inside_lakes = Con(IsNull(sl_lakes+"_r"),remove_value_not_on_lake_inflow_str,-9999)
     remove_value_inside_lakes_no999 = SetNull(remove_value_inside_lakes,remove_value_inside_lakes,"VALUE = -9999")
     remove_value_inside_lakes_no999.save("lake_inflow_seg_outside_lake")
-    find_zonal_maximum_or_minimum_point_on_the_raster("lake_inflow_seg_outside_lake",acc,lake_inflow_pourpoints,"MAXIMUM",cellSize,SptailRef,work_folder,snapRaster)
+
+    # arcgis potential inflow point raster to points
+    arcpy.RasterToPoint_conversion("lake_inflow_seg_outside_lake", "lake_inflow_seg_outside_lake_v", "VALUE")
+    ExtractMultiValuesToPoints("lake_inflow_seg_outside_lake_v",acc,"NONE")
+
+
+    inlet_inlake_table = pd.DataFrame.spatial.from_featureclass("lake_inlet_inlake_v")
+    inlet_inlake_table['acc_max'] = inlet_inlake_table['acc']
+    inlet_inlake_table = inlet_inlake_table[['grid_code','acc_max']]
+    inlet_outside_lake_table = pd.DataFrame.spatial.from_featureclass("lake_inflow_seg_outside_lake_v")
+
+    inlet_outside_lake_table = inlet_outside_lake_table.merge(inlet_inlake_table,on='grid_code',how='left')
+    inlet_outside_lake_table = inlet_outside_lake_table[inlet_outside_lake_table['acc'] < inlet_outside_lake_table['acc_max']]
+
+    inlet_outside_lake_table = inlet_outside_lake_table.sort_values(by=['acc'],ascending = False)
+    inlet_outside_lake_table = inlet_outside_lake_table.drop_duplicates(subset=['grid_code'], keep='first')
+    inlet_outside_lake_table.spatial.to_featureclass(location=os.path.join(work_folder,"arcgis.gdb",lake_inflow_pourpoints + "_v"),overwrite=True,sanitize_columns=False)
+
+#    find_zonal_maximum_or_minimum_point_on_the_raster("lake_inflow_seg_outside_lake",acc,lake_inflow_pourpoints,"MAXIMUM",cellSize,SptailRef,work_folder,snapRaster)
 
     arcpy.RasterToPoint_conversion(catchment_pourpoints_outside_lake, catchment_pourpoints_outside_lake + "_v", "VALUE")
 
