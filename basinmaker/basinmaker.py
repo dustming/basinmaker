@@ -433,23 +433,23 @@ class postprocess:
             The shapefile must have an attribute table that includes the following columns:
              
               - Obs_NM (string): This column should contain the name or ID of the POI site. 
-                  When the provided POI has the same Obs_NM as the existing POI in the routing
-                  product, this function will assume that the user wants to relocate the existing 
-                  POI. Otherwise, the clean_exist_pois variable below controls whether the new POI 
-                  sites fully replace existing POI sites or augment the existing POI sites.
+                When the provided POI has the same Obs_NM as the existing POI in the routing
+                product, this function will assume that the user wants to relocate the existing 
+                POI. Otherwise, the clean_exist_pois variable below controls whether the new POI 
+                sites fully replace existing POI sites or augment the existing POI sites.
               
               - DA_Obs (float): This column should contain the drainage area of the POI site.
               
               - SRC_obs (string): This column should contain the source of the POI site.
               
               - Type (string): This column should contain the type of the POI site. Each POI 
-                  can only have one type. The following types are currently supported: "Lake": the 
-                  POI is located on a lake waterbody surface. "River": the POI is located on a 
-                  river channel. Note that the "Lake" type POI should be located within a lake 
-                  subbasin and the "River" type POI should be located within a non-lake subbasin. 
-                  The POI located in the wrong subbasin will be ignored and not added to the routing 
-                  product. The “River” type POI will be linked to a non-lake subbasin that contains 
-                  the POI. The “Lake” type POI will be linked to the lake subbasin that contains the POI. 
+                can only have one type. The following types are currently supported: "Lake": the 
+                POI is located on a lake waterbody surface. "River": the POI is located on a 
+                river channel. Note that the "Lake" type POI should be located within a lake 
+                subbasin and the "River" type POI should be located within a non-lake subbasin. 
+                The POI located in the wrong subbasin will be ignored and not added to the routing 
+                product. The “River” type POI will be linked to a non-lake subbasin that contains 
+                the POI. The “Lake” type POI will be linked to the lake subbasin that contains the POI. 
         
         gis_platform                   : string
             is the parameter indicating which gis platform is used. Currenly, only "purepy" 
