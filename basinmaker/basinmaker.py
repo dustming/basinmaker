@@ -413,15 +413,14 @@ class postprocess:
         gis_platform="purepy",
         area_thresthold = 10*30*30/1000/1000,
     ):
-        """ The function allows the user to modify point of interest (POI) 
-        related attributes in the routing product. The function is particularly
-        useful when the user wants to add new POI sites, remove existing POI 
-        sites,or modify the location of existing POI sites in the developed 
-        routing products. If the user observes a small subbasin that cannot 
-        be removed by the Decrease_River_Network_Resolution function due 
-        to it representing an unexpected POI, they can use this function to 
-        remove the POI from the routing product and then 
-        apply the Decrease_River_Network_Resolution function.
+        """This function allows the user to modify point of interest (POI) 
+        sites in a pre-existing BasinMaker-generated user input hydrologic 
+        routing network/product. Specific modifications this function can 
+        make are to add new POI sites, remove existing POI sites, or modify
+        the location of existing POI sites in the input routing network. 
+        This function will use the location of the provided POI and link 
+        them to the subbasins in the routing network. At least one POI 
+        should be provided in the point shapefile. 
 
         Parameters
         ----------
@@ -430,33 +429,48 @@ class postprocess:
         routing_product_folder         : string
             is the folder path where the input hydrologic routing network is stored
         path_to_points_of_interest_points                : string
-            is the path to the point shapefile that contains the point of 
-            interest (POI) sites. The shapefile must have an attribute table that includes 
-            the following columns:
-              - Obs_NM (string): This column should contain the name or ID of the POI site.
+            is the path to the point shapefile that contains the point of interest (POI) sites. 
+            The shapefile must have an attribute table that includes the following columns:
+             
+              - Obs_NM (string): This column should contain the name or ID of the POI site. 
+                When the provided POI has the same Obs_NM as the existing POI in the routing
+                product, this function will assume that the user wants to relocate the existing 
+                POI. Otherwise, the clean_exist_pois variable below controls whether the new POI 
+                sites fully replace existing POI sites or augment the existing POI sites.
+              
               - DA_Obs (float): This column should contain the drainage area of the POI site.
+              
               - SRC_obs (string): This column should contain the source of the POI site.
+              
+              - Type (string): This column should contain the type of the POI site. Each POI 
+                can only have one type. The following types are currently supported: "Lake": the 
+                POI is located on a lake waterbody surface. "River": the POI is located on a 
+                river channel. Note that the "Lake" type POI should be located within a lake 
+                subbasin and the "River" type POI should be located within a non-lake subbasin. 
+                The POI located in the wrong subbasin will be ignored and not added to the routing 
+                product. The “River” type POI will be linked to a non-lake subbasin that contains 
+                the POI. The “Lake” type POI will be linked to the lake subbasin that contains the POI. 
+        
         gis_platform                   : string
             is the parameter indicating which gis platform is used. Currenly, only "purepy" 
             is allowed for this parameter.
         clean_exist_pois                : boolean
-            Indicate if user want to remove all existing POI in the input routing product.
-        area_thresthold             : float (optional)
-            This parameter sets a subbasin area threshold in square kilometers (km²). 
-            Subbasins with an area below this threshold will be merged with downstream 
-            or upstream subbasins, depending on their location within the river network. 
-            This can be useful for simplifying the river network and reducing computational
-            requirements. The parameter is optional and has a default value of 0.009 km2. 
-            If the parameter is set to 0, no subbasin merging will be performed.
+            Indicates if the user wants to remove all existing POI in the input routing product. 
+            When it is true, all existing POI will be removed, and only the POI sites provided in
+            the path_to_points_of_interest_points will be added to the input routing network. 
 
         Returns
         -------
 
         Notes
         -----
-        This function has no return values, The modified hydrological routing
-        network will be generated in the path_output_folder including following
-        files:
+        This function does not return any values. If the user only wants to add POI to the routing 
+        product, they should set clean_exist_pois to False. This will keep the existing POI and 
+        add the provided POI to the routing product. If the user wants to remove all existing POI 
+        and add new POI, they should set clean_exist_pois to True. This will remove all existing 
+        POI from the routing product and then add the provided POI to the routing product. 
+        The modified hydrological routing network will be generated in the path_output_folder 
+        and will include the following files:
 
         finalcat_info.shp                     : shapefile
             The finalized hydrologic routing network. the GIS layer containing

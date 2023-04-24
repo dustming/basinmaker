@@ -43,9 +43,6 @@ def delineate_watershed_no_lake_using_fdr(
     dirraster = SetNull(Raster(outFlowDirection) < 1, Raster(outFlowDirection))
     dirraster.save(fdr_arcgis)
 
-    # outFlowAccumulation= ExtractByMask(fac_path, mask)
-    # outFlowAccumulation.save("acc_to_str")
-
     finalacc = FlowAccumulation(in_flow_direction_raster = fdr_arcgis, data_type = "INTEGER" )
     finalacc.save(acc)
 
@@ -53,7 +50,13 @@ def delineate_watershed_no_lake_using_fdr(
     # outFlowAccumulation = FlowAccumulation(dirraster)
     # outFlowAccumulation.save(acc)
 
-    StreamRaster = SetNull(Raster(finalacc) < acc_thresold, Raster(finalacc))
+    if fac_path != '#':
+        outFlowAccumulation= ExtractByMask(fac_path, mask)
+        outFlowAccumulation.save("acc_to_str")
+        StreamRaster = SetNull(Raster(outFlowAccumulation) < acc_thresold, Raster(outFlowAccumulation))
+    else:
+        StreamRaster = SetNull(Raster(finalacc) < acc_thresold, Raster(finalacc))
+
     StreamRaster = Con(StreamRaster >= 0, 1, 0)
     StreamRaster.save("str_1")
 
