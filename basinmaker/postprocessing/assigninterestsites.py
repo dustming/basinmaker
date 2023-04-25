@@ -124,7 +124,9 @@ def define_interest_sites(
         Obs_NM_in =  poi_subs.loc[index,"Obs_NM"]
         DA_Obs_in =  poi_subs.loc[index,"DA_Obs"]
         row = poi_subs[poi_subs.index == index]
-
+        if np.isnan(trg_SubId):
+            print("POI: ",Obs_NM_in,"   is not located in any subbasin, please check the location of this POI")
+            continue
         trg_sub_info = finalriv_infoply[finalriv_infoply["SubId"] == trg_SubId].copy(deep=True)
         Cur_SRC_obs  =  trg_sub_info.loc[finalriv_infoply["SubId"] == trg_SubId,"SRC_obs"].values[0]
         Cur_Obs_NM   =  trg_sub_info.loc[finalriv_infoply["SubId"] == trg_SubId,"Obs_NM"].values[0]
