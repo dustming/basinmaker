@@ -289,7 +289,6 @@ def create_catchments_attributes_template_table(
 
 
     riv_attri = read_table_as_pandas("riv_slope",['Value','MEAN'],work_folder)
-    riv_attri['RivSlope'] = (riv_attri['MEAN']/100).fillna(-1.2345)
     riv_attri['SubId'] = riv_attri['Value']
     riv_attri = riv_attri.drop(columns=['MEAN', 'Value'])
     attri_table = attri_table.merge(riv_attri,on='SubId',how='left')
@@ -300,6 +299,7 @@ def create_catchments_attributes_template_table(
     riv_dem['SubId'] = riv_dem['Value']
     riv_dem = riv_dem.drop(columns=['MIN', 'MAX','Value'])
     attri_table = attri_table.merge(riv_dem,on='SubId',how='left')
+    attri_table['RivSlope'] = (attri_table['Max_DEM'] - attri_table['Min_DEM']) / attri_table['RivLength']
 #    print(len(attri_table),"b")
     riv_landuse = read_table_as_pandas("riv_landuse",['Value','MEAN'],work_folder)
     riv_landuse['FloodP_n'] = riv_landuse['MEAN'] / 1000.0

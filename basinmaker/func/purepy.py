@@ -189,7 +189,7 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
 
         outline = create_watershed_boundary(mapoldnew_info)
         outline.to_file(os.path.join(OutputFolder,"outline.shp"))
-        create_geo_jason_file(os.path.join(OutputFolder,cat_name))
+ #       create_geo_jason_file(os.path.join(OutputFolder,cat_name))
 
     else:
 
