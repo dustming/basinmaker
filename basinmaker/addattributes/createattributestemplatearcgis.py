@@ -319,13 +319,55 @@ def create_catchments_attributes_template_table(
     attri_table.loc[attri_table['RivLength'] == -1.2345,'Max_DEM'] = -1.2345
     attri_table.loc[attri_table['RivLength'] == -1.2345,'Min_DEM'] = -1.2345
     attri_table.loc[attri_table['RivLength'] == -1.2345,'Ch_n'] = -1.2345
-
+    attri_table = attri_table[[
+                       'SubId'    ,
+                       'DowSubId' ,
+                       'RivSlope' ,
+                       'RivLength' ,
+                       'BasSlope'  ,
+                       'BasAspect',
+                       'BasArea'   ,
+                       'BkfWidth'  ,
+                       'BkfDepth' ,
+                       'Lake_Cat'  ,
+                       'HyLakeId'  ,
+                       'LakeVol'  ,
+                       'LakeDepth' ,
+                       'LakeArea'  ,
+                       'Laketype'  ,
+                       'Has_POI'   ,
+                       'MeanElev'  ,
+                       'FloodP_n' ,
+                       'Q_Mean'    ,
+                       'Ch_n'      ,
+                       'DrainArea' ,
+                       'Strahler'  ,
+                       'Seg_ID'   ,
+                       'Seg_order',
+                       'Max_DEM'  ,
+                       'Min_DEM'  ,
+                       'DA_Obs'    ,
+                       'DA_error' ,
+                       'Obs_NM'    ,
+                       'SRC_obs'  ,
+                       'centroid_x',
+                       'centroid_y',
+                       'DA_Chn_L' ,
+                       'DA_Slope'  ,
+                       'DA_Chn_Slp',
+                       'outletLat' ,
+                       'outletLng' ,
+                       'k'         ,
+                       'c'        
+    ]]
+     
     cat_ply= cat_ply[['SubId','SHAPE']]
     cat_ply = cat_ply.merge(attri_table,on='SubId',how='left')
     cat_ply = cat_ply.fillna(-1.2345)
     cat_ply['Obs_NM'] = cat_ply['Obs_NM'].astype('str')
     cat_ply['SRC_obs'] = cat_ply['SRC_obs'].astype('str')
     cat_ply = cat_ply.drop_duplicates(subset=['SubId'], keep='first')
+
     cat_ply.spatial.to_featureclass(location=os.path.join(output_folder,catchment_without_merging_lakes+"_v1-0"),overwrite=True,sanitize_columns=False)
 
     riv_line= riv_line[['SubId','SHAPE']]
