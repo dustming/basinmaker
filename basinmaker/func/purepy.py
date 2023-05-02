@@ -161,7 +161,48 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
         if Path_final_riv != '#':
             riv_pd = riv_pd.drop(columns = ["centroid_y","centroid_x"])
             riv_pd = riv_pd.join(cat_c_x_y)
-
+            riv_pd = riv_pd[[
+                            'SubId'    ,
+                            'DowSubId' ,
+                            'RivSlope' ,
+                            'RivLength' ,
+                            'BasSlope'  ,
+                            'BasAspect',
+                            'BasArea'   ,
+                            'BkfWidth'  ,
+                            'BkfDepth' ,
+                            'Lake_Cat'  ,
+                            'HyLakeId'  ,
+                            'LakeVol'  ,
+                            'LakeDepth' ,
+                            'LakeArea'  ,
+                            'Laketype'  ,
+                            'Has_POI'   ,
+                            'MeanElev'  ,
+                            'FloodP_n' ,
+                            'Q_Mean'    ,
+                            'Ch_n'      ,
+                            'DrainArea' ,
+                            'Strahler'  ,
+                            'Seg_ID'   ,
+                            'Seg_order',
+                            'Max_DEM'  ,
+                            'Min_DEM'  ,
+                            'DA_Obs'    ,
+                            'DA_error' ,
+                            'Obs_NM'    ,
+                            'SRC_obs'  ,
+                            'centroid_x',
+                            'centroid_y',
+                            'DA_Chn_L' ,
+                            'DA_Slope'  ,
+                            'DA_Chn_Slp',
+                            'outletLat' ,
+                            'outletLng' ,
+                            'k'         ,
+                            'c',
+                            'geometry'        
+            ]]
         riv_pd_nncls_routing_info = mapoldnew_info[mapoldnew_info['Lake_Cat'] != 2][['SubId','DowSubId']].copy(deep=True)
         remove_channel = []
         for subid in riv_pd_nncls_routing_info['SubId'].values:
