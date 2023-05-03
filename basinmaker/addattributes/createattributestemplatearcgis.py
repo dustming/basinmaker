@@ -60,7 +60,7 @@ def create_catchments_attributes_template_table(
                        # 'Max_DEM'   : pd.Series(dtype='float'),
                        # 'Min_DEM'   : pd.Series(dtype='float'),
                        'DA_Obs'    : pd.Series(dtype='float'),
-                       'DA_error'  : pd.Series(dtype='float'),
+                       'DA_Diff'  : pd.Series(dtype='float'),
                        # 'Obs_NM'    : pd.Series(dtype='float'),
                        # 'SRC_obs'   : pd.Series(dtype='float'),
                        # 'centroid_x': pd.Series(dtype='float'),
@@ -313,7 +313,7 @@ def create_catchments_attributes_template_table(
     attri_table = calculate_bkf_width_depth(attri_table)
 
     attri_table = update_non_connected_catchment_info(attri_table)
-    attri_table.loc[attri_table['DA_Obs'] > 0,'DA_error'] = (attri_table.loc[attri_table['DA_Obs'] > 0,'DrainArea']/1000/1000)/attri_table.loc[attri_table['DA_Obs'] > 0,'DA_Obs']
+    attri_table.loc[attri_table['DA_Obs'] > 0,'DA_Diff'] = (attri_table.loc[attri_table['DA_Obs'] > 0,'DrainArea']/1000/1000 - attri_table.loc[attri_table['DA_Obs'] > 0,'DA_Obs'])/attri_table.loc[attri_table['DA_Obs'] > 0,'DrainArea']/1000/1000
     attri_table.loc[attri_table['RivLength'] == -1.2345,'RivSlope'] = -1.2345
     attri_table.loc[attri_table['RivLength'] == -1.2345,'FloodP_n'] = -1.2345
     attri_table.loc[attri_table['RivLength'] == -1.2345,'Max_DEM'] = -1.2345
@@ -347,7 +347,7 @@ def create_catchments_attributes_template_table(
                        'Max_DEM'  ,
                        'Min_DEM'  ,
                        'DA_Obs'    ,
-                       'DA_error' ,
+                       'DA_Diff' ,
                        'Obs_NM'    ,
                        'SRC_obs'  ,
                        'centroid_x',
@@ -398,10 +398,10 @@ def create_catchments_attributes_template_table(
     final_pourpoints_2 = final_pourpoints[['obsid','SubId']]
     obs_v = obs_v.merge(final_pourpoints_2,on='obsid',how='left')
     obs_v = obs_v[['SubId','SHAPE']]
-    cat_ply_att = cat_ply[['SubId','DA_Obs','SRC_obs','DrainArea','DA_error','Obs_NM']]
+    cat_ply_att = cat_ply[['SubId','DA_Obs','SRC_obs','DrainArea','DA_Diff','Obs_NM']]
     obs_v = obs_v.merge(cat_ply_att,on='SubId',how='left')
     obs_v['Use_region'] = 1
-    obs_v = obs_v[['SubId','Obs_NM','DA_Obs','DrainArea','DA_error','SRC_obs','Use_region','SHAPE']]
+    obs_v = obs_v[['SubId','Obs_NM','DA_Obs','DrainArea','DA_Diff','SRC_obs','Use_region','SHAPE']]
     obs_v.spatial.to_featureclass(location=os.path.join(output_folder,"poi_v1-0.shp"),overwrite=True,sanitize_columns=False)
     if len(obs_v_missing) > 0:
         obs_v_missing.spatial.to_featureclass(location=os.path.join(output_folder,"poi_missing.shp"),overwrite=True,sanitize_columns=False)

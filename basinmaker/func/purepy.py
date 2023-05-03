@@ -129,7 +129,10 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
 
 
     NEED_TO_REMOVE_IDS = ["SubId_1", "Id","nsubid2", "nsubid","ndownsubid","Old_SubId","Old_DowSub","Join_Count","TARGET_FID","Id","SubID_Oldr","HRU_ID_N_1","HRU_ID_N_2","facters","Old_DowSubId","SubIdt2"]
-
+    obs_error_name = 'DA_error'
+    if 'DA_Diff' in mapoldnew_info.columns:
+        obs_error_name = 'DA_Diff'
+    
     #obtain readme file
     if "DA_Chn_L" in  mapoldnew_info.columns:
         url = 'https://github.com/dustming/RoutingTool/wiki/Files/README_OIH.pdf'
@@ -189,7 +192,7 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
                             'Max_DEM'  ,
                             'Min_DEM'  ,
                             'DA_Obs'    ,
-                            'DA_error' ,
+                            obs_error_name ,
                             'Obs_NM'    ,
                             'SRC_obs'  ,
                             'centroid_x',
