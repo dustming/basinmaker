@@ -314,6 +314,7 @@ def create_catchments_attributes_template_table(
 
     attri_table = update_non_connected_catchment_info(attri_table)
     attri_table.loc[attri_table['DA_Obs'] > 0,'DA_Diff'] = (attri_table.loc[attri_table['DA_Obs'] > 0,'DrainArea']/1000/1000 - attri_table.loc[attri_table['DA_Obs'] > 0,'DA_Obs'])/attri_table.loc[attri_table['DA_Obs'] > 0,'DrainArea']/1000/1000
+    attri_table.loc[attri_table['DA_Obs'] <= 0,'DA_Diff'] = -1.2345
     attri_table.loc[attri_table['RivLength'] == -1.2345,'RivSlope'] = -1.2345
     attri_table.loc[attri_table['RivLength'] == -1.2345,'FloodP_n'] = -1.2345
     attri_table.loc[attri_table['RivLength'] == -1.2345,'Max_DEM'] = -1.2345
