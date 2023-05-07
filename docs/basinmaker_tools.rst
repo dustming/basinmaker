@@ -41,6 +41,20 @@ Generate Raven input files
 BasinMaker - delineate lake-river routing product tools
 =======================================================
 
+In order to fully delineate a lake-river routing network from scratch, users need to sequentially apply five BasinMaker functions (ND1 to ND5) described in this section.
+
+The overview of the workflow is summarized in the Figure below.
+
+.. image:: https://github.com/dustming/RoutingTool/wiki/Figures/too_flowchart.png
+  :width: 900
+  :alt: Alternative text
+
+Figure Caption:  This is Figure 3 from han et al. (2023).  Workflow, including inputs and outputs, of the BasinMaker network delineation mode functions for generating a 
+hydrological routing network with lakes and rivers given a DEM and a lake polygon layer. Notes: 1. Flow direction raster dataset is optional user input here. 
+2. The channel profile coefficient map to define bankfull channel widths and depths across the extent can alternatively be replaced by coefficients that are constant 
+across the spatial extent of the project.
+
+
 Define project spatial extent
 -----------------------------
 
@@ -53,10 +67,31 @@ Delineate routing structure without lakes
 .. autofunction:: basinmaker.basinmaker.delineate.Delineation_Initial_Subbasins_Without_Lakes(fac_thresold,mode = 'using_dem',path_flow_dirction_in = '#',max_memroy = 4096)
 
 
-Add lake and obs control points
+Add lake control points and points of interest
 -------------------------------
 
 .. autofunction:: basinmaker.basinmaker.delineate.Add_New_Subbasin_Outlet_Points(path_lake_polygon = '#',lake_attributes=[],connected_lake_area_thresthold = 0,non_connected_lake_area_thresthold = 0,path_point_of_interest = '#',point_of_interest_attributes = [],max_memroy = 4096)
+
+
+Guidance on Points of Interest input layer preparation
+-------------------------------
+
+For those running BasinMaker with QGIS & GRASS, points of interest will be snapped by this function automatically to 
+the closest delineated river channel and as such, no input layer preparation is strictly required. However, in our 
+experience this auto-snapping approach is only modestly successful. Please inspect snapped results carefully. If users 
+ensure that points of interest associated with lake levels are located within a lake polygon, then this function will 
+include the point of interest at the lake (and lake subbasin) outlet.
+
+
+For those running BasinMaker in ArcGIS pro, the user needs to carefully prepare the points of interest shapefile 
+as input. Specifically, the location of each non-lake point of interest should be carefully snapped to the the appropriate 
+eventual delineated river channel. To do this, we recommend users build a temporary channel raster and snap to that.
+We also recommend users ensure that points of interest associated with lake levels are located within a lake polygon. 
+These POI will be ignored by this function and must be added separately from this function using the function called 
+"Add_Point_Of_Interest_Sites_In_Routing_Product".
+  
+A robust new function that can help users automatically snap points of interest to delineated river 
+channels/lakes is coming in the next version of BasinMaker.
 
 
 Add hydrology related attributes

@@ -56,7 +56,7 @@ BasinMaker and the associated river and lake routing product was developed by th
 Citation
 ========  
     
-- Han, M., Shen, H., Tolson, B. A., Craig, J. R., Mai, J., Lin, S. G. M., Basu, N. B., Awol, F. S. (2023). BasinMaker 3.0: A GIS toolbox for distributed watershed delineation of complex lake-river routing networks. Environmental Modelling &#38; Software, 105688. https://doi.org/10.1016/J.ENVSOFT.2023.105688. 
+- Han, M., Shen, H., Tolson, B. A., Craig, J. R., Mai, J., Lin, S. G. M., Basu, N. B., Awol, F. S. (2023). BasinMaker 3.0: A GIS toolbox for distributed watershed delineation of complex lake-river routing networks. Environmental Modelling and Software, 105688. https://doi.org/10.1016/J.ENVSOFT.2023.105688. 
       
 ========  
 License

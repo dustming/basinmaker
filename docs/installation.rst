@@ -115,13 +115,13 @@ ArcGIS Pro in Windows
     * Open ArcGIS Pro and click on the "Settings/Project" icon in the upper left corner of the ArcGIS Pro window.
     * Click the "Package Manager" tab. And then click the "Manage Environments" button in the upper right corner of the window.
     * Clone the "ArcGIS Pro" environment and name it <any_name_for_env>. The clone process will take a few minutes.
-    * Select and active the newly created environment and restart ArcGIS Pro for the changes to take effect  
+    * Select and active the newly created environment and restart ArcGIS Pro for the changes to take effect
 
 #. Install BasinMaker in ArcGIS Pro
 
     * Open the ArcGIS Pro Python command prompt. To open the ArcGIS Pro Python command prompt, navigate to the Windows program directory: Programs > ArcGIS > Python Command Prompt.
     * Install BasinMaker and related pacakges using the following command:
-  
+
     .. code-block::
 
       > python -m pip install basinmaker
@@ -131,13 +131,13 @@ ArcGIS Pro in Windows
 
     .. code-block::
 
-      > python -m pip install pytest simpledbf netCDF4 joblib jupyter requests wget gdown 
+      > python -m pip install pytest simpledbf netCDF4 joblib jupyter requests wget gdown
 
 #. Validate the installation with the package of test files.
 
     * Please download the `test data and script <https://github.com/dustming/RoutingTool/wiki/Files/test_arcgis_full.zip>`_ and unzip it to a folder, the path of this folder will refer as path_test_data in following section. Then
     * Open the ArcGIS Pro Python command prompt and run the following command:
-  
+
     .. code-block::
 
       cd path_test_data
@@ -249,6 +249,7 @@ QGIS and GRASS in Windows
       python -m pip install simpledbf grass_session scipy joblib
       python -m pip install --upgrade pip
       python -m pip install geopandas -U
+      python -m pip install numpy -U
 
 #. Install GRASS GIS addons
     Install following GRASS GIS addons:
