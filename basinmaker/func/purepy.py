@@ -129,7 +129,10 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
 
 
     NEED_TO_REMOVE_IDS = ["SubId_1", "Id","nsubid2", "nsubid","ndownsubid","Old_SubId","Old_DowSub","Join_Count","TARGET_FID","Id","SubID_Oldr","HRU_ID_N_1","HRU_ID_N_2","facters","Old_DowSubId","SubIdt2"]
-
+    obs_error_name = 'DA_error'
+    if 'DA_Diff' in mapoldnew_info.columns:
+        obs_error_name = 'DA_Diff'
+    
     #obtain readme file
     if "DA_Chn_L" in  mapoldnew_info.columns:
         url = 'https://github.com/dustming/RoutingTool/wiki/Files/README_OIH.pdf'
@@ -161,7 +164,7 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
         if Path_final_riv != '#':
             riv_pd = riv_pd.drop(columns = ["centroid_y","centroid_x"])
             riv_pd = riv_pd.join(cat_c_x_y)
-        
+            riv_pd = riv_pd[mapoldnew_info.columns]        
         remove_subids = [-1]
         
         if 'river_without_merging_lakes' not in riv_name:
@@ -190,7 +193,7 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
 
         outline = create_watershed_boundary(mapoldnew_info)
         outline.to_file(os.path.join(OutputFolder,"outline.shp"))
-        create_geo_jason_file(os.path.join(OutputFolder,cat_name))
+ #       create_geo_jason_file(os.path.join(OutputFolder,cat_name))
 
     else:
 
@@ -212,7 +215,6 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
             mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'Ch_n'] = -1.2345
             mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'Max_DEM'] = -1.2345
             mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_channel),'Min_DEM'] = -1.2345
-
 
         cat_colnms = mapoldnew_info.columns
         drop_cat_colnms = cat_colnms[cat_colnms.isin(["SHAPE","SubId_1", "Id","nsubid2", "nsubid","ndownsubid","Old_DowSub","Join_Count","TARGET_FID","Id","SubID_Oldr","HRU_ID_N_1","HRU_ID_N_2","facters","Old_DowSubId"])]

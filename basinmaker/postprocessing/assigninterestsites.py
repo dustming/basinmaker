@@ -68,13 +68,15 @@ def define_interest_sites(
 
     finalriv_infoply = geopandas.read_file(Path_final_rviply)
     cat_ply = finalriv_infoply.drop(columns=['DA_Obs','SRC_obs','Obs_NM']).copy(deep=True)
-
+    DA_ERR_COL = 'DA_error'
+    if DA_ERR_COL not in cat_ply.columns:
+        DA_ERR_COL = 'DA_Diff'
     if clean_exist_pois:
         finalriv_infoply["Has_POI"] = 0
         finalriv_infoply["SRC_obs"] = "nan"
         finalriv_infoply["Obs_NM"]  = "nan"
         finalriv_infoply["DA_Obs"] = 0
-        finalriv_infoply["DA_error"] = -1.2345
+        finalriv_infoply[DA_ERR_COL] = -1.2345
 
     interest_site = geopandas.read_file(path_to_points_of_interest_points)
     interest_site = interest_site.to_crs(cat_ply.crs)
@@ -124,7 +126,9 @@ def define_interest_sites(
         Obs_NM_in =  poi_subs.loc[index,"Obs_NM"]
         DA_Obs_in =  poi_subs.loc[index,"DA_Obs"]
         row = poi_subs[poi_subs.index == index]
-
+        if np.isnan(trg_SubId):
+            print("POI: ",Obs_NM_in,"   is not located in any subbasin, please check the location of this POI")
+            continue
         trg_sub_info = finalriv_infoply[finalriv_infoply["SubId"] == trg_SubId].copy(deep=True)
         Cur_SRC_obs  =  trg_sub_info.loc[finalriv_infoply["SubId"] == trg_SubId,"SRC_obs"].values[0]
         Cur_Obs_NM   =  trg_sub_info.loc[finalriv_infoply["SubId"] == trg_SubId,"Obs_NM"].values[0]
@@ -136,8 +140,12 @@ def define_interest_sites(
             finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,"SRC_obs"] = DA_Obs_in
             finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,"Has_POI"] = 1
             if DA_Obs_in > 0 :
-                DAerror_in = finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,"DrainArea"]/1000/1000/DA_Obs_in
-                finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,"DA_error"] = DAerror_in
+                da_sim = finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,"DrainArea"]
+                if DA_ERR_COL == 'DA_error':
+                    DAerror_in = da_sim/1000/1000/DA_Obs_in
+                else:
+                    DAerror_in = (da_sim/1000/1000 - DA_Obs_in)/da_sim
+                finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,DA_ERR_COL] = DAerror_in
             continue
 
         # the subbasin already contain the ObsNM
@@ -159,7 +167,7 @@ def define_interest_sites(
             finalriv_infoply.loc[mask_cat,"SRC_obs"] = "nan"
             finalriv_infoply.loc[mask_cat,"Has_POI"] = 0
             finalriv_infoply.loc[mask_cat,"DA_Obs"] = 0
-            finalriv_infoply.loc[mask_cat,"DA_error"] = -1.2345
+            finalriv_infoply.loc[mask_cat,DA_ERR_COL] = -1.2345
             exist_poi=exist_poi.drop(exist_poi.index[mask_point])
             print("The existing : ",Obs_NM_in," in the product is removed")
 
@@ -169,8 +177,12 @@ def define_interest_sites(
             finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,"DA_Obs"] = DA_Obs_in
             finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,"Has_POI"] = 1
             if DA_Obs_in > 0 :
-                DAerror_in = finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,"DrainArea"]/1000/1000/DA_Obs_in
-                finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,"DA_error"] = DAerror_in
+                da_sim = finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,"DrainArea"]
+                if DA_ERR_COL == 'DA_error':
+                    DAerror_in = da_sim/1000/1000/DA_Obs_in
+                else:
+                    DAerror_in = (da_sim/1000/1000 - DA_Obs_in)/da_sim
+                finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,DA_ERR_COL] = DAerror_in
             exist_poi = exist_poi.append(row[["Obs_NM","geometry",'DA_Obs','SRC_obs','DrainArea','SubId']])
             print("Add the POI : ",Obs_NM_in," into the routing product ")
 
@@ -195,8 +207,16 @@ def define_interest_sites(
 
     # cat_table = finalriv_infoply.drop(columns=["geometry",'DA_Obs','SRC_obs','DrainArea'])
     # exist_poi = exist_poi.merge(cat_table,on='Obs_NM',how='left')
-    exist_poi = exist_poi[["geometry",'DA_Obs','SRC_obs','Obs_NM','SubId','DrainArea']].copy(deep=True)
+    exist_poi['Use_region'] = 1
+    exist_poi[DA_ERR_COL] = -1.2345
+    mask = exist_poi["DA_Obs"] > 0 
 
+    if DA_ERR_COL == 'DA_error':
+        exist_poi.loc[mask,DA_ERR_COL] = exist_poi.loc[mask,'DrainArea']/1000/1000/exist_poi.loc[mask,'DA_Obs']                                                                           
+    else:
+        exist_poi.loc[mask,DA_ERR_COL] = (exist_poi.loc[mask,'DrainArea']/1000/1000 - exist_poi.loc[mask,'DA_Obs'])/exist_poi.loc[mask,'DrainArea']                                                                           
+
+    exist_poi = exist_poi[['SubId','Obs_NM','DA_Obs','DrainArea',DA_ERR_COL,'SRC_obs','Use_region','geometry']].copy(deep=True)
     if Path_obs_gauge_point != "#":
         exist_poi.to_file(os.path.join(OutputFolder,os.path.basename(Path_obs_gauge_point)))
     else:

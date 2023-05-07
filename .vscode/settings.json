@@ -1,3 +1,7 @@
 {
-    "esbonio.sphinx.confDir": "${workspaceFolder}\\docs"
+  "esbonio.sphinx.confDir": "${workspaceFolder}\\docs",
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.autopep8"
+  },
+  "python.formatting.provider": "none"
 }
