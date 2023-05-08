@@ -207,10 +207,10 @@ def create_catchments_attributes_template_table(
     final_pourpoints.loc[final_pourpoints['HyLakeId'].isnull(),'HyLakeId'] = final_pourpoints.loc[final_pourpoints['HyLakeId'].isnull(),'ncl_kake_id']
 
     alllake123 = pd.DataFrame.spatial.from_featureclass("all_lakes_v")
-    alllake123['HyLakeId'] = alllake123[lake_attributes[0]]
-    alllake123 = alllake123[lake_attributes + ['HyLakeId']]
+    alllake123['HyLakeId'] = pd.to_numeric(alllake123[lake_attributes[0]])
+    
     obs_v123 = pd.DataFrame.spatial.from_featureclass("obs_clip")
-    obs_v123["obsid"] = obs_v123[obs_attributes[0]]
+    obs_v123["obsid"] = pd.to_numeric(obs_v123[obs_attributes[0]])
     obs_v123 = obs_v123[obs_attributes + ['obsid']]
 
     final_pourpoints = final_pourpoints.merge(alllake123,on='HyLakeId',how='left')
