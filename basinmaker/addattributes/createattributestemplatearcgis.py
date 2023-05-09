@@ -208,13 +208,21 @@ def create_catchments_attributes_template_table(
 
     alllake123 = pd.DataFrame.spatial.from_featureclass("all_lakes_v")
     alllake123['HyLakeId'] = pd.to_numeric(alllake123[lake_attributes[0]])
-    
+    alllake123 =alllake123[lake_attributes + ['HyLakeId']]
+
     obs_v123 = pd.DataFrame.spatial.from_featureclass("obs_clip")
     obs_v123["obsid"] = pd.to_numeric(obs_v123[obs_attributes[0]])
     obs_v123 = obs_v123[obs_attributes + ['obsid']]
 
+    final_pourpoints['HyLakeId'] = pd.to_numeric(final_pourpoints['HyLakeId'])
+    final_pourpoints['HyLakeId']  = final_pourpoints['HyLakeId'].fillna(0)
+    final_pourpoints['HyLakeId'] = final_pourpoints['HyLakeId'].astype(int)
+
     final_pourpoints = final_pourpoints.merge(alllake123,on='HyLakeId',how='left')
     final_pourpoints = final_pourpoints.merge(obs_v123,on='obsid',how='left')
+
+    print(final_pourpoints.columns)
+    print(final_pourpoints.dtypes)
     final_pourpoints.spatial.to_featureclass(location=os.path.join(work_folder,"arcgis.gdb","final_pp_with_routing"),overwrite=True,sanitize_columns=False)
 
     final_pourpoints = final_pourpoints.sort_values(by='SubId', ascending=True)
