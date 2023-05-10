@@ -329,7 +329,7 @@ def create_catchments_attributes_template_table(
     attri_table.loc[attri_table['DA_Obs'] > 0,'DA_Diff'] = (attri_table.loc[attri_table['DA_Obs'] > 0,'DrainArea']/1000/1000 - attri_table.loc[attri_table['DA_Obs'] > 0,'DA_Obs'])/attri_table.loc[attri_table['DA_Obs'] > 0,'DA_Obs']
     attri_table.loc[attri_table['DA_Obs'] <= 0,'DA_Diff'] = -999
     # non-null values are shown as percentage
-    attri_table['DA_Diff'] = attri_table['DA_Diff'].apply(lambda x: f"{x*100:.2f}%" if x != -999 else "nan")
+    attri_table['DA_Diff'] = attri_table['DA_Diff'].apply(lambda x: f"{x*100:.2f}%" if x != -999 else "<NA>")
 
     attri_table.loc[attri_table['DA_Obs'] <= 0, 'DA_Obs'] = -1.2345
     # print(attri_table['DA_Diff'].values)
