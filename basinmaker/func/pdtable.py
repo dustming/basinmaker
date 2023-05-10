@@ -271,9 +271,9 @@ def update_non_connected_catchment_info(catinfo):
 
     catids_nc = catinfo_non_connected["SubId"].copy()
     max_seg_id = catinfo["Seg_ID"].max()
-    catinfo.loc[
-        catinfo["SubId"].isin(catids_nc), "RivLength"
-    ] = 0.0  ## no reiver length since not connected.
+    # catinfo.loc[
+    #     catinfo["SubId"].isin(catids_nc), "RivLength"
+    # ] = 0.0  ## no reiver length since not connected.
 
     for i in range(0, len(catinfo_non_connected)):
         c_subid = catinfo_non_connected["SubId"].values[i]
@@ -316,15 +316,15 @@ def update_non_connected_catchment_info(catinfo):
         if lc_subid == -1:
             continue
 
-        catinfo.loc[catinfo["SubId"] == c_subid, "RivSlope"] = -1.2345
-        catinfo.loc[catinfo["SubId"] == c_subid, "Ch_n"] = -1.2345
-        catinfo.loc[catinfo["SubId"] == c_subid, "RivLength"] = -1.2345
-        catinfo.loc[catinfo["SubId"] == c_subid, "Min_DEM"] = -1.2345
-        catinfo.loc[catinfo["SubId"] == c_subid, "Max_DEM"] = -1.2345
-        catinfo.loc[catinfo["SubId"] == c_subid, "FloodP_n"] = -1.2345
-        if "DA_Chn_L" in catinfo.columns:
-            catinfo.loc[catinfo["SubId"] == c_subid, "DA_Chn_L"] = -1.2345
-            catinfo.loc[catinfo["SubId"] == c_subid, "DA_Chn_Slp"] = -1.2345
+        # catinfo.loc[catinfo["SubId"] == c_subid, "RivSlope"] = -1.2345
+        # catinfo.loc[catinfo["SubId"] == c_subid, "Ch_n"] = -1.2345
+        # catinfo.loc[catinfo["SubId"] == c_subid, "RivLength"] = -1.2345
+        # catinfo.loc[catinfo["SubId"] == c_subid, "Min_DEM"] = -1.2345
+        # catinfo.loc[catinfo["SubId"] == c_subid, "Max_DEM"] = -1.2345
+        # catinfo.loc[catinfo["SubId"] == c_subid, "FloodP_n"] = -1.2345
+        # if "DA_Chn_L" in catinfo.columns:
+        #     catinfo.loc[catinfo["SubId"] == c_subid, "DA_Chn_L"] = -1.2345
+        #     catinfo.loc[catinfo["SubId"] == c_subid, "DA_Chn_Slp"] = -1.2345
 
 
         # catinfo.loc[catinfo["SubId"] == c_subid, "Q_Mean"] = d_sub_info[
@@ -569,17 +569,17 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold = 1):
                 else:
                     mapoldnew_info_new.loc[mask, col] = tarinfo[col].values[0]
 
-            if target_sub_is_head_water_sub or small_sub_is_head_water_sub:
-                if target_sub_has_less_one_up_stream:
-                    mapoldnew_info_new.loc[mask, "RivSlope"] = -1.2345
-                    mapoldnew_info_new.loc[mask, "RivLength"] = -1.2345
-                    mapoldnew_info_new.loc[mask, "FloodP_n"] = -1.2345
-                    mapoldnew_info_new.loc[mask, "Ch_n"] = -1.2345
-                    mapoldnew_info_new.loc[mask, "Min_DEM"] = -1.2345
-                    mapoldnew_info_new.loc[mask, "Max_DEM"] = -1.2345
-                    if "DA_Chn_L" in mapoldnew_info_new.columns:
-                        mapoldnew_info_new.loc[mask, "DA_Chn_L"] = -1.2345
-                        mapoldnew_info_new.loc[mask, "DA_Chn_Slp"] = -1.2345
+            # if target_sub_is_head_water_sub or small_sub_is_head_water_sub:
+            #     if target_sub_has_less_one_up_stream:
+            #         mapoldnew_info_new.loc[mask, "RivSlope"] = -1.2345
+            #         mapoldnew_info_new.loc[mask, "RivLength"] = -1.2345
+            #         mapoldnew_info_new.loc[mask, "FloodP_n"] = -1.2345
+            #         mapoldnew_info_new.loc[mask, "Ch_n"] = -1.2345
+            #         mapoldnew_info_new.loc[mask, "Min_DEM"] = -1.2345
+            #         mapoldnew_info_new.loc[mask, "Max_DEM"] = -1.2345
+            #         if "DA_Chn_L" in mapoldnew_info_new.columns:
+            #             mapoldnew_info_new.loc[mask, "DA_Chn_L"] = -1.2345
+            #             mapoldnew_info_new.loc[mask, "DA_Chn_Slp"] = -1.2345
 
             # print("###################################b")
             # print(small_sub_id)
@@ -671,26 +671,27 @@ def New_SubId_To_Dissolve(
         Lake_Cat == 1
     ):  ## Meger subbasin covered by lakes, Keep lake outlet catchment  DA, stream order info
         #        Longestpath = Calculate_Longest_flowpath(mainriv_merg_info)
-        tarinfo.loc[idx, "RivSlope"] = -1.2345  # Longestpath
-        tarinfo.loc[idx, "RivLength"] = -1.2345  # Longestpath
-        tarinfo.loc[idx, "FloodP_n"] = -1.2345  # Longestpath
-        tarinfo.loc[idx, "Ch_n"] = -1.2345  # Longestpath
-        tarinfo.loc[idx, "Min_DEM"] = -1.2345  # Longestpath
-        tarinfo.loc[idx, "Max_DEM"] = -1.2345  # Longestpath
-        if "DA_Chn_L" in tarinfo.columns:
-            tarinfo.loc[idx, "DA_Chn_L"] = -1.2345  # Longestpath
-            tarinfo.loc[idx, "DA_Chn_Slp"] = -1.2345  # Longestpath
+        # tarinfo.loc[idx, "RivSlope"] = -1.2345  # Longestpath
+        # tarinfo.loc[idx, "RivLength"] = -1.2345  # Longestpath
+        # tarinfo.loc[idx, "FloodP_n"] = -1.2345  # Longestpath
+        # tarinfo.loc[idx, "Ch_n"] = -1.2345  # Longestpath
+        # tarinfo.loc[idx, "Min_DEM"] = -1.2345  # Longestpath
+        # tarinfo.loc[idx, "Max_DEM"] = -1.2345  # Longestpath
+        # if "DA_Chn_L" in tarinfo.columns:
+        #     tarinfo.loc[idx, "DA_Chn_L"] = -1.2345  # Longestpath
+        #     tarinfo.loc[idx, "DA_Chn_Slp"] = -1.2345  # Longestpath
+        do_nothing = 1
 
     elif Lake_Cat == 2:
-        tarinfo.loc[idx, "RivSlope"] = -1.2345  # Longestpath
-        tarinfo.loc[idx, "RivLength"] = -1.2345  # Longestpath
-        tarinfo.loc[idx, "FloodP_n"] = -1.2345  # Longestpath
-        tarinfo.loc[idx, "Ch_n"] = -1.2345  # Longestpath
-        tarinfo.loc[idx, "Min_DEM"] = -1.2345  # Longestpath
-        tarinfo.loc[idx, "Max_DEM"] = -1.2345  # Longestpath
-        if "DA_Chn_L" in tarinfo.columns:
-            tarinfo.loc[idx, "DA_Chn_L"] = -1.2345  # Longestpath
-            tarinfo.loc[idx, "DA_Chn_Slp"] = -1.2345  # Longestpath
+        # tarinfo.loc[idx, "RivSlope"] = -1.2345  # Longestpath
+        # tarinfo.loc[idx, "RivLength"] = -1.2345  # Longestpath
+        # tarinfo.loc[idx, "FloodP_n"] = -1.2345  # Longestpath
+        # tarinfo.loc[idx, "Ch_n"] = -1.2345  # Longestpath
+        # tarinfo.loc[idx, "Min_DEM"] = -1.2345  # Longestpath
+        # tarinfo.loc[idx, "Max_DEM"] = -1.2345  # Longestpath
+        # if "DA_Chn_L" in tarinfo.columns:
+        #     tarinfo.loc[idx, "DA_Chn_L"] = -1.2345  # Longestpath
+        #     tarinfo.loc[idx, "DA_Chn_Slp"] = -1.2345  # Longestpath
         tarinfo.loc[idx, "Lake_Cat"] = 2
     elif Lake_Cat <= 0:
         #        tarinfo.loc[idx,'Strahler']      = -1.2345
@@ -890,15 +891,15 @@ def streamorderanddrainagearea(catinfoall):
             catinfo.loc[idx, "Seg_order"] = 1
             catinfo.loc[idx, "Seg_ID"] = iseg
             #head watershed
-            if "DA_Chn_L" in catinfo.columns:
-                catinfo.loc[idx, "DA_Chn_L"] = -1.2345
-                catinfo.loc[idx, "DA_Chn_Slp"] = -1.2345
-            catinfo.loc[idx, "RivLength"] = -1.2345
-            catinfo.loc[idx, "RivSlope"] = -1.2345
-            catinfo.loc[idx, "Min_DEM"] = -1.2345
-            catinfo.loc[idx, "FloodP_n"] = -1.2345
-            catinfo.loc[idx, "Ch_n"] = -1.2345
-            catinfo.loc[idx, "Max_DEM"] = -1.2345
+            # if "DA_Chn_L" in catinfo.columns:
+            #     catinfo.loc[idx, "DA_Chn_L"] = -1.2345
+            #     catinfo.loc[idx, "DA_Chn_Slp"] = -1.2345
+            # catinfo.loc[idx, "RivLength"] = -1.2345
+            # catinfo.loc[idx, "RivSlope"] = -1.2345
+            # catinfo.loc[idx, "Min_DEM"] = -1.2345
+            # catinfo.loc[idx, "FloodP_n"] = -1.2345
+            # catinfo.loc[idx, "Ch_n"] = -1.2345
+            # catinfo.loc[idx, "Max_DEM"] = -1.2345
             catinfo.loc[idx, "DA_Slope"] = (catinfo["BasSlope"].values[i]*catinfo["BasArea"].values[i]+DA_ncl*slp_ncl)/catinfo.loc[idx, "DrainArea"]
 
             # TC_1,TC_2,TC_3,TC_4,TC_5 = calculate_Tc(catinfo.loc[idx, "DrainArea"],catinfo.loc[idx, "DA_Chn_L"],catinfo.loc[idx, "DA_Chn_Slp"])
@@ -1094,16 +1095,16 @@ def streamorderanddrainagearea(catinfoall):
             catinfoall.loc[idx, "DA_Slope"] = np.average(Up_cat_info["BasSlope"].values,weights = Up_cat_info["BasArea"].values)
 
 
-            catinfoall.loc[idx, "RivLength"] = -1.2345
-            catinfoall.loc[idx, "RivSlope"] = -1.2345
-            catinfoall.loc[idx, "Min_DEM"] = -1.2345
-            catinfoall.loc[idx, "Max_DEM"] = -1.2345
-            catinfoall.loc[idx, "FloodP_n"] = -1.2345
-            catinfoall.loc[idx, "Ch_n"] = -1.2345
+            # catinfoall.loc[idx, "RivLength"] = -1.2345
+            # catinfoall.loc[idx, "RivSlope"] = -1.2345
+            # catinfoall.loc[idx, "Min_DEM"] = -1.2345
+            # catinfoall.loc[idx, "Max_DEM"] = -1.2345
+            # catinfoall.loc[idx, "FloodP_n"] = -1.2345
+            # catinfoall.loc[idx, "Ch_n"] = -1.2345
 
-            if "DA_Chn_L" in catinfoall.columns:
-                catinfoall.loc[idx, "DA_Chn_Slp"] = -1.2345
-                catinfoall.loc[idx, "DA_Chn_L"] = -1.2345
+            # if "DA_Chn_L" in catinfoall.columns:
+            #     catinfoall.loc[idx, "DA_Chn_Slp"] = -1.2345
+            #     catinfoall.loc[idx, "DA_Chn_L"] = -1.2345
 
 
             # TC_1,TC_2,TC_3,TC_4,TC_5 = calculate_Tc(catinfoall.loc[idx, "DrainArea"],catinfoall.loc[idx, "DA_Chn_L"],catinfoall.loc[idx, "DA_Chn_Slp"])
@@ -2623,7 +2624,7 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_NCL(
                 mapoldnew_info=mapoldnew_info,
                 ismodifids=1,
                 modifiidin=modifysubids,
-                mainriv=finalcat_info_temp,
+                mainriv=mapoldnew_info,
                 Lake_Cat=Tar_Lake_Id,
             )
         else:
@@ -3032,15 +3033,15 @@ def update_topology(mapoldnew_info, UpdateStreamorder=1, UpdateSubId=1):
         riv_pd_nncls_routing_info = mapoldnew_info[mapoldnew_info['Lake_Cat'] != 2].copy(deep=True)
         mask = ~mapoldnew_info['SubId'].isin(riv_pd_nncls_routing_info['DowSubId'])
 
-        if "DA_Chn_L" in mapoldnew_info.columns:
-            mapoldnew_info.loc[mask, "DA_Chn_L"] = -1.2345
-            mapoldnew_info.loc[mask, "DA_Chn_Slp"] = -1.2345
-        mapoldnew_info.loc[mask, "RivLength"] = -1.2345
-        mapoldnew_info.loc[mask, "RivSlope"] = -1.2345
-        mapoldnew_info.loc[mask, "FloodP_n"] = -1.2345
-        mapoldnew_info.loc[mask, "Ch_n"] = -1.2345
-        mapoldnew_info.loc[mask, "Max_DEM"] = -1.2345
-        mapoldnew_info.loc[mask, "Min_DEM"] = -1.2345
+        # if "DA_Chn_L" in mapoldnew_info.columns:
+        #     mapoldnew_info.loc[mask, "DA_Chn_L"] = -1.2345
+        #     mapoldnew_info.loc[mask, "DA_Chn_Slp"] = -1.2345
+        # mapoldnew_info.loc[mask, "RivLength"] = -1.2345
+        # mapoldnew_info.loc[mask, "RivSlope"] = -1.2345
+        # mapoldnew_info.loc[mask, "FloodP_n"] = -1.2345
+        # mapoldnew_info.loc[mask, "Ch_n"] = -1.2345
+        # mapoldnew_info.loc[mask, "Max_DEM"] = -1.2345
+        # mapoldnew_info.loc[mask, "Min_DEM"] = -1.2345
 
 
     if UpdateStreamorder < 0:
