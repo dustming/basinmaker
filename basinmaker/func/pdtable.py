@@ -3286,7 +3286,7 @@ def update_topology(mapoldnew_info, UpdateStreamorder=1, UpdateSubId=1):
     mapoldnew_info_unique = mapoldnew_info.drop_duplicates(
         "SubId", keep="first")
 
-    mapoldnew_info_unique = Streamorderanddrainagearea(mapoldnew_info_unique)
+    mapoldnew_info_unique = streamorderanddrainagearea(mapoldnew_info_unique)
 
     for i in range(0, len(mapoldnew_info_unique)):
         isubid = mapoldnew_info_unique["SubId"].values[i]
