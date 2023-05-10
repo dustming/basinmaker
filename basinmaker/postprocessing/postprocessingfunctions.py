@@ -2,9 +2,10 @@ import os
 
 
 def combine_catchments_covered_by_the_same_lake_method(
-    Routing_Product_Folder = '#',
+    Routing_Product_Folder='#',
     qgis_prefix_path="#",
-    area_thresthold = 10*30*30/1000/1000,
+    area_thresthold=10*30*30/1000/1000,
+    length_thresthold=1,
     gis_platform="qgis",
 ):
 
@@ -19,7 +20,7 @@ def combine_catchments_covered_by_the_same_lake_method(
         combine_catchments_covered_by_the_same_lake_qgis(
             # Path_final_rivply=Path_final_rivply,
             # Path_final_riv=Path_final_riv,
-            Routing_Product_Folder = Routing_Product_Folder,
+            Routing_Product_Folder=Routing_Product_Folder,
             qgis_prefix_path=qgis_prefix_path,
         )
     if gis_platform == "arcgis":
@@ -38,7 +39,8 @@ def combine_catchments_covered_by_the_same_lake_method(
 
         combine_catchments_covered_by_the_same_lake_purepy(
             Routing_Product_Folder=Routing_Product_Folder,
-            area_thresthold = area_thresthold,
+            area_thresthold=area_thresthold,
+            length_thresthold=length_thresthold,
         )
 
 
@@ -47,7 +49,7 @@ def simplify_routing_structure_by_filter_lakes_method(
     Path_final_riv="#",
     Path_Con_Lake_ply="#",
     Path_NonCon_Lake_ply="#",
-    Routing_Product_Folder = '#',
+    Routing_Product_Folder='#',
     Thres_Area_Conn_Lakes=-1,
     Thres_Area_Non_Conn_Lakes=-1,
     Selected_Lake_List_in=[],
@@ -65,7 +67,7 @@ def simplify_routing_structure_by_filter_lakes_method(
         )
 
         simplify_routing_structure_by_filter_lakes_qgis(
-            Routing_Product_Folder = Routing_Product_Folder,
+            Routing_Product_Folder=Routing_Product_Folder,
             Thres_Area_Conn_Lakes=Thres_Area_Conn_Lakes,
             Thres_Area_Non_Conn_Lakes=Thres_Area_Non_Conn_Lakes,
             Selected_Lake_List_in=Selected_Lake_List_in,
@@ -79,7 +81,7 @@ def simplify_routing_structure_by_filter_lakes_method(
         )
 
         simplify_routing_structure_by_filter_lakes_arcgis(
-            Routing_Product_Folder = Routing_Product_Folder,
+            Routing_Product_Folder=Routing_Product_Folder,
             Thres_Area_Conn_Lakes=Thres_Area_Conn_Lakes,
             Thres_Area_Non_Conn_Lakes=Thres_Area_Non_Conn_Lakes,
             Selected_Lake_List_in=Selected_Lake_List_in,
@@ -94,7 +96,7 @@ def simplify_routing_structure_by_filter_lakes_method(
         )
 
         simplify_routing_structure_by_filter_lakes_purepy(
-            Routing_Product_Folder = Routing_Product_Folder,
+            Routing_Product_Folder=Routing_Product_Folder,
             Thres_Area_Conn_Lakes=Thres_Area_Conn_Lakes,
             Thres_Area_Non_Conn_Lakes=Thres_Area_Non_Conn_Lakes,
             Selected_Lake_List_in=Selected_Lake_List_in,
@@ -121,7 +123,7 @@ def simplify_routing_structure_by_drainage_area_method(
         )
 
         simplify_routing_structure_by_drainage_area_qgis(
-            Routing_Product_Folder = Routing_Product_Folder,
+            Routing_Product_Folder=Routing_Product_Folder,
             Area_Min=Area_Min,
             OutputFolder=OutputFolder,
             qgis_prefix_path=qgis_prefix_path,
@@ -133,7 +135,7 @@ def simplify_routing_structure_by_drainage_area_method(
         )
 
         simplify_routing_structure_by_drainage_area_arcgis(
-            Routing_Product_Folder = Routing_Product_Folder,
+            Routing_Product_Folder=Routing_Product_Folder,
             Area_Min=Area_Min,
             OutputFolder=OutputFolder,
         )
@@ -144,16 +146,17 @@ def simplify_routing_structure_by_drainage_area_method(
         )
 
         simplify_routing_structure_by_drainage_area_purepy(
-            Routing_Product_Folder = Routing_Product_Folder,
+            Routing_Product_Folder=Routing_Product_Folder,
             Area_Min=Area_Min,
             OutputFolder=OutputFolder,
         )
 
+
 def add_point_of_interest_sites_in_routing_product_method(
-    routing_product_folder= '#',
-    path_to_points_of_interest_points = '#',
-    clean_exist_pois = True,
-    path_output_folder = "#",
+    routing_product_folder='#',
+    path_to_points_of_interest_points='#',
+    clean_exist_pois=True,
+    path_output_folder="#",
     gis_platform="qgis",
 ):
     if gis_platform == "purepy":
@@ -161,12 +164,13 @@ def add_point_of_interest_sites_in_routing_product_method(
             define_interest_sites,
         )
         define_interest_sites(
-            routing_product_folder= routing_product_folder,
-            path_to_points_of_interest_points = path_to_points_of_interest_points,
-            clean_exist_pois = clean_exist_pois,
-            path_output_folder = path_output_folder,
+            routing_product_folder=routing_product_folder,
+            path_to_points_of_interest_points=path_to_points_of_interest_points,
+            clean_exist_pois=clean_exist_pois,
+            path_output_folder=path_output_folder,
         )
     return
+
 
 def select_part_of_routing_product_method(
     Path_Points,
@@ -179,7 +183,7 @@ def select_part_of_routing_product_method(
     Path_Con_Lake_ply="#",
     Path_NonCon_Lake_ply="#",
     qgis_prefix_path="#",
-    Routing_Product_Folder = '#',
+    Routing_Product_Folder='#',
     gis_platform="qgis",
 ):
 
@@ -221,30 +225,30 @@ def select_part_of_routing_product_method(
                 # Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,
                 mostdownid=mostdownid,
                 mostupstreamid=mostupid,
-                Routing_Product_Folder = Routing_Product_Folder,
+                Routing_Product_Folder=Routing_Product_Folder,
                 qgis_prefix_path=qgis_prefix_path,
             )
 
     if gis_platform == "arcgis":
         from basinmaker.postprocessing.selectprodarcgis import (
-        Select_Routing_product_based_SubId_arcgis
+            Select_Routing_product_based_SubId_arcgis
         )
         Select_Routing_product_based_SubId_arcgis(
             OutputFolder=OutputFolder,
             mostdownid=mostdownid,
             mostupstreamid=mostupid,
-            Routing_Product_Folder = Routing_Product_Folder,
+            Routing_Product_Folder=Routing_Product_Folder,
         )
 
     if gis_platform == "purepy":
         from basinmaker.postprocessing.selectprodpurepy import (
-        Select_Routing_product_based_SubId_purepy
+            Select_Routing_product_based_SubId_purepy
         )
         Select_Routing_product_based_SubId_purepy(
             OutputFolder=OutputFolder,
             mostdownid=mostdownid,
             mostupstreamid=mostupid,
-            Routing_Product_Folder = Routing_Product_Folder,
+            Routing_Product_Folder=Routing_Product_Folder,
         )
 
     return
@@ -271,14 +275,14 @@ def generate_hrus_method(
     Path_Other_Ply_2="#",
     Other_Ply_ID_2="O_ID_2",
     DEM="#",
-    Inmportance_order = ["Hylak_id","Landuse_ID"],
-    min_hru_area_pct_sub = 0.2,
+    Inmportance_order=["Hylak_id", "Landuse_ID"],
+    min_hru_area_pct_sub=0.2,
     Project_crs="EPSG:3573",
     OutputFolder="#",
     qgis_prefix_path="#",
     gis_platform="qgis",
-    pixel_size = 30,
-    area_ratio_thresholds = [0,0,0]
+    pixel_size=30,
+    area_ratio_thresholds=[0, 0, 0]
 ):
     if gis_platform == "qgis":
         from basinmaker.postprocessing.hru import GenerateHRUS_qgis
@@ -307,8 +311,8 @@ def generate_hrus_method(
             Project_crs=Project_crs,
             OutputFolder=OutputFolder,
             qgis_prefix_path=qgis_prefix_path,
-            importance_order = Inmportance_order,
-            min_hru_pct_sub_area = min_hru_area_pct_sub,
+            importance_order=Inmportance_order,
+            min_hru_pct_sub_area=min_hru_area_pct_sub,
         )
 
     if gis_platform == "arcgis":
@@ -334,13 +338,12 @@ def generate_hrus_method(
             Other_Ply_ID_1=Other_Ply_ID_1,
             Path_Other_Ply_2=Path_Other_Ply_2,
             Other_Ply_ID_2=Other_Ply_ID_2,
-            Inmportance_order = Inmportance_order,
-            min_hru_area_pct_sub = min_hru_area_pct_sub,
+            Inmportance_order=Inmportance_order,
+            min_hru_area_pct_sub=min_hru_area_pct_sub,
             DEM=DEM,
             Project_crs=Project_crs,
             OutputFolder=OutputFolder,
         )
-
 
     if gis_platform == "purepy":
         from basinmaker.postprocessing.hrupurepy import GenerateHRUS_purepy
@@ -365,15 +368,14 @@ def generate_hrus_method(
             Other_Ply_ID_1=Other_Ply_ID_1,
             Path_Other_Ply_2=Path_Other_Ply_2,
             Other_Ply_ID_2=Other_Ply_ID_2,
-            Inmportance_order = Inmportance_order,
-            min_hru_area_pct_sub = min_hru_area_pct_sub,
+            Inmportance_order=Inmportance_order,
+            min_hru_area_pct_sub=min_hru_area_pct_sub,
             DEM=DEM,
             Project_crs=Project_crs,
             OutputFolder=OutputFolder,
-            pixel_size = pixel_size,
-            area_ratio_thresholds = area_ratio_thresholds,
+            pixel_size=pixel_size,
+            area_ratio_thresholds=area_ratio_thresholds,
         )
-
 
     return
 
@@ -390,10 +392,8 @@ def obtain_grids_polygon_from_netcdf_file(
     spatial_ref="EPSG:4326",
     x_add=-360,
     y_add=0,
-    gis_platform = "qgis",
+    gis_platform="qgis",
 ):
-
-
 
     if gis_platform == "qgis":
         from basinmaker.postprocessing.gridweight import (
@@ -414,14 +414,13 @@ def obtain_grids_polygon_from_netcdf_file(
         )
 
 
-
 def generate_area_weight_of_two_polygons(
     target_polygon_path="#",
     mapping_polygon_path="#",
     col_nm="HRU_ID",
     output_folder="#",
-    qgis_prefix_path = '#',
-    gis_platform = "qgis"
+    qgis_prefix_path='#',
+    gis_platform="qgis"
 ):
 
     if gis_platform == "qgis":
@@ -433,7 +432,7 @@ def generate_area_weight_of_two_polygons(
             Mapping_Ply_Path=mapping_polygon_path,
             Col_NM=col_nm,
             Output_Folder=output_folder,
-            qgis_prefix_path = qgis_prefix_path,
+            qgis_prefix_path=qgis_prefix_path,
         )
 
     if gis_platform == "arcgis":
