@@ -2003,6 +2003,9 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
         finalriv_info[DA_colnm] >= Area_Min * 1000 * 1000
     ].copy()  # find river with drainage area larger than area thresthold
 
+    Selected_riv = update_the_selected_river_to_connect_upsub_with_largest_da(
+        Selected_riv, mapoldnew_info)
+
     # calcuate topology for the selected catchment
     Selected_riv = UpdateTopology(Selected_riv, UpdateSubId=-1)
     Selected_riv = Selected_riv.sort_values(
@@ -2378,6 +2381,74 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
         Old_Non_Connect_LakeIds,
         Conn_To_NonConlakeids,
     )
+
+
+def update_the_selected_river_to_connect_upsub_with_largest_da(Selected_riv, mapoldnew_info):
+    Selected_riv_ids = np.unique(Selected_riv['SubId'].values)
+
+    # target to find all subid has do not have subbasins
+    # in the selected river network.
+    lakeid_in_new_network = np.unique(Selected_riv['HyLakeId'].values)
+    lakeid_in_new_network = lakeid_in_new_network[lakeid_in_new_network > 0]
+
+    mask_lakes = np.logical_and(
+        mapoldnew_info['Lake_Cat'] == 1, ~mapoldnew_info['HyLakeId'].isin(lakeid_in_new_network))
+
+    mask_pois = mapoldnew_info['Has_POI'] > 0
+
+    potential_sub_to_extend = mapoldnew_info[np.logical_or(
+        mask_lakes, mask_pois)].copy(deep=True)
+
+    potential_sub_to_extend = potential_sub_to_extend[~potential_sub_to_extend['SubId'].isin(
+        Selected_riv_ids)]
+    # extend each headwater stream
+    subid_with_upstream = np.unique(potential_sub_to_extend['SubId'].values)
+    for tsubid in subid_with_upstream:
+
+        # find all upstream subbasins
+        upstream_sub = mapoldnew_info[mapoldnew_info['SubId'] == tsubid].copy(
+            deep=True)
+
+        # check if one of the upstream subbasin already have river network
+        upstream_sub_withriver = upstream_sub[upstream_sub['SubId'].isin(
+            Selected_riv_ids)]
+
+        # if one of the upstream subbasin already have river network, skip
+        if len(upstream_sub_withriver) > 0 or len(upstream_sub) == 0:
+            continue
+
+        # remove channels all channels in this sub
+        mask = np.isin(
+            Selected_riv_ids, [tsubid])
+        Selected_riv_ids = Selected_riv_ids[~mask]
+
+        # create new channel for this sub
+        # sort upstream subbasins by DrainArea
+        # the new channel start from a upstream subbasin with largest drainage area
+        upstream_sub = upstream_sub.sort_values(
+            by='DrainArea', ascending=False)
+
+        cur_subid = upstream_sub['SubId'].values[0]
+        # if tsubid == 17313:
+        #     print(mapoldnew_info.columns)
+        #     print(Selected_riv_ids)
+        #     print(mapoldnew_info[mapoldnew_info['SubId'] == tsubid][['Old_SubId','Old_DowSubId','SubId','DowSubId','nsubid', 'ndownsubid']])
+        # get the first channel which is the downsubid if the
+        cur_downsubid = mapoldnew_info[mapoldnew_info['SubId']
+                                       == cur_subid]['DowSubId'].values[0]
+        # print(tsubid,cur_downsubid,cur_downsubid not in Selected_riv_ids)
+        while cur_downsubid not in Selected_riv_ids and cur_downsubid != -1:
+            # print(tsubid,cur_downsubid)
+            Selected_riv_ids = np.append(Selected_riv_ids, cur_downsubid)
+            cur_subinfo = mapoldnew_info[mapoldnew_info['SubId'] == cur_downsubid].copy(
+                deep=True)
+            if len(cur_subinfo) <= 0:
+                print("check this subid ", cur_downsubid)
+                break
+            cur_downsubid = cur_subinfo['DowSubId'].values[0]
+    Selected_riv_out = mapoldnew_info[mapoldnew_info['SubId'].isin(
+        Selected_riv_ids)]
+    return Selected_riv_out
 
 
 def Add_River_Segment_Between_Lakes_And_Observations(mapoldnew_info, Selected_riv_ids, finalriv_infoply):
