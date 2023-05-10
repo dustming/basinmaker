@@ -183,7 +183,9 @@ def define_interest_sites(
                 else:
                     DAerror_in = (da_sim/1000/1000 - DA_Obs_in)/da_sim
                 finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,DA_ERR_COL] = DAerror_in
-            exist_poi = exist_poi.append(row[["Obs_NM","geometry",'DA_Obs','SRC_obs','DrainArea','SubId']])
+
+            exist_poi = pd.concat([exist_poi, row[["Obs_NM","geometry",'DA_Obs','SRC_obs','DrainArea','SubId']]])
+
             print("Add the POI : ",Obs_NM_in," into the routing product ")
 
         else:
@@ -200,7 +202,9 @@ def define_interest_sites(
             finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,"Has_POI"] = 1
 #            row["Obs_NM"] = Obs_NM_in
 #            exist_poi.loc[exist_poi["Obs_NM"] == Cur_Obs_NM ,"Obs_NM"] = Obs_NM_in
-            exist_poi = exist_poi.append(row[["Obs_NM","geometry",'DA_Obs','SRC_obs','DrainArea','SubId']])
+
+            exist_poi = pd.concat([exist_poi, row[["Obs_NM","geometry",'DA_Obs','SRC_obs','DrainArea','SubId']]])
+
             print("Append the POI : ",Obs_NM_in," into the routing product ")
 
     finalriv_infoply.to_file(os.path.join(OutputFolder,os.path.basename(Path_final_riv_ply)))
