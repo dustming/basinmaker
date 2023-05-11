@@ -91,7 +91,7 @@ def define_interest_sites(
     non_lake = interest_site[interest_site["Type"] == "River"].copy(deep=True)
     lake     = interest_site[interest_site["Type"] == "Lake"].copy(deep=True)
 
-    print(interest_site.columns)
+    # print(interest_site.columns)
 
     if len(non_lake) > 0:
         if len(non_lake[non_lake["Lake_Cat"] == 1]) > 0:
