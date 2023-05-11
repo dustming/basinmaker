@@ -544,7 +544,6 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold=50, length_t
             #            tarinfo = down_sub_info
             tarinfo = mapoldnew_info_new[mapoldnew_info_new['SubId']
                                          == down_sub_info['SubId'].values[0]].copy(deep=True)
-            modify = True
             down_sub_info_2 = mapoldnew_info_new[mapoldnew_info_new['SubId']
                                                  == down_sub_info['SubId'].values[0]].copy(deep=True)
             ndown_subid = down_sub_info_2['DowSubId'].values[0]
@@ -559,8 +558,15 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold=50, length_t
 
             if len(common_elements) == 1:
                 update_river = True
+                modify = True
             else:
-                update_river = False
+                upstream_subid_need_modify = target_upstream_info[target_upstream_info['SubId'].isin(
+                    common_elements)].sort_values('DrainArea', ascending=False)
+                if small_sub_id != upstream_subid_need_modify['SubId'].values[0]:
+                    update_river = False
+                else:
+                    update_river = True
+                modify = True
 
         else:
             modify = False
