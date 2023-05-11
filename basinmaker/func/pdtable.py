@@ -2432,10 +2432,7 @@ def update_the_selected_river_to_connect_upsub_with_largest_da(Selected_riv, map
             continue
 
         # remove channels all channels in this sub
-        mask = np.isin(
-            Selected_riv_ids, [tsubid])
-        Selected_riv_ids = Selected_riv_ids[~mask]
-
+        Selected_riv_ids = np.append(Selected_riv_ids, tsubid)
         # create new channel for this sub
         # sort upstream subbasins by DrainArea
         # the new channel start from a upstream subbasin with largest drainage area
