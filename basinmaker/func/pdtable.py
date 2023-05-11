@@ -483,7 +483,7 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold=50, length_t
         deep=True)
     small_sub_non_lake = small_sub_non_lake[small_sub_non_lake[Gauge_col_Name] == 0].copy(
         deep=True)
-
+    small_sub_non_lake = small_sub_non_lake.sort_values(['Strahler','DrainArea'], ascending=True)
     # process connected lakes  merge polygons
     for i in range(0, len(small_sub_non_lake)):
         small_sub_id = small_sub_non_lake['SubId'].values[i]
