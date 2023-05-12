@@ -67,7 +67,11 @@ def define_interest_sites(
     Path_Non_ConL_ply = Path_NonCon_Lake_ply
 
     finalriv_infoply = geopandas.read_file(Path_final_rviply)
-    DA_ERR_COL = 'DA_Diff'
+
+    # For ECCC and other product we still use DA_error
+    DA_ERR_COL = 'DA_error'
+    if DA_ERR_COL not in finalriv_infoply.columns:
+        DA_ERR_COL = 'DA_Diff'
 
     # Remove DA_Obs and DA_Diff columns from subbasin layer
     for col in ['DA_Obs', DA_ERR_COL]:
@@ -184,6 +188,7 @@ def define_interest_sites(
         if trg_sub_info["Has_POI"].values[0] <= 0:
             finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,"SRC_obs"] = SRC_obs_in
             finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,"Obs_NM"] = Obs_NM_in
+            finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,"Has_POI"] = 1
             
             # finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,"DA_Obs"] = DA_Obs_in
             # finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,"Has_POI"] = 1
@@ -195,22 +200,16 @@ def define_interest_sites(
             #         DAerror_in = (da_sim/1000/1000 - DA_Obs_in)/DA_Obs_in
             #     finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,DA_ERR_COL] = DAerror_in
 
-            # exist_poi = pd.concat([exist_poi, row[["Obs_NM","geometry",'DA_Obs','SRC_obs','DrainArea','SubId']]])
 
-            # print("Add the POI : ",Obs_NM_in," into the routing product ")
+            exist_poi = pd.concat([exist_poi, row[["Obs_NM","geometry",'DA_Obs','SRC_obs','DrainArea','SubId']]])
+            print("Add the POI : ",Obs_NM_in," into the routing product ")
 
         else:
             ## POI in this subbasin
 
-            if Cur_SRC_obs != "<NA>":
-                SRC_obs_in  =  Cur_SRC_obs+ "&" + SRC_obs_in
-            else:
-                SRC_obs_in  = SRC_obs_in
+            SRC_obs_in  =  Cur_SRC_obs+ "&" + SRC_obs_in
+            Obs_NM_in   =   Cur_Obs_NM + "&" + Obs_NM_in
 
-            if Cur_Obs_NM != "<NA>":
-                Obs_NM_in   =   Cur_Obs_NM + "&" + Obs_NM_in
-            else:
-                Obs_NM_in   =   Obs_NM_in
 
             finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,"SRC_obs"] = SRC_obs_in
             finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,"Obs_NM"] = Obs_NM_in
@@ -230,8 +229,8 @@ def define_interest_sites(
             # else:
             #     finalriv_infoply.loc[finalriv_infoply["SubId"] == trg_SubId,DA_ERR_COL] = -999
 
-#            row["Obs_NM"] = Obs_NM_in
-#            exist_poi.loc[exist_poi["Obs_NM"] == Cur_Obs_NM ,"Obs_NM"] = Obs_NM_in
+            # row["Obs_NM"] = Obs_NM_in
+            # exist_poi.loc[exist_poi["Obs_NM"] == Cur_Obs_NM ,"Obs_NM"] = Obs_NM_in
 
             exist_poi = pd.concat([exist_poi, row[["Obs_NM","geometry",'DA_Obs','SRC_obs','DrainArea','SubId']]])
 
@@ -256,7 +255,8 @@ def define_interest_sites(
     # Revise DA_Diff column type and value format
     exist_poi.loc[exist_poi['DA_Obs'] <= 0,DA_ERR_COL] = -999
     # non-null values are shown as percentage
-    exist_poi[DA_ERR_COL] = exist_poi[DA_ERR_COL].apply(lambda x: f"{x*100:.3f}%" if x != -999 else "<NA>")
+    if DA_ERR_COL == 'DA_Diff':
+        exist_poi[DA_ERR_COL] = exist_poi[DA_ERR_COL].apply(lambda x: f"{x*100:.3f}%" if x != -999 else "<NA>")
     exist_poi.loc[exist_poi['DA_Obs'] <= 0, 'DA_Obs'] = -1.2345
 
     if Path_obs_gauge_point != "#":
