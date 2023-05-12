@@ -244,7 +244,7 @@ def create_catchments_attributes_template_table(
     attri_table.loc[~final_pourpoints['ncl_kake_id'].isnull(),'Lake_Cat'] = 2
     attri_table.loc[~final_pourpoints['cl_lake_id'].isnull(),'Lake_Cat'] = 1
     attri_table['Has_POI'] = int(0)
-    attri_table.loc[~final_pourpoints['obsid'] != 0,'Has_POI'] = int(1)
+    attri_table.loc[final_pourpoints['obsid'] != 0,'Has_POI'] = int(1)
     attri_table['DA_Obs'] = final_pourpoints[obs_attributes[2]].fillna(0)
     attri_table['Obs_NM'] = final_pourpoints[obs_attributes[1]].astype('str').fillna(" ")
     attri_table['SRC_obs'] = final_pourpoints[obs_attributes[3]].astype('str').fillna(" ")
