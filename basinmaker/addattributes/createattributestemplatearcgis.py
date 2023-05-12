@@ -244,13 +244,12 @@ def create_catchments_attributes_template_table(
     attri_table.loc[~final_pourpoints['ncl_kake_id'].isnull(),'Lake_Cat'] = 2
     attri_table.loc[~final_pourpoints['cl_lake_id'].isnull(),'Lake_Cat'] = 1
     attri_table['Has_POI'] = int(0)
-    attri_table.loc[~final_pourpoints['obsid'].isnull(),'Has_POI'] = int(1)
+    attri_table.loc[~final_pourpoints['obsid'] != 0,'Has_POI'] = int(1)
     attri_table['DA_Obs'] = final_pourpoints[obs_attributes[2]].fillna(0)
     attri_table['Obs_NM'] = final_pourpoints[obs_attributes[1]].astype('str').fillna(" ")
     attri_table['SRC_obs'] = final_pourpoints[obs_attributes[3]].astype('str').fillna(" ")
     attri_table['outletLng'] = final_pourpoints['outletLng'].fillna(-1.2345)
     attri_table['outletLat'] = final_pourpoints['outletLat'].fillna(-1.2345)
-
 
     sub_attri = read_table_as_pandas("sub_degree",['Value','MEAN'],work_folder)
     sub_attri['BasSlope'] = sub_attri['MEAN'].fillna(-1.2345)
@@ -380,7 +379,7 @@ def create_catchments_attributes_template_table(
                        'k'         ,
                        'c'        
     ]]
-     
+    attri_table.to_csv(os.path.join(work_folder,"attri_table.csv"),index=False) 
     cat_ply= cat_ply[['SubId','SHAPE']]
     cat_ply['SubId']  = pd.to_numeric(cat_ply['SubId'])
     cat_ply['SubId']  = cat_ply['SubId'].fillna(0)
@@ -391,7 +390,6 @@ def create_catchments_attributes_template_table(
         # DA_Diff use np.nan for null values
         if col_i != "DA_Diff":
             cat_ply[col_i] = cat_ply[col_i].fillna(-1.2345)
-
     cat_ply['Obs_NM'] = cat_ply['Obs_NM'].astype('str')
     cat_ply['SRC_obs'] = cat_ply['SRC_obs'].astype('str')
     cat_ply = cat_ply.drop_duplicates(subset=['SubId'], keep='first')
