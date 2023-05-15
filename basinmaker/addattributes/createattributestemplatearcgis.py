@@ -207,14 +207,27 @@ def create_catchments_attributes_template_table(
     final_pourpoints.loc[final_pourpoints['HyLakeId'].isnull(),'HyLakeId'] = final_pourpoints.loc[final_pourpoints['HyLakeId'].isnull(),'ncl_kake_id']
 
     alllake123 = pd.DataFrame.spatial.from_featureclass("all_lakes_v")
-    alllake123['HyLakeId'] = alllake123[lake_attributes[0]]
-    alllake123 = alllake123[lake_attributes + ['HyLakeId']]
+    alllake123['HyLakeId'] = pd.to_numeric(alllake123[lake_attributes[0]])
+    alllake123 =alllake123[lake_attributes + ['HyLakeId']]
+
     obs_v123 = pd.DataFrame.spatial.from_featureclass("obs_clip")
-    obs_v123["obsid"] = obs_v123[obs_attributes[0]]
+    obs_v123["obsid"]       = pd.to_numeric(obs_v123[obs_attributes[0]])
+    obs_v123['obsid']       = obs_v123['obsid'].fillna(0)
+    obs_v123['obsid']       = obs_v123['obsid'].astype(int)
+
     obs_v123 = obs_v123[obs_attributes + ['obsid']]
+    
+    final_pourpoints['HyLakeId'] = pd.to_numeric(final_pourpoints['HyLakeId'])
+    final_pourpoints['HyLakeId']  = final_pourpoints['HyLakeId'].fillna(0)
+    final_pourpoints['HyLakeId'] = final_pourpoints['HyLakeId'].astype(int)
+
+    final_pourpoints['obsid'] = pd.to_numeric(final_pourpoints['obsid'])
+    final_pourpoints['obsid']  = final_pourpoints['obsid'].fillna(0)
+    final_pourpoints['obsid'] = final_pourpoints['obsid'].astype(int)
 
     final_pourpoints = final_pourpoints.merge(alllake123,on='HyLakeId',how='left')
     final_pourpoints = final_pourpoints.merge(obs_v123,on='obsid',how='left')
+
     final_pourpoints.spatial.to_featureclass(location=os.path.join(work_folder,"arcgis.gdb","final_pp_with_routing"),overwrite=True,sanitize_columns=False)
 
     final_pourpoints = final_pourpoints.sort_values(by='SubId', ascending=True)
@@ -231,13 +244,12 @@ def create_catchments_attributes_template_table(
     attri_table.loc[~final_pourpoints['ncl_kake_id'].isnull(),'Lake_Cat'] = 2
     attri_table.loc[~final_pourpoints['cl_lake_id'].isnull(),'Lake_Cat'] = 1
     attri_table['Has_POI'] = int(0)
-    attri_table.loc[~final_pourpoints['obsid'].isnull(),'Has_POI'] = int(1)
+    attri_table.loc[final_pourpoints['obsid'] != 0,'Has_POI'] = int(1)
     attri_table['DA_Obs'] = final_pourpoints[obs_attributes[2]].fillna(0)
     attri_table['Obs_NM'] = final_pourpoints[obs_attributes[1]].astype('str').fillna(" ")
     attri_table['SRC_obs'] = final_pourpoints[obs_attributes[3]].astype('str').fillna(" ")
     attri_table['outletLng'] = final_pourpoints['outletLng'].fillna(-1.2345)
     attri_table['outletLat'] = final_pourpoints['outletLat'].fillna(-1.2345)
-
 
     sub_attri = read_table_as_pandas("sub_degree",['Value','MEAN'],work_folder)
     sub_attri['BasSlope'] = sub_attri['MEAN'].fillna(-1.2345)
@@ -313,8 +325,14 @@ def create_catchments_attributes_template_table(
     attri_table = calculate_bkf_width_depth(attri_table)
 
     attri_table = update_non_connected_catchment_info(attri_table)
-    attri_table.loc[attri_table['DA_Obs'] > 0,'DA_Diff'] = (attri_table.loc[attri_table['DA_Obs'] > 0,'DrainArea']/1000/1000 - attri_table.loc[attri_table['DA_Obs'] > 0,'DA_Obs'])/attri_table.loc[attri_table['DA_Obs'] > 0,'DrainArea']/1000/1000
-    attri_table.loc[attri_table['DA_Obs'] <= 0,'DA_Diff'] = -1.2345
+    attri_table.loc[attri_table['DA_Obs'] > 0,'DA_Diff'] = (attri_table.loc[attri_table['DA_Obs'] > 0,'DrainArea']/1000/1000 - attri_table.loc[attri_table['DA_Obs'] > 0,'DA_Obs'])/attri_table.loc[attri_table['DA_Obs'] > 0,'DA_Obs']
+    attri_table.loc[attri_table['DA_Obs'] <= 0,'DA_Diff'] = -999
+    # non-null values are shown as percentage
+    attri_table['DA_Diff'] = attri_table['DA_Diff'].apply(lambda x: f"{x*100:.3f}%" if x != -999 else "<NA>")
+
+    attri_table.loc[attri_table['DA_Obs'] <= 0, 'DA_Obs'] = -1.2345
+    # print(attri_table['DA_Diff'].values)
+    
     attri_table.loc[attri_table['RivLength'] == -1.2345,'RivSlope'] = -1.2345
     attri_table.loc[attri_table['RivLength'] == -1.2345,'FloodP_n'] = -1.2345
     attri_table.loc[attri_table['RivLength'] == -1.2345,'Max_DEM'] = -1.2345
@@ -361,10 +379,17 @@ def create_catchments_attributes_template_table(
                        'k'         ,
                        'c'        
     ]]
-     
+    attri_table.to_csv(os.path.join(work_folder,"attri_table.csv"),index=False) 
     cat_ply= cat_ply[['SubId','SHAPE']]
+    cat_ply['SubId']  = pd.to_numeric(cat_ply['SubId'])
+    cat_ply['SubId']  = cat_ply['SubId'].fillna(0)
+    cat_ply['SubId']  = cat_ply['SubId'].astype(int)
+
     cat_ply = cat_ply.merge(attri_table,on='SubId',how='left')
-    cat_ply = cat_ply.fillna(-1.2345)
+    for col_i in cat_ply.columns:
+        # DA_Diff use np.nan for null values
+        if col_i != "DA_Diff":
+            cat_ply[col_i] = cat_ply[col_i].fillna(-1.2345)
     cat_ply['Obs_NM'] = cat_ply['Obs_NM'].astype('str')
     cat_ply['SRC_obs'] = cat_ply['SRC_obs'].astype('str')
     cat_ply = cat_ply.drop_duplicates(subset=['SubId'], keep='first')
@@ -372,8 +397,16 @@ def create_catchments_attributes_template_table(
     cat_ply.spatial.to_featureclass(location=os.path.join(output_folder,catchment_without_merging_lakes+"_v1-0"),overwrite=True,sanitize_columns=False)
 
     riv_line= riv_line[['SubId','SHAPE']]
+    riv_line['SubId']  = pd.to_numeric(riv_line['SubId'])
+    riv_line['SubId']  = riv_line['SubId'].fillna(0)
+    riv_line['SubId']  = riv_line['SubId'].astype(int)
+
     riv_line = riv_line.merge(attri_table,on='SubId',how='left')
-    riv_line = riv_line.fillna(-1.2345)
+    for col_i in riv_line.columns:
+        # DA_Diff use np.nan for null values
+        if col_i != "DA_Diff":
+            riv_line[col_i] = riv_line[col_i].fillna(-1.2345)
+
     riv_line['Obs_NM'] = riv_line['Obs_NM'].astype('str')
     riv_line['SRC_obs'] = riv_line['SRC_obs'].astype('str')
     riv_line = riv_line.drop_duplicates(subset=['SubId'], keep='first')
