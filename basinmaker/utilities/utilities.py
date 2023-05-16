@@ -8,8 +8,8 @@ def copy_files_with_extension(src_folder,tar_folder,ext):
     files = glob.iglob(os.path.join(src_folder, ext))
     for file in files:
         if os.path.isfile(file):
-            if not os.path.exists(os.path.join(tar_folder, file)):
-                t = shutil.copy2(file, tar_folder)
+            # Note here if src_folder and tar_folder are the same, the copy command will not work!
+            t = shutil.copy2(file, tar_folder)
 
 Internal_Constant_Names = {
     "cat_add_lake_old_fdr": "cat_add_lake_old_fdr",

@@ -463,7 +463,9 @@ def GenerateHRUS_purepy(
         json_file_size = os.stat(output_jason_path).st_size/1024/1024 #to MB
         if json_file_size <= 100:
             break
-
+    
+    # Clean up temp folder
+    shutil.rmtree(tempfolder)
 
 def GeneratelandandlakeHRUS(
     OutputFolder,
