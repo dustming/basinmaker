@@ -41,6 +41,20 @@ Generate Raven input files
 BasinMaker - delineate lake-river routing product tools
 =======================================================
 
+In order to fully delineate a lake-river routing network from scratch, users need to sequentially apply five BasinMaker functions (ND1 to ND5) described in this section.
+
+The overview of the workflow is summarized in the Figure below.
+
+.. image:: https://github.com/dustming/RoutingTool/wiki/Figures/too_flowchart.png
+  :width: 900
+  :alt: Alternative text
+
+Figure Caption:  This is Figure 3 from han et al. (2023).  Workflow, including inputs and outputs, of the BasinMaker network delineation mode functions for generating a 
+hydrological routing network with lakes and rivers given a DEM and a lake polygon layer. Notes: 1. Flow direction raster dataset is optional user input here. 
+2. The channel profile coefficient map to define bankfull channel widths and depths across the extent can alternatively be replaced by coefficients that are constant 
+across the spatial extent of the project.
+
+
 Define project spatial extent
 -----------------------------
 

@@ -436,7 +436,8 @@ def create_catchments_attributes_template_table(
     obs_v = obs_v.merge(cat_ply_att,on='SubId',how='left')
     obs_v['Use_region'] = 1
     obs_v = obs_v[['SubId','Obs_NM','DA_Obs','DrainArea','DA_Diff','SRC_obs','Use_region','SHAPE']]
-    obs_v.spatial.to_featureclass(location=os.path.join(output_folder,"poi_v1-0.shp"),overwrite=True,sanitize_columns=False)
+    if len(obs_v) > 0:
+        obs_v.spatial.to_featureclass(location=os.path.join(output_folder,"poi_v1-0.shp"),overwrite=True,sanitize_columns=False)
     if len(obs_v_missing) > 0:
         obs_v_missing.spatial.to_featureclass(location=os.path.join(output_folder,"poi_missing.shp"),overwrite=True,sanitize_columns=False)
 

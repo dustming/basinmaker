@@ -188,6 +188,7 @@ class postprocess:
         non_connected_lake_area_thresthold =-1,
         selected_lake_ids=[],
         area_thresthold = 10*30*30/1000/1000,
+        length_thresthold=0.01,
         gis_platform="qgis",
     ):
         """This function is to simplify the hydrologic routing network by removing
@@ -297,6 +298,7 @@ class postprocess:
             Routing_Product_Folder = path_output_folder,
             qgis_prefix_path=self.qgispp,
             area_thresthold = area_thresthold,
+            length_thresthold = length_thresthold,
             gis_platform=gis_platform,
         )
 
@@ -307,6 +309,7 @@ class postprocess:
         routing_product_folder = '#',
         gis_platform="qgis",
         minimum_subbasin_drainage_area=-1,
+        length_thresthold = 0.01,
         area_thresthold = 10*30*30/1000/1000,
     ):
         """ This function is to simplify the hydrologic routing network by
@@ -401,6 +404,7 @@ class postprocess:
             Routing_Product_Folder = path_output_folder,
             qgis_prefix_path=self.qgispp,
             area_thresthold = area_thresthold,
+            length_thresthold = length_thresthold,
             gis_platform=gis_platform,
         )
 
@@ -412,6 +416,7 @@ class postprocess:
         clean_exist_pois = True,
         gis_platform="purepy",
         area_thresthold = 10*30*30/1000/1000,
+        length_thresthold = 1,
     ):
         """This function allows the user to modify point of interest (POI) 
         sites in a pre-existing BasinMaker-generated user input hydrologic 
@@ -530,6 +535,7 @@ class postprocess:
             Routing_Product_Folder = path_output_folder,
             qgis_prefix_path=self.qgispp,
             area_thresthold = area_thresthold,
+            length_thresthold = length_thresthold,
             gis_platform=gis_platform,
         )
 
@@ -1447,6 +1453,7 @@ class delineate:
         routing_product_folder='#',
         gis_platform="qgis",
         area_thresthold = 10*30*30/1000/1000,
+        length_thresthold = 1,
     ):
         """Finalize a incomplete hydrologic routing network by merging subbasin
         polygons that are covered by the same lake.
@@ -1488,4 +1495,5 @@ class delineate:
             qgis_prefix_path=self.qgispp,
             gis_platform=gis_platform,
             area_thresthold = area_thresthold,
+            length_thresthold = length_thresthold,
         )

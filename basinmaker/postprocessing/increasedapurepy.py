@@ -1,3 +1,5 @@
+from basinmaker.func.pdtable import *
+from basinmaker.func.purepy import *
 import numpy as np
 import sys
 import os
@@ -8,15 +10,13 @@ import pandas as pd
 import shutil
 import geopandas
 
-import sys, os
+import sys
+import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-
-from basinmaker.func.purepy import *
-from basinmaker.func.pdtable import *
 
 
 def simplify_routing_structure_by_drainage_area_purepy(
-    Routing_Product_Folder= '#',
+    Routing_Product_Folder='#',
     Area_Min=-1,
     OutputFolder="#",
 ):
@@ -77,7 +77,7 @@ def simplify_routing_structure_by_drainage_area_purepy(
     -------
 
     """
-    #### generate river catchments based on minmum area.
+    # generate river catchments based on minmum area.
 
     sub_colnm = "SubId"
     down_colnm = "DowSubId"
@@ -93,43 +93,47 @@ def simplify_routing_structure_by_drainage_area_purepy(
     if not os.path.exists(tempfolder):
         os.makedirs(tempfolder)
 
-    Path_Catchment_Polygon="#"
-    Path_River_Polyline="#"
-    Path_Con_Lake_ply="#"
-    Path_NonCon_Lake_ply="#"
-    Path_obs_gauge_point="#"
-    Path_final_cat_ply="#"
-    Path_final_cat_riv="#"
+    Path_Catchment_Polygon = "#"
+    Path_River_Polyline = "#"
+    Path_Con_Lake_ply = "#"
+    Path_NonCon_Lake_ply = "#"
+    Path_obs_gauge_point = "#"
+    Path_final_cat_ply = "#"
+    Path_final_cat_riv = "#"
 
-    ##define input files from routing prodcut
+    # define input files from routing prodcut
     for file in os.listdir(Routing_Product_Folder):
         if file.endswith(".shp"):
             if 'catchment_without_merging_lakes' in file:
-                Path_Catchment_Polygon = os.path.join(Routing_Product_Folder, file)
+                Path_Catchment_Polygon = os.path.join(
+                    Routing_Product_Folder, file)
             if 'river_without_merging_lakes' in file:
-                Path_River_Polyline = os.path.join(Routing_Product_Folder, file)
+                Path_River_Polyline = os.path.join(
+                    Routing_Product_Folder, file)
             if 'sl_connected_lake' in file:
                 Path_Con_Lake_ply = os.path.join(Routing_Product_Folder, file)
             if 'sl_non_connected_lake' in file:
-                Path_NonCon_Lake_ply = os.path.join(Routing_Product_Folder, file)
+                Path_NonCon_Lake_ply = os.path.join(
+                    Routing_Product_Folder, file)
             if 'obs_gauges' in file or 'poi' in file:
-                Path_obs_gauge_point = os.path.join(Routing_Product_Folder, file)
+                Path_obs_gauge_point = os.path.join(
+                    Routing_Product_Folder, file)
             if 'finalcat_info' in file:
                 Path_final_cat_ply = os.path.join(Routing_Product_Folder, file)
             if 'finalcat_info_riv' in file:
                 Path_final_cat_riv = os.path.join(Routing_Product_Folder, file)
 
-    if Path_Catchment_Polygon == '#' or  Path_River_Polyline =='#':
+    if Path_Catchment_Polygon == '#' or Path_River_Polyline == '#':
         print("Invalid routing product folder ")
 
     Path_final_riv_ply = Path_Catchment_Polygon
     Path_final_riv = Path_River_Polyline
 
-    ## copy obs_gauges to output folder
+    # copy obs_gauges to output folder
     for file in os.listdir(Routing_Product_Folder):
         if 'obs_gauges' in file or 'poi' in file:
-            shutil.copy(os.path.join(Routing_Product_Folder, file), os.path.join(OutputFolder, file))
-
+            shutil.copy(os.path.join(Routing_Product_Folder, file),
+                        os.path.join(OutputFolder, file))
 
     # overall procedure,
     # 1. first get product attribute table
@@ -152,9 +156,8 @@ def simplify_routing_structure_by_drainage_area_purepy(
     if Path_Conl_ply != '#':
         Conn_Lakes_ply = geopandas.read_file(Path_Conl_ply)
     else:
-        Conn_Lakes_ply = pd.DataFrame(np.full((10,1),-9999),columns=["Hylak_id"])
-
-
+        Conn_Lakes_ply = pd.DataFrame(
+            np.full((10, 1), -9999), columns=["Hylak_id"])
 
     # change attribute table
     (
@@ -167,19 +170,23 @@ def simplify_routing_structure_by_drainage_area_purepy(
         finalriv_infoply, Conn_Lakes_ply, Area_Min
     )
 
-    finalriv_inforiv_main = finalriv_inforiv.loc[finalriv_inforiv['SubId'].isin(Selected_riv_ids)]
-    finalriv_inforiv_main.to_file(os.path.join(tempfolder,'selected_riv.shp'))
-
     UpdateTopology(mapoldnew_info)
     mapoldnew_info = update_non_connected_catchment_info(mapoldnew_info)
+
+    # Selected_riv_ids, mapoldnew_info = Add_River_Segment_Between_Lakes_And_Observations(
+    #     mapoldnew_info, Selected_riv_ids, finalriv_infoply)
+
+    finalriv_inforiv_main = finalriv_inforiv.loc[finalriv_inforiv['SubId'].isin(
+        Selected_riv_ids)]
+    finalriv_inforiv_main.to_file(os.path.join(tempfolder, 'selected_riv.shp'))
 
     save_modified_attributes_to_outputs(
         mapoldnew_info=mapoldnew_info,
         tempfolder=tempfolder,
         OutputFolder=OutputFolder,
         cat_name=os.path.basename(Path_final_riv_ply),
-        riv_name = os.path.basename(Path_final_riv),
-        Path_final_riv = os.path.join(tempfolder,'selected_riv.shp'),
+        riv_name=os.path.basename(Path_final_riv),
+        Path_final_riv=os.path.join(tempfolder, 'selected_riv.shp'),
     )
 
     # export lakes
@@ -190,27 +197,34 @@ def simplify_routing_structure_by_drainage_area_purepy(
         Conn_Lakes_ply = geopandas.read_file(Path_Conl_ply)
         lake_mask = Conn_Lakes_ply['Hylak_id'].isin(Connected_Lake_Mainriv)
         Conn_Lakes_ply_select = Conn_Lakes_ply.loc[lake_mask].copy()
-        Conn_Lakes_ply_not_select = Conn_Lakes_ply.loc[np.logical_not(lake_mask)].copy()
+        Conn_Lakes_ply_not_select = Conn_Lakes_ply.loc[np.logical_not(
+            lake_mask)].copy()
 
     # export lake polygons
     # export connected lake polygon
     if len(Conn_Lakes_ply_select) > 0:
-        Conn_Lakes_ply_select.to_file(os.path.join(OutputFolder,os.path.basename(Path_Conl_ply)))
+        Conn_Lakes_ply_select.to_file(os.path.join(
+            OutputFolder, os.path.basename(Path_Conl_ply)))
 
     # export non connected polygon
-    if len(Conn_Lakes_ply_not_select) >0 and Path_NonCon_Lake_ply != '#':
+    if len(Conn_Lakes_ply_not_select) > 0 and Path_NonCon_Lake_ply != '#':
         non_conn_Lakes_ply = geopandas.read_file(Path_NonCon_Lake_ply)
-        new_non_connected_lake = pd.concat([non_conn_Lakes_ply, Conn_Lakes_ply_not_select], ignore_index=True)
-        new_non_connected_lake.to_file(os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply)))
+        new_non_connected_lake = pd.concat(
+            [non_conn_Lakes_ply, Conn_Lakes_ply_not_select], ignore_index=True)
+        new_non_connected_lake.to_file(os.path.join(
+            OutputFolder, os.path.basename(Path_NonCon_Lake_ply)))
     if len(Conn_Lakes_ply_not_select) <= 0 and Path_NonCon_Lake_ply != '#':
         non_conn_Lakes_ply = geopandas.read_file(Path_NonCon_Lake_ply)
-        non_conn_Lakes_ply.to_file(os.path.join(OutputFolder,os.path.basename(Path_NonCon_Lake_ply)))
+        non_conn_Lakes_ply.to_file(os.path.join(
+            OutputFolder, os.path.basename(Path_NonCon_Lake_ply)))
     if len(Conn_Lakes_ply_not_select) > 0 and Path_NonCon_Lake_ply == '#':
         if len(os.path.basename(Path_Conl_ply).split('_')) == 4:
-            outlake_name = 'sl_non_connected_lake_' + os.path.basename(Path_Conl_ply).split('_')[3]
+            outlake_name = 'sl_non_connected_lake_' + \
+                os.path.basename(Path_Conl_ply).split('_')[3]
         else:
             outlake_name = 'sl_non_connected_lake.shp'
 
-        Conn_Lakes_ply_not_select.to_file(os.path.join(OutputFolder,outlake_name))
+        Conn_Lakes_ply_not_select.to_file(
+            os.path.join(OutputFolder, outlake_name))
 
     return
