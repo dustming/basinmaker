@@ -131,7 +131,7 @@ ArcGIS Pro in Windows
 
     .. code-block::
 
-      > python -m pip install pytest simpledbf netCDF4 joblib jupyter requests wget gdown
+      > python -m pip install pytest simpledbf netCDF4 joblib jupyter requests wget gdown geopandas rasterstats
 
 #. Validate the installation with the package of test files.
 
