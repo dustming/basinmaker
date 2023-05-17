@@ -170,20 +170,27 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
         if 'river_without_merging_lakes' not in riv_name:
             riv_pd_nncls_routing_info = mapoldnew_info[['SubId','DowSubId']].copy(deep=True)
             remove_subids = riv_pd_nncls_routing_info[ ~riv_pd_nncls_routing_info['SubId'].isin(mapoldnew_info['DowSubId'].values)]['SubId'].values
-        remove_subids = [-9999]
         if Path_final_riv != '#':
             riv_pd = riv_pd[~riv_pd.SubId.isin(remove_subids)]
             cat_colnms = riv_pd.columns
             drop_cat_colnms = cat_colnms[cat_colnms.isin(NEED_TO_REMOVE_IDS)]
             riv_pd = riv_pd.drop(columns=drop_cat_colnms)
             if len(riv_pd) > 0:
-                riv_pd.to_file(os.path.join(OutputFolder,riv_name))                
-        mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_subids),'RivSlope'] = -1.2345
-        mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_subids),'RivLength'] = -1.2345
-        mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_subids),'FloodP_n'] = -1.2345
-        mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_subids),'Ch_n'] = -1.2345
-        mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_subids),'Max_DEM'] = -1.2345
-        mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_subids),'Min_DEM'] = -1.2345
+                riv_pd.to_file(os.path.join(OutputFolder,riv_name))
+
+        if 'finalcat_info' in cat_name:                
+            mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_subids),'RivSlope'] = -1.2345
+            mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_subids),'RivLength'] = -1.2345
+            mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_subids),'FloodP_n'] = -1.2345
+            mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_subids),'Ch_n'] = -1.2345
+            mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_subids),'Max_DEM'] = -1.2345
+            mapoldnew_info.loc[mapoldnew_info.SubId.isin(remove_subids),'Min_DEM'] = -1.2345
+            mapoldnew_info.loc[mapoldnew_info['Lake_Cat'] > 0,'RivSlope'] = -1.2345
+            mapoldnew_info.loc[mapoldnew_info['Lake_Cat'] > 0,'RivLength'] = -1.2345
+            mapoldnew_info.loc[mapoldnew_info['Lake_Cat'] > 0,'FloodP_n'] = -1.2345
+            mapoldnew_info.loc[mapoldnew_info['Lake_Cat'] > 0,'Ch_n'] = -1.2345
+            mapoldnew_info.loc[mapoldnew_info['Lake_Cat'] > 0,'Max_DEM'] = -1.2345
+            mapoldnew_info.loc[mapoldnew_info['Lake_Cat'] > 0,'Min_DEM'] = -1.2345
 
         cat_colnms = mapoldnew_info.columns
         drop_cat_colnms = cat_colnms[cat_colnms.isin(NEED_TO_REMOVE_IDS)]
