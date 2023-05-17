@@ -188,7 +188,7 @@ class postprocess:
         non_connected_lake_area_thresthold =-1,
         selected_lake_ids=[],
         area_thresthold = 10*30*30/1000/1000,
-        length_thresthold=1,
+        length_thresthold=0.01,
         gis_platform="qgis",
     ):
         """This function is to simplify the hydrologic routing network by removing
@@ -309,7 +309,7 @@ class postprocess:
         routing_product_folder = '#',
         gis_platform="qgis",
         minimum_subbasin_drainage_area=-1,
-        length_thresthold = 1,
+        length_thresthold = 0.01,
         area_thresthold = 10*30*30/1000/1000,
     ):
         """ This function is to simplify the hydrologic routing network by
