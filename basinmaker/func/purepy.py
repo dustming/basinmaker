@@ -10,7 +10,6 @@ import sys
 #import pygeos as pg
 from osgeo import gdal, ogr
 from rasterstats import zonal_stats
-
 def zonal_stats_pd(shp_gpd,raster,stats,key):
 
     result = zonal_stats(shp_gpd, raster, stats = stats,geojson_out=True,all_touched=True)
@@ -428,3 +427,62 @@ def create_geo_jason_file(Input_Polygon_path):
             json.dump(output_jason_lake_riv, f, ensure_ascii=False, indent=4)
 
     return
+
+
+def compare_catchment(cat_a,cat_b):
+    """test function that will:
+    Function that used to compare two catchment files
+    from routing products
+    """
+
+    ### transfer expected siplified product into pandas dataframe
+    Expect_Finalriv_info_ply = geopandas.read_file(cat_a).sort_values(by=["SubId"])
+    ### calcuate expected total number of catchment:Expect_N_Cat
+    Expect_N_Cat = len(Expect_Finalriv_info_ply)
+    ### calcuate expected total river length :Expect_len_Riv
+    Expect_len_Riv = sum(Expect_Finalriv_info_ply["RivLength"])
+    ### calcuate expected total basin area :Expect_Bas_Area
+    Expect_Bas_Area = sum(Expect_Finalriv_info_ply["BasArea"])
+
+    ### transfer resulted siplified product into pandas dataframe
+    Result_Finalriv_info_ply = geopandas.read_file(cat_b).sort_values(by=["SubId"])
+    ### calcuate resulted total number of catchment:Result_N_Cat
+    Result_N_Cat = len(Result_Finalriv_info_ply)
+    ### calcuate resulted total river length :Result_len_Riv
+    Result_len_Riv = sum(Result_Finalriv_info_ply["RivLength"])
+    ### calcuate resulted total basin area :Result_Bas_Area
+    Result_Bas_Area = sum(Result_Finalriv_info_ply["BasArea"])
+
+    ### compare Expect_N_Cat and Result_N_Cat
+    assert Expect_N_Cat == Result_N_Cat
+    ### compare Expect_len_Riv and Result_len_Riv
+    assert (Expect_len_Riv  - Result_len_Riv) < 1    ### compare Expect_Bas_Area and Result_Bas_Area
+    assert (Expect_Bas_Area - Result_Bas_Area) < 10
+    
+def compare_products(product_folder_a,product_folder_b):
+    compare_catchment(os.path.join(product_folder_a,'catchment_without_merging_lakes_v1-0.shp'),os.path.join(product_folder_b,'catchment_without_merging_lakes_v1-0.shp'))
+
+    if os.path.exists(os.path.join(product_folder_a,'finalcat_info_v1-0.shp')):
+        compare_catchment(os.path.join(product_folder_a,'finalcat_info_v1-0.shp'),os.path.join(product_folder_b,'finalcat_info_v1-0.shp'))
+
+
+def compare_hrus(hru_folder_a,hru_folder_b):
+        ### transfer expected siplified product into pandas dataframe
+    hru_a = geopandas.read_file(hru_folder_a).sort_values(by=["HRU_ID"])
+    ### calcuate expected total number of catchment:Expect_N_Cat
+    Expect_N_HRU = len(hru_a)
+    ### calcuate expected total basin area :Expect_Bas_Area
+    Expect_HRU_Area = sum(hru_a["HRU_Area"])
+
+    ### transfer resulted siplified product into pandas dataframe
+    Result_Finalriv_info_ply = geopandas.read_file(hru_folder_b).sort_values(by=["HRU_ID"])
+    ### calcuate resulted total number of catchment:Result_N_Cat
+    Result_N_HRU = len(Result_Finalriv_info_ply)
+    ### calcuate resulted total basin area :Result_Bas_Area
+    Result_HRU_Area = sum(Result_Finalriv_info_ply["HRU_Area"])
+
+    ### compare Expect_N_Cat and Result_N_Cat
+    assert Expect_N_HRU == Result_N_HRU
+    ### compare Expect_len_Riv and Result_len_Riv
+    assert (Expect_HRU_Area  - Result_HRU_Area) < 1    ### compare Expect_Bas_Area and Result_Bas_Area
+    
