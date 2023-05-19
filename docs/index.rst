@@ -1,4 +1,4 @@
-Welcome to BasinMaker v3.0.1 installation and developer documentation!
+Welcome to BasinMaker v3.1.0 installation and developer documentation!
 ====================================================================
 
 

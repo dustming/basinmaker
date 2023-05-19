@@ -32,7 +32,13 @@ A post-processing example via google colab can be found at here `here <https://c
 ====================  
 Version Update Notes
 ====================
-We are excited to announce the release of version 3.0.3 of our software, which includes both major and minor updates.
+We are excited to announce the release of version 3.1.0 of our software, which includes both major and minor updates.
+
+Major updates in version 3.1.0 include:
+=======================================
+
+- Fix the lake inflow subbasin bug in the previous version.
+
 
 Major updates in version 3.0.3 include:
 =======================================
