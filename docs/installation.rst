@@ -50,7 +50,7 @@ Geopandas with anaconda
 
     .. code-block::
 
-      conda create --name <any_name_for_env> python==3.9.5
+      conda create --name <any_name_for_env> python==3.11.3  
       conda activate <any_name_for_env>
 
 #. Install packages (may take some time)
@@ -61,11 +61,15 @@ Geopandas with anaconda
 
     .. code-block::
 
+      conda install gdal
+
+    .. code-block::
+
       conda install numpy=1.21.6 pandas==1.3.5 rasterstats==0.17.0 geopandas==0.11.0 GDAL==3.5.1 Shapely==1.8.5 rasterio==1.2.10
 
     .. code-block::
 
-      python -m pip install  pytest  simpledbf netCDF4 joblib jupyter requests wget gdown
+      python -m pip install  pytest  simpledbf netCDF4 joblib jupyter requests wget gdown pandas rasterstats geopandas rasterio scipy
 
 #. Install BasinMaker
 
