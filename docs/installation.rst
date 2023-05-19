@@ -1,5 +1,5 @@
 ===================
-Installation v3.0.3
+Installation v3.1.0
 ===================
 
 
@@ -17,7 +17,7 @@ Users, who want to use BasinMaker post processing functions without a Windows OS
 For full installation, BasinMaker can work under two python enviroments: the ArcGIS Pro and GRASS/QGIS GIS python enviroments. The instruction to install BasinMaker for each python enviroments are provided at :ref:`Full installation`.It is quite a challenge to setup a python environment for QGIS and GRASS together. Here, two procedures are provided for Windows OS systems, respectively. The procedure have been tested on several machines. But We can't guarantee install procedures work on every machin, but if you run into a problem create an issue on the GitHub and time permitting, we will try to help. If you managed to do the full installation on a different operating system, we would be grateful if you could document and share the detailed installation procedure that was successful (email: m43han@uwaterloo.ca).
 
 
-Updating BasinMaker to v3.0
+Updating BasinMaker to v3.1
 ===========================
 For existing users of v2.0 who want to update BasinMaker to the version v3.0.0. Users should simply reinstall BasinMaker 3.0 to a new working environment (e.g., called 'Basinmaker3' perhaps).
 
