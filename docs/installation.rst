@@ -246,10 +246,10 @@ QGIS and GRASS in Windows
 
     .. code-block::
 
-      python -m pip install simpledbf grass_session scipy joblib
+      python -m pip install simpledbf grass_session scipy joblib wget gdown
       python -m pip install --upgrade pip
       python -m pip install geopandas -U
-      python -m pip install numpy -U
+      python -m pip install rasterstats -U
 
 #. Install GRASS GIS addons
     Install following GRASS GIS addons:
