@@ -1158,7 +1158,7 @@ def streamorderanddrainagearea(catinfoall):
         # if catinfo['BkfWidth'].values[i] > 0 and catinfo['RivSlope'].values[i] > 0 :
         #     catinfo.loc[idx,'Ch_n'] = calculateChannaln(catinfo['BkfWidth'].values[i],catinfo['BkfDepth'].values[i],
         #                       catinfo['Q_Mean'].values[i],catinfo['RivSlope'].values[i])
-        if catinfoall[Gauge_col_Name].values[i] > 0:
+        if catinfoall[Gauge_col_Name].values[i] > 0 and "DA_Obs" in catinfoall.columns and "DA_error" in catinfoall.columns:
             if catinfoall["DA_Obs"].values[i] > 0:
                 catinfoall.loc[idx, "DA_error"] = (
                     catinfoall["DrainArea"].values[i] / 1000.0 / 1000.0
