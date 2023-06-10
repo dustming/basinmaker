@@ -71,7 +71,7 @@ Geopandas with anaconda
 
     .. code-block::
 
-      python -m pip install basinmaker
+      python -m pip install https://github.com/dustming/basinmaker/archive/master.zip
 
 #. Test validation
 
@@ -124,7 +124,7 @@ ArcGIS Pro in Windows
 
     .. code-block::
 
-      > python -m pip install basinmaker
+      > python -m pip install https://github.com/dustming/basinmaker/archive/master.zip
 
 
 #. Install dependent packages
@@ -204,7 +204,7 @@ QGIS and GRASS in Windows
       Microsoft Windows [Version 10.0.19041.867]
       (c) 2020 Microsoft Corporation. All rights reserved
       >
-      >python -m pip install basinmaker
+      >python -m pip install https://github.com/dustming/basinmaker/archive/master.zip
 
 #. Validate the GRASS and QGIS python environment
 
