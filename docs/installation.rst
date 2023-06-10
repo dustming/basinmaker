@@ -19,8 +19,7 @@ For full installation, BasinMaker can work under two python enviroments: the Arc
 
 Updating BasinMaker to v3.1
 ===========================
-For existing users of v2.0 who want to update BasinMaker to the version v3.0.0. Users should simply reinstall BasinMaker 3.0 to a new working environment (e.g., called 'Basinmaker3' perhaps).
-
+For existing users of a BasinMaker version before 3.1 who want to update to version v3.1, users should simply reinstall BasinMaker 3.1 to a new working environment (e.g., called ‘Basinmaker3_1’)
 
 BasinMaker on Google Colab
 ==========================
