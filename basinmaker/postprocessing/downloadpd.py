@@ -50,9 +50,9 @@ def Download_Routing_Product_For_One_Gauge(product_name,gauge_name = "#",region=
 
             url = "http://hydrology.uwaterloo.ca/CLRH/data/%s.zip" % (gauge_name)
             wget.download(url)
-            os.system('unzip %s.zip' % (gauge_name))
             product_name = "%s.zip" % (gauge_name)
-            product_path = os.path.join(os.getcwd(),product_name)            
+            product_path = os.path.join(os.getcwd(),product_name)
+            os.system('unzip %s.zip - d %s' % (gauge_name,product_path))
             print("The needed product locates at:",product_path)
             SubId = -1
 
