@@ -52,8 +52,8 @@ def Download_Routing_Product_For_One_Gauge(product_name,gauge_name = "#",region=
             wget.download(url)
             product_name = "%s" % (gauge_name)
             product_path = os.path.join(os.getcwd(),product_name)
-            os.system('unzip %s.zip - d  %s' % (gauge_name,product_path))
-            print('unzip %s.zip - d  %s' % (gauge_name,product_path))
+            os.system('unzip %s.zip -d  %s' % (gauge_name,product_path))
+            # print('unzip %s.zip - d  %s' % (gauge_name,product_path))
             print("The needed product locates at:",product_path)
             SubId = -1
 
