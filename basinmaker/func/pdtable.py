@@ -616,8 +616,8 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold=50, length_t
                         attributes["RivLength"].values)
                 elif col in ["RivSlope", "FloodP_n", "Q_Mean", "Ch_n"] and update_river:
                     mapoldnew_info_new.loc[mask, col] = np.average(
-                        attributes[col].values,
-                        weights=attributes[col].values,
+                        attributes[col].values[attributes[col].values > 0],
+                        weights=attributes[col].values[attributes[col].values > 0],
                     )
                 elif col in ["Max_DEM"] and update_river:
                     mapoldnew_info_new.loc[mask, col] = np.max(
