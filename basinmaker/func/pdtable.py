@@ -466,6 +466,35 @@ def Calculate_Longest_flowpath(mainriv_merg_info):
 
     return Longestpath
 
+def update_lake_attributes(attri_table):
+
+    lakeids = attri_table["HyLakeId"].unique()
+    lakeids = lakeids[lakeids > 0]
+    if len(lakeids) <= 1:
+        return attri_table
+    routing_info = attri_table[['SubId','DowSubId']].astype(int)
+
+    for lakeid in lakeids:
+        lake_table = attri_table[attri_table["HyLakeId"] == lakeid].copy(deep=True)
+        # no need to update lake attributes
+        if len(lake_table) <= 1:
+            continue 
+        lake_subids = lake_table["SubId"].values
+        lake_table = lake_table.sort_values(["DrainArea"], ascending=(False))
+        outlet_subid = lake_table["SubId"].values[0]
+        upstream_lake_subids = defcat(outlet_subid,routing_info) 
+        routing_info_lake = attri_table[attri_table['SubId'].isin(upstream_lake_subids)][['SubId','DowSubId']]
+        
+        lake_inflow_mask = attri_table['DowSubId'].isin(lake_subids)
+        if len(attri_table[lake_inflow_mask]) < 0:
+            continue 
+    
+        lake_inflow_subids = attri_table[lake_inflow_mask]['SubId'].values
+
+
+
+
+    return attri_table
 
 def remove_possible_small_subbasins(mapoldnew_info, area_thresthold=50, length_thresthold=15):
     mapoldnew_info_new = mapoldnew_info.copy(deep=True)
