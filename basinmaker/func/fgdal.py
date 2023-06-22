@@ -209,7 +209,7 @@ def RasterHRUUnionInt32(OutputFolder,tempfolder,Merge_layer_shp_list,
     mask = np.isin(vector_unique_id,raster_unique_id)
     
     if len(vector_unique_id[~mask]) > 0:
-        print("Please increase the pixel_size parameter")
+        print("Please decrease the pixel_size parameter")
         print("The following element in path_output_folder/finalcat_hru_lake_info.shp is lost ")
         print(vector_unique_id[~mask])
         sys.exit()
