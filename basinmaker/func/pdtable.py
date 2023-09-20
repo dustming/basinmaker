@@ -483,7 +483,8 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold=50, length_t
         deep=True)
     small_sub_non_lake = small_sub_non_lake[small_sub_non_lake[Gauge_col_Name] == 0].copy(
         deep=True)
-    small_sub_non_lake = small_sub_non_lake.sort_values(['Strahler','DrainArea'], ascending=True)
+    small_sub_non_lake = small_sub_non_lake.sort_values(
+        ['Strahler', 'DrainArea'], ascending=True)
     # process connected lakes  merge polygons
     for i in range(0, len(small_sub_non_lake)):
         small_sub_id = small_sub_non_lake['SubId'].values[i]
@@ -615,10 +616,13 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold=50, length_t
                     mapoldnew_info_new.loc[mask, "RivLength"] = np.sum(
                         attributes["RivLength"].values)
                 elif col in ["RivSlope", "FloodP_n", "Q_Mean", "Ch_n"] and update_river:
-                    mapoldnew_info_new.loc[mask, col] = np.average(
-                        attributes[col].values[attributes[col].values > 0],
-                        weights=attributes[col].values[attributes[col].values > 0],
-                    )
+                    if len(attributes[col].values[attributes[col].values > 0]) > 0:
+                        mapoldnew_info_new.loc[mask, col] = np.average(
+                            attributes[col].values[attributes[col].values > 0],
+                            weights=attributes[col].values[attributes[col].values > 0],
+                        )
+                    else:
+                        print(attributes)
                 elif col in ["Max_DEM"] and update_river:
                     mapoldnew_info_new.loc[mask, col] = np.max(
                         attributes[col].values
@@ -2407,7 +2411,6 @@ def update_the_selected_river_to_connect_upsub_with_largest_da(Selected_riv, map
 
     mask_lakes = np.logical_and(
         mapoldnew_info['Lake_Cat'] == 1, ~mapoldnew_info['HyLakeId'].isin(lakeid_in_new_network))
-
 
     # Hongren Debug 2023-05-30
     # Has_Gauge

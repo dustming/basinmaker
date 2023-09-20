@@ -167,8 +167,8 @@ def save_modified_attributes_to_outputs(mapoldnew_info,tempfolder,OutputFolder,c
         remove_subids = [-9999]
         
         if 'river_without_merging_lakes' not in riv_name:
-            riv_pd_nncls_routing_info = mapoldnew_info[['SubId','DowSubId']].copy(deep=True)
-            remove_subids = riv_pd_nncls_routing_info[ ~riv_pd_nncls_routing_info['SubId'].isin(mapoldnew_info['DowSubId'].values)]['SubId'].values
+            riv_pd_nncls_routing_info = mapoldnew_info[mapoldnew_info['Lake_Cat']!=2][['SubId','DowSubId']].copy(deep=True)
+            remove_subids = riv_pd_nncls_routing_info[ ~riv_pd_nncls_routing_info['SubId'].isin(riv_pd_nncls_routing_info['DowSubId'].values)]['SubId'].values
         if Path_final_riv != '#':
             riv_pd = riv_pd[~riv_pd.SubId.isin(remove_subids)]
             cat_colnms = riv_pd.columns
