@@ -81,8 +81,8 @@ def Extract_Routing_Product(version='v1-0', by='Gauge_ID', gauge_id='#', subid=-
     elif by == 'LatLon':
         data = pd.DataFrame(
             {
-                'Latitude': lat,
-                'Longitude': lon,
+                'Latitude': [lat],
+                'Longitude': [lon],
             }
         )
         data_gpd = geopandas.GeoDataFrame(
@@ -97,8 +97,10 @@ def Extract_Routing_Product(version='v1-0', by='Gauge_ID', gauge_id='#', subid=-
             dr = data_dr['Region'].values[0]
             SubId, product_path = Download_Routing_Product_For_One_Gauge(
                 gauge_name='#', product_name='OLLRP', region=dr, subreg='#')
-            product_ply_path = os.path.join(
+            product_folder_real = find_file(
                 product_path, 'catchment_without_merging_lakes_'+version+'.shp')
+            product_ply_path = os.path.join(
+                product_folder_real, 'catchment_without_merging_lakes_'+version+'.shp')
             product = geopandas.read_file(product_ply_path)
             data_gpd = data_gpd.to_crs(product.crs)
             data_pt = geopandas.overlay(data_gpd, product, how='identity')
