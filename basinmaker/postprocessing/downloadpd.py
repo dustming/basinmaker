@@ -7,7 +7,7 @@ import gdown
 # define function two download routing product for a given gauge
 
 
-def Download_Routing_Product_For_One_Gauge(product_name, gauge_name="#", region='#', subreg='#', version='v1-0'):
+def Download_Routing_Product_For_One_Gauge(product_name, gauge_name="#", region='#', subreg='#', version='v1-0', gauge_info='#', productinfo='#'):
     if product_name == 'NALRP':
         version = 'v2-1'
         if gauge_name != '#':
@@ -68,10 +68,18 @@ def Download_Routing_Product_For_One_Gauge(product_name, gauge_name="#", region=
             SubId = -1
 
     if product_name == 'OLRP' or product_name == 'OLLRP':
-        gauge_info = pd.read_csv(
-            "https://github.com/dustming/RoutingTool/wiki/Files/OIH_gauge_info.csv")
-        productinfo = pd.read_csv(
-            "https://github.com/dustming/RoutingTool/wiki/Files/OLRRP.csv")
+        if version == 'v1-0':
+            gauge_info = pd.read_csv(
+                "https://github.com/dustming/RoutingTool/wiki/Files/OIH_gauge_info.csv")
+            productinfo = pd.read_csv(
+                "https://github.com/dustming/RoutingTool/wiki/Files/OLRRP.csv")
+        else:
+            gauge_info = pd.read_csv(
+                "https://github.com/dustming/RoutingTool/wiki/Files/OLLRP_POI_v2.csv")
+            productinfo = pd.read_csv(
+                "https://github.com/dustming/RoutingTool/wiki/Files/OLLRP_Region_V2.csv")
+            gauge_info['Sub_Reg'] = '-'
+            productinfo['Sub_Reg'] = '-'
         if gauge_name != '#':
             gauge_info_sl = gauge_info[gauge_info['Obs_NM'] == gauge_name]
             if len(gauge_info_sl) < 1 or gauge_info_sl['SubId'].values[0] < 0:
@@ -109,14 +117,17 @@ def Download_Routing_Product_For_One_Gauge(product_name, gauge_name="#", region=
                     subreg_id = '-'
                     mask1 = productinfo['Region'] == region_id
                     mask2 = productinfo['Sub_Reg'] == subreg_id
-                    mask = np.logical_and(mask1, mask2)
+                    mask = mask1  # np.logical_and(mask1, mask2)
                     url_veiw = productinfo.loc[mask, 'Download'].values[0]
-                    url_veiw = url_veiw.split("/")
-                    url = "https://drive.google.com/u/0/uc?id=%s&export=download" % (
-                        url_veiw[5])
+                    if version == 'v1-0':
+                        url_veiw = url_veiw.split("/")
+                        url = "https://drive.google.com/u/0/uc?id=%s&export=download" % (
+                            url_veiw[5])
+                    else:
+                        url = f"{url_veiw}&confirm=pbef"
                     output = 'drainage_region_%s_%s.zip' % (region_id, version)
-
-                    os.system('gdown %s -O %s' % (url_veiw[5], output))
+                    gdown.download(url, output, quiet=False)
+                    # os.system('gdown %s -O %s' % (url_veiw[5], output))
 
                     os.system('unzip drainage_region_%s_%s.zip' %
                               (region_id, version))
@@ -134,12 +145,14 @@ def Download_Routing_Product_For_One_Gauge(product_name, gauge_name="#", region=
             mask2 = productinfo['Sub_Reg'] == subreg_id
             mask = np.logical_and(mask1, mask2)
             url_veiw = productinfo.loc[mask, 'Download'].values[0]
-            url_veiw = url_veiw.split("/")
-            url = "https://drive.google.com/u/0/uc?id=%s&export=download" % (
-                url_veiw[5])
+            if version == 'v1-0':
+                url_veiw = url_veiw.split("/")
+                url = "https://drive.google.com/u/0/uc?id=%s&export=download" % (
+                    url_veiw[5])
+            else:
+                url = f"{url_veiw}&confirm=pbef"
             output = 'drainage_region_%s_%s.zip' % (region_id, version)
-
-            os.system('gdown %s -O %s' % (url_veiw[5], output))
+            gdown.download(url, output, quiet=False)
 
             os.system('unzip drainage_region_%s_%s.zip' % (region_id, version))
             SubId = -1

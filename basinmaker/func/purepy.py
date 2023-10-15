@@ -435,11 +435,15 @@ def create_geo_jason_file(Input_Polygon_path):
         input_wgs_84 = input_pd.to_crs('EPSG:4326')
 
         if 'finalcat_info' in Input_file_name[i] or "finalcat_info_riv" in Input_file_name[i]:
-            input_wgs_84['rvhName'] = input_wgs_84['SubId'].astype(
-                int).astype(str)
-            for idx in input_wgs_84.index:
-                input_wgs_84.loc[idx, 'rvhName'] = 'sub' + \
-                    input_wgs_84.loc[idx, 'rvhName']
+
+            input_wgs_84['rvhName'] = 'sub' + \
+                input_wgs_84['SubId'].astype(int).astype(str)
+
+            # input_wgs_84['rvhName'] = input_wgs_84['SubId'].astype(
+            #     int).astype(str)
+            # for idx in input_wgs_84.index:
+            #     input_wgs_84.loc[idx, 'rvhName'] = 'sub' + \
+            #         input_wgs_84.loc[idx, 'rvhName']
 
         input_tojson = input_wgs_84
 
@@ -447,10 +451,10 @@ def create_geo_jason_file(Input_Polygon_path):
             input_tojson['geometry'] = input_tojson.simplify(TOLERANCE)
             input_tojson.to_file(output_jason_path, driver="GeoJSON")
 
-            json_file_size = os.stat(
-                output_jason_path).st_size/1024/1024  # to MB
-            if json_file_size <= 100:
-                break
+            # json_file_size = os.stat(
+            #     output_jason_path).st_size/1024/1024  # to MB
+            # if json_file_size <= 100:
+            #     break
 
     # if len(created_jason_files_lake_riv) > 1 and os.stat(os.path.join(product_dir, Output_file_name[0])).st_size/1024/1024 < 500:
     #     for i in range(0, len(created_jason_files_lake_riv)):

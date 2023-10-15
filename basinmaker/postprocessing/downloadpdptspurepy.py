@@ -29,7 +29,7 @@ def Download_Routing_Product_From_Points_Or_LatLon(product_name, Lat=[-1], Lon=[
 
             dr = data_dr['Region'].values[0]
             Subid, product_path = Download_Routing_Product_For_One_Gauge(
-                gauge_name='#', product_name=product_name, region=dr, subreg='#')
+                gauge_name='#', product_name=product_name, region=dr, subreg='#',version=version)
             product_ply_path = os.path.join(
                 product_path, 'catchment_without_merging_lakes_'+version+'.shp')
             product = geopandas.read_file(product_ply_path)
@@ -96,7 +96,7 @@ def Extract_Routing_Product(version='v1-0', by='Gauge_ID', gauge_id='#', subid=-
         if len(data_dr) >= 1 and data_dr['Region'].values[0] in np.unique(Drainage_region['Region'].values):
             dr = data_dr['Region'].values[0]
             SubId, product_path = Download_Routing_Product_For_One_Gauge(
-                gauge_name='#', product_name='OLLRP', region=dr, subreg='#')
+                gauge_name='#', product_name='OLLRP', region=dr, subreg='#',version=version)
             product_folder_real = find_file(
                 product_path, 'catchment_without_merging_lakes_'+version+'.shp')
             product_ply_path = os.path.join(
