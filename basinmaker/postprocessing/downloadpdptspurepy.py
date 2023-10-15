@@ -72,7 +72,7 @@ def Download_Routing_Product_From_Points_Or_LatLon(product_name, Lat=[-1], Lon=[
     return -1, -1
 
 
-def Extract_Routing_Product(version='v1-0', by='Gauge_ID', gauge_id='#', subid=-1, lat=-1, lon=-1, output_path='#'):
+def Extract_Routing_Product(version='v1-0', by='Gauge_ID', gauge_id='#', subid=-1, region="#", lat=-1, lon=-1, output_path='#'):
     SubId = -1  # default value
     product_path = '#'
     if by == 'Gauge_ID':
@@ -105,9 +105,12 @@ def Extract_Routing_Product(version='v1-0', by='Gauge_ID', gauge_id='#', subid=-
             data_gpd = data_gpd.to_crs(product.crs)
             data_pt = geopandas.overlay(data_gpd, product, how='identity')
             SubId = data_pt['SubId'].values[0]
-
         else:
             print("The point did not overlay with the routing product")
+    elif by == 'SubId':
+        temp, product_path = Download_Routing_Product_For_One_Gauge(
+            gauge_name="#", product_name='OLLRP', region=region, subreg='#', version=version)
+        SubId = subid
     else:
         print("The input by is not supported")
 
