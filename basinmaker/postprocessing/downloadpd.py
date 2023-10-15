@@ -104,8 +104,13 @@ def Download_Routing_Product_For_One_Gauge(product_name, gauge_name="#", region=
 
                     os.system('gdown %s -O %s' % (url_veiw[5], output))
 
-                    os.system('unzip drainage_region_%s_%s_%s.zip' %
-                              (region_id, subreg_id, version))
+                    if version == 'v1-0':
+                        os.system('unzip drainage_region_%s_%s.zip' %
+                                  (region_id, version))
+                    else:
+                        os.system(
+                            f"unzip drainage_region_{region_id}_{version}.zip -d drainage_region_{region_id}_{version}"
+                        )
                     SubId = gauge_info_sl['SubId'].values[0]
                     product_name = 'drainage_region_%s_%s_%s' % (
                         region_id, subreg_id, version)
@@ -129,8 +134,13 @@ def Download_Routing_Product_For_One_Gauge(product_name, gauge_name="#", region=
                     gdown.download(url, output, quiet=False)
                     # os.system('gdown %s -O %s' % (url_veiw[5], output))
 
-                    os.system('unzip drainage_region_%s_%s.zip' %
-                              (region_id, version))
+                    if version == 'v1-0':
+                        os.system('unzip drainage_region_%s_%s.zip' %
+                                  (region_id, version))
+                    else:
+                        os.system(
+                            f"unzip drainage_region_{region_id}_{version}.zip -d drainage_region_{region_id}_{version}"
+                        )
                     SubId = gauge_info_sl['SubId'].values[0]
                     product_name = 'drainage_region_%s_%s' % (
                         region_id, version)
@@ -154,7 +164,14 @@ def Download_Routing_Product_For_One_Gauge(product_name, gauge_name="#", region=
             output = 'drainage_region_%s_%s.zip' % (region_id, version)
             gdown.download(url, output, quiet=False)
 
-            os.system('unzip drainage_region_%s_%s.zip' % (region_id, version))
+            if version == 'v1-0':
+                os.system('unzip drainage_region_%s_%s.zip' %
+                          (region_id, version))
+            else:
+                os.system(
+                    f"unzip drainage_region_{region_id}_{version}.zip -d drainage_region_{region_id}_{version}"
+                )
+
             SubId = -1
             product_name = 'drainage_region_%s_%s' % (region_id, version)
             product_path = os.path.join(os.getcwd(), product_name)
