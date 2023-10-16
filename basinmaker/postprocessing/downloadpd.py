@@ -66,6 +66,33 @@ def Download_Routing_Product_For_One_Gauge(product_name, gauge_name="#", region=
             # print('unzip %s.zip - d  %s' % (gauge_name,product_path))
             print("The needed product locates at:", product_path)
             SubId = -1
+    if product_name == 'OLLRP_POI':
+        version = 'v2-0'
+        gauge_info = pd.read_csv(
+            "https://github.com/dustming/RoutingTool/wiki/Files/OLLRP_POI_v2.csv")
+        poi_row = gauge_info[gauge_info['Obs_NM']
+                             == gauge_name].copy(deep=True)
+        if len(poi_row) < 1:
+            print("f{gauge_name} is not included in the routing product.")
+            SubId = -1
+            product_path = '#'
+            return product_path
+        if poi_row['Download'].values[0] == '-':
+            print("The POI level product for f{gauge_name} is not ready.")
+            SubId = -1
+            product_path = '#'
+            return product_path
+
+        url_veiw = poi_row['Download'].values[0]
+        url = f"{url_veiw}&confirm=pbef"
+        output = f'{gauge_name}.zip'
+        gdown.download(url, output, quiet=False)
+        os.system(
+            f"unzip {gauge_name}.zip -d {gauge_name}"
+        )
+        product_name = f"{gauge_name}"
+        product_path = os.path.join(os.getcwd(), product_name)
+        return product_path
 
     if product_name == 'OLRP' or product_name == 'OLLRP':
         if version == 'v1-0':
