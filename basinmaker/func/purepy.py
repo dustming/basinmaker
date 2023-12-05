@@ -313,7 +313,7 @@ def clean_geometry_purepy(data, set_precision=-1):
 
     #    data["geometry"] = data["geometry"].apply(lambda x: shapely.wkt.loads(shapely.wkt.dumps(x, rounding_precision=4)))
     if set_precision > 0:
-        data['geometry'] = data['geometry'].buffer(0.00000000001)
+        data['geometry'] = data['geometry'].buffer(0.000000001)
 
 #        data.geometry = pg.set_precision(data.geometry.values.data, 1e-6)
 #        data["geometry"] = data["geometry"].apply(lambda x: shapely.wkt.loads(shapely.wkt.dumps(x, rounding_precision=4)))
