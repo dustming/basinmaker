@@ -329,7 +329,7 @@ def create_catchments_attributes_template_table(
     attri_table.loc[attri_table['DA_Obs'] <= 0,'DA_Diff'] = -999
     # non-null values are shown as percentage
     attri_table['DA_Diff'] = attri_table['DA_Diff'].apply(lambda x: f"{x*100:.3f}%" if x != -999 else "<NA>")
-
+    attri_table = adjust_col_dtypes(attri_table)
     attri_table.loc[attri_table['DA_Obs'] <= 0, 'DA_Obs'] = -1.2345
     # print(attri_table['DA_Diff'].values)
     
@@ -386,42 +386,48 @@ def create_catchments_attributes_template_table(
     cat_ply['SubId']  = cat_ply['SubId'].astype(int)
 
     cat_ply = cat_ply.merge(attri_table,on='SubId',how='left')
-    for col_i in cat_ply.columns:
-        # DA_Diff use np.nan for null values
-        if col_i != "DA_Diff":
-            cat_ply[col_i] = cat_ply[col_i].fillna(-1.2345)
+
     cat_ply['Obs_NM'] = cat_ply['Obs_NM'].astype('str')
     cat_ply['SRC_obs'] = cat_ply['SRC_obs'].astype('str')
     cat_ply = cat_ply.drop_duplicates(subset=['SubId'], keep='first')
-
+    
+    cat_ply = adjust_col_dtypes(cat_ply)
     cat_ply.spatial.to_featureclass(location=os.path.join(output_folder,catchment_without_merging_lakes+"_v1-0"),overwrite=True,sanitize_columns=False)
-
+    
     riv_line= riv_line[['SubId','SHAPE']]
     riv_line['SubId']  = pd.to_numeric(riv_line['SubId'])
     riv_line['SubId']  = riv_line['SubId'].fillna(0)
     riv_line['SubId']  = riv_line['SubId'].astype(int)
 
     riv_line = riv_line.merge(attri_table,on='SubId',how='left')
-    for col_i in riv_line.columns:
-        # DA_Diff use np.nan for null values
-        if col_i != "DA_Diff":
-            riv_line[col_i] = riv_line[col_i].fillna(-1.2345)
+    riv_line = adjust_col_dtypes(riv_line)
 
     riv_line['Obs_NM'] = riv_line['Obs_NM'].astype('str')
     riv_line['SRC_obs'] = riv_line['SRC_obs'].astype('str')
     riv_line = riv_line.drop_duplicates(subset=['SubId'], keep='first')
+
     riv_line.spatial.to_featureclass(location=os.path.join(output_folder,river_without_merging_lakes+"_v1-0"),overwrite=True,sanitize_columns=False)
 
-    
-    arcpy.FeatureClassToFeatureClass_conversion("sl_connected_lake_v", output_folder,"sl_connected_lake_v1-0.shp")
-    arcpy.FeatureClassToFeatureClass_conversion("sl_nonconnect_lake_v",output_folder,"sl_non_connected_lake_v1-0.shp")
 
-    arcpy.DeleteField_management(os.path.join(output_folder,"sl_connected_lake_v1-0.shp"),
-        ["area_ratio", "Id","ORIG_FID", "BUFF_DIST","newarea0","newarea1","Shape_Leng","Shape_Area"]
-    )
-    arcpy.DeleteField_management(os.path.join(output_folder,"sl_non_connected_lake_v1-0.shp"),
-        ["area_ratio", "Id","ORIG_FID", "BUFF_DIST","newarea0","newarea1","Shape_Leng","Shape_Area"]
-    )
+    sl_connected_l = pd.DataFrame.spatial.from_featureclass("sl_connected_lake_v")
+    if len(sl_connected_l) > 0:
+        sl_connected_l = sl_connected_l[['Hylak_id', 'Lake_name', 'Country', 'Continent', 'Poly_src',
+                                         'Lake_type', 'Grand_id', 'Lake_area', 'Shore_len', 'Shore_dev',
+                                         'Vol_total', 'Vol_src', 'Depth_avg', 'Dis_avg', 'Res_time',
+                                         'Elevation', 'Slope_100', 'Wshd_area', 'Pour_long', 'Pour_lat',
+                                         'SHAPE']]
+        sl_connected_l = adjust_col_dtypes(sl_connected_l)
+        sl_connected_l.spatial.to_featureclass(location=os.path.join(output_folder,"sl_connected_lake_v1-0"),overwrite=True,sanitize_columns=False)
+
+    sl_connected_nl = pd.DataFrame.spatial.from_featureclass("sl_nonconnect_lake_v")
+    if len(sl_connected_nl) > 0:
+        sl_connected_nl = sl_connected_nl[['Hylak_id', 'Lake_name', 'Country', 'Continent', 'Poly_src',
+                                         'Lake_type', 'Grand_id', 'Lake_area', 'Shore_len', 'Shore_dev',
+                                         'Vol_total', 'Vol_src', 'Depth_avg', 'Dis_avg', 'Res_time',
+                                         'Elevation', 'Slope_100', 'Wshd_area', 'Pour_long', 'Pour_lat',
+                                         'SHAPE']]
+        sl_connected_l = adjust_col_dtypes(sl_connected_l)
+        sl_connected_nl.spatial.to_featureclass(location=os.path.join(output_folder,"sl_non_connected_lake_v1-0"),overwrite=True,sanitize_columns=False)
 
     obs_v = pd.DataFrame.spatial.from_featureclass("obs_v")
     obs_v['obsid'] = obs_v['grid_code']
@@ -434,15 +440,22 @@ def create_catchments_attributes_template_table(
     obs_v = obs_v[['SubId','SHAPE']]
     cat_ply_att = cat_ply[['SubId','DA_Obs','SRC_obs','DrainArea','DA_Diff','Obs_NM']]
     obs_v = obs_v.merge(cat_ply_att,on='SubId',how='left')
-    obs_v['Use_region'] = 1
+    obs_v['Use_region'] = int(1)
     obs_v = obs_v[['SubId','Obs_NM','DA_Obs','DrainArea','DA_Diff','SRC_obs','Use_region','SHAPE']]
-    if len(obs_v) > 0:
+    
+
+    if len(obs_v) > 0: 
+        obs_v = adjust_col_dtypes(obs_v)
         obs_v.spatial.to_featureclass(location=os.path.join(output_folder,"poi_v1-0.shp"),overwrite=True,sanitize_columns=False)
     if len(obs_v_missing) > 0:
+        obs_v_missing = adjust_col_dtypes(obs_v_missing)
+        obs_v_missing['DA_Obs'] = obs_v_missing['DA_Obs'].astype('int')
         obs_v_missing.spatial.to_featureclass(location=os.path.join(output_folder,"poi_missing.shp"),overwrite=True,sanitize_columns=False)
 
-    arcpy.DeleteField_management(os.path.join(output_folder,"poi_v1-0.shp"),
-                             ["Id"])
+    if os.path.exists(os.path.join(output_folder,"poi_v1-0.shp")): 
+        arcpy.DeleteField_management(os.path.join(output_folder,"poi_v1-0.shp"),
+                                ["Id"])
+
     arcpy.DeleteField_management(os.path.join(output_folder,catchment_without_merging_lakes+"_v1-0"),
                              ["Id"])
     arcpy.DeleteField_management(os.path.join(output_folder,river_without_merging_lakes+"_v1-0"),

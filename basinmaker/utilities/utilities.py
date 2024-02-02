@@ -1,7 +1,7 @@
 import os
 import glob,shutil
 from simpledbf import Dbf5
-
+import pandas as pd 
 # define internal file names
 def copy_files_with_extension(src_folder,tar_folder,ext):
 
@@ -10,6 +10,67 @@ def copy_files_with_extension(src_folder,tar_folder,ext):
         if os.path.isfile(file):
             # Note here if src_folder and tar_folder are the same, the copy command will not work!
             t = shutil.copy2(file, tar_folder)
+
+def adjust_col_dtypes(data):
+    for col in data.columns:
+        if col in column_dtypes:
+            data[col] = data[col].astype(column_dtypes[col])
+            if column_dtypes[col] == 'str':
+                data[col] = data[col].fillna('-1.2345')
+            elif column_dtypes[col] == 'float':
+                data[col]  = pd.to_numeric(data[col] , errors='coerce')
+                data[col] = data[col].fillna(-1.2345)
+            elif column_dtypes[col] == 'int':
+                data[col]  = pd.to_numeric(data[col] , errors='coerce')
+                data[col] = data[col].fillna(-12345)
+            else:
+                continue  
+         
+    return data
+
+column_dtypes = {
+    'SubId': 'int',
+    'DowSubId': 'int',
+    'RivSlope': 'float',
+    'RivLength': 'float',
+    'BasSlope': 'float',
+    'BasAspect': 'float',
+    'BasArea': 'float',
+    'BkfWidth': 'float',
+    'BkfDepth': 'float',
+    'Lake_Cat': 'int',
+    'HyLakeId': 'int',
+    'LakeVol': 'float',
+    'LakeDepth': 'float',
+    'LakeArea': 'int',
+    'Laketype': 'int',
+    'Has_POI': 'int',
+    'MeanElev': 'int',
+    'FloodP_n': 'float',
+    'Q_Mean': 'float',
+    'Ch_n': 'float',
+    'DrainArea': 'float',
+    'Strahler': 'int',
+    'Seg_ID': 'int',
+    'Seg_order': 'int',
+    'Max_DEM': 'float',
+    'Min_DEM': 'float',
+    'DA_Obs': 'float',
+    'DA_Diff': 'str',
+    'Obs_NM': 'str',
+    'SRC_obs': 'str',
+    'centroid_x': 'float',
+    'centroid_y': 'float',
+    'DA_Chn_L': 'float',
+    'DA_Slope': 'float',
+    'DA_Chn_Slp': 'float',
+    'outletLat': 'float',
+    'outletLng': 'float',
+    'k': 'float',
+    'c': 'float',
+    'Use_region' : 'int',
+    'Vol_res' : 'float',
+}
 
 Internal_Constant_Names = {
     "cat_add_lake_old_fdr": "cat_add_lake_old_fdr",
