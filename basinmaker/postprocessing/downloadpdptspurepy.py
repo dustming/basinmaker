@@ -72,12 +72,12 @@ def Download_Routing_Product_From_Points_Or_LatLon(product_name, Lat=[-1], Lon=[
     return -1, -1
 
 
-def Extract_Routing_Product(version='v1-0', by='Gauge_ID', gauge_id='#', subid=-1, region="#", lat=-1, lon=-1, output_path='#'):
+def Extract_Routing_Product(version='v1-0', by='Obs_NM', obs_nm='#', subid=-1, region="#", lat=-1, lon=-1, output_path='#'):
     SubId = -1  # default value
     product_path = '#'
-    if by == 'Gauge_ID':
+    if by == 'Obs_NM':
         SubId, product_path = Download_Routing_Product_For_One_Gauge(
-            gauge_name=gauge_id, product_name='OLLRP', region='#', subreg='#', version=version)
+            gauge_name=obs_nm, product_name='OLLRP', region='#', subreg='#', version=version)
     elif by == 'LatLon':
         data = pd.DataFrame(
             {
