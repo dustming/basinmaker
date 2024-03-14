@@ -167,7 +167,6 @@ def save_modified_attributes_to_outputs(mapoldnew_info, tempfolder, OutputFolder
             by=dis_col_name, aggfunc='first', as_index=False)
         mapoldnew_info = add_centroid_in_wgs84(
             mapoldnew_info, "centroid_x", "centroid_y")
-
         cat_c_x_y = mapoldnew_info[[
             "centroid_y", "centroid_x"]].copy(deep=True)
         if Path_final_riv != '#':

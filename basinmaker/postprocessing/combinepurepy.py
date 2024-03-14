@@ -125,9 +125,9 @@ def combine_catchments_covered_by_the_same_lake_purepy(
 
     finalrivply_info = geopandas.read_file(Path_final_rivply)
     # change attribute table for lake covered catchments,
-    finalrivply_info['SubId'] = finalrivply_info['SubId'].astype('int32')
-    finalrivply_info['DowSubId'] = finalrivply_info['DowSubId'].astype('int32')
-    finalrivply_info['HyLakeId'] = finalrivply_info['HyLakeId'].astype('int32')
+    finalrivply_info['SubId'] = finalrivply_info['SubId'].astype('int64')
+    finalrivply_info['DowSubId'] = finalrivply_info['DowSubId'].astype('int64')
+    finalrivply_info['HyLakeId'] = finalrivply_info['HyLakeId'].astype('int64')
 #    finalrivply_info['DrainArea'] = finalrivply_info['DrainArea'].astype('float')
 
     mapoldnew_info = change_attribute_values_for_catchments_covered_by_same_lake(
@@ -139,7 +139,7 @@ def combine_catchments_covered_by_the_same_lake_purepy(
     # update topology for new attribute table
     mapoldnew_info = update_topology(mapoldnew_info, UpdateStreamorder=-1)
 
-    mapoldnew_info['DowSubId'] = mapoldnew_info['DowSubId'].astype('int32')
+    mapoldnew_info['DowSubId'] = mapoldnew_info['DowSubId'].astype('int64')
 
     if len(os.path.basename(Path_Catchment_Polygon).split('_')) == 5:
         cat_name = "finalcat_info_" + \
