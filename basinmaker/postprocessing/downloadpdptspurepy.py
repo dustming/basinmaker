@@ -29,7 +29,7 @@ def Download_Routing_Product_From_Points_Or_LatLon(product_name, Lat=[-1], Lon=[
 
             dr = data_dr['Region'].values[0]
             Subid, product_path = Download_Routing_Product_For_One_Gauge(
-                gauge_name='#', product_name=product_name, region=dr, subreg='#',version=version)
+                gauge_name='#', product_name=product_name, region=dr, subreg='#', version=version)
             product_ply_path = os.path.join(
                 product_path, 'catchment_without_merging_lakes_'+version+'.shp')
             product = geopandas.read_file(product_ply_path)
@@ -72,12 +72,13 @@ def Download_Routing_Product_From_Points_Or_LatLon(product_name, Lat=[-1], Lon=[
     return -1, -1
 
 
-def Extract_Routing_Product(version='v1-0', by='Obs_NM', obs_nm='#', subid=-1, region="#", lat=-1, lon=-1, output_path='#'):
-    SubId = -1  # default value
+def Extract_Routing_Product(version='v1-0', by='Obs_NM', obs_nm='#', subid=[-1], region="#", lat=-1, lon=-1, output_path='#'):
+    SubId = [-1]  # default value
     product_path = '#'
     if by == 'Obs_NM':
         SubId, product_path = Download_Routing_Product_For_One_Gauge(
             gauge_name=obs_nm, product_name='OLLRP', region='#', subreg='#', version=version)
+        SubId = [SubId]
     elif by == 'LatLon':
         data = pd.DataFrame(
             {
@@ -96,7 +97,7 @@ def Extract_Routing_Product(version='v1-0', by='Obs_NM', obs_nm='#', subid=-1, r
         if len(data_dr) >= 1 and data_dr['Region'].values[0] in np.unique(Drainage_region['Region'].values):
             dr = data_dr['Region'].values[0]
             SubId, product_path = Download_Routing_Product_For_One_Gauge(
-                gauge_name='#', product_name='OLLRP', region=dr, subreg='#',version=version)
+                gauge_name='#', product_name='OLLRP', region=dr, subreg='#', version=version)
             product_folder_real = find_file(
                 product_path, 'catchment_without_merging_lakes_'+version+'.shp')
             product_ply_path = os.path.join(
@@ -105,6 +106,7 @@ def Extract_Routing_Product(version='v1-0', by='Obs_NM', obs_nm='#', subid=-1, r
             data_gpd = data_gpd.to_crs(product.crs)
             data_pt = geopandas.overlay(data_gpd, product, how='identity')
             SubId = data_pt['SubId'].values[0]
+            SubId = [SubId]
         else:
             print("The point did not overlay with the routing product")
     elif by == 'SubId':
@@ -114,7 +116,7 @@ def Extract_Routing_Product(version='v1-0', by='Obs_NM', obs_nm='#', subid=-1, r
     else:
         print("The input by is not supported")
 
-    if SubId == -1 or product_path == '#':
+    if product_path == '#':
         return
 
     if not os.path.exists(output_path):
@@ -127,7 +129,7 @@ def Extract_Routing_Product(version='v1-0', by='Obs_NM', obs_nm='#', subid=-1, r
     Select_Routing_product_based_SubId_purepy(
         OutputFolder=output_path,
         Routing_Product_Folder=foldername,
-        mostdownid=[SubId],
+        mostdownid=SubId,
         mostupstreamid=[-1],
     )
 
