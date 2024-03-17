@@ -130,7 +130,7 @@ def Extract_Routing_Product(version='v1-0', by='Obs_NM', obs_nm='#', subid=[-1],
         OutputFolder=output_path,
         Routing_Product_Folder=foldername,
         mostdownid=SubId,
-        mostupstreamid=[-1],
+        mostupstreamid=[-1 for _ in range(len(SubId))],
     )
 
     from basinmaker.postprocessing.postprocessingfunctions import (
