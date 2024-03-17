@@ -184,7 +184,14 @@ def Select_Routing_product_based_SubId_purepy(
 
     sl_gauge_info = cat_ply_select.loc[cat_ply_select[Gauge_col_Name] > 0]
     sl_gauge_nm = np.unique(sl_gauge_info["Obs_NM"].values)
-    sl_gauge_nm = sl_gauge_nm[sl_gauge_nm != 'nan']
+
+    # Create a new array by splitting items in the original array
+    new_array = [item.split('&') for item in sl_gauge_nm]
+    # Flatten the nested lists into a single list
+    sl_gauge_nm = [element for sublist in new_array for element in sublist]
+
+    # sl_gauge_nm = sl_gauge_nm[sl_gauge_nm != 'nan']
+
     if len(sl_gauge_nm) > 0 and Path_obs_gauge_point !='#':
         all_gauge = geopandas.read_file(Path_obs_gauge_point)
         sl_gauge = all_gauge.loc[all_gauge['Obs_NM'].isin(sl_gauge_nm)]
