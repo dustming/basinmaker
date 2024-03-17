@@ -571,17 +571,17 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold=50, length_t
 
         else:
             modify = False
-            if small_downsub_id > 0:
-                print(
-                    small_sub_id,
-                    has_down_sub,
-                    down_sub_has_same_seg_id,
-                    small_sub_is_not_Lake,
-                    small_sub_is_not_gauge,
-                    has_down_sub,
-                    len(mapoldnew_info[mapoldnew_info['Seg_ID']
-                        == small_sub_seg_id])
-                )
+            # if small_downsub_id > 0:
+            #     print(
+            #         small_sub_id,
+            #         has_down_sub,
+            #         down_sub_has_same_seg_id,
+            #         small_sub_is_not_Lake,
+            #         small_sub_is_not_gauge,
+            #         has_down_sub,
+            #         len(mapoldnew_info[mapoldnew_info['Seg_ID']
+            #             == small_sub_seg_id])
+            #     )
             tarinfo = []
             continue
 
