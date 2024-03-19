@@ -140,7 +140,7 @@ def Extract_Routing_Product(version='v1-0', by='Obs_NM', obs_nm='#', subid=[-1],
     combine_catchments_covered_by_the_same_lake_method(
         Routing_Product_Folder=output_path,
         qgis_prefix_path='#',
-        area_thresthold=3,
+        area_thresthold=10*30*30/1000/1000,
         length_thresthold=0,
         gis_platform="purepy",
     )
