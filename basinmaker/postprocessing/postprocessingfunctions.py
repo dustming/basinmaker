@@ -4,8 +4,8 @@ import os
 def combine_catchments_covered_by_the_same_lake_method(
     Routing_Product_Folder='#',
     qgis_prefix_path="#",
-    area_thresthold=10*30*30/1000/1000,
-    length_thresthold=0,
+    area_thresthold=0,
+    length_thresthold=-10,
     gis_platform="qgis",
 ):
 

@@ -184,7 +184,7 @@ class postprocess:
         non_connected_lake_area_thresthold=-1,
         selected_lake_ids=[],
         area_thresthold=10*30*30/1000/1000,
-        length_thresthold=0,
+        length_thresthold=-10,
         gis_platform="qgis",
     ):
         """This function is to simplify the hydrologic routing network by removing
@@ -304,7 +304,7 @@ class postprocess:
         routing_product_folder='#',
         gis_platform="qgis",
         minimum_subbasin_drainage_area=-1,
-        length_thresthold=0,
+        length_thresthold=-10,
         area_thresthold=10*30*30/1000/1000,
     ):
         """ This function is to simplify the hydrologic routing network by
@@ -411,7 +411,7 @@ class postprocess:
         clean_exist_pois=True,
         gis_platform="purepy",
         area_thresthold=10*30*30/1000/1000,
-        length_thresthold=0,
+        length_thresthold=-10,
     ):
         """This function allows the user to modify point of interest (POI) 
         sites in a pre-existing BasinMaker-generated user input hydrologic 
@@ -1447,7 +1447,7 @@ class delineate:
         routing_product_folder='#',
         gis_platform="qgis",
         area_thresthold=10*30*30/1000/1000,
-        length_thresthold=0,
+        length_thresthold=-10,
     ):
         """Finalize a incomplete hydrologic routing network by merging subbasin
         polygons that are covered by the same lake.
