@@ -450,28 +450,28 @@ def create_geo_jason_file(Input_Polygon_path):
             input_tojson['geometry'] = input_tojson.simplify(TOLERANCE)
             input_tojson.to_file(output_jason_path, driver="GeoJSON")
 
-            # json_file_size = os.stat(
-            #     output_jason_path).st_size/1024/1024  # to MB
-            # if json_file_size <= 100:
-            #     break
+            json_file_size = os.stat(
+                output_jason_path).st_size/1024/1024  # to MB
+            if json_file_size <= 100:
+                break
 
-    # if len(created_jason_files_lake_riv) > 1 and os.stat(os.path.join(product_dir, Output_file_name[0])).st_size/1024/1024 < 500:
-    #     for i in range(0, len(created_jason_files_lake_riv)):
-    #         injson2 = load(open(created_jason_files_lake_riv[i]))
-    #         if 'finalcat_info_riv' in created_jason_files_lake_riv[i]:
-    #             new_features = []
-    #             for element in injson2["features"]:
-    #                 if element["properties"]["Lake_Cat"] == 0:
-    #                     new_features.append(element)
-    #             injson2["features"] = new_features
+    if len(created_jason_files_lake_riv) > 1 and os.stat(os.path.join(product_dir, Output_file_name[0])).st_size/1024/1024 < 500:
+        for i in range(0, len(created_jason_files_lake_riv)):
+            injson2 = load(open(created_jason_files_lake_riv[i]))
+            if 'finalcat_info_riv' in created_jason_files_lake_riv[i]:
+                new_features = []
+                for element in injson2["features"]:
+                    if element["properties"]["Lake_Cat"] == 0:
+                        new_features.append(element)
+                injson2["features"] = new_features
 
-    #         if i == 0:
-    #             output_jason_lake_riv = injson2
-    #         else:
-    #             output_jason_lake_riv['features'] += injson2['features']
+            if i == 0:
+                output_jason_lake_riv = injson2
+            else:
+                output_jason_lake_riv['features'] += injson2['features']
 
-    #     with open(os.path.join(product_dir, 'routing_product_lake_river.geojson'), 'w', encoding='utf-8') as f:
-    #         json.dump(output_jason_lake_riv, f, ensure_ascii=False, indent=4)
+        with open(os.path.join(product_dir, 'routing_product_lake_river.geojson'), 'w', encoding='utf-8') as f:
+            json.dump(output_jason_lake_riv, f, ensure_ascii=False, indent=4)
 
     return
 
