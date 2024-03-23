@@ -454,7 +454,7 @@ def GenerateHRUS_purepy(
     HRU_draf_final.to_file(os.path.join(OutputFolder,'finalcat_hru_info.shp'))
     HRU_draf_final_wgs_84 = HRU_draf_final.to_crs('EPSG:4326')
 #    HRU_draf_final_wgs_84 = HRU_draf_final_wgs_84[['HRU_ID','geometry']]
-    TOLERANCEs = [0.0001,0.0005,0.001,0.005,0.01,0.05]
+    TOLERANCEs = [0.01]
     output_jason_path = os.path.join(OutputFolder,'finalcat_hru_info.geojson')
     for TOLERANCE in TOLERANCEs:
         HRU_draf_final_wgs_84['geometry'] = HRU_draf_final_wgs_84.simplify(TOLERANCE)

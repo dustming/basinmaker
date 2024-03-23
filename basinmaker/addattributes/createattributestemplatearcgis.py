@@ -440,9 +440,10 @@ def create_catchments_attributes_template_table(
         obs_v.spatial.to_featureclass(location=os.path.join(output_folder,"poi_v1-0.shp"),overwrite=True,sanitize_columns=False)
     if len(obs_v_missing) > 0:
         obs_v_missing.spatial.to_featureclass(location=os.path.join(output_folder,"poi_missing.shp"),overwrite=True,sanitize_columns=False)
-
-    arcpy.DeleteField_management(os.path.join(output_folder,"poi_v1-0.shp"),
-                             ["Id"])
+    
+    if os.path.exists(os.path.join(output_folder,"poi_v1-0.shp")): 
+        arcpy.DeleteField_management(os.path.join(output_folder,"poi_v1-0.shp"),
+                                ["Id"])
     arcpy.DeleteField_management(os.path.join(output_folder,catchment_without_merging_lakes+"_v1-0"),
                              ["Id"])
     arcpy.DeleteField_management(os.path.join(output_folder,river_without_merging_lakes+"_v1-0"),
