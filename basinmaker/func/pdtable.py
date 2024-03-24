@@ -190,7 +190,7 @@ def simplify_hrus_method2(area_ratio_thresholds, hruinfo, Landuse_ID,
             landuse_thres, hru_land_info, sub_area, Item)
     hru_land_info[Veg_ID] = hru_land_info[Landuse_ID]
 
-    hruinfo = hru_lake_info.append(hru_land_info)
+    hruinfo = pd.concat([hru_land_info, hru_lake_info], ignore_index=True)
 
     return hruinfo
 
