@@ -125,16 +125,17 @@ def combine_catchments_covered_by_the_same_lake_arcgis(
     ### read attribute table
     finalrivply_info = pd.DataFrame.spatial.from_featureclass(Path_final_rivply)
     # change attribute table for lake covered catchments,
-    finalrivply_info['SubId'] = finalrivply_info['SubId'].astype('int32')
-    finalrivply_info['DowSubId'] = finalrivply_info['DowSubId'].astype('int32')
-    finalrivply_info['HyLakeId'] = finalrivply_info['HyLakeId'].astype('int32')
+    finalrivply_info['SubId'] = finalrivply_info['SubId'].astype('int64')
+    finalrivply_info['DowSubId'] = finalrivply_info['DowSubId'].astype('int64')
+    finalrivply_info['HyLakeId'] = finalrivply_info['HyLakeId'].astype('int64')
 #    finalrivply_info['DrainArea'] = finalrivply_info['DrainArea'].astype('float')
 
     mapoldnew_info = change_attribute_values_for_catchments_covered_by_same_lake(
         finalrivply_info
     )
 
-    mapoldnew_info = remove_possible_small_subbasins(mapoldnew_info = mapoldnew_info, area_thresthold = 10*30*30/1000/1000)
+    mapoldnew_info = remove_possible_small_subbasins(
+        mapoldnew_info=mapoldnew_info, area_thresthold=0, length_thresthold=-10)
     # update topology for new attribute table
 
     mapoldnew_info.loc[mapoldnew_info['Lake_Cat'] > 0,'RivLength'] = -1.2345
@@ -150,7 +151,7 @@ def combine_catchments_covered_by_the_same_lake_arcgis(
 
     mapoldnew_info = update_topology(mapoldnew_info, UpdateStreamorder=-1)
 
-    mapoldnew_info['DowSubId'] = mapoldnew_info['DowSubId'].astype('int32')
+    mapoldnew_info['DowSubId'] = mapoldnew_info['DowSubId'].astype('int64')
 
     if len(os.path.basename(Path_Catchment_Polygon).split('_')) == 5:
         cat_name = "finalcat_info_"+os.path.basename(Path_Catchment_Polygon).split('_')[4]

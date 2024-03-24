@@ -16,8 +16,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 def combine_catchments_covered_by_the_same_lake_purepy(
     Routing_Product_Folder,
-    area_thresthold=10*30*30/1000/1000,
-    length_thresthold=1,
+    area_thresthold=0,
+    length_thresthold=-10,
 ):
     """Define final lake river routing structure
 
