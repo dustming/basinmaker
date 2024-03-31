@@ -388,7 +388,7 @@ def create_catchments_attributes_template_table(
     cat_ply = cat_ply.merge(attri_table,on='SubId',how='left')
     for col_i in cat_ply.columns:
         # DA_Diff use np.nan for null values
-        if col_i != "DA_Diff":
+        if col_i not in ["DA_Diff","SHAPE"]:
             cat_ply[col_i] = cat_ply[col_i].fillna(-1.2345)
     cat_ply['Obs_NM'] = cat_ply['Obs_NM'].astype('str')
     cat_ply['SRC_obs'] = cat_ply['SRC_obs'].astype('str')
@@ -404,7 +404,7 @@ def create_catchments_attributes_template_table(
     riv_line = riv_line.merge(attri_table,on='SubId',how='left')
     for col_i in riv_line.columns:
         # DA_Diff use np.nan for null values
-        if col_i != "DA_Diff":
+        if col_i not in ["DA_Diff","SHAPE"]:
             riv_line[col_i] = riv_line[col_i].fillna(-1.2345)
 
     riv_line['Obs_NM'] = riv_line['Obs_NM'].astype('str')
