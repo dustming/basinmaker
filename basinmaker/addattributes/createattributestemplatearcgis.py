@@ -214,6 +214,9 @@ def create_catchments_attributes_template_table(
     obs_v123["obsid"]       = pd.to_numeric(obs_v123[obs_attributes[0]])
     obs_v123['obsid']       = obs_v123['obsid'].fillna(0)
     obs_v123['obsid']       = obs_v123['obsid'].astype(int)
+    obs_v123.loc[obs_v123[obs_attributes[2]] == '<NA>',obs_attributes[2]] = 0
+    obs_v123[obs_attributes[2]] = pd.to_numeric(obs_v123[obs_attributes[2]])
+
 
     obs_v123 = obs_v123[obs_attributes + ['obsid']]
     
