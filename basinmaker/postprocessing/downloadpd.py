@@ -25,7 +25,7 @@ def Download_Routing_Product_For_One_Gauge(product_name, gauge_name="#", region=
                     #                    print(gauge_info_sl['Region'].values[0],gauge_info_sl['Sub_Reg'].values[0])
                     region_id = int(gauge_info_sl['Region'].values[0])
                     subreg_id = int(gauge_info_sl['Sub_Reg'].values[0])
-                    url = "http://hydrology.uwaterloo.ca/basinmaker/data/original/drainage_region_%s_%s_v2-1.zip" % (
+                    url = "https://hydrology.uwaterloo.ca/basinmaker/data/original/drainage_region_%s_%s_v2-1.zip" % (
                         str(region_id).zfill(4), str(subreg_id).zfill(5))
                     wget.download(url)
                     os.system('unzip drainage_region_%s_%s_%s.zip' % (
@@ -41,7 +41,7 @@ def Download_Routing_Product_For_One_Gauge(product_name, gauge_name="#", region=
                     #                    print(gauge_info_sl['Region'].values[0],gauge_info_sl['Sub_Reg'].values[0])
                     region_id = int(gauge_info_sl['Region'].values[0])
 #                    subreg_id = int(gauge_info_sl['Sub_Reg'].values[0])
-                    url = "http://hydrology.uwaterloo.ca/basinmaker/data/original/drainage_region_%s_v2-1.zip" % (
+                    url = "https://hydrology.uwaterloo.ca/basinmaker/data/original/drainage_region_%s_v2-1.zip" % (
                         str(region_id).zfill(4))
                     wget.download(url)
                     os.system('unzip drainage_region_%s_v2-1.zip' %
