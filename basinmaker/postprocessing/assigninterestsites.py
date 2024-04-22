@@ -93,6 +93,9 @@ def define_interest_sites(
     interest_site = interest_site.to_crs(cat_ply.crs)
     interest_site = interest_site.sjoin(cat_ply, how="left")
     interest_site = interest_site[interest_site['SubId'].isna() != True]
+    interest_site.loc[interest_site["DA_Obs"] == '<NA>',"DA_Obs"] = 0
+    interest_site["DA_Obs"] = pd.to_numeric(interest_site["DA_Obs"])
+
     non_lake = interest_site[interest_site["Type"] == "River"].copy(deep=True)
     lake     = interest_site[interest_site["Type"] == "Lake"].copy(deep=True)
 
