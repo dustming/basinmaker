@@ -57,7 +57,7 @@ def Download_Routing_Product_For_One_Gauge(product_name, gauge_name="#", region=
         version = 'v1-0'
         if gauge_name != '#':
 
-            url = "http://hydrology.uwaterloo.ca/CLRH/data/%s.zip" % (
+            url = "https://hydrology.uwaterloo.ca/CLRH/data/%s.zip" % (
                 gauge_name)
             wget.download(url)
             product_name = "%s" % (gauge_name)
