@@ -380,7 +380,7 @@ def create_geo_jason_file(Input_Polygon_path):
     Names_in = os.path.basename(Input_Polygon_path).split('_')
     n_charc = len(Names_in)
     version = Names_in[n_charc - 1][0:4]
-    TOLERANCEs = [0.005]
+    TOLERANCEs = [0.0001]
 
     head_name_cat = "finalcat_info"
     head_name_riv = "finalcat_info_riv"
