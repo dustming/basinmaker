@@ -103,7 +103,7 @@ def simplify_routing_structure_by_drainage_area_purepy(
 
     # define input files from routing prodcut
     for file in os.listdir(Routing_Product_Folder):
-        if file.endswith(".shp"):
+        if file.endswith(".shp") and not file.startswith("._"):
             if 'catchment_without_merging_lakes' in file:
                 Path_Catchment_Polygon = os.path.join(
                     Routing_Product_Folder, file)
