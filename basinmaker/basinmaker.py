@@ -1,5 +1,6 @@
 import os
 
+
 class postprocess:
 
     def __init__(
@@ -14,14 +15,14 @@ class postprocess:
         self,
         path_output_folder,
         path_hru_polygon="#",
-        aspect_from_gis = "grass",
+        aspect_from_gis="grass",
         model_name="test",
         subbasingroup_names_channel=["Allsubbasins"],
         subbasingroup_length_channel=[-1],
         subbasingroup_name_lake=["AllLakesubbasins"],
         subbasingroup_area_lake=[-1],
-        lake_out_flow_method = 'broad_crest',
-        model_time_step = 1,
+        lake_out_flow_method='broad_crest',
+        model_time_step=1,
     ):
         """This function is to generate Raven input files. A subfolder 'RavenInput'
         in path_output_folder is created to sotre resultant outputs.
@@ -84,16 +85,15 @@ class postprocess:
             GenerateRavenInput,
         )
 
-        startyear=-1
-        endYear=-1
-        CA_HYDAT="#"
-        warmup=0
-        template_folder="#"
-        lake_as_gauge=False
-        writeobsrvt=False
-        downloadobsdata=False
-        forcing_input_file="#"
-
+        startyear = -1
+        endYear = -1
+        CA_HYDAT = "#"
+        warmup = 0
+        template_folder = "#"
+        lake_as_gauge = False
+        writeobsrvt = False
+        downloadobsdata = False
+        forcing_input_file = "#"
 
         GenerateRavenInput(
             Path_final_hru_info=path_hru_polygon,
@@ -103,23 +103,22 @@ class postprocess:
             EndYear=endYear,
             CA_HYDAT=CA_HYDAT,
             WarmUp=warmup,
-            time_step = model_time_step,
+            time_step=model_time_step,
             Template_Folder=template_folder,
             Lake_As_Gauge=lake_as_gauge,
             WriteObsrvt=writeobsrvt,
             DownLoadObsData=downloadobsdata,
             Model_Name=model_name,
             Old_Product=False,
-            SubBasinGroup_NM_Channel=subbasingroup_names_channel ,
-            SubBasinGroup_Length_Channel=subbasingroup_length_channel ,
-            SubBasinGroup_NM_Lake=subbasingroup_name_lake ,
-            SubBasinGroup_Area_Lake=subbasingroup_area_lake ,
+            SubBasinGroup_NM_Channel=subbasingroup_names_channel,
+            SubBasinGroup_Length_Channel=subbasingroup_length_channel,
+            SubBasinGroup_NM_Lake=subbasingroup_name_lake,
+            SubBasinGroup_Area_Lake=subbasingroup_area_lake,
             OutputFolder=path_output_folder,
             Forcing_Input_File=forcing_input_file,
-            aspect_from_gis = aspect_from_gis,
-            lake_out_flow_method = lake_out_flow_method,
+            aspect_from_gis=aspect_from_gis,
+            lake_out_flow_method=lake_out_flow_method,
         )
-
 
     def obtain_grids_polygon_from_netcdf_file_method(
         self,
@@ -135,7 +134,6 @@ class postprocess:
         y_add=0,
         gis_platform="qgis",
     ):
-
 
         from basinmaker.postprocessing.postprocessingfunctions import (
             obtain_grids_polygon_from_netcdf_file
@@ -155,7 +153,6 @@ class postprocess:
             qgis_prefix_path=self.qgispp,
             gis_platform=gis_platform,
         )
-
 
     def generate_area_weight_of_two_polygons_method(
         self,
@@ -179,16 +176,15 @@ class postprocess:
             gis_platform=gis_platform,
         )
 
-
     def Remove_Small_Lakes(
         self,
         path_output_folder="#",
-        routing_product_folder  = '#',
+        routing_product_folder='#',
         connected_lake_area_thresthold=-1,
-        non_connected_lake_area_thresthold =-1,
+        non_connected_lake_area_thresthold=-1,
         selected_lake_ids=[],
-        area_thresthold = 10*30*30/1000/1000,
-        length_thresthold=0.01,
+        area_thresthold=10*30*30/1000/1000,
+        length_thresthold=-10,
         gis_platform="qgis",
     ):
         """This function is to simplify the hydrologic routing network by removing
@@ -281,11 +277,11 @@ class postprocess:
             Path_final_riv=Path_final_riv,
             Path_Con_Lake_ply=Path_Con_Lake_ply,
             Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,
-            Routing_Product_Folder = routing_product_folder ,
-            Thres_Area_Conn_Lakes=connected_lake_area_thresthold ,
-            Thres_Area_Non_Conn_Lakes=non_connected_lake_area_thresthold ,
-            Selected_Lake_List_in=selected_lake_ids ,
-            OutputFolder=path_output_folder ,
+            Routing_Product_Folder=routing_product_folder,
+            Thres_Area_Conn_Lakes=connected_lake_area_thresthold,
+            Thres_Area_Non_Conn_Lakes=non_connected_lake_area_thresthold,
+            Selected_Lake_List_in=selected_lake_ids,
+            OutputFolder=path_output_folder,
             qgis_prefix_path=self.qgispp,
             gis_platform=gis_platform,
         )
@@ -295,22 +291,21 @@ class postprocess:
         )
 
         combine_catchments_covered_by_the_same_lake_method(
-            Routing_Product_Folder = path_output_folder,
+            Routing_Product_Folder=path_output_folder,
             qgis_prefix_path=self.qgispp,
-            area_thresthold = area_thresthold,
-            length_thresthold = length_thresthold,
+            area_thresthold=area_thresthold,
+            length_thresthold=length_thresthold,
             gis_platform=gis_platform,
         )
-
 
     def Decrease_River_Network_Resolution(
         self,
         path_output_folder="#",
-        routing_product_folder = '#',
+        routing_product_folder='#',
         gis_platform="qgis",
         minimum_subbasin_drainage_area=-1,
-        length_thresthold = 0.01,
-        area_thresthold = 10*30*30/1000/1000,
+        length_thresthold=-10,
+        area_thresthold=10*30*30/1000/1000,
     ):
         """ This function is to simplify the hydrologic routing network by
         removing subbasins/river reaches with their drainage area below user provided
@@ -389,7 +384,7 @@ class postprocess:
         )
 
         simplify_routing_structure_by_drainage_area_method(
-            Routing_Product_Folder = routing_product_folder,
+            Routing_Product_Folder=routing_product_folder,
             Area_Min=minimum_subbasin_drainage_area,
             OutputFolder=path_output_folder,
             gis_platform=gis_platform,
@@ -401,22 +396,22 @@ class postprocess:
         )
 
         combine_catchments_covered_by_the_same_lake_method(
-            Routing_Product_Folder = path_output_folder,
+            Routing_Product_Folder=path_output_folder,
             qgis_prefix_path=self.qgispp,
-            area_thresthold = area_thresthold,
-            length_thresthold = length_thresthold,
+            area_thresthold=area_thresthold,
+            length_thresthold=length_thresthold,
             gis_platform=gis_platform,
         )
 
     def Add_Point_Of_Interest_Sites_In_Routing_Product(
         self,
-        routing_product_folder= '#',
-        path_to_points_of_interest_points = '#',
+        routing_product_folder='#',
+        path_to_points_of_interest_points='#',
         path_output_folder="#",
-        clean_exist_pois = True,
+        clean_exist_pois=True,
         gis_platform="purepy",
-        area_thresthold = 10*30*30/1000/1000,
-        length_thresthold = 1,
+        area_thresthold=10*30*30/1000/1000,
+        length_thresthold=-10,
     ):
         """This function allows the user to modify point of interest (POI) 
         sites in a pre-existing BasinMaker-generated user input hydrologic 
@@ -436,17 +431,17 @@ class postprocess:
         path_to_points_of_interest_points                : string
             is the path to the point shapefile that contains the point of interest (POI) sites. 
             The shapefile must have an attribute table that includes the following columns:
-             
+
               - Obs_NM (string): This column should contain the name or ID of the POI site. 
                 When the provided POI has the same Obs_NM as the existing POI in the routing
                 product, this function will assume that the user wants to relocate the existing 
                 POI. Otherwise, the clean_exist_pois variable below controls whether the new POI 
                 sites fully replace existing POI sites or augment the existing POI sites.
-              
+
               - DA_Obs (float): This column should contain the drainage area of the POI site.
-              
+
               - SRC_obs (string): This column should contain the source of the POI site.
-              
+
               - Type (string): This column should contain the type of the POI site. Each POI 
                 can only have one type. The following types are currently supported: "Lake": the 
                 POI is located on a lake waterbody surface. "River": the POI is located on a 
@@ -455,7 +450,7 @@ class postprocess:
                 The POI located in the wrong subbasin will be ignored and not added to the routing 
                 product. The “River” type POI will be linked to a non-lake subbasin that contains 
                 the POI. The “Lake” type POI will be linked to the lake subbasin that contains the POI. 
-        
+
         gis_platform                   : string
             is the parameter indicating which gis platform is used. Currenly, only "purepy" 
             is allowed for this parameter.
@@ -520,10 +515,10 @@ class postprocess:
         )
 
         add_point_of_interest_sites_in_routing_product_method(
-            routing_product_folder= routing_product_folder,
-            path_to_points_of_interest_points = path_to_points_of_interest_points,
-            path_output_folder = path_output_folder,
-            clean_exist_pois = clean_exist_pois,
+            routing_product_folder=routing_product_folder,
+            path_to_points_of_interest_points=path_to_points_of_interest_points,
+            path_output_folder=path_output_folder,
+            clean_exist_pois=clean_exist_pois,
             gis_platform=gis_platform,
         )
 
@@ -532,17 +527,17 @@ class postprocess:
         )
 
         combine_catchments_covered_by_the_same_lake_method(
-            Routing_Product_Folder = path_output_folder,
+            Routing_Product_Folder=path_output_folder,
             qgis_prefix_path=self.qgispp,
-            area_thresthold = area_thresthold,
-            length_thresthold = length_thresthold,
+            area_thresthold=area_thresthold,
+            length_thresthold=length_thresthold,
             gis_platform=gis_platform,
         )
 
     def Select_Subregion_Of_Routing_Structure(
         self,
         path_output_folder="#",
-        routing_product_folder = '#',
+        routing_product_folder='#',
         gis_platform="qgis",
         most_down_stream_subbasin_ids=[-1],
         most_up_stream_subbasin_ids=[-1],
@@ -615,12 +610,12 @@ class postprocess:
         from basinmaker.postprocessing.postprocessingfunctions import (
             select_part_of_routing_product_method,
         )
-        Path_Points="#"
-        Gauge_NMS=["#"]
-        Path_Catchment_Polygon="#"
-        Path_River_Polyline="#"
-        Path_Con_Lake_ply="#"
-        Path_NonCon_Lake_ply="#"
+        Path_Points = "#"
+        Gauge_NMS = ["#"]
+        Path_Catchment_Polygon = "#"
+        Path_River_Polyline = "#"
+        Path_Con_Lake_ply = "#"
+        Path_NonCon_Lake_ply = "#"
 
         select_part_of_routing_product_method(
             Path_Points=Path_Points,
@@ -633,7 +628,7 @@ class postprocess:
             Path_Con_Lake_ply=Path_Con_Lake_ply,
             Path_NonCon_Lake_ply=Path_NonCon_Lake_ply,
             qgis_prefix_path=self.qgispp,
-            Routing_Product_Folder = routing_product_folder,
+            Routing_Product_Folder=routing_product_folder,
             gis_platform=gis_platform,
         )
 
@@ -642,7 +637,7 @@ class postprocess:
         )
 
         combine_catchments_covered_by_the_same_lake_method(
-            Routing_Product_Folder = path_output_folder,
+            Routing_Product_Folder=path_output_folder,
             qgis_prefix_path=self.qgispp,
             gis_platform=gis_platform,
         )
@@ -663,11 +658,11 @@ class postprocess:
         path_vegetation_polygon="#",
         path_other_polygon_1="#",
         path_other_polygon_2="#",
-        importance_order = [],
-        min_hru_subbasin_area_ratio = 0.0,
+        importance_order=[],
+        min_hru_subbasin_area_ratio=0.0,
         path_to_dem="#",
-        pixel_size = 30,
-        area_ratio_thresholds = [0,0,0]
+        pixel_size=30,
+        area_ratio_thresholds=[0, 0, 0]
     ):
         """This function is to generate HRU map based on subbasin polygon, lake
         polygon (optional), Land use polygon (optional), soil type polygon(optional),
@@ -751,14 +746,14 @@ class postprocess:
         from basinmaker.postprocessing.postprocessingfunctions import (
             generate_hrus_method,
         )
-        Sub_Lake_ID="HyLakeId"
-        Sub_ID="SubId"
-        Lake_Id="Hylak_id"
-        Landuse_ID="Landuse_ID"
-        Soil_ID="Soil_ID"
-        Other_Ply_ID_1="O_ID_1"
-        Veg_ID="Veg_ID"
-        Other_Ply_ID_2="O_ID_2"
+        Sub_Lake_ID = "HyLakeId"
+        Sub_ID = "SubId"
+        Lake_Id = "Hylak_id"
+        Landuse_ID = "Landuse_ID"
+        Soil_ID = "Soil_ID"
+        Other_Ply_ID_1 = "O_ID_1"
+        Veg_ID = "Veg_ID"
+        Other_Ply_ID_2 = "O_ID_2"
 
         os.environ["GISDBASE"] = path_output_folder
 
@@ -783,14 +778,14 @@ class postprocess:
             Path_Other_Ply_2=path_other_polygon_2,
             Other_Ply_ID_2=Other_Ply_ID_2,
             DEM=path_to_dem,
-            Inmportance_order = importance_order,
-            min_hru_area_pct_sub = min_hru_subbasin_area_ratio,
+            Inmportance_order=importance_order,
+            min_hru_area_pct_sub=min_hru_subbasin_area_ratio,
             Project_crs=projected_epsg_code,
             OutputFolder=path_output_folder,
             qgis_prefix_path=self.qgispp,
-            gis_platform = gis_platform,
-            pixel_size = pixel_size,
-            area_ratio_thresholds = area_ratio_thresholds,
+            gis_platform=gis_platform,
+            pixel_size=pixel_size,
+            area_ratio_thresholds=area_ratio_thresholds,
         )
 
 
@@ -813,7 +808,7 @@ class delineate:
         self,
         path_output_folder="#",
         path_working_folder="#",
-        fac_thresold = 5000,
+        fac_thresold=5000,
     ):
 
         # define drived values
@@ -899,15 +894,14 @@ class delineate:
         self,
         mode,
         path_to_dem_input,
-        watershed_outlet_coordinates = [-1, -1],
+        watershed_outlet_coordinates=[-1, -1],
         path_to_spatial_extent_polygon="#",
         buffer_distance=0.0,
         path_to_hydrobasin_polygon="#",
         hydrobasin_id_of_watershed_outlet=-1,
-        path_to_snap_raster = "#",
+        path_to_snap_raster="#",
         gis_platform="qgis",
     ):
-
         """This function is to define project spatial extent (PSE). Domain ouside
         of the PSE is not processed by BasinMaker functions.
 
@@ -975,7 +969,7 @@ class delineate:
             hybasin_ply=path_to_hydrobasin_polygon,
             down_hybasin_id=hydrobasin_id_of_watershed_outlet,
             up_hybasin_id=up_hybasin_id,
-            path_to_snap_raster = path_to_snap_raster,
+            path_to_snap_raster=path_to_snap_raster,
             mask=self.geofilenames["mask"],
             dem=self.geofilenames["dem"],
             gis_platform=gis_platform,
@@ -984,7 +978,7 @@ class delineate:
     def Delineation_Initial_Subbasins_Without_Lakes(
         self,
         fac_thresold,
-        mode = 'using_dem',
+        mode='using_dem',
         path_flow_dirction="#",
         path_flow_accumulation='#',
         max_memroy=1024 * 4,
@@ -1061,7 +1055,7 @@ class delineate:
             input_geo_names=self.geofilenames,
             acc_thresold=fac_thresold,
             fdr_path=path_flow_dirction,
-            fac_path = path_flow_accumulation,
+            fac_path=path_flow_accumulation,
             subreg_fdr_path=subreg_fdr_path,
             subreg_acc_path=subreg_acc_path,
             subreg_str_r_path=subreg_str_r_path,
@@ -1085,7 +1079,7 @@ class delineate:
         lake_attributes=[],
         connected_lake_area_thresthold=0,
         non_connected_lake_area_thresthold=0,
-        only_included_lake_at_river_interction = False,
+        only_included_lake_at_river_interction=False,
         path_point_of_interest="#",
         point_of_interest_attributes=[],
         path_sub_reg_outlets_v="#",
@@ -1187,7 +1181,7 @@ class delineate:
             obs_attributes=point_of_interest_attributes,
             path_sub_reg_outlets_v=path_sub_reg_outlets_v,
             threshold_con_lake=connected_lake_area_thresthold,
-            only_included_lake_at_river_interction = only_included_lake_at_river_interction,
+            only_included_lake_at_river_interction=only_included_lake_at_river_interction,
             threshold_non_con_lake=non_connected_lake_area_thresthold,
             search_radius=search_radius,
             path_sub_reg_lake_r=path_sub_reg_lake_r,
@@ -1205,7 +1199,7 @@ class delineate:
             cat_use_default_acc=self.geofilenames["cat_use_default_acc"],
             nfdr_arcgis=self.geofilenames["nfdr_arcgis"],
             nfdr_grass=self.geofilenames["nfdr_grass"],
-            fac_thresold = self.fac_thresold,
+            fac_thresold=self.fac_thresold,
             max_memroy=max_memroy,
             grassdb=self.grassdb,
             grass_location=self.grass_location_geo,
@@ -1215,17 +1209,17 @@ class delineate:
 
     def Generate_Hydrologic_Routing_Attributes(
         self,
-        path_output_folder ="#",
-        projected_epsg_code ="EPSG:3573",
-        path_bkfwidthdepth_polyline ="#",
+        path_output_folder="#",
+        projected_epsg_code="EPSG:3573",
+        path_bkfwidthdepth_polyline="#",
         bkfwd_attributes=[],
-        path_k_c_zone_polygon = '#',
-        k =-1,
-        c =-1,
-        path_landuse ="#",
+        path_k_c_zone_polygon='#',
+        k=-1,
+        c=-1,
+        path_landuse="#",
         path_landuse_and_manning_n_table="#",
-        lake_attributes =[],
-        point_of_interest_attributes =[],
+        lake_attributes=[],
+        point_of_interest_attributes=[],
         outlet_obs_id=-1,
         path_sub_reg_outlets_v="#",
         gis_platform="qgis",
@@ -1354,7 +1348,7 @@ class delineate:
             path_landuse=path_landuse,
             path_landuse_info=path_landuse_and_manning_n_table,
             projection=projected_epsg_code,
-            path_k_c_zone_polygon = path_k_c_zone_polygon,
+            path_k_c_zone_polygon=path_k_c_zone_polygon,
             k_in=k,
             c_in=c,
             out_cat_name=self.geofilenames["catchment_without_merging_lakes"],
@@ -1427,9 +1421,9 @@ class delineate:
         is_final_result,
         path_subregion_inlet,
         gis_platform="qgis",
-        start_sub_id = 0,
-        k =1,
-        c = 1,
+        start_sub_id=0,
+        k=1,
+        c=1,
     ):
 
         from basinmaker.subreg.defsubreg import (
@@ -1443,17 +1437,17 @@ class delineate:
             is_final_result=is_final_result,
             qgis_prefix_path=self.qgispp,
             path_subregion_inlet=path_subregion_inlet,
-            start_sub_id = start_sub_id,
-            k = k,
-            c = c
+            start_sub_id=start_sub_id,
+            k=k,
+            c=c
         )
 
     def Combine_Subbasins_Covered_by_The_Same_Lake(
         self,
         routing_product_folder='#',
         gis_platform="qgis",
-        area_thresthold = 10*30*30/1000/1000,
-        length_thresthold = 1,
+        area_thresthold=10*30*30/1000/1000,
+        length_thresthold=-10,
     ):
         """Finalize a incomplete hydrologic routing network by merging subbasin
         polygons that are covered by the same lake.
@@ -1491,9 +1485,9 @@ class delineate:
         )
 
         combine_catchments_covered_by_the_same_lake_method(
-            Routing_Product_Folder = routing_product_folder,
+            Routing_Product_Folder=routing_product_folder,
             qgis_prefix_path=self.qgispp,
             gis_platform=gis_platform,
-            area_thresthold = area_thresthold,
-            length_thresthold = length_thresthold,
+            area_thresthold=area_thresthold,
+            length_thresthold=length_thresthold,
         )

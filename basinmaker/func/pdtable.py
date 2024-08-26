@@ -71,7 +71,7 @@ def return_extracted_subids(cat_ply, mostdownid, mostupstreamid, sec_down_subinf
     has_sec_downsub = False
     update_downsubids_using_sec_downsubid = False
 
-    hyshdinfo = cat_ply[['SubId', 'DowSubId']].astype("int32").values
+    hyshdinfo = cat_ply[['SubId', 'DowSubId']].astype("int64").values
     sum_update_topology = 0
     update_topology = 0
     # find all subid control by this subid
@@ -190,7 +190,7 @@ def simplify_hrus_method2(area_ratio_thresholds, hruinfo, Landuse_ID,
             landuse_thres, hru_land_info, sub_area, Item)
     hru_land_info[Veg_ID] = hru_land_info[Landuse_ID]
 
-    hruinfo = hru_lake_info.append(hru_land_info)
+    hruinfo = pd.concat([hru_land_info, hru_lake_info], ignore_index=True)
 
     return hruinfo
 
@@ -483,7 +483,8 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold=50, length_t
         deep=True)
     small_sub_non_lake = small_sub_non_lake[small_sub_non_lake[Gauge_col_Name] == 0].copy(
         deep=True)
-    small_sub_non_lake = small_sub_non_lake.sort_values(['Strahler','DrainArea'], ascending=True)
+    small_sub_non_lake = small_sub_non_lake.sort_values(
+        ['Strahler', 'DrainArea'], ascending=True)
     # process connected lakes  merge polygons
     for i in range(0, len(small_sub_non_lake)):
         small_sub_id = small_sub_non_lake['SubId'].values[i]
@@ -570,17 +571,17 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold=50, length_t
 
         else:
             modify = False
-            if small_downsub_id > 0:
-                print(
-                    small_sub_id,
-                    has_down_sub,
-                    down_sub_has_same_seg_id,
-                    small_sub_is_not_Lake,
-                    small_sub_is_not_gauge,
-                    has_down_sub,
-                    len(mapoldnew_info[mapoldnew_info['Seg_ID']
-                        == small_sub_seg_id])
-                )
+            # if small_downsub_id > 0:
+            #     print(
+            #         small_sub_id,
+            #         has_down_sub,
+            #         down_sub_has_same_seg_id,
+            #         small_sub_is_not_Lake,
+            #         small_sub_is_not_gauge,
+            #         has_down_sub,
+            #         len(mapoldnew_info[mapoldnew_info['Seg_ID']
+            #             == small_sub_seg_id])
+            #     )
             tarinfo = []
             continue
 
@@ -615,10 +616,13 @@ def remove_possible_small_subbasins(mapoldnew_info, area_thresthold=50, length_t
                     mapoldnew_info_new.loc[mask, "RivLength"] = np.sum(
                         attributes["RivLength"].values)
                 elif col in ["RivSlope", "FloodP_n", "Q_Mean", "Ch_n"] and update_river:
-                    mapoldnew_info_new.loc[mask, col] = np.average(
-                        attributes[col].values[attributes[col].values > 0],
-                        weights=attributes[col].values[attributes[col].values > 0],
-                    )
+                    if len(attributes[col].values[attributes[col].values > 0]) > 0:
+                        mapoldnew_info_new.loc[mask, col] = np.average(
+                            attributes[col].values[attributes[col].values > 0],
+                            weights=attributes[col].values[attributes[col].values > 0],
+                        )
+                    else:
+                        print(attributes)
                 elif col in ["Max_DEM"] and update_river:
                     mapoldnew_info_new.loc[mask, col] = np.max(
                         attributes[col].values
@@ -2407,7 +2411,6 @@ def update_the_selected_river_to_connect_upsub_with_largest_da(Selected_riv, map
 
     mask_lakes = np.logical_and(
         mapoldnew_info['Lake_Cat'] == 1, ~mapoldnew_info['HyLakeId'].isin(lakeid_in_new_network))
-
 
     # Hongren Debug 2023-05-30
     # Has_Gauge
