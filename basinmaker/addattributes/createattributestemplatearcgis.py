@@ -214,6 +214,9 @@ def create_catchments_attributes_template_table(
     obs_v123["obsid"]       = pd.to_numeric(obs_v123[obs_attributes[0]])
     obs_v123['obsid']       = obs_v123['obsid'].fillna(0)
     obs_v123['obsid']       = obs_v123['obsid'].astype(int)
+    obs_v123.loc[obs_v123[obs_attributes[2]] == '<NA>',obs_attributes[2]] = 0
+    obs_v123[obs_attributes[2]] = pd.to_numeric(obs_v123[obs_attributes[2]])
+
 
     obs_v123 = obs_v123[obs_attributes + ['obsid']]
     
@@ -388,7 +391,7 @@ def create_catchments_attributes_template_table(
     cat_ply = cat_ply.merge(attri_table,on='SubId',how='left')
     for col_i in cat_ply.columns:
         # DA_Diff use np.nan for null values
-        if col_i != "DA_Diff":
+        if col_i not in ["DA_Diff","SHAPE"]:
             cat_ply[col_i] = cat_ply[col_i].fillna(-1.2345)
     cat_ply['Obs_NM'] = cat_ply['Obs_NM'].astype('str')
     cat_ply['SRC_obs'] = cat_ply['SRC_obs'].astype('str')
@@ -404,7 +407,7 @@ def create_catchments_attributes_template_table(
     riv_line = riv_line.merge(attri_table,on='SubId',how='left')
     for col_i in riv_line.columns:
         # DA_Diff use np.nan for null values
-        if col_i != "DA_Diff":
+        if col_i not in ["DA_Diff","SHAPE"]:
             riv_line[col_i] = riv_line[col_i].fillna(-1.2345)
 
     riv_line['Obs_NM'] = riv_line['Obs_NM'].astype('str')
@@ -440,9 +443,10 @@ def create_catchments_attributes_template_table(
         obs_v.spatial.to_featureclass(location=os.path.join(output_folder,"poi_v1-0.shp"),overwrite=True,sanitize_columns=False)
     if len(obs_v_missing) > 0:
         obs_v_missing.spatial.to_featureclass(location=os.path.join(output_folder,"poi_missing.shp"),overwrite=True,sanitize_columns=False)
-
-    arcpy.DeleteField_management(os.path.join(output_folder,"poi_v1-0.shp"),
-                             ["Id"])
+    
+    if os.path.exists(os.path.join(output_folder,"poi_v1-0.shp")): 
+        arcpy.DeleteField_management(os.path.join(output_folder,"poi_v1-0.shp"),
+                                ["Id"])
     arcpy.DeleteField_management(os.path.join(output_folder,catchment_without_merging_lakes+"_v1-0"),
                              ["Id"])
     arcpy.DeleteField_management(os.path.join(output_folder,river_without_merging_lakes+"_v1-0"),
