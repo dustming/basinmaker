@@ -2122,7 +2122,8 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
         if all_outlet_sub_info['DrainArea'].values[i] <= Area_Min * 1000 * 1000:
             tsubid = all_outlet_sub_info['SubId'].values[i]
             All_up_subids = defcat(routing_info, tsubid)
-
+            if not (finalriv_info.loc[finalriv_info["SubId"].isin(All_up_subids), Gauge_col_Name] < 0).all():
+                continue
             mapoldnew_info = New_SubId_To_Dissolve(
                 subid=tsubid,
                 catchmentinfo=finalriv_info,
