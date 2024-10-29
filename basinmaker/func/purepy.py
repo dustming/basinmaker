@@ -44,13 +44,14 @@ def ZonalStats(shp_gpd, raster, stats, key, col):
         else:
             i = i + 1
             good_pd = temp_pd[temp_pd['mean'] > 0]
-            result_pd = pd.concat([result_pd, good_pd], ignore_index=True)
+            reault_pd = pd.concat([reault_pd, good_pd], ignore_index=True)
             # reault_pd = reault_pd.append(good_pd)
 
     if len(nodata_pd) > 0:
         nodata_pd['mean'] = nodata_pd[col]
         # reault_pd = reault_pd.append(nodata_pd)
-        result_pd = pd.concat([result_pd, nodata_pd], ignore_index=True)
+        reault_pd = pd.concat(
+            [reault_pd, nodata_pd], ignore_index=True)
 
 #    print(len(shp_gpd),len(nodata_pd),len(reault_pd))
     return reault_pd
