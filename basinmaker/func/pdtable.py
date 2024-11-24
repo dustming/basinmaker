@@ -2013,8 +2013,8 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
     # stupid larege drainage area are provied
     if Area_Min * 1000 * 1000 > max_da:
         Area_Min = max_da/1000.0/1000.0 - 1
-        mapoldnew_info[Gauge_col_Name] = -1
-        finalriv_info[Gauge_col_Name] = -1
+        # mapoldnew_info[Gauge_col_Name] = -1
+        # finalriv_info[Gauge_col_Name] = -1
 
     # select catchment segment that meet the drainage area
     Selected_riv = finalriv_info.loc[
