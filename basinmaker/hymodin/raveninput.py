@@ -33,7 +33,7 @@ def GenerateRavenInput(
     Forcing_Input_File="#",
     aspect_from_gis = 'arcgis',
     lake_out_flow_method = 'broad_crest',
-    detailed_rvh_rvt = False,
+    detailed_rvh = False,
 ):
 
     """Generate Raven input files.
@@ -221,7 +221,6 @@ def GenerateRavenInput(
     ncatinfo = tempinfo.to_dataframe()
     ncatinfo2 = ncatinfo.drop_duplicates("HRU_ID", keep="first")
     ncatinfo2 = ncatinfo2.loc[(ncatinfo2["HRU_ID"] > 0) & (ncatinfo2["SubId"] > 0)]
-
     if 'DrainArea' in ncatinfo2.columns:
         ncatinfo2 = ncatinfo2.sort_values(by=['DrainArea','HRU_ID'])
 
@@ -251,7 +250,7 @@ def GenerateRavenInput(
         SubBasinGroup_Length_Channel,
         time_step,
         aspect_from_gis,
-        detailed_rvh_rvt,
+        detailed_rvh,
     )
     WriteStringToFile(Channel_rvp_string + '\n \n', Channel_rvp_file_path, "w")
     WriteStringToFile(Model_rvh_string + '\n \n', Model_rvh_file_path, "w")
@@ -1252,12 +1251,11 @@ def create_subbasin_group_template(group_name, group_outlet_id):
     """
     template = """
 ############################ Start Subbasin Groups {Group_Name} ######################
-:IfModeEquals {Group_Name}
-    :PopulateSubBasinGroup Actived_Subbasins With SUBBASINS UPSTREAM_OF {Group_OutletID}
-    :PopulateSubBasinGroup Disabled_Subbasins With SUBBASINS NOTWITHIN Actived_Subbasins
-    :IntersectSubBasinGroups Actived_Lake_Subbasins From Actived_Subbasins And WITHIN AllLakesubbasins
-    :DisableSubBasinGroup  Disabled_Subbasins
-:EndIfModeEquals
+#:PopulateSubBasinGroup Upstream_{Group_Name} With SUBBASINS UPSTREAM_OF {Group_OutletID}
+#:PopulateSubBasinGroup Disabled_Subbasins With SUBBASINS NOTWITHIN Upstream_{Group_Name}
+#:DisableSubBasinGroup  Disabled_Subbasins
+#:SBGroupPropertyMultiplier Upstream_{Group_Name}      MANNINGS_N 8.322033E+00
+#:SBGroupPropertyMultiplier Upstream_{Group_Name} RESERVOIR_CREST_WIDTH  8.322033E+00 
 ############################ End Subbasin Groups {Group_Name} ######################
     """
     return template.format(Group_Name=group_name, Group_OutletID=group_outlet_id)
@@ -1272,7 +1270,7 @@ def create_subbasin_group_template(group_name, group_outlet_id):
 #  ############################ End Subbasin Groups {Group_Name} ######################
 #  :SBGroupPropertyMultiplier Actived_Subbasins      MANNINGS_N 8.322033E+00
 #  :SBGroupPropertyMultiplier Actived_Lake_Subbasins RESERVOIR_CREST_WIDTH  MANNINGS_N 8.322033E+00  # only effective for lake subbasin
-def Create_Subbasin_Groups(subbasins,Gauge_col_Name,detailed_rvh_rvt):
+def Create_Subbasin_Groups(subbasins,Gauge_col_Name,detailed_rvh):
     """
     Creates the subbasin groups based on the given subbasins.
 
@@ -1283,36 +1281,34 @@ def Create_Subbasin_Groups(subbasins,Gauge_col_Name,detailed_rvh_rvt):
     Returns:
         str: The generated string based on the template.
     """
-    if detailed_rvh_rvt:
-        group_outlet_ids = subbasins[subbasins[Gauge_col_Name] == 1]["SubId"].values
-        print(group_outlet_ids)
-        group_names = ["Gauge_" + str(int(group_outlet_id)) for group_outlet_id in group_outlet_ids]
-        group_templates = [create_subbasin_group_template(group_name, group_outlet_id) for group_name, group_outlet_id in zip(group_names, group_outlet_ids)]
-    
-        group_templates.append(
-                """
-############################ Start Subbasin Groups Watershed ######################
-:IfModeEquals Watershed
-    :PopulateSubBasinGroup Actived_Subbasins With SUBBASINS WITHIN Allsubbasins
-    :IntersectSubBasinGroups Actived_Lake_Subbasins SUBBASINS WITHIN AllLakesubbasins
-:EndIfModeEquals
-############################ End Subbasin Groups Watershed ######################
-                """
-        )
-    else:
-        group_templates = [
-                """
-############################ Start Subbasin Groups Watershed ######################
-:PopulateSubBasinGroup Actived_Subbasins With SUBBASINS WITHIN Allsubbasins
-:PopulateSubBasinGroup Actived_Lake_Subbasins SUBBASINS WITHIN AllLakesubbasins
-############################ End Subbasin Groups Watershed ######################
-                """
-            ]     
+    if detailed_rvh:
+        group_outlet_ids = subbasins[subbasins[Gauge_col_Name] == 1]["Obs_NM"].values
+        group_names = ["" + group_outlet_id for group_outlet_id in group_outlet_ids]
+        group_templates = [create_subbasin_group_template(group_name, group_outlet_id) for group_name, group_outlet_id in zip(group_names, group_outlet_ids)]  
+#         group_templates.append(
+#                 """
+# ############################ Start Subbasin Groups Watershed ######################
+# :IfModeEquals Watershed
+#     :PopulateSubBasinGroup Actived_Subbasins With SUBBASINS WITHIN Allsubbasins
+#     :IntersectSubBasinGroups Actived_Lake_Subbasins SUBBASINS WITHIN AllLakesubbasins
+# :EndIfModeEquals
+# ############################ End Subbasin Groups Watershed ######################
+#                 """
+#         )
+#     else:
+#         group_templates = [
+#                 """
+# ############################ Start Subbasin Groups Watershed ######################
+# :PopulateSubBasinGroup Actived_Subbasins With SUBBASINS WITHIN Allsubbasins
+# :PopulateSubBasinGroup Actived_Lake_Subbasins SUBBASINS WITHIN AllLakesubbasins
+# ############################ End Subbasin Groups Watershed ######################
+#                 """
+#             ]     
             
     group_templates.append(
         """
-:SBGroupPropertyMultiplier Actived_Subbasins      MANNINGS_N 8.322033E+00
-:SBGroupPropertyMultiplier Actived_Lake_Subbasins RESERVOIR_CREST_WIDTH  MANNINGS_N 8.322033E+00  
+:SBGroupPropertyMultiplier Allsubbasins      MANNINGS_N 8.322033E+00
+:SBGroupPropertyMultiplier AllLakesubbasins RESERVOIR_CREST_WIDTH  8.322033E+00  
     """
         )
     return group_templates
@@ -1330,7 +1326,7 @@ def Generate_Raven_Channel_rvp_rvh_String(
     SubBasinGroup_Length_Channel,
     Tr = 1,
     aspect_from_gis = 'arcgis',
-    detailed_rvh_rvt = False,
+    detailed_rvh = False,
 ):  # Writervhchanl(ocatinfo,Raveinputsfolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM,Lake_As_Gauge = False,Model_Name = 'test'):
     """Generate string of raven chennel rvp input and rvh input
 
@@ -1770,7 +1766,7 @@ def Generate_Raven_Channel_rvp_rvh_String(
 
         Model_rvh_string_list.append(":EndSubBasinGroup   ")
     
-    Model_rvh_string_list.extend(Create_Subbasin_Groups(catinfo_sub,Gauge_col_Name,detailed_rvh_rvt))
+    Model_rvh_string_list.extend(Create_Subbasin_Groups(catinfo_sub,Gauge_col_Name,detailed_rvh))
 
 
     Channel_rvp_string = "\n".join(Channel_rvp_string_list)
