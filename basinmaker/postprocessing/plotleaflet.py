@@ -64,9 +64,18 @@ def plot_routing_product_with_ipyleaflet(path_to_product_folder,version_number =
                              style={'color': '#6E6E6E', 'fillColor': '#0070FF', 'opacity':0, 'weight':1, 'dashArray':'2', 'fillOpacity':1},
                              name = 'Non connected lakes')
     if os.path.exists(path_poi):
-        poi_map = GeoData(geo_dataframe = poi,
-                             style={'color': '#6E6E6E', 'fillColor': '#FF0000', 'opacity':1, 'weight':1, 'dashArray':'2', 'fillOpacity':1},
-                             name = 'POI')
+        poi_map = GeoData(
+            geo_dataframe=poi,
+            style={
+                'color': '#000000',       # Black outline
+                'fillColor': '#000000',   # Black fill
+                'opacity': 1,             # Full outline opacity
+                'weight': 1,              # Thin border for the dot
+                'dashArray': '0',         # Solid line (not dashed)
+                'fillOpacity': 1          # Fully opaque fill
+            },
+            name='POI'
+        )
     m.add_layer(sub_nolake_map)
     if len(subcllake) > 0:
         m.add_layer(sub_cllake_map)
