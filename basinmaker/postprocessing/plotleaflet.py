@@ -67,7 +67,6 @@ def plot_routing_product_with_ipyleaflet(path_to_product_folder,version_number =
         poi_map = GeoData(geo_dataframe = poi,
                              style={'color': '#6E6E6E', 'fillColor': '#FF0000', 'opacity':1, 'weight':1, 'dashArray':'2', 'fillOpacity':1},
                              name = 'POI')
-        m.add_layer(poi_map)
     m.add_layer(sub_nolake_map)
     if len(subcllake) > 0:
         m.add_layer(sub_cllake_map)
