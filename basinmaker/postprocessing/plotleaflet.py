@@ -13,6 +13,7 @@ def plot_routing_product_with_ipyleaflet(path_to_product_folder,version_number =
     path_river = os.path.join(product_folder,'finalcat_info_riv'+version_number+'.shp')
     path_cllake = os.path.join(product_folder,'sl_connected_lake'+version_number+'.shp')
     path_ncllake = os.path.join(product_folder,'sl_non_connected_lake'+version_number+'.shp')
+    path_poi = os.path.join(product_folder,'poi'+version_number+'.shp')
 
     subbasin = geopandas.read_file(path_subbasin)
     subbasin = subbasin.to_crs("EPSG:4326")
@@ -28,6 +29,9 @@ def plot_routing_product_with_ipyleaflet(path_to_product_folder,version_number =
     if os.path.exists(path_ncllake):
         ncllake = geopandas.read_file(path_ncllake)
         ncllake = ncllake.to_crs("EPSG:4326")
+    if os.path.exists(path_poi):
+        poi = geopandas.read_file(path_poi)
+        poi = poi.to_crs("EPSG:4326")
 
     cx = subbasin['centroid_x'].mean()
     cy = subbasin['centroid_y'].mean()
@@ -46,7 +50,7 @@ def plot_routing_product_with_ipyleaflet(path_to_product_folder,version_number =
     if len(subncllake) > 0:
         sub_ncllake_map = GeoData(geo_dataframe = subncllake,
                           style={'color': '#6E6E6E', 'fillColor': '#F5F57A', 'opacity':1, 'weight':1, 'dashArray':'2', 'fillOpacity':1},
-                          name = 'Subbasin with connected lakes')
+                          name = 'Subbasin with non-connected lakes')
     if os.path.exists(path_river):
         river_map = GeoData(geo_dataframe = river,
                           style={'color': '#0070FF', 'fillColor': '#0070FF', 'opacity':1, 'weight':2, 'dashArray':'2', 'fillOpacity':1},
@@ -59,7 +63,19 @@ def plot_routing_product_with_ipyleaflet(path_to_product_folder,version_number =
         ncllake_map = GeoData(geo_dataframe = ncllake,
                              style={'color': '#6E6E6E', 'fillColor': '#0070FF', 'opacity':0, 'weight':1, 'dashArray':'2', 'fillOpacity':1},
                              name = 'Non connected lakes')
-    
+    if os.path.exists(path_poi):
+        poi_map = GeoData(
+            geo_dataframe=poi,
+            style={
+                'color': '#000000',       # Black outline
+                'fillColor': '#000000',   # Black fill
+                'opacity': 1,             # Full outline opacity
+                'weight': 1,              # Thin border for the dot
+                'dashArray': '0',         # Solid line (not dashed)
+                'fillOpacity': 1          # Fully opaque fill
+            },
+            name='POI'
+        )
     m.add_layer(sub_nolake_map)
     if len(subcllake) > 0:
         m.add_layer(sub_cllake_map)
@@ -71,7 +87,8 @@ def plot_routing_product_with_ipyleaflet(path_to_product_folder,version_number =
         m.add_layer(cllake_map)
     if os.path.exists(path_ncllake):
         m.add_layer(ncllake_map)
-
+    if os.path.exists(path_poi):
+        m.add_layer(poi_map)
     m.add_control(LayersControl())
     m.layout.height="700px"
 

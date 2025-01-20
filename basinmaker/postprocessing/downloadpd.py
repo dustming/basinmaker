@@ -53,6 +53,27 @@ def Download_Routing_Product_For_One_Gauge(product_name, gauge_name="#", region=
                     print("The needed product locates at:", product_path)
                     print("The Subbasin Id of the interested gauge is:", SubId)
 
+        elif region != '#' and subreg == '#':
+            #                    print(gauge_info_sl)
+            #                    print(gauge_info_sl['Region'].values[0],gauge_info_sl['Sub_Reg'].values[0])
+    #                    subreg_id = int(gauge_info_sl['Sub_Reg'].values[0])
+            url = "https://hydrology.uwaterloo.ca/basinmaker/data/original/drainage_region_%s_v2-1.zip" % (
+                str(region).zfill(4))
+            wget.download(url)
+            os.system('unzip drainage_region_%s_v2-1.zip' %
+                        (str(region).zfill(4)))
+            SubId = -1
+            product_name = "drainage_region_%s_v2-1" % (
+                str(region).zfill(4))
+            product_path = os.path.join(os.getcwd(), product_name)
+            print("The needed product locates at:", product_path)
+            print("The Subbasin Id of the interested gauge is:", SubId)
+        elif region != '#' and subreg != '#':
+            print("todo")
+        else:
+            print("Wrong option provided")
+
+
     if product_name == 'CLRH':
         version = 'v1-0'
         if gauge_name != '#':

@@ -17,12 +17,13 @@ class postprocess:
         path_hru_polygon="#",
         aspect_from_gis="grass",
         model_name="test",
-        subbasingroup_names_channel=["Allsubbasins"],
+        subbasingroup_names_channel=["Actived_Subbasins"],
         subbasingroup_length_channel=[-1],
-        subbasingroup_name_lake=["AllLakesubbasins"],
+        subbasingroup_name_lake=["Actived_Lake_Subbasins"],
         subbasingroup_area_lake=[-1],
         lake_out_flow_method='broad_crest',
         model_time_step=1,
+        detailed_rvh = True,
     ):
         """This function is to generate Raven input files. A subfolder 'RavenInput'
         in path_output_folder is created to sotre resultant outputs.
@@ -118,6 +119,7 @@ class postprocess:
             Forcing_Input_File=forcing_input_file,
             aspect_from_gis=aspect_from_gis,
             lake_out_flow_method=lake_out_flow_method,
+            detailed_rvh = detailed_rvh,  
         )
 
     def obtain_grids_polygon_from_netcdf_file_method(
