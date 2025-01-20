@@ -316,7 +316,7 @@ def clean_geometry_purepy(data, set_precision=-1):
 
     #    data["geometry"] = data["geometry"].apply(lambda x: shapely.wkt.loads(shapely.wkt.dumps(x, rounding_precision=4)))
     if set_precision > 0:
-        data['geometry'] = data['geometry'].buffer(0.000000001)
+        data['geometry'] = data['geometry'].buffer(0.000000000)
 
 #        data.geometry = pg.set_precision(data.geometry.values.data, 1e-6)
 #        data["geometry"] = data["geometry"].apply(lambda x: shapely.wkt.loads(shapely.wkt.dumps(x, rounding_precision=4)))
@@ -343,6 +343,10 @@ def clean_geometry_purepy(data, set_precision=-1):
         print("###########################")
 
     data = data.loc[data.geom_type != 'GeometryCollection']
+
+    invalid_geometries = data[~data.is_valid]
+    print(len(invalid_geometries))
+    invalid_geometries.to_file("invalid_geometries.shp")
     data.sindex
 #    print("c",len(data))
     return data
