@@ -1254,8 +1254,8 @@ def create_subbasin_group_template(group_name, group_outlet_id):
 #:PopulateSubBasinGroup Upstream_{Group_Name} With SUBBASINS UPSTREAM_OF {Group_OutletID}
 #:PopulateSubBasinGroup Disabled_Subbasins With SUBBASINS NOTWITHIN Upstream_{Group_Name}
 #:DisableSubBasinGroup  Disabled_Subbasins
-#:SBGroupPropertyMultiplier Upstream_{Group_Name}      MANNINGS_N 8.322033E+00
-#:SBGroupPropertyMultiplier Upstream_{Group_Name} RESERVOIR_CREST_WIDTH  8.322033E+00 
+#:SBGroupPropertyMultiplier Upstream_{Group_Name}      MANNINGS_N 1
+#:SBGroupPropertyMultiplier Upstream_{Group_Name} RESERVOIR_CREST_WIDTH  1 
 ############################ End Subbasin Groups {Group_Name} ######################
     """
     return template.format(Group_Name=group_name, Group_OutletID=group_outlet_id)
@@ -1283,8 +1283,9 @@ def Create_Subbasin_Groups(subbasins,Gauge_col_Name,detailed_rvh):
     """
     if detailed_rvh:
         group_outlet_ids = subbasins[subbasins[Gauge_col_Name] == 1]["Obs_NM"].values
+        group_outlet_subids = subbasins[subbasins[Gauge_col_Name] == 1]["SubId"].values.astype(int)
         group_names = ["" + group_outlet_id for group_outlet_id in group_outlet_ids]
-        group_templates = [create_subbasin_group_template(group_name, group_outlet_id) for group_name, group_outlet_id in zip(group_names, group_outlet_ids)]  
+        group_templates = [create_subbasin_group_template(group_name, group_outlet_id) for group_name, group_outlet_id in zip(group_names, group_outlet_subids)]  
 #         group_templates.append(
 #                 """
 # ############################ Start Subbasin Groups Watershed ######################
