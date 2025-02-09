@@ -8,6 +8,7 @@ import urllib.request
 import numpy as np
 import pandas as pd
 from basinmaker.utilities.utilities import *
+from basinmaker.func.pdtable import *
 
 
 def GenerateRavenInput(
@@ -1238,6 +1239,39 @@ def Return_Group_Name_Based_On_Value(value, GroupNames, Group_Thresthold_Values)
     return GroupName
 
 
+def create_subbasin_group_string(group_name, sub_ids, ids_per_line=10):
+    """
+    Given a group name (e.g., '02KB001') and a list of subbasin IDs,
+    return the formatted multi-line string.
+    
+    :param group_name: The string name for the group (e.g. '02KB001')
+    :param sub_ids: A list (or array) of integer subbasin IDs
+    :param ids_per_line: How many IDs to place on each line
+    :return: A multi-line string with the desired format
+    """
+    # Start lines
+    lines = []
+    lines.append(f"#:SubBasinGroup  Upstream_{group_name}")
+    
+    # Break the subbasin IDs into chunks (for readability)
+    for i in range(0, len(sub_ids), ids_per_line):
+        chunk = sub_ids[i : i + ids_per_line]
+        # Convert all IDs to strings and separate them by spaces
+        chunk_str = "   ".join(str(sid) for sid in chunk)
+        # Prepend a comment marker (#) and some spacing
+        lines.append(f"#       {chunk_str}")
+    
+    # End line for this group
+    lines.append("#:EndSubBasinGroup")
+    
+    # Additional line about "PopulateSubBasinGroup..."
+    lines.append(
+        f"#:PopulateSubBasinGroup Disabled_Subbasins With SUBBASINS NOTWITHIN Upstream_{group_name}"
+    )
+    
+    # Join with line breaks
+    return "\n".join(lines)
+
 def create_subbasin_group_template(group_name, group_outlet_id):
     """
     Creates a string based on the given template for subbasin groups.
@@ -1281,11 +1315,26 @@ def Create_Subbasin_Groups(subbasins,Gauge_col_Name,detailed_rvh):
     Returns:
         str: The generated string based on the template.
     """
+    hyshdinfo = subbasins[["SubId", "DowSubId"]].astype("int32").values
+
     if detailed_rvh:
         group_outlet_ids = subbasins[subbasins[Gauge_col_Name] == 1]["Obs_NM"].values
         group_outlet_subids = subbasins[subbasins[Gauge_col_Name] == 1]["SubId"].values.astype(int)
+
+
+
+        
         group_names = ["" + group_outlet_id for group_outlet_id in group_outlet_ids]
-        group_templates = [create_subbasin_group_template(group_name, group_outlet_id) for group_name, group_outlet_id in zip(group_names, group_outlet_subids)]  
+
+        
+
+        group_templates = ["\n"]
+        for group_name, subid in zip(group_names, group_outlet_subids):
+            sub_ids = defcat(hyshdinfo, subid)
+            group_subid_list_string = create_subbasin_group_string(group_name, sub_ids, ids_per_line=10)
+            group_templates.append(group_subid_list_string)
+            group_templates.append("\n")
+#        group_templates = [create_subbasin_group_template(group_name, group_outlet_id) for group_name, group_outlet_id in zip(group_names, group_outlet_subids)]  
 #         group_templates.append(
 #                 """
 # ############################ Start Subbasin Groups Watershed ######################
@@ -1308,8 +1357,8 @@ def Create_Subbasin_Groups(subbasins,Gauge_col_Name,detailed_rvh):
             
     group_templates.append(
         """
-:SBGroupPropertyMultiplier Allsubbasins      MANNINGS_N 8.322033E+00
-:SBGroupPropertyMultiplier AllLakesubbasins RESERVOIR_CREST_WIDTH  8.322033E+00  
+:SBGroupPropertyMultiplier Allsubbasins      MANNINGS_N 1
+:SBGroupPropertyMultiplier AllLakesubbasins RESERVOIR_CREST_WIDTH  1 
     """
         )
     return group_templates
