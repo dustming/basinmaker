@@ -3,6 +3,71 @@ import glob,shutil
 from simpledbf import Dbf5
 import pandas as pd 
 # define internal file names
+
+
+import os
+
+def get_lake_paths(Path_Connect_Lake_ply, Path_Non_Connect_Lake_ply, Path_Subbasin_Ply):
+    """
+    Checks for lake shapefiles based on the provided inputs.
+    
+    Parameters:
+      Path_Connect_Lake_ply (str): User-provided full path for the "connect lake" shapefile 
+                                   or "#" if not provided.
+      Path_Non_Connect_Lake_ply (str): User-provided full path for the "non-connect lake" shapefile 
+                                       or "#" if not provided.
+      Path_Subbasin_Ply (str): Full path to a subbasin shapefile whose base folder will be searched.
+    
+    Behavior:
+      - If both Path_Connect_Lake_ply and Path_Non_Connect_Lake_ply are "#", the function returns them as-is.
+      - Otherwise, it obtains the base folder from Path_Subbasin_Ply and looks for:
+            • a shapefile (.shp) whose filename contains both "con" and "lake" (for the connect lake)
+            • a shapefile (.shp) whose filename contains both "non" and "lake" (for the non-connect lake)
+      - For each, if a matching file is found, its full path is returned; if not, "#" is returned.
+    
+    Returns:
+      tuple: (connect_lake_full_path, non_connect_lake_full_path)
+    """
+    
+    # If both provided lake paths are "#", just return them.
+    if Path_Connect_Lake_ply != "#" or Path_Non_Connect_Lake_ply != "#":
+        return Path_Connect_Lake_ply, Path_Non_Connect_Lake_ply
+
+    # Otherwise, get the base folder from the subbasin file path.
+    base_folder = os.path.dirname(Path_Subbasin_Ply)
+    
+    # Initialize the return values to "#" (not found)
+    found_connect = "#"
+    found_non = "#"
+    
+    # Loop through files in the base folder.
+    try:
+        for filename in os.listdir(base_folder):
+            # Consider only shapefiles
+            if filename.lower().endswith('.shp'):
+                lower_filename = filename.lower()
+                # Look for the connect lake file: must contain both "con" and "lake"
+                if ("con" in lower_filename and "lake" in lower_filename) and "non" not in lower_filename:
+                    found_connect = os.path.join(base_folder, filename)
+                # Look for the non-connect lake file: must contain both "non" and "lake"
+                if "non" in lower_filename and "lake" in lower_filename:
+                    found_non = os.path.join(base_folder, filename)
+    except FileNotFoundError:
+        # If the base folder doesn't exist, we simply return "#" for both.
+        pass
+
+    return found_connect, found_non
+
+# Example usage:
+# If the user did not provide the lake shapefile paths, they might pass "#":
+# result = get_lake_paths("#", "#", r"C:\Data\Subbasins\my_subbasin.shp")
+# In this case, the function will simply return ("#", "#").
+#
+# Otherwise, if at least one of the lake paths is not "#", the function will search the folder
+# where "my_subbasin.shp" is located for shapefiles that match the criteria.
+
+
+
 def copy_files_with_extension(src_folder,tar_folder,ext):
 
     files = glob.iglob(os.path.join(src_folder, ext))

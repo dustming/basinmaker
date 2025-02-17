@@ -216,7 +216,8 @@ def GenerateHRUS_purepy(
 
     copy_files_with_extension(os.path.dirname(
         Path_Subbasin_Ply), OutputFolder, "*.geojson")
-
+    
+    Path_Connect_Lake_ply, Path_Non_Connect_Lake_ply = get_lake_paths(Path_Connect_Lake_ply, Path_Non_Connect_Lake_ply, Path_Subbasin_Ply)    
     Sub_Lake_HRU_Layer, trg_crs, fieldnames_list = GeneratelandandlakeHRUS(
         OutputFolder,
         tempfolder,
@@ -227,13 +228,11 @@ def GenerateHRUS_purepy(
         Sub_Lake_ID=Sub_Lake_ID,
         Lake_Id=Lake_Id,
         prj_crs=prj_crs,
-    )
-
+    ) 
     lakehruinfo = geopandas.read_file(Sub_Lake_HRU_Layer)
     hru_lake_info = lakehruinfo.loc[lakehruinfo['HRU_IsLake'] > 0].copy()
     lakehruinfo_landhrus = lakehruinfo.loc[lakehruinfo['HRU_IsLake'] <= 0].copy(
     )
-
     hru_lake_info = hru_lake_info.to_crs(prj_crs)
     lakehruinfo_landhrus = lakehruinfo_landhrus.to_crs(prj_crs)
     lakehruinfo = lakehruinfo.to_crs(prj_crs)
@@ -589,7 +588,6 @@ def GeneratelandandlakeHRUS(
         return os.path.join(OutputFolder, 'finalcat_hru_lake_info.shp'), crs_id, ["HRULake_ID", "HRU_IsLake", Sub_ID]
     else:
         cat_info = geopandas.read_file(Path_Subbasin_ply)
-
     # fix lake polygon  geometry
     if Path_Connect_Lake_ply != "#":
         #        arcpy.RepairGeometry_management(Path_Connect_Lake_ply)
@@ -598,7 +596,6 @@ def GeneratelandandlakeHRUS(
     if Path_Non_Connect_Lake_ply != "#":
         #        arcpy.RepairGeometry_management(Path_Non_Connect_Lake_ply)
         ncl_lake = geopandas.read_file(Path_Non_Connect_Lake_ply)
-
     # Merge connected and non connected lake polygons first
     if Path_Connect_Lake_ply != "#" and Path_Non_Connect_Lake_ply != "#":
         merged_lake_ply = pd.concat([cl_lake, ncl_lake], ignore_index=True)
@@ -611,7 +608,6 @@ def GeneratelandandlakeHRUS(
         merged_lake_ply = ncl_lake
     else:
         print("should never happened......")
-
     # union merged polygon and subbasin polygon
 #    cat_info.spatial.to_featureclass(location=os.path.join(tempfolder,'cat_ply.shp'))
 #    arcpy.RepairGeometry_management(os.path.join(tempfolder,'cat_ply.shp'))
@@ -620,10 +616,7 @@ def GeneratelandandlakeHRUS(
         os.path.join(tempfolder, 'merged_lake_ply.shp'), 2]]
 
     cat_lake_union = geopandas.overlay(
-        cat_info, merged_lake_ply, how='union', make_valid=True, keep_geom_type=True)
-
-#    cat_lake_union.to_file(os.path.join(tempfolder,'cat_lake_union.shp'))
-
+        cat_info, merged_lake_ply, how='union', make_valid=True, keep_geom_type=True)     
 
 #    arcpy.Union_analysis(inFeatures, os.path.join(tempfolder,'cat_lake_union.shp'))
 #    arcpy.RepairGeometry_management(os.path.join(tempfolder,'cat_lake_union.shp'))
