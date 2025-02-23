@@ -345,8 +345,8 @@ def clean_geometry_purepy(data, set_precision=-1):
     data = data.loc[data.geom_type != 'GeometryCollection']
 
     invalid_geometries = data[~data.is_valid]
-    print(len(invalid_geometries))
-    invalid_geometries.to_file("invalid_geometries.shp")
+    # print(len(invalid_geometries))
+    # invalid_geometries.to_file("invalid_geometries.shp")
     data.sindex
 #    print("c",len(data))
     return data
