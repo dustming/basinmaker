@@ -19,7 +19,7 @@ def GenerateRavenInput(
     EndYear=-1,
     CA_HYDAT="#",
     WarmUp=0,
-    time_step = 1,
+    time_step=1,
     Template_Folder="#",
     Lake_As_Gauge=False,
     WriteObsrvt=False,
@@ -32,11 +32,10 @@ def GenerateRavenInput(
     SubBasinGroup_Area_Lake=[-1],
     OutputFolder="#",
     Forcing_Input_File="#",
-    aspect_from_gis = 'arcgis',
-    lake_out_flow_method = 'broad_crest',
-    detailed_rvh = False,
+    aspect_from_gis='arcgis',
+    lake_out_flow_method='broad_crest',
+    detailed_rvh=False,
 ):
-
     """Generate Raven input files.
 
     Function that used to generate Raven input files. All output will be stored in folder
@@ -196,7 +195,7 @@ def GenerateRavenInput(
 
     shutil.rmtree(Raveinputsfolder, ignore_errors=True)
 
-    ### check if there is a model input template provided
+    # check if there is a model input template provided
     if Template_Folder != "#":
         fromDirectory = Template_Folder
         toDirectory = Raveinputsfolder
@@ -209,7 +208,8 @@ def GenerateRavenInput(
     if not os.path.exists(Json_Folder):
         os.makedirs(Json_Folder)
 
-    copy_files_with_extension(os.path.dirname(Path_final_hru_info),Json_Folder,"*.geojson")
+    copy_files_with_extension(os.path.dirname(
+        Path_final_hru_info), Json_Folder, "*.geojson")
 
     if Forcing_Input_File != "#":
         fromDirectory = Forcing_Input_File
@@ -221,9 +221,10 @@ def GenerateRavenInput(
     tempinfo = Dbf5(finalcatchpath[:-3] + "dbf")
     ncatinfo = tempinfo.to_dataframe()
     ncatinfo2 = ncatinfo.drop_duplicates("HRU_ID", keep="first")
-    ncatinfo2 = ncatinfo2.loc[(ncatinfo2["HRU_ID"] > 0) & (ncatinfo2["SubId"] > 0)]
+    ncatinfo2 = ncatinfo2.loc[(ncatinfo2["HRU_ID"] > 0)
+                              & (ncatinfo2["SubId"] > 0)]
     if 'DrainArea' in ncatinfo2.columns:
-        ncatinfo2 = ncatinfo2.sort_values(by=['DrainArea','HRU_ID'])
+        ncatinfo2 = ncatinfo2.sort_values(by=['DrainArea', 'HRU_ID'])
 
     if 'Rivlen' in ncatinfo2.columns:
         ncatinfo2["RivLength"] = ncatinfo2["Rivlen"].values
@@ -255,10 +256,10 @@ def GenerateRavenInput(
     )
     WriteStringToFile(Channel_rvp_string + '\n \n', Channel_rvp_file_path, "w")
     WriteStringToFile(Model_rvh_string + '\n \n', Model_rvh_file_path, "w")
-    WriteStringToFile(Model_rvp_string_modify + '\n \n', Model_rvp_file_path, "a")
+    # WriteStringToFile(Model_rvp_string_modify + '\n \n', Model_rvp_file_path, "a")
 
     Lake_rvh_string, Lake_rvh_file_path = Generate_Raven_Lake_rvh_String(
-        ncatinfo2, Raveinputsfolder, Model_Name,lake_out_flow_method
+        ncatinfo2, Raveinputsfolder, Model_Name, lake_out_flow_method
     )
 
     WriteStringToFile(Lake_rvh_string, Lake_rvh_file_path, "w")
@@ -287,19 +288,22 @@ def GenerateRavenInput(
                 "w",
             )
             WriteStringToFile(
-                Model_rvt_file_string_modify_gauge_list[i] + '\n \n', Model_rvt_file_path, "a"
+                Model_rvt_file_string_modify_gauge_list[i] +
+                '\n \n', Model_rvt_file_path, "a"
             )
         obsnms.to_csv(os.path.join(Obs_Folder, "obsinfo.csv"))
 
-
-    src_geojson = os.path.join(os.path.dirname(Path_final_hru_info),"finalcat_info.geojson")
-    tar_geojson = os.path.join(Raveinputsfolder,"finalcat_info.geojson")
+    src_geojson = os.path.join(os.path.dirname(
+        Path_final_hru_info), "finalcat_info.geojson")
+    tar_geojson = os.path.join(Raveinputsfolder, "finalcat_info.geojson")
     if os.path.exists(src_geojson):
         shutil.copyfile(src_geojson, tar_geojson)
 
 ####
 # Inputs
 ####
+
+
 def DownloadStreamflowdata_CA(Station_NM, CA_HYDAT, StartYear, EndYear):
     """Return streamflow data from HYDAT
 
@@ -348,7 +352,7 @@ def DownloadStreamflowdata_CA(Station_NM, CA_HYDAT, StartYear, EndYear):
 
     obtaindata = True
     con = sqlite3.connect(CA_HYDAT)
-    ### obtain station info
+    # obtain station info
     sqlstat = "SELECT STATION_NUMBER, DRAINAGE_AREA_GROSS, DRAINAGE_AREA_EFFECT from STATIONS WHERE STATION_NUMBER=?"
     Station_info = pd.read_sql_query(sqlstat, con, params=[Station_NM])
     if len(Station_info) == 0:
@@ -370,13 +374,13 @@ def DownloadStreamflowdata_CA(Station_NM, CA_HYDAT, StartYear, EndYear):
     else:
         obs_DA = -1.2345
 
-    ## obtain streamflow data
+    # obtain streamflow data
     sqlstat = "select * from DLY_FLOWS WHERE STATION_NUMBER = ?"
     Readed_Streamflow = pd.read_sql_query(sqlstat, con, params=[Station_NM])
 
     Readed_Streamflow = Readed_Streamflow[Readed_Streamflow["YEAR"] >= StartYear]
     Readed_Streamflow = Readed_Streamflow[Readed_Streamflow["YEAR"] <= EndYear]
-    ## Initial dataframe
+    # Initial dataframe
     if len(Readed_Streamflow) == 0:
         flowdata = -1
         obs_DA = -9999
@@ -396,7 +400,7 @@ def DownloadStreamflowdata_CA(Station_NM, CA_HYDAT, StartYear, EndYear):
         np.full((len(Date), 2), -1.2345), columns=["Flow", "QC"], index=Date
     )
 
-    ### loop read streamflow data
+    # loop read streamflow data
     for index, row in Readed_Streamflow.iterrows():
         NDays = row["NO_DAYS"]
         for iday in range(1, NDays + 1):
@@ -456,7 +460,7 @@ def DownloadStreamflowdata_US(Station_NM, StartYear, EndYear):
     """
 
     obtaindata = True
-    #### Obtain station info
+    # Obtain station info
     urlstlist = "https://waterdata.usgs.gov/nwis/inventory/?format=rdb&site_no=" + str(
         int(Station_NM)
     ).zfill(8)
@@ -473,19 +477,21 @@ def DownloadStreamflowdata_US(Station_NM, StartYear, EndYear):
     else:
         try:
             obs_DA = (
-                float(station_info_value[len(station_info_value) - 1].decode("utf-8"))
+                float(station_info_value[len(
+                    station_info_value) - 1].decode("utf-8"))
                 * 2.58999
             )  # square miles to square km
         except:
             try:
                 obs_DA = (
-                    float(station_info_value[len(station_info_value) - 2].decode("utf-8"))
+                    float(station_info_value[len(
+                        station_info_value) - 2].decode("utf-8"))
                     * 2.58999
                 )  # square miles to square km
             except:
                 obs_DA = -1.2345
 
-    ## try to obtain data with in this period
+    # try to obtain data with in this period
     Date_ini = str(StartYear) + "-" + "01" + "-" + "01"
     Date_end = str(EndYear) + "-" + "12" + "-" + "31"
     urlstlist = (
@@ -501,12 +507,12 @@ def DownloadStreamflowdata_US(Station_NM, StartYear, EndYear):
     stlistdata = Reslist.read()
     stlistdata = stlistdata.splitlines()
 
-    ##obtain start of the data rows
+    # obtain start of the data rows
     datarow = -1
     for i in range(0, len(stlistdata)):
         istlistdata = stlistdata[i].split()
         if len(istlistdata) == 0:
-            return -1.2345,-1.2345, False
+            return -1.2345, -1.2345, False
 
         if istlistdata[0] == "#" or len(istlistdata) != 5:
             continue
@@ -526,7 +532,8 @@ def DownloadStreamflowdata_US(Station_NM, StartYear, EndYear):
         else:
             date = istlistdata[2].decode("utf-8")
             cdate = pd.to_datetime(
-                {"year": [date[0:4]], "month": [date[5:7]], "day": [date[8:10]]}
+                {"year": [date[0:4]], "month": [
+                    date[5:7]], "day": [date[8:10]]}
             ).values
             flowdata.loc[cdate, "Flow"] = (
                 float(istlistdata[3].decode("utf-8")) * 0.0283168
@@ -538,7 +545,6 @@ def DownloadStreamflowdata_US(Station_NM, StartYear, EndYear):
 def Generate_Raven_Obsrvt_String(
     flowdata, obsnm, outObsfileFolder
 ):  # Writeobsrvtfile(flowdata,obsnm,outObsfileFolder):
-
     """Generate a string in Raven observation rvt input file format
 
     Function that is used to subbasin id and observation guage name from obsnm
@@ -612,7 +618,8 @@ def Generate_Raven_Obsrvt_String(
         + str(len(flowdata))
     )
     for id in range(0, len(flowdata)):
-        output_string_list.append("         " + str(flowdata["Flow"].values[id]))
+        output_string_list.append(
+            "         " + str(flowdata["Flow"].values[id]))
     output_string_list.append(":EndObservationData" + "\n")
     output_string = "\n".join(output_string_list)
 
@@ -622,7 +629,6 @@ def Generate_Raven_Obsrvt_String(
 def Generate_Raven_Timeseries_rvt_String(
     outFolderraven, outObsfileFolder, obsnm, Model_Name
 ):  # Modify_template_rvt(outFolderraven,outObsfileFolder,obsnm):
-
     """Generate a string in Raven time series rvt input file format
 
     Function that used to modify raven model timeseries rvt file (Model_Name.rvt)
@@ -699,7 +705,6 @@ def Generate_Raven_Obs_rvt_String(
     DownLoadObsData=True,
     Model_Name="test",
 ):
-
     """Generate Raven streamflow observation conent
 
     Function that used to generate content of Raven streamflow observation input file.
@@ -806,7 +811,8 @@ def Generate_Raven_Obs_rvt_String(
     obsnms = obsnms.replace(np.nan, '-9999.0', regex=True)
     obsnms = obsnms.loc[obsnms["Obs_NM"] != "-9999.0"]
 
-    obsnms.loc[:, "DrainArea"] = obsnms["DrainArea"].values / 1000 / 1000  # m2 to km2
+    obsnms.loc[:, "DrainArea"] = obsnms["DrainArea"].values / \
+        1000 / 1000  # m2 to km2
     index = obsnms.index
     Date = pd.date_range(
         start=str(startyear) + "-" + "01" + "-" + "01",
@@ -848,7 +854,7 @@ def Generate_Raven_Obs_rvt_String(
         else:
             Finddata = False
 
-        ####check if data are founded, and assign it to the output dataframes
+        # check if data are founded, and assign it to the output dataframes
         if Finddata == False:
             print(iobs_nm + "      not find data")
         else:
@@ -856,7 +862,8 @@ def Generate_Raven_Obs_rvt_String(
                 flowdata.index.isin(flowdata_read.index), ["Flow", "QC"]
             ] = flowdata_read[["Flow", "QC"]]
             obsnms.loc[idx, "Obs_DA_data"] = DA_obs_data
-            obsnms.loc[idx, "Missing_V"] = len(flowdata[flowdata["Flow"] == -1.2345])
+            obsnms.loc[idx, "Missing_V"] = len(
+                flowdata[flowdata["Flow"] == -1.2345])
 
         obs_rvt_file_path, output_string = Generate_Raven_Obsrvt_String(
             flowdata, obsnm, outObsfileFolder
@@ -924,50 +931,65 @@ def Generate_Raven_Channel_rvp_string_sub(
 
     """
     output_string_list = []
-    ### Following SWAT instructions, assume a trapezoidal shape channel, with channel sides has depth and width ratio of 2. zch = 2
+    # Following SWAT instructions, assume a trapezoidal shape channel, with channel sides has depth and width ratio of 2. zch = 2
     zch = 2
-    sidwd = zch * chdep  ###river side width
+    sidwd = zch * chdep  # river side width
     tab = "          "
-    botwd = chwd - 2 * sidwd  ### river
+    botwd = chwd - 2 * sidwd  # river
     if botwd < 0:
         botwd = 0.5 * chwd
         sidwd = 0.5 * 0.5 * chwd
         zch = (chwd - botwd) / 2 / chdep
     if iscalmanningn == True:
-        mann = '{:>10.8f}'.format(channeln) #str(channeln)
+        mann = '{:>10.8f}'.format(channeln)  # str(channeln)
     else:
-        mann = '{:>10.8f}'.format(0.035) #str(0.035)
+        mann = '{:>10.8f}'.format(0.035)  # str(0.035)
     zfld = 4 + elev
     zbot = elev - chdep
     sidwdfp = 4 / 0.25
     Channame = ":ChannelProfile" + tab + chname + tab
     output_string_list.append(Channame)  # orchnl.write(Channame+"\n")
-    Chanslop = "  :Bedslope" + tab + '{:>15.10f}'.format(chslope) #str(chslope)
+    Chanslop = "  :Bedslope" + tab + \
+        '{:>15.10f}'.format(chslope)  # str(chslope)
     output_string_list.append(Chanslop)  # orchnl.write(Chanslop+"\n")
-    output_string_list.append("  :SurveyPoints")  # orchnl.write("  :SurveyPoints"+"\n")
+    # orchnl.write("  :SurveyPoints"+"\n")
+    output_string_list.append("  :SurveyPoints")
     output_string_list.append(
-        "    0" + tab + '{:>10.4f}'.format(zfld) #str(zfld)
+        "    0" + tab + '{:>10.4f}'.format(zfld)  # str(zfld)
     )  # orchnl.write("    0"+tab+str(zfld)+"\n")
     output_string_list.append(
-        "    " + '{:>10.4f}'.format(sidwdfp) + tab + '{:>10.4f}'.format(elev)     #"    " + str(sidwdfp) + tab + str(elev)
+        # "    " + str(sidwdfp) + tab + str(elev)
+        "    " + '{:>10.4f}'.format(sidwdfp) + tab + '{:>10.4f}'.format(elev)
     )  # orchnl.write("    "+str(sidwdfp)+tab+str(elev)+"\n")
     output_string_list.append(
-        "    " + '{:>10.4f}'.format(sidwdfp + 2 * chwd) + tab + '{:>10.4f}'.format(elev)     #"    " + str(sidwdfp + 2 * chwd) + tab + str(elev)
+        # "    " + str(sidwdfp + 2 * chwd) + tab + str(elev)
+        "    " + '{:>10.4f}'.format(sidwdfp + 2 * chwd) +
+        tab + '{:>10.4f}'.format(elev)
     )  # orchnl.write("    "+str(sidwdfp + 2*chwd)+tab+str(elev)+"\n")
     output_string_list.append(
-        "    " + '{:>10.4f}'.format(sidwdfp + 2 * chwd + sidwd) + tab + '{:>10.4f}'.format(zbot) #"    " + str(sidwdfp + 2 * chwd + sidwd) + tab + str(zbot)
+        # "    " + str(sidwdfp + 2 * chwd + sidwd) + tab + str(zbot)
+        "    " + '{:>10.4f}'.format(sidwdfp + 2 *
+                                    chwd + sidwd) + tab + '{:>10.4f}'.format(zbot)
     )  # orchnl.write("    "+str(sidwdfp + 2*chwd + sidwd)+tab+str(zbot)+"\n")
     output_string_list.append(
-        "    " + '{:>10.4f}'.format(sidwdfp + 2 * chwd + sidwd + botwd) + tab + '{:>10.4f}'.format(zbot) #"    " + str(sidwdfp + 2 * chwd + sidwd + botwd) + tab + str(zbot)
+        # "    " + str(sidwdfp + 2 * chwd + sidwd + botwd) + tab + str(zbot)
+        "    " + '{:>10.4f}'.format(sidwdfp + 2 * chwd +
+                                    sidwd + botwd) + tab + '{:>10.4f}'.format(zbot)
     )  # orchnl.write("    "+str(sidwdfp + 2*chwd + sidwd + botwd)+tab+str(zbot)+"\n")
     output_string_list.append(
-        "    " + '{:>10.4f}'.format(sidwdfp + 2 * chwd + 2 * sidwd + botwd) + tab + '{:>10.4f}'.format(elev) #"    " + str(sidwdfp + 2 * chwd + 2 * sidwd + botwd) + tab + str(elev)
+        # "    " + str(sidwdfp + 2 * chwd + 2 * sidwd + botwd) + tab + str(elev)
+        "    " + '{:>10.4f}'.format(sidwdfp + 2 * chwd +
+                                    2 * sidwd + botwd) + tab + '{:>10.4f}'.format(elev)
     )  # orchnl.write("    "+str(sidwdfp + 2*chwd + 2*sidwd + botwd)+tab+str(elev)+"\n")
     output_string_list.append(
-        "    " + '{:>10.4f}'.format(sidwdfp + 4 * chwd + 2 * sidwd + botwd) + tab + '{:>10.4f}'.format(elev) #"    " + str(sidwdfp + 4 * chwd + 2 * sidwd + botwd) + tab + str(elev)
+        # "    " + str(sidwdfp + 4 * chwd + 2 * sidwd + botwd) + tab + str(elev)
+        "    " + '{:>10.4f}'.format(sidwdfp + 4 * chwd +
+                                    2 * sidwd + botwd) + tab + '{:>10.4f}'.format(elev)
     )  # orchnl.write("    "+str(sidwdfp + 4*chwd + 2*sidwd + botwd)+tab+str(elev)+"\n")
     output_string_list.append(
-        "    " + '{:>10.4f}'.format(2 * sidwdfp + 4 * chwd + 2 * sidwd + botwd) + tab + '{:>10.4f}'.format(zfld) # "    " + str(2 * sidwdfp + 4 * chwd + 2 * sidwd + botwd) + tab + str(zfld)
+        # "    " + str(2 * sidwdfp + 4 * chwd + 2 * sidwd + botwd) + tab + str(zfld)
+        "    " + '{:>10.4f}'.format(2 * sidwdfp + 4 * chwd +
+                                    2 * sidwd + botwd) + tab + '{:>10.4f}'.format(zfld)
     )  # orchnl.write("    "+str(2*sidwdfp + 4*chwd + 2*sidwd + botwd)+tab+str(zfld)+"\n")
     output_string_list.append(
         "  :EndSurveyPoints"
@@ -976,13 +998,16 @@ def Generate_Raven_Channel_rvp_string_sub(
         "  :RoughnessZones"
     )  # orchnl.write("  :RoughnessZones"+"\n")
     output_string_list.append(
-        "    0" + tab + '{:>10.8f}'.format(floodn) #str(floodn)
+        "    0" + tab + '{:>10.8f}'.format(floodn)  # str(floodn)
     )  # orchnl.write("    0" + tab + str(floodn) +"\n")
     output_string_list.append(
-        "    " + '{:>10.8f}'.format(sidwdfp + 2 * chwd) + tab + mann #"    " + str(sidwdfp + 2 * chwd) + tab + mann
+        # "    " + str(sidwdfp + 2 * chwd) + tab + mann
+        "    " + '{:>10.8f}'.format(sidwdfp + 2 * chwd) + tab + mann
     )  # orchnl.write("    " + str(sidwdfp + 2*chwd)+ tab + mann +"\n")
     output_string_list.append(
-        "    " + '{:>10.8f}'.format(sidwdfp + 2 * chwd + 2 * sidwd + botwd) + tab + '{:>10.8f}'.format(floodn) #"    " + str(sidwdfp + 2 * chwd + 2 * sidwd + botwd) + tab + str(floodn)
+        # "    " + str(sidwdfp + 2 * chwd + 2 * sidwd + botwd) + tab + str(floodn)
+        "    " + '{:>10.8f}'.format(sidwdfp + 2 * chwd + 2 *
+                                    sidwd + botwd) + tab + '{:>10.8f}'.format(floodn)
     )  # orchnl.write("    " + str(sidwdfp + 2*chwd + 2*sidwd + botwd)+ tab + str(floodn) +"\n")
     output_string_list.append(
         "  :EndRoughnessZones"
@@ -999,10 +1024,10 @@ def Generate_Raven_Channel_rvp_string_sub(
     return output_string
 
 
-#########################################################################################################33
+# 33
 
 
-def Generate_Raven_Lake_rvh_String(catinfo, Raveinputsfolder, Model_Name,lake_out_flow_method):
+def Generate_Raven_Lake_rvh_String(catinfo, Raveinputsfolder, Model_Name, lake_out_flow_method):
     """Generate string of raven lake rvh input
 
     Function that used to generate the content for
@@ -1052,25 +1077,27 @@ def Generate_Raven_Lake_rvh_String(catinfo, Raveinputsfolder, Model_Name,lake_ou
     Lake_rvh_file_path = os.path.join(Raveinputsfolder, "Lakes.rvh")
     Lake_rvh_string_list = []
     tab = "       "
-    Lake_rvh_string_list.append("#----------------------------------------------")
+    Lake_rvh_string_list.append(
+        "#----------------------------------------------")
     Lake_rvh_string_list.append("# This is a Raven lake rvh file generated")
     Lake_rvh_string_list.append("# by BasinMaker v2.0")
-    Lake_rvh_string_list.append("#----------------------------------------------")
+    Lake_rvh_string_list.append(
+        "#----------------------------------------------")
 
     Gauge_col_Name = "Has_POI"
     if "Has_POI" not in catinfo.columns:
         Gauge_col_Name = "Has_Gauge"
 
     for i in range(0, len(catinfo.index)):
-        if catinfo.iloc[i]["HRU_IsLake"] > 0:  ## lake hru
+        if catinfo.iloc[i]["HRU_IsLake"] > 0:  # lake hru
             lakeid = int(catinfo.iloc[i]["HyLakeId"])
             catid = catinfo.iloc[i]["SubId"]
-            A = catinfo.iloc[i]["HRU_Area"]  ### in meters
-            h0 = catinfo.iloc[i]["LakeDepth"]  ## m
+            A = catinfo.iloc[i]["HRU_Area"]  # in meters
+            h0 = catinfo.iloc[i]["LakeDepth"]  # m
             WeirCoe = 0.6
             hruid = int(catinfo.iloc[i]["HRU_ID"])
-            Crewd = catinfo.iloc[i]["BkfWidth"]  ##3 m
-            has_obs = catinfo.iloc[i][Gauge_col_Name]  ##3 m
+            Crewd = catinfo.iloc[i]["BkfWidth"]  # 3 m
+            has_obs = catinfo.iloc[i][Gauge_col_Name]  # 3 m
             #            if slakeinfo.iloc[0]['Wshd_area'] < 6000 and slakeinfo.iloc[0]['Wshd_area'] > 0:
             if has_obs < 1 or lake_out_flow_method == 'broad_crest':
                 Lake_rvh_string_list.append(
@@ -1082,7 +1109,7 @@ def Generate_Raven_Lake_rvh_String(catinfo, Raveinputsfolder, Model_Name,lake_ou
                 Lake_rvh_string_list.append(
                     "#############################################"
                 )  # f2.write("#############################################"+"\n")
-                ######write lake information to file
+                # write lake information to file
                 Lake_rvh_string_list.append(
                     ":Reservoir" + "   Lake_" + str(int(lakeid))
                 )  # f2.write(":Reservoir"+ "   Lake_"+ str(int(lakeid))+ "   ######## " +"\n")
@@ -1099,7 +1126,8 @@ def Generate_Raven_Lake_rvh_String(catinfo, Raveinputsfolder, Model_Name,lake_ou
                     "  :WeirCoefficient  " + str(WeirCoe)
                 )  # f2.write("  :WeirCoefficient  "+str(WeirCoe)+ "\n")
                 Lake_rvh_string_list.append(
-                    "  :CrestWidth " + '{:>10.4f}'.format(Crewd) #"{:.4f}".format(Crewd) #str(Crewd)
+                    # "{:.4f}".format(Crewd) #str(Crewd)
+                    "  :CrestWidth " + '{:>10.4f}'.format(Crewd)
                 )  # f2.write("  :CrestWidth "+str(Crewd)+ "\n")
                 Lake_rvh_string_list.append(
                     "  :MaxDepth " + str(h0)
@@ -1125,7 +1153,7 @@ def Generate_Raven_Lake_rvh_String(catinfo, Raveinputsfolder, Model_Name,lake_ou
                 Lake_rvh_string_list.append(
                     "#############################################"
                 )  # f2.write("#############################################"+"\n")
-                ######write lake information to file
+                # write lake information to file
                 Lake_rvh_string_list.append(
                     ":Reservoir" + "   Lake_" + str(int(lakeid))
                 )  # f2.write(":Reservoir"+ "   Lake_"+ str(int(lakeid))+ "   ######## " +"\n")
@@ -1150,39 +1178,36 @@ def Generate_Raven_Lake_rvh_String(catinfo, Raveinputsfolder, Model_Name,lake_ou
                 )
 
                 Lake_rvh_string_list.append(
-                    "  %s   %s " %(str(Crewd*2/3*(9.80616**(0.5))),str(1.5))
+                    "  %s   %s " % (str(Crewd*2/3*(9.80616**(0.5))), str(1.5))
                 )
 
                 Lake_rvh_string_list.append(
                     "  :EndOutflowStageRelation "
                 )
 
-
                 Lake_rvh_string_list.append(
                     "  :VolumeStageRelation POWER_LAW "
                 )
 
                 Lake_rvh_string_list.append(
-                    "  %s   %s " %(str(A),str(1))
+                    "  %s   %s " % (str(A), str(1))
                 )
 
                 Lake_rvh_string_list.append(
                     "  :EndVolumeStageRelation "
                 )
 
-
                 Lake_rvh_string_list.append(
                     "  :AreaStageRelation POWER_LAW "
                 )
 
                 Lake_rvh_string_list.append(
-                    "  %s   %s " %(str(A),str(0))
+                    "  %s   %s " % (str(A), str(0))
                 )
 
                 Lake_rvh_string_list.append(
                     "  :EndAreaStageRelation "
                 )
-
 
                 Lake_rvh_string_list.append(
                     ":EndReservoir   "
@@ -1190,7 +1215,7 @@ def Generate_Raven_Lake_rvh_String(catinfo, Raveinputsfolder, Model_Name,lake_ou
 
     Lake_rvh_string = "\n".join(Lake_rvh_string_list)
     return Lake_rvh_string, Lake_rvh_file_path
-    #### write lake input files for different lake zone
+    # write lake input files for different lake zone
 
 
 #########################
@@ -1223,17 +1248,17 @@ def Return_Group_Name_Based_On_Value(value, GroupNames, Group_Thresthold_Values)
         the group name determined by value
     """
 
-    ### only one group
+    # only one group
     if len(GroupNames) == 1:
         GroupName = GroupNames[0]
     elif len(GroupNames) > 1:
         for i in range(0, len(Group_Thresthold_Values)):
-#            print(value,Group_Thresthold_Values,GroupNames[i])
+            #            print(value,Group_Thresthold_Values,GroupNames[i])
             ###
             if value < Group_Thresthold_Values[i]:
                 GroupName = GroupNames[i]
                 break
-            ## value larger than all thresthold value
+            # value larger than all thresthold value
             elif i == len(Group_Thresthold_Values) - 1:
                 GroupName = GroupNames[i + 1]
     return GroupName
@@ -1243,7 +1268,7 @@ def create_subbasin_group_string(group_name, sub_ids, ids_per_line=10):
     """
     Given a group name (e.g., '02KB001') and a list of subbasin IDs,
     return the formatted multi-line string.
-    
+
     :param group_name: The string name for the group (e.g. '02KB001')
     :param sub_ids: A list (or array) of integer subbasin IDs
     :param ids_per_line: How many IDs to place on each line
@@ -1252,25 +1277,26 @@ def create_subbasin_group_string(group_name, sub_ids, ids_per_line=10):
     # Start lines
     lines = []
     lines.append(f"#:SubBasinGroup  Upstream_{group_name}")
-    
+
     # Break the subbasin IDs into chunks (for readability)
     for i in range(0, len(sub_ids), ids_per_line):
-        chunk = sub_ids[i : i + ids_per_line]
+        chunk = sub_ids[i: i + ids_per_line]
         # Convert all IDs to strings and separate them by spaces
         chunk_str = "   ".join(str(sid) for sid in chunk)
         # Prepend a comment marker (#) and some spacing
         lines.append(f"#       {chunk_str}")
-    
+
     # End line for this group
     lines.append("#:EndSubBasinGroup")
-    
+
     # Additional line about "PopulateSubBasinGroup..."
     lines.append(
         f"#:PopulateSubBasinGroup Disabled_Subbasins With SUBBASINS NOTWITHIN Upstream_{group_name}"
     )
-    
+
     # Join with line breaks
     return "\n".join(lines)
+
 
 def create_subbasin_group_template(group_name, group_outlet_id):
     """
@@ -1304,7 +1330,9 @@ def create_subbasin_group_template(group_name, group_outlet_id):
 #  ############################ End Subbasin Groups {Group_Name} ######################
 #  :SBGroupPropertyMultiplier Actived_Subbasins      MANNINGS_N 8.322033E+00
 #  :SBGroupPropertyMultiplier Actived_Lake_Subbasins RESERVOIR_CREST_WIDTH  MANNINGS_N 8.322033E+00  # only effective for lake subbasin
-def Create_Subbasin_Groups(subbasins,Gauge_col_Name,detailed_rvh):
+
+
+def Create_Subbasin_Groups(subbasins, Gauge_col_Name, detailed_rvh):
     """
     Creates the subbasin groups based on the given subbasins.
 
@@ -1318,23 +1346,22 @@ def Create_Subbasin_Groups(subbasins,Gauge_col_Name,detailed_rvh):
     hyshdinfo = subbasins[["SubId", "DowSubId"]].astype("int32").values
 
     if detailed_rvh:
-        group_outlet_ids = subbasins[subbasins[Gauge_col_Name] == 1]["Obs_NM"].values
-        group_outlet_subids = subbasins[subbasins[Gauge_col_Name] == 1]["SubId"].values.astype(int)
+        group_outlet_ids = subbasins[subbasins[Gauge_col_Name]
+                                     == 1]["Obs_NM"].values
+        group_outlet_subids = subbasins[subbasins[Gauge_col_Name] == 1]["SubId"].values.astype(
+            int)
 
-
-
-        
-        group_names = ["" + group_outlet_id for group_outlet_id in group_outlet_ids]
-
-        
+        group_names = [
+            "" + group_outlet_id for group_outlet_id in group_outlet_ids]
 
         group_templates = ["\n"]
         for group_name, subid in zip(group_names, group_outlet_subids):
             sub_ids = defcat(hyshdinfo, subid)
-            group_subid_list_string = create_subbasin_group_string(group_name, sub_ids, ids_per_line=10)
+            group_subid_list_string = create_subbasin_group_string(
+                group_name, sub_ids, ids_per_line=10)
             group_templates.append(group_subid_list_string)
             group_templates.append("\n")
-#        group_templates = [create_subbasin_group_template(group_name, group_outlet_id) for group_name, group_outlet_id in zip(group_names, group_outlet_subids)]  
+#        group_templates = [create_subbasin_group_template(group_name, group_outlet_id) for group_name, group_outlet_id in zip(group_names, group_outlet_subids)]
 #         group_templates.append(
 #                 """
 # ############################ Start Subbasin Groups Watershed ######################
@@ -1353,15 +1380,16 @@ def Create_Subbasin_Groups(subbasins,Gauge_col_Name,detailed_rvh):
 # :PopulateSubBasinGroup Actived_Lake_Subbasins SUBBASINS WITHIN AllLakesubbasins
 # ############################ End Subbasin Groups Watershed ######################
 #                 """
-#             ]     
-            
+#             ]
+
     group_templates.append(
         """
 :SBGroupPropertyMultiplier Allsubbasins      MANNINGS_N 1
 :SBGroupPropertyMultiplier AllLakesubbasins RESERVOIR_CREST_WIDTH  1 
     """
-        )
+    )
     return group_templates
+
 
 def Generate_Raven_Channel_rvp_rvh_String(
     ocatinfo,
@@ -1374,9 +1402,9 @@ def Generate_Raven_Channel_rvp_rvh_String(
     SubBasinGroup_Area_Lake,
     SubBasinGroup_NM_Channel,
     SubBasinGroup_Length_Channel,
-    Tr = 1,
-    aspect_from_gis = 'arcgis',
-    detailed_rvh = False,
+    Tr=1,
+    aspect_from_gis='arcgis',
+    detailed_rvh=False,
 ):  # Writervhchanl(ocatinfo,Raveinputsfolder,lenThres,iscalmanningn,HRU_ID_NM,HRU_Area_NM,Sub_ID_NM,Lake_As_Gauge = False,Model_Name = 'test'):
     """Generate string of raven chennel rvp input and rvh input
 
@@ -1480,7 +1508,8 @@ def Generate_Raven_Channel_rvp_rvh_String(
 
     """
 
-    Channel_rvp_file_path = os.path.join(Raveinputsfolder, "channel_properties.rvp")
+    Channel_rvp_file_path = os.path.join(
+        Raveinputsfolder, "channel_properties.rvp")
     Channel_rvp_string_list = []
     Model_rvh_file_path = os.path.join(Raveinputsfolder, Model_Name + ".rvh")
     Model_rvh_string_list = []
@@ -1490,34 +1519,40 @@ def Generate_Raven_Channel_rvp_rvh_String(
     )
 
     tab = "     "
-    Channel_rvp_string_list.append("#----------------------------------------------")
+    Channel_rvp_string_list.append(
+        "#----------------------------------------------")
     Channel_rvp_string_list.append(
         "# This is a Raven channel properties file generated"
     )
     Channel_rvp_string_list.append("# by BasinMaker v3.1")
-    Channel_rvp_string_list.append("#----------------------------------------------")
+    Channel_rvp_string_list.append(
+        "#----------------------------------------------")
 
-    Model_rvh_string_list.append("#----------------------------------------------")
-    Model_rvh_string_list.append("# This is a Raven HRU rvh input file generated")
+    Model_rvh_string_list.append(
+        "#----------------------------------------------")
+    Model_rvh_string_list.append(
+        "# This is a Raven HRU rvh input file generated")
     Model_rvh_string_list.append("# by BasinMaker v3.1")
-    Model_rvh_string_list.append("#----------------------------------------------")
+    Model_rvh_string_list.append(
+        "#----------------------------------------------")
 
     catinfo_hru = copy.copy(ocatinfo)
     catinfo = copy.copy(ocatinfo)
     #    print int(catinfo.iloc[0]['SUBID']),len(catinfo.index)
 
-    ##################3
+    # 3
     Model_rvh_string_list.append(":SubBasins")  # orvh.write(":SubBasins"+"\n")
     Model_rvh_string_list.append(
         "  :Attributes   NAME  DOWNSTREAM_ID       PROFILE REACH_LENGTH  GAUGED"
-    )  
+    )
     Model_rvh_string_list.append(
         "  :Units        none           none          none           km    none"
-    )  
+    )
     catinfo_sub = catinfo.drop_duplicates(
         "SubId", keep="first"
-    )  
-    catinfo_hru = catinfo_hru.drop_duplicates(subset=['HRU_ID','SubId'], keep="first")
+    )
+    catinfo_hru = catinfo_hru.drop_duplicates(
+        subset=['HRU_ID', 'SubId'], keep="first")
     Gauge_col_Name = "Has_POI"
     if "Has_POI" not in catinfo_sub.columns:
         Gauge_col_Name = "Has_Gauge"
@@ -1540,14 +1575,14 @@ def Generate_Raven_Channel_rvp_rvh_String(
     )
     not_write_default_channel = True
     for i in range(0, len(catinfo_sub)):
-        ### Get catchment width and dpeth
+        # Get catchment width and dpeth
         catid = int(catinfo_sub["SubId"].values[i])
         downcatid = int(catinfo_sub["DowSubId"].values[i])
         temp = catinfo_sub["RivLength"].values[i]
 
         if float(temp) > lenThres:
-            catlen = float(temp) / 1000  #### in km
-            strRlen = '{:>10.4f}'.format(catlen) #str(catlen)
+            catlen = float(temp) / 1000  # in km
+            strRlen = '{:>10.4f}'.format(catlen)  # str(catlen)
         else:
             catlen = -9999
             strRlen = "ZERO-"
@@ -1555,7 +1590,7 @@ def Generate_Raven_Channel_rvp_rvh_String(
             catinfo_sub["Lake_Cat"].values[i] > 0
         ):  # and catinfo_sub['HRU_Type'].values[i] == 1:
             strRlen = "ZERO-"
-        #####################################################3
+        # 3
         Strcat = str(catid)
         #        print(catid,downcatid,len(catinfo_sub.loc[catinfo_sub['SubId'] == downcatid]))
         if catid == downcatid:
@@ -1625,14 +1660,17 @@ def Generate_Raven_Channel_rvp_rvh_String(
             not_write_default_channel = False
         else:
             output_string_chn_rvp_sub = []
-            output_string_chn_rvp_sub.append("#   Sub "+ Strcat + "  refer to  Chn_ZERO_LENGTH ")
-            output_string_chn_rvp_sub.append("##############new channel ##############################")
+            output_string_chn_rvp_sub.append(
+                "#   Sub " + Strcat + "  refer to  Chn_ZERO_LENGTH ")
+            output_string_chn_rvp_sub.append(
+                "##############new channel ##############################")
             output_string_chn_rvp_sub = "\n".join(output_string_chn_rvp_sub)
 
         Channel_rvp_string_list.append(output_string_chn_rvp_sub)
-
+        rvh_name = "sub" + Strcat
         if catinfo_sub[Gauge_col_Name].values[i] > 0:
             Guage = "1"
+            rvh_name = catinfo_sub["Obs_NM"].values[i]
         elif (
             catinfo_sub["Lake_Cat"].values[i] > 0 and Lake_As_Gauge == True
         ):
@@ -1644,8 +1682,7 @@ def Generate_Raven_Channel_rvp_rvh_String(
             "  "
             + Strcat
             + tab
-            + "sub"
-            + Strcat
+            + rvh_name
             + tab
             + StrDid
             + tab
@@ -1656,7 +1693,8 @@ def Generate_Raven_Channel_rvp_rvh_String(
             + Guage
         )
 
-    Model_rvh_string_list.append(":EndSubBasins")  # orvh.write(":EndSubBasins"+"\n")
+    # orvh.write(":EndSubBasins"+"\n")
+    Model_rvh_string_list.append(":EndSubBasins")
     Model_rvh_string_list.append("\n")  # orvh.write("\n")
     ##########################################
 
@@ -1704,29 +1742,33 @@ def Generate_Raven_Channel_rvp_rvh_String(
 
         catarea2 = max(
             0.0001, catinfo_hru["HRU_Area"].values[i] / 1000 / 1000
-        )  ### in km2
+        )  # in km2
 
         StrGid = str(hruid)  # str( catinfo_hru.iloc[i][HRU_Area_NM])+tab
 
         catid = str(int(catinfo_hru["SubId"].values[i])) + tab
 
-        StrGidarea = '{:>10.4f}'.format(catarea2) + tab  #str(catarea2) + tab
-        StrGidelev = '{:>10.4f}'.format(catinfo_hru["HRU_E_mean"].values[i]) + tab #str(catinfo_hru["HRU_E_mean"].values[i]) + tab
-        lat = '{:>10.4f}'.format(catinfo_hru["HRU_CenY"].values[i])  + tab #str(catinfo_hru["HRU_CenY"].values[i]) + tab
-        lon = '{:>10.4f}'.format(catinfo_hru["HRU_CenX"].values[i])  + tab #str(catinfo_hru["HRU_CenX"].values[i]) + tab
+        StrGidarea = '{:>10.4f}'.format(catarea2) + tab  # str(catarea2) + tab
+        # str(catinfo_hru["HRU_E_mean"].values[i]) + tab
+        StrGidelev = '{:>10.4f}'.format(
+            catinfo_hru["HRU_E_mean"].values[i]) + tab
+        # str(catinfo_hru["HRU_CenY"].values[i]) + tab
+        lat = '{:>10.4f}'.format(catinfo_hru["HRU_CenY"].values[i]) + tab
+        # str(catinfo_hru["HRU_CenX"].values[i]) + tab
+        lon = '{:>10.4f}'.format(catinfo_hru["HRU_CenX"].values[i]) + tab
         LAND_USE_CLASS = catinfo_hru["LAND_USE_C"].values[i] + tab
         VEG_CLASS = catinfo_hru["VEG_C"].values[i] + tab
         SOIL_PROFILE = catinfo_hru["SOIL_PROF"].values[i] + tab
         AQUIFER_PROFILE = "[NONE]" + tab
         TERRAIN_CLASS = "[NONE]" + tab
 
-        SLOPE = '{:>10.6f}'.format(catslope)  + tab #str(catslope) + tab
+        SLOPE = '{:>10.6f}'.format(catslope) + tab  # str(catslope) + tab
 
         if aspect_from_gis == 'grass':
             asp_temp = 270 + cataspect
             if asp_temp > 360:
                 asp_temp = asp_temp - 360
-            ASPECT = '{:>10.4f}'.format(asp_temp)  + tab # str(asp_temp) + tab
+            ASPECT = '{:>10.4f}'.format(asp_temp) + tab  # str(asp_temp) + tab
 
         elif aspect_from_gis == 'arcgis' or aspect_from_gis == 'qgis':
             asp_temp = -(-360 + cataspect)
@@ -1737,7 +1779,8 @@ def Generate_Raven_Channel_rvp_rvh_String(
             asp_temp = 360 - cataspect
             ASPECT = str(asp_temp) + tab
         else:
-            ASPECT = '{:>10.4f}'.format(cataspect)  + tab #str(cataspect) + tab
+            ASPECT = '{:>10.4f}'.format(
+                cataspect) + tab  # str(cataspect) + tab
 
         Model_rvh_string_list.append(
             "  "
@@ -1763,7 +1806,8 @@ def Generate_Raven_Channel_rvp_rvh_String(
                 SubBasinGroup_NM_Lake,
                 SubBasinGroup_Area_Lake,
             )
-            SubBasin_Group_Lake.loc[i, "SubId"] = catinfo_hru["SubId"].values[i]
+            SubBasin_Group_Lake.loc[i,
+                                    "SubId"] = catinfo_hru["SubId"].values[i]
             SubBasin_Group_Lake.loc[i, "SubBasin_Group_NM"] = GroupName
             Lake_HRU_Name = LAND_USE_CLASS
     Model_rvh_string_list.append(":EndHRUs")  # orvh.write(":EndHRUs"+"\n")
@@ -1771,13 +1815,14 @@ def Generate_Raven_Channel_rvp_rvh_String(
     if Lake_HRU_Name != None:
         # Model_rvh_string_list.append(
         #     ":PopulateHRUGroup Lake_HRUs With LANDUSE EQUALS " + Lake_HRU_Name
-        # )  
+        # )
         Model_rvh_string_list.append(
             ":RedirectToFile " + "Lakes.rvh"
-        )  
-    
+        )
+
     for i in range(0, len(SubBasinGroup_NM_Channel)):
-        Model_rvh_string_list.append(":SubBasinGroup   " + SubBasinGroup_NM_Channel[i])
+        Model_rvh_string_list.append(
+            ":SubBasinGroup   " + SubBasinGroup_NM_Channel[i])
         SubBasin_Group_Channel_i = SubBasin_Group_Channel.loc[
             SubBasin_Group_Channel["SubBasin_Group_NM"] == SubBasinGroup_NM_Channel[i]
         ]
@@ -1794,10 +1839,10 @@ def Generate_Raven_Channel_rvp_rvh_String(
                 Model_rvh_string_list.append(SubIDs_In_Group_Str)
                 nsubbasin = 0
         Model_rvh_string_list.append(":EndSubBasinGroup   ")
-        
 
     for i in range(0, len(SubBasinGroup_NM_Lake)):
-        Model_rvh_string_list.append(":SubBasinGroup   " + SubBasinGroup_NM_Lake[i])
+        Model_rvh_string_list.append(
+            ":SubBasinGroup   " + SubBasinGroup_NM_Lake[i])
         SubBasin_Group_Lake_i = SubBasin_Group_Lake.loc[
             SubBasin_Group_Lake["SubBasin_Group_NM"] == SubBasinGroup_NM_Lake[i]
         ]
@@ -1815,9 +1860,9 @@ def Generate_Raven_Channel_rvp_rvh_String(
                 nsubbasin = 0
 
         Model_rvh_string_list.append(":EndSubBasinGroup   ")
-    
-    Model_rvh_string_list.extend(Create_Subbasin_Groups(catinfo_sub,Gauge_col_Name,detailed_rvh))
 
+    Model_rvh_string_list.extend(Create_Subbasin_Groups(
+        catinfo_sub, Gauge_col_Name, detailed_rvh))
 
     Channel_rvp_string = "\n".join(Channel_rvp_string_list)
     Model_rvh_string = "\n".join(Model_rvh_string_list)
@@ -1858,9 +1903,11 @@ def plotGuagelineobs(scenario, data, outfilename):
             label=scenario[i],
         )
 
-    ax.scatter(data.index, data["Obs"], color="grey", s=0.1, label="Observation")
+    ax.scatter(data.index, data["Obs"],
+               color="grey", s=0.1, label="Observation")
     plt.legend(loc="upper left", frameon=False, ncol=2, prop={"size": 6})
-    plt.ylim(0, max(data[scenario[i]].values) + max(data[scenario[i]].values) * 0.1)
+    plt.ylim(0, max(data[scenario[i]].values) +
+             max(data[scenario[i]].values) * 0.1)
     plt.xlabel("Model Time")
     plt.ylabel("Discharge (m3/s)")
     plt.savefig(outfilename, bbox_inches="tight", dpi=300)
@@ -1904,8 +1951,8 @@ def plotGuageerror(basename, scenario, data, Diagno):
         fig = plt.figure(figsize=(3, 3))
         ax = fig.add_subplot(1, 1, 1)
         ax.scatter(
-            results[0 : len(results) - 2, 2],
-            results[1 : len(results) - 1, 2],
+            results[0: len(results) - 2, 2],
+            results[1: len(results) - 1, 2],
             color="grey",
             s=0.1,
         )
@@ -1987,7 +2034,7 @@ def PlotHydrography_Raven_alone(
 ):
 
     Obs_rvt_NMS = []
-    ###obtain obs rvt file name
+    # obtain obs rvt file name
     for file in os.listdir(Path_rvt_Folder):
         if file.endswith(".rvt"):
             Obs_rvt_NMS.append(file)
@@ -1998,7 +2045,7 @@ def PlotHydrography_Raven_alone(
     print(Metric_OUT)
     Obs_subids = []
     for i in range(0, len(Obs_rvt_NMS)):
-        ###find subID
+        # find subID
         obs_nm = Obs_rvt_NMS[i]
         ifilepath = os.path.join(Path_rvt_Folder, obs_nm)
         f = open(ifilepath, "r")
@@ -2008,24 +2055,24 @@ def PlotHydrography_Raven_alone(
             #            print(firstline_info)
             if firstline_info[0] == ":ObservationData":
                 obssubid = int(firstline_info[2])
-                break  ### only read first line
+                break  # only read first line
             else:
                 obssubid = -1.2345
-                break  ### only read first line
+                break  # only read first line
         #        print(obssubid)
         Obs_subids.append(obssubid)
         Metric_OUT.loc[i, "SubId"] = obssubid
-        ## this is not a observation rvt file
+        # this is not a observation rvt file
         if obssubid == -1.2345:
             continue
-        ####assign column name in the hydrography.csv
+        # assign column name in the hydrography.csv
 
         colnm_obs = "sub" + str(obssubid) + " (observed) [m3/s]"
         colnm_sim = "sub" + str(obssubid) + " [m3/s]"
         colnm_Date = "date"
         colnm_hr = "hour"
 
-        ##obtain data from all provided hydrograpy csv output files each hydrograpy csv need has a coorespond scenario name
+        # obtain data from all provided hydrograpy csv output files each hydrograpy csv need has a coorespond scenario name
         Initial_data_frame = 1
         readed_data_correc = 1
         data_len = []
@@ -2036,10 +2083,10 @@ def PlotHydrography_Raven_alone(
             #            print(Path_Hydrographs_output_file_j)#
             i_simresult = pd.read_csv(Path_Hydrographs_output_file[j], sep=",")
             colnames = i_simresult.columns
-            ## check if obs name exist in the hydrograpy csv output files
+            # check if obs name exist in the hydrograpy csv output files
             if colnm_obs in colnames:
 
-                ## Initial lize the reaed in data frame
+                # Initial lize the reaed in data frame
                 if Initial_data_frame == 1:
                     Readed_Data = i_simresult[[colnm_Date, colnm_hr]]
                     Readed_Data["Obs"] = i_simresult[colnm_obs]
@@ -2272,12 +2319,12 @@ def Caluculate_Lake_Active_Depth_and_Lake_Evap(
             Mb_info_lake = Res_MB_info[Mb_Col_NM]
             Stage_info_lake = Res_Stage_info[Stage_Col_NM]
 
-            ### For stage
+            # For stage
             Stage_Statis = Calulate_Yearly_Reservior_stage_statistics(
                 Stage_info_lake, Stage_Statis, stage_idx, Stage_Col_NM
             )
 
-            ### for Mass
+            # for Mass
 
             for iyr in range(Year_Begin, Year_end + 1):
                 Mb_info_lake_iyr = Mb_info_lake.loc[
@@ -2327,7 +2374,8 @@ def Calulate_Yearly_Reservior_stage_statistics(
             Max_stage_sum = Max_stage_sum + max(Stage_info_lake_iyr)
             Ave_stage_sum = Ave_stage_sum + np.average(Stage_info_lake_iyr)
 
-    Stage_Statis.loc[stage_idx, "#_Day_Active_stage"] = Num_Day_Active_stage_sum / nyear
+    Stage_Statis.loc[stage_idx,
+                     "#_Day_Active_stage"] = Num_Day_Active_stage_sum / nyear
     Stage_Statis.loc[stage_idx, "Min_stage"] = Min_stage_sum / nyear
     Stage_Statis.loc[stage_idx, "Max_stage"] = Max_stage_sum / nyear
     Stage_Statis.loc[stage_idx, "Ave_stage"] = Ave_stage_sum / nyear
