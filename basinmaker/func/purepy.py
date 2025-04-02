@@ -440,12 +440,21 @@ def create_geo_jason_file(Input_Polygon_path):
         input_pd = geopandas.read_file(input_path)
 
         input_wgs_84 = input_pd.to_crs('EPSG:4326')
+        Gauge_col_Name = "Has_POI"
+        if "Has_POI" not in input_wgs_84.columns:
+            Gauge_col_Name = "Has_Gauge"
 
         if 'finalcat_info' in Input_file_name[i] or "finalcat_info_riv" in Input_file_name[i]:
 
-            input_wgs_84['rvhName'] = 'sub' + \
-                input_wgs_84['SubId'].astype(int).astype(str)
+            # Set rvhName for rows where gauge == 1
+            input_wgs_84.loc[input_wgs_84[Gauge_col_Name] == 1, 'rvhName'] = \
+                input_wgs_84.loc[input_wgs_84[Gauge_col_Name]
+                                 == 1, 'Obs_NM'].values
 
+            # Set rvhName for all other rows
+            input_wgs_84.loc[input_wgs_84[Gauge_col_Name] != 1, 'rvhName'] = \
+                'sub' + input_wgs_84.loc[input_wgs_84[Gauge_col_Name]
+                                         != 1, 'SubId'].astype(int).astype(str)
             # input_wgs_84['rvhName'] = input_wgs_84['SubId'].astype(
             #     int).astype(str)
             # for idx in input_wgs_84.index:
