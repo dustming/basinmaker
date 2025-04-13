@@ -1351,8 +1351,9 @@ def Create_Subbasin_Groups(subbasins, Gauge_col_Name, detailed_rvh):
         group_outlet_subids = subbasins[subbasins[Gauge_col_Name] == 1]["SubId"].values.astype(
             int)
 
-        group_names = [
-            "" + group_outlet_id for group_outlet_id in group_outlet_ids]
+        # Replace space with _ in Obs_NM
+        # Consistent with rvhName
+        group_names = [group_outlet_id.replace(" ", "_") for group_outlet_id in group_outlet_ids]
 
         group_templates = ["\n"]
         for group_name, subid in zip(group_names, group_outlet_subids):
