@@ -1670,7 +1670,7 @@ def Generate_Raven_Channel_rvp_rvh_String(
         rvh_name = "sub" + Strcat
         if catinfo_sub[Gauge_col_Name].values[i] > 0:
             Guage = "1"
-            rvh_name = catinfo_sub["Obs_NM"].values[i]
+            rvh_name = str(catinfo_sub["Obs_NM"].values[i]).replace(" ", "_")
         elif (
             catinfo_sub["Lake_Cat"].values[i] > 0 and Lake_As_Gauge == True
         ):
