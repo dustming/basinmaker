@@ -221,8 +221,13 @@ def GenerateRavenInput(
     tempinfo = Dbf5(finalcatchpath[:-3] + "dbf")
     ncatinfo = tempinfo.to_dataframe()
     ncatinfo2 = ncatinfo.drop_duplicates("HRU_ID", keep="first")
-    ncatinfo2 = ncatinfo2.loc[(ncatinfo2["HRU_ID"] > 0)
-                              & (ncatinfo2["SubId"] > 0)]
+    # ncatinfo2 = ncatinfo2.loc[(ncatinfo2["HRU_ID"] > 0)
+    #                           & (ncatinfo2["SubId"] > 0)]
+    
+    # HRU_ID and SubId can be string type
+    ncatinfo2 = ncatinfo2.loc[(pd.to_numeric(ncatinfo2["HRU_ID"], errors="coerce") > 0)
+                                & (pd.to_numeric(ncatinfo2["SubId"], errors="coerce") > 0)]
+    
     if 'DrainArea' in ncatinfo2.columns:
         ncatinfo2 = ncatinfo2.sort_values(by=['DrainArea', 'HRU_ID'])
 
