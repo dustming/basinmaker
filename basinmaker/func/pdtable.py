@@ -2823,6 +2823,18 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Remove_NCL(
             finalcat_info_temp["SubId"] == downsubid
         ].copy()  # obtain downstream infomation
         if len(Down_Sub_info) == 0 and downsubid < 0:
+            mapoldnew_info.loc[mapoldnew_info["SubId"]
+                               == csubid, 'HyLakeId'] = 0
+            mapoldnew_info.loc[mapoldnew_info["SubId"]
+                               == csubid, 'LakeVol'] = 0
+            mapoldnew_info.loc[mapoldnew_info["SubId"]
+                               == csubid, 'LakeArea'] = 0
+            mapoldnew_info.loc[mapoldnew_info["SubId"]
+                               == csubid, 'LakeDepth'] = 0
+            mapoldnew_info.loc[mapoldnew_info["SubId"]
+                               == csubid, 'Laketype'] = 0
+            mapoldnew_info.loc[mapoldnew_info["SubId"]
+                               == csubid, 'Lake_Cat'] = 0
             continue
         if Down_Sub_info["Lake_Cat"].values[0] != 2:
             # check if this downsubid has a new subid
