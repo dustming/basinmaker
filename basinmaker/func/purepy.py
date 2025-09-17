@@ -292,8 +292,8 @@ def Remove_Unselected_Lake_Attribute_In_Finalcatinfo_purepy(finalcat_ply, Conn_L
     """
 
     mask1 = np.logical_not(finalcat_ply['HyLakeId'].isin(Conn_Lake_Ids))
-    mask2 = finalcat_ply['Lake_Cat'] != 2
-    mask = np.logical_and(mask1, mask2)
+    # mask2 = finalcat_ply['Lake_Cat'] != 2
+    mask = mask1  # np.logical_and(mask1, mask2)
 
     finalcat_ply.loc[mask, 'HyLakeId'] = 0
     finalcat_ply.loc[mask, 'LakeVol'] = 0
