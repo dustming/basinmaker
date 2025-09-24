@@ -188,7 +188,7 @@ def simplify_routing_structure_by_drainage_area_purepy(
         riv_name=os.path.basename(Path_final_riv),
         Path_final_riv=os.path.join(tempfolder, 'selected_riv.shp'),
     )
-
+    connect_lake_id_in_network = mapoldnew_info.loc[mapoldnew_info['Lake_Cat'] == 1, 'HyLakeId'].unique().tolist() 
     # export lakes
     if Path_Conl_ply == '#':
         Conn_Lakes_ply_select = []
@@ -196,7 +196,7 @@ def simplify_routing_structure_by_drainage_area_purepy(
     else:
         Conn_Lakes_ply = geopandas.read_file(Path_Conl_ply)
         lake_mask = Conn_Lakes_ply['Hylak_id'].isin(Connected_Lake_Mainriv)
-        Conn_Lakes_ply_select = Conn_Lakes_ply.loc[lake_mask].copy()
+        Conn_Lakes_ply_select = Conn_Lakes_ply.loc[Conn_Lakes_ply['Hylak_id'].isin(connect_lake_id_in_network)].copy()
         Conn_Lakes_ply_not_select = Conn_Lakes_ply.loc[np.logical_not(
             lake_mask)].copy()
 
