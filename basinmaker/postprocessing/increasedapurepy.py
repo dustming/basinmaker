@@ -189,6 +189,8 @@ def simplify_routing_structure_by_drainage_area_purepy(
         Path_final_riv=os.path.join(tempfolder, 'selected_riv.shp'),
     )
     connect_lake_id_in_network = mapoldnew_info.loc[mapoldnew_info['Lake_Cat'] == 1, 'HyLakeId'].unique().tolist() 
+    non_connect_lake_id_in_network = mapoldnew_info.loc[mapoldnew_info['Lake_Cat'] == 2, 'HyLakeId'].unique().tolist() 
+
     # export lakes
     if Path_Conl_ply == '#':
         Conn_Lakes_ply_select = []
@@ -211,10 +213,12 @@ def simplify_routing_structure_by_drainage_area_purepy(
         non_conn_Lakes_ply = geopandas.read_file(Path_NonCon_Lake_ply)
         new_non_connected_lake = pd.concat(
             [non_conn_Lakes_ply, Conn_Lakes_ply_not_select], ignore_index=True)
+        new_non_connected_lake = new_non_connected_lake.loc[new_non_connected_lake['Hylak_id'].isin(non_connect_lake_id_in_network)]
         new_non_connected_lake.to_file(os.path.join(
             OutputFolder, os.path.basename(Path_NonCon_Lake_ply)))
     if len(Conn_Lakes_ply_not_select) <= 0 and Path_NonCon_Lake_ply != '#':
         non_conn_Lakes_ply = geopandas.read_file(Path_NonCon_Lake_ply)
+        non_conn_Lakes_ply = non_conn_Lakes_ply.loc[non_conn_Lakes_ply['Hylak_id'].isin(non_connect_lake_id_in_network)].copy()
         non_conn_Lakes_ply.to_file(os.path.join(
             OutputFolder, os.path.basename(Path_NonCon_Lake_ply)))
     if len(Conn_Lakes_ply_not_select) > 0 and Path_NonCon_Lake_ply == '#':
@@ -223,7 +227,7 @@ def simplify_routing_structure_by_drainage_area_purepy(
                 os.path.basename(Path_Conl_ply).split('_')[3]
         else:
             outlake_name = 'sl_non_connected_lake.shp'
-
+        Conn_Lakes_ply_not_select = Conn_Lakes_ply_not_select.loc[Conn_Lakes_ply_not_select['Hylak_id'].isin(non_connect_lake_id_in_network)].copy()
         Conn_Lakes_ply_not_select.to_file(
             os.path.join(OutputFolder, outlake_name))
 
