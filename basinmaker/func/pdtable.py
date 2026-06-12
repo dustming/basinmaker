@@ -2121,7 +2121,13 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
     for i in range(0, len(all_outlet_sub_info)):
         if all_outlet_sub_info['DrainArea'].values[i] <= Area_Min * 1000 * 1000:
             tsubid = all_outlet_sub_info['SubId'].values[i]
+            # if tsubid in mapoldnew_info["nsubid"].values:
+            #     print("Warning: skip outlet dissolve; tsubid already assigned", tsubid)
+            #     # continue
             All_up_subids = defcat(routing_info, tsubid)
+            if len(All_up_subids) == 0:
+                # print("Warning: skip outlet dissolve; empty upstream ids", tsubid)
+                continue
             if not (finalriv_info.loc[finalriv_info["SubId"].isin(All_up_subids), Gauge_col_Name] <= 0).all():
                 continue
             mapoldnew_info = New_SubId_To_Dissolve(
@@ -2167,6 +2173,13 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
             ]  # combine two list not sum
 
         modifysubids = np.asarray(modifysubids)
+
+        # if tsubid in mapoldnew_info["nsubid"].values:
+        #     print("Warning: skip lake dissolve; tsubid already assigned", tsubid)
+        #     # continue
+        if len(modifysubids) == 0:
+            # print("Warning: skip lake dissolve; empty modify ids", tsubid)
+            continue
 
         mapoldnew_info = New_SubId_To_Dissolve(
             subid=tsubid,
@@ -2317,6 +2330,13 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
                 mask_old_nonLake = np.in1d(seg_sub_ids, Old_Non_Connect_SubIds)
                 seg_sub_ids = seg_sub_ids[np.logical_not(mask_old_nonLake)]
 
+                # if tsubid in mapoldnew_info["nsubid"].values:
+                #     print("Warning: skip segment dissolve(end); tsubid already assigned", tsubid)
+                #     # continue
+                if len(seg_sub_ids) == 0:
+                    # print("Warning: skip segment dissolve(end); empty seg_sub_ids", tsubid)
+                    continue
+
                 mapoldnew_info = New_SubId_To_Dissolve(
                     subid=tsubid,
                     catchmentinfo=finalriv_info,
@@ -2372,6 +2392,13 @@ def Change_Attribute_Values_For_Catchments_Need_To_Be_Merged_By_Increase_DA(
 
                 mask_old_nonLake = np.in1d(seg_sub_ids, Old_Non_Connect_SubIds)
                 seg_sub_ids = seg_sub_ids[np.logical_not(mask_old_nonLake)]
+
+                # if tsubid in mapoldnew_info["nsubid"].values:
+                #     print("Warning: skip segment dissolve(mid); tsubid already assigned", tsubid)
+                #     continue
+                if len(seg_sub_ids) == 0:
+                    # print("Warning: skip segment dissolve(mid); empty seg_sub_ids", tsubid)
+                    continue
 
                 mapoldnew_info = New_SubId_To_Dissolve(
                     subid=tsubid,
