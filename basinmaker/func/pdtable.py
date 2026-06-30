@@ -1966,7 +1966,7 @@ def Determine_HRU_Attributes(
     #         Attri_table.loc[i, "SubId"] = int(0)
 
     Attri_table["facters"] = (
-        Attri_table["HRULake_ID"].astype(str)
+        (Attri_table["HRULake_ID"] * 100).astype("Int64").astype(str)
         + Attri_table[Landuse_ID].astype(str)
         + Attri_table[Soil_ID].astype(str)
         #        + Attri_table[Veg_ID].astype(str)
