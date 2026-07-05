@@ -1966,11 +1966,11 @@ def Determine_HRU_Attributes(
     #         Attri_table.loc[i, "SubId"] = int(0)
 
     Attri_table["facters"] = (
-        (Attri_table["HRULake_ID"] * 100).astype("Int64").astype(str)
-        + Attri_table[Landuse_ID].astype(str)
-        + Attri_table[Soil_ID].astype(str)
+        (Attri_table["HRULake_ID"]).astype("Int64").astype(str)
+        + Attri_table[Landuse_ID].astype(str).str.zfill(2)
+        + Attri_table[Soil_ID].astype(str).str.zfill(2)
         #        + Attri_table[Veg_ID].astype(str)
-        + Attri_table[Other_Ply_ID_1].astype(str)
+        + Attri_table[Other_Ply_ID_1].astype(str).str.zfill(2)
         #        + Attri_table[Other_Ply_ID_2].astype(str)
     )
     Attri_table["HRU_ID_New"] = pd.factorize(Attri_table["facters"])[0] + 1
